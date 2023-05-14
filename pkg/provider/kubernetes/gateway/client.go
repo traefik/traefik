@@ -53,6 +53,9 @@ type Client interface {
 	GetGatewayClasses() ([]*gatev1alpha2.GatewayClass, error)
 	UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewayStatus gatev1alpha2.GatewayStatus) error
 	UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error
+	UpdateHTTPRouteStatus(route *gatev1alpha2.HTTPRoute, routeStatus gatev1alpha2.RouteStatus) error
+	UpdateTCPRouteStatus(route *gatev1alpha2.TCPRoute, routeStatus gatev1alpha2.RouteStatus) error
+	UpdateTLSRouteStatus(route *gatev1alpha2.TLSRoute, routeStatus gatev1alpha2.RouteStatus) error
 	GetGateways() []*gatev1alpha2.Gateway
 	GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTPRoute, error)
 	GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error)
@@ -429,6 +432,81 @@ func (c *clientWrapper) UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatew
 	return nil
 }
 
+func (c *clientWrapper) UpdateHTTPRouteStatus(route *gatev1alpha2.HTTPRoute, routeStatus gatev1alpha2.RouteStatus) error {
+	if !c.isWatchedNamespace(route.Namespace) {
+		return fmt.Errorf("cannot update HTTPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
+	}
+
+	if routeStatusEquals(route.Status.RouteStatus, routeStatus) {
+		return nil
+	}
+
+	log.Debug().Msgf("Updating status resource for HTTPRoute %s/%s", route.Namespace, route.Name)
+
+	r := route.DeepCopy()
+	r.Status.RouteStatus = routeStatus
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := c.csGateway.GatewayV1alpha2().HTTPRoutes(route.Namespace).UpdateStatus(ctx, r, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update HTTPRoute %q status: %w", route.Name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateTCPRouteStatus(route *gatev1alpha2.TCPRoute, routeStatus gatev1alpha2.RouteStatus) error {
+	if !c.isWatchedNamespace(route.Namespace) {
+		return fmt.Errorf("cannot update TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
+	}
+
+	if routeStatusEquals(route.Status.RouteStatus, routeStatus) {
+		return nil
+	}
+
+	log.Debug().Msgf("Updating status resource for TCPRoute %s/%s", route.Namespace, route.Namespace)
+
+	r := route.DeepCopy()
+	r.Status.RouteStatus = routeStatus
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := c.csGateway.GatewayV1alpha2().TCPRoutes(route.Namespace).UpdateStatus(ctx, r, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update TCPRoute %q status: %w", route.Name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateTLSRouteStatus(route *gatev1alpha2.TLSRoute, routeStatus gatev1alpha2.RouteStatus) error {
+	if !c.isWatchedNamespace(route.Namespace) {
+		return fmt.Errorf("cannot update TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
+	}
+
+	if routeStatusEquals(route.Status.RouteStatus, routeStatus) {
+		return nil
+	}
+
+	log.Debug().Msgf("Updating status resource for TLSRoute %s/%s", route.Namespace, route.Name)
+
+	r := route.DeepCopy()
+	r.Status.RouteStatus = routeStatus
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := c.csGateway.GatewayV1alpha2().TLSRoutes(route.Namespace).UpdateStatus(ctx, r, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update TLSRoute %q status: %w", route.Name, err)
+	}
+
+	return nil
+}
+
 func statusEquals(oldStatus, newStatus gatev1alpha2.GatewayStatus) bool {
 	if len(oldStatus.Listeners) != len(newStatus.Listeners) {
 		return false
@@ -452,6 +530,26 @@ func statusEquals(oldStatus, newStatus gatev1alpha2.GatewayStatus) bool {
 	}
 
 	return listenerMatches == len(oldStatus.Listeners)
+}
+
+func routeStatusEquals(oldStatus, newStatus gatev1alpha2.RouteStatus) bool {
+	if len(oldStatus.Parents) != len(newStatus.Parents) {
+		return false
+	}
+
+	parentMatches := 0
+	for _, newParent := range newStatus.Parents {
+		for _, oldParent := range oldStatus.Parents {
+			if newParent.ParentRef == oldParent.ParentRef {
+				if !conditionsEquals(newParent.Conditions, oldParent.Conditions) {
+					return false
+				}
+				parentMatches++
+			}
+		}
+	}
+
+	return parentMatches == len(oldStatus.Parents)
 }
 
 func conditionsEquals(conditionsA, conditionsB []metav1.Condition) bool {

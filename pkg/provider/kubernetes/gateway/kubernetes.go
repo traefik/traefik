@@ -37,12 +37,17 @@ import (
 const (
 	providerName = "kubernetesgateway"
 
+	controllerName = "traefik.io/gateway-controller"
+
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
 	kindHTTPRoute      = "HTTPRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 )
+
+// timeNow is a mockable version of time.Now.
+var timeNow = time.Now
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -205,7 +210,7 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 	}
 
 	for _, gatewayClass := range gatewayClasses {
-		if gatewayClass.Spec.ControllerName == "traefik.io/gateway-controller" {
+		if gatewayClass.Spec.ControllerName == controllerName {
 			gatewayClassNames[gatewayClass.Name] = struct{}{}
 
 			err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
@@ -328,6 +333,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			Name:           listener.Name,
 			SupportedKinds: []gatev1alpha2.RouteGroupKind{},
 			Conditions:     []metav1.Condition{},
+			AttachedRoutes: 0,
 		}
 
 		supportedKinds, conditions := supportedRouteKinds(listener.Protocol)
@@ -495,16 +501,26 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			}
 		}
 
+		routesAttached := int32(0)
 		for _, routeKind := range routeKinds {
+			var (
+				numRoutesAttached int32
+				conditions        []metav1.Condition
+			)
+
 			switch routeKind.Kind {
 			case kindHTTPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
+				numRoutesAttached, conditions = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTCPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
+				numRoutesAttached, conditions = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTLSRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
+				numRoutesAttached, conditions = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			}
+
+			routesAttached += numRoutesAttached
+			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 		}
+		listenerStatuses[i].AttachedRoutes = routesAttached
 	}
 
 	return listenerStatuses
@@ -657,16 +673,16 @@ func getAllowedRouteKinds(listener gatev1alpha2.Listener, supportedKinds []gatev
 	return routeKinds, conditions
 }
 
-func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return nil
+		return 0, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
+		return 0, []metav1.Condition{{
 			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
@@ -678,7 +694,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 	routes, err := client.GetHTTPRoutes(namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
+		return 0, []metav1.Condition{{
 			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
@@ -689,9 +705,10 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No HTTPRoutes found")
-		return nil
+		return 0, nil
 	}
 
+	numRoutesAttached := int32(0)
 	var conditions []metav1.Condition
 	for _, route := range routes {
 		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
@@ -717,6 +734,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 			continue
 		}
 
+		atLeastOneRuleMatched := false
 		for _, routeRule := range route.Spec.Rules {
 			rule, err := extractRule(routeRule, hostRule)
 			if err != nil {
@@ -812,22 +830,32 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 
 			routerKey = provider.Normalize(routerKey)
 			conf.HTTP.Routers[routerKey] = &router
+
+			atLeastOneRuleMatched = true
+		}
+
+		if atLeastOneRuleMatched {
+			if err := updateHTTPRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+				continue
+			}
+			numRoutesAttached++
 		}
 	}
 
-	return conditions
+	return numRoutesAttached, conditions
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return nil
+		return 0, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
+		return 0, []metav1.Condition{{
 			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
@@ -839,7 +867,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 	routes, err := client.GetTCPRoutes(namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
+		return 0, []metav1.Condition{{
 			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
@@ -850,9 +878,10 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No TCPRoutes found")
-		return nil
+		return 0, nil
 	}
 
+	numRoutesAttached := int32(0)
 	var conditions []metav1.Condition
 	for _, route := range routes {
 		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
@@ -926,6 +955,11 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		if len(ruleServiceNames) == 1 {
 			router.Service = ruleServiceNames[0]
 			conf.TCP.Routers[routerKey] = &router
+			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+				continue
+			}
+			numRoutesAttached++
 			continue
 		}
 
@@ -943,21 +977,29 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 		router.Service = routeServiceKey
 		conf.TCP.Routers[routerKey] = &router
+
+		if len(ruleServiceNames) > 0 {
+			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+				continue
+			}
+			numRoutesAttached++
+		}
 	}
 
-	return conditions
+	return numRoutesAttached, conditions
 }
 
-func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return nil
+		return 0, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
+		return 0, []metav1.Condition{{
 			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
@@ -969,7 +1011,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 	routes, err := client.GetTLSRoutes(namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
+		return 0, []metav1.Condition{{
 			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
@@ -980,9 +1022,10 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No TLSRoutes found")
-		return nil
+		return 0, nil
 	}
 
+	numRoutesAttached := int32(0)
 	var conditions []metav1.Condition
 	for _, route := range routes {
 		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
@@ -1081,6 +1124,11 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		if len(ruleServiceNames) == 1 {
 			router.Service = ruleServiceNames[0]
 			conf.TCP.Routers[routerKey] = &router
+			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+				continue
+			}
+			numRoutesAttached++
 			continue
 		}
 
@@ -1098,9 +1146,17 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 		router.Service = routeServiceKey
 		conf.TCP.Routers[routerKey] = &router
+
+		if len(ruleServiceNames) > 0 {
+			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+				continue
+			}
+			numRoutesAttached++
+		}
 	}
 
-	return conditions
+	return numRoutesAttached, conditions
 }
 
 // Because of Kubernetes validation we admit that the given Hostnames are valid.
@@ -1822,4 +1878,110 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+func updateHTTPRouteStatus(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
+	status := route.Status.RouteStatus.DeepCopy()
+	spec := route.Spec.CommonRouteSpec.DeepCopy()
+	return client.UpdateHTTPRouteStatus(route, makeRouteStatus(ctx, *status, *spec, route.ObjectMeta, gateway, listener))
+}
+
+func updateTCPRouteStatus(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TCPRoute) error {
+	status := route.Status.RouteStatus.DeepCopy()
+	spec := route.Spec.CommonRouteSpec.DeepCopy()
+	return client.UpdateTCPRouteStatus(route, makeRouteStatus(ctx, *status, *spec, route.ObjectMeta, gateway, listener))
+}
+
+func updateTLSRouteStatus(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TLSRoute) error {
+	status := route.Status.RouteStatus.DeepCopy()
+	spec := route.Spec.CommonRouteSpec.DeepCopy()
+	return client.UpdateTLSRouteStatus(route, makeRouteStatus(ctx, *status, *spec, route.ObjectMeta, gateway, listener))
+}
+
+func makeRouteStatus(ctx context.Context, routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
+	var routeParentStatus *gatev1alpha2.RouteParentStatus
+
+	// Check if we need to update an existing parent reference
+	for i, parent := range routeStatus.Parents {
+		if parent.ControllerName != controllerName {
+			continue
+		}
+
+		parentRef := parent.ParentRef
+
+		if parentRef.Group == nil || *parentRef.Group != gatev1alpha2.GroupName {
+			continue
+		}
+		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
+			continue
+		}
+		if parentRef.SectionName != nil && *parentRef.SectionName != listener.Name {
+			continue
+		}
+
+		namespace := routeMeta.Namespace
+		if parentRef.Namespace != nil {
+			namespace = string(*parentRef.Namespace)
+		}
+
+		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
+			log.Ctx(ctx).Debug().Msgf("Found existing parent reference for route %s/%s", routeMeta.Namespace, routeMeta.Name)
+			routeParentStatus = &routeStatus.Parents[i]
+		}
+	}
+
+	// No existing parent reference was found - create a new one
+	if routeParentStatus == nil {
+		log.Ctx(ctx).Debug().Msgf("Adding parent reference for route %s/%s", routeMeta.Namespace, routeMeta.Name)
+
+		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
+		kind := gatev1alpha2.Kind(kindGateway)
+		namespace := gatev1alpha2.Namespace(gateway.Namespace)
+
+		// Only set the section name if the route requests it
+		var sectionName *gatev1alpha2.SectionName
+		for _, p := range routeSpec.ParentRefs {
+			if p.SectionName != nil && *p.SectionName == listener.Name {
+				sectionName = p.SectionName
+			}
+		}
+
+		routeStatus.Parents = append(routeStatus.Parents, gatev1alpha2.RouteParentStatus{
+			ParentRef: gatev1alpha2.ParentRef{
+				Group:       &group,
+				Kind:        &kind,
+				Namespace:   &namespace,
+				Name:        gatev1alpha2.ObjectName(gateway.Name),
+				SectionName: sectionName,
+			},
+			ControllerName: controllerName,
+		})
+
+		routeParentStatus = &routeStatus.Parents[len(routeStatus.Parents)-1]
+	}
+
+	// Don't write duplicate conditions
+	shouldUpdateConditions := true
+	if len(routeParentStatus.Conditions) > 0 {
+		lastCondition := routeParentStatus.Conditions[len(routeParentStatus.Conditions)-1]
+
+		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue {
+			shouldUpdateConditions = false
+		}
+	}
+
+	if shouldUpdateConditions {
+		log.Ctx(ctx).Debug().Msgf("Route %s/%s was attached to gateway", routeMeta.Namespace, routeMeta.Name)
+
+		routeParentStatus.Conditions = append(routeParentStatus.Conditions, metav1.Condition{
+			Type:               string(gatev1alpha2.ConditionRouteAccepted),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: routeMeta.Generation,
+			LastTransitionTime: metav1.NewTime(timeNow()),
+			Reason:             string(gatev1alpha2.ConditionRouteAccepted),
+			Message:            "The route was attached to the Gateway",
+		})
+	}
+
+	return routeStatus
 }
