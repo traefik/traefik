@@ -303,14 +303,11 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	// GatewayReasonListenersNotValid is used when one or more
 	// Listeners have an invalid or unsupported configuration
 	// and cannot be configured on the Gateway.
-	listenerStatuses, err := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
-	if err != nil {
-		return nil, err
-	}
+	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
 
 	gatewayStatus, errG := p.makeGatewayStatus(listenerStatuses)
 
-	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
+	err := client.UpdateGatewayStatus(gateway, gatewayStatus)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
 	}
@@ -326,7 +323,7 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	return conf, nil
 }
 
-func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) ([]gatev1alpha2.ListenerStatus, error) {
+func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []gatev1alpha2.ListenerStatus {
 	logger := log.Ctx(ctx)
 	listenerStatuses := make([]gatev1alpha2.ListenerStatus, len(gateway.Spec.Listeners))
 	allocatedListeners := make(map[string]struct{})
@@ -531,7 +528,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		listenerStatuses[i].AttachedRoutes = routesAttached
 	}
 
-	return listenerStatuses, nil
+	return listenerStatuses
 }
 
 func (p *Provider) makeGatewayStatus(listenerStatuses []gatev1alpha2.ListenerStatus) (gatev1alpha2.GatewayStatus, error) {
