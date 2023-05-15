@@ -79,12 +79,21 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		entryPointHandlers[entryPointName] = handler
 	}
 
+	// Create default handlers.
 	for _, entryPointName := range entryPoints {
+		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
+		ctx := logger.WithContext(rootCtx)
+
 		handler, ok := entryPointHandlers[entryPointName]
-		if !ok || handler == nil {
-			handler = BuildDefaultHTTPRouter()
+		if ok || handler != nil {
+			continue
 		}
 
+		handler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "").Then(BuildDefaultHTTPRouter())
+		if err != nil {
+			logger.Error().Err(err).Send()
+			continue
+		}
 		entryPointHandlers[entryPointName] = handler
 	}
 
@@ -92,14 +101,12 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
-	observabilityChain := m.observabilityMgr.BuildEPChain(ctx, entryPointName)
-
 	muxer, err := httpmuxer.NewMuxer()
 	if err != nil {
 		return nil, err
 	}
 
-	defaultHandler, err := observabilityChain.Then(http.NotFoundHandler())
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "defaultHandler").Then(http.NotFoundHandler())
 	if err != nil {
 		return nil, err
 	}
@@ -121,14 +128,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		// Prevents from enabling observability for internal resources.
-		if m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, routerConfig.Service)) {
-			handler, err = observabilityChain.Then(handler)
-			if err != nil {
-				routerConfig.AddError(err, true)
-				logger.Error().Err(err).Send()
-				continue
-			}
+		observabilityChain := m.observabilityMgr.BuildEPChain(ctx, entryPointName, routerConfig.Service)
+		handler, err = observabilityChain.Then(handler)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
+			continue
 		}
 
 		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
@@ -168,7 +173,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 	}
 
 	// Prevents from enabling observability for internal resources.
-	if !m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, routerConfig.Service)) {
+	if !m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, routerConfig.Service)) {
 		m.routerHandlers[routerName] = handler
 		return m.routerHandlers[routerName], nil
 	}
@@ -206,8 +211,13 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	chain := alice.New()
 
-	// Prevents from enabling observability for internal resources.
-	if !m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, router.Service)) {
+	if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsRouterEnabled() &&
+		m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, router.Service)) {
+		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, provider.GetQualifiedName(ctx, router.Service)))
+	}
+
+	// Prevents from enabling tracing for internal resources.
+	if !m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, router.Service)) {
 		return chain.Extend(*mHandler).Then(sHandler)
 	}
 

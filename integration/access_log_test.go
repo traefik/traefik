@@ -606,8 +606,10 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 	ensureWorkingDirectoryIsClean()
 
+	file := s.adaptFile("fixtures/access_log/access_log_ping.toml", struct{}{})
+
 	// Start Traefik.
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_ping.toml"))
+	s.traefikCmd(withConfigFile(file))
 
 	defer func() {
 		traefikLog, err := os.ReadFile(traefikTestLogFile)

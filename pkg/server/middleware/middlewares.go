@@ -387,11 +387,6 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	// Prevents from enabling observability for internal resources.
-	if strings.HasSuffix(provider.GetQualifiedName(ctx, middlewareName), "@internal") {
-		return middleware, nil
-	}
-
 	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
 	// Hence, regarding internal resources' observability deactivation,
 	// this would not enable tracing.

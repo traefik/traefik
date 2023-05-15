@@ -304,24 +304,27 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		// Prevents from enabling observability for internal resources.
 
-		if m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, serviceName)) {
+		if m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, serviceName)) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		}
 
-			if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() {
-				metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
+		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
+			m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, serviceName)) {
+			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
-				proxy, err = alice.New().
-					Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
-					Then(proxy)
-				if err != nil {
-					return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
-				}
+			proxy, err = alice.New().
+				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
+				Then(proxy)
+			if err != nil {
+				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
 			}
 		}
 
-		proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
+		if m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, serviceName)) {
+			proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
+		}
 
 		lb.Add(proxyName, proxy, server.Weight)
 

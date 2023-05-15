@@ -276,10 +276,8 @@
   debug = true
   disableDashboardAd = true
 
-[observability]
-  addInternals = true
-
 [metrics]
+  addInternals = true
   [metrics.prometheus]
     buckets = [42.0, 42.0]
     addEntryPointsLabels = true
@@ -354,6 +352,7 @@
   filePath = "foobar"
   format = "foobar"
   bufferingSize = 42
+  addInternals = true
   [accessLog.filters]
     statusCodes = ["foobar", "foobar"]
     retryAttempts = true
@@ -372,6 +371,7 @@
 [tracing]
   serviceName = "foobar"
   sampleRate = 42.0
+  addInternals = true
   [tracing.headers]
     name0 = "foobar"
     name1 = "foobar"
