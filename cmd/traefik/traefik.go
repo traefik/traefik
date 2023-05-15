@@ -193,10 +193,13 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
 
-	// Metrics
+	// Observability
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
+	accessLog := setupAccessLog(staticConfiguration.AccessLog)
+	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
+	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
 
@@ -238,12 +241,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			return nil, fmt.Errorf("plugin: failed to add provider: %w", err)
 		}
 	}
-
-	// Observability
-
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
-	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration.Observability, metricsRegistry, accessLog, tracer)
 
 	// Service manager factory
 
@@ -354,7 +351,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	})
 
-	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, observabilityMgr, accessLog, tracerCloser), nil
+	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, observabilityMgr), nil
 }
 
 func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvider http.Handler) http.Handler {

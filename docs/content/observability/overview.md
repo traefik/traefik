@@ -8,28 +8,6 @@ description: "Traefik provides Logs, Access Logs, Metrics and Tracing. Read the 
 Traefik's Observability system
 {: .subtitle }
 
-## Global configuration
-
-### `addInternals`
-
-_Optional, Default="false"_
-
-Enables observability for internal resources.
-
-```yaml tab="File (YAML)"
-observability:
-  addInternals: true
-```
-
-```toml tab="File (TOML)"
-[observability]
-  addInternals = true
-```
-
-```bash tab="CLI"
---observability.addinternals
-```
-
 ## Logs
 
 Traefik logs informs about everything that happens within Traefik (startup, configuration, events, shutdown, and so on).
@@ -59,6 +37,6 @@ Read the [Metrics documentation](./metrics/overview.md) to learn how to configur
 
 The Traefik tracing system allows developers to gain deep visibility into the flow of requests through their infrastructure.
 
-Traefik supports these tracing systems: OpenTelemetry, Jaeger, Zipkin, Datadog, Elastic, Haystack and Instana.
+Traefik supports these tracing with OpenTelemetry.
 
 Read the [Tracing documentation](./tracing/overview.md) to learn how to configure it.

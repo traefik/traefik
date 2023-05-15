@@ -307,6 +307,7 @@ api:
   debug: true
   disableDashboardAd: true
 metrics:
+  addInternals: true
   prometheus:
     buckets:
       - 42
@@ -398,6 +399,7 @@ accessLog:
         name0: foobar
         name1: foobar
   bufferingSize: 42
+  addInternals: true
 tracing:
   serviceName: foobar
   headers:
@@ -407,6 +409,7 @@ tracing:
     name0: foobar
     name1: foobar
   sampleRate: 42
+  addInternals: true
   otlp:
     grpc:
       endpoint: foobar
