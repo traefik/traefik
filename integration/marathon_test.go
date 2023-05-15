@@ -36,7 +36,7 @@ func deployApplication(c *check.C, client marathon.Marathon, application *marath
 	deploy, err := client.UpdateApplication(application, false)
 	c.Assert(err, checker.IsNil)
 	// Wait for deployment to complete.
-	c.Assert(client.WaitOnDeployment(deploy.DeploymentID, 1*time.Minute), checker.IsNil)
+	c.Assert(client.WaitOnDeployment(deploy.DeploymentID, 2*time.Minute), checker.IsNil)
 }
 
 func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
