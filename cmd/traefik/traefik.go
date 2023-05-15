@@ -33,7 +33,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server"
@@ -231,19 +230,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 
-	// Traefik Hub
-
-	if staticConfiguration.Hub != nil {
-		if err = providerAggregator.AddProvider(staticConfiguration.Hub); err != nil {
-			return nil, fmt.Errorf("adding Traefik Hub provider: %w", err)
-		}
-
-		// API is mandatory for Traefik Hub to access the dynamic configuration.
-		if staticConfiguration.API == nil {
-			staticConfiguration.API = &static.API{}
-		}
-	}
-
 	// Metrics
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
@@ -325,10 +311,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				continue
 			}
 
-			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok &&
-				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
-				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
-				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
+			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
 				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
 			}
 		}
@@ -351,11 +334,6 @@ func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvid
 func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string {
 	var defaultEntryPoints []string
 	for name, cfg := range staticConfiguration.EntryPoints {
-		// Traefik Hub entryPoint should not be part of the set of default entryPoints.
-		if hub.APIEntrypoint == name || hub.TunnelEntrypoint == name {
-			continue
-		}
-
 		protocol, err := cfg.GetProtocol()
 		if err != nil {
 			// Should never happen because Traefik should not start if protocol is invalid.
