@@ -248,7 +248,6 @@ func getFeatures(conf static.Configuration) features {
 		Tracing:   getTracing(conf),
 		Metrics:   getMetrics(conf),
 		AccessLog: conf.AccessLog != nil,
-		Hub:       conf.Hub != nil,
 	}
 }
 
