@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	th "github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -192,7 +193,8 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			dialerManager := tcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, dialerManager)
+			observabiltyMgr := middleware.NewObservabilityMgr(staticConfig, nil, nil, nil, nil)
+			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, observabiltyMgr, nil, dialerManager)
 
 			entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)}))
 

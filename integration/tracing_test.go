@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"github.com/traefik/traefik/v3/integration/try"
-	"gopkg.in/check.v1"
 )
 
 type TracingSuite struct {
@@ -415,7 +414,7 @@ func (s *TracingSuite) TestOpentelemetryAuth() {
 	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestNoInternals(c *check.C) {
+func (s *TracingSuite) TestNoInternals() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
