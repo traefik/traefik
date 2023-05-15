@@ -3,14 +3,12 @@ package server
 import (
 	"context"
 	"errors"
-	"io"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/metrics"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 )
@@ -22,29 +20,23 @@ type Server struct {
 	udpEntryPoints   UDPEntryPoints
 	observabilityMgr *middleware.ObservabilityMgr
 
-	accessLoggerMiddleware *accesslog.Handler
-
 	signals  chan os.Signal
 	stopChan chan bool
 
 	routinesPool *safe.Pool
-
-	tracerCloser io.Closer
 }
 
 // NewServer returns an initialized Server.
 func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher,
-	observabilityMgr *middleware.ObservabilityMgr, accessLoggerMiddleware *accesslog.Handler, tracerCloser io.Closer) *Server {
+	observabilityMgr *middleware.ObservabilityMgr) *Server {
 	srv := &Server{
-		watcher:                watcher,
-		tcpEntryPoints:         entryPoints,
-		observabilityMgr:       observabilityMgr,
-		accessLoggerMiddleware: accessLoggerMiddleware,
-		signals:                make(chan os.Signal, 1),
-		stopChan:               make(chan bool, 1),
-		routinesPool:           routinesPool,
-		udpEntryPoints:         entryPointsUDP,
-		tracerCloser:           tracerCloser,
+		watcher:          watcher,
+		tcpEntryPoints:   entryPoints,
+		observabilityMgr: observabilityMgr,
+		signals:          make(chan os.Signal, 1),
+		stopChan:         make(chan bool, 1),
+		routinesPool:     routinesPool,
+		udpEntryPoints:   entryPointsUDP,
 	}
 
 	srv.configureSignals()
@@ -107,12 +99,6 @@ func (s *Server) Close() {
 	close(s.stopChan)
 
 	s.observabilityMgr.Close()
-
-	if s.tracerCloser != nil {
-		if err := s.tracerCloser.Close(); err != nil {
-			log.Error().Err(err).Msg("Could not close the tracer")
-		}
-	}
 
 	cancel()
 }
