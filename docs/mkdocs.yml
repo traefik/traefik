@@ -139,7 +139,6 @@ nav:
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
         - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
-  - 'Traefik Hub': 'traefik-hub/index.md'
   - 'Plugins & Plugin Catalog': 'plugins/index.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'
