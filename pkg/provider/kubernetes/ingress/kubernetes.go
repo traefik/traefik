@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -46,7 +47,25 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
-	lastConfiguration         safe.Safe
+
+	lastConfiguration safe.Safe
+
+	routerTransform k8s.RouterTransform
+}
+
+func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
+	p.routerTransform = routerTransform
+}
+
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *netv1.Ingress) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, ingress.Annotations)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Error("Apply router transform")
+	}
 }
 
 // EndpointIngress holds the endpoint information for the Kubernetes provider.
@@ -262,6 +281,8 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.TLS = rtConfig.Router.TLS
 			}
 
+			p.applyRouterTransform(ctx, rt, ingress)
+
 			conf.HTTP.Routers["default-router"] = rt
 			conf.HTTP.Services["default-backend"] = service
 		}
@@ -304,8 +325,13 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
 				conf.HTTP.Services[serviceName] = service
 
+				rt := loadRouter(rule, pa, rtConfig, serviceName)
+
+				p.applyRouterTransform(ctx, rt, ingress)
+
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host+pa.Path), "-")
-				routers[routerKey] = append(routers[routerKey], loadRouter(rule, pa, rtConfig, serviceName))
+
+				routers[routerKey] = append(routers[routerKey], rt)
 			}
 		}
 
