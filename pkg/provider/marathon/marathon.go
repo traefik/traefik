@@ -167,7 +167,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					case <-ctxPool.Done():
 						return
 					case event := <-update:
-						logger.Debugf("Received provider event %s", event)
+						logger.Debugf("Received provider event %v", event)
 
 						conf := p.getConfigurations(ctx)
 						if conf != nil {
