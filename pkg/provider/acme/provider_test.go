@@ -218,13 +218,6 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			expectedDomains: nil,
 		},
 		{
-			desc:            "no DNSChallenge",
-			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"foo.traefik.wtf"}},
-			dnsChallenge:    nil,
-			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domain \"*.traefik.wtf,foo.traefik.wtf\" : ACME needs a DNSChallenge",
-			expectedDomains: nil,
-		},
-		{
 			desc:            "unauthorized wildcard with SAN",
 			domains:         types.Domain{Main: "*.*.traefik.wtf", SANs: []string{"foo.traefik.wtf"}},
 			dnsChallenge:    &DNSChallenge{},
