@@ -930,14 +930,8 @@ func (p *Provider) sanitizeDomains(ctx context.Context, domain types.Domain) ([]
 
 	var cleanDomains []string
 	for _, dom := range domains {
-		if strings.HasPrefix(dom, "*") {
-			if p.DNSChallenge == nil {
-				return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
-			}
-
-			if strings.HasPrefix(dom, "*.*") {
-				return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
-			}
+		if strings.HasPrefix(dom, "*.*") {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
 		}
 
 		canonicalDomain := types.CanonicalDomain(dom)
