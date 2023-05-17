@@ -16,14 +16,14 @@ import (
 // CertificateStore store for dynamic certificates.
 type CertificateStore struct {
 	DynamicCerts       *safe.Safe
-	DefaultCertificate *tls.Certificate
+	DefaultCertificate *CertificateData
 	CertCache          *cache.Cache
 }
 
 // NewCertificateStore create a store for dynamic certificates.
 func NewCertificateStore() *CertificateStore {
 	s := &safe.Safe{}
-	s.Set(make(map[string]*tls.Certificate))
+	s.Set(make(map[string]*CertificateData))
 
 	return &CertificateStore{
 		DynamicCerts: s,
@@ -38,7 +38,7 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 		return allCerts
 	}
 
-	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate[0])
+	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate.Certificate[0])
 	if err != nil {
 		log.Error().Err(err).Msg("Could not parse default certificate")
 		return allCerts
@@ -63,7 +63,7 @@ func (c CertificateStore) GetAllDomains() []string {
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domain := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domain := range c.DynamicCerts.Get().(map[string]*CertificateData) {
 			allDomains = append(allDomains, domain)
 		}
 	}
@@ -72,7 +72,7 @@ func (c CertificateStore) GetAllDomains() []string {
 }
 
 // GetBestCertificate returns the best match certificate, and caches the response.
-func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *CertificateData {
 	if c == nil {
 		return nil
 	}
@@ -87,12 +87,12 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	}
 
 	if cert, ok := c.CertCache.Get(serverName); ok {
-		return cert.(*tls.Certificate)
+		return cert.(*CertificateData)
 	}
 
-	matchedCerts := map[string]*tls.Certificate{}
+	matchedCerts := map[string]*CertificateData{}
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domains, cert := range c.DynamicCerts.Get().(map[string]*CertificateData) {
 			for _, certDomain := range strings.Split(domains, ",") {
 				if matchDomain(serverName, certDomain) {
 					matchedCerts[certDomain] = cert
@@ -118,7 +118,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 }
 
 // GetCertificate returns the first certificate matching all the given domains.
-func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
+func (c *CertificateStore) GetCertificate(domains []string) *CertificateData {
 	if c == nil {
 		return nil
 	}
@@ -127,11 +127,11 @@ func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 	domainsKey := strings.Join(domains, ",")
 
 	if cert, ok := c.CertCache.Get(domainsKey); ok {
-		return cert.(*tls.Certificate)
+		return cert.(*CertificateData)
 	}
 
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*CertificateData) {
 			if domainsKey == certDomains {
 				c.CertCache.SetDefault(domainsKey, cert)
 				return cert

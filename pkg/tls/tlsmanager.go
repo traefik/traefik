@@ -83,7 +83,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		m.storesConfig[tlsalpn01.ACMETLS1Protocol] = Store{}
 	}
 
-	storesCertificates := make(map[string]map[string]*tls.Certificate)
+	storesCertificates := make(map[string]map[string]*CertificateData)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
 			log.Ctx(ctx).Debug().MsgFunc(func() string {
@@ -100,8 +100,8 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 				m.storesConfig[store] = Store{}
 			}
 
-			err := conf.Certificate.AppendCertificate(storesCertificates, store)
-			if err != nil {
+			cert := CertificateData{config: &conf.Certificate}
+			if err := cert.AppendCertificate(storesCertificates, store); err != nil {
 				logger.Error().Err(err).Msgf("Unable to append certificate %s to store", conf.Certificate.GetTruncatedCertificateName())
 			}
 		}
@@ -196,12 +196,17 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 				return nil, nil
 			}
 
-			return certificate, nil
+			return certificate.Certificate, nil
 		}
 
 		bestCertificate := store.GetBestCertificate(clientHello)
 		if bestCertificate != nil {
-			return bestCertificate, nil
+			err := bestCertificate.StapleOCSP()
+			if err != nil {
+				log.Warn().Err(err).Msg("ocsp - error during staple")
+			}
+
+			return bestCertificate.Certificate, nil
 		}
 
 		if sniStrict {
@@ -218,7 +223,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		}
 
 		log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
-		return store.DefaultCertificate, nil
+		return store.DefaultCertificate.Certificate, nil
 	}
 
 	return tlsConfig, err
@@ -237,8 +242,8 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 
 	// We iterate over all the certificates.
 	if defaultStore.DynamicCerts != nil && defaultStore.DynamicCerts.Get() != nil {
-		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*tls.Certificate) {
-			x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*CertificateData) {
+			x509Cert, err := x509.ParseCertificate(cert.Certificate.Certificate[0])
 			if err != nil {
 				continue
 			}
@@ -248,7 +253,7 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 	}
 
 	if defaultStore.DefaultCertificate != nil {
-		x509Cert, err := x509.ParseCertificate(defaultStore.DefaultCertificate.Certificate[0])
+		x509Cert, err := x509.ParseCertificate(defaultStore.DefaultCertificate.Certificate.Certificate[0])
 		if err != nil {
 			return certificates
 		}
@@ -281,7 +286,7 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 	return m.getStore(storeName)
 }
 
-func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*tls.Certificate, error) {
+func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*CertificateData, error) {
 	if tlsStore.DefaultCertificate != nil {
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
@@ -296,22 +301,26 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 		return nil, err
 	}
 
+	defaultCertificate := &CertificateData{
+		Certificate: defaultCert,
+	}
+
 	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil && tlsStore.DefaultGeneratedCert.Resolver != "" {
 		domains, err := sanitizeDomains(*tlsStore.DefaultGeneratedCert.Domain)
 		if err != nil {
-			return defaultCert, fmt.Errorf("falling back to the internal generated certificate because invalid domains: %w", err)
+			return defaultCertificate, fmt.Errorf("falling back to the internal generated certificate because invalid domains: %w", err)
 		}
 
 		defaultACMECert := st.GetCertificate(domains)
 		if defaultACMECert == nil {
-			return defaultCert, fmt.Errorf("unable to find certificate for domains %q: falling back to the internal generated certificate", strings.Join(domains, ","))
+			return defaultCertificate, fmt.Errorf("unable to find certificate for domains %q: falling back to the internal generated certificate", strings.Join(domains, ","))
 		}
 
 		return defaultACMECert, nil
 	}
 
 	log.Ctx(ctx).Debug().Msg("No default certificate, fallback to the internal generated certificate")
-	return defaultCert, nil
+	return defaultCertificate, nil
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
@@ -403,7 +412,7 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	return conf, nil
 }
 
-func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate, error) {
+func buildDefaultCertificate(defaultCertificate *Certificate) (*CertificateData, error) {
 	certFile, err := defaultCertificate.CertFile.Read()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cert file content: %w", err)
@@ -418,7 +427,9 @@ func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate,
 	if err != nil {
 		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
 	}
-	return &cert, nil
+	return &CertificateData{
+		Certificate: &cert,
+	}, nil
 }
 
 func isACMETLS(clientHello *tls.ClientHelloInfo) bool {
