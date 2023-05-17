@@ -15,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/provider/docker"
 	"github.com/traefik/traefik/v3/pkg/provider/file"
-	"github.com/traefik/traefik/v3/pkg/provider/hub"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
@@ -235,6 +234,7 @@ func TestHandler_Overview(t *testing.T) {
 				API:    &static.API{},
 				Providers: &static.Providers{
 					Docker:            &docker.Provider{},
+					Swarm:             &docker.SwarmProvider{},
 					File:              &file.Provider{},
 					KubernetesIngress: &ingress.Provider{},
 					KubernetesCRD:     &crd.Provider{},
@@ -262,7 +262,6 @@ func TestHandler_Overview(t *testing.T) {
 				Tracing: &static.Tracing{
 					Jaeger: &jaeger.Config{},
 				},
-				Hub: &hub.Provider{},
 			},
 			confDyn: runtime.Configuration{},
 			expected: expected{

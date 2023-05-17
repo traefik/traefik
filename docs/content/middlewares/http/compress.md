@@ -15,7 +15,7 @@ The activation of compression, and the compression method choice rely (among oth
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Enable compression
 labels:
   - "traefik.http.middlewares.test-compress.compress=true"
@@ -82,7 +82,7 @@ Content types are compared in a case-insensitive, whitespace-ignored manner.
 
     Note that `application/grpc` is never compressed.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-compress.compress.excludedcontenttypes=text/event-stream"
 ```
@@ -125,7 +125,7 @@ _Optional, Default=1024_
 
 Responses smaller than the specified values will not be compressed.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
 ```

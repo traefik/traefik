@@ -1,4 +1,4 @@
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Dynamic Configuration
 labels:
   - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"

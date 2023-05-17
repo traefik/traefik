@@ -1,3 +1,12 @@
+## [v2.10.1](https://github.com/traefik/traefik/tree/v2.10.1) (2023-04-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.0...v2.10.1)
+
+**Bug fixes:**
+- **[middleware,oxy]** Update vulcand/oxy to be5cf38 ([#9874](https://github.com/traefik/traefik/pull/9874) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Fix v2.10 migration guide ([#9863](https://github.com/traefik/traefik/pull/9863) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.10.0](https://github.com/traefik/traefik/tree/v2.10.0) (2023-04-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.10.0)
 
