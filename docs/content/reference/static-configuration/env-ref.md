@@ -189,6 +189,9 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
+`TRAEFIK_EXPERIMENTAL_HTTP3`:  
+Enable HTTP3. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -221,21 +224,6 @@ resolv.conf used for DNS resolving (Default: ```/etc/resolv.conf```)
 
 `TRAEFIK_HOSTRESOLVER_RESOLVDEPTH`:  
 The maximal depth of DNS recursive resolving (Default: ```5```)
-
-`TRAEFIK_HUB`:  
-Traefik Hub configuration. (Default: ```false```)
-
-`TRAEFIK_HUB_TLS_CA`:  
-The certificate authority authenticates the Traefik Hub Agent certificate.
-
-`TRAEFIK_HUB_TLS_CERT`:  
-The TLS certificate for Traefik Proxy as a TLS client.
-
-`TRAEFIK_HUB_TLS_INSECURE`:  
-Enables an insecure TLS connection that uses default credentials, and which has no peer authentication between Traefik Proxy and the Traefik Hub Agent. (Default: ```false```)
-
-`TRAEFIK_HUB_TLS_KEY`:  
-The TLS key for Traefik Proxy as a TLS client.
 
 `TRAEFIK_LOG`:  
 Traefik log settings. (Default: ```false```)
