@@ -148,6 +148,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 			}
 
+			p.applyRouterTransform(ctx, r, ingressRoute)
+
 			conf.Routers[normalized] = r
 		}
 	}

@@ -158,6 +158,56 @@ By default, the following headers are automatically added when proxying requests
 For more details,
 please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.
 
+## How Traefik is Storing and Serving TLS Certificates?
+
+### Storing TLS Certificates
+
+[TLS](../https/tls.md "Link to Traefik TLS docs") certificates are either provided directly by the [dynamic configuration](./configuration-overview.md#the-dynamic-configuration "Link to dynamic configuration overview") from [providers](../https/tls.md#user-defined "Link to the TLS configuration"),
+or by [ACME resolvers](../https/acme.md#providers "Link to ACME resolvers"), which act themselves as providers internally.
+
+For each TLS certificate, Traefik produces an identifier used as a key to store it.
+This identifier is constructed as the alphabetically ordered concatenation of the SANs `DNSNames` and `IPAddresses` of the TLScertificate.
+
+#### Examples:
+
+| X509v3 Subject Alternative Name         | TLS Certificate Identifier  |
+|-----------------------------------------|-----------------------------|
+| `DNS:example.com, IP Address:127.0.0.1` | `127.0.0.1,example.com`     |
+| `DNS:example.com, DNS:*.example.com`    | `*.example.com,example.com` |
+
+The identifier is used to store TLS certificates in order to be later used to handle TLS connections.
+This operation happens each time there are configuration changes.
+
+If multiple TLS certificates are provided with the same SANs definition (same identifier), only the one processed first is kept.
+Because the dynamic configuration is aggregated from all providers,
+when processing it to gather TLS certificates,
+there is no guarantee of the order in which they would be processed.
+This means that along with configurations applied, it is possible that the TLS certificate retained for a given identifier differs.
+
+### Serving TLS Certificates
+
+For each incoming connection, Traefik is serving the "best" matching TLS certificate for the provided server name.
+
+The TLS certificate selection process narrows down the list of TLS certificates matching the server name,
+and then selects the last TLS certificate in this list after having ordered it by the identifier alphabetically.
+
+#### Examples:
+
+| Selected TLS Certificates Identifiers               | Sorted TLS Certificates Identifiers                 | Served Certificate Identifier |
+|-----------------------------------------------------|-----------------------------------------------------|-------------------------------|
+| `127.0.0.1,example.com`,`*.example.com,example.com` | `*.example.com,example.com`,`127.0.0.1,example.com` | `127.0.0.1,example.com`       |
+| `*.example.com,example.com`,`example.com`           | `*.example.com,example.com`,`example.com`           | `example.com`                 |
+
+### Caching TLS Certificates
+
+While Traefik is serving the best matching TLS certificate for each incoming connection,
+the selection process cost for each incoming connection is avoided thanks to a cache mechanism.
+
+Once a TLS certificate has been selected as the "best" TLS certificate for a server name,
+it is cached for an hour, avoiding the selection process for further connections.
+
+Nonetheless, when a new configuration is applied, the cache is reset.
+
 ## What does the "field not found" error mean?
 
 ```shell

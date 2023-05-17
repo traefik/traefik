@@ -34,7 +34,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
-	"github.com/traefik/traefik/v3/pkg/provider/hub"
 	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -235,19 +234,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 
-	// Traefik Hub
-
-	if staticConfiguration.Hub != nil {
-		if err = providerAggregator.AddProvider(staticConfiguration.Hub); err != nil {
-			return nil, fmt.Errorf("adding Traefik Hub provider: %w", err)
-		}
-
-		// API is mandatory for Traefik Hub to access the dynamic configuration.
-		if staticConfiguration.API == nil {
-			staticConfiguration.API = &static.API{}
-		}
-	}
-
 	// Service manager factory
 
 	var spiffeX509Source *workloadapi.X509Source
@@ -318,7 +304,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP))
 
 	// Metrics
-	if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
+	if metricsRegistry.IsEpEnabled() || metricsRegistry.IsRouterEnabled() || metricsRegistry.IsSvcEnabled() {
 		var eps []string
 		for key := range serverEntryPointsTCP {
 			eps = append(eps, key)
@@ -354,10 +340,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				continue
 			}
 
-			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok &&
-				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
-				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
-				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
+			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
 				log.Error().Err(err).Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
 					Msg("Router uses a non-existent certificate resolver")
 			}
@@ -394,11 +377,6 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 		// By default all entrypoints are considered.
 		// If at least one is flagged, then only flagged entrypoints are included.
 		if hasDefinedDefaults && !cfg.AsDefault {
-			continue
-		}
-
-		// Traefik Hub entryPoint should not be used as a default entryPoint.
-		if hub.APIEntrypoint == name || hub.TunnelEntrypoint == name {
 			continue
 		}
 
