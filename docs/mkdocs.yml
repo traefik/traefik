@@ -75,6 +75,7 @@ nav:
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
+      - 'Swarm': 'providers/swarm.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Kubernetes Gateway API': 'providers/kubernetes-gateway.md'
@@ -94,6 +95,7 @@ nav:
       - 'Services': 'routing/services/index.md'
       - 'Providers':
           - 'Docker': 'routing/providers/docker.md'
+          - 'Swarm': 'routing/providers/swarm.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
           - 'Kubernetes Gateway API': 'routing/providers/kubernetes-gateway.md'
@@ -138,7 +140,6 @@ nav:
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
         - 'IpAllowList': 'middlewares/tcp/ipallowlist.md'
-  - 'Traefik Hub': 'traefik-hub/index.md'
   - 'Plugins & Plugin Catalog': 'plugins/index.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'
@@ -196,6 +197,7 @@ nav:
       - 'Dynamic Configuration':
         - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
+        - 'Swarm': 'reference/dynamic-configuration/swarm.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
         - 'Kubernetes Gateway API': 'reference/dynamic-configuration/kubernetes-gateway.md'
         - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'

@@ -1,6 +1,10 @@
 
 <p align="center">
-<img src="docs/content/assets/img/traefik.logo.png" alt="Traefik" title="Traefik" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/content/assets/img/traefik.logo-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/content/assets/img/traefik.logo.png">
+      <img alt="Traefik" title="Traefik" src="docs/content/assets/img/traefik.logo.png">
+    </picture>
 </p>
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)

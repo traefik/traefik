@@ -18,7 +18,7 @@ PassTLSClientCert adds the selected data from the passed client TLS certificate 
 
 Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 labels:
   - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
@@ -57,7 +57,7 @@ http:
 
 ??? example "Pass the pem in the `X-Forwarded-Tls-Client-Cert` header"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     labels:
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
