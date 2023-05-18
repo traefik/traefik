@@ -22,4 +22,5 @@ export function getOverviewClear (state) {
 // ----------------------------
 export function getVersionSuccess (state, body) {
   state.version = body
+  state.version.disableDashboardAd = !!body.disableDashboardAd // Ensures state.version.disableDashboardAd is defined
 }
