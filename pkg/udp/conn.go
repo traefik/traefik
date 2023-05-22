@@ -1,6 +1,7 @@
 package udp
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net"
@@ -33,14 +34,24 @@ type Listener struct {
 }
 
 // Listen creates a new listener.
-func Listen(network string, laddr *net.UDPAddr, timeout time.Duration) (*Listener, error) {
+func Listen(listenConfig net.ListenConfig, network string, laddr *net.UDPAddr, timeout time.Duration) (*Listener, error) {
 	if timeout <= 0 {
 		return nil, errors.New("timeout should be greater than zero")
 	}
 
-	conn, err := net.ListenUDP(network, laddr)
-	if err != nil {
-		return nil, err
+	var conn *net.UDPConn
+	if listenConfig.Control == nil && listenConfig.KeepAlive == 0 {
+		var err error
+		conn, err = net.ListenUDP(network, laddr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		packetConn, err := listenConfig.ListenPacket(context.Background(), network, laddr.String())
+		if err != nil {
+			return nil, err
+		}
+		conn = packetConn.(*net.UDPConn)
 	}
 
 	l := &Listener{
