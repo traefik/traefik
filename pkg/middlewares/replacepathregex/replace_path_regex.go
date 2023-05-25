@@ -67,6 +67,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 			return
 		}
 
+		req.Header.Add(replacepath.ServicePathHeader, req.URL.Path)
 		req.RequestURI = req.URL.RequestURI()
 	}
 
