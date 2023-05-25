@@ -14,7 +14,9 @@ import (
 const (
 	// ReplacedPathHeader is the default header to set the old path to.
 	ReplacedPathHeader = "X-Replaced-Path"
-	typeName           = "ReplacePath"
+	// ServicePathHeader is the destination path set by service.
+	ServicePathHeader = "X-Service-Path"
+	typeName          = "ReplacePath"
 )
 
 // ReplacePath is a middleware used to replace the path of a URL request.
@@ -56,6 +58,7 @@ func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	req.Header.Add(ServicePathHeader, req.URL.Path)
 	req.RequestURI = req.URL.RequestURI()
 
 	r.next.ServeHTTP(rw, req)

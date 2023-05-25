@@ -14,13 +14,14 @@ import (
 
 func TestReplacePathRegex(t *testing.T) {
 	testCases := []struct {
-		desc            string
-		path            string
-		config          dynamic.ReplacePathRegex
-		expectedPath    string
-		expectedRawPath string
-		expectedHeader  string
-		expectsError    bool
+		desc                  string
+		path                  string
+		config                dynamic.ReplacePathRegex
+		expectedPath          string
+		expectedRawPath       string
+		expectedHeader        string
+		expectedServiceHeader string
+		expectsError          bool
 	}{
 		{
 			desc: "simple regex",
@@ -29,9 +30,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/who-am-i/$1",
 				Regex:       `^/whoami/(.*)`,
 			},
-			expectedPath:    "/who-am-i/and/whoami",
-			expectedRawPath: "/who-am-i/and/whoami",
-			expectedHeader:  "/whoami/and/whoami",
+			expectedPath:          "/who-am-i/and/whoami",
+			expectedRawPath:       "/who-am-i/and/whoami",
+			expectedHeader:        "/whoami/and/whoami",
+			expectedServiceHeader: "/who-am-i/and/whoami",
 		},
 		{
 			desc: "simple replace (no regex)",
@@ -40,9 +42,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/who-am-i",
 				Regex:       `/whoami`,
 			},
-			expectedPath:    "/who-am-i/and/who-am-i",
-			expectedRawPath: "/who-am-i/and/who-am-i",
-			expectedHeader:  "/whoami/and/whoami",
+			expectedPath:          "/who-am-i/and/who-am-i",
+			expectedRawPath:       "/who-am-i/and/who-am-i",
+			expectedHeader:        "/whoami/and/whoami",
+			expectedServiceHeader: "/who-am-i/and/who-am-i",
 		},
 		{
 			desc: "no match",
@@ -60,9 +63,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/downloads/$1-$2",
 				Regex:       `^(?i)/downloads/([^/]+)/([^/]+)$`,
 			},
-			expectedPath:    "/downloads/src-source.go",
-			expectedRawPath: "/downloads/src-source.go",
-			expectedHeader:  "/downloads/src/source.go",
+			expectedPath:          "/downloads/src-source.go",
+			expectedRawPath:       "/downloads/src-source.go",
+			expectedHeader:        "/downloads/src/source.go",
+			expectedServiceHeader: "/downloads/src-source.go",
 		},
 		{
 			desc: "invalid regular expression",
@@ -81,9 +85,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/foo%2Fbar",
 				Regex:       `/aaa/bbb`,
 			},
-			expectedPath:    "/foo/bar",
-			expectedRawPath: "/foo%2Fbar",
-			expectedHeader:  "/aaa/bbb",
+			expectedPath:          "/foo/bar",
+			expectedRawPath:       "/foo%2Fbar",
+			expectedHeader:        "/aaa/bbb",
+			expectedServiceHeader: "/foo/bar",
 		},
 		{
 			desc: "path and regex with escaped char",
@@ -92,9 +97,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/foo/bar",
 				Regex:       `/aaa%2Fbbb`,
 			},
-			expectedPath:    "/foo/bar",
-			expectedRawPath: "/foo/bar",
-			expectedHeader:  "/aaa%2Fbbb",
+			expectedPath:          "/foo/bar",
+			expectedRawPath:       "/foo/bar",
+			expectedHeader:        "/aaa%2Fbbb",
+			expectedServiceHeader: "/foo/bar",
 		},
 		{
 			desc: "path with escaped char (no match)",
@@ -120,11 +126,12 @@ func TestReplacePathRegex(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var actualPath, actualRawPath, actualHeader, requestURI string
+			var actualPath, actualRawPath, actualHeader, actualServiceHeader, requestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
 				actualRawPath = r.URL.RawPath
 				actualHeader = r.Header.Get(replacepath.ReplacedPathHeader)
+				actualServiceHeader = r.Header.Get(replacepath.ServicePathHeader)
 				requestURI = r.RequestURI
 			})
 
@@ -154,6 +161,10 @@ func TestReplacePathRegex(t *testing.T) {
 
 			if test.expectedHeader != "" {
 				assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", replacepath.ReplacedPathHeader)
+			}
+
+			if test.expectedServiceHeader != "" {
+				assert.Equal(t, test.expectedServiceHeader, actualServiceHeader, "Unexpected '%s' service header.", replacepath.ServicePathHeader)
 			}
 		})
 	}

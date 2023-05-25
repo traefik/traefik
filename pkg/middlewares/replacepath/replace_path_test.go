@@ -13,12 +13,13 @@ import (
 
 func TestReplacePath(t *testing.T) {
 	testCases := []struct {
-		desc            string
-		path            string
-		config          dynamic.ReplacePath
-		expectedPath    string
-		expectedRawPath string
-		expectedHeader  string
+		desc                  string
+		path                  string
+		config                dynamic.ReplacePath
+		expectedPath          string
+		expectedRawPath       string
+		expectedHeader        string
+		expectedServiceHeader string
 	}{
 		{
 			desc: "simple path",
@@ -26,9 +27,10 @@ func TestReplacePath(t *testing.T) {
 			config: dynamic.ReplacePath{
 				Path: "/replacement-path",
 			},
-			expectedPath:    "/replacement-path",
-			expectedRawPath: "",
-			expectedHeader:  "/example",
+			expectedPath:          "/replacement-path",
+			expectedRawPath:       "",
+			expectedHeader:        "/example",
+			expectedServiceHeader: "/replacement-path",
 		},
 		{
 			desc: "long path",
@@ -36,9 +38,10 @@ func TestReplacePath(t *testing.T) {
 			config: dynamic.ReplacePath{
 				Path: "/replacement-path",
 			},
-			expectedPath:    "/replacement-path",
-			expectedRawPath: "",
-			expectedHeader:  "/some/really/long/path",
+			expectedPath:          "/replacement-path",
+			expectedRawPath:       "",
+			expectedHeader:        "/some/really/long/path",
+			expectedServiceHeader: "/replacement-path",
 		},
 		{
 			desc: "path with escaped value",
@@ -46,9 +49,10 @@ func TestReplacePath(t *testing.T) {
 			config: dynamic.ReplacePath{
 				Path: "/replacement-path",
 			},
-			expectedPath:    "/replacement-path",
-			expectedRawPath: "",
-			expectedHeader:  "/foo%2Fbar",
+			expectedPath:          "/replacement-path",
+			expectedRawPath:       "",
+			expectedHeader:        "/foo%2Fbar",
+			expectedServiceHeader: "/replacement-path",
 		},
 		{
 			desc: "replacement with escaped value",
@@ -56,9 +60,10 @@ func TestReplacePath(t *testing.T) {
 			config: dynamic.ReplacePath{
 				Path: "/foo%2Fbar",
 			},
-			expectedPath:    "/foo/bar",
-			expectedRawPath: "/foo%2Fbar",
-			expectedHeader:  "/path",
+			expectedPath:          "/foo/bar",
+			expectedRawPath:       "/foo%2Fbar",
+			expectedHeader:        "/path",
+			expectedServiceHeader: "/foo/bar",
 		},
 		{
 			desc: "replacement with percent encoded backspace char",
@@ -66,19 +71,21 @@ func TestReplacePath(t *testing.T) {
 			config: dynamic.ReplacePath{
 				Path: "/path/%08bar",
 			},
-			expectedPath:    "/path/\bbar",
-			expectedRawPath: "/path/%08bar",
-			expectedHeader:  "/path/%08bar",
+			expectedPath:          "/path/\bbar",
+			expectedRawPath:       "/path/%08bar",
+			expectedHeader:        "/path/%08bar",
+			expectedServiceHeader: "/path/\bbar",
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var actualPath, actualRawPath, actualHeader, requestURI string
+			var actualPath, actualRawPath, actualHeader, actualServiceHeader, requestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
 				actualRawPath = r.URL.RawPath
 				actualHeader = r.Header.Get(ReplacedPathHeader)
+				actualServiceHeader = r.Header.Get(ServicePathHeader)
 				requestURI = r.RequestURI
 			})
 
@@ -94,6 +101,7 @@ func TestReplacePath(t *testing.T) {
 
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ReplacedPathHeader)
+			assert.Equal(t, test.expectedServiceHeader, actualServiceHeader, "Unexpected '%s' service header.", ServicePathHeader)
 
 			if actualRawPath == "" {
 				assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
