@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-version"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
-	traefikversion "github.com/traefik/traefik/v2/pkg/version"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	traefikversion "github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
@@ -46,15 +46,16 @@ type Client interface {
 }
 
 type clientWrapper struct {
-	clientset            kclientset.Interface
-	factoriesKube        map[string]kinformers.SharedInformerFactory
-	factoriesSecret      map[string]kinformers.SharedInformerFactory
-	factoriesIngress     map[string]kinformers.SharedInformerFactory
-	clusterFactory       kinformers.SharedInformerFactory
-	ingressLabelSelector string
-	isNamespaceAll       bool
-	watchedNamespaces    []string
-	serverVersion        *version.Version
+	clientset                   kclientset.Interface
+	factoriesKube               map[string]kinformers.SharedInformerFactory
+	factoriesSecret             map[string]kinformers.SharedInformerFactory
+	factoriesIngress            map[string]kinformers.SharedInformerFactory
+	clusterFactory              kinformers.SharedInformerFactory
+	ingressLabelSelector        string
+	isNamespaceAll              bool
+	disableIngressClassInformer bool
+	watchedNamespaces           []string
+	serverVersion               *version.Version
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -225,7 +226,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	if supportsIngressClass(serverVersion) {
+	if !c.disableIngressClassInformer && supportsIngressClass(serverVersion) {
 		c.clusterFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
@@ -263,7 +264,7 @@ func (c *clientWrapper) GetIngresses() []*netv1.Ingress {
 			// networking
 			listNew, err := factory.Networking().V1().Ingresses().Lister().List(labels.Everything())
 			if err != nil {
-				log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+				log.Error().Err(err).Msgf("Failed to list ingresses in namespace %s", ns)
 				continue
 			}
 
@@ -274,14 +275,14 @@ func (c *clientWrapper) GetIngresses() []*netv1.Ingress {
 		// networking beta
 		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
-			log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list ingresses in namespace %s", ns)
 			continue
 		}
 
 		for _, ing := range list {
 			n, err := convert[netv1.Ingress](ing)
 			if err != nil {
-				log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
+				log.Error().Err(err).Msgf("Failed to convert ingress %s from networking/v1beta1 to networking/v1", ns)
 				continue
 			}
 
@@ -353,10 +354,10 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []netv
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
 	}
 
-	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
+	logger := log.With().Str("namespace", ing.Namespace).Str("ingress", ing.Name).Logger()
 
 	if isLoadBalancerIngressEquals(ing.Status.LoadBalancer.Ingress, ingStatus) {
-		logger.Debug("Skipping ingress status update")
+		logger.Debug().Msg("Skipping ingress status update")
 		return nil
 	}
 
@@ -371,7 +372,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []netv
 		return fmt.Errorf("failed to update ingress status %s/%s: %w", src.Namespace, src.Name, err)
 	}
 
-	logger.Info("Updated ingress status")
+	logger.Info().Msg("Updated ingress status")
 	return nil
 }
 
@@ -381,7 +382,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []n
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
 	}
 
-	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
+	logger := log.With().Str("namespace", ing.Namespace).Str("ingress", ing.Name).Logger()
 
 	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](ing.Status.LoadBalancer.Ingress)
 	if err != nil {
@@ -389,7 +390,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []n
 	}
 
 	if isLoadBalancerIngressEquals(ingresses, ingStatus) {
-		logger.Debug("Skipping ingress status update")
+		logger.Debug().Msg("Skipping ingress status update")
 		return nil
 	}
 
@@ -408,7 +409,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []n
 	if err != nil {
 		return fmt.Errorf("failed to update ingress status %s/%s: %w", src.Namespace, src.Name, err)
 	}
-	logger.Info("Updated ingress status")
+	logger.Info().Msg("Updated ingress status")
 	return nil
 }
 
@@ -481,7 +482,7 @@ func (c *clientWrapper) GetIngressClasses() ([]*netv1.IngressClass, error) {
 			if ic.Spec.Controller == traefikDefaultIngressClassController {
 				icN, err := convert[netv1.IngressClass](ic)
 				if err != nil {
-					log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1: %v", ic.Name, err)
+					log.Error().Err(err).Msgf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1", ic.Name)
 					continue
 				}
 				ics = append(ics, icN)

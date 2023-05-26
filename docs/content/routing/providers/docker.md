@@ -83,54 +83,6 @@ Attach labels to your containers and let Traefik do the rest!
           - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
-
-    Enabling the docker provider (Swarm Mode)
-
-    ```yaml tab="File (YAML)"
-    providers:
-      docker:
-        # swarm classic (1.12-)
-        # endpoint: "tcp://127.0.0.1:2375"
-        # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2377"
-        swarmMode: true
-    ```
-
-    ```toml tab="File (TOML)"
-    [providers.docker]
-      # swarm classic (1.12-)
-      # endpoint = "tcp://127.0.0.1:2375"
-      # docker swarm mode (1.12+)
-      endpoint = "tcp://127.0.0.1:2377"
-      swarmMode = true
-    ```
-
-    ```bash tab="CLI"
-    # swarm classic (1.12-)
-    # --providers.docker.endpoint=tcp://127.0.0.1:2375
-    # docker swarm mode (1.12+)
-    --providers.docker.endpoint=tcp://127.0.0.1:2377
-    --providers.docker.swarmMode=true
-    ```
-
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        deploy:
-          labels:
-            - traefik.http.routers.my-container.rule=Host(`example.com`)
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
-    ```
-
-    !!! important "Labels in Docker Swarm Mode"
-        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
-        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
-        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
-
 ## Routing Configuration
 
 !!! info "Labels"
@@ -275,9 +227,6 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection_1)).
-    {: #port }
-
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.port=8080"
     ```
@@ -345,6 +294,14 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.method=foobar"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.status=42"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
@@ -569,12 +526,12 @@ You can declare TCP Routers and/or Services using labels.
     - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=423"
     ```
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.tls`"
 
-    See [termination delay](../services/index.md#termination-delay) for more information.
+    Determines whether to use TLS when dialing with the backend.
 
     ```yaml
-    - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
+    - "traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true"
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
@@ -583,6 +540,15 @@ You can declare TCP Routers and/or Services using labels.
 
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1"
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport_2) for more information.
+
+    ```yaml
+    - "traefik.tcp.services.<service_name>.loadbalancer.serverstransport=foobar@file"
     ```
 
 ### UDP
@@ -658,14 +624,3 @@ otherwise it will randomly pick one (depending on how docker is returning them).
 
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
-
-#### `traefik.docker.lbswarm`
-
-```yaml
-- "traefik.docker.lbswarm=true"
-```
-
-Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).
-
-If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
-Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.

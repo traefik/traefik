@@ -21,7 +21,7 @@ spec:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a Traefik Service.
           TraefikService object allows to: - Apply weight to Services on load-balancing
-          - Mirror traffic on services More info: https://doc.traefik.io/traefik/v2.10/routing/providers/kubernetes-crd/#kind-traefikservice'
+          - Mirror traffic on services More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-traefikservice'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -127,7 +127,7 @@ spec:
                           type: string
                         sticky:
                           description: 'Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v2.10/routing/services/#sticky-sessions'
+                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions'
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -218,7 +218,7 @@ spec:
                     type: string
                   sticky:
                     description: 'Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v2.10/routing/services/#sticky-sessions'
+                      More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions'
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -325,7 +325,7 @@ spec:
                           type: string
                         sticky:
                           description: 'Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v2.10/routing/services/#sticky-sessions'
+                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions'
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -364,7 +364,7 @@ spec:
                     type: array
                   sticky:
                     description: 'Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v2.10/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
+                      More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.

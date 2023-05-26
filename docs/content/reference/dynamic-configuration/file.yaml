@@ -58,11 +58,13 @@ http:
           - url: foobar
         healthCheck:
           scheme: foobar
+          mode: foobar
           path: foobar
           method: foobar
+          status: 42
           port: 42
-          interval: foobar
-          timeout: foobar
+          interval: 42s
+          timeout: 42s
           hostname: foobar
           followRedirects: true
           headers:
@@ -70,7 +72,7 @@ http:
             name1: foobar
         passHostHeader: true
         responseForwarding:
-          flushInterval: foobar
+          flushInterval: 42s
         serversTransport: foobar
     Service02:
       mirroring:
@@ -139,8 +141,7 @@ http:
           - foobar
         minResponseBodyBytes: 42
     Middleware06:
-      contentType:
-        autoDetect: true
+      contentType: {}
     Middleware07:
       digestAuth:
         users:
@@ -162,7 +163,6 @@ http:
         address: foobar
         tls:
           ca: foobar
-          caOptional: true
           cert: foobar
           key: foobar
           insecureSkipVerify: true
@@ -206,13 +206,9 @@ http:
         hostsProxyHeaders:
           - foobar
           - foobar
-        sslRedirect: true
-        sslTemporaryRedirect: true
-        sslHost: foobar
         sslProxyHeaders:
           name0: foobar
           name1: foobar
-        sslForceHost: true
         stsSeconds: 42
         stsIncludeSubdomains: true
         stsPreload: true
@@ -225,11 +221,10 @@ http:
         contentSecurityPolicy: foobar
         publicKey: foobar
         referrerPolicy: foobar
-        featurePolicy: foobar
         permissionsPolicy: foobar
         isDevelopment: true
     Middleware11:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - foobar
           - foobar
@@ -317,10 +312,14 @@ http:
         prefixes:
           - foobar
           - foobar
-        forceSlash: true
     Middleware22:
       stripPrefixRegex:
         regex:
+          - foobar
+          - foobar
+    Middleware23:
+      grpcWeb:
+        allowOrigins:
           - foobar
           - foobar
   serversTransports:
@@ -344,6 +343,12 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -364,6 +369,12 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+
 tcp:
   routers:
     TCPRouter0:
@@ -415,12 +426,14 @@ tcp:
   services:
     TCPService01:
       loadBalancer:
-        terminationDelay: 42
+        serversTransport: foobar
         proxyProtocol:
           version: 42
         servers:
           - address: foobar
+            tls: true
           - address: foobar
+            tls: true
     TCPService02:
       weighted:
         services:
@@ -430,13 +443,56 @@ tcp:
             weight: 42
   middlewares:
     TCPMiddleware00:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - foobar
           - foobar
     TCPMiddleware01:
       inFlightConn:
         amount: 42
+  serversTransports:
+    TCPServersTransport0:
+      dialTimeout: 42s
+      dialKeepAlive: 42s
+      terminationDelay: 42s
+      tls:
+        serverName: foobar
+        insecureSkipVerify: true
+        rootCAs:
+          - foobar
+          - foobar
+        certificates:
+          - certFile: foobar
+            keyFile: foobar
+          - certFile: foobar
+            keyFile: foobar
+        peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+    TCPServersTransport1:
+      dialTimeout: 42s
+      dialKeepAlive: 42s
+      terminationDelay: 42s
+      tls:
+        serverName: foobar
+        insecureSkipVerify: true
+        rootCAs:
+          - foobar
+          - foobar
+        certificates:
+          - certFile: foobar
+            keyFile: foobar
+          - certFile: foobar
+            keyFile: foobar
+        peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
 udp:
   routers:
     UDPRouter0:
@@ -490,7 +546,6 @@ tls:
           - foobar
         clientAuthType: foobar
       sniStrict: true
-      preferServerCipherSuites: true
       alpnProtocols:
         - foobar
         - foobar
@@ -509,7 +564,6 @@ tls:
           - foobar
         clientAuthType: foobar
       sniStrict: true
-      preferServerCipherSuites: true
       alpnProtocols:
         - foobar
         - foobar

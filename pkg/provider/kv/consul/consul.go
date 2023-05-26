@@ -7,10 +7,9 @@ import (
 	"time"
 
 	"github.com/kvtools/consul"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kv"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kv"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // providerName is the Consul provider name.
@@ -25,8 +24,6 @@ type ProviderBuilder struct {
 	Token string           `description:"Per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	TLS   *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 
-	// Deprecated: use Namespaces instead.
-	Namespace  string   `description:"Sets the namespace used to discover the configuration (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Namespaces []string `description:"Sets the namespaces used to discover the configuration (Consul Enterprise only)." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
@@ -38,20 +35,12 @@ func (p *ProviderBuilder) SetDefaults() {
 
 // BuildProviders builds Consul provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-	// We can warn about that, because we've already made sure before that
-	// Namespace and Namespaces are mutually exclusive.
-	if p.Namespace != "" {
-		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
-	}
-
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Provider: p.Provider,
 			name:     providerName,
-			// p.Namespace could very well be empty.
-			namespace: p.Namespace,
-			token:     p.Token,
-			tls:       p.TLS,
+			token:    p.Token,
+			tls:      p.TLS,
 		}}
 	}
 

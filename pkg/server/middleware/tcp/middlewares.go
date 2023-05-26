@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	inflightconn "github.com/traefik/traefik/v2/pkg/middlewares/tcp/inflightconn"
-	ipwhitelist "github.com/traefik/traefik/v2/pkg/middlewares/tcp/ipwhitelist"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 type middlewareStackType int
@@ -94,10 +94,10 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// IPWhiteList
-	if config.IPWhiteList != nil {
+	// IPAllowList
+	if config.IPAllowList != nil {
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
-			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+			return ipallowlist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}
 	}
 

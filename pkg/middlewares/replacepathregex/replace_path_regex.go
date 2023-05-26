@@ -9,11 +9,10 @@ import (
 	"strings"
 
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/replacepath"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/replacepath"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 const typeName = "ReplacePathRegex"
@@ -28,7 +27,7 @@ type replacePathRegex struct {
 
 // New creates a new replace path regex middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	exp, err := regexp.Compile(strings.TrimSpace(config.Regex))
 	if err != nil {
@@ -63,7 +62,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		var err error
 		req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 		if err != nil {
-			log.FromContext(middlewares.GetLoggerCtx(context.Background(), rp.name, typeName)).Error(err)
+			middlewares.GetLogger(context.Background(), rp.name, typeName).Error().Err(err).Send()
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -18,7 +18,7 @@ The Retry middleware has an optional configuration to enable an exponential back
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Retry 4 times with exponential backoff
 labels:
   - "traefik.http.middlewares.test-retry.retry.attempts=4"
@@ -41,20 +41,6 @@ spec:
 # Retry 4 times with exponential backoff
 - "traefik.http.middlewares.test-retry.retry.attempts=4"
 - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-retry.retry.attempts": "4",
-  "traefik.http.middlewares.test-retry.retry.initialinterval": "100ms",
-}
-```
-
-```yaml tab="Rancher"
-# Retry 4 times with exponential backoff
-labels:
-  - "traefik.http.middlewares.test-retry.retry.attempts=4"
-  - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
 ```
 
 ```yaml tab="File (YAML)"

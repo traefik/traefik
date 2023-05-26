@@ -211,20 +211,12 @@ spec:
         - bar.example.org
 ```
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 ## Dynamic configuration
 labels:
   - "traefik.tls.stores.default.defaultgeneratedcert.resolver=myresolver"
   - "traefik.tls.stores.default.defaultgeneratedcert.domain.main=example.org"
   - "traefik.tls.stores.default.defaultgeneratedcert.domain.sans=foo.example.org, bar.example.org"
-```
-
-```json tab="Marathon"
-labels: {
-  "traefik.tls.stores.default.defaultgeneratedcert.resolver": "myresolver",
-  "traefik.tls.stores.default.defaultgeneratedcert.domain.main": "example.org",
-  "traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foo.example.org, bar.example.org",
-}
 ```
 
 ## TLS Options

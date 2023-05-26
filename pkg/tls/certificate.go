@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -63,7 +63,7 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	for _, certificate := range c {
 		cert, err := certificate.GetCertificate()
 		if err != nil {
-			log.WithoutContext().Debugf("Error while getting certificate: %v", err)
+			log.Debug().Err(err).Msg("Error while getting certificate")
 			continue
 		}
 
@@ -153,30 +153,41 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 		}
 	}
 	if certExists {
-		log.Debugf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
+		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
 	} else {
-		log.Debugf("Adding certificate for domain(s) %s", certKey)
+		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
 		certs[storeName][certKey] = &tlsCert
 	}
 
 	return err
 }
 
-// GetCertificate retrieves Certificate as tls.Certificate.
+// GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
 func (c *Certificate) GetCertificate() (tls.Certificate, error) {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read CertFile : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to read CertFile: %w", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile: %w", err)
 	}
 
 	cert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to generate TLS certificate : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
+	}
+
+	return cert, nil
+}
+
+// GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
+// It assumes that the configured CertFile and KeyFile are of byte type.
+func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
+	cert, err := tls.X509KeyPair([]byte(c.CertFile), []byte(c.KeyFile))
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
 
 	return cert, nil

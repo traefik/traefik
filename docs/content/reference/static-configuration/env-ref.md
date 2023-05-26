@@ -99,11 +99,17 @@ Storage to use. (Default: ```acme.json```)
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_TLSCHALLENGE`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_TAILSCALE`:  
+Enables Tailscale certificate resolution. (Default: ```true```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_ASDEFAULT`:  
+Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
@@ -222,6 +228,9 @@ The maximal depth of DNS recursive resolving (Default: ```5```)
 `TRAEFIK_LOG`:  
 Traefik log settings. (Default: ```false```)
 
+`TRAEFIK_LOG_COMPRESS`:  
+Determines if the rotated log files should be compressed using gzip. (Default: ```false```)
+
 `TRAEFIK_LOG_FILEPATH`:  
 Traefik log file path. Stdout is used when omitted or empty.
 
@@ -230,6 +239,18 @@ Traefik log format: json | common (Default: ```common```)
 
 `TRAEFIK_LOG_LEVEL`:  
 Log level set to traefik logs. (Default: ```ERROR```)
+
+`TRAEFIK_LOG_MAXAGE`:  
+Maximum number of days to retain old log files based on the timestamp encoded in their filename. (Default: ```0```)
+
+`TRAEFIK_LOG_MAXBACKUPS`:  
+Maximum number of old log files to retain. (Default: ```0```)
+
+`TRAEFIK_LOG_MAXSIZE`:  
+Maximum size in megabytes of the log file before it gets rotated. (Default: ```0```)
+
+`TRAEFIK_LOG_NOCOLOR`:  
+When using the 'common' format, disables the colorized output. (Default: ```false```)
 
 `TRAEFIK_METRICS_DATADOG`:  
 Datadog metrics exporter type. (Default: ```false```)
@@ -251,9 +272,6 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
 Datadog push interval. (Default: ```10```)
-
-`TRAEFIK_METRICS_INFLUXDB`:  
-InfluxDB metrics exporter type. (Default: ```false```)
 
 `TRAEFIK_METRICS_INFLUXDB2`:  
 InfluxDB v2 metrics exporter type. (Default: ```false```)
@@ -285,38 +303,50 @@ InfluxDB v2 push interval. (Default: ```10```)
 `TRAEFIK_METRICS_INFLUXDB2_TOKEN`:  
 InfluxDB v2 access token.
 
-`TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
+`TRAEFIK_METRICS_OPENTELEMETRY`:  
+OpenTelemetry metrics exporter type. (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`TRAEFIK_METRICS_INFLUXDB_ADDITIONALLABELS_<NAME>`:  
-Additional labels (influxdb tags) on all metrics
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
+Address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
-`TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
-InfluxDB address. (Default: ```localhost:8089```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDROUTERSLABELS`:  
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
 
-`TRAEFIK_METRICS_INFLUXDB_ADDSERVICESLABELS`:  
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
-`TRAEFIK_METRICS_INFLUXDB_DATABASE`:  
-InfluxDB database used when protocol is http.
+`TRAEFIK_METRICS_OPENTELEMETRY_EXPLICITBOUNDARIES`:  
+Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
-`TRAEFIK_METRICS_INFLUXDB_PASSWORD`:  
-InfluxDB password (only with http).
+`TRAEFIK_METRICS_OPENTELEMETRY_GRPC`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
-`TRAEFIK_METRICS_INFLUXDB_PROTOCOL`:  
-InfluxDB address protocol (udp or http). (Default: ```udp```)
+`TRAEFIK_METRICS_OPENTELEMETRY_HEADERS_<NAME>`:  
+Headers sent with payload.
 
-`TRAEFIK_METRICS_INFLUXDB_PUSHINTERVAL`:  
-InfluxDB push interval. (Default: ```10```)
+`TRAEFIK_METRICS_OPENTELEMETRY_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
 
-`TRAEFIK_METRICS_INFLUXDB_RETENTIONPOLICY`:  
-InfluxDB retention policy used when protocol is http.
+`TRAEFIK_METRICS_OPENTELEMETRY_PATH`:  
+Set the URL path of the collector endpoint.
 
-`TRAEFIK_METRICS_INFLUXDB_USERNAME`:  
-InfluxDB username (only with http).
+`TRAEFIK_METRICS_OPENTELEMETRY_PUSHINTERVAL`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_KEY`:  
+TLS key
 
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -417,9 +447,6 @@ The URI scheme for the Consul server
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CERT`:  
 TLS cert
 
@@ -434,9 +461,6 @@ Token is used to provide a per-request ACL token which overrides the agent's def
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_EXPOSEDBYDEFAULT`:  
 Expose containers by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACE`:  
-Sets the namespace used to discover services (Consul Enterprise only).
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACES`:  
 Sets the namespaces used to discover services (Consul Enterprise only).
@@ -462,9 +486,6 @@ Watch Consul API events. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSUL_ENDPOINTS`:  
 KV store endpoints. (Default: ```127.0.0.1:8500```)
 
-`TRAEFIK_PROVIDERS_CONSUL_NAMESPACE`:  
-Sets the namespace used to discover the configuration (Consul Enterprise only).
-
 `TRAEFIK_PROVIDERS_CONSUL_NAMESPACES`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
@@ -473,9 +494,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSUL_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_CONSUL_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_CONSUL_TLS_CERT`:  
 TLS cert
@@ -502,7 +520,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_DOCKER_ENDPOINT`:  
-Docker server endpoint. Can be a tcp or a unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
+Docker server endpoint. Can be a TCP or a Unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
 
 `TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT`:  
 Expose containers by default. (Default: ```true```)
@@ -513,17 +531,8 @@ Client timeout for HTTP connections. (Default: ```0```)
 `TRAEFIK_PROVIDERS_DOCKER_NETWORK`:  
 Default Docker network used.
 
-`TRAEFIK_PROVIDERS_DOCKER_SWARMMODE`:  
-Use Docker on Swarm Mode. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_DOCKER_SWARMMODEREFRESHSECONDS`:  
-Polling interval for swarm mode. (Default: ```15```)
-
 `TRAEFIK_PROVIDERS_DOCKER_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_DOCKER_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_DOCKER_TLS_CERT`:  
 TLS cert
@@ -544,13 +553,13 @@ Watch Docker events. (Default: ```true```)
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_ACCESSKEYID`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key ID to use for making requests.
 
 `TRAEFIK_PROVIDERS_ECS_AUTODISCOVERCLUSTERS`:  
-Auto discover cluster (Default: ```false```)
+Auto discover cluster. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_CLUSTERS`:  
-ECS Clusters name (Default: ```default```)
+ECS Cluster names. (Default: ```default```)
 
 `TRAEFIK_PROVIDERS_ECS_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -559,19 +568,22 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_ECS_ECSANYWHERE`:  
-Enable ECS Anywhere support (Default: ```false```)
+Enable ECS Anywhere support. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_EXPOSEDBYDEFAULT`:  
-Expose services by default (Default: ```true```)
+Expose services by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_ECS_HEALTHYTASKSONLY`:  
+Determines whether to discover only healthy tasks. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_REFRESHSECONDS`:  
-Polling interval (in seconds) (Default: ```15```)
+Polling interval (in seconds). (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_ECS_REGION`:  
-The AWS region to use for requests
+AWS region to use for requests.
 
 `TRAEFIK_PROVIDERS_ECS_SECRETACCESSKEY`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key to use for making requests.
 
 `TRAEFIK_PROVIDERS_ETCD`:  
 Enable Etcd backend with default settings. (Default: ```false```)
@@ -587,9 +599,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_ETCD_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_ETCD_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD_TLS_CERT`:  
 TLS cert
@@ -621,6 +630,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_HTTP_ENDPOINT`:  
 Load configuration from this endpoint.
 
+`TRAEFIK_PROVIDERS_HTTP_HEADERS_<NAME>`:  
+Define custom headers to be sent to the endpoint.
+
 `TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
 Polling interval for endpoint. (Default: ```5```)
 
@@ -629,9 +641,6 @@ Polling timeout for endpoint. (Default: ```5```)
 
 `TRAEFIK_PROVIDERS_HTTP_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_HTTP_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_HTTP_TLS_CERT`:  
 TLS cert
@@ -708,6 +717,9 @@ Allow ExternalName services. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_DISABLEINGRESSCLASSLOOKUP`:  
+Disables the lookup of IngressClasses. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -735,69 +747,6 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
-`TRAEFIK_PROVIDERS_MARATHON`:  
-Enable Marathon backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_BASIC_HTTPBASICAUTHUSER`:  
-Basic authentication User.
-
-`TRAEFIK_PROVIDERS_MARATHON_BASIC_HTTPBASICPASSWORD`:  
-Basic authentication Password.
-
-`TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS`:  
-Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
-
-`TRAEFIK_PROVIDERS_MARATHON_DCOSTOKEN`:  
-DCOSToken for DCOS environment, This will override the Authorization header.
-
-`TRAEFIK_PROVIDERS_MARATHON_DEFAULTRULE`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`TRAEFIK_PROVIDERS_MARATHON_DIALERTIMEOUT`:  
-Set a dialer timeout for Marathon. (Default: ```5```)
-
-`TRAEFIK_PROVIDERS_MARATHON_ENDPOINT`:  
-Marathon server endpoint. You can also specify multiple endpoint for Marathon. (Default: ```http://127.0.0.1:8080```)
-
-`TRAEFIK_PROVIDERS_MARATHON_EXPOSEDBYDEFAULT`:  
-Expose Marathon apps by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_MARATHON_FORCETASKHOSTNAME`:  
-Force to use the task's hostname. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_KEEPALIVE`:  
-Set a TCP Keep Alive time. (Default: ```10```)
-
-`TRAEFIK_PROVIDERS_MARATHON_RESPECTREADINESSCHECKS`:  
-Filter out tasks with non-successful readiness checks during deployments. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_RESPONSEHEADERTIMEOUT`:  
-Set a response header timeout for Marathon. (Default: ```60```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLSHANDSHAKETIMEOUT`:  
-Set a TLS handshake timeout for Marathon. (Default: ```5```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CA`:  
-TLS CA
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CERT`:  
-TLS cert
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_INSECURESKIPVERIFY`:  
-TLS insecure skip verify (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_KEY`:  
-TLS key
-
-`TRAEFIK_PROVIDERS_MARATHON_TRACE`:  
-Display additional provider logs. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
-Watch provider. (Default: ```true```)
-
 `TRAEFIK_PROVIDERS_NOMAD`:  
 Enable Nomad backend with default settings. (Default: ```false```)
 
@@ -819,9 +768,6 @@ Nomad region to use. If not provided, the local agent region is used.
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CERT`:  
 TLS cert
 
@@ -836,9 +782,6 @@ Token is used to provide a per-request ACL token.
 
 `TRAEFIK_PROVIDERS_NOMAD_EXPOSEDBYDEFAULT`:  
 Expose Nomad services by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_NOMAD_NAMESPACE`:  
-Sets the Nomad namespace used to discover services.
 
 `TRAEFIK_PROVIDERS_NOMAD_NAMESPACES`:  
 Sets the Nomad namespaces used to discover services.
@@ -858,33 +801,6 @@ Plugins configuration.
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
 
-`TRAEFIK_PROVIDERS_RANCHER`:  
-Enable Rancher backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS`:  
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-
-`TRAEFIK_PROVIDERS_RANCHER_DEFAULTRULE`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`TRAEFIK_PROVIDERS_RANCHER_ENABLESERVICEHEALTHFILTER`:  
-Filter services with unhealthy states and inactive states. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_RANCHER_EXPOSEDBYDEFAULT`:  
-Expose containers by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_RANCHER_INTERVALPOLL`:  
-Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate). (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_PREFIX`:  
-Prefix used for accessing the Rancher metadata service. (Default: ```latest```)
-
-`TRAEFIK_PROVIDERS_RANCHER_REFRESHSECONDS`:  
-Defines the polling interval in seconds. (Default: ```15```)
-
-`TRAEFIK_PROVIDERS_RANCHER_WATCH`:  
-Watch provider. (Default: ```true```)
-
 `TRAEFIK_PROVIDERS_REDIS`:  
 Enable Redis backend with default settings. (Default: ```false```)
 
@@ -903,9 +819,6 @@ Root key used for KV store. (Default: ```traefik```)
 `TRAEFIK_PROVIDERS_REDIS_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_REDIS_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_REDIS_TLS_CERT`:  
 TLS cert
 
@@ -923,6 +836,51 @@ Enable Rest backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_REST_INSECURE`:  
 Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM`:  
+Enable Docker Swarm backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_ALLOWEMPTYSERVICES`:  
+Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_SWARM_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_SWARM_ENDPOINT`:  
+Docker server endpoint. Can be a TCP or a Unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
+
+`TRAEFIK_PROVIDERS_SWARM_EXPOSEDBYDEFAULT`:  
+Expose containers by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_SWARM_HTTPCLIENTTIMEOUT`:  
+Client timeout for HTTP connections. (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_SWARM_NETWORK`:  
+Default Docker network used.
+
+`TRAEFIK_PROVIDERS_SWARM_REFRESHSECONDS`:  
+Polling interval for swarm mode. (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_SWARM_USEBINDPORTIP`:  
+Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_WATCH`:  
+Watch Docker events. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER`:  
 Enable ZooKeeper backend with default settings. (Default: ```false```)
@@ -957,6 +915,45 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 `TRAEFIK_SERVERSTRANSPORT_ROOTCAS`:  
 Add cert file for self-signed certificate.
 
+`TRAEFIK_SERVERSTRANSPORT_SPIFFE`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`TRAEFIK_SERVERSTRANSPORT_SPIFFE_IDS`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`TRAEFIK_SERVERSTRANSPORT_SPIFFE_TRUSTDOMAIN`:  
+Defines the allowed SPIFFE trust domain.
+
+`TRAEFIK_SPIFFE_WORKLOADAPIADDR`:  
+Defines the workload API address.
+
+`TRAEFIK_TCPSERVERSTRANSPORT_DIALKEEPALIVE`:  
+Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_DIALTIMEOUT`:  
+Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TERMINATIONDELAY`:  
+Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS`:  
+Defines the TLS configuration. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_INSECURESKIPVERIFY`:  
+Disables SSL certificate verification. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_ROOTCAS`:  
+Defines a list of CA secret used to validate self-signed certificate
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE`:  
+Defines the SPIFFE TLS configuration. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_IDS`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_TRUSTDOMAIN`:  
+Defines the allowed SPIFFE trust domain.
+
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
@@ -968,9 +965,6 @@ Sets the header name prefix used to store baggage items in a map.
 
 `TRAEFIK_TRACING_DATADOG_DEBUG`:  
 Enables Datadog debug. (Default: ```false```)
-
-`TRAEFIK_TRACING_DATADOG_GLOBALTAG`:  
-Sets a key:value tag on all spans.
 
 `TRAEFIK_TRACING_DATADOG_GLOBALTAGS_<NAME>`:  
 Sets a list of key:value tags on all spans.
@@ -1079,6 +1073,36 @@ Sets the sampling type. (Default: ```const```)
 
 `TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
 Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
+Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
+Defines additional headers to be sent with the payloads.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
+Sets the URL path of the collector endpoint.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_KEY`:  
+TLS key
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)

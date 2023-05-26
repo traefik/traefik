@@ -8,12 +8,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 const defaultInternalEntryPointName = "traefik"
@@ -37,7 +38,7 @@ func (i Provider) ThrottleDuration() time.Duration {
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "internal"))
+	ctx := log.With().Str(logs.ProviderName, "internal").Logger().WithContext(context.Background())
 
 	configurationChan <- dynamic.Message{
 		ProviderName:  "internal",
@@ -62,8 +63,9 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  make(map[string]*dynamic.TCPRouter),
-			Services: make(map[string]*dynamic.TCPService),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
@@ -78,6 +80,7 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 	i.entryPointModels(cfg)
 	i.redirection(ctx, cfg)
 	i.serverTransport(cfg)
+	i.serverTransportTCP(cfg)
 
 	i.acme(cfg)
 
@@ -118,17 +121,17 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 			continue
 		}
 
-		logger := log.FromContext(log.With(ctx, log.Str(log.EntryPointName, name)))
+		logger := log.Ctx(ctx).With().Str(logs.EntryPointName, name).Logger()
 
 		def := ep.HTTP.Redirections
 		if def.EntryPoint == nil || def.EntryPoint.To == "" {
-			logger.Error("Unable to create redirection: the entry point or the port is missing")
+			logger.Error().Msg("Unable to create redirection: the entry point or the port is missing")
 			continue
 		}
 
 		port, err := i.getRedirectPort(name, def)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -136,7 +139,7 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 		mdName := "redirect-" + rtName
 
 		rt := &dynamic.Router{
-			Rule:        "HostRegexp(`{host:.+}`)",
+			Rule:        "HostRegexp(`^.+$`)",
 			EntryPoints: []string{name},
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
@@ -322,6 +325,13 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 		MaxIdleConnsPerHost: i.staticCfg.ServersTransport.MaxIdleConnsPerHost,
 	}
 
+	if i.staticCfg.ServersTransport.Spiffe != nil {
+		st.Spiffe = &dynamic.Spiffe{
+			IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
+			TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+		}
+	}
+
 	if i.staticCfg.ServersTransport.ForwardingTimeouts != nil {
 		st.ForwardingTimeouts = &dynamic.ForwardingTimeouts{
 			DialTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.DialTimeout,
@@ -331,4 +341,31 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.ServersTransports["default"] = st
+}
+
+func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
+	if i.staticCfg.TCPServersTransport == nil {
+		return
+	}
+
+	st := &dynamic.TCPServersTransport{
+		DialTimeout:   i.staticCfg.TCPServersTransport.DialTimeout,
+		DialKeepAlive: i.staticCfg.TCPServersTransport.DialKeepAlive,
+	}
+
+	if i.staticCfg.TCPServersTransport.TLS != nil {
+		st.TLS = &dynamic.TLSClientConfig{
+			InsecureSkipVerify: i.staticCfg.TCPServersTransport.TLS.InsecureSkipVerify,
+			RootCAs:            i.staticCfg.TCPServersTransport.TLS.RootCAs,
+		}
+
+		if i.staticCfg.TCPServersTransport.TLS.Spiffe != nil {
+			st.TLS.Spiffe = &dynamic.Spiffe{
+				IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
+				TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+			}
+		}
+	}
+
+	cfg.TCP.ServersTransports["default"] = st
 }

@@ -112,12 +112,15 @@
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
             <main-table
-              :data="allRouters"
               v-bind="getTableProps({ type: `${protocol}-routers` })"
+              :data="allRouters"
+              :onLoadMore="onGetAll"
               :request="()=>{}"
               :loading="routersLoading"
               :pagination.sync="routersPagination"
               :filter="routersFilter"
+              :currentSort.sync="sortBy"
+              :currentSortDir.sync="sortDir"
             />
           </div>
         </div>
@@ -167,7 +170,11 @@ export default {
         page: 1,
         rowsPerPage: 1000,
         rowsNumber: 0
-      }
+      },
+      filter: '',
+      status: '',
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
@@ -185,12 +192,15 @@ export default {
     },
     getRouterByName () {
       return this[`${this.protocol}_getRouterByName`]
+    },
+    getAllRouters () {
+      return this[`${this.protocol}_getAllRouters`]
     }
   },
   methods: {
-    ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName' }),
-    ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName' }),
-    ...mapActions('udp', { udp_getServiceByName: 'getServiceByName', udp_getRouterByName: 'getRouterByName' }),
+    ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName', http_getAllRouters: 'getAllRouters' }),
+    ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName', tcp_getAllRouters: 'getAllRouters' }),
+    ...mapActions('udp', { udp_getServiceByName: 'getServiceByName', udp_getRouterByName: 'getRouterByName', udp_getAllRouters: 'getAllRouters' }),
     refreshAll () {
       if (this.serviceByName.loading) {
         return
@@ -205,22 +215,26 @@ export default {
             return
           }
           // Get routers
-          if (body.usedBy) {
-            for (const router in body.usedBy) {
-              if (body.usedBy.hasOwnProperty(router)) {
-                this.getRouterByName(body.usedBy[router])
-                  .then(body => {
-                    if (body) {
-                      this.routersLoading = false
-                      this.allRouters.push(body)
-                    }
-                  })
-                  .catch(error => {
-                    console.log('Error -> routers/byName', error)
-                  })
+          this.getAllRouters({
+            query: this.filter,
+            status: this.status,
+            page: 1,
+            limit: 1000,
+            middlewareName: '',
+            serviceName: this.name,
+            sortBy: this.sortBy,
+            direction: this.sortDir
+          })
+            .then(body => {
+              this.allRouters = []
+              if (body) {
+                this.routersLoading = false
+                this.allRouters.push(...body.data)
               }
-            }
-          }
+            })
+            .catch(error => {
+              console.log('Error -> getAllRouters', error)
+            })
           clearTimeout(this.timeOutGetAll)
           this.timeOutGetAll = setTimeout(() => {
             this.loading = false
@@ -231,12 +245,18 @@ export default {
         })
     }
   },
+  watch: {
+    'sortBy' () {
+      this.refreshAll()
+    },
+    'sortDir' () {
+      this.refreshAll()
+    }
+  },
   created () {
     this.refreshAll()
   },
-  mounted () {
-
-  },
+  mounted () {},
   beforeDestroy () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getServiceByNameClear')

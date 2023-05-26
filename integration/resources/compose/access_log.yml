@@ -75,14 +75,14 @@ services:
       traefik.http.middlewares.rate.ratelimit.burst: 2
       traefik.http.services.service3.loadbalancer.server.port: 80
 
-  frontendWhitelist:
+  frontendAllowlist:
     image: traefik/whoami
     labels:
       traefik.enable: true
-      traefik.http.routers.rt-frontendWhitelist.entryPoints: web
-      traefik.http.routers.rt-frontendWhitelist.rule: Host(`frontend.whitelist.docker.local`)
-      traefik.http.routers.rt-frontendWhitelist.middlewares: wl
-      traefik.http.middlewares.wl.ipwhitelist.sourcerange: 8.8.8.8/32
+      traefik.http.routers.rt-frontendAllowlist.entryPoints: web
+      traefik.http.routers.rt-frontendAllowlist.rule: Host(`frontend.allowlist.docker.local`)
+      traefik.http.routers.rt-frontendAllowlist.middlewares: wl
+      traefik.http.middlewares.wl.ipallowlist.sourcerange: 8.8.8.8/32
       traefik.http.services.service3.loadbalancer.server.port: 80
 
 networks:

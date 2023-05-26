@@ -15,9 +15,9 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -57,7 +57,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 
 	for _, filename := range generatedFiles {
 		if err := os.Remove(filename); err != nil {
-			log.WithoutContext().Warning(err)
+			log.Warn().Err(err).Send()
 		}
 	}
 }
@@ -126,6 +126,17 @@ func (s *K8sSuite) TestIngressclass(c *check.C) {
 	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-ingressclass.json", "8080")
+}
+
+func (s *K8sSuite) TestDisableIngressclassLookup(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	testConfiguration(c, "testdata/rawdata-ingressclass-disabled.json", "8080")
 }
 
 func testConfiguration(c *check.C, path, apiPort string) {
@@ -204,7 +215,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 		// The pods IPs are dynamic, so we cannot predict them,
 		// which is why we have to ignore them in the comparison.
 		rxURL := regexp.MustCompile(`"(url|address)":\s+(".*")`)
-		sanitizedExpected := rxURL.ReplaceAll(expected, []byte(`"$1": "XXXX"`))
+		sanitizedExpected := rxURL.ReplaceAll(bytes.TrimSpace(expected), []byte(`"$1": "XXXX"`))
 		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"$1": "XXXX"`))
 
 		rxServerStatus := regexp.MustCompile(`"http://.*?":\s+(".*")`)

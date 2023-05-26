@@ -16,6 +16,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/zip"
 	"gopkg.in/yaml.v3"
@@ -32,8 +35,7 @@ const (
 const pluginsURL = "https://plugins.traefik.io/public/"
 
 const (
-	hashHeader  = "X-Plugin-Hash"
-	tokenHeader = "X-Token"
+	hashHeader = "X-Plugin-Hash"
 )
 
 // ClientOptions the options of a Traefik plugins client.
@@ -46,7 +48,6 @@ type Client struct {
 	HTTPClient *http.Client
 	baseURL    *url.URL
 
-	token     string
 	archives  string
 	stateFile string
 	goPath    string
@@ -77,8 +78,13 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to create archives directory %s: %w", archivesPath, err)
 	}
 
+	client := retryablehttp.NewClient()
+	client.Logger = logs.NewRetryableHTTPLogger(log.Logger)
+	client.HTTPClient = &http.Client{Timeout: 10 * time.Second}
+	client.RetryMax = 3
+
 	return &Client{
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		HTTPClient: client.StandardClient(),
 		baseURL:    baseURL,
 
 		archives:  archivesPath,
@@ -150,10 +156,6 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 		req.Header.Set(hashHeader, hash)
 	}
 
-	if c.token != "" {
-		req.Header.Set(tokenHeader, c.token)
-	}
-
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to call service: %w", err)
@@ -212,10 +214,6 @@ func (c *Client) Check(ctx context.Context, pName, pVersion, hash string) error 
 
 	if hash != "" {
 		req.Header.Set(hashHeader, hash)
-	}
-
-	if c.token != "" {
-		req.Header.Set(tokenHeader, c.token)
 	}
 
 	resp, err := c.HTTPClient.Do(req)

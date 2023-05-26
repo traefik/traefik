@@ -10,7 +10,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type cnameResolv struct {
@@ -46,12 +46,12 @@ func (hr *Resolver) CNAMEFlatten(ctx context.Context, host string) string {
 		return value.(string)
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 	cacheDuration := 0 * time.Second
 	for depth := 0; depth < hr.ResolvDepth; depth++ {
 		resolv, err := cnameResolve(ctx, request, hr.ResolvConfig)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			break
 		}
 		if resolv == nil {
@@ -66,7 +66,7 @@ func (hr *Resolver) CNAMEFlatten(ctx context.Context, host string) string {
 	}
 
 	if err := hr.cache.Add(host, result, cacheDuration); err != nil {
-		logger.Error(err)
+		logger.Error().Err(err).Send()
 	}
 
 	return result
@@ -88,7 +88,7 @@ func cnameResolve(ctx context.Context, host, resolvPath string) (*cnameResolv, e
 	for _, server := range config.Servers {
 		tempRecord, err := getRecord(client, m, server, config.Port)
 		if err != nil {
-			log.FromContext(ctx).Errorf("Failed to resolve host %s: %v", host, err)
+			log.Ctx(ctx).Error().Err(err).Msgf("Failed to resolve host %s", host)
 			continue
 		}
 		result = append(result, tempRecord)

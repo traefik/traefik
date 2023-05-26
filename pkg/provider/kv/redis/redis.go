@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/kvtools/redis"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kv"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kv"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)

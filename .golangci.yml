@@ -85,17 +85,17 @@ linters-settings:
 
       # Traefik Kubernetes rewrites:
       - alias: containousv1alpha1
-        pkg: "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
       - alias: traefikv1alpha1
-        pkg: "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
       - alias: traefikclientset
-        pkg: "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
       - alias: traefikinformers
-        pkg: "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
       - alias: traefikscheme
-        pkg: "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
       - alias: traefikcrdfake
-        pkg: "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
   tagalign:
     align: false
     sort: true
@@ -207,15 +207,6 @@ issues:
   exclude:
     - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
     - "should have a package comment, unless it's in another file for this package"
-    - 'SA1019: http.CloseNotifier has been deprecated' # FIXME must be fixed
-    - 'SA1019: cfg.SSLRedirect is deprecated'
-    - 'SA1019: cfg.SSLTemporaryRedirect is deprecated'
-    - 'SA1019: cfg.SSLHost is deprecated'
-    - 'SA1019: cfg.SSLForceHost is deprecated'
-    - 'SA1019: cfg.FeaturePolicy is deprecated'
-    - 'SA1019: c.Providers.ConsulCatalog.Namespace is deprecated'
-    - 'SA1019: c.Providers.Consul.Namespace is deprecated'
-    - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:
@@ -236,7 +227,7 @@ issues:
       text: "Function 'buildConstructor' has too many statements"
       linters:
         - funlen
-    - path: pkg/tracing/haystack/logger.go
+    - path: pkg/logs/haystack.go
       linters:
         - goprintffuncname
     - path: pkg/tracing/tracing.go
@@ -261,6 +252,10 @@ issues:
       text: 'Duplicate words \(sub\) found'
       linters:
         - dupword
+    - path: pkg/provider/kubernetes/crd/kubernetes.go
+      text: "Function 'loadConfigurationFromCRD' has too many statements"
+      linters:
+        - funlen
     - path: pkg/provider/kubernetes/gateway/client_mock_test.go
       text: 'unusedwrite: unused write to field'
       linters:

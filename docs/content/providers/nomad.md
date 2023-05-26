@@ -440,7 +440,7 @@ providers:
 
 For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
-### `namespace`
+### `namespaces`
 
 ??? warning "Deprecated in favor of the [`namespaces`](#namespaces) option."
 

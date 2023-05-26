@@ -38,6 +38,8 @@ type MiddlewareTCPExpansion interface{}
 
 type ServersTransportExpansion interface{}
 
+type ServersTransportTCPExpansion interface{}
+
 type TLSOptionExpansion interface{}
 
 type TLSStoreExpansion interface{}

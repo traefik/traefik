@@ -59,40 +59,6 @@ providers:
 --providers.consul.rootkey=traefik
 ```
 
-### `namespace`
-
-??? warning "Deprecated in favor of the [`namespaces`](#namespaces) option."
-
-    _Optional, Default=""_
-    
-    The `namespace` option defines the namespace to query.
-    
-    !!! warning
-    
-        The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
-        which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
-    
-    !!! warning
-    
-        One should only define either the `namespaces` option or the `namespace` option.
-    
-    ```yaml tab="File (YAML)"
-    providers:
-      consul:
-        # ...
-        namespace: "production"
-    ```
-    
-    ```toml tab="File (TOML)"
-    [providers.consul]
-      # ...
-      namespace = "production"
-    ```
-    
-    ```bash tab="CLI"
-    --providers.consul.namespace=production
-    ```
-
 ### `namespaces`
 
 _Optional, Default=""_

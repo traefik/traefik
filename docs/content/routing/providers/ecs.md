@@ -195,6 +195,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     traefik.http.services.myservice.loadbalancer.healthcheck.method=foobar
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.healthcheck.status=42
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
     
     See [health check](../services/index.md#health-check) for more information.
@@ -410,12 +418,12 @@ You can declare TCP Routers and/or Services using labels.
     traefik.tcp.services.mytcpservice.loadbalancer.server.port=423
     ```
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
-        
-    See [termination delay](../services/index.md#termination-delay) for more information.
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.tls`"
+    
+    Determines whether to use TLS when dialing with the backend.
     
     ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100
+    traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
@@ -424,6 +432,15 @@ You can declare TCP Routers and/or Services using labels.
     
     ```yaml
     traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport_2) for more information.
+    
+    ```yaml
+    traefik.tcp.services.<service_name>.loadbalancer.serverstransport=foobar@file
     ```
 
 ### UDP

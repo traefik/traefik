@@ -10,14 +10,15 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -47,27 +48,26 @@ type item struct {
 	ExtraConf configuration // global options
 }
 
+// configuration contains information from the service's tags that are globals
+// (not specific to the dynamic configuration).
+type configuration struct {
+	Enable bool // <prefix>.enable is the corresponding label.
+	Canary bool // <prefix>.nomad.canary is the corresponding label.
+}
+
 // ProviderBuilder is responsible for constructing namespaced instances of the Nomad provider.
 type ProviderBuilder struct {
 	Configuration `yaml:",inline" export:"true"`
 
-	// Deprecated: Use Namespaces option instead
-	Namespace  string   `description:"Sets the Nomad namespace used to discover services." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Namespaces []string `description:"Sets the Nomad namespaces used to discover services." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
 // BuildProviders builds Nomad provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-	if p.Namespace != "" {
-		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
-	}
-
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
 			name:          providerName,
-			// p.Namespace could be empty
-			namespace: p.Namespace,
 		}}
 	}
 
@@ -118,16 +118,6 @@ func (c *Configuration) SetDefaults() {
 	c.DefaultRule = defaultTemplateRule
 }
 
-// Provider holds configuration along with the namespace it will discover services in.
-type Provider struct {
-	Configuration
-
-	name           string
-	namespace      string
-	client         *api.Client        // client for Nomad API
-	defaultRuleTpl *template.Template // default routing rule
-}
-
 type EndpointConfig struct {
 	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://127.0.0.1:4646".
 	Address string `description:"The address of the Nomad server, including scheme and port." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -137,6 +127,16 @@ type EndpointConfig struct {
 	Token            string           `description:"Token is used to provide a per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	TLS              *types.ClientTLS `description:"Configure TLS." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	EndpointWaitTime ptypes.Duration  `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
+}
+
+// Provider holds configuration along with the namespace it will discover services in.
+type Provider struct {
+	Configuration
+
+	name           string
+	namespace      string
+	client         *api.Client        // client for Nomad API
+	defaultRuleTpl *template.Template // default routing rule
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider.
@@ -174,8 +174,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, p.name))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, p.name).Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			ctx, cancel := context.WithCancel(ctxLog)
@@ -206,7 +206,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		failure := func(err error, d time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, d)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", d)
 		}
 
 		if retryErr := backoff.RetryNotify(
@@ -214,7 +214,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog),
 			failure,
 		); retryErr != nil {
-			logger.Errorf("Cannot connect to Nomad server %+v", retryErr)
+			logger.Error().Err(retryErr).Msg("Cannot connect to Nomad server")
 		}
 	})
 
@@ -234,51 +234,6 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 	return nil
 }
 
-func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
-	config := api.Config{
-		Address:   endpoint.Address,
-		Namespace: namespace,
-		Region:    endpoint.Region,
-		SecretID:  endpoint.Token,
-		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
-	}
-
-	if endpoint.TLS != nil {
-		config.TLSConfig = &api.TLSConfig{
-			CACert:     endpoint.TLS.CA,
-			ClientCert: endpoint.TLS.Cert,
-			ClientKey:  endpoint.TLS.Key,
-			Insecure:   endpoint.TLS.InsecureSkipVerify,
-		}
-	}
-
-	return api.NewClient(&config)
-}
-
-// configuration contains information from the service's tags that are globals
-// (not specific to the dynamic configuration).
-type configuration struct {
-	Enable bool // <prefix>.enable is the corresponding label.
-	Canary bool // <prefix>.nomad.canary is the corresponding label.
-}
-
-// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
-func (p *Provider) getExtraConf(tags []string) configuration {
-	labels := tagsToLabels(tags, p.Prefix)
-
-	enabled := p.ExposedByDefault
-	if v, exists := labels["traefik.enable"]; exists {
-		enabled = strings.EqualFold(v, "true")
-	}
-
-	var canary bool
-	if v, exists := labels["traefik.nomad.canary"]; exists {
-		canary = strings.EqualFold(v, "true")
-	}
-
-	return configuration{Enable: enabled, Canary: canary}
-}
-
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 	// first, get list of service stubs
 	opts := &api.QueryOptions{AllowStale: p.Stale}
@@ -293,22 +248,22 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 
 	for _, stub := range stubs {
 		for _, service := range stub.Services {
-			logger := log.FromContext(log.With(ctx, log.Str("serviceName", service.ServiceName)))
+			logger := log.Ctx(ctx).With().Str("serviceName", service.ServiceName).Logger()
 
 			extraConf := p.getExtraConf(service.Tags)
 			if !extraConf.Enable {
-				logger.Debug("Filter Nomad service that is not enabled")
+				logger.Debug().Msg("Filter Nomad service that is not enabled")
 				continue
 			}
 
 			matches, err := constraints.MatchTags(service.Tags, p.Constraints)
 			if err != nil {
-				logger.Errorf("Error matching constraint expressions: %v", err)
+				logger.Error().Err(err).Msg("Error matching constraint expressions")
 				continue
 			}
 
 			if !matches {
-				logger.Debugf("Filter Nomad service not matching constraints: %q", p.Constraints)
+				logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
 				continue
 			}
 
@@ -336,6 +291,23 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 	return items, nil
 }
 
+// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
+func (p *Provider) getExtraConf(tags []string) configuration {
+	labels := tagsToLabels(tags, p.Prefix)
+
+	enabled := p.ExposedByDefault
+	if v, exists := labels["traefik.enable"]; exists {
+		enabled = strings.EqualFold(v, "true")
+	}
+
+	var canary bool
+	if v, exists := labels["traefik.nomad.canary"]; exists {
+		canary = strings.EqualFold(v, "true")
+	}
+
+	return configuration{Enable: enabled, Canary: canary}
+}
+
 // fetchService queries Nomad API for services matching name,
 // that also have the  <prefix>.enable=true set in its tags.
 func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.ServiceRegistration, error) {
@@ -355,4 +327,25 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Servic
 		return nil, fmt.Errorf("failed to fetch services: %w", err)
 	}
 	return services, nil
+}
+
+func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
+	config := api.Config{
+		Address:   endpoint.Address,
+		Namespace: namespace,
+		Region:    endpoint.Region,
+		SecretID:  endpoint.Token,
+		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
+	}
+
+	if endpoint.TLS != nil {
+		config.TLSConfig = &api.TLSConfig{
+			CACert:     endpoint.TLS.CA,
+			ClientCert: endpoint.TLS.Cert,
+			ClientKey:  endpoint.TLS.Key,
+			Insecure:   endpoint.TLS.InsecureSkipVerify,
+		}
+	}
+
+	return api.NewClient(&config)
 }

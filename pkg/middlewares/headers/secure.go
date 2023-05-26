@@ -3,7 +3,7 @@ package headers
 import (
 	"net/http"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/unrolled/secure"
 )
 
@@ -21,9 +21,6 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 		ForceSTSHeader:          cfg.ForceSTSHeader,
 		FrameDeny:               cfg.FrameDeny,
 		IsDevelopment:           cfg.IsDevelopment,
-		SSLRedirect:             cfg.SSLRedirect,
-		SSLForceHost:            cfg.SSLForceHost,
-		SSLTemporaryRedirect:    cfg.SSLTemporaryRedirect,
 		STSIncludeSubdomains:    cfg.STSIncludeSubdomains,
 		STSPreload:              cfg.STSPreload,
 		ContentSecurityPolicy:   cfg.ContentSecurityPolicy,
@@ -31,12 +28,10 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 		CustomFrameOptionsValue: cfg.CustomFrameOptionsValue,
 		PublicKey:               cfg.PublicKey,
 		ReferrerPolicy:          cfg.ReferrerPolicy,
-		SSLHost:                 cfg.SSLHost,
 		AllowedHosts:            cfg.AllowedHosts,
 		HostsProxyHeaders:       cfg.HostsProxyHeaders,
 		SSLProxyHeaders:         cfg.SSLProxyHeaders,
 		STSSeconds:              cfg.STSSeconds,
-		FeaturePolicy:           cfg.FeaturePolicy,
 		PermissionsPolicy:       cfg.PermissionsPolicy,
 		SecureContextKey:        contextKey,
 	}

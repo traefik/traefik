@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-check/check"
 	gorillawebsocket "github.com/gorilla/websocket"
-	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v3/integration/try"
 	checker "github.com/vdemeester/shakers"
 	"golang.org/x/net/websocket"
 )

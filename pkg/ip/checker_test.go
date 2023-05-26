@@ -11,25 +11,25 @@ import (
 func TestIsAuthorized(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		whiteList  []string
+		allowList  []string
 		remoteAddr string
 		authorized bool
 	}{
 		{
 			desc:       "remoteAddr not in range",
-			whiteList:  []string{"1.2.3.4/24"},
+			allowList:  []string{"1.2.3.4/24"},
 			remoteAddr: "10.2.3.1:123",
 			authorized: false,
 		},
 		{
 			desc:       "remoteAddr in range",
-			whiteList:  []string{"1.2.3.4/24"},
+			allowList:  []string{"1.2.3.4/24"},
 			remoteAddr: "1.2.3.1:123",
 			authorized: true,
 		},
 		{
 			desc:       "octal ip in remoteAddr",
-			whiteList:  []string{"127.2.3.4/24"},
+			allowList:  []string{"127.2.3.4/24"},
 			remoteAddr: "0127.2.3.1:123",
 			authorized: false,
 		},
@@ -40,7 +40,7 @@ func TestIsAuthorized(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ipChecker, err := NewChecker(test.whiteList)
+			ipChecker, err := NewChecker(test.allowList)
 			require.NoError(t, err)
 
 			err = ipChecker.IsAuthorized(test.remoteAddr)

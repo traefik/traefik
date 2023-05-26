@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 )
@@ -30,15 +30,16 @@ type clientMock struct {
 	apiSecretError    error
 	apiEndpointsError error
 
-	ingressRoutes    []*traefikv1alpha1.IngressRoute
-	ingressRouteTCPs []*traefikv1alpha1.IngressRouteTCP
-	ingressRouteUDPs []*traefikv1alpha1.IngressRouteUDP
-	middlewares      []*traefikv1alpha1.Middleware
-	middlewareTCPs   []*traefikv1alpha1.MiddlewareTCP
-	tlsOptions       []*traefikv1alpha1.TLSOption
-	tlsStores        []*traefikv1alpha1.TLSStore
-	traefikServices  []*traefikv1alpha1.TraefikService
-	serversTransport []*traefikv1alpha1.ServersTransport
+	ingressRoutes        []*traefikv1alpha1.IngressRoute
+	ingressRouteTCPs     []*traefikv1alpha1.IngressRouteTCP
+	ingressRouteUDPs     []*traefikv1alpha1.IngressRouteUDP
+	middlewares          []*traefikv1alpha1.Middleware
+	middlewareTCPs       []*traefikv1alpha1.MiddlewareTCP
+	tlsOptions           []*traefikv1alpha1.TLSOption
+	tlsStores            []*traefikv1alpha1.TLSStore
+	traefikServices      []*traefikv1alpha1.TraefikService
+	serversTransports    []*traefikv1alpha1.ServersTransport
+	serversTransportTCPs []*traefikv1alpha1.ServersTransportTCP
 
 	watchChan chan interface{}
 }
@@ -74,7 +75,9 @@ func newClientMock(paths ...string) clientMock {
 			case *traefikv1alpha1.TLSOption:
 				c.tlsOptions = append(c.tlsOptions, o)
 			case *traefikv1alpha1.ServersTransport:
-				c.serversTransport = append(c.serversTransport, o)
+				c.serversTransports = append(c.serversTransports, o)
+			case *traefikv1alpha1.ServersTransportTCP:
+				c.serversTransportTCPs = append(c.serversTransportTCPs, o)
 			case *traefikv1alpha1.TLSStore:
 				c.tlsStores = append(c.tlsStores, o)
 			case *corev1.Secret:
@@ -131,7 +134,11 @@ func (c clientMock) GetTLSStores() []*traefikv1alpha1.TLSStore {
 }
 
 func (c clientMock) GetServersTransports() []*traefikv1alpha1.ServersTransport {
-	return c.serversTransport
+	return c.serversTransports
+}
+
+func (c clientMock) GetServersTransportTCPs() []*traefikv1alpha1.ServersTransportTCP {
+	return c.serversTransportTCPs
 }
 
 func (c clientMock) GetTLSOption(namespace, name string) (*traefikv1alpha1.TLSOption, bool, error) {

@@ -1,5 +1,5 @@
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 ## Dynamic configuration
 labels:
   - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
@@ -33,23 +33,6 @@ spec:
       port: 8080
   tls:
     certResolver: myresolver
-```
-
-```json tab="Marathon"
-labels: {
-  "traefik.http.routers.blog.rule": "(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)",
-  "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "myresolver",
-  "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
-}
-```
-
-```yaml tab="Rancher"
-## Dynamic configuration
-labels:
-  - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
-  - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
 
 ```yaml tab="File (YAML)"

@@ -4,6 +4,7 @@
 
 [log]
   level = "DEBUG"
+  noColor = true
 
 [serversTransport]
   # Use certificate in net/internal/testcert.go

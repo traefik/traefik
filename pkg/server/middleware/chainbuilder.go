@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
-	metricsmiddleware "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
-	mTracing "github.com/traefik/traefik/v2/pkg/middlewares/tracing"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	metricsmiddleware "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	mTracing "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 // ChainBuilder Creates a middleware chain by entry point. It is used for middlewares that are created almost systematically and that need to be created before all others.
@@ -56,7 +56,7 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 func (c *ChainBuilder) Close() {
 	if c.accessLoggerMiddleware != nil {
 		if err := c.accessLoggerMiddleware.Close(); err != nil {
-			log.WithoutContext().Errorf("Could not close the access log file: %s", err)
+			log.Error().Err(err).Msg("Could not close the access log file")
 		}
 	}
 

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -278,7 +278,7 @@ func (c *clientWrapper) GetNamespaces(selector labels.Selector) ([]string, error
 	var namespaces []string
 	for _, namespace := range ns {
 		if !c.isWatchedNamespace(namespace.Name) {
-			log.WithoutContext().Warnf("Namespace %q is not within  watched namespaces", selector, namespace)
+			log.Warn().Msgf("Namespace %q is not within %q watched namespaces", selector, namespace)
 			continue
 		}
 		namespaces = append(namespaces, namespace.Name)
@@ -290,7 +290,7 @@ func (c *clientWrapper) GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTP
 	var httpRoutes []*gatev1alpha2.HTTPRoute
 	for _, namespace := range namespaces {
 		if !c.isWatchedNamespace(namespace) {
-			log.WithoutContext().Warnf("Failed to get HTTPRoutes: %q is not within watched namespaces", namespace)
+			log.Warn().Msgf("Failed to get HTTPRoutes: %q is not within watched namespaces", namespace)
 			continue
 		}
 
@@ -300,7 +300,7 @@ func (c *clientWrapper) GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTP
 		}
 
 		if len(routes) == 0 {
-			log.WithoutContext().Debugf("No HTTPRoutes found in namespace %q", namespace)
+			log.Debug().Msgf("No HTTPRoutes found in namespace %q", namespace)
 			continue
 		}
 
@@ -314,7 +314,7 @@ func (c *clientWrapper) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRo
 	var tcpRoutes []*gatev1alpha2.TCPRoute
 	for _, namespace := range namespaces {
 		if !c.isWatchedNamespace(namespace) {
-			log.WithoutContext().Warnf("Failed to get TCPRoutes: %q is not within watched namespaces", namespace)
+			log.Warn().Msgf("Failed to get TCPRoutes: %q is not within watched namespaces", namespace)
 			continue
 		}
 
@@ -324,7 +324,7 @@ func (c *clientWrapper) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRo
 		}
 
 		if len(routes) == 0 {
-			log.WithoutContext().Debugf("No TCPRoutes found in namespace %q", namespace)
+			log.Debug().Msgf("No TCPRoutes found in namespace %q", namespace)
 			continue
 		}
 
@@ -337,7 +337,7 @@ func (c *clientWrapper) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRo
 	var tlsRoutes []*gatev1alpha2.TLSRoute
 	for _, namespace := range namespaces {
 		if !c.isWatchedNamespace(namespace) {
-			log.WithoutContext().Warnf("Failed to get TLSRoutes: %q is not within watched namespaces", namespace)
+			log.Warn().Msgf("Failed to get TLSRoutes: %q is not within watched namespaces", namespace)
 			continue
 		}
 
@@ -347,7 +347,7 @@ func (c *clientWrapper) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRo
 		}
 
 		if len(routes) == 0 {
-			log.WithoutContext().Debugf("No TLSRoutes found in namespace %q", namespace)
+			log.Debug().Msgf("No TLSRoutes found in namespace %q", namespace)
 			continue
 		}
 
@@ -362,7 +362,7 @@ func (c *clientWrapper) GetGateways() []*gatev1alpha2.Gateway {
 	for ns, factory := range c.factoriesGateway {
 		gateways, err := factory.Gateway().V1alpha2().Gateways().Lister().List(labels.Everything())
 		if err != nil {
-			log.WithoutContext().Errorf("Failed to list Gateways in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list Gateways in namespace %s", ns)
 			continue
 		}
 		result = append(result, gateways...)
