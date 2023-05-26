@@ -424,7 +424,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		if port == 0 {
-			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
+			continue
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
