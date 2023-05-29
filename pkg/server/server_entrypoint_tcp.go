@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	stdlog "log"
 	"net"
 	"net/http"
@@ -539,7 +540,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
 
-	next, err := alice.New(requestdecorator.WrapHandler(reqDecorator)).Then(httpSwitcher)
+	next, err := alice.New(middleware.BuildGlobalMiddleware(ctx), requestdecorator.WrapHandler(reqDecorator)).Then(httpSwitcher)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/containous/alice"
@@ -39,6 +40,28 @@ type middlewareStackType int
 const (
 	middlewareStackKey middlewareStackType = iota
 )
+
+var middlewares = map[string]Middleware{}
+
+type Middleware interface {
+
+	// Name is middleware name
+	Name() string
+
+	// Priority more than has more priority
+	Priority() int
+
+	// Scope is middleware effect scope, 0 is global, others is customized.
+	Scope() int
+
+	// New middleware instance
+	New(ctx context.Context, next http.Handler, name string) (http.Handler, error)
+}
+
+// Provide the middleware
+func Provide(middleware Middleware) {
+	middlewares[middleware.Name()] = middleware
+}
 
 // Builder the middleware builder.
 type Builder struct {
@@ -347,6 +370,12 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	if nil != middlewares[middlewareName] {
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return middlewares[middlewareName].New(ctx, next, middlewareName)
+		}
+	}
+
 	// Plugin
 	if config.Plugin != nil && !reflect.ValueOf(b.pluginBuilder).IsNil() { // Using "reflect" because "b.pluginBuilder" is an interface.
 		if middleware != nil {
@@ -382,4 +411,24 @@ func inSlice(element string, stack []string) bool {
 		}
 	}
 	return false
+}
+
+func BuildGlobalMiddleware(ctx context.Context) alice.Constructor {
+	var plugins []Middleware
+	for _, middleware := range middlewares {
+		if middleware.Scope() == 0 {
+			plugins = append(plugins, middleware)
+		}
+	}
+	sort.Slice(plugins, func(i, j int) bool { return plugins[i].Priority() < plugins[j].Priority() })
+	constructor := func(next http.Handler) (http.Handler, error) {
+		var err error
+		for _, plugin := range plugins {
+			if next, err = plugin.New(ctx, next, plugin.Name()); nil != err {
+				return nil, err
+			}
+		}
+		return next, nil
+	}
+	return constructor
 }

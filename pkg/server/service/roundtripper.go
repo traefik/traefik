@@ -130,8 +130,8 @@ func (r *RoundTripperManager) createRoundTripper(cfg *dynamic.ServersTransport) 
 	}
 
 	transport := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           dialer.DialContext,
+		Proxy:                 CreateProxy(cfg.Proxy),
+		DialContext:           CreateDialer(cfg.ServerName, dialer),
 		MaxIdleConnsPerHost:   cfg.MaxIdleConnsPerHost,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
