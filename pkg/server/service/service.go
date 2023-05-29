@@ -307,7 +307,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
 		}
 
-		lb.Add(proxyName, proxy, nil)
+		lb.AddURL(proxyName, proxy, nil, target)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
