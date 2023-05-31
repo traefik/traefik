@@ -29,12 +29,11 @@ subsets:
       - name: web
         port: 80
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
+      - ip: 10.10.0.3
+      - ip: 10.10.0.4
     ports:
       - name: web2
         port: 8080
-
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -47,9 +46,9 @@ spec:
     - foo
 
   routes:
-  - match: Host(`foo.com`) && PathPrefix(`/bar`)
-    kind: Rule
-    priority: 12
-    services:
-    - name: whoami-svc-multiple-subsets
-      port: 8080
+    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      services:
+        - name: whoami-svc-multiple-subsets
+          port: 8080
