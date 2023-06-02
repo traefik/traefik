@@ -333,7 +333,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 				schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 				re, _ := regexp.Compile(schemeRegex)
 
-				if re.Match([]byte(test.url)) {
+				if re.MatchString(test.url) {
 					match := re.FindStringSubmatch(test.url)
 					req.RequestURI = match[4]
 
