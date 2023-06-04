@@ -154,9 +154,9 @@ accessLog:
     headers:
       defaultMode: keep
       names:
-          User-Agent: redact
-          Authorization: drop
-          Content-Type: keep
+        User-Agent: redact
+        Authorization: drop
+        Content-Type: keep
 ```
 
 ```toml tab="File (TOML)"
