@@ -96,7 +96,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			usersFile, err := os.CreateTemp(t.TempDir(), "auth-users")
 			require.NoError(t, err)
 
-			_, err = usersFile.Write([]byte(test.userFileContent))
+			_, err = usersFile.WriteString(test.userFileContent)
 			require.NoError(t, err)
 
 			// Creates the configuration for our Authenticator

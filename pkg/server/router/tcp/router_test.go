@@ -842,7 +842,7 @@ func checkTCPTLS(addr string, timeout time.Duration, tlsVersion uint16) (err err
 
 	err = conn.SetReadDeadline(time.Now().Add(timeout))
 	if err != nil {
-		return
+		return err
 	}
 
 	var buf bytes.Buffer
