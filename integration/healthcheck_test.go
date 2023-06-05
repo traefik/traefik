@@ -61,7 +61,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	client := &http.Client{}
 	whoamiHosts := []string{s.whoami1IP, s.whoami2IP}
 	for _, whoami := range whoamiHosts {
-		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBufferString("500"))
 		c.Assert(err, checker.IsNil)
 		_, err = client.Do(statusInternalServerErrorReq)
 		c.Assert(err, checker.IsNil)
@@ -72,7 +72,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Change one whoami health to 200
-	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
+	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("200"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusOKReq1)
 	c.Assert(err, checker.IsNil)
@@ -138,7 +138,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 	client := &http.Client{}
 	whoamiHosts := []string{s.whoami1IP, s.whoami2IP}
 	for _, whoami := range whoamiHosts {
-		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBufferString("500"))
 		c.Assert(err, checker.IsNil)
 		_, err = client.Do(statusInternalServerErrorReq)
 		c.Assert(err, checker.IsNil)
@@ -149,7 +149,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// reactivate the whoami2
-	statusInternalServerOkReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBuffer([]byte("200")))
+	statusInternalServerOkReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBufferString("200"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusInternalServerOkReq)
 	c.Assert(err, checker.IsNil)
@@ -174,7 +174,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	// Set one whoami health to 200
 	client := &http.Client{}
-	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
+	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("200"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusInternalServerErrorReq)
 	c.Assert(err, checker.IsNil)
@@ -203,7 +203,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Set one whoami health to 500
-	statusInternalServerErrorReq, err = http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("500")))
+	statusInternalServerErrorReq, err = http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("500"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusInternalServerErrorReq)
 	c.Assert(err, checker.IsNil)
@@ -232,7 +232,7 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 
 	// Set whoami health to 200 to be sure to start with the wanted status
 	client := &http.Client{}
-	statusOkReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
+	statusOkReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("200"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusOkReq)
 	c.Assert(err, checker.IsNil)
@@ -253,7 +253,7 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Set whoami health to 500
-	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("500")))
+	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("500"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusInternalServerErrorReq)
 	c.Assert(err, checker.IsNil)
@@ -266,7 +266,7 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Change one whoami health to 200
-	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
+	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("200"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusOKReq1)
 	c.Assert(err, checker.IsNil)
@@ -312,7 +312,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 
 	whoamiHosts := []string{s.whoami1IP, s.whoami3IP}
 	for _, whoami := range whoamiHosts {
-		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBufferString("500"))
 		c.Assert(err, checker.IsNil)
 		_, err = client.Do(statusInternalServerErrorReq)
 		c.Assert(err, checker.IsNil)
@@ -394,7 +394,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	// Bring whoami2 and whoami4 down
 	whoamiHosts = []string{s.whoami2IP, s.whoami4IP}
 	for _, whoami := range whoamiHosts {
-		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBufferString("500"))
 		c.Assert(err, checker.IsNil)
 		_, err = client.Do(statusInternalServerErrorReq)
 		c.Assert(err, checker.IsNil)
@@ -420,7 +420,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	// Bring everything back up.
 	whoamiHosts = []string{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP}
 	for _, whoami := range whoamiHosts {
-		statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("200")))
+		statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBufferString("200"))
 		c.Assert(err, checker.IsNil)
 		_, err = client.Do(statusOKReq)
 		c.Assert(err, checker.IsNil)
@@ -585,7 +585,7 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	client := http.Client{
 		Timeout: 10 * time.Second,
 	}
-	statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBuffer([]byte("500")))
+	statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBufferString("500"))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusOKReq)
 	c.Assert(err, checker.IsNil)

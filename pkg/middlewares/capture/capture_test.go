@@ -177,7 +177,7 @@ func generateBytes(length int) []byte {
 }
 
 func TestRequestReader(t *testing.T) {
-	buff := bytes.NewBuffer([]byte("foo"))
+	buff := bytes.NewBufferString("foo")
 	rr := readCounter{source: io.NopCloser(buff)}
 	assert.Equal(t, int64(0), rr.size)
 
