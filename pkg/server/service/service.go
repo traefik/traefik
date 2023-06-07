@@ -33,6 +33,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
 	"google.golang.org/grpc/status"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 )
 
 // ProxyBuilder builds reverse proxy handlers.
@@ -134,6 +135,13 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	case conf.Weighted != nil:
 		var err error
 		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	case conf.HighestRandomWeight != nil:
+		var err error
+		lb, err = m.getHRWServiceHandler(ctx, serviceName, conf.HighestRandomWeight)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
@@ -304,6 +312,50 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 	default:
 		return m.BuildHTTP(ctx, service.Name)
 	}
+func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
+	// TODO Handle accesslog and metrics with multiple service name
+	log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 1")
+	// balancer := hrw.New(config.HealthCheck != nil)
+	balancer := hrw.New(false)
+	log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 2 ")
+	for _, service := range shuffle(config.Services, m.rand) {
+		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 2.5 ")
+		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
+		if err != nil {
+			return nil, err
+		}
+		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 3 ")
+
+		balancer.Add(service.Name, serviceHandler, service.Weight)
+
+		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 4 ")
+
+		if config.HealthCheck == nil {
+			continue
+		}
+		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 5 ")
+
+
+		childName := service.Name
+		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
+		if !ok {
+			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
+		}
+		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 6 ")
+
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			balancer.SetStatus(ctx, childName, up)
+		}); err != nil {
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+		}
+		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 7 ")
+
+
+		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+			Msg("Child service will update parent on status change")
+	}
+
+	return balancer, nil
 }
 
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
