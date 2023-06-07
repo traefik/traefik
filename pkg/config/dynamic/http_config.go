@@ -46,6 +46,7 @@ type Model struct {
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
 	LoadBalancer *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
+	HighestRandomWeight     *HighestRandomWeight  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 	Weighted     *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 	Mirroring    *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
 	Failover     *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
@@ -121,10 +122,38 @@ type WeightedRoundRobin struct {
 
 // +k8s:deepcopy-gen=true
 
-// WRRService is a reference to a service load-balanced with weighted round-robin.
+// HighestRandomWeight is a weighted round robin load-balancer of services.
+type HighestRandomWeight struct {
+	Services []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" export:"true"`
+	// HealthCheck enables automatic self-healthcheck for this service, i.e.
+	// whenever one of its children is reported as down, this service becomes aware of it,
+	// and takes it into account (i.e. it ignores the down child) when running the
+	// load-balancing algorithm. In addition, if the parent of this service also has
+	// HealthCheck enabled, this service reports to its parent any status change.
+	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// WRRService is a reference to a service load-balanced with hrw weighted round-robin.
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// HRWService is a reference to a service load-balanced with weighted round-robin.
+type HRWService struct {
+	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (w *HRWService) SetDefaults() {
+	defaultWeight := 1
+	w.Weight = &defaultWeight
 }
 
 // SetDefaults Default values for a WRRService.
