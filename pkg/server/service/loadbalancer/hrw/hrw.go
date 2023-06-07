@@ -61,7 +61,7 @@ func New(wantHealthCheck bool) *Balancer {
 // }
 
 // Push implements something for pushing an item into the list.
-func (b *Balancer) Push(x namedHandler) {
+func (b *Balancer) Push(x interface{}) {
 	h, ok := x.(*namedHandler)
 	if !ok {
 		return
