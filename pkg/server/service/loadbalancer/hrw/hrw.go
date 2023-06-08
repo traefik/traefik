@@ -4,6 +4,8 @@ import (
 	// "container/heap"
 	"context"
 	"errors"
+	"hash/fnv"
+	"math"
 	"net/http"
 	"sync"
 
@@ -13,8 +15,8 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name     string
-	weight   float64
+	name   string
+	weight float64
 }
 
 // Balancer is a HRW load balancer based on RENDEZVOUS (HRW).
@@ -23,9 +25,8 @@ type namedHandler struct {
 type Balancer struct {
 	wantsHealthCheck bool
 
-	mutex       sync.RWMutex
-	handlers    []*namedHandler
-	curDeadline float64
+	mutex    sync.RWMutex
+	handlers []*namedHandler
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
 	// created via Add, and it is later removed or added to the map as needed,
@@ -76,6 +77,19 @@ func (b *Balancer) Push(x interface{}) {
 // 	b.handlers = b.handlers[0 : len(b.handlers)-1]
 // 	return h
 // }
+
+func getNodeScore(handler *namedHandler, src string) float64 {
+	log.Debug().Msgf("getNodeScore() name=%s", src+(*handler).name)
+	h := fnv.New32a()
+	h.Write([]byte(src + (*handler).name))
+	sum := h.Sum32()
+	log.Debug().Msgf("getNodeScore() sum=%d", sum)
+	score := float32(sum) / float32(math.Pow(2, 32))
+	log.Debug().Msgf("getNodeScore() score=%f", score)
+	log_score := 1.0 / -math.Log(float64(score))
+	log.Debug().Msgf("getNodeScore() log_score=%f", score)
+	return log_score
+}
 
 // SetStatus sets on the balancer that its given child is now of the given
 // status. balancerName is only needed for logging purposes.
@@ -142,14 +156,11 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 
 	var handler *namedHandler
-	for {
-		// add rendez vous code here
-		handler = b.handlers[0]
-
-		if _, ok := b.status[handler.name]; ok {
-			break
-		}
+	for _, h := range b.handlers {
+		getNodeScore(h, "src")
 	}
+
+	handler = b.handlers[0]
 
 	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
 	return handler, nil
