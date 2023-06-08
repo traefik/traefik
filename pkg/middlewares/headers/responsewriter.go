@@ -36,10 +36,19 @@ func newResponseModifier(w http.ResponseWriter, r *http.Request, modifier func(*
 	return rm
 }
 
+// WriteHeader is, in the specific case of 1xx status codes, a direct call to the wrapped ResponseWriter, without marking headers as sent,
+// allowing so further calls.
 func (r *responseModifier) WriteHeader(code int) {
 	if r.headersSent {
 		return
 	}
+
+	// Handling informational headers.
+	if code >= 100 && code <= 199 {
+		r.rw.WriteHeader(code)
+		return
+	}
+
 	defer func() {
 		r.code = code
 		r.headersSent = true
