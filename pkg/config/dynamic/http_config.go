@@ -125,8 +125,6 @@ type WeightedRoundRobin struct {
 // HighestRandomWeight is a weighted round robin load-balancer of services.
 type HighestRandomWeight struct {
 	Services []HRWService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
-	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" export:"true"`
-	Servers  []Server     `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 	// HealthCheck enables automatic self-healthcheck for this service, i.e.
 	// whenever one of its children is reported as down, this service becomes aware of it,
 	// and takes it into account (i.e. it ignores the down child) when running the
@@ -192,6 +190,7 @@ type Cookie struct {
 type ServersLoadBalancer struct {
 	Sticky  *Sticky  `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Servers []Server `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	Type    string   `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty" export:"true"`
 	// HealthCheck enables regular active checks of the responsiveness of the
 	// children servers of this load-balancer. To propagate status changes (e.g. all
 	// servers of this service are down) upwards, HealthCheck must also be enabled on

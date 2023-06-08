@@ -25,9 +25,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
-	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 )
 
 const defaultMaxBodySize int64 = -1
@@ -280,7 +280,6 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 		}
 		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 5 ")
 
-
 		childName := service.Name
 		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
 		if !ok {
@@ -294,7 +293,6 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
 		}
 		log.Ctx(ctx).Debug().Msg("getHRWServiceHandler() 7 ")
-
 
 		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
 			Msg("Child service will update parent on status change")
@@ -334,7 +332,15 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		return nil, err
 	}
 
-	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
+	// here choose between WRR and HRW based on load balancer type
+	var lbHRW *hrw.Balancer
+	var lbWRR *wrr.Balancer
+	// so many ifs
+	if info.LoadBalancer.Type == "hrw" {
+		lbHRW = hrw.New(service.HealthCheck != nil)
+	} else {
+		lbWRR = wrr.New(service.Sticky, service.HealthCheck != nil)
+	}
 	healthCheckTargets := make(map[string]*url.URL)
 
 	for _, server := range shuffle(service.Servers, m.rand) {
@@ -360,8 +366,12 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
 			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
 		}
-
-		lb.Add(proxyName, proxy, nil)
+		// so many ifs
+		if info.LoadBalancer.Type == "hrw" {
+			lbHRW.Add(proxyName, proxy, nil)
+		} else {
+			lbWRR.Add(proxyName, proxy, nil)
+		}
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
@@ -369,19 +379,34 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		healthCheckTargets[proxyName] = target
 	}
 
-	if service.HealthCheck != nil {
-		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
-			ctx,
-			m.metricsRegistry,
-			service.HealthCheck,
-			lb,
-			info,
-			roundTripper,
-			healthCheckTargets,
-		)
+	// so many ifs
+	if info.LoadBalancer.Type == "hrw" {
+		if service.HealthCheck != nil {
+			m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
+				ctx,
+				m.metricsRegistry,
+				service.HealthCheck,
+				lbHRW,
+				info,
+				roundTripper,
+				healthCheckTargets,
+			)
+		}
+		return lbWRR, nil
+	} else {
+		if service.HealthCheck != nil {
+			m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
+				ctx,
+				m.metricsRegistry,
+				service.HealthCheck,
+				lbWRR,
+				info,
+				roundTripper,
+				healthCheckTargets,
+			)
+		}
+		return lbWRR, nil
 	}
-
-	return lb, nil
 }
 
 // LaunchHealthCheck launches the health checks.
