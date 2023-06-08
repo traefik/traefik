@@ -318,4 +318,3 @@ curl -v http://localhost/
     - Protect [ingresses with TLS](../routing/providers/kubernetes-ingress.md#enabling-tls-via-annotations)
     
 {!traefik-api-management-kubernetes.md!}
-
