@@ -1904,4 +1904,4 @@ If the ServersTransport CRD is defined in another provider the cross-provider fo
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{!traefik-api-management-kubernetes.md!}

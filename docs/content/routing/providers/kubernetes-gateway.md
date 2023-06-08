@@ -354,3 +354,5 @@ Kubernetes cluster before creating `TLSRoute` objects.
 | [10] | `port`        | The port of the referent service.                                                                                                  |
 | [11] | `group`       | Group is the group of the referent. Only `traefik.io`, `traefik.containo.us` and `gateway.networking.k8s.io` values are supported. |
 | [12] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                                            |
+
+{!traefik-api-management-kubernetes.md!}
