@@ -145,7 +145,7 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 
 var errNoAvailableServer = errors.New("no available server")
 
-func (b *Balancer) nextServer() (*namedHandler, error) {
+func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 	log.Debug().Msgf("nextServer()")
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -156,11 +156,14 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 
 	var handler *namedHandler
+	score := 0.0
 	for _, h := range b.handlers {
-		getNodeScore(h, "src")
+		s := getNodeScore(h, ip)
+		if s > score {
+			handler = h
+			score = s
+		}
 	}
-
-	handler = b.handlers[0]
 
 	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
 	return handler, nil
@@ -168,7 +171,9 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	log.Debug().Msgf("ServeHTTP()")
-	server, err := b.nextServer()
+	// here give ip fetched to b.nextServer
+	ip := "10.0.0.1"
+	server, err := b.nextServer(ip)
 	if err != nil {
 		log.Debug().Err(err).Msg("ServeHTTP() err")
 		if errors.Is(err, errNoAvailableServer) {
