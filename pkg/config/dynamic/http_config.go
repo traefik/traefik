@@ -45,11 +45,11 @@ type Model struct {
 
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
-	LoadBalancer *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
-	HighestRandomWeight     *HighestRandomWeight  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
-	Weighted     *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
-	Mirroring    *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
-	Failover     *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
+	LoadBalancer        *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
+	HighestRandomWeight *HighestRandomWeight `json:"highestRandomWeight,omitempty" toml:"highestRandomWeight,omitempty" yaml:"highestRandomWeight,omitempty" label:"-" export:"true"`
+	Weighted            *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
+	Mirroring           *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
+	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -124,8 +124,9 @@ type WeightedRoundRobin struct {
 
 // HighestRandomWeight is a weighted round robin load-balancer of services.
 type HighestRandomWeight struct {
-	Services []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Services []HRWService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" export:"true"`
+	Servers  []Server     `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 	// HealthCheck enables automatic self-healthcheck for this service, i.e.
 	// whenever one of its children is reported as down, this service becomes aware of it,
 	// and takes it into account (i.e. it ignores the down child) when running the
