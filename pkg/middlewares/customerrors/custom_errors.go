@@ -144,16 +144,6 @@ type codeCatcher struct {
 	headersSent        bool
 }
 
-type codeCatcherWithCloseNotify struct {
-	*codeCatcher
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
-func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
-	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
-}
-
 func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges) responseInterceptor {
 	catcher := &codeCatcher{
 		headerMap:      make(http.Header),
@@ -168,6 +158,10 @@ func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges)
 }
 
 func (cc *codeCatcher) Header() http.Header {
+	if cc.headersSent {
+		return cc.responseWriter.Header()
+	}
+
 	if cc.headerMap == nil {
 		cc.headerMap = make(http.Header)
 	}
@@ -247,6 +241,16 @@ func (cc *codeCatcher) Flush() {
 	}
 }
 
+type codeCatcherWithCloseNotify struct {
+	*codeCatcher
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone away.
+func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
+	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
+}
+
 // codeModifier forwards a response back to the client,
 // while enforcing a given response code.
 type codeModifier interface {
@@ -289,6 +293,10 @@ func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
 
 // Header returns the response headers.
 func (r *codeModifierWithoutCloseNotify) Header() http.Header {
+	if r.headerSent {
+		return r.responseWriter.Header()
+	}
+
 	if r.headerMap == nil {
 		r.headerMap = make(http.Header)
 	}
