@@ -181,8 +181,12 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	strategy := &ip.PoolStrategy{
 		Checker: checker,
 	}
+	strategyRM := ip.RemoteAddrStrategy{}
+
 	clientIP := strategy.GetIP(req)
+	clientIPRM := strategyRM.GetIP(req)
 	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
+	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIPRM)
 
 	server, err := b.nextServer(clientIP)
 	if err != nil {
