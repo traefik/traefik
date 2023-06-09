@@ -32,7 +32,7 @@ type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
-// customErrors is a middleware that provides the custom error pages..
+// customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
 	name           string
 	next           http.Handler
@@ -245,8 +245,8 @@ type codeCatcherWithCloseNotify struct {
 	*codeCatcher
 }
 
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
+// CloseNotify returns a channel that receives at most a single value (true)
+// when the client connection has gone away.
 func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
 	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
 }
@@ -279,16 +279,6 @@ type codeModifierWithoutCloseNotify struct {
 	headerMap  http.Header // the HTTP response headers from the backend.
 
 	responseWriter http.ResponseWriter
-}
-
-type codeModifierWithCloseNotify struct {
-	*codeModifierWithoutCloseNotify
-}
-
-// CloseNotify returns a channel that receives at most a single value (true)
-// when the client connection has gone away.
-func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 // Header returns the response headers.
@@ -339,4 +329,14 @@ func (r *codeModifierWithoutCloseNotify) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+type codeModifierWithCloseNotify struct {
+	*codeModifierWithoutCloseNotify
+}
+
+// CloseNotify returns a channel that receives at most a single value (true)
+// when the client connection has gone away.
+func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
+	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }
