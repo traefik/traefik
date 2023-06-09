@@ -144,16 +144,6 @@ type codeCatcher struct {
 	headersSent        bool
 }
 
-type codeCatcherWithCloseNotify struct {
-	*codeCatcher
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
-func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
-	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
-}
-
 func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges) responseInterceptor {
 	catcher := &codeCatcher{
 		headerMap:      make(http.Header),
@@ -249,6 +239,16 @@ func (cc *codeCatcher) Flush() {
 	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+type codeCatcherWithCloseNotify struct {
+	*codeCatcher
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone away.
+func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
+	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 // codeModifier forwards a response back to the client,
