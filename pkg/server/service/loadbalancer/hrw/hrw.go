@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/ip"
 	// "github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
@@ -24,6 +25,8 @@ type namedHandler struct {
 // providing weighted round-robin behavior with floating point weights and an O(n) pick time.
 type Balancer struct {
 	wantsHealthCheck bool
+	// checker          ip.Checker
+	// strategy         ip.Strategy
 
 	mutex    sync.RWMutex
 	handlers []*namedHandler
@@ -172,8 +175,16 @@ func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	log.Debug().Msgf("ServeHTTP()")
 	// here give ip fetched to b.nextServer
-	ip := "10.0.0.1"
-	server, err := b.nextServer(ip)
+	sourceRange := []string{}
+	checker, _ := ip.NewChecker(sourceRange)
+
+	strategy := &ip.PoolStrategy{
+		Checker: checker,
+	}
+	clientIP := strategy.GetIP(req)
+	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
+
+	server, err := b.nextServer(clientIP)
 	if err != nil {
 		log.Debug().Err(err).Msg("ServeHTTP() err")
 		if errors.Is(err, errNoAvailableServer) {
