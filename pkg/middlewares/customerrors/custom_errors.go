@@ -168,6 +168,10 @@ func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges)
 }
 
 func (cc *codeCatcher) Header() http.Header {
+	if cc.headersSent {
+		return cc.responseWriter.Header()
+	}
+
 	if cc.headerMap == nil {
 		cc.headerMap = make(http.Header)
 	}
@@ -289,6 +293,10 @@ func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
 
 // Header returns the response headers.
 func (r *codeModifierWithoutCloseNotify) Header() http.Header {
+	if r.headerSent {
+		return r.responseWriter.Header()
+	}
+
 	if r.headerMap == nil {
 		r.headerMap = make(http.Header)
 	}
