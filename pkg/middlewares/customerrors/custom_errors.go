@@ -281,16 +281,6 @@ type codeModifierWithoutCloseNotify struct {
 	responseWriter http.ResponseWriter
 }
 
-type codeModifierWithCloseNotify struct {
-	*codeModifierWithoutCloseNotify
-}
-
-// CloseNotify returns a channel that receives at most a single value (true)
-// when the client connection has gone away.
-func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseWriter.(http.CloseNotifier).CloseNotify()
-}
-
 // Header returns the response headers.
 func (r *codeModifierWithoutCloseNotify) Header() http.Header {
 	if r.headerSent {
@@ -339,4 +329,14 @@ func (r *codeModifierWithoutCloseNotify) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+type codeModifierWithCloseNotify struct {
+	*codeModifierWithoutCloseNotify
+}
+
+// CloseNotify returns a channel that receives at most a single value (true)
+// when the client connection has gone away.
+func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
+	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }
