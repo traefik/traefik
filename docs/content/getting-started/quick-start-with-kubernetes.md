@@ -316,3 +316,5 @@ curl -v http://localhost/
     - [Filter the ingresses](../providers/kubernetes-ingress.md#ingressclass) to use with [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)
     - Use [IngressRoute CRD](../providers/kubernetes-crd.md)
     - Protect [ingresses with TLS](../routing/providers/kubernetes-ingress.md#enabling-tls-via-annotations)
+    
+{!traefik-api-management-kubernetes.md!}
