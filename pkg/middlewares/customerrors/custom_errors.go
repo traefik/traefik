@@ -131,10 +131,10 @@ type responseInterceptor interface {
 	isFilteredCode() bool
 }
 
-// codeCatcher is a response writer that detects as soon as possible whether the
-// response is a code within the ranges of codes it watches for. If it is, it
-// simply drops the data from the response. Otherwise, it forwards it directly to
-// the original client (its responseWriter) without any buffering.
+// codeCatcher is a response writer that detects as soon as possible
+// whether the response is a code within the ranges of codes it watches for.
+// If it is, it simply drops the data from the response.
+// Otherwise, it forwards it directly to the original client (its responseWriter) without any buffering.
 type codeCatcher struct {
 	headerMap          http.Header
 	code               int
@@ -285,8 +285,8 @@ type codeModifierWithCloseNotify struct {
 	*codeModifierWithoutCloseNotify
 }
 
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
+// CloseNotify returns a channel that receives at most a single value (true)
+// when the client connection has gone away.
 func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
 	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }
@@ -311,8 +311,8 @@ func (r *codeModifierWithoutCloseNotify) Write(buf []byte) (int, error) {
 	return r.responseWriter.Write(buf)
 }
 
-// WriteHeader sends the headers, with the enforced code (the code in argument
-// is always ignored), if it hasn't already been done.
+// WriteHeader sends the headers, with the enforced code (the code in argument is always ignored),
+// if it hasn't already been done.
 func (r *codeModifierWithoutCloseNotify) WriteHeader(_ int) {
 	if r.headerSent {
 		return
