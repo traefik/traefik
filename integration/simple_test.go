@@ -1444,14 +1444,14 @@ func (s *SimpleSuite) TestEncodeSemicolons(c *check.C) {
 		expected int
 	}{
 		{
-			desc:     "!Query with semicolon, match",
+			desc:     "Transforming semicolons",
 			request:  "GET /?bar=toto;boo=titi HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
 			expected: http.StatusOK,
 			body:     "bar=toto&boo=titi",
 		},
 		{
-			desc:     "!Query with semicolon, encode",
+			desc:     "Encoding semicolons",
 			request:  "GET /?bar=toto&boo=titi;aaaa HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8001",
 			expected: http.StatusOK,

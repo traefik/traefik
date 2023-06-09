@@ -24,8 +24,7 @@
 [http.routers]
   [http.routers.router]
     service = "service1"
-    rule = "PathPrefix(`/`)"
-#    rule = "Host(`other.localhost`)"
+    rule = "Host(`other.localhost`)"
 
 [http.services]
   [http.services.service1.loadBalancer]
