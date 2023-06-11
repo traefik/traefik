@@ -2,6 +2,10 @@ package hrw
 
 import (
 	"context"
+	"encoding/binary"
+	"fmt"
+	"math/rand"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,14 +13,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// test not working
+func genIPAddress() string {
+	buf := make([]byte, 4)
+
+	ip := rand.Uint32()
+
+	binary.LittleEndian.PutUint32(buf, ip)
+	ipStr := net.IP(buf)
+	fmt.Printf("%s\n", ipStr)
+	return ipStr.String()
+}
+
 func TestBalancer(t *testing.T) {
 	balancer := New(false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(3))
+	}), Int(4))
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
@@ -25,17 +39,12 @@ func TestBalancer(t *testing.T) {
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req, _ := http.NewRequest(http.MethodGet, "/", nil)
-	req.RemoteAddr = "10.0.0.1:8080"
-	balancer.ServeHTTP(recorder, req)
-	req.RemoteAddr = "10.0.0.2:8080"
-	balancer.ServeHTTP(recorder, req)
-	req.RemoteAddr = "10.0.0.3:8080"
-	balancer.ServeHTTP(recorder, req)
-	req.RemoteAddr = "10.0.0.4:8080"
-	balancer.ServeHTTP(recorder, req)
-
-	assert.Equal(t, 3, recorder.save["first"])
-	assert.Equal(t, 1, recorder.save["second"])
+	for i := 0; i < 100; i++ {
+		req.RemoteAddr = genIPAddress()
+		balancer.ServeHTTP(recorder, req)
+	}
+	assert.InDelta(t, 80, recorder.save["first"], 5)
+	assert.InDelta(t, 20, recorder.save["second"], 5)
 }
 
 func TestBalancerNoService(t *testing.T) {
@@ -110,8 +119,6 @@ func TestBalancerOneServerDown(t *testing.T) {
 	assert.Equal(t, 3, recorder.save["first"])
 }
 
-// test not working
-
 func TestBalancerDownThenUp(t *testing.T) {
 	balancer := New(false)
 
@@ -135,13 +142,16 @@ func TestBalancerDownThenUp(t *testing.T) {
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req, _ := http.NewRequest(http.MethodGet, "/", nil)
-	req.RemoteAddr = "10.0.0.1:8080"
-	balancer.ServeHTTP(recorder, req)
-	req.RemoteAddr = "10.0.0.2:8080"
-	balancer.ServeHTTP(recorder, req)
-	assert.Equal(t, 1, recorder.save["first"])
-	assert.Equal(t, 1, recorder.save["second"])
+	for i := 0; i < 100; i++ {
+		req.RemoteAddr = genIPAddress()
+		balancer.ServeHTTP(recorder, req)
+	}
+	assert.InDelta(t, 50, recorder.save["first"], 5)
+	assert.InDelta(t, 50, recorder.save["second"], 5)
+
 }
+
+// test not working
 
 func TestBalancerPropagate(t *testing.T) {
 	balancer1 := New(true)
@@ -228,6 +238,8 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
 }
 
+// test not working
+
 func TestSticky(t *testing.T) {
 	balancer := New(false)
 
@@ -256,6 +268,8 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, 0, recorder.save["first"])
 	assert.Equal(t, 3, recorder.save["second"])
 }
+
+// test not working
 
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
 // and that it does not "over-favor" the high-weighted ones with a biased start-up regime.
