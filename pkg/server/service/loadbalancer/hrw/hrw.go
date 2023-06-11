@@ -26,7 +26,8 @@ type namedHandler struct {
 // Client connects to the same server each time based on their IP source
 type Balancer struct {
 	wantsHealthCheck bool
-	strategy         ip.RemoteAddrStrategy
+
+	strategy ip.RemoteAddrStrategy
 
 	mutex    sync.RWMutex
 	handlers []*namedHandler
@@ -137,10 +138,14 @@ func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 	var handler *namedHandler
 	score := 0.0
 	for _, h := range b.handlers {
-		s := getNodeScore(h, ip)
-		if s > score {
-			handler = h
-			score = s
+		// if handler healthy we calcul score
+		// fmt.Printf("b.status = %s\n", b.status[h.name])
+		if _, ok := b.status[h.name]; ok {
+			s := getNodeScore(h, ip)
+			if s > score {
+				handler = h
+				score = s
+			}
 		}
 	}
 
