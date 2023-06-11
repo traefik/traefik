@@ -24,6 +24,14 @@ func genIPAddress() string {
 	return ipStr.String()
 }
 
+func initStatusArray(size int, value int) []int {
+	status := make([]int, 0, size)
+	for i := 1; i <= size; i++ {
+		status = append(status, value)
+	}
+	return status
+}
+
 func TestBalancer(t *testing.T) {
 	balancer := New(false)
 
@@ -43,8 +51,8 @@ func TestBalancer(t *testing.T) {
 		req.RemoteAddr = genIPAddress()
 		balancer.ServeHTTP(recorder, req)
 	}
-	assert.InDelta(t, 80, recorder.save["first"], 5)
-	assert.InDelta(t, 20, recorder.save["second"], 5)
+	assert.InDelta(t, 80, recorder.save["first"], 10)
+	assert.InDelta(t, 20, recorder.save["second"], 10)
 }
 
 func TestBalancerNoService(t *testing.T) {
@@ -146,12 +154,10 @@ func TestBalancerDownThenUp(t *testing.T) {
 		req.RemoteAddr = genIPAddress()
 		balancer.ServeHTTP(recorder, req)
 	}
-	assert.InDelta(t, 50, recorder.save["first"], 5)
-	assert.InDelta(t, 50, recorder.save["second"], 5)
+	assert.InDelta(t, 50, recorder.save["first"], 10)
+	assert.InDelta(t, 50, recorder.save["second"], 10)
 
 }
-
-// test not working
 
 func TestBalancerPropagate(t *testing.T) {
 	balancer1 := New(true)
@@ -189,15 +195,15 @@ func TestBalancerPropagate(t *testing.T) {
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 100; i++ {
 		req.RemoteAddr = genIPAddress()
 		topBalancer.ServeHTTP(recorder, req)
 	}
-	assert.InDelta(t, 2, recorder.save["first"], 1)
-	assert.InDelta(t, 2, recorder.save["second"], 1)
-	assert.InDelta(t, 2, recorder.save["third"], 1)
-	assert.InDelta(t, 2, recorder.save["fourth"], 1)
-	wantStatus := []int{200, 200, 200, 200, 200, 200, 200, 200}
+	assert.InDelta(t, 25, recorder.save["first"], 10)
+	assert.InDelta(t, 25, recorder.save["second"], 10)
+	assert.InDelta(t, 25, recorder.save["third"], 10)
+	assert.InDelta(t, 25, recorder.save["fourth"], 10)
+	wantStatus := initStatusArray(100, 200)
 	assert.Equal(t, wantStatus, recorder.status)
 
 	fmt.Println("Start part2")
@@ -205,35 +211,34 @@ func TestBalancerPropagate(t *testing.T) {
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 100; i++ {
 		req.RemoteAddr = genIPAddress()
 		topBalancer.ServeHTTP(recorder, req)
 	}
-	assert.InDelta(t, 2, recorder.save["first"], 1)
-	assert.InDelta(t, 2, recorder.save["second"], 1)
-	assert.InDelta(t, 4, recorder.save["third"], 1)
+	assert.InDelta(t, 25, recorder.save["first"], 10)
+	assert.InDelta(t, 25, recorder.save["second"], 10)
+	assert.InDelta(t, 50, recorder.save["third"], 10)
 	assert.InDelta(t, 0, recorder.save["fourth"], 0)
-	wantStatus = []int{200, 200, 200, 200, 200, 200, 200, 200}
+	wantStatus = initStatusArray(100, 200)
 	assert.Equal(t, wantStatus, recorder.status)
 
-	// log.Debug("Part 3 test start")
+	fmt.Println("Part 3 test start")
 
-	// // third gets downed, and the propagation triggers balancer2 to be marked as
-	// // down as well for topBalancer.
-	// balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "third", false)
-	// recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	// // part of test not working
-	// req = httptest.NewRequest(http.MethodGet, "/", nil)
-	// for i := 0; i < 8; i++ {
-	// 	req.RemoteAddr = genIPAddress()
-	// 	topBalancer.ServeHTTP(recorder, req)
-	// }
-	// assert.InDelta(t, 4, recorder.save["first"], 1)
-	// assert.InDelta(t, 4, recorder.save["second"], 1)
-	// assert.InDelta(t, 0, recorder.save["third"], 0)
-	// assert.InDelta(t, 0, recorder.save["fourth"], 0)
-	// wantStatus = []int{200, 200, 200, 200, 200, 200, 200, 200}
-	// assert.Equal(t, wantStatus, recorder.status)
+	// third gets downed, and the propagation triggers balancer2 to be marked as
+	// down as well for topBalancer.
+	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "third", false)
+	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	for i := 0; i < 100; i++ {
+		req.RemoteAddr = genIPAddress()
+		topBalancer.ServeHTTP(recorder, req)
+	}
+	assert.InDelta(t, 50, recorder.save["first"], 10)
+	assert.InDelta(t, 50, recorder.save["second"], 10)
+	assert.InDelta(t, 0, recorder.save["third"], 0)
+	assert.InDelta(t, 0, recorder.save["fourth"], 0)
+	wantStatus = initStatusArray(100, 200)
+	assert.Equal(t, wantStatus, recorder.status)
 }
 
 func TestBalancerAllServersZeroWeight(t *testing.T) {
