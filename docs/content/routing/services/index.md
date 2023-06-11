@@ -146,8 +146,9 @@ The `url` option point to a specific instance.
 #### Load-balancing
 
 For now, only round robin load balancing is supported:
+LoadBalancing can be configured with WeightedRoundRobin (WRR) or HighestRandomWeight (HRW) Algorithm
 
-??? example "Load Balancing -- Using the [File Provider](../../providers/file.md)"
+??? example "Load Balancing WRR with-- Using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="YAML"
     ## Dynamic configuration
@@ -155,6 +156,32 @@ For now, only round robin load balancing is supported:
       services:
         my-service:
           loadBalancer:
+            # wrr is optional as it is the default and legacy behavior
+            type: wrr
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+    
+    ```
+??? example "Load Balancing HRW with-- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            type: hrw
             servers:
             - url: "http://private-ip-server-1/"
             - url: "http://private-ip-server-2/"
@@ -170,7 +197,12 @@ For now, only round robin load balancing is supported:
           url = "http://private-ip-server-2/"
     ```
 
+
 #### Sticky sessions
+
+Sticky Sessions can be achieved using a Cookie or by using the HighestRoundRobin algorithm.
+
+##### With Cookies
 
 When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
 On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
@@ -312,6 +344,89 @@ On subsequent requests, to keep the session alive with the same server, the clie
     ```
     curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
     ```
+  
+##### With HighestRandomWeight Algorithm
+
+  HighestRandomWeight, also called RendezVous hashing allows to loadbalance clients in a pool of services or servers.  
+  Clients will always reach the same server when they connect based on their IP source.  
+  A score is calculated between the client IP and the service name. The highest score is chosen.  
+
+  ??? example "Adding Stickiness with HRW -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            type: hrw
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service]
+        [http.services.my-service.loadBalancer]
+          type = "hrw"
+    ```
+
+??? example "Adding Stickiness with HRW with service and server loadbalancing -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        hrw1:
+          highestRandomWeight:
+            services:
+              - name: whoami1
+                weight: 1
+              - name: whoami2
+                weight: 1
+
+        whoami1:
+          loadBalancer:
+            type: hrw
+            servers:
+              - url: http://127.0.0.1:8081
+              - url: http://127.0.0.1:8082
+
+        whoami2:
+          loadBalancer:
+            type: hrw
+            servers:
+              - url: http://127.0.0.1:8083
+              - url: http://127.0.0.1:8084
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.hrw1]
+        [[http.services.hrw1.highestRandomWeight.services]]
+          name = "whoami1"
+          weight = 1
+        [[http.services.hrw1.highestRandomWeight.services]]
+          name = "whoami2"
+          weight = 1
+
+      [http.services.whoami1]
+        [http.services.whoami1.loadBalancer]
+          type = "hrw"
+          [[http.services.whoami1.loadBalancer.servers]]
+            url = "http://127.0.0.1:8081"
+          [[http.services.whoami1.loadBalancer.servers]]
+            url = "http://127.0.0.1:8082"
+
+      [http.services.whoami2]
+        [http.services.whoami2.loadBalancer]
+          type = "hrw"
+          [[http.services.whoami2.loadBalancer.servers]]
+            url = "http://127.0.0.1:8083"
+          [[http.services.whoami2.loadBalancer.servers]]
+            url = "http://127.0.0.1:8084"
+    ```
+
 
 #### Health Check
 
