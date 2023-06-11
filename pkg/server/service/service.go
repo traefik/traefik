@@ -501,8 +501,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			serviceName,
 		)
 	// so many ifs
-	if info.LoadBalancer.Type == "hrw" {
-		if service.HealthCheck != nil {
+	if service.HealthCheck != nil {
+		if info.LoadBalancer.Type == "hrw" {
 			m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 				ctx,
 				m.metricsRegistry,
@@ -512,22 +512,19 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 				roundTripper,
 				healthCheckTargets,
 			)
-		}
+			return lbWRR, nil
+		} 
+		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
+			ctx,
+			m.metricsRegistry,
+			service.HealthCheck,
+			lbWRR,
+			info,
+			roundTripper,
+			healthCheckTargets,
+		)
 		return lbWRR, nil
-	} else {
-		if service.HealthCheck != nil {
-			m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
-				ctx,
-				m.metricsRegistry,
-				service.HealthCheck,
-				lbWRR,
-				info,
-				roundTripper,
-				healthCheckTargets,
-			)
-		}
-		return lbWRR, nil
-	}
+	} 
 }
 
 // LaunchHealthCheck launches the health checks.
