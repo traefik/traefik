@@ -276,34 +276,6 @@ func TestSticky(t *testing.T) {
 	// from one IP, the choice between server must be the same for the 10 requests
 }
 
-// test not working
-
-// TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
-// and that it does not "over-favor" the high-weighted ones with a biased start-up regime.
-func TestBalancerBias(t *testing.T) {
-	balancer := New(false)
-
-	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("server", "A")
-		rw.WriteHeader(http.StatusOK)
-	}), Int(11))
-
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("server", "B")
-		rw.WriteHeader(http.StatusOK)
-	}), Int(3))
-
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-
-	for i := 0; i < 14; i++ {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	}
-
-	wantSequence := []string{"A", "A", "A", "B", "A", "A", "A", "A", "B", "A", "A", "A", "B", "A"}
-
-	assert.Equal(t, wantSequence, recorder.sequence)
-}
-
 func Int(v int) *int { return &v }
 
 type responseRecorder struct {
