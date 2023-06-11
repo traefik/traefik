@@ -23,10 +23,10 @@ type namedHandler struct {
 // Balancer is a HRW load balancer based on RENDEZVOUS (HRW).
 // (https://en.m.wikipedia.org/wiki/Rendezvous_hashing)
 // providing weighted round-robin behavior with floating point weights and an O(n) pick time.
+// Client connects to the same server each time based on their IP source
 type Balancer struct {
 	wantsHealthCheck bool
-	// checker          ip.Checker
-	// strategy         ip.Strategy
+	strategy         ip.RemoteAddrStrategy
 
 	mutex    sync.RWMutex
 	handlers []*namedHandler
@@ -46,7 +46,9 @@ func New(wantHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		wantsHealthCheck: wantHealthCheck,
+		strategy:         ip.RemoteAddrStrategy{},
 	}
+
 	log.Debug().Msgf("New() 2")
 	return balancer
 }
@@ -154,26 +156,13 @@ func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Debug().Msgf("ServeHTTP()")
-	// here give ip fetched to b.nextServer
 
-	strategyRM := ip.RemoteAddrStrategy{}
-	sourceRange := []string{}
-	sourceRange = append(sourceRange, "10.0.50.30")
-	checker, _ := ip.NewChecker(sourceRange)
-
-	strategy := &ip.PoolStrategy{
-		Checker: checker,
-	}
-
-	clientIP := strategy.GetIP(req)
-	clientIPRM := strategyRM.GetIP(req)
+	// give ip fetched to b.nextServer
+	clientIP := b.strategy.GetIP(req)
 	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
-	log.Debug().Msgf("ServeHTTP() clientIPRM=%s", clientIPRM)
 
-	server, err := b.nextServer(clientIPRM)
+	server, err := b.nextServer(clientIP)
 	if err != nil {
-		log.Debug().Err(err).Msg("ServeHTTP() err")
 		if errors.Is(err, errNoAvailableServer) {
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
 		} else {
@@ -188,7 +177,6 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
 func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
-	log.Debug().Msgf("Add()")
 	w := 1
 	if weight != nil {
 		w = *weight
