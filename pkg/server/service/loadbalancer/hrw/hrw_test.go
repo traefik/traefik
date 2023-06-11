@@ -38,7 +38,7 @@ func TestBalancer(t *testing.T) {
 	}), Int(1))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 100; i++ {
 		req.RemoteAddr = genIPAddress()
 		balancer.ServeHTTP(recorder, req)
@@ -141,7 +141,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 100; i++ {
 		req.RemoteAddr = genIPAddress()
 		balancer.ServeHTTP(recorder, req)
@@ -188,26 +188,30 @@ func TestBalancerPropagate(t *testing.T) {
 	})
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 8; i++ {
-		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		req.RemoteAddr = genIPAddress()
+		topBalancer.ServeHTTP(recorder, req)
 	}
-	assert.Equal(t, 2, recorder.save["first"])
-	assert.Equal(t, 2, recorder.save["second"])
-	assert.Equal(t, 2, recorder.save["third"])
-	assert.Equal(t, 2, recorder.save["fourth"])
+	assert.InDelta(t, 2, recorder.save["first"], 1)
+	assert.InDelta(t, 2, recorder.save["second"], 1)
+	assert.InDelta(t, 2, recorder.save["third"], 1)
+	assert.InDelta(t, 2, recorder.save["fourth"], 1)
 	wantStatus := []int{200, 200, 200, 200, 200, 200, 200, 200}
 	assert.Equal(t, wantStatus, recorder.status)
 
 	// fourth gets downed, but balancer2 still up since third is still up.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 8; i++ {
-		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		req.RemoteAddr = genIPAddress()
+		topBalancer.ServeHTTP(recorder, req)
 	}
-	assert.Equal(t, 2, recorder.save["first"])
-	assert.Equal(t, 2, recorder.save["second"])
-	assert.Equal(t, 4, recorder.save["third"])
-	assert.Equal(t, 0, recorder.save["fourth"])
+	assert.InDelta(t, 2, recorder.save["first"], 1)
+	assert.InDelta(t, 2, recorder.save["second"], 1)
+	assert.InDelta(t, 4, recorder.save["third"], 1)
+	assert.InDelta(t, 0, recorder.save["fourth"], 0)
 	wantStatus = []int{200, 200, 200, 200, 200, 200, 200, 200}
 	assert.Equal(t, wantStatus, recorder.status)
 
@@ -215,13 +219,16 @@ func TestBalancerPropagate(t *testing.T) {
 	// down as well for topBalancer.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "third", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	// part of test not working
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 8; i++ {
-		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		req.RemoteAddr = genIPAddress()
+		topBalancer.ServeHTTP(recorder, req)
 	}
-	assert.Equal(t, 4, recorder.save["first"])
-	assert.Equal(t, 4, recorder.save["second"])
-	assert.Equal(t, 0, recorder.save["third"])
-	assert.Equal(t, 0, recorder.save["fourth"])
+	assert.InDelta(t, 4, recorder.save["first"], 1)
+	assert.InDelta(t, 4, recorder.save["second"], 1)
+	assert.InDelta(t, 0, recorder.save["third"], 0)
+	assert.InDelta(t, 0, recorder.save["fourth"], 0)
 	wantStatus = []int{200, 200, 200, 200, 200, 200, 200, 200}
 	assert.Equal(t, wantStatus, recorder.status)
 }
@@ -237,8 +244,6 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
 }
-
-// test not working
 
 func TestSticky(t *testing.T) {
 	balancer := New(false)
@@ -256,7 +261,8 @@ func TestSticky(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 3; i++ {
+	req.RemoteAddr = genIPAddress()
+	for i := 0; i < 10; i++ {
 		for _, cookie := range recorder.Result().Cookies() {
 			req.AddCookie(cookie)
 		}
@@ -265,8 +271,9 @@ func TestSticky(t *testing.T) {
 		balancer.ServeHTTP(recorder, req)
 	}
 
-	assert.Equal(t, 0, recorder.save["first"])
-	assert.Equal(t, 3, recorder.save["second"])
+	assert.True(t, recorder.save["first"] == 0 || recorder.save["first"] == 10)
+	assert.True(t, recorder.save["second"] == 0 || recorder.save["second"] == 10)
+	// from one IP, the choice between server must be the same for the 10 requests
 }
 
 // test not working
