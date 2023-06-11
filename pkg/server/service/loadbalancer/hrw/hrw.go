@@ -1,7 +1,6 @@
 package hrw
 
 import (
-	// "container/heap"
 	"context"
 	"errors"
 	"hash/fnv"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
-	// "github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 type namedHandler struct {
@@ -20,9 +18,9 @@ type namedHandler struct {
 	weight float64
 }
 
-// Balancer is a HRW load balancer based on RENDEZVOUS (HRW).
+// Balancer is a HRW load balancer based on RendezVous hashing Algorithm (HRW).
 // (https://en.m.wikipedia.org/wiki/Rendezvous_hashing)
-// providing weighted round-robin behavior with floating point weights and an O(n) pick time.
+// providing weighted stateless sticky session behavior with floating point weights and an O(n) pick time.
 // Client connects to the same server each time based on their IP source
 type Balancer struct {
 	wantsHealthCheck bool
@@ -52,7 +50,7 @@ func New(wantHealthCheck bool) *Balancer {
 	return balancer
 }
 
-// Push implements something for pushing an item into the list.
+// Push append a handler to the balancer list.
 func (b *Balancer) Push(x interface{}) {
 	h, ok := x.(*namedHandler)
 	if !ok {
@@ -61,6 +59,7 @@ func (b *Balancer) Push(x interface{}) {
 	b.handlers = append(b.handlers, h)
 }
 
+// getNodeScore calcul the score of the couple of src and handler name.
 func getNodeScore(handler *namedHandler, src string) float64 {
 	h := fnv.New32a()
 	h.Write([]byte(src + (*handler).name))
@@ -68,7 +67,6 @@ func getNodeScore(handler *namedHandler, src string) float64 {
 	score := float32(sum) / float32(math.Pow(2, 32))
 	log_score := 1.0 / -math.Log(float64(score))
 	log_weighted_score := log_score * (*handler).weight
-	// log.Debug().Msgf("log_score=%f", log_weighted_score)
 	return log_weighted_score
 }
 
@@ -157,7 +155,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// give ip fetched to b.nextServer
 	clientIP := b.strategy.GetIP(req)
-	// log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
+	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
 
 	server, err := b.nextServer(clientIP)
 	if err != nil {

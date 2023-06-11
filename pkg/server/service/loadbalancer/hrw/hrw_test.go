@@ -3,7 +3,6 @@ package hrw
 import (
 	"context"
 	"encoding/binary"
-	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// genIPAddress generate randomly an IP address as a string.
 func genIPAddress() string {
 	buf := make([]byte, 4)
 
@@ -20,10 +20,10 @@ func genIPAddress() string {
 
 	binary.LittleEndian.PutUint32(buf, ip)
 	ipStr := net.IP(buf)
-	fmt.Printf("%s\n", ipStr)
 	return ipStr.String()
 }
 
+// initStatusArray initialize an array filled with status value for test assertions.
 func initStatusArray(size int, value int) []int {
 	status := make([]int, 0, size)
 	for i := 1; i <= size; i++ {
@@ -31,6 +31,10 @@ func initStatusArray(size int, value int) []int {
 	}
 	return status
 }
+
+// Tests evaluate load balancing of single and multiple clients.
+// Due to the randomness of IP Adresses, repartition between services is not perfect
+// The tests validate repartition using a margin of 10% of the number of requests
 
 func TestBalancer(t *testing.T) {
 	balancer := New(false)
@@ -206,7 +210,6 @@ func TestBalancerPropagate(t *testing.T) {
 	wantStatus := initStatusArray(100, 200)
 	assert.Equal(t, wantStatus, recorder.status)
 
-	fmt.Println("Start part2")
 	// fourth gets downed, but balancer2 still up since third is still up.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -221,8 +224,6 @@ func TestBalancerPropagate(t *testing.T) {
 	assert.InDelta(t, 0, recorder.save["fourth"], 0)
 	wantStatus = initStatusArray(100, 200)
 	assert.Equal(t, wantStatus, recorder.status)
-
-	fmt.Println("Part 3 test start")
 
 	// third gets downed, and the propagation triggers balancer2 to be marked as
 	// down as well for topBalancer.
