@@ -338,7 +338,6 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	// here choose between WRR and HRW based on load balancer type
 	var lbHRW *hrw.Balancer
 	var lbWRR *wrr.Balancer
-	// so many ifs
 	if info.LoadBalancer.Type == "hrw" {
 		lbHRW = hrw.New(service.HealthCheck != nil)
 	} else {
@@ -369,7 +368,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
 			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
 		}
-		// so many ifs
+
 		if info.LoadBalancer.Type == "hrw" {
 			lbHRW.Add(proxyName, proxy, nil)
 		} else {
@@ -382,8 +381,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		healthCheckTargets[proxyName] = target
 	}
 
-	// so many ifs
-
+	// fills healthcheck for the service of the loadbalancer
 	if info.LoadBalancer.Type == "hrw" {
 		if service.HealthCheck != nil {
 			m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
