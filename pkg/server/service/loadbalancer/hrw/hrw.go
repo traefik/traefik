@@ -157,7 +157,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	log.Debug().Msgf("ServeHTTP()")
 	// here give ip fetched to b.nextServer
 
-	// strategyRM := ip.RemoteAddrStrategy{}
+	strategyRM := ip.RemoteAddrStrategy{}
 	sourceRange := []string{}
 	sourceRange = append(sourceRange, "10.0.50.30")
 	checker, _ := ip.NewChecker(sourceRange)
@@ -167,9 +167,11 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	clientIP := strategy.GetIP(req)
+	clientIPRM := strategyRM.GetIP(req)
 	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
+	log.Debug().Msgf("ServeHTTP() clientIPRM=%s", clientIPRM)
 
-	server, err := b.nextServer(clientIP)
+	server, err := b.nextServer(clientIPRM)
 	if err != nil {
 		log.Debug().Err(err).Msg("ServeHTTP() err")
 		if errors.Is(err, errNoAvailableServer) {

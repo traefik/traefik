@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// test not working
 func TestBalancer(t *testing.T) {
 	balancer := New(false)
 
@@ -23,9 +24,15 @@ func TestBalancer(t *testing.T) {
 	}), Int(1))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 4; i++ {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	}
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "10.0.0.1:8080"
+	balancer.ServeHTTP(recorder, req)
+	req.RemoteAddr = "10.0.0.2:8080"
+	balancer.ServeHTTP(recorder, req)
+	req.RemoteAddr = "10.0.0.3:8080"
+	balancer.ServeHTTP(recorder, req)
+	req.RemoteAddr = "10.0.0.4:8080"
+	balancer.ServeHTTP(recorder, req)
 
 	assert.Equal(t, 3, recorder.save["first"])
 	assert.Equal(t, 1, recorder.save["second"])
@@ -103,6 +110,8 @@ func TestBalancerOneServerDown(t *testing.T) {
 	assert.Equal(t, 3, recorder.save["first"])
 }
 
+// test not working
+
 func TestBalancerDownThenUp(t *testing.T) {
 	balancer := New(false)
 
@@ -125,9 +134,11 @@ func TestBalancerDownThenUp(t *testing.T) {
 
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 2; i++ {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	}
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "10.0.0.1:8080"
+	balancer.ServeHTTP(recorder, req)
+	req.RemoteAddr = "10.0.0.2:8080"
+	balancer.ServeHTTP(recorder, req)
 	assert.Equal(t, 1, recorder.save["first"])
 	assert.Equal(t, 1, recorder.save["second"])
 }
