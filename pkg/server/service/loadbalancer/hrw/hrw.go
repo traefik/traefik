@@ -42,14 +42,12 @@ type Balancer struct {
 
 // New creates a new load balancer.
 func New(wantHealthCheck bool) *Balancer {
-	log.Debug().Msgf("New() 1")
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		wantsHealthCheck: wantHealthCheck,
 		strategy:         ip.RemoteAddrStrategy{},
 	}
 
-	log.Debug().Msgf("New() 2")
 	return balancer
 }
 
@@ -63,17 +61,13 @@ func (b *Balancer) Push(x interface{}) {
 }
 
 func getNodeScore(handler *namedHandler, src string) float64 {
-	log.Debug().Msgf("getNodeScore() name=%s", src+(*handler).name)
 	h := fnv.New32a()
 	h.Write([]byte(src + (*handler).name))
 	sum := h.Sum32()
-	log.Debug().Msgf("getNodeScore() sum=%d", sum)
 	score := float32(sum) / float32(math.Pow(2, 32))
-	log.Debug().Msgf("getNodeScore() score=%f", score)
 	log_score := 1.0 / -math.Log(float64(score))
-	log.Debug().Msgf("getNodeScore() log_score=%f", score)
 	log_weighted_score := log_score * (*handler).weight
-	log.Debug().Msgf("getNodeScore() log_score=%f", log_weighted_score)
+	// log.Debug().Msgf("log_score=%f", log_weighted_score)
 	return log_weighted_score
 }
 
@@ -132,7 +126,6 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
-	log.Debug().Msgf("nextServer()")
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -159,7 +152,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// give ip fetched to b.nextServer
 	clientIP := b.strategy.GetIP(req)
-	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
+	// log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
 
 	server, err := b.nextServer(clientIP)
 	if err != nil {
