@@ -51,19 +51,6 @@ func New(wantHealthCheck bool) *Balancer {
 	return balancer
 }
 
-// // Len implements heap.Interface/sort.Interface.
-// func (b *Balancer) Len() int { return len(b.handlers) }
-
-// // Less implements heap.Interface/sort.Interface.
-// func (b *Balancer) Less(i, j int) bool {
-// 	return b.handlers[i].deadline < b.handlers[j].deadline
-// }
-
-// // Swap implements heap.Interface/sort.Interface.
-// func (b *Balancer) Swap(i, j int) {
-// 	b.handlers[i], b.handlers[j] = b.handlers[j], b.handlers[i]
-// }
-
 // Push implements something for pushing an item into the list.
 func (b *Balancer) Push(x interface{}) {
 	h, ok := x.(*namedHandler)
@@ -72,14 +59,6 @@ func (b *Balancer) Push(x interface{}) {
 	}
 	b.handlers = append(b.handlers, h)
 }
-
-// // Pop implements heap.Interface for popping an item from the heap.
-// // It panics if b.Len() < 1.
-// func (b *Balancer) Pop() interface{} {
-// 	h := b.handlers[len(b.handlers)-1]
-// 	b.handlers = b.handlers[0 : len(b.handlers)-1]
-// 	return h
-// }
 
 func getNodeScore(handler *namedHandler, src string) float64 {
 	log.Debug().Msgf("getNodeScore() name=%s", src+(*handler).name)
@@ -91,7 +70,9 @@ func getNodeScore(handler *namedHandler, src string) float64 {
 	log.Debug().Msgf("getNodeScore() score=%f", score)
 	log_score := 1.0 / -math.Log(float64(score))
 	log.Debug().Msgf("getNodeScore() log_score=%f", score)
-	return log_score
+	log_weighted_score := log_score * (*handler).weight
+	log.Debug().Msgf("getNodeScore() log_score=%f", log_weighted_score)
+	return log_weighted_score
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
@@ -175,18 +156,18 @@ func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	log.Debug().Msgf("ServeHTTP()")
 	// here give ip fetched to b.nextServer
+
+	// strategyRM := ip.RemoteAddrStrategy{}
 	sourceRange := []string{}
+	sourceRange = append(sourceRange, "10.0.50.30")
 	checker, _ := ip.NewChecker(sourceRange)
 
 	strategy := &ip.PoolStrategy{
 		Checker: checker,
 	}
-	strategyRM := ip.RemoteAddrStrategy{}
 
 	clientIP := strategy.GetIP(req)
-	clientIPRM := strategyRM.GetIP(req)
 	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
-	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIPRM)
 
 	server, err := b.nextServer(clientIP)
 	if err != nil {
