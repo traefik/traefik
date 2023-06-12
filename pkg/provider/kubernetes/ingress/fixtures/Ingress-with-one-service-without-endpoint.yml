@@ -1,0 +1,29 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name: service1
+                port:
+                  number: 80
+            pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+  - port: 80
+  clusterIP: 10.0.0.1

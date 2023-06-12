@@ -68,28 +68,6 @@ spec:
                   number: 80
 ```
 
-```yaml tab="Ingress v1beta1 (deprecated)"
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: foo
-  namespace: production
-
-spec:
-  rules:
-    - host: example.net
-      http:
-        paths:
-          - path: /bar
-            backend:
-              serviceName: service1
-              servicePort: 80
-          - path: /foo
-            backend:
-              serviceName: service1
-              servicePort: 80
-```
-
 ## LetsEncrypt Support with the Ingress Provider
 
 By design, Traefik is a stateless application,
@@ -257,46 +235,7 @@ Value of `kubernetes.io/ingress.class` annotation that identifies Ingress object
 If the parameter is set, only Ingresses containing an annotation with the same value are processed.
 Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 
-??? info "Kubernetes 1.18+"
-
-    If the Kubernetes cluster version is 1.18+,
-    the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
-    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*.
-
-    In addition to the controller value matching mechanism, the property `ingressClass` (if set) will be used to select IngressClasses by applying a strict matching on their name.
-
-    Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
-
-    ```yaml tab="IngressClass"
-    apiVersion: networking.k8s.io/v1beta1
-    kind: IngressClass
-    metadata:
-      name: traefik-lb
-    spec:
-      controller: traefik.io/ingress-controller
-    ```
-
-    ```yaml tab="Ingress"
-    apiVersion: networking.k8s.io/v1beta1
-    kind: Ingress
-    metadata:
-      name: example-ingress
-    spec:
-      ingressClassName: traefik-lb
-      rules:
-      - host: "*.example.com"
-        http:
-          paths:
-          - path: /example
-            backend:
-              serviceName: example-service
-              servicePort: 80
-    ```
-
-??? info "Kubernetes 1.19+"
-
-    If the Kubernetes cluster version is 1.19+,
-    prefer using the `networking.k8s.io/v1` [apiVersion](https://v1-19.docs.kubernetes.io/docs/setup/release/notes/#api-change) of `Ingress` and `IngressClass`.
+??? info "Example"
 
     ```yaml tab="IngressClass"
     apiVersion: networking.k8s.io/v1
