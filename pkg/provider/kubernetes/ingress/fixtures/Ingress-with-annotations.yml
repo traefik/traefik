@@ -1,0 +1,70 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+  annotations:
+    ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/router.pathmatcher: Path
+    traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
+    traefik.ingress.kubernetes.io/router.middlewares: md1,md2
+    traefik.ingress.kubernetes.io/router.priority: "42"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver:   foobar
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: domain.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: one.domain.com,two.domain.com
+    traefik.ingress.kubernetes.io/router.tls.domains.1.main: example.com
+    traefik.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
+    traefik.ingress.kubernetes.io/router.tls.options: foobar
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name: service1
+                port:
+                  number: 80
+            pathType: Exact
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/service.serversscheme: protocol
+    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
+    traefik.ingress.kubernetes.io/service.passhostheader: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
+    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
+
+spec:
+  ports:
+    - port: 80
+  clusterIP: 10.0.0.1
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+    ports:
+      - port: 8080
+  - addresses:
+      - ip: 10.21.0.1
+    ports:
+      - port: 8080
