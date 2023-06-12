@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/go-errors/errors"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -32,7 +31,7 @@ func newClientMock(path string) clientMock {
 
 	yamlContent, err := os.ReadFile(path)
 	if err != nil {
-		panic(errors.Errorf("Unable to read file %q: %w", path, err))
+		panic(fmt.Errorf("unable to read file %q: %w", path, err))
 	}
 
 	k8sObjects := k8s.MustParseYaml(yamlContent)
