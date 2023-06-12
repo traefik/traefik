@@ -1,0 +1,31 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: example.com
+  namespace: testing
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /foo
+            backend:
+              service:
+                name: service-foo
+                port:
+                  number: 8080
+            pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service-foo
+  namespace: testing
+
+spec:
+  ports:
+    - name: http
+      port: 8080
+  type: ExternalName
+  externalName: "2001:0db8:3c4d:0015:0000:0000:1a2f:2a3b"
