@@ -1,6 +1,6 @@
 ---
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 metadata:
   name: ""
   namespace: testing
@@ -12,16 +12,22 @@ spec:
         paths:
           - path: /bar
             backend:
-              serviceName: service1
-              servicePort: tchouk
+              service:
+                name: service1
+                port:
+                  name: tchouk
+            pathType: Prefix
           - path: /foo
             backend:
-              serviceName: service1
-              servicePort: carotte
+              service:
+                name: service1
+                port:
+                  name: carotte
+            pathType: Prefix
 
 ---
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 metadata:
   name: ""
   namespace: toto
@@ -33,5 +39,8 @@ spec:
         paths:
           - path: /bar
             backend:
-              serviceName: service1
-              servicePort: tchouk
+              service:
+                name: service1
+                port:
+                  name: tchouk
+            pathType: Prefix
