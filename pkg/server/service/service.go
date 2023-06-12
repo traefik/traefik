@@ -98,19 +98,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, err
 	}
 
-	// // need access to sourcerange
-	// sourceRange := []string{}
-	// checker, err := ip.NewChecker(sourceRange)
-	// if err != nil {
-	// 	// check the error need to be reformatted
-	// 	return nil, fmt.Errorf("cannot parse CIDRs %s: %w", sourceRange, err)
-	// }
-
-	// strategy, err := ip.RemoteAddrStrategy()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	var lb http.Handler
 
 	switch {

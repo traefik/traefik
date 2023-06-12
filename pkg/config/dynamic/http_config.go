@@ -122,7 +122,7 @@ type WeightedRoundRobin struct {
 
 // +k8s:deepcopy-gen=true
 
-// HighestRandomWeight is a weighted round robin load-balancer of services.
+// HighestRandomWeight is a weighted sticky load-balancer of services.
 type HighestRandomWeight struct {
 	Services []HRWService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	// HealthCheck enables automatic self-healthcheck for this service, i.e.
@@ -135,7 +135,7 @@ type HighestRandomWeight struct {
 
 // +k8s:deepcopy-gen=true
 
-// WRRService is a reference to a service load-balanced with hrw weighted round-robin.
+// WRRService is a reference to a service load-balanced with weighted round-robin.
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
@@ -143,13 +143,13 @@ type WRRService struct {
 
 // +k8s:deepcopy-gen=true
 
-// HRWService is a reference to a service load-balanced with weighted round-robin.
+// HRWService is a reference to a service load-balanced with highest random weight.
 type HRWService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
 }
 
-// SetDefaults Default values for a WRRService.
+// SetDefaults Default values for a HRWService.
 func (w *HRWService) SetDefaults() {
 	defaultWeight := 1
 	w.Weight = &defaultWeight
