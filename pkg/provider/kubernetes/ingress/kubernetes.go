@@ -212,11 +212,9 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		TCP: &dynamic.TCPConfiguration{},
 	}
 
-	serverVersion := client.GetServerVersion()
-
 	var ingressClasses []*netv1.IngressClass
 
-	if !p.DisableIngressClassLookup && supportsIngressClass(serverVersion) {
+	if !p.DisableIngressClassLookup {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")

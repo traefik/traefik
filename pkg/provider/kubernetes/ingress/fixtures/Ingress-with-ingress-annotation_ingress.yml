@@ -15,3 +15,4 @@ spec:
             name: service1
             port:
               number: 80
+        pathType: prefix

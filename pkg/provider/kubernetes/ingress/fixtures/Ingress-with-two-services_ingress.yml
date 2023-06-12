@@ -1,5 +1,5 @@
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 metadata:
   name: ""
   namespace: testing
@@ -11,12 +11,18 @@ spec:
       paths:
       - path: /bar
         backend:
-          serviceName: service1
-          servicePort: 80
+          service:
+            name: service1
+            port:
+              number: 80
+        pathType: Prefix
   - host: traefik.courgette
     http:
       paths:
       - path: /carotte
         backend:
-          serviceName: service2
-          servicePort: 8082
+          service:
+            name: service2
+            port:
+              number: 8082
+        pathType: Prefix

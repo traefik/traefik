@@ -1,5 +1,5 @@
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 metadata:
   name: example.com
   namespace: testing
@@ -10,9 +10,15 @@ spec:
         paths:
           - path: /bar
             backend:
-              serviceName: service-bar
-              servicePort: 8080
+              service:
+                name: service-bar
+                port:
+                  number: 8080
+            pathType: Prefix
           - path: /foo
             backend:
-              serviceName: service-foo
-              servicePort: 8080
+              service:
+                name: service-foo
+                port:
+                  number: 8080
+            pathType: Prefix
