@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -1347,7 +1346,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
 			// Showing that disabling the ingressClass discovery still allow the discovery of ingresses with ingress annotation.
-			desc: "Ingress with ingress annotation",
+			desc:                      "Ingress with ingress annotation",
+			disableIngressClassLookup: true,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1500,29 +1500,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var paths []string
-			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingress", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_endpoint", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_service", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_service", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_secret", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_secret", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
-			}
-
-			clientMock := newClientMock(paths...)
+			clientMock := newClientMock(generateTestFilename(test.desc))
 			p := Provider{
 				IngressClass:              test.ingressClass,
 				AllowEmptyServices:        test.allowEmptyServices,
@@ -1653,29 +1631,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var paths []string
-			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingress", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_endpoint", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_service", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_service", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_secret", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_secret", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
-			}
-
-			clientMock := newClientMock(paths...)
+			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
@@ -1728,29 +1684,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var paths []string
-			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingress", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_endpoint", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_service", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_service", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_secret", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_secret", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
-			}
-
-			clientMock := newClientMock(paths...)
+			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
@@ -1760,8 +1694,8 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 	}
 }
 
-func generateTestFilename(suffix, desc string) string {
-	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
+func generateTestFilename(desc string) string {
+	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+".yml")
 }
 
 func TestGetCertificates(t *testing.T) {

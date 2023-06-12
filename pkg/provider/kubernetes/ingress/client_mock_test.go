@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-errors/errors"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -26,31 +27,29 @@ type clientMock struct {
 	watchChan chan interface{}
 }
 
-func newClientMock(paths ...string) clientMock {
+func newClientMock(path string) clientMock {
 	c := clientMock{}
 
-	for _, path := range paths {
-		yamlContent, err := os.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
+	yamlContent, err := os.ReadFile(path)
+	if err != nil {
+		panic(errors.Errorf("Unable to read file %q: %w", path, err))
+	}
 
-		k8sObjects := k8s.MustParseYaml(yamlContent)
-		for _, obj := range k8sObjects {
-			switch o := obj.(type) {
-			case *corev1.Service:
-				c.services = append(c.services, o)
-			case *corev1.Secret:
-				c.secrets = append(c.secrets, o)
-			case *corev1.Endpoints:
-				c.endpoints = append(c.endpoints, o)
-			case *netv1.Ingress:
-				c.ingresses = append(c.ingresses, o)
-			case *netv1.IngressClass:
-				c.ingressClasses = append(c.ingressClasses, o)
-			default:
-				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
-			}
+	k8sObjects := k8s.MustParseYaml(yamlContent)
+	for _, obj := range k8sObjects {
+		switch o := obj.(type) {
+		case *corev1.Service:
+			c.services = append(c.services, o)
+		case *corev1.Secret:
+			c.secrets = append(c.secrets, o)
+		case *corev1.Endpoints:
+			c.endpoints = append(c.endpoints, o)
+		case *netv1.Ingress:
+			c.ingresses = append(c.ingresses, o)
+		case *netv1.IngressClass:
+			c.ingressClasses = append(c.ingressClasses, o)
+		default:
+			panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 		}
 	}
 
