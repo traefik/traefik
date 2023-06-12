@@ -33,6 +33,8 @@ linters-settings:
             desc: not allowed
           - pkg: "github.com/pkg/errors"
             desc: Should be replaced by standard lib errors package
+          - pkg: "k8s.io/api/networking/v1beta1"
+            desc: This API is deprecated
   godox:
     keywords:
       - FIXME
@@ -47,8 +49,6 @@ linters-settings:
         pkg: "k8s.io/api/core/v1"
       - alias: netv1
         pkg: "k8s.io/api/networking/v1"
-      - alias: netv1beta1
-        pkg: "k8s.io/api/networking/v1beta1"
       - alias: admv1
         pkg: "k8s.io/api/admission/v1"
       - alias: admv1beta1
