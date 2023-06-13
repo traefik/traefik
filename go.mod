@@ -57,7 +57,7 @@ require (
 	github.com/quic-go/quic-go v0.33.0
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/traefik/paerser v0.2.0
 	github.com/traefik/yaegi v0.15.1
@@ -76,7 +76,7 @@ require (
 	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.6.0
 	google.golang.org/grpc v1.53.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.51.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.3
@@ -104,9 +104,13 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/obfuscate v0.0.0-20211129110424-6491aa3bf583 // indirect
+	github.com/DataDog/appsec-internal-go v1.0.0 // indirect
+	github.com/DataDog/datadog-agent/pkg/obfuscate v0.45.0-rc.1 // indirect
+	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.45.0-rc.1 // indirect
 	github.com/DataDog/datadog-go v4.8.2+incompatible // indirect
-	github.com/DataDog/datadog-go/v5 v5.0.2 // indirect
+	github.com/DataDog/datadog-go/v5 v5.1.1 // indirect
+	github.com/DataDog/go-libddwaf v1.2.0 // indirect
+	github.com/DataDog/go-tuf v0.3.0--fix-localmeta-fork // indirect
 	github.com/DataDog/sketches-go v1.2.1 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -140,7 +144,6 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.9.1 // indirect
-	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/distribution/distribution/v3 v3.0.0-20210316161203-a01c71e2477e // indirect
@@ -178,7 +181,6 @@ require (
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
-	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/btree v1.0.1 // indirect
@@ -274,6 +276,7 @@ require (
 	github.com/opencontainers/runc v1.1.4 // indirect
 	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
 	github.com/oracle/oci-go-sdk v24.3.0+incompatible // indirect
+	github.com/outcaste-io/ristretto v0.2.1 // indirect
 	github.com/ovh/go-ovh v1.1.0 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -291,6 +294,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.5.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/simplesurance/bunny-go v0.0.0-20221115111006-e11d9dc91f04 // indirect
@@ -304,7 +308,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.490 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/dnspod v1.0.490 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
-	github.com/tinylib/msgp v1.1.2 // indirect
+	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20201103201449-0834f99b7b85 // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
 	github.com/transip/gotransip/v6 v6.17.0 // indirect
@@ -323,7 +327,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.5 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
@@ -346,7 +350,7 @@ require (
 	gopkg.in/ns1/ns1-go.v2 v2.6.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
-	inet.af/netaddr v0.0.0-20220617031823-097006376321 // indirect
+	inet.af/netaddr v0.0.0-20220811202034-502d2d690317 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
