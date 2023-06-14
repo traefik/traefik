@@ -209,7 +209,7 @@ func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
 		r.DisableRetries()
 	}
 
-	if r.ShouldRetry() {
+	if r.ShouldRetry() || r.written {
 		return
 	}
 
@@ -223,6 +223,13 @@ func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
 	}
 
 	r.responseWriter.WriteHeader(code)
+
+	// Handling informational headers.
+	// This allows to keep writing to r.headers map until a final status code is written.
+	if code >= 100 && code <= 199 {
+		return
+	}
+
 	r.written = true
 }
 
