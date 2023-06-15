@@ -172,7 +172,7 @@ metadata:
   name: traefik-dashboard-service
 
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: dashboard
@@ -185,7 +185,7 @@ metadata:
   name: traefik-web-service
 
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - targetPort: web
       port: 80
