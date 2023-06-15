@@ -1433,7 +1433,7 @@ func (s *SimpleSuite) TestEncodeSemicolons(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`other.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
 	testCases := []struct {
