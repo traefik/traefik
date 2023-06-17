@@ -211,7 +211,7 @@ spec:
         - bar.example.org
 ```
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 ## Dynamic configuration
 labels:
   - "traefik.tls.stores.default.defaultgeneratedcert.resolver=myresolver"

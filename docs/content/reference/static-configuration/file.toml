@@ -83,12 +83,26 @@
     defaultRule = "foobar"
     exposedByDefault = true
     useBindPortIP = true
-    swarmMode = true
     network = "foobar"
-    swarmModeRefreshSeconds = "42s"
     httpClientTimeout = "42s"
     allowEmptyServices = true
     [providers.docker.tls]
+      ca = "foobar"
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [providers.swarm]
+    constraints = "foobar"
+    watch = true
+    endpoint = "foobar"
+    defaultRule = "foobar"
+    exposedByDefault = true
+    useBindPortIP = true
+    network = "foobar"
+    refreshSeconds = "42s"
+    httpClientTimeout = "42s"
+    allowEmptyServices = true
+    [providers.swarm.tls]
       ca = "foobar"
       cert = "foobar"
       key = "foobar"

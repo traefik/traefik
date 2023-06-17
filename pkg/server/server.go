@@ -73,6 +73,7 @@ func (s *Server) Wait() {
 
 // Stop stops the server.
 func (s *Server) Stop() {
+	//nolint:zerologlint // false-positive https://github.com/ykadowak/zerologlint/issues/3
 	defer log.Info().Msg("Server stopped")
 
 	s.tcpEntryPoints.Stop()

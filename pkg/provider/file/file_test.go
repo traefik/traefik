@@ -63,7 +63,7 @@ func TestTLSCertificateContent(t *testing.T) {
       keyFile = "` + fileTLSKey.Name() + `"
 `
 
-	_, err = fileConfig.Write([]byte(content))
+	_, err = fileConfig.WriteString(content)
 	require.NoError(t, err)
 
 	provider := &Provider{}

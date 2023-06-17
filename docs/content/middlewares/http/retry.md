@@ -18,7 +18,7 @@ The Retry middleware has an optional configuration to enable an exponential back
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Retry 4 times with exponential backoff
 labels:
   - "traefik.http.middlewares.test-retry.retry.attempts=4"

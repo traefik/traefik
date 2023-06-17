@@ -1,3 +1,2 @@
 - "traefik.enable=true"
 - "traefik.docker.network=foobar"
-- "traefik.docker.lbswarm=true"

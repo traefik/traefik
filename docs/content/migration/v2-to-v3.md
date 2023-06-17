@@ -87,3 +87,10 @@ In v3, the InfluxDB v1 metrics provider has been removed because InfluxDB v1.x m
 
 In v3 the Kubernetes CRDs API Group `traefik.containo.us` has been removed. 
 Please use the API Group `traefik.io` instead.
+
+## Docker & Docker Swarm
+
+In v3, the provider Docker has been split into 2 providers:
+
+- Docker provider (without Swarm support)
+- Swarm provider  (Swarm support only)
