@@ -1,3 +1,9 @@
+## [v2.10.3](https://github.com/traefik/traefik/tree/v2.10.3) (2023-06-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.2...v2.10.3)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.12.2 ([#9935](https://github.com/traefik/traefik/pull/9971) by [ldez](https://github.com/ldez))
+
 ## [v2.10.2](https://github.com/traefik/traefik/tree/v2.10.2) (2023-06-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.10.1...v2.10.2)
 
@@ -10,7 +16,7 @@
 - **[k8s/ingress,k8s/crd,k8s,hub]** Clean code related to Hub ([#9894](https://github.com/traefik/traefik/pull/9894) by [ldez](https://github.com/ldez))
 - **[metrics]** Enable Prometheus provider cleanup when only the router&#39;s metrics level is activated ([#9887](https://github.com/traefik/traefik/pull/9887) by [rtribotte](https://github.com/rtribotte))
 - **[middleware]** Encode query semicolons ([#9943](https://github.com/traefik/traefik/pull/9943) by [LandryBe](https://github.com/LandryBe))
-- **[middleware]** Mssing trailer with custom errors middleware ([#9942](https://github.com/traefik/traefik/pull/9942) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Missing trailer with custom errors middleware ([#9942](https://github.com/traefik/traefik/pull/9942) by [rtribotte](https://github.com/rtribotte))
 - **[middleware]** Support informational headers in middlewares redefining the response writer. ([#9938](https://github.com/traefik/traefik/pull/9938) by [rtribotte](https://github.com/rtribotte))
 - **[plugins]** Improve error messages related to plugins ([#9924](https://github.com/traefik/traefik/pull/9924) by [ldez](https://github.com/ldez))
 - **[tracing]** Update DataDog tracing dependency to v1.50.1 ([#9953](https://github.com/traefik/traefik/pull/9953) by [der-eismann](https://github.com/der-eismann))
