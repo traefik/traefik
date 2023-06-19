@@ -73,7 +73,7 @@ blocks:
           - curl -sSL -o /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz
           - tar -zxvf /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz -C /tmp
           - sudo mv /tmp/gh_${GH_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh
-          - sudo rm -rf ~/.phpbrew ~/.kerl ~/.sbt ~/.nvm ~/.npm ~/.kiex /usr/lib/jvm /opt/az /opt/firefox # Remove unnecessary data.
+          - sudo rm -rf ~/.phpbrew ~/.kerl ~/.sbt ~/.nvm ~/.npm ~/.kiex /usr/lib/jvm /opt/az /opt/firefox /usr/lib/google-cloud-sdk ~/.rbenv ~/.pip_download_cache # Remove unnecessary data.
           - sudo service docker stop && sudo umount /var/lib/docker && sudo service docker start # Unmounts the docker disk and the whole system disk is usable.
       jobs:
         - name: Release
