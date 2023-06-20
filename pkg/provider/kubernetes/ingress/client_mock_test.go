@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/go-version"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
-	netv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
@@ -20,8 +18,6 @@ type clientMock struct {
 	endpoints      []*corev1.Endpoints
 	ingressClasses []*netv1.IngressClass
 
-	serverVersion *version.Version
-
 	apiServiceError       error
 	apiSecretError        error
 	apiEndpointsError     error
@@ -30,46 +26,29 @@ type clientMock struct {
 	watchChan chan interface{}
 }
 
-func newClientMock(serverVersion string, paths ...string) clientMock {
+func newClientMock(path string) clientMock {
 	c := clientMock{}
 
-	c.serverVersion = version.Must(version.NewVersion(serverVersion))
+	yamlContent, err := os.ReadFile(path)
+	if err != nil {
+		panic(fmt.Errorf("unable to read file %q: %w", path, err))
+	}
 
-	for _, path := range paths {
-		yamlContent, err := os.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-
-		k8sObjects := k8s.MustParseYaml(yamlContent)
-		for _, obj := range k8sObjects {
-			switch o := obj.(type) {
-			case *corev1.Service:
-				c.services = append(c.services, o)
-			case *corev1.Secret:
-				c.secrets = append(c.secrets, o)
-			case *corev1.Endpoints:
-				c.endpoints = append(c.endpoints, o)
-			case *netv1beta1.Ingress:
-				ing, err := convert[netv1.Ingress](o)
-				if err != nil {
-					panic(err)
-				}
-				addServiceFromV1Beta1(ing, *o)
-				c.ingresses = append(c.ingresses, ing)
-			case *netv1.Ingress:
-				c.ingresses = append(c.ingresses, o)
-			case *netv1beta1.IngressClass:
-				ic, err := convert[netv1.IngressClass](o)
-				if err != nil {
-					panic(err)
-				}
-				c.ingressClasses = append(c.ingressClasses, ic)
-			case *netv1.IngressClass:
-				c.ingressClasses = append(c.ingressClasses, o)
-			default:
-				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
-			}
+	k8sObjects := k8s.MustParseYaml(yamlContent)
+	for _, obj := range k8sObjects {
+		switch o := obj.(type) {
+		case *corev1.Service:
+			c.services = append(c.services, o)
+		case *corev1.Secret:
+			c.secrets = append(c.secrets, o)
+		case *corev1.Endpoints:
+			c.endpoints = append(c.endpoints, o)
+		case *netv1.Ingress:
+			c.ingresses = append(c.ingresses, o)
+		case *netv1.IngressClass:
+			c.ingressClasses = append(c.ingressClasses, o)
+		default:
+			panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 		}
 	}
 
@@ -78,10 +57,6 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 
 func (c clientMock) GetIngresses() []*netv1.Ingress {
 	return c.ingresses
-}
-
-func (c clientMock) GetServerVersion() *version.Version {
-	return c.serverVersion
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
