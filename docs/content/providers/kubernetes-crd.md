@@ -16,9 +16,7 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
 ## Requirements
 
-Traefik follows the [Kubernetes support policy](https://kubernetes.io/releases/version-skew-policy/#supported-versions),
-and supports at least the latest three minor versions of Kubernetes.
-General functionality cannot be guaranteed for versions older than that.
+{!kubernetes-requirements.md!}
 
 !!! tip "All Steps for a Successful Deployment"
 
