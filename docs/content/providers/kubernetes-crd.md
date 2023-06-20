@@ -16,6 +16,8 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
 ## Configuration Requirements
 
+Traefik supports `1.23+` Kubernetes clusters.
+
 !!! tip "All Steps for a Successful Deployment"
 
     * Add/update **all** the Traefik resources [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions)
@@ -24,12 +26,6 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
         * Enable the kubernetesCRD provider
         * Apply the needed kubernetesCRD provider [configuration](#provider-configuration)
     * Add all necessary Traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
-
-!!! warning "Deprecated apiextensions.k8s.io/v1beta1 CRD"
-
-    The `apiextensions.k8s.io/v1beta1` CustomResourceDefinition is deprecated in Kubernetes `v1.16+` and will be removed in `v1.22+`.
-    
-    For Kubernetes `v1.16+`, please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
 
 !!! example "Installing Resource Definition and RBAC"
 
