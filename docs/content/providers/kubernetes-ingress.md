@@ -13,7 +13,9 @@ it manages access to cluster services by supporting the [Ingress](https://kubern
 
 ## Requirements
 
-Traefik supports `1.23+` Kubernetes clusters.
+Traefik follows the [Kubernetes support policy](https://kubernetes.io/releases/version-skew-policy/#supported-versions),
+and supports at least the latest three minor versions of Kubernetes.
+General functionality cannot be guaranteed for versions older than that.
 
 ## Routing Configuration
 
