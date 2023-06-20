@@ -70,6 +70,10 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
+		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, entryPointReqsBytesTotalName,
+			"The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
+		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, entryPointRespsBytesTotalName,
+			"The total size of responses in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddRoutersLabels {
@@ -80,6 +84,10 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
+		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, routerReqsBytesTotalName,
+			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
+		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
+			"The total size of responses in bytes handled by a router, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddServicesLabels {
@@ -95,6 +103,10 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
 			"service server is up, described by gauge value of 0 or 1.",
 			unit.Dimensionless)
+		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, serviceReqsBytesTotalName,
+			"The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.")
+		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, serviceRespsBytesTotalName,
+			"The total size of responses in bytes returned by a service, partitioned by status code, protocol, and method.")
 	}
 
 	return reg
