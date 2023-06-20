@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   server:
-    image: rancher/k3s:v1.20.15-k3s1
+    image: rancher/k3s:v1.23.17-k3s1
     command: server --disable-agent --no-deploy coredns --no-deploy servicelb --no-deploy traefik --no-deploy local-storage --no-deploy metrics-server --log /output/k3s.log --bind-address=server --tls-san=server
     environment:
       K3S_CLUSTER_SECRET: somethingtotallyrandom
@@ -12,7 +12,7 @@ services:
       - ./fixtures/k8s:/var/lib/rancher/k3s/server/manifests
 
   node:
-    image: rancher/k3s:v1.20.15-k3s1
+    image: rancher/k3s:v1.23.17-k3s1
     privileged: true
     environment:
       K3S_URL: https://server:6443
