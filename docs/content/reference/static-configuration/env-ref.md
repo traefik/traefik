@@ -129,6 +129,9 @@ HTTP/3 configuration. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
+Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 

@@ -30,7 +30,7 @@ type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
-// customErrors is a middleware that provides the custom error pages..
+// customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
 	name           string
 	next           http.Handler
@@ -121,10 +121,10 @@ func newRequest(baseURL string) (*http.Request, error) {
 	return req, nil
 }
 
-// codeCatcher is a response writer that detects as soon as possible whether the
-// response is a code within the ranges of codes it watches for. If it is, it
-// simply drops the data from the response. Otherwise, it forwards it directly to
-// the original client (its responseWriter) without any buffering.
+// codeCatcher is a response writer that detects as soon as possible
+// whether the response is a code within the ranges of codes it watches for.
+// If it is, it simply drops the data from the response.
+// Otherwise, it forwards it directly to the original client (its responseWriter) without any buffering.
 type codeCatcher struct {
 	headerMap          http.Header
 	code               int
@@ -144,6 +144,10 @@ func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges)
 }
 
 func (cc *codeCatcher) Header() http.Header {
+	if cc.headersSent {
+		return cc.responseWriter.Header()
+	}
+
 	if cc.headerMap == nil {
 		cc.headerMap = make(http.Header)
 	}
@@ -175,8 +179,22 @@ func (cc *codeCatcher) Write(buf []byte) (int, error) {
 	return cc.responseWriter.Write(buf)
 }
 
+// WriteHeader is, in the specific case of 1xx status codes, a direct call to the wrapped ResponseWriter, without marking headers as sent,
+// allowing so further calls.
 func (cc *codeCatcher) WriteHeader(code int) {
 	if cc.headersSent || cc.caughtFilteredCode {
+		return
+	}
+
+	// Handling informational headers.
+	if code >= 100 && code <= 199 {
+		// Multiple informational status codes can be used,
+		// so here the copy is not appending the values to not repeat them.
+		for k, v := range cc.Header() {
+			cc.responseWriter.Header()[k] = v
+		}
+
+		cc.responseWriter.WriteHeader(code)
 		return
 	}
 
@@ -190,7 +208,11 @@ func (cc *codeCatcher) WriteHeader(code int) {
 		}
 	}
 
-	utils.CopyHeaders(cc.responseWriter.Header(), cc.Header())
+	// The copy is not appending the values,
+	// to not repeat them in case any informational status code has been written.
+	for k, v := range cc.Header() {
+		cc.responseWriter.Header()[k] = v
+	}
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
 }
@@ -247,6 +269,10 @@ func newCodeModifier(rw http.ResponseWriter, code int) *codeModifier {
 
 // Header returns the response headers.
 func (r *codeModifier) Header() http.Header {
+	if r.headerSent {
+		return r.responseWriter.Header()
+	}
+
 	if r.headerMap == nil {
 		r.headerMap = make(http.Header)
 	}
@@ -261,14 +287,30 @@ func (r *codeModifier) Write(buf []byte) (int, error) {
 	return r.responseWriter.Write(buf)
 }
 
-// WriteHeader sends the headers, with the enforced code (the code in argument
-// is always ignored), if it hasn't already been done.
-func (r *codeModifier) WriteHeader(_ int) {
+// WriteHeader sends the headers, with the enforced code (the code in argument is always ignored),
+// if it hasn't already been done.
+// WriteHeader is, in the specific case of 1xx status codes, a direct call to the wrapped ResponseWriter, without marking headers as sent,
+// allowing so further calls.
+func (r *codeModifier) WriteHeader(code int) {
 	if r.headerSent {
 		return
 	}
 
-	utils.CopyHeaders(r.responseWriter.Header(), r.Header())
+	// Handling informational headers.
+	if code >= 100 && code <= 199 {
+		// Multiple informational status codes can be used,
+		// so here the copy is not appending the values to not repeat them.
+		for k, v := range r.headerMap {
+			r.responseWriter.Header()[k] = v
+		}
+
+		r.responseWriter.WriteHeader(code)
+		return
+	}
+
+	for k, v := range r.headerMap {
+		r.responseWriter.Header()[k] = v
+	}
 	r.responseWriter.WriteHeader(r.code)
 	r.headerSent = true
 }

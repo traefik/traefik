@@ -54,6 +54,7 @@ entryPoints:
         - foobar
         - foobar
     http:
+      encodeQuerySemicolons: true
       redirections:
         entryPoint:
           to: foobar
