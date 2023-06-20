@@ -1,0 +1,32 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+  [entryPoints.encodeSemicolons]
+    address = ":8001"
+    [entryPoints.encodeSemicolons.http]
+      encodeQuerySemicolons = true
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router]
+    service = "service1"
+    rule = "Host(`other.localhost`)"
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Server1 }}"

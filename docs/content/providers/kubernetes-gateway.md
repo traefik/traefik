@@ -268,3 +268,5 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesgateway.throttleDuration=10s
 ```
+
+{!traefik-api-management-kubernetes.md!}

@@ -46,6 +46,7 @@ func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Reques
 
 		outReq.URL.Path = u.Path
 		outReq.URL.RawPath = u.RawPath
+		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 		outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
