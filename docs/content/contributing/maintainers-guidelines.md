@@ -89,7 +89,7 @@ but we can suggest you start with activities such as:
   The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md)*.
   Each of the maintainers is welcome to join the meeting.
   For that purpose, we use a dedicated Discord server
-  where you are invited once you have become the official maintainer.
+  where you are invited once you have become an official maintainer.
 
 ## Maintainers Activity
 
