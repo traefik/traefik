@@ -34,7 +34,7 @@ The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
 * You can find an exhaustive list, of the custom resources and their attributes in
   [the reference page](../../reference/dynamic-configuration/kubernetes-gateway.md) or in the Kubernetes
   Sigs `Gateway API` [repository](https://github.com/kubernetes-sigs/gateway-api).
-* Validate that [the prerequisites](../../providers/kubernetes-gateway.md#configuration-requirements) are fulfilled
+* Validate that [the prerequisites](../../providers/kubernetes-gateway.md#requirements) are fulfilled
   before using the Traefik Kubernetes Gateway Provider.
 
 You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:

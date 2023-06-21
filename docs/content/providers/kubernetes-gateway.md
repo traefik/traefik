@@ -41,7 +41,9 @@ This provider is proposed as an experimental feature and partially supports the 
     --experimental.kubernetesgateway=true --providers.kubernetesgateway=true #...
     ```
 
-## Configuration Requirements
+## Requirements
+
+{!kubernetes-requirements.md!}
 
 !!! tip "All Steps for a Successful Deployment"
 

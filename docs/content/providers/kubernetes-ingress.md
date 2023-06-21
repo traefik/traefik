@@ -13,7 +13,7 @@ it manages access to cluster services by supporting the [Ingress](https://kubern
 
 ## Requirements
 
-Traefik supports `1.23+` Kubernetes clusters.
+{!kubernetes-requirements.md!}
 
 ## Routing Configuration
 
