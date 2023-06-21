@@ -70,7 +70,7 @@ but we can suggest you start with activities such as:
 
 ## Communicating
 
-- All of our maintainers are added to Slack #traefik-maintainers channel that belongs to Traefik labs workspace.
+- All of our maintainers are added to the Traefik Maintainers Discord server that belongs to Traefik labs.
   Having the team in one place helps us to communicate effectively.
   You can reach Traefik core developers directly,
   which offers the possibility to discuss issues, pull requests, enhancements more efficiently
@@ -88,7 +88,7 @@ but we can suggest you start with activities such as:
   and prioritize them based on the severity of the problem.
   The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md)*.
   Each of the maintainers is welcome to join the meeting.
-  For that purpose, we use a dedicated Discord server
+  For that purpose, we use the Traefik Maintainers Discord server
   where you are invited once you have become an official maintainer.
 
 ## Maintainers Activity
