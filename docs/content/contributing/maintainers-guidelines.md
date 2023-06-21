@@ -83,7 +83,7 @@ but we can suggest you start with activities such as:
   activities related to the reported issues and PR’s,
   other important project-related announcements.
 
-- At 5:00 PM CET every day we review all the created issues that have been reported,
+- At 2:15pm CET every Monday and Thursday we review all the created issues that have been reported,
   assign them the appropriate *[labels](maintainers.md#labels)*
   and prioritize them based on the severity of the problem.
   The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md)*.
