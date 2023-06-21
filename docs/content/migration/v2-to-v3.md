@@ -97,7 +97,12 @@ In v3, the provider Docker has been split into 2 providers:
 
 ### Kubernetes Ingress API Group `networking.k8s.io/v1beta1`
 
-As v3 is targeting support for Kubernetes v1.23+,
-the Kubernetes Ingress API Group `networking.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#ingress-v122)) support has been removed.
+In v3, the Kubernetes Ingress API Group `networking.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#ingress-v122)) support has been removed.
 
 Please use the API Group `networking.k8s.io/v1` instead.
+
+### Traefik CRD API Version `apiextensions.k8s.io/v1beta1`
+
+In v3, the Traefik CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
+
+Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` instead.
