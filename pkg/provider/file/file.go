@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/reloadable"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"gopkg.in/fsnotify.v1"
@@ -78,6 +79,23 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	sendConfigToChannel(configurationChan, configuration)
+	return nil
+}
+
+// Ensure that Provider implements the Reloadable interface
+var _ reloadable.Reloadable = (*Provider)(nil)
+
+// ReloadConfig rebuilds the configuration for the file provider and sends it to the given channel
+func (p *Provider) ReloadConfig(configurationChan chan<- dynamic.Message) error {
+	configuration, err := p.BuildConfiguration()
+	if err != nil {
+		log.Error().Str("provider", "file").Err(err).Msg("Error occurred during configuration reload")
+		return err
+	}
+
+	// Send the new configuration to the channel
+	sendConfigToChannel(configurationChan, configuration)
+	log.Info().Str("provider", "file").Msg("Configuration reloaded successfully")
 	return nil
 }
 
