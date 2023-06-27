@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Server) configureSignals() {
-	signal.Notify(s.signals, syscall.SIGUSR1)
+	signal.Notify(s.signals, syscall.SIGUSR1, syscall.SIGHUP)
 }
 
 func (s *Server) listenSignals(ctx context.Context) {
@@ -21,7 +21,8 @@ func (s *Server) listenSignals(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case sig := <-s.signals:
-			if sig == syscall.SIGUSR1 {
+			switch sig {
+			case syscall.SIGUSR1:
 				log.Info().Msgf("Closing and re-opening log files for rotation: %+v", sig)
 
 				if s.accessLoggerMiddleware != nil {
@@ -29,6 +30,9 @@ func (s *Server) listenSignals(ctx context.Context) {
 						log.Error().Err(err).Msg("Error rotating access log")
 					}
 				}
+			case syscall.SIGHUP:
+				log.Info().Msgf("%+v: Reloading file config", sig)
+				s.watcher.ReloadFileConfig()
 			}
 		}
 	}
