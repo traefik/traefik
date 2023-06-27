@@ -141,6 +141,11 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 	return p
 }
 
+// FileProvider retruns fileProvider
+func (p *ProviderAggregator) FileProvider() *file.Provider {
+	return p.fileProvider.(*file.Provider)
+}
+
 func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
 	err := p.AddProvider(provider)
 	if err != nil {
