@@ -10,6 +10,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
@@ -66,6 +67,23 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 		c.configurationListeners = make([]func(dynamic.Configuration), 0)
 	}
 	c.configurationListeners = append(c.configurationListeners, listener)
+}
+
+// ReloadFileConfig reload a dynamic file config
+func (c *ConfigurationWatcher) ReloadFileConfig() {
+	aggregator := c.providerAggregator.(aggregator.ProviderAggregator)
+	fileProvider := aggregator.FileProvider()
+	configuration, err := fileProvider.BuildConfiguration()
+	if err != nil {
+		log.Error().Err(err).Msg("ReloadFileConfig failed")
+		return
+	}
+
+	log.Info().Msgf("Sending new configuration: %+v", configuration)
+	c.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "file",
+		Configuration: configuration,
+	}
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {
