@@ -407,31 +407,7 @@ providers:
 # ...
 ```
 
-### `swarmMode`
-
-_Optional, Default=false_
-
-Enables the Swarm Mode (instead of standalone Docker).
-
-```yaml tab="File (YAML)"
-providers:
-  swarm:
-    swarmMode: true
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.swarm]
-  swarmMode = true
-  # ...
-```
-
-```bash tab="CLI"
---providers.swarm.swarmMode=true
-# ...
-```
-
-### `swarmModeRefreshSeconds`
+### `refreshSeconds`
 
 _Optional, Default=15_
 
@@ -440,18 +416,18 @@ Defines the polling interval (in seconds) for Swarm Mode.
 ```yaml tab="File (YAML)"
 providers:
   swarm:
-    swarmModeRefreshSeconds: 30
+    refreshSeconds: 30
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.swarm]
-  swarmModeRefreshSeconds = 30
+  refreshSeconds = 30
   # ...
 ```
 
 ```bash tab="CLI"
---providers.swarm.swarmModeRefreshSeconds=30
+--providers.swarm.refreshSeconds=30
 # ...
 ```
 
