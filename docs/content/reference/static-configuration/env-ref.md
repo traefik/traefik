@@ -46,7 +46,7 @@ Activate dashboard. (Default: ```true```)
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
 `TRAEFIK_API_DISABLEDASHBOARDAD`:  
-Disable ad in the dashboard (Default: ```false```)
+Disable ad in the dashboard. (Default: ```false```)
 
 `TRAEFIK_API_INSECURE`:  
 Activate API directly on the entryPoint named traefik. (Default: ```false```)
