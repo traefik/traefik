@@ -265,6 +265,7 @@
   insecure = true
   dashboard = true
   debug = true
+  disableDashboardAd = false
 
 [metrics]
   [metrics.prometheus]
