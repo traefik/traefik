@@ -42,6 +42,9 @@ Enable api/dashboard. (Default: ```false```)
 `--api.dashboard`:  
 Activate dashboard. (Default: ```true```)
 
+`--api.disableDashboardAd`:  
+Disable Traefik Hub button in the dashboard. (Default: ```false```)
+
 `--api.debug`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
