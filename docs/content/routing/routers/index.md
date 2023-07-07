@@ -821,7 +821,14 @@ If you want to limit the router scope to a set of entry points, set the entry po
 Rules are a set of matchers configured with values, that determine if a particular request matches specific criteria.
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
-??? tip "Backticks or Quotes?"
+The table below lists all the available matchers:
+
+| Rule                                                        | Description                                                                                      |
+|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| [```ClientIP(`ip`)```](#clientip)                           | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
+| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
      To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
 
