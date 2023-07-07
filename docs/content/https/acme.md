@@ -69,7 +69,7 @@ inferred from routers, with the following logic:
 Please note that:
 
 - When multiple domain names are inferred from a given router,
-  only **one** certificate is requested with the first domain name as the main domain,
+  only __one__ certificate is requested with the first domain name as the main domain,
   and the other domains as ["SANs" (Subject Alternative Name)](https://en.wikipedia.org/wiki/Subject_Alternative_Name).
 
 - As [ACME V2 supports "wildcard domains"](#wildcard-domains),
