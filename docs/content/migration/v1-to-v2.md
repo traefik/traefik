@@ -23,7 +23,7 @@ feature by feature, of how the configuration looked like in v1, and how it now l
     - convert `acme.json` file from v1 to v2 format.
     - migrate the static configuration contained in the file `traefik.toml` to a Traefik v2 file.
 
-## Frontends and Backends Are Dead... <br/>... Long Live Routers, Middlewares, and Services
+## Frontends and Backends Are Dead, Long Live Routers, Middlewares, and Services
 
 During the transition from v1 to v2, a number of internal pieces and components of Traefik were rewritten and reorganized.
 As such, the combination of core notions such as frontends and backends has been replaced with the combination of [routers](../routing/routers/index.md), [services](../routing/services/index.md), and [middlewares](../middlewares/overview.md).
@@ -542,7 +542,7 @@ To apply a redirection:
 ## Strip and Rewrite Path Prefixes
 
 With the new core notions of v2 (introduced earlier in the section
-["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
+["Frontends and Backends Are Dead, Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
 transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
 after the routing step with [router rule `PathPrefix`](../routing/routers/index.md#rule).
 
