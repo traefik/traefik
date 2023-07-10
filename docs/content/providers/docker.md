@@ -254,7 +254,9 @@ services:
 
 _Required, Default="unix:///var/run/docker.sock"_
 
-See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access) for more information.
+<!-- markdownlint-disable MD051 -->
+See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access_1) for more information.
+<!-- markdownlint-restore -->
 
 ??? example "Using the docker.sock"
 
