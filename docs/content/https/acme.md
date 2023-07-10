@@ -11,7 +11,7 @@ Automatic HTTPS
 You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
-    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to __one week__, and can not be overridden.
+    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and can not be overridden.
     
     When running Traefik in a container this file should be persisted across restarts. 
     If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
@@ -69,7 +69,7 @@ inferred from routers, with the following logic:
 Please note that:
 
 - When multiple domain names are inferred from a given router,
-  only __one__ certificate is requested with the first domain name as the main domain,
+  only **one** certificate is requested with the first domain name as the main domain,
   and the other domains as ["SANs" (Subject Alternative Name)](https://en.wikipedia.org/wiki/Subject_Alternative_Name).
 
 - As [ACME V2 supports "wildcard domains"](#wildcard-domains),
