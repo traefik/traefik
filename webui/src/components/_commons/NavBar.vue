@@ -110,12 +110,14 @@ export default {
           hubButtonScriptLocal.onload = () => {
             this.hasHubButtonComponent = customElements.get('hub-button-app') !== undefined
           }
+          // Sources: https://github.com/traefik/traefiklabs-hub-button-app
           hubButtonScriptLocal.src = 'statics/traefiklabs-hub-button-app/main-v1.js'
           document.head.appendChild(hubButtonScriptLocal)
         }
         hubButtonScript.onload = () => {
           this.hasHubButtonComponent = customElements.get('hub-button-app') !== undefined
         }
+        // Sources: https://github.com/traefik/traefiklabs-hub-button-app
         hubButtonScript.src = 'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js'
         document.head.appendChild(hubButtonScript)
       }
