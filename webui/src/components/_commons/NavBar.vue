@@ -30,12 +30,9 @@
           </q-tabs>
           <div class="right-menu">
             <q-tabs>
-              <div class="tooltip" :class="{ 'is-dark-mode': $q.dark.isActive }">
-                <q-btn type="a" href="https://traefik.io/try-hub-now" target="_blank" flat no-caps label="Try Traefik Hub →" class="btn-menu btn-hub" />
-                <div class="content">
-                  <p>Extend your capabilities to API Management</p>
-                  <img alt="" v-bind:src="getHubLogoSrc($q.dark.isActive)" width="100px" />
-                </div>
+              <div v-if="!coreVersion.disableDashboardAd && hasHubButtonComponent" style="margin-right: 5px;">
+                <hub-button-app theme="dark" v-if="$q.dark.isActive"></hub-button-app>
+                <hub-button-app v-if="!$q.dark.isActive"></hub-button-app>
               </div>
               <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
               <q-btn stretch flat icon="eva-question-mark-circle-outline">
@@ -89,14 +86,41 @@ export default {
     },
     name () {
       return config.productName
+    },
+    disableDashboardAd () {
+      return this.coreVersion.disableDashboardAd
+    }
+  },
+  data () {
+    return {
+      hasHubButtonComponent: false
     }
   },
   methods: {
-    ...mapActions('core', { getVersion: 'getVersion' }),
-    getHubLogoSrc (isDarkMode) {
-      return isDarkMode
-        ? 'statics/hub-logo-horizontal-dark.png'
-        : 'statics/hub-logo-horizontal-clear.png'
+    ...mapActions('core', { getVersion: 'getVersion' })
+  },
+  watch: {
+    disableDashboardAd (newValue) {
+      if (!newValue && customElements.get('hub-button-app') === undefined) {
+        const hubButtonScript = document.createElement('script')
+        hubButtonScript.async = true
+        hubButtonScript.onerror = () => {
+          const hubButtonScriptLocal = document.createElement('script')
+          hubButtonScriptLocal.async = true
+          hubButtonScriptLocal.onload = () => {
+            this.hasHubButtonComponent = customElements.get('hub-button-app') !== undefined
+          }
+          // Sources: https://github.com/traefik/traefiklabs-hub-button-app
+          hubButtonScriptLocal.src = 'statics/traefiklabs-hub-button-app/main-v1.js'
+          document.head.appendChild(hubButtonScriptLocal)
+        }
+        hubButtonScript.onload = () => {
+          this.hasHubButtonComponent = customElements.get('hub-button-app') !== undefined
+        }
+        // Sources: https://github.com/traefik/traefiklabs-hub-button-app
+        hubButtonScript.src = 'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js'
+        document.head.appendChild(hubButtonScript)
+      }
     }
   },
   created () {
@@ -164,11 +188,6 @@ export default {
     font-weight: 600;
   }
 
-  .btn-hub {
-    color: #dedede;
-    background: #5f6572;
-  }
-
   .q-item {
     padding: 0;
   }
@@ -176,71 +195,6 @@ export default {
   .btn-submenu {
     font-weight: 700;
     align-items: flex-start;
-  }
-
-  .tooltip {
-    display: inline-block;
-
-    .content {
-      display: flex;
-      align-items: center;
-      visibility: hidden;
-      font-size: 16px;
-      padding: 20px;
-      border-radius: 16px;
-      background-color: #fff;
-      box-shadow: 0 0 6px rgba(0,0,0,0.16), 0 0 6px rgba(0,0,0,0.23);
-
-      /* Position the tooltip text */
-      position: absolute;
-      z-index: 1;
-      top: 90%;
-      left: -5%;
-
-      /* Fade in tooltip */
-      opacity: 0;
-      transition: opacity 0.3s;
-
-      &::after {
-        content: "";
-        position: absolute;
-        top: -10px;
-        left: 22%;
-        border-left: 7px solid transparent;
-        border-right: 7px solid transparent;
-        border-bottom: 10px solid #fff;
-      }
-
-      p {
-        align-self: baseline;
-        color: var(--q-color-primary);
-        font-weight: bold;
-        margin: 0 20px 0 0;
-        max-width: 180px;
-      }
-
-      img {
-        margin: 0 20px;
-      }
-    }
-
-    &.is-dark-mode .content {
-      background-color: #262626;
-      box-shadow: 0 0 6px rgba(10,18,36,0.16), 0 0 6px rgba(10,18,36,0.23);
-
-      &::after {
-        border-bottom: 10px solid #262626;
-      }
-
-      p {
-        color: #fff;
-      }
-    }
-
-    &:hover .content {
-      visibility: visible;
-      opacity: 1;
-    }
   }
 
 </style>
