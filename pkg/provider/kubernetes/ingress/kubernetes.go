@@ -519,6 +519,15 @@ func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
+	if backend.Resource != nil {
+		// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
+		return nil, errors.New("resource backends are not supported")
+	}
+
+	if backend.Service == nil {
+		return nil, errors.New("missing service definition")
+	}
+
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err
