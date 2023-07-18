@@ -1140,6 +1140,7 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 		desc               string
 		hostHeader         string
 		serverName         string
+		expectedError      bool
 		expectedContent    string
 		expectedStatusCode int
 	}{
@@ -1161,6 +1162,7 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 			desc:               "Spaces after the host header",
 			hostHeader:         "site3.www.snitest.com ",
 			serverName:         "site3.www.snitest.com",
+			expectedError:      true,
 			expectedContent:    "server3",
 			expectedStatusCode: http.StatusOK,
 		},
@@ -1175,6 +1177,7 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 			desc:               "Spaces after the servername and host header",
 			hostHeader:         "site3.www.snitest.com ",
 			serverName:         "site3.www.snitest.com ",
+			expectedError:      true,
 			expectedContent:    "server3",
 			expectedStatusCode: http.StatusOK,
 		},
@@ -1223,7 +1226,11 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 		req.Host = test.hostHeader
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
-		c.Assert(err, checker.IsNil)
+		if test.expectedError {
+			c.Assert(err, checker.NotNil)
+		} else {
+			c.Assert(err, checker.IsNil)
+		}
 	}
 }
 
