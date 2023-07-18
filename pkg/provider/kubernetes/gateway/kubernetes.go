@@ -323,15 +323,14 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	// and cannot be configured on the Gateway.
 	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
 
-	gatewayStatus, errG := p.makeGatewayStatus(listenerStatuses)
-
-	err := client.UpdateGatewayStatus(gateway, gatewayStatus)
+	gatewayStatus, err := p.makeGatewayStatus(listenerStatuses)
 	if err != nil {
-		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
+		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", err)
 	}
 
-	if errG != nil {
-		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", errG)
+	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
+	if err != nil {
+		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
 	}
 
 	if len(tlsConfigs) > 0 {
