@@ -32,7 +32,7 @@ Pygments==2.11.2
 pymdown-extensions==7.0
 pyparsing==2.4.7
 python-dateutil==2.8.2
-PyYAML==6.0
+PyYAML==6.0.1
 pyyaml-env-tag==0.1
 requests==2.25.1
 retrying==1.3.3
