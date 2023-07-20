@@ -357,7 +357,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return plug(ctx, next)
+			return newTraceablePlugin(ctx, middlewareName, plug, next)
 		}
 	}
 
