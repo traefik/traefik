@@ -472,12 +472,7 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
-hub:
-  tls:
-    insecure: true
-    ca: foobar
-    cert: foobar
-    key: foobar
+
 experimental:
   kubernetesGateway: true
   http3: true
