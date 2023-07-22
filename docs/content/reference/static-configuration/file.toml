@@ -445,13 +445,6 @@
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
 
-[hub]
-  [hub.tls]
-    insecure = true
-    ca = "foobar"
-    cert = "foobar"
-    key = "foobar"
-
 [experimental]
   kubernetesGateway = true
   http3 = true
