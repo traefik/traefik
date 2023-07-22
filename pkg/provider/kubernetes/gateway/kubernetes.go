@@ -2064,26 +2064,40 @@ func makeRouteStatus(ctx context.Context, routeStatus gatev1alpha2.RouteStatus, 
 		routeParentStatus = &routeStatus.Parents[len(routeStatus.Parents)-1]
 	}
 
+	routeStatusCondition := metav1.ConditionTrue
+	routeStatusReason := string(gatev1alpha2.ConditionRouteAccepted)
+	if len(conditions) > 0 {
+		routeStatusCondition = metav1.ConditionFalse
+		routeStatusReason = conditions[0].Reason
+	}
+
 	// Don't write duplicate conditions
 	shouldUpdateConditions := true
 	if len(routeParentStatus.Conditions) > 0 {
 		lastCondition := routeParentStatus.Conditions[len(routeParentStatus.Conditions)-1]
 
-		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue {
+		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == routeStatusCondition {
 			shouldUpdateConditions = false
 		}
 	}
 
 	if shouldUpdateConditions {
-		log.Ctx(ctx).Debug().Msgf("Route %s/%s was attached to gateway", routeMeta.Namespace, routeMeta.Name)
+		routeStatusString := "attached to"
+		if routeStatusCondition == metav1.ConditionFalse {
+			routeStatusString = "rejected by"
+		}
+
+		log.Ctx(ctx).Debug().Msgf("Route %s/%s was %s gateway", routeMeta.Namespace, routeMeta.Name, routeStatusString)
+
+		// TODO dedupe and add passed in conditions
 
 		routeParentStatus.Conditions = append(routeParentStatus.Conditions, metav1.Condition{
 			Type:               string(gatev1alpha2.ConditionRouteAccepted),
-			Status:             metav1.ConditionTrue,
+			Status:             routeStatusCondition,
 			ObservedGeneration: routeMeta.Generation,
 			LastTransitionTime: metav1.NewTime(timeNow()),
-			Reason:             string(gatev1alpha2.ConditionRouteAccepted),
-			Message:            "The route was attached to the Gateway",
+			Reason:             routeStatusReason,
+			Message:            fmt.Sprintf("The route was %s the Gateway", routeStatusString),
 		})
 	}
 
