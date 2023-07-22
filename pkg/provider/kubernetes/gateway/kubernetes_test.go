@@ -4583,8 +4583,32 @@ func TestHTTPRouteStatus(t *testing.T) {
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
-			paths:    []string{"services.yml", "httproute/with_wrong_service_port.yml"},
-			expected: nil,
+			paths: []string{"services.yml", "httproute/with_wrong_service_port.yml"},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "False",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "InvalidBackendRefs",
+									Message:            "The route was rejected by the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			desc: "Empty caused by HTTPS without TLS",
@@ -4672,8 +4696,32 @@ func TestHTTPRouteStatus(t *testing.T) {
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
-			paths:    []string{"services.yml", "httproute/simple_with_bad_rule.yml"},
-			expected: nil,
+			paths: []string{"services.yml", "httproute/simple_with_bad_rule.yml"},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "False",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "InvalidBackendRefs",
+									Message:            "The route was rejected by the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			desc:  "Empty because no tcp route defined tls protocol",
