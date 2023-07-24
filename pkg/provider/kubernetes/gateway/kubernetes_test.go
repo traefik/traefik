@@ -5871,7 +5871,31 @@ func TestTLSRouteStatus(t *testing.T) {
 			entryPoints: map[string]Entrypoint{
 				"tls": {Address: ":9001"},
 			},
-			expected: nil,
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "False",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "InvalidHostnames",
+									Message:            "The route was rejected by the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			desc:  "Simple TLS listener to TCPRoute in Terminate mode",
