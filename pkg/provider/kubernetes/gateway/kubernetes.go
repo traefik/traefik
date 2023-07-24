@@ -735,8 +735,15 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 
 		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
 		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
-			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
+			if err := updateHTTPRouteStatus(ctx, client, gateway, listener, route, []metav1.Condition{{
+				Type:               string(gatev1alpha2.ConditionRouteResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             "InvalidRouteHostname", // TODO check the spec if a proper reason is introduced at some point
+				Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", route.Name, err),
+			}}); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+			}
 			continue
 		}
 
@@ -744,13 +751,15 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 
 		hostRule, err := hostRule(hostnames)
 		if err != nil {
-			routeConditions = append(routeConditions, metav1.Condition{
+			if err := updateHTTPRouteStatus(ctx, client, gateway, listener, route, []metav1.Condition{{
 				Type:               string(gatev1alpha2.ConditionRouteResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidRouteHostname", // TODO check the spec if a proper reason is introduced at some point
 				Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", route.Name, err),
-			})
+			}}); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+			}
 			listenerConditions = append(listenerConditions, metav1.Condition{
 				Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
@@ -967,13 +976,15 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		routerName := route.Name + "-" + gateway.Name + "-" + ep
 		routerKey, err := makeRouterKey("", makeID(route.Namespace, routerName))
 		if err != nil {
-			routeConditions = append(routeConditions, metav1.Condition{
+			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route, []metav1.Condition{{
 				Type:               string(gatev1alpha2.ConditionRouteResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidRouterKey", // Should never happen
 				Message:            fmt.Sprintf("Skipping TCPRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
-			})
+			}}); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+			}
 
 			// update "ResolvedRefs" status true with "DroppedRoutes" reason
 			listenerConditions = append(listenerConditions, metav1.Condition{
@@ -1130,13 +1141,15 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 		rule, err := hostSNIRule(hostnames)
 		if err != nil {
-			routeConditions = append(routeConditions, metav1.Condition{
+			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route, []metav1.Condition{{
 				Type:               string(gatev1alpha2.ConditionRouteResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidHostnames", // TODO check the spec if a proper reason is introduced at some point
 				Message:            fmt.Sprintf("Skipping TLSRoute %s: cannot make route's SNI match: %v", route.Name, err),
-			})
+			}}); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+			}
 
 			// update "ResolvedRefs" status true with "DroppedRoutes" reason
 			listenerConditions = append(listenerConditions, metav1.Condition{
@@ -1162,13 +1175,15 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		routerName := route.Name + "-" + gateway.Name + "-" + ep
 		routerKey, err := makeRouterKey(rule, makeID(route.Namespace, routerName))
 		if err != nil {
-			routeConditions = append(routeConditions, metav1.Condition{
+			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route, []metav1.Condition{{
 				Type:               string(gatev1alpha2.ConditionRouteResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidRouterKey", // Should never happen
 				Message:            fmt.Sprintf("Skipping TLSRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
-			})
+			}}); err != nil {
+				log.Ctx(ctx).Err(err).Send()
+			}
 
 			// update "ResolvedRefs" status true with "DroppedRoutes" reason
 			listenerConditions = append(listenerConditions, metav1.Condition{
