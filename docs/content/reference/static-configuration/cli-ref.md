@@ -45,6 +45,9 @@ Activate dashboard. (Default: ```true```)
 `--api.debug`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
+`--api.disabledashboardad`:  
+Disable ad in the dashboard. (Default: ```false```)
+
 `--api.insecure`:  
 Activate API directly on the entryPoint named traefik. (Default: ```false```)
 
@@ -119,6 +122,9 @@ Trust only forwarded headers from selected IPs.
 
 `--entrypoints.<name>.http`:  
 HTTP configuration.
+
+`--entrypoints.<name>.http.encodequerysemicolons`:  
+Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
 `--entrypoints.<name>.http.middlewares`:  
 Default middlewares for the routers linked to the entry point.

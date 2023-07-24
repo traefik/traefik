@@ -209,6 +209,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
+	if staticConfiguration.API != nil {
+		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+	}
+
 	// Plugins
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)

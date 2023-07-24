@@ -1399,3 +1399,71 @@ func (s *SimpleSuite) TestDebugLog(c *check.C) {
 		c.Fail()
 	}
 }
+
+func (s *SimpleSuite) TestEncodeSemicolons(c *check.C) {
+	s.createComposeProject(c, "base")
+
+	s.composeUp(c)
+	defer s.composeDown(c)
+
+	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP(c, "whoami1"), "80")
+
+	file := s.adaptFile(c, "fixtures/simple_encode_semicolons.toml", struct {
+		Server1 string
+	}{whoami1URL})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`other.localhost`)"))
+	c.Assert(err, checker.IsNil)
+
+	testCases := []struct {
+		desc     string
+		request  string
+		target   string
+		body     string
+		expected int
+	}{
+		{
+			desc:     "Transforming semicolons",
+			request:  "GET /?bar=toto;boo=titi HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000",
+			expected: http.StatusOK,
+			body:     "bar=toto&boo=titi",
+		},
+		{
+			desc:     "Encoding semicolons",
+			request:  "GET /?bar=toto&boo=titi;aaaa HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusOK,
+			body:     "bar=toto&boo=titi%3Baaaa",
+		},
+	}
+
+	for _, test := range testCases {
+		conn, err := net.Dial("tcp", test.target)
+		c.Assert(err, checker.IsNil)
+
+		_, err = conn.Write([]byte(test.request))
+		c.Assert(err, checker.IsNil)
+
+		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		c.Assert(err, checker.IsNil)
+
+		if resp.StatusCode != test.expected {
+			c.Errorf("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
+		}
+
+		if test.body != "" {
+			body, err := io.ReadAll(resp.Body)
+			c.Assert(err, checker.IsNil)
+			c.Assert(string(body), checker.Contains, test.body)
+		}
+	}
+}

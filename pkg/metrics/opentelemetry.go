@@ -18,9 +18,6 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/asyncfloat64"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
-	"go.opentelemetry.io/otel/metric/unit"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -57,9 +54,9 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           newOTLPCounterFrom(meter, configReloadsTotalName, "Config reloads"),
-		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", unit.Milliseconds),
-		openConnectionsGauge:           newOTLPGaugeFrom(meter, openConnectionsName, "How many open connections exist, by entryPoint and protocol", unit.Dimensionless),
-		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestampName, "Certificate expiration timestamp", unit.Milliseconds),
+		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", "ms"),
+		openConnectionsGauge:           newOTLPGaugeFrom(meter, openConnectionsName, "How many open connections exist, by entryPoint and protocol", "1"),
+		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestampName, "Certificate expiration timestamp", "ms"),
 	}
 
 	if config.AddEntryPointsLabels {
@@ -69,7 +66,11 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.")
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
-			unit.Milliseconds), time.Second)
+			"ms"), time.Second)
+		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, entryPointReqsBytesTotalName,
+			"The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
+		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, entryPointRespsBytesTotalName,
+			"The total size of responses in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddRoutersLabels {
@@ -79,7 +80,11 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.")
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
-			unit.Milliseconds), time.Second)
+			"ms"), time.Second)
+		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, routerReqsBytesTotalName,
+			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
+		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
+			"The total size of responses in bytes handled by a router, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddServicesLabels {
@@ -89,12 +94,16 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.")
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
-			unit.Milliseconds), time.Second)
+			"ms"), time.Second)
 		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,
 			"How many request retries happened on a service.")
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
 			"service server is up, described by gauge value of 0 or 1.",
-			unit.Dimensionless)
+			"1")
+		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, serviceReqsBytesTotalName,
+			"The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.")
+		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, serviceRespsBytesTotalName,
+			"The total size of responses in bytes returned by a service, partitioned by status code, protocol, and method.")
 	}
 
 	return reg
@@ -223,9 +232,9 @@ func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 }
 
 func newOTLPCounterFrom(meter metric.Meter, name, desc string) *otelCounter {
-	c, _ := meter.SyncFloat64().Counter(name,
+	c, _ := meter.Float64Counter(name,
 		instrument.WithDescription(desc),
-		instrument.WithUnit(unit.Dimensionless),
+		instrument.WithUnit("1"),
 	)
 
 	return &otelCounter{
@@ -235,7 +244,7 @@ func newOTLPCounterFrom(meter metric.Meter, name, desc string) *otelCounter {
 
 type otelCounter struct {
 	labelNamesValues otelLabelNamesValues
-	ip               syncfloat64.Counter
+	ip               instrument.Float64Counter
 }
 
 func (c *otelCounter) With(labelValues ...string) metrics.Counter {
@@ -310,27 +319,29 @@ func (c *gaugeCollector) set(name string, value float64, attributes otelLabelNam
 	}
 }
 
-func newOTLPGaugeFrom(meter metric.Meter, name, desc string, u unit.Unit) *otelGauge {
+func newOTLPGaugeFrom(meter metric.Meter, name, desc string, unit string) *otelGauge {
 	openTelemetryGaugeCollector.values[name] = make(map[string]gaugeValue)
 
-	c, _ := meter.AsyncFloat64().Gauge(name,
+	c, _ := meter.Float64ObservableGauge(name,
 		instrument.WithDescription(desc),
-		instrument.WithUnit(u),
+		instrument.WithUnit(unit),
 	)
 
-	err := meter.RegisterCallback([]instrument.Asynchronous{c}, func(ctx context.Context) {
+	_, err := meter.RegisterCallback(func(ctx context.Context, observer metric.Observer) error {
 		openTelemetryGaugeCollector.mu.Lock()
 		defer openTelemetryGaugeCollector.mu.Unlock()
 
 		values, exists := openTelemetryGaugeCollector.values[name]
 		if !exists {
-			return
+			return nil
 		}
 
 		for _, value := range values {
-			c.Observe(ctx, value.value, value.attributes.ToLabels()...)
+			observer.ObserveFloat64(c, value.value, value.attributes.ToLabels()...)
 		}
-	})
+
+		return nil
+	}, c)
 	if err != nil {
 		log.Err(err).Msg("Unable to register OpenTelemetry meter callback")
 	}
@@ -343,7 +354,7 @@ func newOTLPGaugeFrom(meter metric.Meter, name, desc string, u unit.Unit) *otelG
 
 type otelGauge struct {
 	labelNamesValues otelLabelNamesValues
-	ip               asyncfloat64.Gauge
+	ip               instrument.Float64ObservableGauge
 	name             string
 }
 
@@ -363,10 +374,10 @@ func (g *otelGauge) Set(value float64) {
 	openTelemetryGaugeCollector.set(g.name, value, g.labelNamesValues)
 }
 
-func newOTLPHistogramFrom(meter metric.Meter, name, desc string, u unit.Unit) *otelHistogram {
-	c, _ := meter.SyncFloat64().Histogram(name,
+func newOTLPHistogramFrom(meter metric.Meter, name, desc string, unit string) *otelHistogram {
+	c, _ := meter.Float64Histogram(name,
 		instrument.WithDescription(desc),
-		instrument.WithUnit(u),
+		instrument.WithUnit(unit),
 	)
 
 	return &otelHistogram{
@@ -376,7 +387,7 @@ func newOTLPHistogramFrom(meter metric.Meter, name, desc string, u unit.Unit) *o
 
 type otelHistogram struct {
 	labelNamesValues otelLabelNamesValues
-	ip               syncfloat64.Histogram
+	ip               instrument.Float64Histogram
 }
 
 func (h *otelHistogram) With(labelValues ...string) metrics.Histogram {

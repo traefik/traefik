@@ -867,6 +867,44 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     --entrypoints.foo.http.redirections.entrypoint.priority=10
     ```
 
+### EncodeQuerySemicolons
+
+_Optional, Default=false_
+
+The `encodeQuerySemicolons` option allows to enable query semicolons encoding.
+One could use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Traefik.
+When using this option, the non-encoded semicolons characters in query will be transmitted encoded to the backend.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      encodeQuerySemicolons: true
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    encodeQuerySemicolons = true
+```
+
+```bash tab="CLI"
+--entrypoints.websecure.address=:443
+--entrypoints.websecure.http.encodequerysemicolons=true
+```
+
+#### Examples
+
+| EncodeQuerySemicolons | Request Query       | Resulting Request Query |
+|-----------------------|---------------------|-------------------------|
+| false                 | foo=bar;baz=bar     | foo=bar&baz=bar         |
+| true                  | foo=bar;baz=bar     | foo=bar%3Bbaz=bar       |
+| false                 | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
+| true                  | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
+
 ### Middlewares
 
 The list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.
