@@ -41,7 +41,9 @@ This provider is proposed as an experimental feature and partially supports the 
     --experimental.kubernetesgateway=true --providers.kubernetesgateway=true #...
     ```
 
-## Configuration Requirements
+## Requirements
+
+{!kubernetes-requirements.md!}
 
 !!! tip "All Steps for a Successful Deployment"
 
@@ -268,3 +270,5 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesgateway.throttleDuration=10s
 ```
+
+{!traefik-api-management-kubernetes.md!}

@@ -14,7 +14,9 @@ However, as the community expressed the need to benefit from Traefik features wi
 the Traefik engineering team developed a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
 (CRD) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
-## Configuration Requirements
+## Requirements
+
+{!kubernetes-requirements.md!}
 
 !!! tip "All Steps for a Successful Deployment"
 
@@ -24,12 +26,6 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
         * Enable the kubernetesCRD provider
         * Apply the needed kubernetesCRD provider [configuration](#provider-configuration)
     * Add all necessary Traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
-
-!!! warning "Deprecated apiextensions.k8s.io/v1beta1 CRD"
-
-    The `apiextensions.k8s.io/v1beta1` CustomResourceDefinition is deprecated in Kubernetes `v1.16+` and will be removed in `v1.22+`.
-    
-    For Kubernetes `v1.16+`, please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
 
 !!! example "Installing Resource Definition and RBAC"
 
@@ -345,4 +341,4 @@ providers:
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{!traefik-api-management-kubernetes.md!}

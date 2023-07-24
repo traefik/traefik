@@ -17,7 +17,7 @@ import (
 )
 
 // collectorURL URL where the stats are sent.
-const collectorURL = "https://collect.traefik.io/9vxmmkcdmalbdi635d4jgc5p5rx0h7h8"
+const collectorURL = "https://collect.traefik.io/yYaUej3P42cziRVzv6T5w2aYy9po2Mrn"
 
 // Collected data.
 //
