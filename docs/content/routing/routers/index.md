@@ -94,7 +94,8 @@ or act before forwarding the request to the service.
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault).
+If not specified, HTTP routers will accept requests from all EntryPoints in
+the [list of default EntryPoints](../entrypoints.md#asdefault).
 If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
@@ -284,7 +285,8 @@ The `Header` and `HeaderRegexp` matchers allow to match requests that contain sp
 
 The `Host` and `HostRegexp` matchers allow to match requests that are targeted to a given host.
 
-These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
+These matchers do not support non-ASCII characters, use punycode encoded
+values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
 If no Host is set in the request URL (e.g., it's an IP address), these matchers will look at the `Host` header.
 
@@ -437,7 +439,8 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
 
 ### Priority
 
-To avoid path overlap, routes are sorted, by default, in descending order using rules length. The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
+To avoid path overlap, routes are sorted, by default, in descending order using rules length. The priority is directly
+equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
@@ -567,7 +570,8 @@ See the specific [docker](../providers/docker.md#service-definition) documentati
 
 #### General
 
- When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non TLS) requests).
+When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and
+that the router should ignore HTTP (non TLS) requests).
 Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services).
 
 ??? example "Configuring the router to accept HTTPS requests only"
@@ -751,14 +755,15 @@ http:
 ```toml tab="File (TOML)"
 ## Dynamic configuration
 [http.routers]
-  [http.routers.routerfoo]
-    rule = "Host(`snitest.com`) && Path(`/foo`)"
-    [http.routers.routerfoo.tls]
-      certResolver = "foo"
+[http.routers.routerfoo]
+rule = "Host(`snitest.com`) && Path(`/foo`)"
+[http.routers.routerfoo.tls]
+certResolver = "foo"
 ```
 
 !!! info "Multiple Hosts in a Rule"
-    The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
+The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main
+domain `test1.example.com` and SAN `test2.example.com`.
 
 #### `domains`
 
@@ -783,30 +788,38 @@ http:
 ```toml tab="File (TOML)"
 ## Dynamic configuration
 [http.routers]
-  [http.routers.routerbar]
-    rule = "Host(`snitest.com`) && Path(`/bar`)"
-    [http.routers.routerbar.tls]
-      certResolver = "bar"
-      [[http.routers.routerbar.tls.domains]]
-        main = "snitest.com"
-        sans = ["*.snitest.com"]
+[http.routers.routerbar]
+rule = "Host(`snitest.com`) && Path(`/bar`)"
+[http.routers.routerbar.tls]
+certResolver = "bar"
+[[http.routers.routerbar.tls.domains]]
+main = "snitest.com"
+sans = ["*.snitest.com"]
 ```
 
-[ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
-As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](../../https/acme.md#dnschallenge).
+[ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard
+certificates.
+As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard
+certificates can only be generated through a [`DNS-01` challenge](../../https/acme.md#dnschallenge).
 
-Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
+Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01`
+challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
-Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant,
-it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
+Even though this behavior
+is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant,
+it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater
+than the challenge timeout making the `DNS-01` challenge fail.
 
-The Traefik ACME client library [lego](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
-The [supported `provider` table](../../https/acme.md#providers) indicates if they allow generating certificates for a wildcard domain and its root domain.
+The Traefik ACME client library [lego](https://github.com/go-acme/lego) supports some but not all DNS providers to work
+around this issue.
+The [supported `provider` table](../../https/acme.md#providers) indicates if they allow generating certificates for a
+wildcard domain and its root domain.
 
-!!! important "Wildcard certificates can only be verified through a [`DNS-01` challenge](../../https/acme.md#dnschallenge)."
+!!! important "Wildcard certificates can only be verified through
+a [`DNS-01` challenge](../../https/acme.md#dnschallenge)."
 
 !!! warning "Double Wildcard Certificates"
-    It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
+It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
 
 ## Configuring TCP Routers
 
@@ -814,12 +827,14 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply *before* the HTTP
+routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault)..
+If not specified, TCP routers will accept requests from all EntryPoints in
+the [list of default EntryPoints](../entrypoints.md#asdefault)..
 If you want to limit the router scope to a set of entry points, set the entry points option.
 
 ??? info "How to handle Server First protocols?"
@@ -970,12 +985,12 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                        | Description                                                                                      |
-|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
-| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
-| [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
-| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
+| Rule                                                                                                | Description                                                                                      |
+|-----------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)                                               | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)                                         | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-disable --> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
+| [```ALPN(`protocol`)```](#alpn)                                                                     | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
 !!! tip "Backticks or Quotes?"
 
@@ -1007,7 +1022,8 @@ The table below lists all the available matchers:
 
 `HostSNI` and `HostSNIRegexp` matchers allow to match connections targeted to a given domain.
 
-These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
+These matchers do not support non-ASCII characters, use punycode encoded
+values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
 !!! important "HostSNI & TLS"
 
@@ -1174,7 +1190,8 @@ The middlewares will take effect only if the rule matches, and before connecting
 
     Middlewares are applied in the same order as their declaration in **router**.
 
-??? example "With a [middleware](../../middlewares/tcp/overview.md) -- using the [File Provider](../../providers/file.md)"
+??? example "With a [middleware](../../middlewares/tcp/overview.md) -- using
+the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
     ## Dynamic configuration
@@ -1210,9 +1227,11 @@ Services are the target for the router.
 #### General
 
 When a TLS section is specified,
-it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
+it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore
+non-TLS requests).
 
-By default, a router with a TLS section will terminate the TLS connections, meaning that it will send decrypted data to the services.
+By default, a router with a TLS section will terminate the TLS connections, meaning that it will send decrypted data to
+the services.
 
 ??? example "Router for TLS requests"
 
@@ -1264,7 +1283,8 @@ By default, a router with a TLS section will terminate the TLS connections, mean
 #### `passthrough`
 
 As seen above, a TLS router will terminate the TLS connection by default.
-However, the `passthrough` option can be specified to set whether the requests should be forwarded "as is", keeping all data encrypted.
+However, the `passthrough` option can be specified to set whether the requests should be forwarded "as is", keeping all
+data encrypted.
 
 It defaults to `false`.
 
@@ -1360,10 +1380,10 @@ tcp:
 ```toml tab="File (TOML)"
 ## Dynamic configuration
 [tcp.routers]
-  [tcp.routers.routerfoo]
-    rule = "HostSNI(`snitest.com`)"
-    [tcp.routers.routerfoo.tls]
-      certResolver = "foo"
+[tcp.routers.routerfoo]
+rule = "HostSNI(`snitest.com`)"
+[tcp.routers.routerfoo.tls]
+certResolver = "foo"
 ```
 
 #### `domains`
@@ -1387,13 +1407,13 @@ tcp:
 ```toml tab="File (TOML)"
 ## Dynamic configuration
 [tcp.routers]
-  [tcp.routers.routerbar]
-    rule = "HostSNI(`snitest.com`)"
-    [tcp.routers.routerbar.tls]
-      certResolver = "bar"
-      [[tcp.routers.routerbar.tls.domains]]
-        main = "snitest.com"
-        sans = ["*.snitest.com"]
+[tcp.routers.routerbar]
+rule = "HostSNI(`snitest.com`)"
+[tcp.routers.routerbar.tls]
+certResolver = "bar"
+[[tcp.routers.routerbar.tls.domains]]
+main = "snitest.com"
+sans = ["*.snitest.com"]
 ```
 
 ## Configuring UDP Routers
