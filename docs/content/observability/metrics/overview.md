@@ -117,7 +117,6 @@ traefik.entrypoint.responses.bytes.total
 traefik_entrypoint_requests_total
 traefik_entrypoint_requests_tls_total
 traefik_entrypoint_request_duration_seconds
-traefik_entrypoint_open_connections
 traefik_entrypoint_requests_bytes_total
 traefik_entrypoint_responses_bytes_total
 ```
@@ -169,7 +168,6 @@ traefik.router.responses.bytes.total
 traefik_router_requests_total
 traefik_router_requests_tls_total
 traefik_router_request_duration_seconds
-traefik_router_open_connections
 traefik_router_requests_bytes_total
 traefik_router_responses_bytes_total
 ```
@@ -231,7 +229,6 @@ traefik.service.responses.bytes.total
 traefik_service_requests_total
 traefik_service_requests_tls_total
 traefik_service_request_duration_seconds
-traefik_service_open_connections
 traefik_service_retries_total
 traefik_service_server_up
 traefik_service_requests_bytes_total

@@ -11,7 +11,7 @@ This page explains the base concepts of Traefik.
 
 ## Introduction
 
-Traefik is based on the concept of EntryPoints, Routers, Middelwares and Services.
+Traefik is based on the concept of EntryPoints, Routers, Middlewares and Services.
 
 The main features include dynamic configuration, automatic service discovery, and support for multiple backends and protocols.
 

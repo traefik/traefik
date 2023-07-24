@@ -553,7 +553,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
-	handler = http.AllowQuerySemicolons(handler)
+	if configuration.HTTP.EncodeQuerySemicolons {
+		handler = encodeQuerySemicolons(handler)
+	} else {
+		handler = http.AllowQuerySemicolons(handler)
+	}
 
 	handler = contenttype.DisableAutoDetection(handler)
 
@@ -615,4 +619,24 @@ type trackedConnection struct {
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// This function is inspired by http.AllowQuerySemicolons.
+func encodeQuerySemicolons(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if strings.Contains(req.URL.RawQuery, ";") {
+			r2 := new(http.Request)
+			*r2 = *req
+			r2.URL = new(url.URL)
+			*r2.URL = *req.URL
+
+			r2.URL.RawQuery = strings.ReplaceAll(req.URL.RawQuery, ";", "%3B")
+			// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
+			r2.RequestURI = r2.URL.RequestURI()
+
+			h.ServeHTTP(rw, r2)
+		} else {
+			h.ServeHTTP(rw, req)
+		}
+	})
 }
