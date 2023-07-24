@@ -972,7 +972,7 @@ The table below lists all the available matchers:
 |----------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
 | [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)                                                    | Checks if the connection's Server Name Indication is equal to `domain`.                          |
 | [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)                                              | Checks if the connection's Server Name Indication matches `regexp`.                              |
-| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-enable MD051 --> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
+| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-restore --> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
 | [```ALPN(`protocol`)```](#alpn)                                                                          | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
 !!! tip "Backticks or Quotes?"
