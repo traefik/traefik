@@ -1,3 +1,19 @@
+## [v2.10.4](https://github.com/traefik/traefik/tree/v2.10.4) (2023-07-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.3...v2.10.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.13.2 ([#10036](https://github.com/traefik/traefik/pull/10036) by [ldez](https://github.com/ldez))
+- **[acme]** Update go-acme/lego to v4.13.0 ([#10029](https://github.com/traefik/traefik/pull/10029) by [ldez](https://github.com/ldez))
+- **[k8s/ingress,k8s]** fix: avoid panic on resource backends ([#10023](https://github.com/traefik/traefik/pull/10023) by [ldez](https://github.com/ldez))
+- **[middleware,tracing,plugins]** fix: traceability of the middleware plugins ([#10028](https://github.com/traefik/traefik/pull/10028) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Update maintainers guidelines ([#9981](https://github.com/traefik/traefik/pull/9981) by [geraldcroes](https://github.com/geraldcroes))
+- Update release documentation ([#9975](https://github.com/traefik/traefik/pull/9975) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- **[webui]** Updates the Hub tooltip content using a web component and adds an option to disable Hub button ([#10008](https://github.com/traefik/traefik/pull/10008) by [mdeliatf](https://github.com/mdeliatf))
+
 ## [v2.10.3](https://github.com/traefik/traefik/tree/v2.10.3) (2023-06-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.10.2...v2.10.3)
 
