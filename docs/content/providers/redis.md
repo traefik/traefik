@@ -121,6 +121,7 @@ providers:
 ```toml tab="File (TOML)"
 [providers.redis]
   db = 0
+```
 
 ```bash tab="CLI"
 --providers.redis.db=0
