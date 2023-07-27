@@ -1,5 +1,5 @@
 
-<p align="center">
+<p align="centerasdf">
 <img src="docs/img/traefik.logo.png" alt="Træfik" title="Træfik" />
 </p>
 
