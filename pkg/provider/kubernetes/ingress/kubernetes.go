@@ -212,11 +212,9 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		TCP: &dynamic.TCPConfiguration{},
 	}
 
-	serverVersion := client.GetServerVersion()
-
 	var ingressClasses []*netv1.IngressClass
 
-	if !p.DisableIngressClassLookup && supportsIngressClass(serverVersion) {
+	if !p.DisableIngressClassLookup {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")
@@ -527,6 +525,15 @@ func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
+	if backend.Resource != nil {
+		// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
+		return nil, errors.New("resource backends are not supported")
+	}
+
+	if backend.Service == nil {
+		return nil, errors.New("missing service definition")
+	}
+
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err

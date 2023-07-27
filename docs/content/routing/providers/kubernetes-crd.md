@@ -290,7 +290,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 ### Custom Resource Definition (CRD)
 
 * You can find an exhaustive list, generated from Traefik's source code, of the custom resources and their attributes in [the reference page](../../reference/dynamic-configuration/kubernetes-crd.md).
-* Validate that [the prerequisites](../../providers/kubernetes-crd.md#configuration-requirements) are fulfilled before using the Traefik custom resources.
+* Validate that [the prerequisites](../../providers/kubernetes-crd.md#requirements) are fulfilled before using the Traefik custom resources.
 * Traefik CRDs are building blocks that you can assemble according to your needs.
     
 You can find an excerpt of the available custom resources in the table below:
@@ -2011,4 +2011,4 @@ If the ServersTransportTCP CRD is defined in another provider the cross-provider
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{!traefik-api-management-kubernetes.md!}
