@@ -76,66 +76,8 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.File)
 	}
 
-	if conf.Docker != nil {
-		p.quietAddProvider(conf.Docker)
-	}
-
-	if conf.Marathon != nil {
-		p.quietAddProvider(conf.Marathon)
-	}
-
 	if conf.Rest != nil {
 		p.quietAddProvider(conf.Rest)
-	}
-
-	if conf.KubernetesIngress != nil {
-		p.quietAddProvider(conf.KubernetesIngress)
-	}
-
-	if conf.KubernetesCRD != nil {
-		p.quietAddProvider(conf.KubernetesCRD)
-	}
-
-	if conf.KubernetesGateway != nil {
-		p.quietAddProvider(conf.KubernetesGateway)
-	}
-
-	if conf.Rancher != nil {
-		p.quietAddProvider(conf.Rancher)
-	}
-
-	if conf.Ecs != nil {
-		p.quietAddProvider(conf.Ecs)
-	}
-
-	if conf.ConsulCatalog != nil {
-		for _, pvd := range conf.ConsulCatalog.BuildProviders() {
-			p.quietAddProvider(pvd)
-		}
-	}
-
-	if conf.Nomad != nil {
-		for _, pvd := range conf.Nomad.BuildProviders() {
-			p.quietAddProvider(pvd)
-		}
-	}
-
-	if conf.Consul != nil {
-		for _, pvd := range conf.Consul.BuildProviders() {
-			p.quietAddProvider(pvd)
-		}
-	}
-
-	if conf.Etcd != nil {
-		p.quietAddProvider(conf.Etcd)
-	}
-
-	if conf.ZooKeeper != nil {
-		p.quietAddProvider(conf.ZooKeeper)
-	}
-
-	if conf.Redis != nil {
-		p.quietAddProvider(conf.Redis)
 	}
 
 	if conf.HTTP != nil {

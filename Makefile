@@ -84,18 +84,17 @@ binary: build-dev-image
 
 ## Build the linux binary locally
 .PHONY: binary-debug
-binary-debug: generate-webui
+binary-debug:
 	GOOS=linux ./script/make.sh binary
 
 ## Build the binary for the standard platforms (linux, darwin, windows)
 .PHONY: crossbinary-default
-crossbinary-default: generate-webui build-dev-image
+crossbinary-default: build-dev-image
 	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-default
 
 ## Build the binary for the standard platforms (linux, darwin, windows) in parallel
 .PHONY: crossbinary-default-parallel
 crossbinary-default-parallel:
-	$(MAKE) generate-webui
 	$(MAKE) build-dev-image crossbinary-default
 
 ## Run the unit and integration tests
