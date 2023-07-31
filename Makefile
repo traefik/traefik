@@ -79,8 +79,8 @@ generate-webui: webui/static/index.html
 
 ## Build the binary
 .PHONY: binary
-binary: generate-webui build-dev-image
-	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate binary
+binary: build-dev-image
+	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh binary
 
 ## Build the linux binary locally
 .PHONY: binary-debug
