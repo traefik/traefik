@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - 'develop'
+
+env:
+  GO_VERSION: '1.20'
+  CGO_ENABLED: 0
+  IN_DOCKER: ""
+
+jobs:
+
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build Step 1
+        run: |
+          echo "step 1 success"
+      - name: Build Step 2
+        run: |
+          echo "step 2 success"
+
+  test:
+    runs-on: ubuntu-20.04
+    needs:
+      - build
+
+    steps:
+      - name: UAT
+        run: |
+          echo "uat success"
+
+      - name: SIT
+        run: |
+          echo "sit failed"
+          exit 1
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs:
+      - test
+    steps:
+      - name: staging
+        run: |
+          echo "staging success"
+
+      - name: production
+        run: |
+          echo "production success"
+          exit 0
