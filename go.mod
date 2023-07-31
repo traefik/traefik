@@ -403,6 +403,8 @@ replace (
 // https://github.com/docker/compose/blob/e44222664abd07ce1d1fe6796d84d93cbc7468c3/go.mod#L131
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
+replace github.com/improbable-eng/grpc-web v0.15.0 => github.com/cleverunderdog/grpc-web v0.15.1
+
 // ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
 // tencentcloud uses monorepo with multimodule but the go.mod files are incomplete.
 exclude github.com/tencentcloud/tencentcloud-sdk-go v3.0.83+incompatible
