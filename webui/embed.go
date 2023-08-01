@@ -1,11 +1,10 @@
 package webui
 
 import (
-	"embed"
 	"io/fs"
+	"embed"
 )
 
-//go:embed static
 var assets embed.FS
 
 // FS contains the web UI assets.

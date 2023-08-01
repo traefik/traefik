@@ -9,7 +9,7 @@ IMAGE_NAME="kubernetes-codegen:latest"
 CURRENT_DIR="$(pwd)"
 
 echo "Building codegen Docker image..."
-docker build --build-arg KUBE_VERSION=v0.20.2 \
+/usr/bin/docker build --build-arg KUBE_VERSION=v0.20.2 \
              --build-arg USER="${USER}" \
              --build-arg UID="$(id -u)" \
              --build-arg GID="$(id -g)" \
@@ -18,7 +18,7 @@ docker build --build-arg KUBE_VERSION=v0.20.2 \
              "."
 
 echo "Generating Traefik clientSet code ..."
-docker run --rm \
+/usr/bin/docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" \
@@ -30,7 +30,7 @@ docker run --rm \
 
 echo "Generating DeepCopy code ..."
 
-docker run --rm \
+/usr/bin/docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" \
@@ -42,7 +42,7 @@ docker run --rm \
            --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl
 
 echo "Generating the CRD definitions for the documentation ..."
-docker run --rm \
+/usr/bin/docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" \

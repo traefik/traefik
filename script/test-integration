@@ -13,7 +13,7 @@ fi
 
 cd integration
 echo "Testing against..."
-docker version
+/usr/bin/docker version
 
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048

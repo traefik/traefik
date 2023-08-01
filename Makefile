@@ -29,9 +29,9 @@ TRAEFIK_ENVS := \
 TRAEFIK_MOUNT := -v "$(CURDIR)/dist:/go/src/github.com/traefik/traefik/dist"
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_NON_INTERACTIVE ?= false
-DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
-DOCKER_RUN_TRAEFIK_TEST := docker run --add-host=host.docker.internal:127.0.0.1 --rm --name=traefik --network traefik-test-network -v $(PWD):$(PWD) -w $(PWD) $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
-DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -i) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK := /usr/bin/docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK_TEST := /usr/bin/docker run --add-host=host.docker.internal:127.0.0.1 --rm --name=traefik --network traefik-test-network -v $(PWD):$(PWD) -w $(PWD) $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK_NOTTY := /usr/bin/docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -i) $(DOCKER_RUN_OPTS)
 
 IN_DOCKER ?= true
 
@@ -46,20 +46,20 @@ dist:
 .PHONY: build-dev-image
 build-dev-image: dist
 ifneq ("$(IN_DOCKER)", "")
-	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
+	/usr/bin/docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
 endif
 
 ## Build Dev Docker image without cache
 .PHONY: build-dev-image-no-cache
 build-dev-image-no-cache: dist
 ifneq ("$(IN_DOCKER)", "")
-	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
+	/usr/bin/docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
 endif
 
 ## Build WebUI Docker image
 .PHONY: build-webui-image
 build-webui-image:
-	docker build -t traefik-webui -f webui/Dockerfile webui
+	/usr/bin/docker build -t traefik-webui -f webui/Dockerfile webui
 
 ## Clean WebUI static generated assets
 .PHONY: clean-webui
@@ -71,52 +71,51 @@ clean-webui:
 ## Generate WebUI
 webui/static/index.html:
 	$(MAKE) build-webui-image
-	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui npm run build:nc
-	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+	/usr/bin/docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui npm run build:nc
+	/usr/bin/docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
 
 .PHONY: generate-webui
 generate-webui: webui/static/index.html
 
 ## Build the binary
 .PHONY: binary
-binary: generate-webui build-dev-image
-	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate binary
+binary: build-dev-image
+	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh binary
 
 ## Build the linux binary locally
 .PHONY: binary-debug
-binary-debug: generate-webui
+binary-debug:
 	GOOS=linux ./script/make.sh binary
 
 ## Build the binary for the standard platforms (linux, darwin, windows)
 .PHONY: crossbinary-default
-crossbinary-default: generate-webui build-dev-image
+crossbinary-default: build-dev-image
 	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-default
 
 ## Build the binary for the standard platforms (linux, darwin, windows) in parallel
 .PHONY: crossbinary-default-parallel
 crossbinary-default-parallel:
-	$(MAKE) generate-webui
 	$(MAKE) build-dev-image crossbinary-default
 
 ## Run the unit and integration tests
 .PHONY: test
 test: build-dev-image
-	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
-	trap 'docker network rm traefik-test-network' EXIT; \
+	-/usr/bin/docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	trap '/usr/bin/docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
 .PHONY: test-unit
 test-unit: build-dev-image
-	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
-	trap 'docker network rm traefik-test-network' EXIT; \
+	-/usr/bin/docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	trap '/usr/bin/docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit
 
 ## Run the integration tests
 .PHONY: test-integration
 test-integration: build-dev-image
-	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
-	trap 'docker network rm traefik-test-network' EXIT; \
+	-/usr/bin/docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	trap '/usr/bin/docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate binary test-integration
 
 ## Pull all images for integration tests
@@ -126,7 +125,7 @@ pull-images:
 		| awk '{print $$2}' \
 		| sort \
 		| uniq \
-		| xargs -P 6 -n 1 docker pull
+		| xargs -P 6 -n 1 /usr/bin/docker pull
 
 ## Validate code and docs
 .PHONY: validate-files
@@ -143,17 +142,17 @@ validate: build-dev-image
 ## Clean up static directory and build a Docker Traefik image
 .PHONY: build-image
 build-image: clean-webui binary
-	docker build -t $(TRAEFIK_IMAGE) .
+	/usr/bin/docker build -t $(TRAEFIK_IMAGE) .
 
 ## Build a Docker Traefik image without re-building the webui
 .PHONY: build-image-dirty
 build-image-dirty: binary
-	docker build -t $(TRAEFIK_IMAGE) .
+	/usr/bin/docker build -t $(TRAEFIK_IMAGE) .
 
 ## Locally build traefik for linux, then shove it an alpine image, with basic tools.
 .PHONY: build-image-debug
 build-image-debug: binary-debug
-	docker build -t $(TRAEFIK_IMAGE) -f debug.Dockerfile .
+	/usr/bin/docker build -t $(TRAEFIK_IMAGE) -f debug.Dockerfile .
 
 ## Start a shell inside the build env
 .PHONY: shell

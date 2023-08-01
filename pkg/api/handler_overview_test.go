@@ -13,12 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/provider/docker"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v2/pkg/provider/marathon"
-	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -235,13 +230,8 @@ func TestHandler_Overview(t *testing.T) {
 				Global: &static.Global{},
 				API:    &static.API{},
 				Providers: &static.Providers{
-					Docker:            &docker.Provider{},
-					File:              &file.Provider{},
-					Marathon:          &marathon.Provider{},
-					KubernetesIngress: &ingress.Provider{},
-					KubernetesCRD:     &crd.Provider{},
-					Rest:              &rest.Provider{},
-					Rancher:           &rancher.Provider{},
+					File: &file.Provider{},
+					Rest: &rest.Provider{},
 					Plugin: map[string]static.PluginConf{
 						"test": map[string]interface{}{},
 					},
