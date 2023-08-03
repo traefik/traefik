@@ -62,7 +62,7 @@ blocks:
         - name: traefik
       env_vars:
         - name: GH_VERSION
-          value: 1.12.1
+          value: 2.32.1
         - name: CODENAME
           value: "saintmarcelin"
         - name: IN_DOCKER
@@ -79,5 +79,5 @@ blocks:
         - name: Release
           commands:
             - make release-packages
-            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/traefik*.* --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
+            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
             - ./script/deploy.sh
