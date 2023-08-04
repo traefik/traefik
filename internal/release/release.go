@@ -5,25 +5,37 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"text/template"
 )
 
 func main() {
-	t := template.New(".goreleaser.yml.tmpl").Delims("[[", "]]")
-	tmpl := template.Must(t.ParseFiles("./.goreleaser.yml.tmpl"))
+	if len(os.Args) < 2 {
+		log.Fatal("GOOS should be provided as a CLI argument")
+	}
 
-	goos := os.Args[1]
+	goos := strings.TrimSpace(os.Args[1])
+	if goos == "" {
+		log.Fatal("GOOS should be provided as a CLI argument")
+	}
 
-	f := path.Join(os.TempDir(), fmt.Sprintf(".goreleaser_%s.yml", goos))
-	file, err := os.Create(f)
+	tmpl := template.Must(
+		template.New(".goreleaser.yml.tmpl").
+			Delims("[[", "]]").
+			ParseFiles("./.goreleaser.yml.tmpl"),
+	)
+
+	outputPath := path.Join(os.TempDir(), fmt.Sprintf(".goreleaser_%s.yml", goos))
+
+	output, err := os.Create(outputPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = tmpl.Execute(file, map[string]string{"GOOS": goos})
+	err = tmpl.Execute(output, map[string]string{"GOOS": goos})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Print(f)
+	fmt.Print(outputPath)
 }
