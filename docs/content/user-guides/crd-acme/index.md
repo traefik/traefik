@@ -91,7 +91,7 @@ Therefore, for the whole thing to work, we must delay applying the ingressRoute 
 kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
 ```
 
-Also, and this is out of the scope if this guide, please note that because of the privileged ports limitation on Linux, the above command might fail to listen on port 443.
+Also, and this is out of the scope of this guide, please note that because of the privileged ports limitation on Linux, the above command might fail to listen on port 443.
 In which case you can use tricks such as elevating caps of `kubectl` with `setcaps`, or using `authbind`, or setting up a NAT between your host and the WAN.
 Look it up.
 
