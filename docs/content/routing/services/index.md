@@ -338,7 +338,6 @@ Below are the available options for the health check mechanism:
 !!! info "Interval & Timeout Format"
 
     Interval and timeout are to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
-    The interval must be greater than the timeout. If configuration doesn't reflect this, the interval will be set to timeout + 1 second.
 
 !!! info "Recovering Servers"
 
