@@ -220,7 +220,12 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 
 func TestSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
-		Cookie: &dynamic.Cookie{Name: "test"},
+		Cookie: &dynamic.Cookie{
+			Name:     "test",
+			Secure:   true,
+			HTTPOnly: true,
+			SameSite: "none",
+		},
 	}, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -233,7 +238,11 @@ func TestSticky(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), Int(2))
 
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	recorder := &responseRecorder{
+		ResponseRecorder: httptest.NewRecorder(),
+		save:             map[string]int{},
+		cookies:          make(map[string]*http.Cookie),
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 3; i++ {
@@ -247,6 +256,9 @@ func TestSticky(t *testing.T) {
 
 	assert.Equal(t, 0, recorder.save["first"])
 	assert.Equal(t, 3, recorder.save["second"])
+	assert.Equal(t, true, recorder.cookies["test"].HttpOnly)
+	assert.Equal(t, true, recorder.cookies["test"].Secure)
+	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
 }
 
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
@@ -282,11 +294,15 @@ type responseRecorder struct {
 	save     map[string]int
 	sequence []string
 	status   []int
+	cookies  map[string]*http.Cookie
 }
 
 func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.save[r.Header().Get("server")]++
 	r.sequence = append(r.sequence, r.Header().Get("server"))
 	r.status = append(r.status, statusCode)
+	for _, cookie := range r.Result().Cookies() {
+		r.cookies[cookie.Name] = cookie
+	}
 	r.ResponseRecorder.WriteHeader(statusCode)
 }
