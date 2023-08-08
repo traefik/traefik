@@ -18,7 +18,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func TestServiceHealthChecker_NewServiceHealthCheckerDurations(t *testing.T) {
+func TestNewServiceHealthChecker_durations(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		config      *dynamic.ServerHealthCheck
