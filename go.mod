@@ -22,7 +22,7 @@ require (
 	github.com/go-acme/lego/v4 v4.13.2
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
@@ -33,11 +33,10 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/nomad/api v0.0.0-20220506174431-b5665129cd1f
-	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
-	github.com/klauspost/compress v1.16.6
+	github.com/klauspost/compress v1.16.7
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.2
 	github.com/kvtools/redis v1.0.2
@@ -59,11 +58,12 @@ require (
 	github.com/prometheus/client_model v0.3.0
 	github.com/quic-go/quic-go v0.33.0
 	github.com/rs/zerolog v1.28.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.8.4
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tailscale/tscert v0.0.0-20220316030059-54bbcb9f74e2
+	github.com/traefik/grpc-web v0.16.0
 	github.com/traefik/paerser v0.2.0
 	github.com/traefik/yaegi v0.15.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
@@ -89,8 +89,8 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db
 	golang.org/x/mod v0.11.0
-	golang.org/x/net v0.11.0
-	golang.org/x/text v0.10.0
+	golang.org/x/net v0.12.0
+	golang.org/x/text v0.11.0
 	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.10.0
 	google.golang.org/grpc v1.53.0
@@ -367,12 +367,12 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.111.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
