@@ -22,7 +22,7 @@ require (
 	github.com/go-acme/lego/v4 v4.13.2
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
@@ -57,7 +57,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
-	github.com/quic-go/quic-go v0.33.0
+	github.com/quic-go/quic-go v0.37.4
 	github.com/rs/zerolog v1.28.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spiffe/go-spiffe/v2 v2.1.1
@@ -193,14 +193,14 @@ require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
+	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/go-zookeeper/zk v1.0.3 // indirect
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
@@ -299,7 +299,7 @@ require (
 	github.com/nrdcg/nodion v0.1.0 // indirect
 	github.com/nrdcg/porkbun v0.2.0 // indirect
 	github.com/nzdjb/go-metaname v1.0.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.4.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
@@ -314,8 +314,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-19 v0.2.1 // indirect
-	github.com/quic-go/qtls-go1-20 v0.1.1 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.1 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/sacloud/api-client-go v0.2.8 // indirect
 	github.com/sacloud/go-http v0.1.6 // indirect
