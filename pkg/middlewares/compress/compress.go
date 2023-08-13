@@ -5,6 +5,7 @@ import (
 	"context"
 	"mime"
 	"net/http"
+	"slices"
 
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
@@ -54,7 +55,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
 	}
 
-	if contains(c.excludes, mediaType) {
+	if slices.Contains(c.excludes, mediaType) {
 		c.next.ServeHTTP(rw, req)
 	} else {
 		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
@@ -76,13 +77,4 @@ func (c *compress) gzipHandler(ctx context.Context) http.Handler {
 	}
 
 	return wrapper(c.next)
-}
-
-func contains(values []string, val string) bool {
-	for _, v := range values {
-		if v == val {
-			return true
-		}
-	}
-	return false
 }

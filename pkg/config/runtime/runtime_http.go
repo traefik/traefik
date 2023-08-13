@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"sync"
 
@@ -23,7 +24,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 
 		entryPointsCount := 0
 		for _, entryPointName := range rt.EntryPoints {
-			if !contains(entryPoints, entryPointName) {
+			if !slices.Contains(entryPoints, entryPointName) {
 				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
 				logger.WithField(log.EntryPointName, entryPointName).
 					Errorf("entryPoint %q doesn't exist", entryPointName)
