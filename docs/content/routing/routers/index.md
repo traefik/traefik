@@ -239,7 +239,7 @@ The table below lists all the available matchers:
 | ```HeadersRegexp(`key`, `regexp`)```                                                       | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
 | ```Host(`example.com`, ...)```                                                             | Check if the request domain (host header value) targets one of the given `domains`.                            |
 | ```HostHeader(`example.com`, ...)```                                                       | Same as `Host`, only exists for historical reasons.                                                            |
-| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)```                     | Match the request domain. See "Regexp Syntax" below.                                                           |
+| ```HostRegexp(`example.com`, `{subdomain:[a-z0-9]+}.example.com`, ...)```                     | Match the request domain. See "Regexp Syntax" below.                                                           |
 | ```Method(`GET`, ...)```                                                                   | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`)    |
 | ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```                             | Match exact request path. See "Regexp Syntax" below.                                                           |
 | ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```                       | Match request prefix path. See "Regexp Syntax" below.                                                          |
@@ -300,7 +300,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     http:
       routers:
         Router-1:
-          rule: "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+          rule: "HostRegexp(`{subdomain:[a-z0-9]+}.traefik.com`)"
           # ...
         Router-2:
           rule: "Host(`foobar.traefik.com`)"
@@ -311,7 +311,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+        rule = "HostRegexp(`{subdomain:[a-z0-9]+}.traefik.com`)"
         # ...
       [http.routers.Router-2]
         rule = "Host(`foobar.traefik.com`)"
@@ -322,7 +322,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
     | Name     | Rule                                               | Priority |
     |----------|----------------------------------------------------|----------|
-    | Router-1 | ```HostRegexp(`{subdomain:[a-z]+}.traefik.com`)``` | 44       |
+    | Router-1 | ```HostRegexp(`{subdomain:[a-z0-9]+}.traefik.com`)``` | 47       |
     | Router-2 | ```Host(`foobar.traefik.com`)```                   | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
@@ -336,7 +336,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     http:
       routers:
         Router-1:
-          rule: "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+          rule: "HostRegexp(`{subdomain:[a-z0-9]+}.traefik.com`)"
           entryPoints:
           - "web"
           service: service-1
@@ -353,7 +353,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+        rule = "HostRegexp(`{subdomain:[a-z0-9]+}.traefik.com`)"
         entryPoints = ["web"]
         service = "service-1"
         priority = 1
@@ -844,7 +844,7 @@ The table below lists all the available matchers:
 | Rule                                                                      | Description                                                                                             |
 |---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | ```HostSNI(`domain-1`, ...)```                                            | Checks if the Server Name Indication corresponds to the given `domains`.                                |
-| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Checks if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below.  |
+| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z0-9]+}.example.com`, ...)``` | Checks if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below.  |
 | ```ClientIP(`10.0.0.0/16`, `::1`)```                                      | Checks if the connection client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats. |
 | ```ALPN(`mqtt`, `h2c`)```                                                 | Checks if any of the connection ALPN protocols is one of the given protocols.                           |
 
