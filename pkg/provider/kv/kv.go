@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // Provider holds configurations of the provider.
@@ -133,11 +134,33 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 
 func (p *Provider) buildConfiguration(ctx context.Context) (*dynamic.Configuration, error) {
 	pairs, err := p.kvClient.List(ctx, p.RootKey, nil)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
 		return nil, err
 	}
 
-	cfg := &dynamic.Configuration{}
+	cfg := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Stores:  make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
+		},
+	}
+
 	err = kv.Decode(pairs, cfg, p.RootKey)
 	if err != nil {
 		return nil, err
