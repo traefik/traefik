@@ -2,11 +2,13 @@
 package integration
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	stdlog "log"
 	"os"
@@ -264,8 +266,18 @@ func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
 		log.Info().Str("testName", c.TestName()).Msg("No Traefik logs.")
 	} else {
-		log.Info().Str("testName", c.TestName()).
-			Str("logs", output.String()).Msg("Traefik logs")
+		log.Info().Str("testName", c.TestName()).Msg("Traefik logs")
+		reader := bufio.NewReader(output)
+		for {
+			line, err := reader.ReadString('\n')
+			if line != "" {
+				log.Info().Msg(strings.Trim(line, "\n"))
+			}
+			if err != nil {
+				c.Assert(err, checker.Equals, io.EOF)
+				break
+			}
+		}
 	}
 }
 
