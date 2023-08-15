@@ -703,6 +703,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers: map[string]*dynamic.TCPRouter{
@@ -790,6 +791,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
+			Middlewares: make(map[string]*dynamic.TCPMiddleware),
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers: map[string]*dynamic.UDPRouter{
