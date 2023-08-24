@@ -968,12 +968,12 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                                                                 | Description                                                                                      |
-|------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)                                                | Checks if the connection's Server Name Indication is equal to `domain`.                          |
-| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)                                          | Checks if the connection's Server Name Indication matches `regexp`.                              |
-| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-disable -->  | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
-| [```ALPN(`protocol`)```](#alpn)                                                                      | Checks if the connection's ALPN protocol equals `protocol`.                                      |
+| Rule                                                        | Description                                                                                      |
+|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |<!-- markdownlint-disable-line MD051 -->
+| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
 !!! tip "Backticks or Quotes?"
 
