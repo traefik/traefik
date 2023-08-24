@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -14,31 +15,49 @@ import (
 )
 
 var (
+	// https://www.postgresql.org/docs/current/protocol-message-formats.html
+	// Postgres message headers are 64 bits
 	PostgresStartTLSMsg   = []byte{0, 0, 0, 8, 4, 210, 22, 47} // int32(8) + int32(80877103)
+	PostgresStartupMsg    = []byte{0, 3, 0, 0}                 // most significant 32 bits vary per message + int32(196608)
 	PostgresStartTLSReply = []byte{83}                         // S
 )
 
-// isPostgres determines whether the buffer contains the Postgres STARTTLS message.
+// isPostgres determines whether the buffer contains the Postgres STARTTLS message,
+// or if we detect a StartupMessage, we return an error, since we do not support
+// 'sslmode=disable', or 'sslmode=default' with encryption denied falling back to 'disable'.
 func isPostgres(br *bufio.Reader) (bool, error) {
 	// Peek the first 8 bytes individually to prevent blocking on peek
 	// if the underlying conn does not send enough bytes.
 	// It could happen if a protocol start by sending less than 8 bytes,
 	// and expect a response before proceeding.
+	var peeked []byte
 	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
 		peeked, err := br.Peek(i)
 		if err != nil {
 			var opErr *net.OpError
 			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
-				log.Error().Err(err).Msg("Error while Peeking first byte")
+				log.Error().Err(err).Msg("Error while Peeking bytes")
 			}
 			return false, err
 		}
 
-		if !bytes.Equal(peeked, PostgresStartTLSMsg[:i]) {
+		// We need to check the 5th-8th bytes for StartupMessage
+		if i <= 4 {
+			continue
+		}
+
+		// Start checking for Postgres messages on the 5th byte,
+		// checking for encrypted and plaintext connection formats.
+		if !(bytes.Equal(peeked, PostgresStartTLSMsg[:i]) || bytes.Equal(peeked[i-4:i], PostgresStartupMsg[:i-4])) {
 			return false, nil
 		}
 	}
-	return true, nil
+
+	if bytes.Equal(peeked, PostgresStartTLSMsg) {
+		return true, nil
+	}
+
+	return true, fmt.Errorf("Plaintext Postgres connection")
 }
 
 // servePostgres serves a connection with a Postgres client negotiating a STARTTLS session.
