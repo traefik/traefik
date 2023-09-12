@@ -15,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 // Provider holds configurations of the provider.
@@ -140,25 +139,11 @@ func (p *Provider) buildConfiguration(ctx context.Context) (*dynamic.Configurati
 		return nil, err
 	}
 
+	// This empty configuration satisfies the pkg/server/configurationwatcher.go isEmptyConfiguration func constraints,
+	// and will not be discarded by the configuration watcher.
 	cfg := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:           make(map[string]*dynamic.Router),
-			Middlewares:       make(map[string]*dynamic.Middleware),
-			Services:          make(map[string]*dynamic.Service),
-			ServersTransports: make(map[string]*dynamic.ServersTransport),
-		},
-		TCP: &dynamic.TCPConfiguration{
-			Routers:     make(map[string]*dynamic.TCPRouter),
-			Services:    make(map[string]*dynamic.TCPService),
-			Middlewares: make(map[string]*dynamic.TCPMiddleware),
-		},
-		TLS: &dynamic.TLSConfiguration{
-			Stores:  make(map[string]tls.Store),
-			Options: make(map[string]tls.Options),
-		},
-		UDP: &dynamic.UDPConfiguration{
-			Routers:  make(map[string]*dynamic.UDPRouter),
-			Services: make(map[string]*dynamic.UDPService),
+			Routers: make(map[string]*dynamic.Router),
 		},
 	}
 

@@ -189,11 +189,11 @@ func (s *ConsulSuite) TestDeleteRootKey(c *check.C) {
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
-		"traefik/http/routers/Router0/service":       "simplesvc0",
 		"traefik/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
+		"traefik/http/routers/Router0/service":       "simplesvc0",
 
-		"traefik/http/routers/Router1/rule":          "Host(`kv2.localhost`)",
 		"traefik/http/routers/Router1/entryPoints/0": "web",
+		"traefik/http/routers/Router1/rule":          "Host(`kv2.localhost`)",
 		"traefik/http/routers/Router1/service":       "simplesvc1",
 
 		"traefik/http/services/simplesvc0/loadBalancer/servers/0/url": "http://" + svcaddr,
