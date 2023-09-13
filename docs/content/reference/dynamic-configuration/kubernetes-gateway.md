@@ -30,4 +30,4 @@ Dynamic configuration with Kubernetes Gateway provider.
 --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml"
 ```
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

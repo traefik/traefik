@@ -969,4 +969,4 @@ This will allow users to create a "default router" that will match all unmatched
 
     To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}
