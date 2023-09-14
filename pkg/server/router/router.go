@@ -76,7 +76,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		}
 
 		handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, log.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+			return accesslog.NewFieldHandler(next, log.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
 		}).Then(handler)
 		if err != nil {
 			log.FromContext(ctx).Error(err)
