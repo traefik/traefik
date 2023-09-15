@@ -29,11 +29,14 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 			desc: "delete a header",
 			cfg: dynamic.Headers{
 				CustomRequestHeaders: map[string]string{
+					"X-Forwarded-For":         "",
 					"X-Custom-Request-Header": "",
 					"Foo":                     "",
 				},
 			},
-			expected: http.Header{},
+			expected: http.Header{
+				"X-Forwarded-For": nil,
+			},
 		},
 		{
 			desc: "override a header",
