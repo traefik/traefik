@@ -199,6 +199,7 @@
     [http.middlewares.Middleware11]
       [http.middlewares.Middleware11.ipAllowList]
         sourceRange = ["foobar", "foobar"]
+        rejectStatusCode = 404
         [http.middlewares.Middleware11.ipAllowList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
