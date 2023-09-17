@@ -193,3 +193,7 @@ http:
     [http.middlewares.test-ipallowlist.ipAllowList.ipStrategy]
       excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```
+
+### `rejectStatusCode`
+
+The `rejectStatusCode` option sets HTTP status code for refused requests. If not set, the default is 403 (Forbidden).
