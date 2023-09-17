@@ -30,6 +30,14 @@ func TestNewIPAllowLister(t *testing.T) {
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
+		{
+			desc: "invalid HTTP status code",
+			allowList: dynamic.IPAllowList{
+				SourceRange:      []string{"10.10.10.10"},
+				RejectStatusCode: 600,
+			},
+			expectedError: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -72,6 +80,24 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 			},
 			remoteAddr: "20.20.20.21:1234",
 			expected:   403,
+		},
+		{
+			desc: "authorized with remote address, reject 404",
+			allowList: dynamic.IPAllowList{
+				SourceRange:      []string{"20.20.20.20"},
+				RejectStatusCode: 404,
+			},
+			remoteAddr: "20.20.20.20:1234",
+			expected:   200,
+		},
+		{
+			desc: "non authorized with remote address, reject 404",
+			allowList: dynamic.IPAllowList{
+				SourceRange:      []string{"20.20.20.20"},
+				RejectStatusCode: 404,
+			},
+			remoteAddr: "20.20.20.21:1234",
+			expected:   404,
 		},
 	}
 
