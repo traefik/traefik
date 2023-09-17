@@ -20,10 +20,11 @@ const (
 
 // ipAllowLister is a middleware that provides Checks of the Requesting IP against a set of Allowlists.
 type ipAllowLister struct {
-	next        http.Handler
-	allowLister *ip.Checker
-	strategy    ip.Strategy
-	name        string
+	next             http.Handler
+	allowLister      *ip.Checker
+	strategy         ip.Strategy
+	name             string
+	rejectStatusCode int
 }
 
 // New builds a new IPAllowLister given a list of CIDR-Strings to allow.
@@ -33,6 +34,12 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 
 	if len(config.SourceRange) == 0 {
 		return nil, errors.New("sourceRange is empty, IPAllowLister not created")
+	}
+
+	rejectStatusCode := config.RejectStatusCode
+	// If RejectStatusCode is not given, default to Forbidden (403).
+	if rejectStatusCode == 0 {
+		rejectStatusCode = 403
 	}
 
 	checker, err := ip.NewChecker(config.SourceRange)
@@ -48,10 +55,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 	logger.Debug().Msgf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)
 
 	return &ipAllowLister{
-		strategy:    strategy,
-		allowLister: checker,
-		next:        next,
-		name:        name,
+		strategy:         strategy,
+		allowLister:      checker,
+		next:             next,
+		name:             name,
+		rejectStatusCode: rejectStatusCode,
 	}, nil
 }
 
@@ -69,7 +77,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug().Msg(msg)
 		tracing.SetErrorWithEvent(req, msg)
-		reject(ctx, rw)
+		reject(al.rejectStatusCode, ctx, rw)
 		return
 	}
 	logger.Debug().Msgf("Accepting IP %s", clientIP)
@@ -77,9 +85,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	al.next.ServeHTTP(rw, req)
 }
 
-func reject(ctx context.Context, rw http.ResponseWriter) {
-	statusCode := http.StatusForbidden
-
+func reject(statusCode int, ctx context.Context, rw http.ResponseWriter) {
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write([]byte(http.StatusText(statusCode)))
 	if err != nil {
