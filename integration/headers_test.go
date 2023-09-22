@@ -1,7 +1,9 @@
 package integration
 
 import (
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"time"
 
@@ -22,6 +24,46 @@ func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
 
 	// Expected a 404 as we did not configure anything
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *HeadersSuite) TestReverseProxyHeaderRemoved(c *check.C) {
+	file := s.adaptFile(c, "fixtures/headers/remove_reverseproxy_headers.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, found := r.Header["X-Forwarded-Host"]
+		c.Assert(found, checker.True)
+		_, found = r.Header["Foo"]
+		c.Assert(found, checker.False)
+		_, found = r.Header["X-Forwarded-For"]
+		c.Assert(found, checker.False)
+	})
+
+	listener, err := net.Listen("tcp", "127.0.0.1:9000")
+	c.Assert(err, checker.IsNil)
+
+	ts := &httptest.Server{
+		Listener: listener,
+		Config:   &http.Server{Handler: handler},
+	}
+	ts.Start()
+	defer ts.Close()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.localhost"
+	req.Header = http.Header{
+		"Foo": {"bar"},
+	}
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
