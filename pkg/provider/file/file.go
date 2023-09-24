@@ -67,7 +67,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	configuration, err := p.BuildConfiguration()
 	if err != nil {
 		if p.Watch {
-			log.Debug().
+			log.Error().
 				Str(logs.ProviderName, providerName).
 				Err(err).
 				Msg("Error while building configuration (for the first time)")
