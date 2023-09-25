@@ -92,10 +92,10 @@ func cnameResolve(ctx context.Context, host, resolvPath string) (*cnameResolv, e
 		tempRecord, err := getRecord(client, m, server, config.Port)
 		if err != nil {
 			if errors.Is(err, errNoCNAMERecord) {
-				log.FromContext(ctx).Errorf("Failed to resolve host %s: %s", host, err)
+				log.FromContext(ctx).Errorf("CNAME lookup for hostname %q: %s", host, err)
 				continue
 			}
-			log.FromContext(ctx).Errorf("Failed to resolve host %s: %s", host, err)
+			log.FromContext(ctx).Errorf("CNAME lookup for hostname %q: %s", host, err)
 			continue
 		}
 		result = append(result, tempRecord)
