@@ -84,7 +84,7 @@ require (
 	k8s.io/apimachinery v0.26.3
 	k8s.io/client-go v0.26.3
 	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
-	mvdan.cc/xurls/v2 v2.1.0
+	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/gateway-api v0.4.0
 )
 
