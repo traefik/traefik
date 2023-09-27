@@ -2245,6 +2245,7 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:80",
+										TLS:     true,
 									},
 								},
 								ServersTransport: "tls-ns-dc1-Test",
