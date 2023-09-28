@@ -53,6 +53,7 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Handle Cors headers and preflight if configured.
 	if isPreflight := s.processCorsHeaders(rw, req); isPreflight {
+		rw.WriteHeader(http.StatusOK)
 		return
 	}
 

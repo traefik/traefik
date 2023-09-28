@@ -592,6 +592,53 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
 	checkNoOtherTraefikProblems(c)
 }
 
+func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly: false,
+			code:       "200",
+			user:       "-",
+			routerName: "rt-preflightCORS",
+			serviceURL: "-",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	checkStatsForLogFile(c)
+
+	waitForTraefik(c, "preflightCORS")
+
+	// Verify Traefik started OK
+	checkTraefikStarted(c)
+
+	// Test preflight response
+	req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:8009/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "preflight.docker.local"
+	req.Header.Set("Origin", "whatever")
+	req.Header.Set("Access-Control-Request-Method", "GET")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(c)
+}
+
 func checkNoOtherTraefikProblems(c *check.C) {
 	traefikLog, err := os.ReadFile(traefikTestLogFile)
 	c.Assert(err, checker.IsNil)
