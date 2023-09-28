@@ -34,6 +34,15 @@ import (
 
 var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
 
+type key string
+
+const connState key = "connState"
+
+type ConnState struct {
+	start     time.Time
+	idleCycle int
+}
+
 type httpForwarder struct {
 	net.Listener
 	connChan chan net.Conn
@@ -547,8 +556,36 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		})
 	}
 
+	var lastHandler http.Handler
+	if configuration.KeepAliveMaxTime > 0 || configuration.KeepAliveMaxRequests > 0 {
+		lastHandler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			state, ok := req.Context().Value(connState).(*ConnState)
+			if ok {
+				state.idleCycle++
+				if configuration.KeepAliveMaxRequests > 0 && state.idleCycle > configuration.KeepAliveMaxRequests {
+					log.WithoutContext().Debug("Close because of too many requests")
+					rw.Header().Set("Connection", "close")
+
+				}
+				if configuration.KeepAliveMaxTime > 0 && time.Now().After(state.start.Add(time.Duration(configuration.KeepAliveMaxTime))) {
+					log.WithoutContext().Debug("Close because of too long connection")
+					rw.Header().Set("Connection", "close")
+				}
+			}
+			handler.ServeHTTP(rw, req)
+		})
+	} else {
+		lastHandler = handler
+	}
+
 	serverHTTP := &http.Server{
-		Handler:      handler,
+		Handler: lastHandler,
+		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+			if configuration.KeepAliveMaxTime > 0 || configuration.KeepAliveMaxRequests > 0 {
+				return context.WithValue(ctx, connState, &ConnState{start: time.Now()})
+			}
+			return ctx
+		},
 		ErrorLog:     httpServerLogger,
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
