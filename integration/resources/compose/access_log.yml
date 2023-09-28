@@ -91,7 +91,7 @@ services:
       traefik.enable: true
       traefik.http.routers.rt-preflightCORS.entryPoints: preflight
       traefik.http.routers.rt-preflightCORS.rule: Host(`preflight.docker.local`)
-      traefik.http.routers.rt-preflightCORS.middlewares: preflight
+      traefik.http.routers.rt-preflightCORS.middlewares: preflightCORS
       traefik.http.middlewares.preflightCORS.headers.accessControlAllowMethods: OPTIONS, GET
       traefik.http.services.preflightCORS.loadbalancer.server.port: 80
 
