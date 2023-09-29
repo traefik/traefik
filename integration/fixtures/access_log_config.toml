@@ -20,6 +20,8 @@
     address = ":8007"
   [entryPoints.digestAuth]
     address = ":8008"
+  [entryPoints.preflight]
+    address = ":8009"
 
 [api]
   insecure = true
