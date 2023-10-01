@@ -141,6 +141,8 @@ type CircuitBreaker struct {
 	FallbackDuration ptypes.Duration `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
 	RecoveryDuration ptypes.Duration `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
+	// ResponseCode is the code that the circuit breaker will return while it is in the tripped state.
+	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
@@ -148,6 +150,7 @@ func (c *CircuitBreaker) SetDefaults() {
 	c.CheckPeriod = ptypes.Duration(100 * time.Millisecond)
 	c.FallbackDuration = ptypes.Duration(10 * time.Second)
 	c.RecoveryDuration = ptypes.Duration(10 * time.Second)
+	c.ResponseCode = 503
 }
 
 // +k8s:deepcopy-gen=true
