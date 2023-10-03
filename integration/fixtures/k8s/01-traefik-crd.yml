@@ -788,6 +788,19 @@ spec:
                   type detected from the response content, when it is not set by the
                   backend.
                 type: object
+              coraza:
+                description: Coraza holds the configuration of the coraza middleware.
+                  This middleware enables you to define coraza web application firewall
+                  rules.
+                properties:
+                  crsEnabled:
+                    description: CRSEnabled coreruleset configs added to coraza.
+                    type: boolean
+                  directives:
+                    description: Directives parses the directives from the given string
+                      and adds them to the WAF.
+                    type: string
+                type: object
               digestAuth:
                 description: 'DigestAuth holds the digest auth middleware configuration.
                   This middleware restricts access to your services to known users.
