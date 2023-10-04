@@ -35,8 +35,19 @@ type Middleware struct {
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
+	CorazaWAF         *CorazaWAF         `json:"corazaWAF,omitempty" toml:"corazaWAF,omitempty" yaml:"corazaWAF,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// CorazaWAF holds the coraza web application firewall middleware configuration.
+type CorazaWAF struct {
+	// Directives parses the directives from the given string and adds them to the WAF.
+	Directives string `json:"directives,omitempty" toml:"directives,omitempty" yaml:"directives,omitempty"`
+	// CRSEnabled coreruleset configs added to coraza.
+	CRSEnabled bool `json:"crsEnabled,omitempty" toml:"crsEnabled,omitempty" yaml:"crsEnabled,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

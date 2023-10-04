@@ -305,6 +305,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
+			CorazaWAF:         createCorazaMiddleware(middleware.Spec.CorazaWAF),
 			Plugin:            plugin,
 		}
 	}
@@ -670,6 +671,17 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 	}
 
 	return rl, nil
+}
+
+func createCorazaMiddleware(coraza *traefikv1alpha1.CorazaWAF) *dynamic.CorazaWAF {
+	if coraza == nil {
+		return nil
+	}
+
+	return &dynamic.CorazaWAF{
+		Directives: coraza.Directives,
+		CRSEnabled: coraza.CRSEnabled,
+	}
 }
 
 func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error) {

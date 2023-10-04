@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/circuitbreaker"
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress"
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
+	"github.com/traefik/traefik/v3/pkg/middlewares/corazawaf"
 	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
@@ -223,6 +224,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return grpcweb.New(ctx, next, *config.GrpcWeb, middlewareName), nil
+		}
+	}
+
+	// CorazaWAF
+	if config.CorazaWAF != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return corazawaf.NewCorazaWAF(ctx, next, *config.CorazaWAF, middlewareName)
 		}
 	}
 
