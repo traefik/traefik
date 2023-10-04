@@ -1,4 +1,4 @@
-package coraza
+package corazawaf
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
-const typeName = "Coraza"
+const typeName = "CorazaWAF"
 
-// Coraza is a web application firewall (WAF) middleware.
+// CorazaWAF is a web application firewall (WAF) middleware.
 // it will help you to block the possible malicious requests.
-type Coraza struct {
+type CorazaWAF struct {
 	next http.Handler
 }
 
@@ -42,8 +42,8 @@ func newErrorCb(logger *zerolog.Logger) func(types.MatchedRule) {
 	}
 }
 
-// NewCoraza constructs a new coraza instance from supplied frontend coraza struct.
-func NewCoraza(ctx context.Context, next http.Handler, cfg dynamic.Coraza, name string) (*Coraza, error) {
+// NewCorazaWAF constructs a new coraza waf instance from supplied frontend coraza struct.
+func NewCorazaWAF(ctx context.Context, next http.Handler, cfg dynamic.CorazaWAF, name string) (*CorazaWAF, error) {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	corazaCfg := coraza.NewWAFConfig().
 		WithDirectives(cfg.Directives).
@@ -57,11 +57,11 @@ func NewCoraza(ctx context.Context, next http.Handler, cfg dynamic.Coraza, name 
 	if err != nil {
 		return nil, err
 	}
-	return &Coraza{
+	return &CorazaWAF{
 		next: txhttp.WrapHandler(waf, next),
 	}, nil
 }
 
-func (c *Coraza) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (c *CorazaWAF) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	c.next.ServeHTTP(rw, req)
 }

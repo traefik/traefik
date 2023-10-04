@@ -275,8 +275,6 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		coraza := createCorazaMiddleware(middleware.Spec.Coraza)
-
 		circuitBreaker, err := createCircuitBreakerMiddleware(middleware.Spec.CircuitBreaker)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading circuit breaker middleware")
@@ -307,7 +305,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
-			Coraza:            coraza,
+			CorazaWAF:         createCorazaMiddleware(middleware.Spec.CorazaWAF),
 			Plugin:            plugin,
 		}
 	}
@@ -675,12 +673,12 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 	return rl, nil
 }
 
-func createCorazaMiddleware(coraza *traefikv1alpha1.Coraza) *dynamic.Coraza {
+func createCorazaMiddleware(coraza *traefikv1alpha1.CorazaWAF) *dynamic.CorazaWAF {
 	if coraza == nil {
 		return nil
 	}
 
-	return &dynamic.Coraza{
+	return &dynamic.CorazaWAF{
 		Directives: coraza.Directives,
 		CRSEnabled: coraza.CRSEnabled,
 	}

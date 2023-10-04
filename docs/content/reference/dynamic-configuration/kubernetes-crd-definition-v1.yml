@@ -788,10 +788,10 @@ spec:
                   type detected from the response content, when it is not set by the
                   backend.
                 type: object
-              coraza:
-                description: Coraza holds the configuration of the coraza middleware.
-                  This middleware enables you to define coraza web application firewall
-                  rules.
+              corazaWAF:
+                description: CorazaWAF holds the configuration of the coraza middleware.
+                  This middleware enables you to define the directives for coraza
+                  web application firewall.
                 properties:
                   crsEnabled:
                     description: CRSEnabled coreruleset configs added to coraza.

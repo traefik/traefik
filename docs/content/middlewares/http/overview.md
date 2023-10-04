@@ -124,7 +124,7 @@ http:
 | [Retry](retry.md)                         | Automatically retries in case of error            | Request lifecycle           |
 | [StripPrefix](stripprefix.md)             | Changes the path of the request                   | Path Modifier               |
 | [StripPrefixRegex](stripprefixregex.md)   | Changes the path of the request                   | Path Modifier               |
-| [Coraza](coraza.md)                       | Adds web application firewall (WAF) capability    | Security                    |
+| [CorazaWAF](corazawaf.md)                 | Adds web application firewall (WAF) capability    | Security                    |
 
 ## Community Middlewares
 

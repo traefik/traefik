@@ -1,4 +1,4 @@
-package coraza
+package corazawaf
 
 import (
 	"context"
@@ -23,10 +23,10 @@ func TestNewCoraza(t *testing.T) {
 	SecRule REQUEST_URI "@streq /admin" "id:101,phase:1,t:lowercase,log,deny"
 `
 
-	conf := dynamic.Coraza{
+	conf := dynamic.CorazaWAF{
 		Directives: directives,
 	}
-	handler, err := NewCoraza(context.Background(), next, conf, "coraza")
+	handler, err := NewCorazaWAF(context.Background(), next, conf, "coraza")
 	require.NoError(t, err)
 	assert.NotNil(t, handler, "this should not be nil")
 
@@ -88,11 +88,11 @@ func TestCorazaCRS(t *testing.T) {
 	Include @owasp_crs/REQUEST-949-BLOCKING-EVALUATION.conf
 `
 
-	conf := dynamic.Coraza{
+	conf := dynamic.CorazaWAF{
 		Directives: directives,
 		CRSEnabled: true,
 	}
-	handler, err := NewCoraza(context.Background(), next, conf, "coraza")
+	handler, err := NewCorazaWAF(context.Background(), next, conf, "coraza")
 	require.NoError(t, err)
 	assert.NotNil(t, handler, "this should not be nil")
 
