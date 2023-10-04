@@ -1,9 +1,9 @@
 ---
-title: "Traefik Coraza Documentation"
+title: "Traefik Coraza WAF Documentation"
 description: "The HTTP coraza middleware in Traefik Proxy implements web application firewall capability to Traefik. Read the technical documentation."
 ---
 
-# Coraza
+# Coraza WAF
 
 The HTTP [Coraza](https://coraza.io/) middleware in Traefik Proxy implements web application firewall capability to Traefik.
 To get help writing rules https://coraza.io/docs/tutorials/introduction/ and https://coreruleset.org/docs/ are excellent places to start. 
@@ -17,7 +17,7 @@ kind: Middleware
 metadata:
   name: waf
 spec:
-  coraza:
+  corazaWAF:
     directives: |
       SecRuleEngine On
       SecRule REQUEST_URI "@streq /admin" "id:101,phase:1,t:lowercase,log,deny"
@@ -37,7 +37,7 @@ kind: Middleware
 metadata:
   name: waf
 spec:
-  coraza:
+  corazaWAF:
     directives: |
       SecRuleEngine On
       SecRule REQUEST_URI "@streq /admin" "id:101,phase:1,t:lowercase,log,deny"
@@ -57,7 +57,7 @@ kind: Middleware
 metadata:
   name: wafcrs
 spec:
-  coraza:
+  corazaWAF:
     crsEnabled: true
     directives: |
       SecDefaultAction "phase:1,log,auditlog,deny,status:403"
