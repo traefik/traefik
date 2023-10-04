@@ -49,6 +49,7 @@ type MiddlewareSpec struct {
 	Retry             *Retry                     `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
+	Coraza            *Coraza                    `json:"coraza,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/plugins/
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
@@ -207,6 +208,17 @@ type Retry struct {
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Coraza holds the configuration of the coraza middleware.
+// This middleware enables you to define coraza web application firewall rules.
+type Coraza struct {
+	// Directives parses the directives from the given string and adds them to the WAF.
+	Directives string `json:"directives,omitempty"`
+	// CRSEnabled coreruleset configs added to coraza.
+	CRSEnabled bool `json:"crsEnabled,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
