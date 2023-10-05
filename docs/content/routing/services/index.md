@@ -200,7 +200,7 @@ LoadBalancing can be configured with WeightedRoundRobin (WRR) or HighestRandomWe
 
 #### Sticky sessions
 
-Sticky Sessions can be achieved using a Cookie or by using the HighestRoundRobin algorithm.
+Sticky Sessions can be achieved using a Cookie or by using the HighestRandomWeight algorithm.
 
 ##### With Cookies
 
