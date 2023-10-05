@@ -22,7 +22,8 @@ var (
 	BuildDate = "I don't remember exactly"
 	// StartDate holds the start date of traefik.
 	StartDate = time.Now()
-	// UUID instance uuid.
+	// DisableDashboardAd disables ad in the dashboard.
+	DisableDashboardAd = false
 )
 
 // Handler expose version routes.
@@ -37,14 +38,16 @@ func (v Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/version").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			v := struct {
-				Version   string
-				Codename  string
-				StartDate time.Time `json:"startDate"`
-				UUID      string    `json:"uuid,omitempty"`
+				Version            string
+				Codename           string
+				StartDate          time.Time `json:"startDate"`
+				UUID               string    `json:"uuid,omitempty"`
+				DisableDashboardAd bool      `json:"disableDashboardAd,omitempty"`
 			}{
-				Version:   Version,
-				Codename:  Codename,
-				StartDate: StartDate,
+				Version:            Version,
+				Codename:           Codename,
+				StartDate:          StartDate,
+				DisableDashboardAd: DisableDashboardAd,
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {

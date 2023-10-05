@@ -437,7 +437,8 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
 
 ### Priority
 
-To avoid path overlap, routes are sorted, by default, in descending order using rules length. The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
+To avoid path overlap, routes are sorted, by default, in descending order using rules length.
+The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
@@ -567,7 +568,8 @@ See the specific [docker](../providers/docker.md#service-definition) documentati
 
 #### General
 
- When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non TLS) requests).
+When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only
+(and that the router should ignore HTTP (non TLS) requests).
 Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services).
 
 ??? example "Configuring the router to accept HTTPS requests only"
@@ -819,23 +821,19 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault)..
+If not specified, TCP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault).
 If you want to limit the router scope to a set of entry points, set the entry points option.
 
 ??? info "How to handle Server First protocols?"
 
-    To correctly handle a request, Traefik needs to wait for the first
-    few bytes to arrive before it can decide what to do with it.
+    To correctly handle a request, Traefik needs to wait for the first few bytes to arrive before it can decide what to do with it.
 
-    For protocols where the server is expected to send first, such
-    as SMTP, if no specific setup is in place, we could end up in
-    a situation where both sides are waiting for data and the
-    connection appears to have hanged.
+    For protocols where the server is expected to send first, such as SMTP, if no specific setup is in place,
+    we could end up in a situation where both sides are waiting for data and the connection appears to have hanged.
 
-    The only way that Traefik can deal with such a case, is to make
-    sure that on the concerned entry point, there is no TLS router
-    whatsoever (neither TCP nor HTTP), and there is at least one
-    non-TLS TCP router that leads to the server in question.
+    The only way that Traefik can deal with such a case, is to make sure that on the concerned entry point,
+    there is no TLS router whatsoever (neither TCP nor HTTP),
+    and there is at least one non-TLS TCP router that leads to the server in question.
 
 ??? example "Listens to Every Entry Point"
 
@@ -970,12 +968,12 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                        | Description                                                                                      |
-|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
-| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
-| [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
-| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
+| Rule                                                                                                 | Description                                                                                      |
+|------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)                                                | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)                                          | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-disable -->  | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
+| [```ALPN(`protocol`)```](#alpn)                                                                      | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
 !!! tip "Backticks or Quotes?"
 
@@ -1246,20 +1244,17 @@ By default, a router with a TLS section will terminate the TLS connections, mean
     identifies if they correspond to the message of a STARTTLS negotiation,
     and, if so, acknowledges and signals the client that it can start the TLS handshake.
 
-    Please note/remember that there are subtleties inherent to STARTTLS in whether
-    the connection ends up being a TLS one or not. These subtleties depend on the
-    `sslmode` value in the client configuration (and on the server authentication
-    rules). Therefore, it is recommended to use the `require` value for the
-    `sslmode`.
+    Please note/remember that there are subtleties inherent to STARTTLS in whether the connection ends up being a TLS one or not.
+    These subtleties depend on the `sslmode` value in the client configuration (and on the server authentication rules).
+    Therefore, it is recommended to use the `require` value for the `sslmode`.
 
     Afterwards, the TLS handshake, and routing based on TLS, can proceed as expected.
 
     !!! warning "Postgres STARTTLS with TCP TLS PassThrough routers"
 
-        As mentioned above, the `sslmode` configuration parameter does have an impact on
-        whether a STARTTLS session will succeed. In particular in the context of TCP TLS
-        PassThrough, some of the values (such as `allow`) do not even make sense. Which
-        is why, once more it is recommended to use the `require` value.
+        As mentioned above, the `sslmode` configuration parameter does have an impact on whether a STARTTLS session will succeed.
+        In particular in the context of TCP TLS PassThrough, some of the values (such as `allow`) do not even make sense.
+        Which is why, once more it is recommended to use the `require` value.
 
 #### `passthrough`
 
@@ -1417,8 +1412,7 @@ So UDP "routers" at this time are pretty much only load-balancers in one form or
 	notably so that the proxy knows where to forward a response packet from a backend.
 	As expected, a `timeout` is associated to each of these sessions,
 	so that they get cleaned out if they go through a period of inactivity longer than a given duration.
-	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described
-	under [EntryPoints](../entrypoints/#udp-options).
+	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described under [EntryPoints](../entrypoints/#udp-options).
 
 ### EntryPoints
 
