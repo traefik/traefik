@@ -402,6 +402,20 @@
               </div>
             </div>
           </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowOriginListRegex -->
+          <q-card-section v-if="middleware.headers">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">Access Control Allow Origin Regex</div>
+                <q-chip
+                  v-for="(val, key) in exData(middleware).accessControlAllowOriginListRegex" :key="key"
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ val }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlExposeHeaders -->
           <q-card-section v-if="middleware.headers">
             <div class="row items-start no-wrap">
