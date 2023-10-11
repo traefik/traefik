@@ -341,4 +341,4 @@ providers:
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}
