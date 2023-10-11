@@ -1,3 +1,48 @@
+## [v2.10.5](https://github.com/traefik/traefik/tree/v2.10.5) (2023-10-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.4...v2.10.5)
+
+**Bug fixes:**
+- **[accesslogs]** Move origin fields capture to service level ([#10126](https://github.com/traefik/traefik/pull/10126) by [rtribotte](https://github.com/rtribotte))
+- **[accesslogs]** Fix preflight response status in access logs ([#10142](https://github.com/traefik/traefik/pull/10142) by [rtribotte](https://github.com/rtribotte))
+- **[acme]** Update go-acme/lego to v4.14.0 ([#10087](https://github.com/traefik/traefik/pull/10087) by [ldez](https://github.com/ldez))
+- **[acme]** Update go-acme/lego to v4.13.3 ([#10077](https://github.com/traefik/traefik/pull/10077) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.37.5 ([#10083](https://github.com/traefik/traefik/pull/10083) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.39.0 ([#10137](https://github.com/traefik/traefik/pull/10137) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.37.6 ([#10085](https://github.com/traefik/traefik/pull/10085) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.38.0 ([#10086](https://github.com/traefik/traefik/pull/10086) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.38.1 ([#10090](https://github.com/traefik/traefik/pull/10090) by [ldez](https://github.com/ldez))
+- **[kv]** Ignore ErrKeyNotFound error for the KV provider ([#10082](https://github.com/traefik/traefik/pull/10082) by [sunyakun](https://github.com/sunyakun))
+- **[middleware,authentication]** Adjust forward auth to avoid connection leak ([#10096](https://github.com/traefik/traefik/pull/10096) by [wdhongtw](https://github.com/wdhongtw))
+- **[middleware,server]** Improve CNAME flattening to avoid unnecessary error logging ([#10128](https://github.com/traefik/traefik/pull/10128) by [niallnsec](https://github.com/niallnsec))
+- **[middleware]** Allow X-Forwarded-For delete operation ([#10132](https://github.com/traefik/traefik/pull/10132) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Update x/net and grpc/grpc-go ([#10161](https://github.com/traefik/traefik/pull/10161) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Add missing accessControlAllowOriginListRegex to middleware view ([#10157](https://github.com/traefik/traefik/pull/10157) by [DBendit](https://github.com/DBendit))
+- Fix false positive in url anonymization ([#10138](https://github.com/traefik/traefik/pull/10138) by [jspdown](https://github.com/jspdown))
+
+**Documentation:**
+- **[acme]** Change Arvancloud URL ([#10115](https://github.com/traefik/traefik/pull/10115) by [sajjadjafaribojd](https://github.com/sajjadjafaribojd))
+- **[acme]** Correct minor typo in crd-acme docs ([#10067](https://github.com/traefik/traefik/pull/10067) by [ayyron-lmao](https://github.com/ayyron-lmao))
+- **[healthcheck]** Remove healthcheck interval configuration warning ([#10068](https://github.com/traefik/traefik/pull/10068) by [rtribotte](https://github.com/rtribotte))
+- **[kv,redis]** Docs describe the missing db parameter in redis provider ([#10052](https://github.com/traefik/traefik/pull/10052) by [tokers](https://github.com/tokers))
+- **[middleware]** Doc fix accessControlAllowHeaders examples ([#10121](https://github.com/traefik/traefik/pull/10121) by [ebuildy](https://github.com/ebuildy))
+- Updates business callout in the documentation ([#10122](https://github.com/traefik/traefik/pull/10122) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
+## [v2.10.4](https://github.com/traefik/traefik/tree/v2.10.4) (2023-07-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.3...v2.10.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.13.2 ([#10036](https://github.com/traefik/traefik/pull/10036) by [ldez](https://github.com/ldez))
+- **[acme]** Update go-acme/lego to v4.13.0 ([#10029](https://github.com/traefik/traefik/pull/10029) by [ldez](https://github.com/ldez))
+- **[k8s/ingress,k8s]** fix: avoid panic on resource backends ([#10023](https://github.com/traefik/traefik/pull/10023) by [ldez](https://github.com/ldez))
+- **[middleware,tracing,plugins]** fix: traceability of the middleware plugins ([#10028](https://github.com/traefik/traefik/pull/10028) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Update maintainers guidelines ([#9981](https://github.com/traefik/traefik/pull/9981) by [geraldcroes](https://github.com/geraldcroes))
+- Update release documentation ([#9975](https://github.com/traefik/traefik/pull/9975) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- **[webui]** Updates the Hub tooltip content using a web component and adds an option to disable Hub button ([#10008](https://github.com/traefik/traefik/pull/10008) by [mdeliatf](https://github.com/mdeliatf))
+
 ## [v3.0.0-beta3](https://github.com/traefik/traefik/tree/v3.0.0-beta3) (2023-06-21)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta2...v3.0.0-beta3)
 

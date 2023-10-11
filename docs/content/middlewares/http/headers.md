@@ -190,7 +190,8 @@ spec:
       - "GET"
       - "OPTIONS"
       - "PUT"
-    accessControlAllowHeaders: "*"
+    accessControlAllowHeaders:
+      - "*"
     accessControlAllowOriginList:
       - "https://foo.bar.org"
       - "https://example.org"
@@ -226,8 +227,8 @@ http:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowHeaders= "*"
+    accessControlAllowMethods = ["GET", "OPTIONS", "PUT"]
+    accessControlAllowHeaders = [ "*" ]
     accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
     addVaryHeader = true

@@ -86,7 +86,7 @@ type DNSChallenge struct {
 
 // HTTPChallenge contains HTTP challenge configuration.
 type HTTPChallenge struct {
-	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"  export:"true"`
+	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 }
 
 // TLSChallenge contains TLS challenge configuration.
