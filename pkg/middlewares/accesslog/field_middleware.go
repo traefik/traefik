@@ -65,3 +65,14 @@ func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handle
 	data.Core[OriginStatus] = capt.StatusCode()
 	data.Core[OriginContentSize] = capt.ResponseSize()
 }
+
+// InitServiceFields init service fields.
+func InitServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
+	// Because they are expected to be initialized when the logger is processing the data table,
+	// the origin fields are initialized in case the response is returned by Traefik itself, and not a service.
+	data.Core[OriginDuration] = time.Duration(0)
+	data.Core[OriginStatus] = 0
+	data.Core[OriginContentSize] = int64(0)
+
+	next.ServeHTTP(rw, req)
+}

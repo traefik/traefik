@@ -19,13 +19,13 @@ global_job_config:
   prologue:
     commands:
       - curl -sSfL https://raw.githubusercontent.com/ldez/semgo/master/godownloader.sh | sudo sh -s -- -b "/usr/local/bin"
-      - sudo semgo go1.20
+      - sudo semgo go1.21
       - export "GOPATH=$(go env GOPATH)"
       - export "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/traefik/${SEMAPHORE_PROJECT_NAME}"
       - export "PATH=${GOPATH}/bin:${PATH}"
       - mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"
       - export GOPROXY=https://proxy.golang.org,direct
-      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.52.2
+      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.54.1
       - curl -sSfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131bb2cca8900e/raw/goreleaser.sh | bash -s -- -b "${GOPATH}/bin"
       - checkout
       - cache restore traefik-$(checksum go.sum)
@@ -62,7 +62,7 @@ blocks:
         - name: traefik
       env_vars:
         - name: GH_VERSION
-          value: 1.12.1
+          value: 2.32.1
         - name: CODENAME
           value: "beaufort"
         - name: IN_DOCKER
@@ -79,5 +79,5 @@ blocks:
         - name: Release
           commands:
             - make release-packages
-            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/traefik*.* --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
+            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
             - ./script/deploy.sh

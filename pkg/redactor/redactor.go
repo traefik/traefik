@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 
 	"github.com/mitchellh/copystructure"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -67,8 +66,7 @@ func do(baseConfig interface{}, tag string, redactByDefault, indent bool) (strin
 }
 
 func doOnJSON(input string) string {
-	mailExp := regexp.MustCompile(`\w[-.\w]*\w@\w[-.\w]*\w\.\w{2,3}"`)
-	return xurls.Relaxed().ReplaceAllString(mailExp.ReplaceAllString(input, maskLarge+"\""), maskLarge)
+	return xurls.Relaxed().ReplaceAllString(input, maskLarge)
 }
 
 func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {

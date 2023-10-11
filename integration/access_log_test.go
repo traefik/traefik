@@ -3,6 +3,7 @@ package integration
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -335,6 +336,71 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 	checkNoOtherTraefikProblems(c)
 }
 
+func (s *AccessLogSuite) TestAccessLogJSONFrontendRedirect(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	type logLine struct {
+		DownstreamStatus int    `json:"downstreamStatus"`
+		OriginStatus     int    `json:"originStatus"`
+		RouterName       string `json:"routerName"`
+		ServiceName      string `json:"serviceName"`
+	}
+
+	expected := []logLine{
+		{
+			DownstreamStatus: 302,
+			OriginStatus:     0,
+			RouterName:       "rt-frontendRedirect@docker",
+			ServiceName:      "",
+		},
+		{
+			DownstreamStatus: 200,
+			OriginStatus:     200,
+			RouterName:       "rt-server0@docker",
+			ServiceName:      "service1@docker",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_json_config.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	checkStatsForLogFile(c)
+
+	waitForTraefik(c, "frontendRedirect")
+
+	// Verify Traefik started OK
+	checkTraefikStarted(c)
+
+	// Test frontend redirect
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8005/test", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = ""
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	lines := extractLines(c)
+	c.Assert(len(lines), checker.GreaterOrEqualThan, len(expected))
+
+	for i, line := range lines {
+		if line == "" {
+			continue
+		}
+		var logline logLine
+		err := json.Unmarshal([]byte(line), &logline)
+		c.Assert(err, checker.IsNil)
+		c.Assert(logline.DownstreamStatus, checker.Equals, expected[i].DownstreamStatus)
+		c.Assert(logline.OriginStatus, checker.Equals, expected[i].OriginStatus)
+		c.Assert(logline.RouterName, checker.Equals, expected[i].RouterName)
+		c.Assert(logline.ServiceName, checker.Equals, expected[i].ServiceName)
+	}
+}
+
 func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	ensureWorkingDirectoryIsClean()
 
@@ -515,6 +581,53 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
 	req.SetBasicAuth("test", "test")
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(c)
+}
+
+func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly: false,
+			code:       "200",
+			user:       "-",
+			routerName: "rt-preflightCORS",
+			serviceURL: "-",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	checkStatsForLogFile(c)
+
+	waitForTraefik(c, "preflightCORS")
+
+	// Verify Traefik started OK
+	checkTraefikStarted(c)
+
+	// Test preflight response
+	req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:8009/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "preflight.docker.local"
+	req.Header.Set("Origin", "whatever")
+	req.Header.Set("Access-Control-Request-Method", "GET")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
