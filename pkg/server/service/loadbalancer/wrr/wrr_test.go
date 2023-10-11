@@ -254,8 +254,39 @@ func TestSticky(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 3; i++ {
 		for _, cookie := range recorder.Result().Cookies() {
+			assert.NotContains(t, "test=first", cookie.Value)
+			assert.NotContains(t, "test=second", cookie.Value)
 			req.AddCookie(cookie)
 		}
+		recorder.ResponseRecorder = httptest.NewRecorder()
+
+		balancer.ServeHTTP(recorder, req)
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 3, recorder.save["second"])
+}
+
+func TestSticky_FallBack(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{Name: "test"},
+	}, nil)
+
+	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(1))
+
+	balancer.AddService("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(2))
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.AddCookie(&http.Cookie{Name: "test", Value: "second"})
+	for i := 0; i < 3; i++ {
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
 		balancer.ServeHTTP(recorder, req)
