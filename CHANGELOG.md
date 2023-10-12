@@ -1,3 +1,21 @@
+## [v3.0.0-beta4](https://github.com/traefik/traefik/tree/v3.0.0-beta4) (2023-10-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta3...v3.0.0-beta4)
+
+**Bug fixes:**
+- **[consul,tls]** Enable TLS for Consul Connect TCP services ([#10140](https://github.com/traefik/traefik/pull/10140) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Allow short healthcheck interval with long timeout ([#9832](https://github.com/traefik/traefik/pull/9832) by [kevinmcconnell](https://github.com/kevinmcconnell))
+- **[middleware]** Fix GrpcWeb middleware to clear ContentLength after translating to normal gRPC message ([#9782](https://github.com/traefik/traefik/pull/9782) by [CleverUnderDog](https://github.com/CleverUnderDog))
+- **[sticky-session,server]** Set sameSite field for wrr load balancer sticky cookie ([#10066](https://github.com/traefik/traefik/pull/10066) by [sunyakun](https://github.com/sunyakun))
+
+**Documentation:**
+- **[docker/swarm]** Fix minor typo in swarm example ([#10071](https://github.com/traefik/traefik/pull/10071) by [kaznovac](https://github.com/kaznovac))
+- **[docker/swarm]** Remove documentation of old swarm options ([#10001](https://github.com/traefik/traefik/pull/10001) by [ldez](https://github.com/ldez))
+- Fix bad anchor on documentation ([#10041](https://github.com/traefik/traefik/pull/10041) by [mmatur](https://github.com/mmatur))
+- Fix migration guide heading ([#9989](https://github.com/traefik/traefik/pull/9989) by [ldez](https://github.com/ldez))
+
+**Misc:**
+- Merge current v2.10 into v3.0 ([#10038](https://github.com/traefik/traefik/pull/10038) by [mmatur](https://github.com/mmatur))
+
 ## [v2.10.5](https://github.com/traefik/traefik/tree/v2.10.5) (2023-10-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.10.4...v2.10.5)
 
