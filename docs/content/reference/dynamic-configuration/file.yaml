@@ -53,6 +53,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            maxAge: 1000 
         servers:
           - url: foobar
           - url: foobar
@@ -98,6 +99,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            maxAge: 1000 
     Service04:
       failover:
         service: foobar

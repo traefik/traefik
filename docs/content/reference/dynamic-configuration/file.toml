@@ -45,6 +45,7 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
+            maxAge = 1000
 
         [[http.services.Service01.loadBalancer.servers]]
           url = "foobar"
@@ -98,6 +99,7 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
+            maxAge = 1000
     [http.services.Service04]
       [http.services.Service04.failover]
         service = "foobar"
