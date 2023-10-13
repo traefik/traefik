@@ -297,6 +297,10 @@ spec:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
+                              maxAge:
+                                description: 'MaxAge defines the cookie maxAge time
+                                  in seconds. More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                                type: integer
                               name:
                                 description: Name defines the Cookie name.
                                 type: string
