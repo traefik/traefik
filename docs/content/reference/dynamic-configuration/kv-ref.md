@@ -221,7 +221,7 @@
 | `traefik/http/services/Service01/loadBalancer/servers/1/url` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/serversTransport` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/httpOnly` | `true` |
-| `traefik/http/services/Service01/loadBalancer/sticky/cookie/maxAge` | `1000` |
+| `traefik/http/services/Service01/loadBalancer/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/name` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/secure` | `true` |
@@ -238,7 +238,7 @@
 | `traefik/http/services/Service03/weighted/services/1/name` | `foobar` |
 | `traefik/http/services/Service03/weighted/services/1/weight` | `42` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/httpOnly` | `true` |
-| `traefik/http/services/Service03/weighted/sticky/cookie/maxAge` | `1000` |
+| `traefik/http/services/Service03/weighted/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/name` | `foobar` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/secure` | `true` |
