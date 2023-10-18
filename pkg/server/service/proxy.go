@@ -21,13 +21,23 @@ const StatusClientClosedRequest = 499
 // StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 const StatusClientClosedRequestText = "Client Closed Request"
 
+// StatusCloseConnection non-standard HTTP sttatus code for close connection.
+const StatusCloseConnection = 444
+
+// StatusCloseConnectionText non-standardHTTP status for close connection.
+const StatusCloseConnectionText = "No Response"
+
+// ErrStatusCloseConnection non-standard erreor for close connection
+var ErrStatusCloseConnection = errors.New(StatusCloseConnectionText)
+
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader),
-		Transport:     roundTripper,
-		FlushInterval: flushInterval,
-		BufferPool:    bufferPool,
-		ErrorHandler:  errorHandler,
+		Director:       directorBuilder(target, passHostHeader),
+		Transport:      roundTripper,
+		FlushInterval:  flushInterval,
+		BufferPool:     bufferPool,
+		ModifyResponse: modifyResponse,
+		ErrorHandler:   errorHandler,
 	}
 }
 
@@ -101,6 +111,8 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 		statusCode = http.StatusBadGateway
 	case errors.Is(err, context.Canceled):
 		statusCode = StatusClientClosedRequest
+	case errors.Is(err, ErrStatusCloseConnection):
+		statusCode = StatusCloseConnection
 	default:
 		var netErr net.Error
 		if errors.As(err, &netErr) {
@@ -115,15 +127,36 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	logger := log.Ctx(req.Context())
 	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
 
+	if statusCode == StatusCloseConnection {
+		conn, _, hjErr := w.(http.Hijacker).Hijack()
+		if hjErr == nil {
+			conn.Close()
+			return
+		}
+	}
+
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
 		logger.Debug().Err(werr).Msg("Error while writing status code")
 	}
 }
 
-func statusText(statusCode int) string {
-	if statusCode == StatusClientClosedRequest {
-		return StatusClientClosedRequestText
+func modifyResponse(response *http.Response) error {
+	switch response.StatusCode {
+	case StatusCloseConnection:
+		return ErrStatusCloseConnection
+	default:
+		return nil
 	}
-	return http.StatusText(statusCode)
+}
+
+func statusText(statusCode int) string {
+	switch statusCode {
+	case StatusClientClosedRequest:
+		return StatusClientClosedRequestText
+	case StatusCloseConnection:
+		return StatusCloseConnectionText
+	default:
+		return http.StatusText(statusCode)
+	}
 }
