@@ -302,6 +302,13 @@ spec:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
+                              maxAge:
+                                description: 'MaxAge defines the cookie maxAge time
+                                  in seconds. MaxAge=0 means no ''Max-Age'' attribute
+                                  specified. MaxAge<0 means delete cookie now, equivalently
+                                  ''Max-Age: 0'' MaxAge>0 means Max-Age attribute
+                                  present and given in seconds More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                                type: integer
                               name:
                                 description: Name defines the Cookie name.
                                 type: string
