@@ -154,6 +154,12 @@ type Cookie struct {
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
+	// MaxAge defines the cookie maxAge time in seconds.
+	// MaxAge=0 means no 'Max-Age' attribute specified.
+	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'
+	// MaxAge>0 means Max-Age attribute present and given in seconds
+	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber
+	MaxAge int `json:"maxAge,omitempty" toml:"maxAge,omitempty" yaml:"maxAge,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
