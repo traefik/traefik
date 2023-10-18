@@ -301,7 +301,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 
 		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
 			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
