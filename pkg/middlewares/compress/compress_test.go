@@ -35,7 +35,7 @@ func TestNegotiation(t *testing.T) {
 	}{
 		{
 			desc:        "no accept header",
-			expEncoding: "br",
+			expEncoding: "",
 		},
 		{
 			desc:            "unsupported accept header",
