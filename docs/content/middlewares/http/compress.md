@@ -55,7 +55,7 @@ http:
     Responses are compressed when the following criteria are all met:
 
     * The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
-    If the `Accept-Encoding` request header is absent, it is meant as br compression is requested.
+    If the `Accept-Encoding` request header is absent, for compatibility reasons the response won't be encoded.
     If it is present, but its value is the empty string, then compression is disabled.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
     * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes).
