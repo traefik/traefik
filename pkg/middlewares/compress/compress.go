@@ -93,11 +93,14 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Client allows us to do whatever we want, so we br compress.
+	// In theory, if no Accept-Encoding is present in the request, the client
+	// should accept any Encoding.
 	// See https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3
+	// In practice, using brotli in such a case breaks several clients
+	// (like curl or yum/dnf)
 	acceptEncoding, ok := req.Header["Accept-Encoding"]
 	if !ok {
-		c.brotliHandler.ServeHTTP(rw, req)
+		c.next.ServeHTTP(rw, req)
 		return
 	}
 
