@@ -287,6 +287,15 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.nativelb: "true"
     ```
 
+??? info "`traefik.ingress.kubernetes.io/service.usednsname`"
+
+    Controls, when creating the load-balancer, whether it will use directly IPs or if it will use fully-qualified DNS name.
+    By default, UseDNSName is false.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.usednsname: "true"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
 
     Overrides the default scheme.

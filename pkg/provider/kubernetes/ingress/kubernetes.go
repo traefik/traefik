@@ -35,6 +35,7 @@ const (
 	traefikDefaultIngressClass           = "traefik"
 	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
 	defaultPathMatcher                   = "PathPrefix"
+	kubernetesDefaultDomainName          = "cluster.local."
 )
 
 // Provider holds configurations of the provider.
@@ -50,6 +51,7 @@ type Provider struct {
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	DisableIngressClassLookup bool             `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
+	KubernetesDNSDomainName   string           `description:"Fully-qualified kubernetes cluster DNS domain when using useDNSName (default to cluster.local.)." json:"kubernetesDNSDomainName,omitempty"  toml:"kubernetesDNSDomainName,omitempty" yaml:"kubernetesDNSDomainName,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -117,6 +119,9 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	if p.KubernetesDNSDomainName == "" {
+		p.KubernetesDNSDomainName = kubernetesDefaultDomainName
+	}
 	return nil
 }
 
@@ -589,6 +594,15 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			if err != nil {
 				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 			}
+			// Will match my-svc.my-namespace.svc.cluster-domain.example.
+			if svcConfig.Service.UseDNSName {
+				address = net.JoinHostPort(fmt.Sprintf(
+					"%s.%s.svc.%s",
+					service.Name,
+					namespace,
+					p.KubernetesDNSDomainName,
+				), strconv.Itoa(int(portSpec.Port)))
+			}
 
 			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
 
@@ -636,7 +650,17 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+			hostName := addr.IP
+			// Will match pod-ip-address.service-name.my-namespace.svc.cluster-domain.example.
+			if svcConfig != nil && svcConfig.Service != nil && svcConfig.Service.UseDNSName {
+				hostName = fmt.Sprintf("%s.%s.%s.svc.%s",
+					strings.ReplaceAll(addr.IP, ".", "-"),
+					backend.Service.Name,
+					namespace,
+					p.KubernetesDNSDomainName,
+				)
+			}
+			hostPort := net.JoinHostPort(hostName, strconv.Itoa(int(port)))
 
 			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
 				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
