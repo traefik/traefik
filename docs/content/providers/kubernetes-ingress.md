@@ -467,6 +467,29 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `kubernetesDNSDomainName`
+
+_Optional, Default: cluster.local._
+
+Fully-qualified kubernetes cluster DNS domain when using useDNSName.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    kubernetesDNSDomainName: cluster.test.
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  kubernetesDNSDomainName = cluster.test.
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.kubernetesDNSDomainName=cluster.test.
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,

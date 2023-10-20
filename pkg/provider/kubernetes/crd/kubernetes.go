@@ -39,6 +39,7 @@ import (
 const (
 	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
 	traefikDefaultIngressClass       = "traefik"
+	kubernetesDefaultDomainName      = "cluster.local."
 )
 
 const (
@@ -58,6 +59,7 @@ type Provider struct {
 	IngressClass              string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	KubernetesDNSDomainName   string          `description:"Fully-qualified kubernetes cluster DNS domain when using useDNSName (default to cluster.local.)." json:"kubernetesDNSDomainName,omitempty"  toml:"kubernetesDNSDomainName,omitempty" yaml:"kubernetesDNSDomainName,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -114,6 +116,9 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	if p.KubernetesDNSDomainName == "" {
+		p.KubernetesDNSDomainName = kubernetesDefaultDomainName
+	}
 	return nil
 }
 
@@ -323,6 +328,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
+		kubernetesDNSDomainName:   p.KubernetesDNSDomainName,
 	}
 
 	for _, service := range client.GetTraefikServices() {
@@ -702,6 +708,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
+		kubernetesDNSDomainName:   p.KubernetesDNSDomainName,
 	}
 
 	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)

@@ -55,6 +55,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowCrossNamespace:       p.AllowCrossNamespace,
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
+			kubernetesDNSDomainName:   p.KubernetesDNSDomainName,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
@@ -201,6 +202,7 @@ type configBuilder struct {
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
 	allowEmptyServices        bool
+	kubernetesDNSDomainName   string
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -381,6 +383,15 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		if err != nil {
 			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 		}
+		// Will match my-svc.my-namespace.svc.cluster-domain.example.
+		if svc.UseDNSName {
+			address = net.JoinHostPort(fmt.Sprintf(
+				"%s.%s.svc.%s",
+				service.Name,
+				namespace,
+				c.kubernetesDNSDomainName,
+			), strconv.Itoa(int(svcPort.Port)))
+		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
@@ -439,7 +450,17 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+			hostName := addr.IP
+			// Will match pod-ip-address.service-name.my-namespace.svc.cluster-domain.example.
+			if svc.UseDNSName {
+				hostName = fmt.Sprintf("%s.%s.%s.svc.%s",
+					strings.ReplaceAll(addr.IP, ".", "-"),
+					svc.Name,
+					namespace,
+					c.kubernetesDNSDomainName,
+				)
+			}
+			hostPort := net.JoinHostPort(hostName, strconv.Itoa(int(port)))
 
 			servers = append(servers, dynamic.Server{
 				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
