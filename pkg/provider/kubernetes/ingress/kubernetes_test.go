@@ -1129,6 +1129,38 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress with dns",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-foobar-com-bar": {
+							Rule:    "HostRegexp(`^[a-zA-Z0-9-]+\\.foobar\\.com$`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL:    "http://10-10-0-1.service1.testing.svc.cluster.local.:8080",
+										Scheme: "",
+										Port:   "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Ingress with multiple ingressClasses",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
@@ -1506,6 +1538,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 				DisableIngressClassLookup: test.disableIngressClassLookup,
 			}
+			_ = p.Init()
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
@@ -1634,6 +1667,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
+			_ = p.Init()
 			p.AllowExternalNameServices = test.allowExternalNameServices
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
@@ -1676,6 +1710,34 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress with native service lb with dns",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://service1.testing.svc.cluster.local.:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1687,6 +1749,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
+			_ = p.Init()
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)

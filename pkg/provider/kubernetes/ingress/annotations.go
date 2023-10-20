@@ -46,6 +46,7 @@ type ServiceIng struct {
 	PassHostHeader   *bool           `json:"passHostHeader"`
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 	NativeLB         bool            `json:"nativeLB,omitempty"`
+	UseDNSName       bool            `json:"useDNSName,omitempty"`
 }
 
 // SetDefaults sets the default values.

@@ -337,6 +337,29 @@ providers:
 --providers.kubernetescrd.allowexternalnameservices=true
 ```
 
+### `kubernetesDNSDomainName`
+
+_Optional, Default: cluster.local._
+
+Fully-qualified kubernetes cluster DNS domain when using useDNSName.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    kubernetesDNSDomainName: cluster.test.
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  kubernetesDNSDomainName = cluster.test.
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.kubernetesDNSDomainName=cluster.test.
+```
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

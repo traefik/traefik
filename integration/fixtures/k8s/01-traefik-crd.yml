@@ -181,6 +181,11 @@ spec:
                               between the servers. RoundRobin is the only supported
                               value at the moment.
                             type: string
+                          useDNSName:
+                            description: UseDNSName control, when creating the load-balancer,
+                              whether it will use directly IPs or if it will use fully-qualified
+                              DNS name.
+                            type: boolean
                           weight:
                             description: Weight defines the weight and should only
                               be specified when Name references a TraefikService object
@@ -915,6 +920,11 @@ spec:
                           between the servers. RoundRobin is the only supported value
                           at the moment.
                         type: string
+                      useDNSName:
+                        description: UseDNSName control, when creating the load-balancer,
+                          whether it will use directly IPs or if it will use fully-qualified
+                          DNS name.
+                        type: boolean
                       weight:
                         description: Weight defines the weight and should only be
                           specified when Name references a TraefikService object (and
@@ -2197,6 +2207,11 @@ spec:
                             between the servers. RoundRobin is the only supported
                             value at the moment.
                           type: string
+                        useDNSName:
+                          description: UseDNSName control, when creating the load-balancer,
+                            whether it will use directly IPs or if it will use fully-qualified
+                            DNS name.
+                          type: boolean
                         weight:
                           description: Weight defines the weight and should only be
                             specified when Name references a TraefikService object
@@ -2286,6 +2301,11 @@ spec:
                     description: Strategy defines the load balancing strategy between
                       the servers. RoundRobin is the only supported value at the moment.
                     type: string
+                  useDNSName:
+                    description: UseDNSName control, when creating the load-balancer,
+                      whether it will use directly IPs or if it will use fully-qualified
+                      DNS name.
+                    type: boolean
                   weight:
                     description: Weight defines the weight and should only be specified
                       when Name references a TraefikService object (and to be precise,
@@ -2395,6 +2415,11 @@ spec:
                             between the servers. RoundRobin is the only supported
                             value at the moment.
                           type: string
+                        useDNSName:
+                          description: UseDNSName control, when creating the load-balancer,
+                            whether it will use directly IPs or if it will use fully-qualified
+                            DNS name.
+                          type: boolean
                         weight:
                           description: Weight defines the weight and should only be
                             specified when Name references a TraefikService object

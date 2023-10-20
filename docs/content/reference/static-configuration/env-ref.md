@@ -678,6 +678,9 @@ Kubernetes server endpoint (required for external cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_INGRESSCLASS`:  
 Value of kubernetes.io/ingress.class annotation to watch for.
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_KUBERNETESDNSDOMAINNAME`:  
+Fully-qualified kubernetes cluster DNS domain when using useDNSName (default to cluster.local.).
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_LABELSELECTOR`:  
 Kubernetes label selector to use.
 
@@ -740,6 +743,9 @@ IP used for Kubernetes Ingress endpoints.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_PUBLISHEDSERVICE`:  
 Published Kubernetes Service to copy status from.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_KUBERNETESDNSDOMAINNAME`:  
+Fully-qualified kubernetes cluster DNS domain when using useDNSName (default to cluster.local.).
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_LABELSELECTOR`:  
 Kubernetes Ingress label selector to use.
