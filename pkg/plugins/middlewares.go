@@ -77,8 +77,8 @@ func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp, wasmPath string) 
 	return builder, nil
 }
 
-func newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName, wasmPath string) (http.Handler, error) {
-	code, err := os.ReadFile(wasmPath)
+func (p middlewareBuilder) newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	code, err := os.ReadFile(p.wasmPath)
 	if err != nil {
 		return nil, err
 	}
@@ -106,10 +106,7 @@ func newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, m
 	return mw.NewHandler(ctx, next), nil
 }
 
-func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
-	if p.pluginType == PluginTypeWasm {
-		return newWasmHandler(ctx, next, cfg, middlewareName, p.wasmPath)
-	}
+func (p middlewareBuilder) newYaegiHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
 	results := p.fnNew.Call(args)
 
@@ -125,11 +122,18 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}
-
 	return handler, nil
 }
 
+func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	if p.pluginType == PluginTypeWasm {
+		return p.newWasmHandler(ctx, next, cfg, middlewareName)
+	}
+	return p.newYaegiHandler(ctx, next, cfg, middlewareName)
+}
+
 func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+	// in case of wasm we are just wrapping config to reflect.Value and using the content as is.
 	if p.pluginType == PluginTypeWasm {
 		return reflect.ValueOf(config), nil
 	}
