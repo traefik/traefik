@@ -10,7 +10,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const localGoPath = "./plugins-local/"
+type pluginType int8
+
+const (
+	PluginTypeYaegi pluginType = 0
+	PluginTypeWasm  pluginType = 1
+	localGoPath                = "./plugins-local/"
+)
 
 // SetupRemotePlugins setup remote plugins environment.
 func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
@@ -144,12 +150,22 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
 	}
 
-	if m.Import == "" {
-		errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
+	if m.Type == "middleware" && (m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "") {
+		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
 	}
 
-	if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
-		errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
+	if m.IsYaegiPlugin() {
+		if m.Import == "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
+		}
+
+		if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
+			errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
+		}
+	} else {
+		if m.WasmPath == "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: missing WasmPath", descriptor.ModuleName))
+		}
 	}
 
 	if m.DisplayName == "" {
