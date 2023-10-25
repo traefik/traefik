@@ -27,6 +27,6 @@ func (w WasmLogger) IsEnabled(level api.LogLevel) bool {
 }
 
 // Log implements the same method as documented on api.Logger.
-func (w WasmLogger) Log(_ context.Context, level api.LogLevel, message string) {
+func (w WasmLogger) Log(ctx context.Context, level api.LogLevel, message string) {
 	w.logger.WithLevel(zerolog.Level(level + 1)).Msg(message)
 }
