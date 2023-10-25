@@ -158,8 +158,6 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 		if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
 			errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
 		}
-	} else if m.WasmPath == "" {
-		errs = multierror.Append(errs, fmt.Errorf("%s: missing WasmPath", descriptor.ModuleName))
 	}
 
 	if m.DisplayName == "" {
