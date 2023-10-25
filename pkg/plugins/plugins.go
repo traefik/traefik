@@ -150,6 +150,10 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
 	}
 
+	if m.Type == "middleware" && (m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "") {
+		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
+	}
+
 	if m.IsYaegiPlugin() {
 		if m.Import == "" {
 			errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
@@ -157,6 +161,10 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 
 		if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
 			errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
+		}
+	} else {
+		if m.WasmPath == "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: missing WasmPath", descriptor.ModuleName))
 		}
 	}
 
