@@ -10,10 +10,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type pluginType int8
+
 const (
-	localGoPath     = "./plugins-local/"
-	PluginTypeWASM  = "wasm"
-	PluginTypeYaegi = "yaegi"
+	PluginTypeYaegi pluginType = 0
+	PluginTypeWasm  pluginType = 1
+	localGoPath                = "./plugins-local/"
 )
 
 // SetupRemotePlugins setup remote plugins environment.
