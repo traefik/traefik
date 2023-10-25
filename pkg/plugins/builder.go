@@ -45,14 +45,21 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 		}
 
 		switch manifest.Type {
-		case "middleware":
-			middleware, err := newMiddlewareBuilder(i, manifest.BasePkg, manifest.Import, wasmPath)
-			if err != nil {
-				return nil, err
+		case middleware:
+			var middleware *middlewareBuilder
+			switch manifest.Runtime {
+			case RuntimeWasm:
+				middleware = newWasmMiddlewareBuilder(wasmPath)
+			case RuntimeYaegi, "":
+				middleware, err = newYaegiMiddlewareBuilder(i, manifest.BasePkg, manifest.Import)
+				if err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
 			}
-
 			pb.middlewareBuilders[pName] = middleware
-		case "provider":
+		case provider:
 			pb.providerBuilders[pName] = providerBuilder{
 				interpreter: i,
 				Import:      manifest.Import,
@@ -77,14 +84,21 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 		}
 
 		switch manifest.Type {
-		case "middleware":
-			middleware, err := newMiddlewareBuilder(i, manifest.BasePkg, manifest.Import, wasmPath)
-			if err != nil {
-				return nil, err
+		case middleware:
+			var middleware *middlewareBuilder
+			switch manifest.Runtime {
+			case RuntimeWasm:
+				middleware = newWasmMiddlewareBuilder(wasmPath)
+			case RuntimeYaegi, "":
+				middleware, err = newYaegiMiddlewareBuilder(i, manifest.BasePkg, manifest.Import)
+				if err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
 			}
-
 			pb.middlewareBuilders[pName] = middleware
-		case "provider":
+		case provider:
 			pb.providerBuilders[pName] = providerBuilder{
 				interpreter: i,
 				Import:      manifest.Import,

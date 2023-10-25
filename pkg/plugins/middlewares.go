@@ -43,21 +43,16 @@ type middlewareBuilder struct {
 	wasmPath       string
 }
 
-func findPluginType(wasmPath string) pluginType {
-	if wasmPath != "" {
-		return PluginTypeWasm
+func newWasmMiddlewareBuilder(wasmPath string) *middlewareBuilder {
+	return &middlewareBuilder{
+		wasmPath:   wasmPath,
+		pluginType: PluginTypeWasm,
 	}
-	return PluginTypeYaegi
 }
 
-func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp, wasmPath string) (*middlewareBuilder, error) {
+func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*middlewareBuilder, error) {
 	builder := &middlewareBuilder{
-		wasmPath:   wasmPath,
-		pluginType: findPluginType(wasmPath),
-	}
-
-	if builder.pluginType == PluginTypeWasm {
-		return builder, nil
+		pluginType: PluginTypeYaegi,
 	}
 
 	if basePkg == "" {
@@ -132,11 +127,7 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	return p.newYaegiHandler(ctx, next, cfg, middlewareName)
 }
 
-func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
-	// in case of wasm we are just wrapping config to reflect.Value and using the content as is.
-	if p.pluginType == PluginTypeWasm {
-		return reflect.ValueOf(config), nil
-	}
+func (p middlewareBuilder) createYeagiConfig(config map[string]interface{}) (reflect.Value, error) {
 	results := p.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
@@ -174,9 +165,15 @@ type Middleware struct {
 }
 
 func newMiddleware(builder *middlewareBuilder, config map[string]interface{}, middlewareName string) (*Middleware, error) {
-	vConfig, err := builder.createConfig(config)
-	if err != nil {
-		return nil, err
+	var vConfig reflect.Value
+	if builder.pluginType == PluginTypeWasm {
+		vConfig = reflect.ValueOf(config)
+	} else {
+		var err error
+		vConfig, err = builder.createYeagiConfig(config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Middleware{
