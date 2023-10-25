@@ -23,5 +23,11 @@ type Manifest struct {
 	BasePkg       string                 `yaml:"basePkg"`
 	Compatibility string                 `yaml:"compatibility"`
 	Summary       string                 `yaml:"summary"`
+	WasmPath      string                 `yaml:"wasmPath"`
 	TestData      map[string]interface{} `yaml:"testData"`
+}
+
+// IsYaegiPlugin returns true if the plugin is a Yaegi plugin.
+func (m *Manifest) IsYaegiPlugin() bool {
+	return m.WasmPath == ""
 }

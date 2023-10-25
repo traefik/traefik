@@ -2,13 +2,18 @@ package plugins
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"reflect"
 	"strings"
 
+	"github.com/http-wasm/http-wasm-host-go/handler"
+	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/mitchellh/mapstructure"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/yaegi/interp"
 )
 
@@ -34,30 +39,77 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 type middlewareBuilder struct {
 	fnNew          reflect.Value
 	fnCreateConfig reflect.Value
+	pluginType     pluginType
+	wasmPath       string
 }
 
-func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*middlewareBuilder, error) {
+func findPluginType(wasmPath string) pluginType {
+	if wasmPath != "" {
+		return PluginTypeWasm
+	}
+	return PluginTypeYaegi
+}
+
+func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp, wasmPath string) (*middlewareBuilder, error) {
+	builder := &middlewareBuilder{
+		wasmPath:   wasmPath,
+		pluginType: findPluginType(wasmPath),
+	}
+
+	if builder.pluginType == PluginTypeWasm {
+		return builder, nil
+	}
+
 	if basePkg == "" {
 		basePkg = strings.ReplaceAll(path.Base(imp), "-", "_")
 	}
+	var err error
 
-	fnNew, err := i.Eval(basePkg + `.New`)
+	builder.fnNew, err = i.Eval(basePkg + `.New`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eval New: %w", err)
 	}
 
-	fnCreateConfig, err := i.Eval(basePkg + `.CreateConfig`)
+	builder.fnCreateConfig, err = i.Eval(basePkg + `.CreateConfig`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
+	return builder, nil
+}
 
-	return &middlewareBuilder{
-		fnNew:          fnNew,
-		fnCreateConfig: fnCreateConfig,
-	}, nil
+func newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName, wasmPath string) (http.Handler, error) {
+	code, err := os.ReadFile(wasmPath)
+	if err != nil {
+		return nil, err
+	}
+	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
+	opts := []handler.Option{
+		handler.Logger(initWasmLogger(logger)),
+	}
+	i := cfg.Interface()
+	if i != nil {
+		config, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("could not type assert config: %T", i)
+		}
+		b, err := json.Marshal(config)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, handler.GuestConfig(b))
+	}
+
+	mw, err := wasm.NewMiddleware(context.Background(), code, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return mw.NewHandler(ctx, next), nil
 }
 
 func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	if p.pluginType == PluginTypeWasm {
+		return newWasmHandler(ctx, next, cfg, middlewareName, p.wasmPath)
+	}
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
 	results := p.fnNew.Call(args)
 
@@ -78,6 +130,9 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 }
 
 func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+	if p.pluginType == PluginTypeWasm {
+		return reflect.ValueOf(config), nil
+	}
 	results := p.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
