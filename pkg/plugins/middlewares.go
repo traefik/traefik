@@ -2,13 +2,18 @@ package plugins
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"reflect"
 	"strings"
 
+	"github.com/http-wasm/http-wasm-host-go/handler"
+	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/mitchellh/mapstructure"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/yaegi/interp"
 )
 
@@ -34,30 +39,69 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 type middlewareBuilder struct {
 	fnNew          reflect.Value
 	fnCreateConfig reflect.Value
+	pluginType     pluginType
+	wasmPath       string
 }
 
-func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*middlewareBuilder, error) {
+func newWasmMiddlewareBuilder(wasmPath string) *middlewareBuilder {
+	return &middlewareBuilder{
+		wasmPath:   wasmPath,
+		pluginType: PluginTypeWasm,
+	}
+}
+
+func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*middlewareBuilder, error) {
+	builder := &middlewareBuilder{
+		pluginType: PluginTypeYaegi,
+	}
+
 	if basePkg == "" {
 		basePkg = strings.ReplaceAll(path.Base(imp), "-", "_")
 	}
+	var err error
 
-	fnNew, err := i.Eval(basePkg + `.New`)
+	builder.fnNew, err = i.Eval(basePkg + `.New`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eval New: %w", err)
 	}
 
-	fnCreateConfig, err := i.Eval(basePkg + `.CreateConfig`)
+	builder.fnCreateConfig, err = i.Eval(basePkg + `.CreateConfig`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
-
-	return &middlewareBuilder{
-		fnNew:          fnNew,
-		fnCreateConfig: fnCreateConfig,
-	}, nil
+	return builder, nil
 }
 
-func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+func (p middlewareBuilder) newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	code, err := os.ReadFile(p.wasmPath)
+	if err != nil {
+		return nil, err
+	}
+	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
+	opts := []handler.Option{
+		handler.Logger(initWasmLogger(logger)),
+	}
+	i := cfg.Interface()
+	if i != nil {
+		config, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("could not type assert config: %T", i)
+		}
+		b, err := json.Marshal(config)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, handler.GuestConfig(b))
+	}
+
+	mw, err := wasm.NewMiddleware(context.Background(), code, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return mw.NewHandler(ctx, next), nil
+}
+
+func (p middlewareBuilder) newYaegiHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
 	results := p.fnNew.Call(args)
 
@@ -73,11 +117,17 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}
-
 	return handler, nil
 }
 
-func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	if p.pluginType == PluginTypeWasm {
+		return p.newWasmHandler(ctx, next, cfg, middlewareName)
+	}
+	return p.newYaegiHandler(ctx, next, cfg, middlewareName)
+}
+
+func (p middlewareBuilder) createYeagiConfig(config map[string]interface{}) (reflect.Value, error) {
 	results := p.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
@@ -115,9 +165,15 @@ type Middleware struct {
 }
 
 func newMiddleware(builder *middlewareBuilder, config map[string]interface{}, middlewareName string) (*Middleware, error) {
-	vConfig, err := builder.createConfig(config)
-	if err != nil {
-		return nil, err
+	var vConfig reflect.Value
+	if builder.pluginType == PluginTypeWasm {
+		vConfig = reflect.ValueOf(config)
+	} else {
+		var err error
+		vConfig, err = builder.createYeagiConfig(config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Middleware{
