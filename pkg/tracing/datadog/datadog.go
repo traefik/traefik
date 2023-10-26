@@ -48,7 +48,7 @@ func (c *Config) SetDefaults() {
 // Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	opts := []datadog.StartOption{
-		datadog.WithServiceName(serviceName),
+		datadog.WithService(serviceName),
 		datadog.WithDebugMode(c.Debug),
 		datadog.WithPropagator(datadog.NewPropagator(&datadog.PropagatorConfig{
 			TraceHeader:    c.TraceIDHeaderName,
