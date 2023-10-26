@@ -277,6 +277,7 @@
       label2 = "foobar"
   [metrics.datadog]
     address = "foobar"
+    localAgentSocket = "foobar"
     pushInterval = "42s"
     addEntryPointsLabels = true
     addRoutersLabels = true

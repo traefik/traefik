@@ -43,6 +43,28 @@ metrics:
 --metrics.datadog.address=127.0.0.1:8125
 ```
 
+#### `localAgentSocket`
+
+_Optional, Default=""_
+
+Local Agent Socket instructs the send metrics to datadog-agent at this UNIX socket.
+
+```yaml tab="File (YAML)"
+tracing:
+  datadog:
+    localAgentSocket: /var/run/datadog/dsd.socket
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    localAgentSocket = "/var/run/datadog/dsd.socket"
+```
+
+```bash tab="CLI"
+--metrics.datadog.localAgentSocket=/var/run/datadog/dsd.socket
+```
+
 #### `addEntryPointsLabels`
 
 _Optional, Default=true_
