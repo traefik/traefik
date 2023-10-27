@@ -39,7 +39,7 @@ func (p *Prometheus) SetDefaults() {
 // Datadog contains address and metrics pushing interval configuration.
 type Datadog struct {
 	Address              string         `description:"Datadog's address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	LocalAgentSocket   	 string			`description:"DataDog's DogStatsD Agent over UDS." json:"localAgentSocket,omitempty" toml:"localAgentSocket,omitempty" yaml:"localAgentSocket,omitempty"`
+	LocalAgentSocket     string         `description:"DataDog's DogStatsD Agent over UDS." json:"localAgentSocket,omitempty" toml:"localAgentSocket,omitempty" yaml:"localAgentSocket,omitempty"`
 	PushInterval         types.Duration `description:"Datadog push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
 	AddEntryPointsLabels bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddRoutersLabels     bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
