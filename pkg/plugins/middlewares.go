@@ -15,6 +15,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/yaegi/interp"
+	"github.com/tetratelabs/wazero"
 )
 
 // Build builds a middleware plugin.
@@ -157,6 +158,7 @@ func (p wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Han
 	}
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 	opts := []handler.Option{
+		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
 		handler.Logger(initWasmLogger(logger)),
 	}
 	i := cfg.Interface()
