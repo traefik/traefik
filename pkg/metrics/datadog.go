@@ -103,6 +103,7 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 	if len(address) == 0 {
 		address = "localhost:8125"
 	}
+
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
 	safe.Go(func() {
