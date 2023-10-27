@@ -64,6 +64,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tailscale/tscert v0.0.0-20220316030059-54bbcb9f74e2
+	github.com/tetratelabs/wazero v1.2.0
 	github.com/traefik/grpc-web v0.16.0
 	github.com/traefik/paerser v0.2.0
 	github.com/traefik/yaegi v0.15.1
@@ -352,7 +353,6 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.490 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/dnspod v1.0.490 // indirect
-	github.com/tetratelabs/wazero v1.2.0 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20201103201449-0834f99b7b85 // indirect
