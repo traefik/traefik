@@ -103,14 +103,17 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 	if len(address) == 0 {
 		address = "localhost:8125"
 	}
-
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
 	safe.Go(func() {
 		ticker := time.NewTicker(time.Duration(config.PushInterval))
 		defer ticker.Stop()
 
-		datadogClient.SendLoop(ctx, ticker.C, "udp", address)
+		if config.LocalAgentSocket != "" {
+			datadogClient.SendLoop(ctx, ticker.C, "unix", config.LocalAgentSocket)
+		} else {
+			datadogClient.SendLoop(ctx, ticker.C, "udp", address)
+		}
 	})
 }
 
