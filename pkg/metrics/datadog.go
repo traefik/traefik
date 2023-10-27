@@ -99,8 +99,16 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 }
 
 func initDatadogClient(ctx context.Context, config *types.Datadog) {
-	address := config.Address
-	if len(address) == 0 {
+	network := "udp"
+
+	var address string
+	switch {
+	case config.LocalAgentSocket != "":
+		network = "unix"
+		address = config.LocalAgentSocket
+	case config.Address != "":
+		address = config.Address
+	default:
 		address = "localhost:8125"
 	}
 
@@ -110,11 +118,7 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 		ticker := time.NewTicker(time.Duration(config.PushInterval))
 		defer ticker.Stop()
 
-		if config.LocalAgentSocket != "" {
-			datadogClient.SendLoop(ctx, ticker.C, "unix", config.LocalAgentSocket)
-		} else {
-			datadogClient.SendLoop(ctx, ticker.C, "udp", address)
-		}
+		datadogClient.SendLoop(ctx, ticker.C, network, address)
 	})
 }
 
