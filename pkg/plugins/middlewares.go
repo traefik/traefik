@@ -13,6 +13,7 @@ import (
 	"github.com/http-wasm/http-wasm-host-go/handler"
 	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/mitchellh/mapstructure"
+	"github.com/tetratelabs/wazero"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/yaegi/interp"
 )
@@ -157,6 +158,7 @@ func (p wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Han
 	}
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 	opts := []handler.Option{
+		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
 		handler.Logger(initWasmLogger(logger)),
 	}
 	i := cfg.Interface()
