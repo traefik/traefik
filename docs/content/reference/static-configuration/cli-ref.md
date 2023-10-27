@@ -273,6 +273,9 @@ Enable metrics on routers. (Default: ```false```)
 `--metrics.datadog.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
+`--metrics.datadog.localagentsocket`:  
+DataDog's DogStatsD Agent over UDS.
+
 `--metrics.datadog.prefix`:  
 Prefix to use for metrics collection. (Default: ```traefik```)
 

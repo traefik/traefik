@@ -5,10 +5,6 @@ on:
     branches:
       - master
       - v*
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches:
-      - '*'
   schedule:
     - cron: '11 22 * * 1'
 

@@ -105,6 +105,28 @@ providers:
 --providers.redis.password=foo
 ```
 
+### `db`
+
+_Optional, Default=0_
+
+Defines the database to be selected after connecting to the Redis.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    # ...
+    db: 0
+```
+
+```toml tab="File (TOML)"
+[providers.redis]
+  db = 0
+```
+
+```bash tab="CLI"
+--providers.redis.db=0
+```
+
 ### `tls`
 
 _Optional_
