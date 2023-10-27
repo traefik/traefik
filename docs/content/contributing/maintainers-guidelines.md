@@ -35,8 +35,8 @@ If the quorum is not reached within one month after the issue is created, it is 
 ## Maintainer's Responsibilities and Privileges
 
 As a maintainer, you are granted a vote for the following:
-- [PR review](https://github.com/traefik/contributors-guide/blob/master/pr_guidlines.md).
-- [Design review](https://github.com/traefik/contributors-guide/blob/master/proposal_guidlines.md).
+- [PR review](https://github.com/traefik/contributors-guide/blob/master/pr_guidelines.md).
+- [Design review](https://github.com/traefik/contributors-guide/blob/master/proposal_guideines.md).
 - [Proposals](https://github.com/traefik/contributors-guide/blob/master/proposals.md).
 
 Maintainers are also added to the maintainer's Discord server where happens the [issue triage](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md)
