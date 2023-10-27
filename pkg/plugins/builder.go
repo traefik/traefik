@@ -4,32 +4,32 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/yaegi/interp"
-	"github.com/traefik/yaegi/stdlib"
 )
 
 // Constructor creates a plugin handler.
 type Constructor func(context.Context, http.Handler) (http.Handler, error)
 
+type pluginMiddleware interface {
+	NewHandler(context.Context, http.Handler) (http.Handler, error)
+}
+
+type middlewareBuilder interface {
+	newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error)
+}
+
 // Builder is a plugin builder.
 type Builder struct {
-	yaegiMiddlewareBuilders map[string]*yaegiMiddlewareBuilder
-	wasmMiddlewareBuilders  map[string]*wasmMiddlewareBuilder
-	providerBuilders        map[string]providerBuilder
+	providerBuilders   map[string]providerBuilder
+	middlewareBuilders map[string]middlewareBuilder
 }
 
 // NewBuilder creates a new Builder.
 func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor) (*Builder, error) {
 	pb := &Builder{
-		yaegiMiddlewareBuilders: map[string]*yaegiMiddlewareBuilder{},
-		wasmMiddlewareBuilders:  map[string]*wasmMiddlewareBuilder{},
-		providerBuilders:        map[string]providerBuilder{},
+		middlewareBuilders: map[string]middlewareBuilder{},
+		providerBuilders:   map[string]providerBuilder{},
 	}
 
 	for pName, desc := range plugins {
@@ -41,26 +41,26 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		logger := log.With().Str("plugin", "plugin-"+pName).Str("module", desc.ModuleName).Logger()
 
-		i, wasmPath, err := initMiddlewareBuilder(logger, client.GoPath(), desc.ModuleName, manifest)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
-		}
-
 		switch manifest.Type {
 		case middleware:
 			switch manifest.Runtime {
 			case RuntimeWasm:
-				pb.wasmMiddlewareBuilders[pName] = newWasmMiddlewareBuilder(wasmPath)
+				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(client.GoPath(), desc.ModuleName, manifest)
 			case RuntimeYaegi, "":
-				middleware, err := newYaegiMiddlewareBuilder(i, manifest.BasePkg, manifest.Import)
+				middleware, err := newYaegiMiddlewareBuilder(logger, client.GoPath(), manifest)
 				if err != nil {
 					return nil, err
 				}
-				pb.yaegiMiddlewareBuilders[pName] = middleware
+				pb.middlewareBuilders[pName] = middleware
 			default:
 				return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
 			}
 		case provider:
+			i, err := initInterp(logger, client.GoPath(), manifest.Import)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
+			}
+
 			pb.providerBuilders[pName] = providerBuilder{
 				interpreter: i,
 				Import:      manifest.Import,
@@ -79,26 +79,26 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		logger := log.With().Str("plugin", "plugin-"+pName).Str("module", desc.ModuleName).Logger()
 
-		i, wasmPath, err := initMiddlewareBuilder(logger, localGoPath, desc.ModuleName, manifest)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
-		}
-
 		switch manifest.Type {
 		case middleware:
 			switch manifest.Runtime {
 			case RuntimeWasm:
-				pb.wasmMiddlewareBuilders[pName] = newWasmMiddlewareBuilder(wasmPath)
+				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(client.GoPath(), desc.ModuleName, manifest)
 			case RuntimeYaegi, "":
-				middleware, err := newYaegiMiddlewareBuilder(i, manifest.BasePkg, manifest.Import)
+				middleware, err := newYaegiMiddlewareBuilder(logger, client.GoPath(), manifest)
 				if err != nil {
 					return nil, err
 				}
-				pb.yaegiMiddlewareBuilders[pName] = middleware
+				pb.middlewareBuilders[pName] = middleware
 			default:
 				return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
 			}
 		case provider:
+			i, err := initInterp(logger, client.GoPath(), manifest.Import)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
+			}
+
 			pb.providerBuilders[pName] = providerBuilder{
 				interpreter: i,
 				Import:      manifest.Import,
@@ -110,37 +110,23 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 	}
 
 	return pb, nil
+
 }
 
-func initMiddlewareBuilder(logger zerolog.Logger, goPath string, moduleName string, manifest *Manifest) (*interp.Interpreter, string, error) {
-	if !manifest.IsYaegiPlugin() {
-		return nil, filepath.Join(goPath, "src", moduleName, manifest.WasmPath), nil
-	}
-	i, err := initInterp(logger, goPath, manifest.Import)
-	return i, "", err
-}
-
-func initInterp(logger zerolog.Logger, goPath string, manifestImport string) (*interp.Interpreter, error) {
-	i := interp.New(interp.Options{
-		GoPath: goPath,
-		Env:    os.Environ(),
-		Stdout: logs.NoLevel(logger, zerolog.DebugLevel),
-		Stderr: logs.NoLevel(logger, zerolog.ErrorLevel),
-	})
-
-	err := i.Use(stdlib.Symbols)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load symbols: %w", err)
+// Build builds a middleware plugin.
+func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
+	if b.middlewareBuilders == nil {
+		return nil, fmt.Errorf("no plugin definitions in the static configuration: %s", pName)
 	}
 
-	err = i.Use(ppSymbols())
-	if err != nil {
-		return nil, fmt.Errorf("failed to load provider symbols: %w", err)
+	// plugin (pName) can be located in yaegi middleware builders.
+	if descriptor, ok := b.middlewareBuilders[pName]; ok {
+		m, err := descriptor.newMiddleware(config, middlewareName)
+		if err != nil {
+			return nil, err
+		}
+		return m.NewHandler, nil
 	}
 
-	_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifestImport))
-	if err != nil {
-		return nil, fmt.Errorf("failed to import plugin code %q: %w", manifestImport, err)
-	}
-	return i, nil
+	return nil, fmt.Errorf("unknown plugin type: %s", pName)
 }
