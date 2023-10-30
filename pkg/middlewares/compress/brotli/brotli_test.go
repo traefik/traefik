@@ -349,14 +349,14 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			desc:                 "Compress included content types",
 			contentType:          "text/plain",
 			excludedContentTypes: []string{},
-			includedContentTypes: []string{"text/plain"},
+			includedContentTypes: []string{"text/html", "application/json;charset=utf-8", "text/plain"},
 			expCompression:       true,
 		},
 		{
 			desc:                 "Do not compress when included content types are missing",
 			contentType:          "text/html",
 			excludedContentTypes: []string{},
-			includedContentTypes: []string{"text/plain"},
+			includedContentTypes: []string{"text/plain", "application/json;charset=utf-8"},
 			expCompression:       false,
 		},
 	}

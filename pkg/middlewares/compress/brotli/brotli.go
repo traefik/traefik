@@ -149,10 +149,10 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 					found = true
 					break
 				}
-				if !found {
-					r.compressionDisabled = true
-					return r.rw.Write(p)
-				}
+			}
+			if !found {
+				r.compressionDisabled = true
+				return r.rw.Write(p)
 			}
 		} else {
 			for _, excludedContentType := range r.excludedContentTypes {
