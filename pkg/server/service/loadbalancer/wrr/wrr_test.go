@@ -225,6 +225,7 @@ func TestSticky(t *testing.T) {
 			Secure:   true,
 			HTTPOnly: true,
 			SameSite: "none",
+			MaxAge:   42,
 		},
 	}, false)
 
@@ -259,6 +260,7 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, true, recorder.cookies["test"].HttpOnly)
 	assert.Equal(t, true, recorder.cookies["test"].Secure)
 	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
+	assert.Equal(t, 42, recorder.cookies["test"].MaxAge)
 }
 
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
