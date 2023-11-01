@@ -2,41 +2,51 @@ package plugins
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"reflect"
 	"strings"
 
+	"github.com/http-wasm/http-wasm-host-go/handler"
+	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/mitchellh/mapstructure"
+	"github.com/tetratelabs/wazero"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/yaegi/interp"
 )
 
 // Build builds a middleware plugin.
 func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
-	if b.middlewareBuilders == nil {
-		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
+	if b.yaegiMiddlewareBuilders == nil || b.wasmMiddlewareBuilders == nil {
+		return nil, fmt.Errorf("no plugin definitions in the static configuration: %s", pName)
 	}
 
-	descriptor, ok := b.middlewareBuilders[pName]
-	if !ok {
-		return nil, fmt.Errorf("unknown plugin type: %s", pName)
+	// plugin (pName) can be located in yaegi middleware builders.
+	if yaegiDescriptor, ok := b.yaegiMiddlewareBuilders[pName]; ok {
+		m, err := newYaegiMiddleware(yaegiDescriptor, config, middlewareName)
+		if err != nil {
+			return nil, err
+		}
+		return m.NewHandler, nil
 	}
 
-	m, err := newMiddleware(descriptor, config, middlewareName)
-	if err != nil {
-		return nil, err
+	// Or in wasm middleware builders.
+	if wasmDescriptor, ok := b.wasmMiddlewareBuilders[pName]; ok {
+		return newWasmMiddleware(wasmDescriptor, config, middlewareName).NewHandler, nil
 	}
 
-	return m.NewHandler, err
+	return nil, fmt.Errorf("unknown plugin type: %s", pName)
 }
 
-type middlewareBuilder struct {
+type yaegiMiddlewareBuilder struct {
 	fnNew          reflect.Value
 	fnCreateConfig reflect.Value
 }
 
-func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*middlewareBuilder, error) {
+func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yaegiMiddlewareBuilder, error) {
 	if basePkg == "" {
 		basePkg = strings.ReplaceAll(path.Base(imp), "-", "_")
 	}
@@ -51,13 +61,13 @@ func newMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*middlewa
 		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
 
-	return &middlewareBuilder{
+	return &yaegiMiddlewareBuilder{
 		fnNew:          fnNew,
 		fnCreateConfig: fnCreateConfig,
 	}, nil
 }
 
-func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+func (p yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
 	results := p.fnNew.Call(args)
 
@@ -73,11 +83,10 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}
-
 	return handler, nil
 }
 
-func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+func (p yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
 	results := p.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
@@ -107,20 +116,20 @@ func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.
 	return vConfig, nil
 }
 
-// Middleware is an HTTP handler plugin wrapper.
-type Middleware struct {
+// YaegiMiddleware is an HTTP handler plugin wrapper.
+type YaegiMiddleware struct {
 	middlewareName string
 	config         reflect.Value
-	builder        *middlewareBuilder
+	builder        *yaegiMiddlewareBuilder
 }
 
-func newMiddleware(builder *middlewareBuilder, config map[string]interface{}, middlewareName string) (*Middleware, error) {
+func newYaegiMiddleware(builder *yaegiMiddlewareBuilder, config map[string]interface{}, middlewareName string) (*YaegiMiddleware, error) {
 	vConfig, err := builder.createConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Middleware{
+	return &YaegiMiddleware{
 		middlewareName: middlewareName,
 		config:         vConfig,
 		builder:        builder,
@@ -128,6 +137,66 @@ func newMiddleware(builder *middlewareBuilder, config map[string]interface{}, mi
 }
 
 // NewHandler creates a new HTTP handler.
-func (m *Middleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
+func (m *YaegiMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
 	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
+}
+
+type wasmMiddlewareBuilder struct {
+	wasmPath string
+}
+
+func newWasmMiddlewareBuilder(wasmPath string) *wasmMiddlewareBuilder {
+	return &wasmMiddlewareBuilder{
+		wasmPath: wasmPath,
+	}
+}
+
+func (p wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	code, err := os.ReadFile(p.wasmPath)
+	if err != nil {
+		return nil, err
+	}
+	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
+	opts := []handler.Option{
+		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
+		handler.Logger(initWasmLogger(logger)),
+	}
+	i := cfg.Interface()
+	if i != nil {
+		config, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("could not type assert config: %T", i)
+		}
+		b, err := json.Marshal(config)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, handler.GuestConfig(b))
+	}
+
+	mw, err := wasm.NewMiddleware(context.Background(), code, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return mw.NewHandler(ctx, next), nil
+}
+
+// WasmMiddleware is an HTTP handler plugin wrapper.
+type WasmMiddleware struct {
+	middlewareName string
+	config         reflect.Value
+	builder        *wasmMiddlewareBuilder
+}
+
+func newWasmMiddleware(builder *wasmMiddlewareBuilder, config map[string]interface{}, middlewareName string) *WasmMiddleware {
+	return &WasmMiddleware{
+		middlewareName: middlewareName,
+		config:         reflect.ValueOf(config),
+		builder:        builder,
+	}
+}
+
+// NewHandler creates a new HTTP handler.
+func (y *WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
+	return y.builder.newWasmHandler(ctx, next, y.config, y.middlewareName)
 }
