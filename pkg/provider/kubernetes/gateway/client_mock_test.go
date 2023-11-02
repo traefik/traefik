@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
+	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
@@ -18,6 +19,11 @@ var _ Client = (*clientMock)(nil)
 func init() {
 	// required by k8s.MustParseYaml
 	err := gatev1alpha2.AddToScheme(kscheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+
+	err = gatev1.AddToScheme(kscheme.Scheme)
 	if err != nil {
 		panic(err)
 	}
@@ -33,9 +39,9 @@ type clientMock struct {
 	apiSecretError    error
 	apiEndpointsError error
 
-	gatewayClasses []*gatev1alpha2.GatewayClass
-	gateways       []*gatev1alpha2.Gateway
-	httpRoutes     []*gatev1alpha2.HTTPRoute
+	gatewayClasses []*gatev1.GatewayClass
+	gateways       []*gatev1.Gateway
+	httpRoutes     []*gatev1.HTTPRoute
 	tcpRoutes      []*gatev1alpha2.TCPRoute
 	tlsRoutes      []*gatev1alpha2.TLSRoute
 
@@ -62,11 +68,11 @@ func newClientMock(paths ...string) clientMock {
 				c.namespaces = append(c.namespaces, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *gatev1alpha2.GatewayClass:
+			case *gatev1.GatewayClass:
 				c.gatewayClasses = append(c.gatewayClasses, o)
-			case *gatev1alpha2.Gateway:
+			case *gatev1.Gateway:
 				c.gateways = append(c.gateways, o)
-			case *gatev1alpha2.HTTPRoute:
+			case *gatev1.HTTPRoute:
 				c.httpRoutes = append(c.httpRoutes, o)
 			case *gatev1alpha2.TCPRoute:
 				c.tcpRoutes = append(c.tcpRoutes, o)
@@ -81,7 +87,7 @@ func newClientMock(paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewayStatus gatev1alpha2.GatewayStatus) error {
+func (c clientMock) UpdateGatewayStatus(gateway *gatev1.Gateway, gatewayStatus gatev1.GatewayStatus) error {
 	for _, g := range c.gateways {
 		if g.Name == gateway.Name {
 			if !statusEquals(g.Status, gatewayStatus) {
@@ -94,7 +100,7 @@ func (c clientMock) UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewaySt
 	return nil
 }
 
-func (c clientMock) UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error {
+func (c clientMock) UpdateGatewayClassStatus(gatewayClass *gatev1.GatewayClass, condition metav1.Condition) error {
 	for _, gc := range c.gatewayClasses {
 		if gc.Name == gatewayClass.Name {
 			for _, c := range gc.Status.Conditions {
@@ -110,7 +116,7 @@ func (c clientMock) UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayC
 	return nil
 }
 
-func (c clientMock) UpdateGatewayStatusConditions(gateway *gatev1alpha2.Gateway, condition metav1.Condition) error {
+func (c clientMock) UpdateGatewayStatusConditions(gateway *gatev1.Gateway, condition metav1.Condition) error {
 	for _, g := range c.gatewayClasses {
 		if g.Name == gateway.Name {
 			for _, c := range g.Status.Conditions {
@@ -126,11 +132,11 @@ func (c clientMock) UpdateGatewayStatusConditions(gateway *gatev1alpha2.Gateway,
 	return nil
 }
 
-func (c clientMock) GetGatewayClasses() ([]*gatev1alpha2.GatewayClass, error) {
+func (c clientMock) GetGatewayClasses() ([]*gatev1.GatewayClass, error) {
 	return c.gatewayClasses, nil
 }
 
-func (c clientMock) GetGateways() []*gatev1alpha2.Gateway {
+func (c clientMock) GetGateways() []*gatev1.Gateway {
 	return c.gateways
 }
 
@@ -148,8 +154,8 @@ func (c clientMock) GetNamespaces(selector labels.Selector) ([]string, error) {
 	return ns, nil
 }
 
-func (c clientMock) GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTPRoute, error) {
-	var httpRoutes []*gatev1alpha2.HTTPRoute
+func (c clientMock) GetHTTPRoutes(namespaces []string) ([]*gatev1.HTTPRoute, error) {
+	var httpRoutes []*gatev1.HTTPRoute
 	for _, namespace := range namespaces {
 		for _, httpRoute := range c.httpRoutes {
 			if inNamespace(httpRoute.ObjectMeta, namespace) {

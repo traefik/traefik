@@ -5,32 +5,32 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 func TestStatusEquals(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		statusA  gatev1alpha2.GatewayStatus
-		statusB  gatev1alpha2.GatewayStatus
+		statusA  gatev1.GatewayStatus
+		statusB  gatev1.GatewayStatus
 		expected bool
 	}{
 		{
 			desc:     "Empty",
-			statusA:  gatev1alpha2.GatewayStatus{},
-			statusB:  gatev1alpha2.GatewayStatus{},
+			statusA:  gatev1.GatewayStatus{},
+			statusB:  gatev1.GatewayStatus{},
 			expected: true,
 		},
 		{
 			desc: "Same status",
-			statusA: gatev1alpha2.GatewayStatus{
+			statusA: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type:   "foobar",
 						Reason: "foobar",
 					},
 				},
-				Listeners: []gatev1alpha2.ListenerStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Name: "foo",
 						Conditions: []metav1.Condition{
@@ -42,14 +42,14 @@ func TestStatusEquals(t *testing.T) {
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
+			statusB: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type:   "foobar",
 						Reason: "foobar",
 					},
 				},
-				Listeners: []gatev1alpha2.ListenerStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Name: "foo",
 						Conditions: []metav1.Condition{
@@ -65,11 +65,11 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Listeners length not equal",
-			statusA: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{},
+			statusA: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusB: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{},
 				},
 			},
@@ -77,10 +77,10 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway conditions length not equal",
-			statusA: gatev1alpha2.GatewayStatus{
+			statusA: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
+			statusB: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{},
 				},
@@ -89,14 +89,14 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway conditions different types",
-			statusA: gatev1alpha2.GatewayStatus{
+			statusA: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type: "foobar",
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
+			statusB: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type: "foobir",
@@ -107,14 +107,14 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway conditions same types but different reason",
-			statusA: gatev1alpha2.GatewayStatus{
+			statusA: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type: "foobar",
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
+			statusB: gatev1.GatewayStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type:   "foobar",
@@ -126,16 +126,16 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway listeners conditions length",
-			statusA: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusA: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Name:       "foo",
 						Conditions: []metav1.Condition{},
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusB: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Name: "foo",
 						Conditions: []metav1.Condition{
@@ -148,8 +148,8 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway listeners conditions same types but different status",
-			statusA: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusA: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Conditions: []metav1.Condition{
 							{
@@ -159,8 +159,8 @@ func TestStatusEquals(t *testing.T) {
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusB: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Conditions: []metav1.Condition{
 							{
@@ -175,8 +175,8 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway listeners conditions same types but different message",
-			statusA: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusA: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Conditions: []metav1.Condition{
 							{
@@ -186,8 +186,8 @@ func TestStatusEquals(t *testing.T) {
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusB: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Conditions: []metav1.Condition{
 							{
@@ -202,8 +202,8 @@ func TestStatusEquals(t *testing.T) {
 		},
 		{
 			desc: "Gateway listeners conditions same types/reason but different names",
-			statusA: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusA: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Name: "foo",
 						Conditions: []metav1.Condition{
@@ -215,8 +215,8 @@ func TestStatusEquals(t *testing.T) {
 					},
 				},
 			},
-			statusB: gatev1alpha2.GatewayStatus{
-				Listeners: []gatev1alpha2.ListenerStatus{
+			statusB: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
 					{
 						Name: "bar",
 						Conditions: []metav1.Condition{
