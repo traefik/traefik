@@ -9,7 +9,7 @@ IMAGE_NAME="kubernetes-codegen:latest"
 CURRENT_DIR="$(pwd)"
 
 echo "Building codegen Docker image..."
-docker build --build-arg KUBE_VERSION=v0.20.2 \
+docker build --build-arg KUBE_VERSION=v0.28.3 \
              --build-arg USER="${USER}" \
              --build-arg UID="$(id -u)" \
              --build-arg GID="$(id -g)" \
@@ -22,7 +22,7 @@ docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" \
-           /go/src/k8s.io/code-generator/generate-groups.sh all \
+           /go/src/k8s.io/code-generator/kube_codegen.sh "applyconfiguration,client,deepcopy,informer,lister" \
            ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated \
            ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd \
            "traefikio:v1alpha1" \
