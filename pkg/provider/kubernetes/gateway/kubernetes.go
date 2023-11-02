@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"sort"
 	"strconv"
 	"strings"
@@ -614,13 +615,13 @@ func supportedRouteKinds(protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind,
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		return []gatev1alpha2.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
 
 	case gatev1.TLSProtocolType:
-		return []gatev1.RouteGroupKind{
+		return []gatev1alpha2.RouteGroupKind{
 			{Kind: kindTCPRoute, Group: &group},
 			{Kind: kindTLSRoute, Group: &group},
 		}, nil
