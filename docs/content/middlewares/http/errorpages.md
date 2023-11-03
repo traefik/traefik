@@ -115,9 +115,8 @@ The status code ranges are inclusive (`505-599` will trigger with every code bet
     as multiple comma-separated numbers (`500,502`),
     as ranges by separating two codes with a dash (`500-599`),
     or a combination of the two (`404,418,500-599`).
-    The comma-separated syntax is not available for 
-    every provider. The examples above demonstrate which syntax
-    is appropriate for each provider.
+    The comma-separated syntax is only available for label-based providers.
+    The examples above demonstrate which syntax is appropriate for each provider.
 
 ### `service`
 
