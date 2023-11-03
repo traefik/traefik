@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,6 +33,7 @@ import (
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 const (
