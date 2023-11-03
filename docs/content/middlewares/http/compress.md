@@ -58,8 +58,12 @@ http:
     If the `Accept-Encoding` request header is absent, the response won't be encoded.
     If it is present, but its value is the empty string, then compression is disabled.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
+    * The response`Content-Type` header is one among the [includedContentTypes options](#includedcontenttypes).
     * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes).
     * The response body is larger than the [configured minimum amount of bytes](#minresponsebodybytes) (default is `1024`).
+
+    When both `includedContentTypes` and `excludedContentTypes` are present, `includedContentTypes` takes precedence. Only the `includedContentTypes` list will be evaluated for determining whether compression should occur, and the `excludedContentTypes` list will be ignored.
+
 
 ## Configuration Options
 
@@ -116,6 +120,57 @@ http:
   [http.middlewares.test-compress.compress]
     excludedContentTypes = ["text/event-stream"]
 ```
+
+### `includedContentTypes`
+
+_Optional, Default=""_
+
+`includedContentTypes` specifies a list of content types to compare the `Content-Type` header of the responses before compressing.
+
+Only the responses with content types defined in `includedContentTypes` are compressed. If a response's MIME type matches one of the types in this list, it will be compressed, while all other responses will not be compressed.
+
+Content types are compared in a case-insensitive, whitespace-ignored manner.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.includedcontenttypes=application/json,text/html,text/plain"
+
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    includedContentTypes:
+      - application/json
+      - text/html
+      - text/plain
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.includedcontenttypes=application/json,text/html,text/plain"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        includedContentTypes:
+          - application/json
+          - text/html
+          - text/plain
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    excludedContentTypes = ["text/event-stream"]
+```
+
 
 ### `minResponseBodyBytes`
 
