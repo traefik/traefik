@@ -108,9 +108,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
 		}
 	}
-
 	return pb, nil
-
 }
 
 // Build builds a middleware plugin.
