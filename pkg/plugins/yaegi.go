@@ -23,6 +23,9 @@ type yaegiMiddlewareBuilder struct {
 
 func newYaegiMiddlewareBuilder(logger zerolog.Logger, goPath string, manifest *Manifest) (*yaegiMiddlewareBuilder, error) {
 	i, err := initInterp(logger, goPath, manifest.Import)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initInterp: %w", err)
+	}
 
 	basePkg := manifest.BasePkg
 	if basePkg == "" {
@@ -44,6 +47,7 @@ func newYaegiMiddlewareBuilder(logger zerolog.Logger, goPath string, manifest *M
 		fnCreateConfig: fnCreateConfig,
 	}, nil
 }
+
 func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
 	vConfig, err := b.createConfig(config)
 	if err != nil {
