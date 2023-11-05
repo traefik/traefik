@@ -36,7 +36,7 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, midd
 func (b wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	code, err := os.ReadFile(b.wasmPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading Wasm binary: %w", err)
 	}
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 	opts := []handler.Option{
@@ -51,7 +51,7 @@ func (b wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Han
 		}
 		b, err := json.Marshal(config)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("marshaling config: %w", err)
 		}
 		opts = append(opts, handler.GuestConfig(b))
 	}
