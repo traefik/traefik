@@ -449,6 +449,19 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+
+	RedisConfig *RedisConfig `json:"redisConfig,omitempty" toml:"redisConfig,omitempty" yaml:"redisConfig,omitempty" export:"true"`
+}
+
+// RedisConfig is a group of options for redis.
+type RedisConfig struct {
+	URI             string        `json:"uri,omitempty" toml:"uri,omitempty" yaml:"uri,omitempty"`
+	PoolSize        int           `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty"`
+	MinIdleConns    int           `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty"`
+	IdleConnTimeout time.Duration `json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty"`
+	ReadTimeout     time.Duration `json:"readTimeout,omitempty" toml:"omitempty,omitempty" yaml:"readTimeout,omitempty"`
+	WriteTimeout    time.Duration `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty"`
+	DialTimeout     time.Duration `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
