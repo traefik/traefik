@@ -1,10 +1,10 @@
 version: "3.8"
 services:
-  zipkin:
-    image: openzipkin/zipkin:2.16.2
-    environment:
-      STORAGE_TYPE: mem
-      JAVA_OPTS: -Dlogging.level.zipkin=DEBUG
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./fixtures/tracing/tempo.yaml:/etc/tempo.yaml
 
   whoami:
     image: traefik/whoami
