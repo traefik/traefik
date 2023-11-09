@@ -5,15 +5,15 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Traceable embeds tracing information.
 type Traceable interface {
-	GetTracingInformation() (name string, spanKind ext.SpanKindEnum)
+	GetTracingInformation() (name string, spanKind trace.SpanKind)
 }
 
 // Wrap adds traceability to an alice.Constructor.
@@ -37,7 +37,7 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 }
 
 // NewWrapper returns a http.Handler struct.
-func NewWrapper(next http.Handler, name string, spanKind ext.SpanKindEnum) http.Handler {
+func NewWrapper(next http.Handler, name string, spanKind trace.SpanKind) http.Handler {
 	return &Wrapper{
 		next:     next,
 		name:     name,
@@ -49,18 +49,18 @@ func NewWrapper(next http.Handler, name string, spanKind ext.SpanKindEnum) http.
 type Wrapper struct {
 	next     http.Handler
 	name     string
-	spanKind ext.SpanKindEnum
+	spanKind trace.SpanKind
 }
 
 func (w *Wrapper) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	_, err := tracing.FromContext(req.Context())
+	t, err := tracing.FromContext(req.Context())
 	if err != nil {
 		w.next.ServeHTTP(rw, req)
 		return
 	}
 
 	var finish func()
-	_, req, finish = tracing.StartSpan(req, w.name, w.spanKind)
+	_, req, finish = tracing.StartSpan(t.GetTracer(), req, w.name, w.spanKind)
 	defer finish()
 
 	if w.next != nil {
