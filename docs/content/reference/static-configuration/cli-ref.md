@@ -984,9 +984,6 @@ Sets the socket for the Datadog Agent.
 `--tracing.datadog.parentidheadername`:  
 Sets the header name used to store the parent ID.
 
-`--tracing.datadog.prioritysampling`:  
-Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
-
 `--tracing.datadog.samplingpriorityheadername`:  
 Sets the header name used to store the sampling priority.
 
