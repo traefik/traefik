@@ -1011,9 +1011,6 @@ Sets the socket for the Datadog Agent.
 `TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
 Sets the header name used to store the parent ID.
 
-`TRAEFIK_TRACING_DATADOG_PRIORITYSAMPLING`:  
-Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
-
 `TRAEFIK_TRACING_DATADOG_SAMPLINGPRIORITYHEADERNAME`:  
 Sets the header name used to store the sampling priority.
 
