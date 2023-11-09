@@ -8,11 +8,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/replacepath"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "ReplacePathRegex"
@@ -42,7 +42,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex
 	}, nil
 }
 
-func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (rp *replacePathRegex) GetTracingInformation() (string, trace.SpanKind) {
 	return rp.name, tracing.SpanKindNoneEnum
 }
 
