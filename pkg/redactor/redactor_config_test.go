@@ -882,11 +882,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 			SamplingPriorityHeaderName: "foobar",
 			BagagePrefixHeaderName:     "foobar",
 		},
-		Instana: &instana.Config{
-			LocalAgentHost: "foobar",
-			LocalAgentPort: 4242,
-			LogLevel:       "foobar",
-		},
+		Instana: &instana.Config{},
 		Haystack: &haystack.Config{
 			LocalAgentHost:          "foobar",
 			LocalAgentPort:          42,
