@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/mailgun/ttlmap"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 )
 
@@ -122,7 +122,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (rl *rateLimiter) GetTracingInformation() (string, trace.SpanKind) {
 	return rl.name, tracing.SpanKindNoneEnum
 }
 
