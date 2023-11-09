@@ -572,11 +572,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 	var backend tracing.Backend
 
 	if conf.Zipkin != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Zipkin backend.")
-		} else {
-			backend = conf.Zipkin
-		}
+		backend = conf.Zipkin
 	}
 
 	if conf.Datadog != nil {

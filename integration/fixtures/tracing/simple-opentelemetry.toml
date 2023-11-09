@@ -15,8 +15,9 @@
 
 [tracing]
   servicename = "tracing"
-  [tracing.zipkin]
-    httpEndpoint = "http://{{.IP}}:9411/api/v2/spans"
+  [tracing.opentelemetry]
+    address = "{{.IP}}:4318"
+    insecure = true
     sampleRate = 1.0
 
 [providers.file]
@@ -26,17 +27,17 @@
 
 [http.routers]
   [http.routers.router1]
-    service = "service1"
-    middlewares = ["retry", "ratelimit-1"]
-    rule = "Path(`/ratelimit`)"
+    Service = "service1"
+    Middlewares = ["retry", "ratelimit-1"]
+    Rule = "Path(`/ratelimit`)"
   [http.routers.router2]
-    service = "service2"
-    middlewares = ["retry"]
-    rule = "Path(`/retry`)"
+    Service = "service2"
+    Middlewares = ["retry"]
+    Rule = "Path(`/retry`)"
   [http.routers.router3]
-    service = "service3"
-    middlewares = ["retry", "basic-auth"]
-    rule = "Path(`/auth`)"
+    Service = "service3"
+    Middlewares = ["retry", "basic-auth"]
+    Rule = "Path(`/auth`)"
 
 [http.middlewares]
   [http.middlewares.retry.retry]
