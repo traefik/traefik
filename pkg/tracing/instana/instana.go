@@ -60,5 +60,14 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 
 	otel.SetTracerProvider(tracerProvider)
 
-	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), nil, nil
+	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, nil
+}
+
+// tpCloser converts a TraceProvider into an io.Closer.
+type tpCloser struct {
+	provider *sdktrace.TracerProvider
+}
+
+func (t tpCloser) Close() error {
+	return t.provider.Shutdown(context.Background())
 }

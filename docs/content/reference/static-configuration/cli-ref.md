@@ -996,6 +996,12 @@ Sets the header name used to store the trace ID.
 `--tracing.elastic`:  
 Settings for Elastic. (Default: ```false```)
 
+`--tracing.elastic.attributes.<name>`:  
+Defines additional attributes to be sent with the payloads.
+
+`--tracing.elastic.samplerate`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+
 `--tracing.elastic.secrettoken`:  
 Sets the token used to connect to Elastic APM Server.
 
