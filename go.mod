@@ -71,8 +71,9 @@ require (
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy/v2 v2.0.0-20230427132221-be5cf38f3c1c
 	github.com/vulcand/predicate v1.2.0
-	go.elastic.co/apm v1.13.1
-	go.elastic.co/apm/module/apmot v1.13.1
+	go.elastic.co/apm v1.15.0
+	go.elastic.co/apm/module/apmotel/v2 v2.4.5
+	go.elastic.co/apm/v2 v2.4.5
 	go.opentelemetry.io/collector/pdata v0.66.0
 	go.opentelemetry.io/otel v1.19.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.42.0
@@ -192,9 +193,8 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/elastic/go-licenser v0.3.1 // indirect
-	github.com/elastic/go-sysinfo v1.1.1 // indirect
-	github.com/elastic/go-windows v1.0.0 // indirect
+	github.com/elastic/go-sysinfo v1.7.1 // indirect
+	github.com/elastic/go-windows v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/exoscale/egoscale v0.100.1 // indirect
@@ -260,7 +260,6 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/infobloxopen/infoblox-go-client v1.1.1 // indirect
 	github.com/jaguilar/vt100 v0.0.0-20150826170717-2703a27b14ea // indirect
-	github.com/jcchavezs/porto v0.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
@@ -333,7 +332,6 @@ require (
 	github.com/sacloud/iaas-api-go v1.11.1 // indirect
 	github.com/sacloud/packages-go v0.0.9 // indirect
 	github.com/sanathkr/go-yaml v0.0.0-20170819195128-ed9d249f429b // indirect
-	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.17 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.5.0 // indirect
@@ -363,7 +361,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.0.0-20220805142335-27b56ddae16f // indirect
 	github.com/yandex-cloud/go-sdk v0.0.0-20220805164847-cf028e604997 // indirect
 	github.com/zeebo/errs v1.2.2 // indirect
-	go.elastic.co/apm/module/apmhttp v1.13.1 // indirect
+	go.elastic.co/apm/module/apmhttp/v2 v2.4.5 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.5 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
@@ -379,7 +377,6 @@ require (
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
@@ -397,7 +394,7 @@ require (
 	gopkg.in/ns1/ns1-go.v2 v2.7.6 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
+	howett.net/plist v1.0.0 // indirect
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
