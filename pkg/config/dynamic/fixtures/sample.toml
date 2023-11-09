@@ -123,14 +123,6 @@
 [tracing]
   serviceName = "foobar"
   spanNameLimit = 42
-  [tracing.jaeger]
-    samplingServerURL = "foobar"
-    samplingType = "foobar"
-    samplingParam = 42.0
-    localAgentHostPort = "foobar"
-    gen128Bit = true
-    propagation = "foobar"
-    traceContextHeaderName = "foobar"
   [tracing.zipkin]
     httpEndpoint = "foobar"
     sameSpan = true
@@ -150,13 +142,6 @@
     localAgentHost = "foobar"
     localAgentPort = 42
     logLevel = "foobar"
-  [tracing.haystack]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    globalTag = "foobar"
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    spanIDHeaderName = "foobar"
 
 [hostResolver]
   cnameFlattening = true
