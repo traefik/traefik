@@ -26,7 +26,7 @@ type Config struct {
 	ServerURL          string            `description:"Sets the URL of the Elastic APM server." json:"serverURL,omitempty" toml:"serverURL,omitempty" yaml:"serverURL,omitempty"`
 	SecretToken        string            `description:"Sets the token used to connect to Elastic APM Server." json:"secretToken,omitempty" toml:"secretToken,omitempty" yaml:"secretToken,omitempty" loggable:"false"`
 	ServiceEnvironment string            `description:"Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'." json:"serviceEnvironment,omitempty" toml:"serviceEnvironment,omitempty" yaml:"serviceEnvironment,omitempty" export:"true"`
-	Attributes         map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
+	GlobalTags         map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
 	SampleRate         float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 }
 
@@ -69,7 +69,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range c.Attributes {
+	for k, v := range c.GlobalTags {
 		attr = append(attr, attribute.String(k, v))
 	}
 
@@ -93,5 +93,5 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 
 	log.Debug().Msg("Elastic tracer configured")
 
-	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), nil, nil
+	return tracerProvider.Tracer("github.com/traefik/traefik", trace.WithInstrumentationVersion(version.Version)), nil, nil
 }
