@@ -29,7 +29,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
 	"github.com/traefik/traefik/v3/pkg/tracing/instana"
 	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
@@ -193,7 +192,6 @@ type Tracing struct {
 	Zipkin        *zipkin.Config        `description:"Settings for Zipkin." json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Datadog       *datadog.Config       `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Instana       *instana.Config       `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	Haystack      *haystack.Config      `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Elastic       *elastic.Config       `description:"Settings for Elastic." json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	OpenTelemetry *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"openTelemetry,omitempty" toml:"openTelemetry,omitempty" yaml:"openTelemetry,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }

@@ -391,14 +391,6 @@
     localAgentPort = 42
     logLevel = "foobar"
     enableAutoProfile = true
-  [tracing.haystack]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    globalTag = "foobar"
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    spanIDHeaderName = "foobar"
-    baggagePrefixHeaderName = "foobar"
   [tracing.elastic]
     serverURL = "foobar"
     secretToken = "foobar"
