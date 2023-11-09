@@ -1020,6 +1020,12 @@ Sets the header name used to store the trace ID.
 `TRAEFIK_TRACING_ELASTIC`:  
 Settings for Elastic. (Default: ```false```)
 
+`TRAEFIK_TRACING_ELASTIC_ATTRIBUTES_<NAME>`:  
+Defines additional attributes to be sent with the payloads.
+
+`TRAEFIK_TRACING_ELASTIC_SAMPLERATE`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+
 `TRAEFIK_TRACING_ELASTIC_SECRETTOKEN`:  
 Sets the token used to connect to Elastic APM Server.
 
