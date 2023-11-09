@@ -391,6 +391,9 @@ tracing:
   zipkin:
     httpEndpoint: foobar
     sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
   datadog:
     localAgentHostPort: foobar
     localAgentSocket: foobar
@@ -398,7 +401,6 @@ tracing:
       tag1: foobar
       tag2: foobar
     debug: true
-    prioritySampling: true
     traceIDHeaderName: foobar
     parentIDHeaderName: foobar
     samplingPriorityHeaderName: foobar
@@ -406,12 +408,18 @@ tracing:
   instana:
     localAgentHost: foobar
     localAgentPort: 42
-    logLevel: foobar
-    enableAutoProfile: true
+    sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
   elastic:
     serverURL: foobar
     secretToken: foobar
     serviceEnvironment: foobar
+    sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
   openTelemetry:
     address: foobar
     headers:
@@ -420,6 +428,9 @@ tracing:
     insecure: true
     path: foobar
     sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
     tls:
       ca: foobar
       caOptional: true

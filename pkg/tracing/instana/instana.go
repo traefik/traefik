@@ -20,7 +20,7 @@ const Name = "instana"
 
 // Config provides configuration settings for an instana tracer.
 type Config struct {
-	Attributes map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
+	GlobalTags map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
 	SampleRate float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 }
 
@@ -39,7 +39,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range c.Attributes {
+	for k, v := range c.GlobalTags {
 		attr = append(attr, attribute.String(k, v))
 	}
 
@@ -60,7 +60,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 
 	otel.SetTracerProvider(tracerProvider)
 
-	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, nil
+	return tracerProvider.Tracer("github.com/traefik/traefik", trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, nil
 }
 
 // tpCloser converts a TraceProvider into an io.Closer.

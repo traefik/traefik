@@ -74,7 +74,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 
 	logger.Debug().Msg("Datadog tracer configured")
 
-	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, nil
+	return tracerProvider.Tracer("github.com/traefik/traefik", trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, nil
 }
 
 // tpCloser converts a TraceProvider into an io.Closer.
