@@ -403,8 +403,6 @@ tracing:
       password: foobar
   zipkin:
     httpEndpoint: foobar
-    sameSpan: true
-    id128Bit: true
     sampleRate: 42
   datadog:
     localAgentHostPort: foobar
@@ -442,6 +440,7 @@ tracing:
       name1: foobar
     insecure: true
     path: foobar
+    sampleRate: 42
     tls:
       ca: foobar
       caOptional: true

@@ -869,8 +869,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "foobar",
-			SameSpan:     true,
-			ID128Bit:     true,
 			SampleRate:   42,
 		},
 		Datadog: &datadog.Config{
@@ -884,11 +882,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 			SamplingPriorityHeaderName: "foobar",
 			BagagePrefixHeaderName:     "foobar",
 		},
-		Instana: &instana.Config{
-			LocalAgentHost: "foobar",
-			LocalAgentPort: 4242,
-			LogLevel:       "foobar",
-		},
+		Instana: &instana.Config{},
 		Haystack: &haystack.Config{
 			LocalAgentHost:          "foobar",
 			LocalAgentPort:          42,
