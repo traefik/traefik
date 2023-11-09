@@ -1032,17 +1032,11 @@ Sets the header name used to store the trace ID.
 `--tracing.instana`:  
 Settings for Instana. (Default: ```false```)
 
-`--tracing.instana.enableautoprofile`:  
-Enables automatic profiling for the Traefik process. (Default: ```false```)
+`--tracing.instana.attributes.<name>`:  
+Defines additional attributes to be sent with the payloads.
 
-`--tracing.instana.localagenthost`:  
-Sets the Instana Agent host.
-
-`--tracing.instana.localagentport`:  
-Sets the Instana Agent port. (Default: ```42699```)
-
-`--tracing.instana.loglevel`:  
-Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
+`--tracing.instana.samplerate`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.jaeger`:  
 Settings for Jaeger. (Default: ```false```)

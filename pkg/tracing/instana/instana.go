@@ -1,11 +1,17 @@
 package instana
 
 import (
+	"context"
+	"fmt"
 	"io"
 
-	instana "github.com/instana/go-sensor"
-	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	instana "github.com/instana/go-otel-exporter"
+	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -14,48 +20,45 @@ const Name = "instana"
 
 // Config provides configuration settings for an instana tracer.
 type Config struct {
-	LocalAgentHost    string `description:"Sets the Instana Agent host." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
-	LocalAgentPort    int    `description:"Sets the Instana Agent port." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
-	LogLevel          string `description:"Sets the log level for the Instana tracer. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
-	EnableAutoProfile bool   `description:"Enables automatic profiling for the Traefik process." json:"enableAutoProfile,omitempty" toml:"enableAutoProfile,omitempty" yaml:"enableAutoProfile,omitempty" export:"true"`
+	Attributes map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
+	SampleRate float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
-	c.LocalAgentPort = 42699
-	c.LogLevel = "info"
+	c.SampleRate = 1.0
 }
 
 // Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
-	// set default logLevel
-	logLevel := instana.Info
+	// this takes env variables INSTANA_ENDPOINT_URL and INSTANA_AGENT_KEY
+	exporter := instana.New()
 
-	// check/set logLevel overrides
-	switch c.LogLevel {
-	case "error":
-		logLevel = instana.Error
-	case "warn":
-		logLevel = instana.Warn
-	case "debug":
-		logLevel = instana.Debug
+	attr := []attribute.KeyValue{
+		semconv.ServiceNameKey.String(serviceName),
+		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
-	instana.SetLogger(logs.NewInstanaLogger(logger))
+	for k, v := range c.Attributes {
+		attr = append(attr, attribute.String(k, v))
+	}
 
-	tracer := instana.NewTracerWithOptions(&instana.Options{
-		Service:           serviceName,
-		LogLevel:          logLevel,
-		AgentPort:         c.LocalAgentPort,
-		AgentHost:         c.LocalAgentHost,
-		EnableAutoProfile: c.EnableAutoProfile,
-	})
+	res, err := resource.New(context.Background(),
+		resource.WithAttributes(attr...),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("building resource: %w", err)
+	}
 
-	// Without this, child spans are getting the NOOP tracer
-	//opentracing.SetGlobalTracer(tracer)
+	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(c.SampleRate)),
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+	)
 
-	logger.Debug().Msgf("Instana tracer configured %+v", tracer)
+	otel.SetTracerProvider(tracerProvider)
 
-	return nil, nil, nil
+	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), nil, nil
 }
