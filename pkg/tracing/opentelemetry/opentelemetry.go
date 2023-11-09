@@ -10,6 +10,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -26,16 +27,19 @@ type Config struct {
 	// NOTE: as no gRPC option is implemented yet, the type is empty and is used as a boolean for upward compatibility purposes.
 	GRPC *struct{} `description:"gRPC specific configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
-	Address  string            `description:"Sets the address (host:port) of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	Path     string            `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
-	Insecure bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	Headers  map[string]string `description:"Defines additional headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
-	TLS      *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Address    string            `description:"Sets the address (host:port) of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	Path       string            `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	Insecure   bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Headers    map[string]string `description:"Defines additional connection headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	Attributes map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
+	SampleRate float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	TLS        *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
 	c.Address = "localhost:4318"
+	c.SampleRate = 1.0
 }
 
 // Setup sets up the tracer.
@@ -53,9 +57,17 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
+	attr := []attribute.KeyValue{
+		semconv.ServiceNameKey.String(componentName),
+		semconv.ServiceVersionKey.String(version.Version),
+	}
+
+	for k, v := range c.Attributes {
+		attr = append(attr, attribute.String(k, v))
+	}
+
 	res, err := resource.New(context.Background(),
-		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
-		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
+		resource.WithAttributes(attr...),
 		resource.WithFromEnv(),
 		resource.WithTelemetrySDK(),
 	)
@@ -64,7 +76,7 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 	}
 
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(c.SampleRate)),
 		sdktrace.WithResource(res),
 		sdktrace.WithBatcher(exporter),
 	)
@@ -72,7 +84,7 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
-	return tracerProvider.Tracer("traefik", trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
+	return tracerProvider.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
 }
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {

@@ -43,50 +43,6 @@ tracing:
 --tracing.zipkin.httpEndpoint=http://localhost:9411/api/v2/spans
 ```
 
-#### `sameSpan`
-
-_Optional, Default=false_
-
-Uses SameSpan RPC style traces.
-
-```yaml tab="File (YAML)"
-tracing:
-  zipkin:
-    sameSpan: true
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.zipkin]
-    sameSpan = true
-```
-
-```bash tab="CLI"
---tracing.zipkin.sameSpan=true
-```
-
-#### `id128Bit`
-
-_Optional, Default=true_
-
-Uses 128 bits trace IDs.
-
-```yaml tab="File (YAML)"
-tracing:
-  zipkin:
-    id128Bit: false
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.zipkin]
-    id128Bit = false
-```
-
-```bash tab="CLI"
---tracing.zipkin.id128Bit=false
-```
-
 #### `sampleRate`
 
 _Required, Default=1.0_
