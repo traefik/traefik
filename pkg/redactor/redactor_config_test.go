@@ -875,7 +875,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			LocalAgentSocket:           "foobar",
 			GlobalTags:                 map[string]string{"foobar": "foobar"},
 			Debug:                      true,
-			PrioritySampling:           true,
 			TraceIDHeaderName:          "foobar",
 			ParentIDHeaderName:         "foobar",
 			SamplingPriorityHeaderName: "foobar",
