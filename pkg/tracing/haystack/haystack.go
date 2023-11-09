@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Name sets the name of this tracer.
@@ -32,7 +33,7 @@ func (c *Config) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	tag := strings.SplitN(c.GlobalTag, ":", 2)
 
 	value := ""
@@ -64,9 +65,9 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	)
 
 	// Without this, child spans are getting the NOOP tracer
-	opentracing.SetGlobalTracer(tracer)
+	//opentracing.SetGlobalTracer(tracer)
 
-	log.Debug().Msg("haystack tracer configured")
+	log.Debug().Msgf("haystack tracer configured %+v", tracer)
 
-	return tracer, closer, nil
+	return nil, closer, nil
 }

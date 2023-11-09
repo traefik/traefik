@@ -6,16 +6,13 @@ import (
 	"io"
 	"net"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
-	oteltracer "go.opentelemetry.io/otel/bridge/opentracing"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -42,7 +39,7 @@ func (c *Config) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
+func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -56,12 +53,6 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
-	bt := oteltracer.NewBridgeTracer()
-	bt.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-
-	bt.SetOpenTelemetryTracer(otel.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)))
-	opentracing.SetGlobalTracer(bt)
-
 	res, err := resource.New(context.Background(),
 		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
 		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
@@ -73,6 +64,7 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 	}
 
 	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
 		sdktrace.WithBatcher(exporter),
 	)
@@ -80,7 +72,7 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
-	return bt, tpCloser{provider: tracerProvider}, err
+	return tracerProvider.Tracer("traefik", trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
 }
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
