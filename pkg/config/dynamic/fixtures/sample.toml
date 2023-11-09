@@ -150,13 +150,6 @@
     localAgentHost = "foobar"
     localAgentPort = 42
     logLevel = "foobar"
-  [tracing.haystack]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    globalTag = "foobar"
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    spanIDHeaderName = "foobar"
 
 [hostResolver]
   cnameFlattening = true

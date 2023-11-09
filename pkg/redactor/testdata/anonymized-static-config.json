@@ -383,14 +383,6 @@
       "localAgentHost": "xxxx",
       "logLevel": "foobar"
     },
-    "haystack": {
-      "localAgentHost": "xxxx",
-      "globalTag": "foobar",
-      "traceIDHeaderName": "foobar",
-      "parentIDHeaderName": "foobar",
-      "spanIDHeaderName": "foobar",
-      "baggagePrefixHeaderName": "foobar"
-    },
     "elastic": {
       "serverURL": "xxxx",
       "secretToken": "xxxx",

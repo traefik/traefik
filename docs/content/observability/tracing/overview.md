@@ -18,7 +18,6 @@ Traefik supports seven tracing backends:
 - [Zipkin](./zipkin.md)
 - [Datadog](./datadog.md)
 - [Instana](./instana.md)
-- [Haystack](./haystack.md)
 - [Elastic](./elastic.md)
 - [OpenTelemetry](./opentelemetry.md)
 
