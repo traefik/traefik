@@ -1086,11 +1086,14 @@ Settings for OpenTelemetry. (Default: ```false```)
 `--tracing.opentelemetry.address`:  
 Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
+`--tracing.opentelemetry.attributes.<name>`:  
+Defines additional attributes to be sent with the payloads.
+
 `--tracing.opentelemetry.grpc`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `--tracing.opentelemetry.headers.<name>`:  
-Defines additional headers to be sent with the payloads.
+Defines additional connection headers to be sent with the payloads.
 
 `--tracing.opentelemetry.insecure`:  
 Disables client transport security for the exporter. (Default: ```false```)
@@ -1098,7 +1101,7 @@ Disables client transport security for the exporter. (Default: ```false```)
 `--tracing.opentelemetry.path`:  
 Sets the URL path of the collector endpoint.
 
-`--tracing.opentelemetry.samplerate`:
+`--tracing.opentelemetry.samplerate`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.opentelemetry.tls.ca`:  
@@ -1121,6 +1124,9 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 
 `--tracing.zipkin`:  
 Settings for Zipkin. (Default: ```false```)
+
+`--tracing.zipkin.attributes.<name>`:  
+Defines additional attributes to be sent with the payloads.
 
 `--tracing.zipkin.httpendpoint`:  
 Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)

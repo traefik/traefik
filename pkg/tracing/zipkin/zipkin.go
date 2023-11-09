@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/zipkin"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -21,8 +22,9 @@ const Name = "zipkin"
 
 // Config provides configuration settings for a zipkin tracer.
 type Config struct {
-	HTTPEndpoint string  `description:"Sets the HTTP Endpoint to report traces to." json:"httpEndpoint,omitempty" toml:"httpEndpoint,omitempty" yaml:"httpEndpoint,omitempty"`
-	SampleRate   float64 `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	HTTPEndpoint string            `description:"Sets the HTTP Endpoint to report traces to." json:"httpEndpoint,omitempty" toml:"httpEndpoint,omitempty" yaml:"httpEndpoint,omitempty"`
+	SampleRate   float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	Attributes   map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -40,9 +42,17 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 
 	batcher := sdktrace.NewBatchSpanProcessor(exporter)
 
+	attr := []attribute.KeyValue{
+		semconv.ServiceNameKey.String(serviceName),
+		semconv.ServiceVersionKey.String(version.Version),
+	}
+
+	for k, v := range c.Attributes {
+		attr = append(attr, attribute.String(k, v))
+	}
+
 	res, err := resource.New(context.Background(),
-		resource.WithAttributes(semconv.ServiceNameKey.String(serviceName)),
-		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
+		resource.WithAttributes(attr...),
 		resource.WithFromEnv(),
 		resource.WithTelemetrySDK(),
 	)
