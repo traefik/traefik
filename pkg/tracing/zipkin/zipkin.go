@@ -4,11 +4,11 @@ import (
 	"io"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Name sets the name of this tracer.
@@ -31,7 +31,7 @@ func (c *Config) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	// create our local endpoint
 	endpoint, err := zipkin.NewEndpoint(serviceName, "0.0.0.0:0")
 	if err != nil {
@@ -63,9 +63,9 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	tracer := zipkinot.Wrap(nativeTracer)
 
 	// Without this, child spans are getting the NOOP tracer
-	opentracing.SetGlobalTracer(tracer)
+	//opentracing.SetGlobalTracer(tracer)
 
-	log.Debug().Msg("Zipkin tracer configured")
+	log.Debug().Msgf("Zipkin tracer configured %+v", tracer)
 
-	return tracer, reporter, nil
+	return nil, reporter, nil
 }
