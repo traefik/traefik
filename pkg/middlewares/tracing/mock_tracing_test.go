@@ -15,12 +15,15 @@ type MockTracer struct {
 
 // Start belongs to the Tracer interface.
 func (n MockTracer) Start(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	c := trace.NewSpanStartConfig(opts...)
+	n.Span.SetAttributes(c.Attributes()...)
+	n.Span.SetAttributes(attribute.String("span.kind", c.SpanKind().String()))
 	n.Span.OpName = operationName
 	return ctx, n.Span
 }
 
 // StartSpan belongs to the Tracer interface.
-func (n MockTracer) StartSpan(ctx context.Context, operationName string) (context.Context, trace.Span) {
+func (n MockTracer) StartSpan(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	n.Span.OpName = operationName
 	return ctx, n.Span
 }

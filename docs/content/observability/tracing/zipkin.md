@@ -43,9 +43,36 @@ tracing:
 --tracing.zipkin.httpEndpoint=http://localhost:9411/api/v2/spans
 ```
 
+#### `globalTags`
+
+_Optional, Default=empty_
+
+Applies a list of shared key:value tags on all spans.
+
+```yaml tab="File (YAML)"
+tracing:
+  zipkin:
+    globalTags:
+      tag1: foo
+      tag2: bar
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.zipkin]
+    [tracing.zipkin.globalTags]
+      tag1 = "foo"
+      tag2 = "bar"
+```
+
+```bash tab="CLI"
+--tracing.zipkin.globalTags.tag1=foo
+--tracing.zipkin.globalTags.tag2=bar
+```
+
 #### `sampleRate`
 
-_Required, Default=1.0_
+_Optional, Default=1.0_
 
 The proportion of requests to trace, specified between 0.0 and 1.0.
 
