@@ -30,7 +30,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
 	"github.com/traefik/traefik/v3/pkg/tracing/instana"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -188,7 +187,6 @@ func (a *LifeCycle) SetDefaults() {
 type Tracing struct {
 	ServiceName   string                `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	SpanNameLimit int                   `description:"Set the maximum character limit for Span names (default 0 = no limit)." json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
-	Jaeger        *jaeger.Config        `description:"Settings for Jaeger." json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Zipkin        *zipkin.Config        `description:"Settings for Zipkin." json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Datadog       *datadog.Config       `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Instana       *instana.Config       `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
