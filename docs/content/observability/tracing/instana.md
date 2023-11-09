@@ -5,6 +5,8 @@ description: "Traefik supports several tracing backends, including Instana. Lear
 
 # Instana
 
+You need first add `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables to Traefik executable.
+
 To enable the Instana tracer:
 
 ```yaml tab="File (YAML)"
@@ -21,97 +23,51 @@ tracing:
 --tracing.instana=true
 ```
 
-#### `localAgentHost`
+#### `globalTags`
 
-_Required, Default="127.0.0.1"_
+_Optional, Default=empty_
 
-Local Agent Host instructs reporter to send spans to the Instana Agent at this address.
+Applies a list of shared key:value tags on all spans.
 
 ```yaml tab="File (YAML)"
 tracing:
   instana:
-    localAgentHost: 127.0.0.1
+    globalTags:
+      tag1: foo
+      tag2: bar
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.instana]
-    localAgentHost = "127.0.0.1"
+    [tracing.instana.globalTags]
+      tag1 = "foo"
+      tag2 = "bar"
 ```
 
 ```bash tab="CLI"
---tracing.instana.localAgentHost=127.0.0.1
+--tracing.instana.globalTags.tag1=foo
+--tracing.instana.globalTags.tag2=bar
 ```
 
-#### `localAgentPort`
+#### `sampleRate`
 
-_Required, Default=42699_
+_Optional, Default=1.0_
 
-Local Agent port instructs reporter to send spans to the Instana Agent listening on this port.
+The proportion of requests to trace, specified between 0.0 and 1.0.
 
 ```yaml tab="File (YAML)"
 tracing:
   instana:
-    localAgentPort: 42699
+    sampleRate: 0.2
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.instana]
-    localAgentPort = 42699
+    sampleRate = 0.2
 ```
 
 ```bash tab="CLI"
---tracing.instana.localAgentPort=42699
-```
-
-#### `logLevel`
-
-_Required, Default="info"_
-
-Sets Instana tracer log level.
-
-Valid values are:
-
-- `error`
-- `warn`
-- `debug`
-- `info`
-
-```yaml tab="File (YAML)"
-tracing:
-  instana:
-    logLevel: info
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.instana]
-    logLevel = "info"
-```
-
-```bash tab="CLI"
---tracing.instana.logLevel=info
-```
-
-#### `enableAutoProfile`
-
-_Required, Default=false_
-
-Enables [automatic profiling](https://www.ibm.com/docs/en/obi/current?topic=instana-profile-processes) for the Traefik process.
-
-```yaml tab="File (YAML)"
-tracing:
-  instana:
-    enableAutoProfile: true
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.instana]
-    enableAutoProfile = true
-```
-
-```bash tab="CLI"
---tracing.instana.enableAutoProfile=true
+--tracing.instana.sampleRate=0.2
 ```
