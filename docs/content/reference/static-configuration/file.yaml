@@ -388,19 +388,6 @@ accessLog:
 tracing:
   serviceName: foobar
   spanNameLimit: 42
-  jaeger:
-    samplingServerURL: foobar
-    samplingType: foobar
-    samplingParam: 42
-    localAgentHostPort: foobar
-    gen128Bit: true
-    propagation: foobar
-    traceContextHeaderName: foobar
-    disableAttemptReconnecting: true
-    collector:
-      endpoint: foobar
-      user: foobar
-      password: foobar
   zipkin:
     httpEndpoint: foobar
     sampleRate: 42
