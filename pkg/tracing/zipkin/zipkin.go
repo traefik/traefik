@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	//"github.com/openzipkin/zipkin-go"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
