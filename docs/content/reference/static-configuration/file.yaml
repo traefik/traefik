@@ -431,14 +431,6 @@ tracing:
     localAgentPort: 42
     logLevel: foobar
     enableAutoProfile: true
-  haystack:
-    localAgentHost: foobar
-    localAgentPort: 42
-    globalTag: foobar
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    spanIDHeaderName: foobar
-    baggagePrefixHeaderName: foobar
   elastic:
     serverURL: foobar
     secretToken: foobar

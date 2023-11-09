@@ -32,7 +32,6 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
 	"github.com/traefik/traefik/v3/pkg/tracing/instana"
 	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
@@ -883,15 +882,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			BagagePrefixHeaderName:     "foobar",
 		},
 		Instana: &instana.Config{},
-		Haystack: &haystack.Config{
-			LocalAgentHost:          "foobar",
-			LocalAgentPort:          42,
-			GlobalTag:               "foobar",
-			TraceIDHeaderName:       "foobar",
-			ParentIDHeaderName:      "foobar",
-			SpanIDHeaderName:        "foobar",
-			BaggagePrefixHeaderName: "foobar",
-		},
 		Elastic: &elastic.Config{
 			ServerURL:          "foobar",
 			SecretToken:        "foobar",

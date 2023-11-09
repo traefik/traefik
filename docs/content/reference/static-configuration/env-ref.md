@@ -1038,30 +1038,6 @@ Sets the URL of the Elastic APM server.
 `TRAEFIK_TRACING_ELASTIC_SERVICEENVIRONMENT`:  
 Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
 
-`TRAEFIK_TRACING_HAYSTACK`:  
-Settings for Haystack. (Default: ```false```)
-
-`TRAEFIK_TRACING_HAYSTACK_BAGGAGEPREFIXHEADERNAME`:  
-Sets the header name prefix used to store baggage items in a map.
-
-`TRAEFIK_TRACING_HAYSTACK_GLOBALTAG`:  
-Sets a key:value tag on all spans.
-
-`TRAEFIK_TRACING_HAYSTACK_LOCALAGENTHOST`:  
-Sets the Haystack Agent host. (Default: ```127.0.0.1```)
-
-`TRAEFIK_TRACING_HAYSTACK_LOCALAGENTPORT`:  
-Sets the Haystack Agent port. (Default: ```35000```)
-
-`TRAEFIK_TRACING_HAYSTACK_PARENTIDHEADERNAME`:  
-Sets the header name used to store the parent ID.
-
-`TRAEFIK_TRACING_HAYSTACK_SPANIDHEADERNAME`:  
-Sets the header name used to store the span ID.
-
-`TRAEFIK_TRACING_HAYSTACK_TRACEIDHEADERNAME`:  
-Sets the header name used to store the trace ID.
-
 `TRAEFIK_TRACING_INSTANA`:  
 Settings for Instana. (Default: ```false```)
 
