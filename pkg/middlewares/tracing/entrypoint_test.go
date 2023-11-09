@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestEntryPointMiddleware(t *testing.T) {
@@ -34,11 +34,14 @@ func TestEntryPointMiddleware(t *testing.T) {
 			},
 			expected: expected{
 				Tags: map[string]interface{}{
-					"span.kind":   ext.SpanKindRPCServerEnum,
-					"http.method": http.MethodGet,
-					"component":   "",
-					"http.url":    "http://www.test.com",
-					"http.host":   "www.test.com",
+					"span.kind":                   trace.SpanKindServer.String(),
+					"http.method":                 http.MethodGet,
+					"component":                   "",
+					"http.url":                    "http://www.test.com",
+					"http.host":                   "www.test.com",
+					"http.client_ip":              "10.0.0.1",
+					"http.request_content_length": int64(0),
+					"http.user_agent":             "entrypoint-test",
 				},
 				OperationName: "EntryPoint test www.test.com",
 			},
@@ -52,11 +55,14 @@ func TestEntryPointMiddleware(t *testing.T) {
 			},
 			expected: expected{
 				Tags: map[string]interface{}{
-					"span.kind":   ext.SpanKindRPCServerEnum,
-					"http.method": http.MethodGet,
-					"component":   "",
-					"http.url":    "http://www.test.com",
-					"http.host":   "www.test.com",
+					"span.kind":                   trace.SpanKindServer.String(),
+					"http.method":                 http.MethodGet,
+					"component":                   "",
+					"http.url":                    "http://www.test.com",
+					"http.host":                   "www.test.com",
+					"http.client_ip":              "10.0.0.1",
+					"http.request_content_length": int64(0),
+					"http.user_agent":             "entrypoint-test",
 				},
 				OperationName: "EntryPoint te... ww... 0c15301b",
 			},
@@ -70,7 +76,8 @@ func TestEntryPointMiddleware(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://www.test.com", nil)
 			rw := httptest.NewRecorder()
-
+			req.RemoteAddr = "10.0.0.1:1234"
+			req.Header.Set("User-Agent", "entrypoint-test")
 			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 				span := test.tracing.tracer.(*MockTracer).Span
 
