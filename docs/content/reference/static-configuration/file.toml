@@ -358,19 +358,6 @@
 [tracing]
   serviceName = "foobar"
   spanNameLimit = 42
-  [tracing.jaeger]
-    samplingServerURL = "foobar"
-    samplingType = "foobar"
-    samplingParam = 42.0
-    localAgentHostPort = "foobar"
-    gen128Bit = true
-    propagation = "foobar"
-    traceContextHeaderName = "foobar"
-    disableAttemptReconnecting = true
-    [tracing.jaeger.collector]
-      endpoint = "foobar"
-      user = "foobar"
-      password = "foobar"
   [tracing.zipkin]
     httpEndpoint = "foobar"
     sampleRate = 42.0
