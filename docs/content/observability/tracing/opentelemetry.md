@@ -120,6 +120,33 @@ tracing:
 --tracing.openTelemetry.path=/foo/v1/traces
 ```
 
+#### `globalTags`
+
+_Optional, Default=empty_
+
+Applies a list of shared key:value tags on all spans.
+
+```yaml tab="File (YAML)"
+tracing:
+  openTelemetry:
+    globalTags:
+      tag1: foo
+      tag2: bar
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.openTelemetry]
+    [tracing.openTelemetry.globalTags]
+      tag1 = "foo"
+      tag2 = "bar"
+```
+
+```bash tab="CLI"
+--tracing.openTelemetry.globalTags.tag1=foo
+--tracing.openTelemetry.globalTags.tag2=bar
+```
+
 #### `sampleRate`
 
 _Optional, Default=1.0_

@@ -993,8 +993,8 @@ Sets the header name used to store the trace ID.
 `TRAEFIK_TRACING_ELASTIC`:  
 Settings for Elastic. (Default: ```false```)
 
-`TRAEFIK_TRACING_ELASTIC_ATTRIBUTES_<NAME>`:  
-Defines additional attributes to be sent with the payloads.
+`TRAEFIK_TRACING_ELASTIC_GLOBALTAGS_<NAME>`:  
+Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_ELASTIC_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
@@ -1011,8 +1011,8 @@ Sets the name of the environment Traefik is deployed in, e.g. 'production' or 's
 `TRAEFIK_TRACING_INSTANA`:  
 Settings for Instana. (Default: ```false```)
 
-`TRAEFIK_TRACING_INSTANA_ATTRIBUTES_<NAME>`:  
-Defines additional attributes to be sent with the payloads.
+`TRAEFIK_TRACING_INSTANA_GLOBALTAGS_<NAME>`:  
+Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_INSTANA_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
@@ -1023,8 +1023,8 @@ Settings for OpenTelemetry. (Default: ```false```)
 `TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
 Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
-`TRAEFIK_TRACING_OPENTELEMETRY_ATTRIBUTES_<NAME>`:  
-Defines additional attributes to be sent with the payloads.
+`TRAEFIK_TRACING_OPENTELEMETRY_GLOBALTAGS_<NAME>`:  
+Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
@@ -1062,8 +1062,8 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 `TRAEFIK_TRACING_ZIPKIN`:  
 Settings for Zipkin. (Default: ```false```)
 
-`TRAEFIK_TRACING_ZIPKIN_ATTRIBUTES_<NAME>`:  
-Defines additional attributes to be sent with the payloads.
+`TRAEFIK_TRACING_ZIPKIN_GLOBALTAGS_<NAME>`:  
+Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_ZIPKIN_HTTPENDPOINT`:  
 Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
