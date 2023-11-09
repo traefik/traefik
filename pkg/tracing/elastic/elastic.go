@@ -4,13 +4,13 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmot"
 	"go.elastic.co/apm/transport"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Name sets the name of this tracer.
@@ -31,7 +31,7 @@ type Config struct {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	// Create default transport.
 	tr, err := transport.NewHTTPTransport()
 	if err != nil {
@@ -66,9 +66,9 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	otTracer := apmot.New(apmot.WithTracer(tracer))
 
 	// Without this, child spans are getting the NOOP tracer
-	opentracing.SetGlobalTracer(otTracer)
+	//opentracing.SetGlobalTracer(otTracer)
 
-	log.Debug().Msg("Elastic tracer configured")
+	log.Debug().Msgf("Elastic tracer configured %+v", otTracer)
 
-	return otTracer, nil, nil
+	return nil, nil, nil
 }
