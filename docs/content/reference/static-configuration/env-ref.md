@@ -1098,6 +1098,9 @@ Disables client transport security for the exporter. (Default: ```false```)
 `TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
 Sets the URL path of the collector endpoint.
 
+`TRAEFIK_TRACING_OPENTELEMETRY_SAMPLERATE`:
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+
 `TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
 TLS CA
 
@@ -1121,12 +1124,6 @@ Settings for Zipkin. (Default: ```false```)
 
 `TRAEFIK_TRACING_ZIPKIN_HTTPENDPOINT`:  
 Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
-
-`TRAEFIK_TRACING_ZIPKIN_ID128BIT`:  
-Uses 128 bits root span IDs. (Default: ```true```)
-
-`TRAEFIK_TRACING_ZIPKIN_SAMESPAN`:  
-Uses SameSpan RPC style traces. (Default: ```false```)
 
 `TRAEFIK_TRACING_ZIPKIN_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

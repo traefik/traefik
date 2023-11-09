@@ -1098,6 +1098,9 @@ Disables client transport security for the exporter. (Default: ```false```)
 `--tracing.opentelemetry.path`:  
 Sets the URL path of the collector endpoint.
 
+`--tracing.opentelemetry.samplerate`:
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+
 `--tracing.opentelemetry.tls.ca`:  
 TLS CA
 
@@ -1121,12 +1124,6 @@ Settings for Zipkin. (Default: ```false```)
 
 `--tracing.zipkin.httpendpoint`:  
 Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
-
-`--tracing.zipkin.id128bit`:  
-Uses 128 bits root span IDs. (Default: ```true```)
-
-`--tracing.zipkin.samespan`:  
-Uses SameSpan RPC style traces. (Default: ```false```)
 
 `--tracing.zipkin.samplerate`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
