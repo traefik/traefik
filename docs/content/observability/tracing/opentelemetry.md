@@ -120,6 +120,28 @@ tracing:
 --tracing.openTelemetry.path=/foo/v1/traces
 ```
 
+#### `sampleRate`
+
+_Optional, Default=1.0_
+
+The proportion of requests to trace, specified between 0.0 and 1.0.
+
+```yaml tab="File (YAML)"
+tracing:
+  openTelemetry:
+    sampleRate: 0.2
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.openTelemetry]
+    sampleRate = 0.2
+```
+
+```bash tab="CLI"
+--tracing.openTelemetry.sampleRate=0.2
+```
+
 #### `tls`
 
 _Optional_

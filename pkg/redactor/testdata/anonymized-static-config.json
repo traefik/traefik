@@ -345,21 +345,6 @@
   "tracing": {
     "serviceName": "myServiceName",
     "spanNameLimit": 42,
-    "jaeger": {
-      "samplingServerURL": "xxxx",
-      "samplingType": "foobar",
-      "samplingParam": 42,
-      "localAgentHostPort": "xxxx",
-      "gen128Bit": true,
-      "propagation": "foobar",
-      "traceContextHeaderName": "foobar",
-      "collector": {
-        "endpoint": "xxxx",
-        "user": "xxxx",
-        "password": "xxxx"
-      },
-      "disableAttemptReconnecting": true
-    },
     "zipkin": {
       "httpEndpoint": "xxxx",
       "sameSpan": true,
@@ -382,14 +367,6 @@
     "instana": {
       "localAgentHost": "xxxx",
       "logLevel": "foobar"
-    },
-    "haystack": {
-      "localAgentHost": "xxxx",
-      "globalTag": "foobar",
-      "traceIDHeaderName": "foobar",
-      "parentIDHeaderName": "foobar",
-      "spanIDHeaderName": "foobar",
-      "baggagePrefixHeaderName": "foobar"
     },
     "elastic": {
       "serverURL": "xxxx",
