@@ -10,7 +10,7 @@ Visualize the Requests Flow
 
 The tracing system allows developers to visualize call flows in their infrastructure.
 
-Traefik uses OpenTracing, an open standard designed for distributed tracing.
+Traefik uses OpenTelemetry, an open standard designed for distributed tracing.
 
 Traefik supports five tracing backends:
 

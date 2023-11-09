@@ -31,7 +31,7 @@ type Config struct {
 	Path       string            `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	Insecure   bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	Headers    map[string]string `description:"Defines additional connection headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
-	Attributes map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
+	GlobalTags map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
 	SampleRate float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 	TLS        *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
@@ -43,7 +43,7 @@ func (c *Config) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -58,11 +58,11 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 	}
 
 	attr := []attribute.KeyValue{
-		semconv.ServiceNameKey.String(componentName),
+		semconv.ServiceNameKey.String(serviceName),
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range c.Attributes {
+	for k, v := range c.GlobalTags {
 		attr = append(attr, attribute.String(k, v))
 	}
 
@@ -84,7 +84,7 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
-	return tracerProvider.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
+	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
 }
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
