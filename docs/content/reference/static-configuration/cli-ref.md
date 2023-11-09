@@ -1044,42 +1044,6 @@ Defines additional attributes to be sent with the payloads.
 `--tracing.instana.samplerate`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
-`--tracing.jaeger`:  
-Settings for Jaeger. (Default: ```false```)
-
-`--tracing.jaeger.collector.endpoint`:  
-Instructs reporter to send spans to jaeger-collector at this URL.
-
-`--tracing.jaeger.collector.password`:  
-Password for basic http authentication when sending spans to jaeger-collector.
-
-`--tracing.jaeger.collector.user`:  
-User for basic http authentication when sending spans to jaeger-collector.
-
-`--tracing.jaeger.disableattemptreconnecting`:  
-Disables the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
-
-`--tracing.jaeger.gen128bit`:  
-Generates 128 bits span IDs. (Default: ```false```)
-
-`--tracing.jaeger.localagenthostport`:  
-Sets the Jaeger Agent host:port. (Default: ```127.0.0.1:6831```)
-
-`--tracing.jaeger.propagation`:  
-Sets the propagation format (jaeger/b3). (Default: ```jaeger```)
-
-`--tracing.jaeger.samplingparam`:  
-Sets the sampling parameter. (Default: ```1.000000```)
-
-`--tracing.jaeger.samplingserverurl`:  
-Sets the sampling server URL. (Default: ```http://localhost:5778/sampling```)
-
-`--tracing.jaeger.samplingtype`:  
-Sets the sampling type. (Default: ```const```)
-
-`--tracing.jaeger.tracecontextheadername`:  
-Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
-
 `--tracing.opentelemetry`:  
 Settings for OpenTelemetry. (Default: ```false```)
 

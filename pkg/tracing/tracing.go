@@ -42,7 +42,7 @@ func FromContext(ctx context.Context) (*Tracing, error) {
 	return tracer, nil
 }
 
-// Backend is an abstraction for tracking backend (Jaeger, Zipkin, ...).
+// Backend is an abstraction for tracking backend (OpenTracing, Zipkin, ...).
 type Backend interface {
 	Setup(componentName string) (trace.Tracer, io.Closer, error)
 }

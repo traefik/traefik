@@ -1044,42 +1044,6 @@ Defines additional attributes to be sent with the payloads.
 `TRAEFIK_TRACING_INSTANA_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
-`TRAEFIK_TRACING_JAEGER`:  
-Settings for Jaeger. (Default: ```false```)
-
-`TRAEFIK_TRACING_JAEGER_COLLECTOR_ENDPOINT`:  
-Instructs reporter to send spans to jaeger-collector at this URL.
-
-`TRAEFIK_TRACING_JAEGER_COLLECTOR_PASSWORD`:  
-Password for basic http authentication when sending spans to jaeger-collector.
-
-`TRAEFIK_TRACING_JAEGER_COLLECTOR_USER`:  
-User for basic http authentication when sending spans to jaeger-collector.
-
-`TRAEFIK_TRACING_JAEGER_DISABLEATTEMPTRECONNECTING`:  
-Disables the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
-
-`TRAEFIK_TRACING_JAEGER_GEN128BIT`:  
-Generates 128 bits span IDs. (Default: ```false```)
-
-`TRAEFIK_TRACING_JAEGER_LOCALAGENTHOSTPORT`:  
-Sets the Jaeger Agent host:port. (Default: ```127.0.0.1:6831```)
-
-`TRAEFIK_TRACING_JAEGER_PROPAGATION`:  
-Sets the propagation format (jaeger/b3). (Default: ```jaeger```)
-
-`TRAEFIK_TRACING_JAEGER_SAMPLINGPARAM`:  
-Sets the sampling parameter. (Default: ```1.000000```)
-
-`TRAEFIK_TRACING_JAEGER_SAMPLINGSERVERURL`:  
-Sets the sampling server URL. (Default: ```http://localhost:5778/sampling```)
-
-`TRAEFIK_TRACING_JAEGER_SAMPLINGTYPE`:  
-Sets the sampling type. (Default: ```const```)
-
-`TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
-Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
-
 `TRAEFIK_TRACING_OPENTELEMETRY`:  
 Settings for OpenTelemetry. (Default: ```false```)
 
