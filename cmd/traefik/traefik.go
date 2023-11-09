@@ -599,14 +599,6 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 		}
 	}
 
-	if conf.Haystack != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Haystack backend.")
-		} else {
-			backend = conf.Haystack
-		}
-	}
-
 	if conf.Elastic != nil {
 		if backend != nil {
 			log.Error().Msg("Multiple tracing backend are not supported: cannot create Elastic backend.")

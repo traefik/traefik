@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -54,7 +54,7 @@ func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.Digest
 	return da, nil
 }
 
-func (d *digestAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (d *digestAuth) GetTracingInformation() (string, trace.SpanKind) {
 	return d.name, tracing.SpanKindNoneEnum
 }
 

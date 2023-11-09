@@ -996,6 +996,12 @@ Sets the header name used to store the trace ID.
 `TRAEFIK_TRACING_ELASTIC`:  
 Settings for Elastic. (Default: ```false```)
 
+`TRAEFIK_TRACING_ELASTIC_ATTRIBUTES_<NAME>`:  
+Defines additional attributes to be sent with the payloads.
+
+`TRAEFIK_TRACING_ELASTIC_SAMPLERATE`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+
 `TRAEFIK_TRACING_ELASTIC_SECRETTOKEN`:  
 Sets the token used to connect to Elastic APM Server.
 
@@ -1005,44 +1011,14 @@ Sets the URL of the Elastic APM server.
 `TRAEFIK_TRACING_ELASTIC_SERVICEENVIRONMENT`:  
 Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
 
-`TRAEFIK_TRACING_HAYSTACK`:  
-Settings for Haystack. (Default: ```false```)
-
-`TRAEFIK_TRACING_HAYSTACK_BAGGAGEPREFIXHEADERNAME`:  
-Sets the header name prefix used to store baggage items in a map.
-
-`TRAEFIK_TRACING_HAYSTACK_GLOBALTAG`:  
-Sets a key:value tag on all spans.
-
-`TRAEFIK_TRACING_HAYSTACK_LOCALAGENTHOST`:  
-Sets the Haystack Agent host. (Default: ```127.0.0.1```)
-
-`TRAEFIK_TRACING_HAYSTACK_LOCALAGENTPORT`:  
-Sets the Haystack Agent port. (Default: ```35000```)
-
-`TRAEFIK_TRACING_HAYSTACK_PARENTIDHEADERNAME`:  
-Sets the header name used to store the parent ID.
-
-`TRAEFIK_TRACING_HAYSTACK_SPANIDHEADERNAME`:  
-Sets the header name used to store the span ID.
-
-`TRAEFIK_TRACING_HAYSTACK_TRACEIDHEADERNAME`:  
-Sets the header name used to store the trace ID.
-
 `TRAEFIK_TRACING_INSTANA`:  
 Settings for Instana. (Default: ```false```)
 
-`TRAEFIK_TRACING_INSTANA_ENABLEAUTOPROFILE`:  
-Enables automatic profiling for the Traefik process. (Default: ```false```)
+`TRAEFIK_TRACING_INSTANA_ATTRIBUTES_<NAME>`:  
+Defines additional attributes to be sent with the payloads.
 
-`TRAEFIK_TRACING_INSTANA_LOCALAGENTHOST`:  
-Sets the Instana Agent host.
-
-`TRAEFIK_TRACING_INSTANA_LOCALAGENTPORT`:  
-Sets the Instana Agent port. (Default: ```42699```)
-
-`TRAEFIK_TRACING_INSTANA_LOGLEVEL`:  
-Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
+`TRAEFIK_TRACING_INSTANA_SAMPLERATE`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `TRAEFIK_TRACING_JAEGER`:  
 Settings for Jaeger. (Default: ```false```)
@@ -1086,17 +1062,23 @@ Settings for OpenTelemetry. (Default: ```false```)
 `TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
 Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
+`TRAEFIK_TRACING_OPENTELEMETRY_ATTRIBUTES_<NAME>`:  
+Defines additional attributes to be sent with the payloads.
+
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
-Defines additional headers to be sent with the payloads.
+Defines additional connection headers to be sent with the payloads.
 
 `TRAEFIK_TRACING_OPENTELEMETRY_INSECURE`:  
 Disables client transport security for the exporter. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
 Sets the URL path of the collector endpoint.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_SAMPLERATE`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
 TLS CA
@@ -1119,14 +1101,11 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 `TRAEFIK_TRACING_ZIPKIN`:  
 Settings for Zipkin. (Default: ```false```)
 
+`TRAEFIK_TRACING_ZIPKIN_ATTRIBUTES_<NAME>`:  
+Defines additional attributes to be sent with the payloads.
+
 `TRAEFIK_TRACING_ZIPKIN_HTTPENDPOINT`:  
 Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
-
-`TRAEFIK_TRACING_ZIPKIN_ID128BIT`:  
-Uses 128 bits root span IDs. (Default: ```true```)
-
-`TRAEFIK_TRACING_ZIPKIN_SAMESPAN`:  
-Uses SameSpan RPC style traces. (Default: ```false```)
 
 `TRAEFIK_TRACING_ZIPKIN_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

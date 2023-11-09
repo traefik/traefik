@@ -5,9 +5,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
+	"go.opentelemetry.io/otel/trace"
 	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	datadog "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -44,7 +44,7 @@ func (c *Config) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
 
 	opts := []datadog.StartOption{
@@ -76,9 +76,9 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	tracer := ddtracer.New(opts...)
 
 	// Without this, child spans are getting the NOOP tracer
-	opentracing.SetGlobalTracer(tracer)
+	//opentracing.SetGlobalTracer(tracer)
 
-	logger.Debug().Msg("Datadog tracer configured")
+	logger.Debug().Msgf("Datadog tracer configured %+v", tracer)
 
-	return tracer, nil, nil
+	return nil, nil, nil
 }

@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	oxybuffer "github.com/vulcand/oxy/v2/buffer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -49,7 +49,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	}, nil
 }
 
-func (b *buffer) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (b *buffer) GetTracingInformation() (string, trace.SpanKind) {
 	return b.name, tracing.SpanKindNoneEnum
 }
 
