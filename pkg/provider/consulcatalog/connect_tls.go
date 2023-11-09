@@ -3,7 +3,6 @@ package consulcatalog
 import (
 	"fmt"
 
-	"github.com/hashicorp/consul/agent/connect"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
@@ -52,11 +51,11 @@ func (c *connectCert) equals(other *connectCert) bool {
 }
 
 func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
-	spiffeIDService := connect.SpiffeIDService{
-		Namespace:  item.Namespace,
-		Datacenter: item.Datacenter,
-		Service:    item.Name,
-	}
+	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
+		item.Namespace,
+		item.Datacenter,
+		item.Name,
+	)
 
 	return &dynamic.ServersTransport{
 		// This ensures that the config changes whenever the verifier function changes
@@ -67,6 +66,6 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 		Certificates: traefiktls.Certificates{
 			c.getLeaf(),
 		},
-		PeerCertURI: spiffeIDService.URI().String(),
+		PeerCertURI: spiffeID,
 	}
 }
