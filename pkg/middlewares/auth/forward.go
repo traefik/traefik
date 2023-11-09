@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -92,8 +92,8 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	return connectionheader.Remover(fa), nil
 }
 
-func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return fa.name, ext.SpanKindRPCClientEnum
+func (fa *forwardAuth) GetTracingInformation() (string, trace.SpanKind) {
+	return fa.name, trace.SpanKindClient
 }
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
