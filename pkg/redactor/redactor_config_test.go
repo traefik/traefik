@@ -32,7 +32,6 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
 	"github.com/traefik/traefik/v3/pkg/tracing/instana"
 	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
@@ -869,8 +868,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "foobar",
-			SameSpan:     true,
-			ID128Bit:     true,
 			SampleRate:   42,
 		},
 		Datadog: &datadog.Config{
@@ -878,26 +875,12 @@ func TestDo_staticConfiguration(t *testing.T) {
 			LocalAgentSocket:           "foobar",
 			GlobalTags:                 map[string]string{"foobar": "foobar"},
 			Debug:                      true,
-			PrioritySampling:           true,
 			TraceIDHeaderName:          "foobar",
 			ParentIDHeaderName:         "foobar",
 			SamplingPriorityHeaderName: "foobar",
 			BagagePrefixHeaderName:     "foobar",
 		},
-		Instana: &instana.Config{
-			LocalAgentHost: "foobar",
-			LocalAgentPort: 4242,
-			LogLevel:       "foobar",
-		},
-		Haystack: &haystack.Config{
-			LocalAgentHost:          "foobar",
-			LocalAgentPort:          42,
-			GlobalTag:               "foobar",
-			TraceIDHeaderName:       "foobar",
-			ParentIDHeaderName:      "foobar",
-			SpanIDHeaderName:        "foobar",
-			BaggagePrefixHeaderName: "foobar",
-		},
+		Instana: &instana.Config{},
 		Elastic: &elastic.Config{
 			ServerURL:          "foobar",
 			SecretToken:        "foobar",

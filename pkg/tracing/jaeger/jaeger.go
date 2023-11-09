@@ -11,6 +11,7 @@ import (
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
 	jaegermet "github.com/uber/jaeger-lib/metrics"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Name sets the name of this tracer.
@@ -56,7 +57,7 @@ func (c *Collector) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
+func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 	reporter := &jaegercfg.ReporterConfig{
 		LogSpans:                   true,
 		LocalAgentHostPort:         c.LocalAgentHostPort,
@@ -120,5 +121,5 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 	}
 	logger.Debug().Msg("Jaeger tracer configured")
 
-	return opentracing.GlobalTracer(), closer, nil
+	return nil, closer, nil
 }
