@@ -869,8 +869,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "foobar",
-			SameSpan:     true,
-			ID128Bit:     true,
 			SampleRate:   42,
 		},
 		Datadog: &datadog.Config{

@@ -383,8 +383,6 @@
       password = "foobar"
   [tracing.zipkin]
     httpEndpoint = "foobar"
-    sameSpan = true
-    id128Bit = true
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
@@ -419,6 +417,7 @@
     address = "foobar"
     insecure = true
     path = "foobar"
+    sampleRate = 42.0
     [tracing.openTelemetry.headers]
       name0 = "foobar"
       name1 = "foobar"
