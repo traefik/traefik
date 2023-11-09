@@ -852,6 +852,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SpanNameLimit: 42,
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "foobar",
+			GlobalTags:   map[string]string{"foobar": "foobar"},
 			SampleRate:   42,
 		},
 		Datadog: &datadog.Config{
@@ -864,11 +865,16 @@ func TestDo_staticConfiguration(t *testing.T) {
 			SamplingPriorityHeaderName: "foobar",
 			BagagePrefixHeaderName:     "foobar",
 		},
-		Instana: &instana.Config{},
+		Instana: &instana.Config{
+			GlobalTags: map[string]string{"foobar": "foobar"},
+			SampleRate: 42,
+		},
 		Elastic: &elastic.Config{
 			ServerURL:          "foobar",
 			SecretToken:        "foobar",
 			ServiceEnvironment: "foobar",
+			GlobalTags:         map[string]string{"foobar": "foobar"},
+			SampleRate:         42,
 		},
 	}
 

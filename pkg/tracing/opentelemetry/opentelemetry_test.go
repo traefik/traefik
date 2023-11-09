@@ -69,8 +69,9 @@ func TestTracing(t *testing.T) {
 	t.Cleanup(collector.Close)
 
 	newTracing, err := tracing.NewTracing("", 0, &Config{
-		Insecure: true,
-		Address:  strings.TrimPrefix(collector.URL, "http://"),
+		Insecure:   true,
+		Address:    strings.TrimPrefix(collector.URL, "http://"),
+		SampleRate: 1.0,
 	})
 	require.NoError(t, err)
 	t.Cleanup(newTracing.Close)
