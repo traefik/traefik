@@ -33,7 +33,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
 	"github.com/traefik/traefik/v3/pkg/tracing/instana"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -851,21 +850,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 	config.Tracing = &static.Tracing{
 		ServiceName:   "myServiceName",
 		SpanNameLimit: 42,
-		Jaeger: &jaeger.Config{
-			SamplingServerURL:      "foobar",
-			SamplingType:           "foobar",
-			SamplingParam:          42,
-			LocalAgentHostPort:     "foobar",
-			Gen128Bit:              true,
-			Propagation:            "foobar",
-			TraceContextHeaderName: "foobar",
-			Collector: &jaeger.Collector{
-				Endpoint: "foobar",
-				User:     "foobar",
-				Password: "foobar",
-			},
-			DisableAttemptReconnecting: true,
-		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "foobar",
 			SampleRate:   42,
