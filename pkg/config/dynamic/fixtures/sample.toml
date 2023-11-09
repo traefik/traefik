@@ -125,23 +125,18 @@
   spanNameLimit = 42
   [tracing.zipkin]
     httpEndpoint = "foobar"
-    sameSpan = true
-    id128Bit = true
     debug = true
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
     localAgentSocket = "foobar"
     debug = true
-    prioritySampling = true
     traceIDHeaderName = "foobar"
     parentIDHeaderName = "foobar"
     samplingPriorityHeaderName = "foobar"
     bagagePrefixHeaderName = "foobar"
   [tracing.instana]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    logLevel = "foobar"
+    sampleRate = 42.0
 
 [hostResolver]
   cnameFlattening = true
