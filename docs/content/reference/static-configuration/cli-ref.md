@@ -993,8 +993,8 @@ Sets the header name used to store the trace ID.
 `--tracing.elastic`:  
 Settings for Elastic. (Default: ```false```)
 
-`--tracing.elastic.attributes.<name>`:  
-Defines additional attributes to be sent with the payloads.
+`--tracing.elastic.globaltags.<name>`:  
+Sets a list of key:value tags on all spans.
 
 `--tracing.elastic.samplerate`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
@@ -1011,8 +1011,8 @@ Sets the name of the environment Traefik is deployed in, e.g. 'production' or 's
 `--tracing.instana`:  
 Settings for Instana. (Default: ```false```)
 
-`--tracing.instana.attributes.<name>`:  
-Defines additional attributes to be sent with the payloads.
+`--tracing.instana.globaltags.<name>`:  
+Sets a list of key:value tags on all spans.
 
 `--tracing.instana.samplerate`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
@@ -1023,8 +1023,8 @@ Settings for OpenTelemetry. (Default: ```false```)
 `--tracing.opentelemetry.address`:  
 Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
-`--tracing.opentelemetry.attributes.<name>`:  
-Defines additional attributes to be sent with the payloads.
+`--tracing.opentelemetry.globaltags.<name>`:  
+Sets a list of key:value tags on all spans.
 
 `--tracing.opentelemetry.grpc`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
@@ -1062,8 +1062,8 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 `--tracing.zipkin`:  
 Settings for Zipkin. (Default: ```false```)
 
-`--tracing.zipkin.attributes.<name>`:  
-Defines additional attributes to be sent with the payloads.
+`--tracing.zipkin.globaltags.<name>`:  
+Sets a list of key:value tags on all spans.
 
 `--tracing.zipkin.httpendpoint`:  
 Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
