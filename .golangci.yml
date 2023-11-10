@@ -151,6 +151,7 @@ linters-settings:
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
+      - go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
 
 linters:
   enable-all: true
