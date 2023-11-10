@@ -32,9 +32,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
 	"github.com/traefik/traefik/v3/pkg/tracing/instana"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -852,25 +850,9 @@ func TestDo_staticConfiguration(t *testing.T) {
 	config.Tracing = &static.Tracing{
 		ServiceName:   "myServiceName",
 		SpanNameLimit: 42,
-		Jaeger: &jaeger.Config{
-			SamplingServerURL:      "foobar",
-			SamplingType:           "foobar",
-			SamplingParam:          42,
-			LocalAgentHostPort:     "foobar",
-			Gen128Bit:              true,
-			Propagation:            "foobar",
-			TraceContextHeaderName: "foobar",
-			Collector: &jaeger.Collector{
-				Endpoint: "foobar",
-				User:     "foobar",
-				Password: "foobar",
-			},
-			DisableAttemptReconnecting: true,
-		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "foobar",
-			SameSpan:     true,
-			ID128Bit:     true,
+			GlobalTags:   map[string]string{"foobar": "foobar"},
 			SampleRate:   42,
 		},
 		Datadog: &datadog.Config{
@@ -878,30 +860,21 @@ func TestDo_staticConfiguration(t *testing.T) {
 			LocalAgentSocket:           "foobar",
 			GlobalTags:                 map[string]string{"foobar": "foobar"},
 			Debug:                      true,
-			PrioritySampling:           true,
 			TraceIDHeaderName:          "foobar",
 			ParentIDHeaderName:         "foobar",
 			SamplingPriorityHeaderName: "foobar",
 			BagagePrefixHeaderName:     "foobar",
 		},
 		Instana: &instana.Config{
-			LocalAgentHost: "foobar",
-			LocalAgentPort: 4242,
-			LogLevel:       "foobar",
-		},
-		Haystack: &haystack.Config{
-			LocalAgentHost:          "foobar",
-			LocalAgentPort:          42,
-			GlobalTag:               "foobar",
-			TraceIDHeaderName:       "foobar",
-			ParentIDHeaderName:      "foobar",
-			SpanIDHeaderName:        "foobar",
-			BaggagePrefixHeaderName: "foobar",
+			GlobalTags: map[string]string{"foobar": "foobar"},
+			SampleRate: 42,
 		},
 		Elastic: &elastic.Config{
 			ServerURL:          "foobar",
 			SecretToken:        "foobar",
 			ServiceEnvironment: "foobar",
+			GlobalTags:         map[string]string{"foobar": "foobar"},
+			SampleRate:         42,
 		},
 	}
 

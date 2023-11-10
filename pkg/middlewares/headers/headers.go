@@ -6,11 +6,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -61,7 +61,7 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	}, nil
 }
 
-func (h *headers) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (h *headers) GetTracingInformation() (string, trace.SpanKind) {
 	return h.name, tracing.SpanKindNoneEnum
 }
 
