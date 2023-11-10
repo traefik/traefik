@@ -1,70 +1,59 @@
 package tracing
 
 import (
+	"context"
 	"io"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type MockTracer struct {
 	Span *MockSpan
 }
 
-// StartSpan belongs to the Tracer interface.
-func (n MockTracer) StartSpan(operationName string, opts ...opentracing.StartSpanOption) opentracing.Span {
+// Start belongs to the Tracer interface.
+func (n MockTracer) Start(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	c := trace.NewSpanStartConfig(opts...)
+	n.Span.SetAttributes(c.Attributes()...)
+	n.Span.SetAttributes(attribute.String("span.kind", c.SpanKind().String()))
 	n.Span.OpName = operationName
-	return n.Span
+	return ctx, n.Span
 }
 
-// Inject belongs to the Tracer interface.
-func (n MockTracer) Inject(sp opentracing.SpanContext, format, carrier interface{}) error {
-	return nil
+// StartSpan belongs to the Tracer interface.
+func (n MockTracer) StartSpan(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	n.Span.OpName = operationName
+	return ctx, n.Span
 }
-
-// Extract belongs to the Tracer interface.
-func (n MockTracer) Extract(format, carrier interface{}) (opentracing.SpanContext, error) {
-	return nil, opentracing.ErrSpanContextNotFound
-}
-
-// MockSpanContext a span context mock.
-type MockSpanContext struct{}
-
-func (n MockSpanContext) ForeachBaggageItem(handler func(k, v string) bool) {}
 
 // MockSpan a span mock.
 type MockSpan struct {
-	OpName string
-	Tags   map[string]interface{}
+	OpName   string
+	Tags     map[string]interface{}
+	Conf     trace.SpanContextConfig
+	Provider trace.TracerProvider
 }
 
-func (n MockSpan) Context() opentracing.SpanContext { return MockSpanContext{} }
-func (n MockSpan) SetBaggageItem(key, val string) opentracing.Span {
-	return MockSpan{Tags: make(map[string]interface{})}
+func (n MockSpan) AddEvent(event string, foo ...trace.EventOption)     {}
+func (n MockSpan) End(options ...trace.SpanEndOption)                  {}
+func (n MockSpan) IsRecording() bool                                   { return false }
+func (n MockSpan) RecordError(err error, options ...trace.EventOption) {}
+func (n MockSpan) SpanContext() trace.SpanContext                      { return trace.NewSpanContext(n.Conf) }
+func (n MockSpan) SetStatus(code codes.Code, description string)       {}
+func (n MockSpan) SetName(name string)                                 {}
+func (n MockSpan) SetAttributes(kv ...attribute.KeyValue) {
+	for _, v := range kv {
+		n.Tags[string(v.Key)] = v.Value.AsInterface()
+	}
 }
-func (n MockSpan) BaggageItem(key string) string { return "" }
-func (n MockSpan) SetTag(key string, value interface{}) opentracing.Span {
-	n.Tags[key] = value
-	return n
-}
-func (n MockSpan) LogFields(fields ...log.Field)                          {}
-func (n MockSpan) LogKV(keyVals ...interface{})                           {}
-func (n MockSpan) Finish()                                                {}
-func (n MockSpan) FinishWithOptions(opts opentracing.FinishOptions)       {}
-func (n MockSpan) SetOperationName(operationName string) opentracing.Span { return n }
-func (n MockSpan) Tracer() opentracing.Tracer                             { return MockTracer{} }
-func (n MockSpan) LogEvent(event string)                                  {}
-func (n MockSpan) LogEventWithPayload(event string, payload interface{})  {}
-func (n MockSpan) Log(data opentracing.LogData)                           {}
-func (n *MockSpan) Reset() {
-	n.Tags = make(map[string]interface{})
-}
+func (n MockSpan) TracerProvider() trace.TracerProvider { return n.Provider }
 
 type trackingBackenMock struct {
-	tracer opentracing.Tracer
+	tracer trace.Tracer
 }
 
-func (t *trackingBackenMock) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	opentracing.SetGlobalTracer(t.tracer)
-	return t.tracer, nil, nil
+func (t *trackingBackenMock) Setup(componentName string) (trace.Tracer, io.Closer, error) {
+	return t.tracer, io.NopCloser(nil), nil
 }
