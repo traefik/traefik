@@ -1,38 +1,42 @@
 package elastic
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net/url"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"go.elastic.co/apm"
-	"go.elastic.co/apm/module/apmot"
+	"go.elastic.co/apm/module/apmotel/v2"
 	"go.elastic.co/apm/transport"
+	"go.elastic.co/apm/v2"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Name sets the name of this tracer.
 const Name = "elastic"
 
-func init() {
-	// The APM lib uses the init() function to create a default tracer.
-	// So this default tracer must be disabled.
-	// https://github.com/elastic/apm-agent-go/blob/8dd383d0d21776faad8841fe110f35633d199a03/tracer.go#L61-L65
-	apm.DefaultTracer.Close()
-}
-
 // Config provides configuration settings for a elastic.co tracer.
 type Config struct {
-	ServerURL          string `description:"Sets the URL of the Elastic APM server." json:"serverURL,omitempty" toml:"serverURL,omitempty" yaml:"serverURL,omitempty"`
-	SecretToken        string `description:"Sets the token used to connect to Elastic APM Server." json:"secretToken,omitempty" toml:"secretToken,omitempty" yaml:"secretToken,omitempty" loggable:"false"`
-	ServiceEnvironment string `description:"Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'." json:"serviceEnvironment,omitempty" toml:"serviceEnvironment,omitempty" yaml:"serviceEnvironment,omitempty" export:"true"`
+	ServerURL          string            `description:"Sets the URL of the Elastic APM server." json:"serverURL,omitempty" toml:"serverURL,omitempty" yaml:"serverURL,omitempty"`
+	SecretToken        string            `description:"Sets the token used to connect to Elastic APM Server." json:"secretToken,omitempty" toml:"secretToken,omitempty" yaml:"secretToken,omitempty" loggable:"false"`
+	ServiceEnvironment string            `description:"Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'." json:"serviceEnvironment,omitempty" toml:"serviceEnvironment,omitempty" yaml:"serviceEnvironment,omitempty" export:"true"`
+	GlobalTags         map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
+	SampleRate         float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (c *Config) SetDefaults() {
+	c.SampleRate = 1.0
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-	// Create default transport.
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	tr, err := transport.NewHTTPTransport()
 	if err != nil {
 		return nil, nil, err
@@ -60,15 +64,34 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 		return nil, nil, err
 	}
 
-	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
-	tracer.SetLogger(logs.NewElasticLogger(logger))
+	attr := []attribute.KeyValue{
+		semconv.ServiceNameKey.String("traefik"),
+		semconv.ServiceVersionKey.String(version.Version),
+	}
 
-	otTracer := apmot.New(apmot.WithTracer(tracer))
+	for k, v := range c.GlobalTags {
+		attr = append(attr, attribute.String(k, v))
+	}
 
-	// Without this, child spans are getting the NOOP tracer
-	opentracing.SetGlobalTracer(otTracer)
+	res, err := resource.New(context.Background(),
+		resource.WithAttributes(attr...),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("building resource: %w", err)
+	}
+
+	tracerProvider, err := apmotel.NewTracerProvider(
+		apmotel.WithResource(res),
+		apmotel.WithAPMTracer(tracer),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error newTracerProvider: %w", err)
+	}
+	otel.SetTracerProvider(tracerProvider)
 
 	log.Debug().Msg("Elastic tracer configured")
 
-	return otTracer, nil, nil
+	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), nil, nil
 }
