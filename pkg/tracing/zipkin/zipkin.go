@@ -23,7 +23,7 @@ const Name = "zipkin"
 type Config struct {
 	HTTPEndpoint string            `description:"Sets the HTTP Endpoint to report traces to." json:"httpEndpoint,omitempty" toml:"httpEndpoint,omitempty" yaml:"httpEndpoint,omitempty"`
 	SampleRate   float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
-	Attributes   map[string]string `description:"Defines additional attributes to be sent with the payloads." json:"attributes,omitempty" toml:"attributes,omitempty" yaml:"attributes,omitempty" export:"true"`
+	GlobalTags   map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -46,7 +46,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range c.Attributes {
+	for k, v := range c.GlobalTags {
 		attr = append(attr, attribute.String(k, v))
 	}
 

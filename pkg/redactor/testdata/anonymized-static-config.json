@@ -347,9 +347,10 @@
     "spanNameLimit": 42,
     "zipkin": {
       "httpEndpoint": "xxxx",
-      "sameSpan": true,
-      "id128Bit": true,
-      "sampleRate": 42
+      "sampleRate": 42,
+      "globalTags": {
+        "foobar": "foobar"
+      }
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
@@ -365,13 +366,19 @@
       "bagagePrefixHeaderName": "foobar"
     },
     "instana": {
-      "localAgentHost": "xxxx",
-      "logLevel": "foobar"
+      "sampleRate": 42,
+      "globalTags": {
+        "foobar": "foobar"
+      }
     },
     "elastic": {
       "serverURL": "xxxx",
       "secretToken": "xxxx",
-      "serviceEnvironment": "foobar"
+      "serviceEnvironment": "foobar",
+      "sampleRate": 42,
+      "globalTags": {
+        "foobar": "foobar"
+      }
     }
   },
   "hostResolver": {
