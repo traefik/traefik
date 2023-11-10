@@ -43,53 +43,36 @@ tracing:
 --tracing.zipkin.httpEndpoint=http://localhost:9411/api/v2/spans
 ```
 
-#### `sameSpan`
+#### `globalTags`
 
-_Optional, Default=false_
+_Optional, Default=empty_
 
-Uses SameSpan RPC style traces.
+Applies a list of shared key:value tags on all spans.
 
 ```yaml tab="File (YAML)"
 tracing:
   zipkin:
-    sameSpan: true
+    globalTags:
+      tag1: foo
+      tag2: bar
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.zipkin]
-    sameSpan = true
+    [tracing.zipkin.globalTags]
+      tag1 = "foo"
+      tag2 = "bar"
 ```
 
 ```bash tab="CLI"
---tracing.zipkin.sameSpan=true
-```
-
-#### `id128Bit`
-
-_Optional, Default=true_
-
-Uses 128 bits trace IDs.
-
-```yaml tab="File (YAML)"
-tracing:
-  zipkin:
-    id128Bit: false
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.zipkin]
-    id128Bit = false
-```
-
-```bash tab="CLI"
---tracing.zipkin.id128Bit=false
+--tracing.zipkin.globalTags.tag1=foo
+--tracing.zipkin.globalTags.tag2=bar
 ```
 
 #### `sampleRate`
 
-_Required, Default=1.0_
+_Optional, Default=1.0_
 
 The proportion of requests to trace, specified between 0.0 and 1.0.
 

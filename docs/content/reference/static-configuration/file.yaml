@@ -388,24 +388,12 @@ accessLog:
 tracing:
   serviceName: foobar
   spanNameLimit: 42
-  jaeger:
-    samplingServerURL: foobar
-    samplingType: foobar
-    samplingParam: 42
-    localAgentHostPort: foobar
-    gen128Bit: true
-    propagation: foobar
-    traceContextHeaderName: foobar
-    disableAttemptReconnecting: true
-    collector:
-      endpoint: foobar
-      user: foobar
-      password: foobar
   zipkin:
     httpEndpoint: foobar
-    sameSpan: true
-    id128Bit: true
     sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
   datadog:
     localAgentHostPort: foobar
     localAgentSocket: foobar
@@ -413,7 +401,6 @@ tracing:
       tag1: foobar
       tag2: foobar
     debug: true
-    prioritySampling: true
     traceIDHeaderName: foobar
     parentIDHeaderName: foobar
     samplingPriorityHeaderName: foobar
@@ -421,20 +408,18 @@ tracing:
   instana:
     localAgentHost: foobar
     localAgentPort: 42
-    logLevel: foobar
-    enableAutoProfile: true
-  haystack:
-    localAgentHost: foobar
-    localAgentPort: 42
-    globalTag: foobar
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    spanIDHeaderName: foobar
-    baggagePrefixHeaderName: foobar
+    sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
   elastic:
     serverURL: foobar
     secretToken: foobar
     serviceEnvironment: foobar
+    sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
   openTelemetry:
     address: foobar
     headers:
@@ -442,6 +427,10 @@ tracing:
       name1: foobar
     insecure: true
     path: foobar
+    sampleRate: 42
+    globalTags:
+      tag1: foobar
+      tag2: foobar
     tls:
       ca: foobar
       caOptional: true
