@@ -44,7 +44,7 @@ As a maintainer, you are granted a vote for the following:
 
 - [PR review](https://github.com/traefik/contributors-guide/blob/master/pr_guidelines.md).
 
-- [Design review](https://github.com/traefik/contributors-guide/blob/master/proposal_guideines.md).
+- [Design review](https://github.com/traefik/contributors-guide/blob/master/proposals.md).
 
 - [Proposals](https://github.com/traefik/contributors-guide/blob/master/proposals.md).
 
