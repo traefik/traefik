@@ -10,7 +10,7 @@ Adding Digest Authentication
 
 ![BasicAuth](../../assets/img/middleware/digestauth.png)
 
-The DigestAuth middleware restricts access to your services to known users.
+The DigestAuth middleware grants access to services to authorized users only.
 
 ## Configuration Examples
 
