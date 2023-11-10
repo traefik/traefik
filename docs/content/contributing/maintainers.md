@@ -33,4 +33,4 @@ People who have had an incredibly positive impact on the project, and are now fo
 
 ## Maintainer's Guidelines
 
-Please read the [maintainer's guidelines](maintainers-guidelines.md)
+Please read the [maintainer's guidelines](maintainers-guidelines.md).
