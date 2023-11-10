@@ -87,6 +87,55 @@ tracing:
 --tracing.elastic.serviceenvironment="production"
 ```
 
+#### `globalTags`
+
+_Optional, Default=empty_
+
+Applies a list of shared key:value tags on all spans.
+
+```yaml tab="File (YAML)"
+tracing:
+  elastic:
+    globalTags:
+      tag1: foo
+      tag2: bar
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.elastic]
+    [tracing.elastic.globalTags]
+      tag1 = "foo"
+      tag2 = "bar"
+```
+
+```bash tab="CLI"
+--tracing.elastic.globalTags.tag1=foo
+--tracing.elastic.globalTags.tag2=bar
+```
+
+#### `sampleRate`
+
+_Optional, Default=1.0_
+
+The proportion of requests to trace, specified between 0.0 and 1.0.
+
+```yaml tab="File (YAML)"
+tracing:
+  elastic:
+    sampleRate: 0.2
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.elastic]
+    sampleRate = 0.2
+```
+
+```bash tab="CLI"
+--tracing.elastic.sampleRate=0.2
+```
+
 ### Further
 
 Additional configuration of Elastic APM Go agent can be done using environment variables.
