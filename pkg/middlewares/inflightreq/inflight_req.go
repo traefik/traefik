@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/connlimit"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -54,7 +54,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 	return &inFlightReq{handler: handler, name: name}, nil
 }
 
-func (i *inFlightReq) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (i *inFlightReq) GetTracingInformation() (string, trace.SpanKind) {
 	return i.name, tracing.SpanKindNoneEnum
 }
 
