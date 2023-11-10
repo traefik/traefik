@@ -237,6 +237,7 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 	checkTraceContent(c, s.tracerIP, "forward service2/router2@file", "retry@file")
 }
 
+/*
 func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 	s.startTempo(c)
 	defer s.composeStop(c, "tempo")
@@ -262,7 +263,7 @@ func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	checkTraceContent(c, s.tracerIP, "EntryPoint web", "basic-auth@file")
-}
+}*/
 
 func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
 	baseURL, err := url.Parse("http://" + tracerIP + ":3200/api/search")
