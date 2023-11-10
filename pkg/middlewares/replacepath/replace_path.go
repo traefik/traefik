@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -35,7 +35,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePath, nam
 	}, nil
 }
 
-func (r *replacePath) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (r *replacePath) GetTracingInformation() (string, trace.SpanKind) {
 	return r.name, tracing.SpanKindNoneEnum
 }
 

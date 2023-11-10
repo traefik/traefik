@@ -345,26 +345,12 @@
   "tracing": {
     "serviceName": "myServiceName",
     "spanNameLimit": 42,
-    "jaeger": {
-      "samplingServerURL": "xxxx",
-      "samplingType": "foobar",
-      "samplingParam": 42,
-      "localAgentHostPort": "xxxx",
-      "gen128Bit": true,
-      "propagation": "foobar",
-      "traceContextHeaderName": "foobar",
-      "collector": {
-        "endpoint": "xxxx",
-        "user": "xxxx",
-        "password": "xxxx"
-      },
-      "disableAttemptReconnecting": true
-    },
     "zipkin": {
       "httpEndpoint": "xxxx",
-      "sameSpan": true,
-      "id128Bit": true,
-      "sampleRate": 42
+      "sampleRate": 42,
+      "globalTags": {
+        "foobar": "foobar"
+      }
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
@@ -373,28 +359,25 @@
         "foobar": "foobar"
       },
       "debug": true,
-      "prioritySampling": true,
       "traceIDHeaderName": "foobar",
       "parentIDHeaderName": "foobar",
       "samplingPriorityHeaderName": "foobar",
       "bagagePrefixHeaderName": "foobar"
     },
     "instana": {
-      "localAgentHost": "xxxx",
-      "logLevel": "foobar"
-    },
-    "haystack": {
-      "localAgentHost": "xxxx",
-      "globalTag": "foobar",
-      "traceIDHeaderName": "foobar",
-      "parentIDHeaderName": "foobar",
-      "spanIDHeaderName": "foobar",
-      "baggagePrefixHeaderName": "foobar"
+      "globalTags": {
+        "foobar": "foobar"
+      },
+      "sampleRate": 42
     },
     "elastic": {
       "serverURL": "xxxx",
       "secretToken": "xxxx",
-      "serviceEnvironment": "foobar"
+      "serviceEnvironment": "foobar",
+      "globalTags": {
+        "foobar": "foobar"
+      },
+      "sampleRate": 42
     }
   },
   "hostResolver": {
