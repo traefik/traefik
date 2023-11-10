@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestNewForwarder(t *testing.T) {
@@ -41,7 +41,7 @@ func TestNewForwarder(t *testing.T) {
 					"http.url":             "http://www.test.com/toto",
 					"traefik.service.name": "some-service.domain.tld",
 					"traefik.router.name":  "some-service.domain.tld",
-					"span.kind":            ext.SpanKindRPCClientEnum,
+					"span.kind":            trace.SpanKindClient.String(),
 				},
 				OperationName: "forward some-service.domain.tld/some-service.domain.tld",
 			},
@@ -61,7 +61,7 @@ func TestNewForwarder(t *testing.T) {
 					"http.url":             "http://www.test.com/toto",
 					"traefik.service.name": "some-service-100.slug.namespace.environment.domain.tld",
 					"traefik.router.name":  "some-service-100.slug.namespace.environment.domain.tld",
-					"span.kind":            ext.SpanKindRPCClientEnum,
+					"span.kind":            trace.SpanKindClient.String(),
 				},
 				OperationName: "forward some-service-100.slug.namespace.enviro.../some-service-100.slug.namespace.enviro.../bc4a0d48",
 			},
@@ -81,7 +81,7 @@ func TestNewForwarder(t *testing.T) {
 					"http.url":             "http://www.test.com/toto",
 					"traefik.service.name": "some-service1.namespace.environment.domain.tld",
 					"traefik.router.name":  "some-service1.namespace.environment.domain.tld",
-					"span.kind":            ext.SpanKindRPCClientEnum,
+					"span.kind":            trace.SpanKindClient.String(),
 				},
 				OperationName: "forward some-service1.namespace.environment.domain.tld/some-service1.namespace.environment.domain.tld",
 			},
@@ -101,7 +101,7 @@ func TestNewForwarder(t *testing.T) {
 					"http.url":             "http://www.test.com/toto",
 					"traefik.service.name": "some-service1.frontend.namespace.environment.domain.tld",
 					"traefik.router.name":  "some-service1.backend.namespace.environment.domain.tld",
-					"span.kind":            ext.SpanKindRPCClientEnum,
+					"span.kind":            trace.SpanKindClient.String(),
 				},
 				OperationName: "forward some-service1.frontend.namespace.envir.../some-service1.backend.namespace.enviro.../fa49dd23",
 			},
@@ -115,7 +115,8 @@ func TestNewForwarder(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/toto", nil)
 			req = req.WithContext(tracing.WithTracing(req.Context(), newTracing))
-
+			req.RemoteAddr = "10.0.0.1:1234"
+			req.Header.Set("User-Agent", "forwarder-test")
 			rw := httptest.NewRecorder()
 
 			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
