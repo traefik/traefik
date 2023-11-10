@@ -11,11 +11,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "PassClientTLSCert"
@@ -140,7 +140,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	}, nil
 }
 
-func (p *passTLSClientCert) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (p *passTLSClientCert) GetTracingInformation() (string, trace.SpanKind) {
 	return p.name, tracing.SpanKindNoneEnum
 }
 

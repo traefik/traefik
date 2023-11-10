@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -62,7 +62,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}, nil
 }
 
-func (c *customErrors) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (c *customErrors) GetTracingInformation() (string, trace.SpanKind) {
 	return c.name, tracing.SpanKindNoneEnum
 }
 
