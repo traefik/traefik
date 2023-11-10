@@ -47,6 +47,18 @@ Further details of specific enforcement policies may be posted separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project's leadership.
 
+When an inapropriate behavior is reported, maintainers will discuss on the Maintainer's Discord before marking the message as "abuse". 
+This conversation beforehand avoids one-sided decisions.
+
+The first message will be edited and marked as abuse.
+The second edited message and marked as abuse results in a 7-day ban.
+The third edited message and marked as abuse results in a permanent ban.
+
+The content of edited messages is:
+`Dear user, we want traefik to provide a welcoming and respectful environment. Your [comment/issue/PR] has been reported and marked as abuse according to our [Code of Conduct](./CODE_OF_CONDUCT.md). Thank you.`
+
+The [report must be resolved](https://docs.github.com/en/communities/moderating-comments-and-conversations/managing-reported-content-in-your-organizations-repository#resolving-a-report) accordingly.
+
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4, available at [http://contributor-covenant.org/version/1/4][version]
