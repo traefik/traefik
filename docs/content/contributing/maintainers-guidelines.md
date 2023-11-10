@@ -71,7 +71,8 @@ Any triage activity on issues and PRs (e.g. labels, marking messages as off-topi
 
 - Every decision made on the discord server among maintainers is documented so it's visible to the rest of the community.
 
-- Maintainers express their opinions on issues and reviews. It is fine to have different point of views. 
+- Maintainers express their opinions on issues and reviews. 
+  It is fine to have different point of views. 
   We encourage active and open conversations which goals are to improve Traefik.
 
 - When discussing issues and proposals, maintainers should share as much information as possible to help solve the issue.
