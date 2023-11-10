@@ -15,12 +15,10 @@
 
 [tracing]
   servicename = "tracing"
-  [tracing.jaeger]
-    samplingType = "const"
-    samplingParam = 1.0
-    samplingServerURL = "http://{{.IP}}:5778/sampling"
-    localAgentHostPort = "{{.IP}}:6831"
-    traceContextHeaderName = "{{.TraceContextHeaderName}}"
+  [tracing.opentelemetry]
+    address = "{{.IP}}:4318"
+    insecure = true
+    sampleRate = 1.0
 
 [providers.file]
   filename = "{{ .SelfFilename }}"
