@@ -57,7 +57,7 @@ As a maintainer, you should:
 
 Making sure contributors and community members are listened to and have an impact on the project is essential to keeping the project active and develop a thriving community.
 
-- prioritize helping contributors reaching the expecting quality level over rewriting contributions.
+- Prioritize helping contributors reaching the expecting quality level over rewriting contributions.
 
 Any triage activity on issues and PRs (e.g. labels, marking messages as off-topic, refusing, marking duplicates) should result from a collective decision to ensure knowledge is shared among maintainers.
 
