@@ -51,7 +51,7 @@ func NewBaseLimiter(
 	}, nil
 }
 
-func (b *BasicLimiter) Allowed(
+func (b *BasicLimiter) Allow(
 	ctx context.Context, source string, amount int64, req *http.Request, rw http.ResponseWriter,
 ) (bool, error) {
 	var bucket *rate.Limiter

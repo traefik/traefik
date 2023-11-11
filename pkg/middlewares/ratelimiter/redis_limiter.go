@@ -56,7 +56,7 @@ func NewRedisLimiter(
 	}, nil
 }
 
-func (r *RedisLimiter) Allowed(
+func (r *RedisLimiter) Allow(
 	ctx context.Context, source string, _ int64, req *http.Request, rw http.ResponseWriter,
 ) (bool, error) {
 	res, err := r.limiter.Allow(

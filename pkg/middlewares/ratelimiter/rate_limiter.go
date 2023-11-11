@@ -35,7 +35,7 @@ type rateLimiter struct {
 }
 
 type Limiter interface {
-	Allowed(ctx context.Context, token string, amount int64, req *http.Request, rw http.ResponseWriter) (bool, error)
+	Allow(ctx context.Context, token string, amount int64, req *http.Request, rw http.ResponseWriter) (bool, error)
 }
 
 // New returns a rate limiter middleware.
@@ -144,7 +144,7 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	allowed, err := rl.limiter.Allowed(ctx, source, amount, req, rw)
+	allowed, err := rl.limiter.Allow(ctx, source, amount, req, rw)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
