@@ -43,7 +43,7 @@ func (c *Config) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -58,7 +58,7 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 	}
 
 	attr := []attribute.KeyValue{
-		semconv.ServiceNameKey.String("traefik"),
+		semconv.ServiceNameKey.String(serviceName),
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
@@ -84,7 +84,7 @@ func (c *Config) Setup(componentName string) (trace.Tracer, io.Closer, error) {
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
-	return tracerProvider.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
+	return tracerProvider.Tracer(serviceName, trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
 }
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {

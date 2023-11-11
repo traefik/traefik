@@ -48,7 +48,7 @@ func (c *Config) SetDefaults() {
 func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
 	opts := []tracer.StartOption{
-		tracer.WithServiceName("traefik"),
+		tracer.WithServiceName(serviceName),
 		tracer.WithDebugMode(c.Debug),
 		tracer.WithPropagator(tracer.NewPropagator(&tracer.PropagatorConfig{
 			TraceHeader:    c.TraceIDHeaderName,
