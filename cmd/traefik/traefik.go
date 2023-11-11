@@ -43,7 +43,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tracing"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
@@ -571,16 +571,8 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	var backend tracing.Backend
 
-	if conf.Jaeger != nil {
-		backend = conf.Jaeger
-	}
-
 	if conf.Zipkin != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Zipkin backend.")
-		} else {
-			backend = conf.Zipkin
-		}
+		backend = conf.Zipkin
 	}
 
 	if conf.Datadog != nil {
@@ -596,14 +588,6 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 			log.Error().Msg("Multiple tracing backend are not supported: cannot create Instana backend.")
 		} else {
 			backend = conf.Instana
-		}
-	}
-
-	if conf.Haystack != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Haystack backend.")
-		} else {
-			backend = conf.Haystack
 		}
 	}
 
@@ -624,8 +608,8 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 	}
 
 	if backend == nil {
-		log.Debug().Msg("Could not initialize tracing, using Jaeger by default")
-		defaultBackend := &jaeger.Config{}
+		log.Debug().Msg("Could not initialize tracing, using OpenTelemetry by default")
+		defaultBackend := &opentelemetry.Config{}
 		defaultBackend.SetDefaults()
 		backend = defaultBackend
 	}
