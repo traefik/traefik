@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -33,16 +33,10 @@ type entryPointMiddleware struct {
 }
 
 func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	spanCtx, err := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	if err != nil {
-		middlewares.GetLogger(req.Context(), "tracing", entryPointTypeName).
-			Debug().Err(err).Msg("Failed to extract the context")
-	}
-
-	span, req, finish := e.StartSpanf(req, ext.SpanKindRPCServerEnum, "EntryPoint", []string{e.entryPoint, req.Host}, " ", ext.RPCServerOption(spanCtx))
+	span, req, finish := e.StartSpanf(req, trace.SpanKindServer, "EntryPoint", []string{e.entryPoint, req.Host}, " ", trace.WithSpanKind(trace.SpanKindServer))
 	defer finish()
 
-	ext.Component.Set(span, e.ServiceName)
+	span.SetAttributes(attribute.String("component", e.ServiceName))
 	tracing.LogRequest(span, req)
 
 	req = req.WithContext(tracing.WithTracing(req.Context(), e.Tracing))

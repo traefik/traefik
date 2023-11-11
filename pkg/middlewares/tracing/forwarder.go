@@ -4,10 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -40,14 +42,15 @@ func (f *forwarderMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 	}
 
 	opParts := []string{f.service, f.router}
-	span, req, finish := tr.StartSpanf(req, ext.SpanKindRPCClientEnum, "forward", opParts, "/")
+
+	span, req, finish := tr.StartSpanf(req, trace.SpanKindClient, "forward", opParts, "/", trace.WithSpanKind(trace.SpanKindClient))
 	defer finish()
 
-	span.SetTag("traefik.service.name", f.service)
-	span.SetTag("traefik.router.name", f.router)
-	ext.HTTPMethod.Set(span, req.Method)
-	ext.HTTPUrl.Set(span, req.URL.String())
-	span.SetTag("http.host", req.Host)
+	span.SetAttributes(attribute.String("traefik.service.name", f.service))
+	span.SetAttributes(attribute.String("traefik.router.name", f.router))
+	span.SetAttributes(semconv.HTTPMethod(req.Method))
+	span.SetAttributes(attribute.String("http.host", req.Host))
+	span.SetAttributes(semconv.HTTPURL(req.URL.String()))
 
 	tracing.InjectRequestHeaders(req)
 
