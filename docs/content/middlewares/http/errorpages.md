@@ -113,8 +113,8 @@ The status code ranges are inclusive (`505-599` will trigger with every code bet
 
     You can define either a status code as a number (`500`),
     as multiple comma-separated numbers (`500,502`),
-    as ranges by separating two codes with a dash (`500-599`),
-    or a combination of the two (`404,418,500-599`).
+    as ranges by separating two codes with a dash (`505-599`),
+    or a combination of the two (`404,418,505-599`).
     The comma-separated syntax is only available for label-based providers.
     The examples above demonstrate which syntax is appropriate for each provider.
 
