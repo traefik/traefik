@@ -35,7 +35,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 	exporter := instana.New()
 
 	attr := []attribute.KeyValue{
-		semconv.ServiceNameKey.String("traefik"),
+		semconv.ServiceNameKey.String(serviceName),
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 

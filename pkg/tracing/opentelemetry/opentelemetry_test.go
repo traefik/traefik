@@ -68,7 +68,7 @@ func TestTracing(t *testing.T) {
 	}))
 	t.Cleanup(collector.Close)
 
-	newTracing, err := tracing.NewTracing("", 0, &Config{
+	newTracing, err := tracing.NewTracing("traefik", 0, &Config{
 		Insecure:   true,
 		Address:    strings.TrimPrefix(collector.URL, "http://"),
 		SampleRate: 1.0,
