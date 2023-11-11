@@ -4,13 +4,10 @@ package ratelimiter
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/http"
 	"time"
 
-	"github.com/mailgun/ttlmap"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
@@ -26,21 +23,19 @@ const (
 // rateLimiter implements rate limiting and traffic shaping with a set of token buckets;
 // one for each traffic source. The same parameters are applied to all the buckets.
 type rateLimiter struct {
-	name  string
-	rate  rate.Limit // reqs/s
-	burst int64
+	name string
+	rate rate.Limit // reqs/s
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
 	// For now it is somewhat arbitrarily set to 1/(2*rate).
-	maxDelay time.Duration
-	// each rate limiter for a given source is stored in the buckets ttlmap.
-	// To keep this ttlmap constrained in size,
-	// each ratelimiter is "garbage collected" when it is considered expired.
-	// It is considered expired after it hasn't been used for ttl seconds.
-	ttl           int
+	maxDelay      time.Duration
 	sourceMatcher utils.SourceExtractor
 	next          http.Handler
 
-	buckets *ttlmap.TtlMap // actual buckets, keyed by source.
+	limiter Limiter
+}
+
+type Limiter interface {
+	Allowed(ctx context.Context, token string, amount int64, req *http.Request, rw http.ResponseWriter) (bool, error)
 }
 
 // New returns a rate limiter middleware.
@@ -59,11 +54,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}
 
 	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
-	if err != nil {
-		return nil, err
-	}
-
-	buckets, err := ttlmap.NewConcurrent(maxSources)
 	if err != nil {
 		return nil, err
 	}
@@ -109,17 +99,29 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
+	var limiter Limiter
+	if config.Redis != nil {
+		limiter, err = NewRedisLimiter(rate.Limit(rtl), burst, config, logger)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		limiter, err = NewBaseLimiter(logger, rate.Limit(rtl), burst, maxDelay, ttl)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	return &rateLimiter{
+	rateLimmiter := &rateLimiter{
 		name:          name,
 		rate:          rate.Limit(rtl),
-		burst:         burst,
 		maxDelay:      maxDelay,
 		next:          next,
 		sourceMatcher: sourceMatcher,
-		buckets:       buckets,
-		ttl:           ttl,
-	}, nil
+		limiter:       limiter,
+	}
+
+	return rateLimmiter, nil
 }
 
 func (rl *rateLimiter) GetTracingInformation() (string, ext.SpanKindEnum) {
@@ -137,49 +139,18 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// always equal to 1 if exist.
 	if amount != 1 {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	var bucket *rate.Limiter
-	if rlSource, exists := rl.buckets.Get(source); exists {
-		bucket = rlSource.(*rate.Limiter)
-	} else {
-		bucket = rate.NewLimiter(rl.rate, int(rl.burst))
-	}
-
-	// We Set even in the case where the source already exists,
-	// because we want to update the expiryTime everytime we get the source,
-	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
-	if err := rl.buckets.Set(source, bucket, rl.ttl); err != nil {
-		logger.Error().Err(err).Msg("Could not insert/update bucket")
-		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
+	allowed, err := rl.limiter.Allowed(ctx, source, amount, req, rw)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	res := bucket.Reserve()
-	if !res.OK() {
-		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
-		return
-	}
-
-	delay := res.Delay()
-	if delay > rl.maxDelay {
-		res.Cancel()
-		rl.serveDelayError(ctx, rw, delay)
-		return
-	}
-
-	time.Sleep(delay)
-	rl.next.ServeHTTP(rw, req)
-}
-
-func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
-	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
-	w.Header().Set("X-Retry-In", delay.String())
-	w.WriteHeader(http.StatusTooManyRequests)
-
-	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Could not serve 429")
+	if allowed {
+		rl.next.ServeHTTP(rw, req)
 	}
 }

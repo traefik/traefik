@@ -449,6 +449,25 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+
+	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Redis is a group of options for redis.
+type Redis struct {
+	Endpoints       []string         `description:"KV store endpoints." json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
+	TLS             *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Username        string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password        string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	DB              int              `description:"Database to be selected after connecting to the server." json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
+	PoolSize        int              `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
+	MinIdleConns    int              `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty" export:"true"`
+	IdleConnTimeout time.Duration    `json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
+	ReadTimeout     time.Duration    `json:"readTimeout,omitempty" toml:"omitempty,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout    time.Duration    `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	DialTimeout     time.Duration    `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
