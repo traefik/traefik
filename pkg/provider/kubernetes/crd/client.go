@@ -119,14 +119,23 @@ func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, tokenFilePath, caFilePath string) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
+	var tokenData string
+	if tokenFilePath != "" {
+		tokenDataByte, err := os.ReadFile(tokenFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read Token file %s: %w", tokenFilePath, err)
+		}
+		tokenData = string(tokenDataByte)
+	}
+
 	config := &rest.Config{
 		Host:        endpoint,
-		BearerToken: token,
+		BearerToken: tokenData,
 	}
 
 	if caFilePath != "" {
