@@ -11,10 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	"github.com/go-acme/lego/v4/challenge/http01"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 // ChallengeHTTP HTTP challenge provider implements challenge.Provider.
@@ -105,35 +103,18 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 	logger := log.FromContext(ctx)
 	logger.Debugf("Retrieving the ACME challenge for %s (token %q)...", domain, token)
 
-	var result []byte
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
-	operation := func() error {
-		c.lock.RLock()
-		defer c.lock.RUnlock()
-
-		if _, ok := c.httpChallenges[token]; !ok {
-			return fmt.Errorf("cannot find challenge for token %q (%s)", token, domain)
-		}
-
-		var ok bool
-		result, ok = c.httpChallenges[token][domain]
-		if !ok {
-			return fmt.Errorf("cannot find challenge for %s (token %q)", domain, token)
-		}
-
+	if _, ok := c.httpChallenges[token]; !ok {
+		logger.Errorf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
 		return nil
 	}
 
-	notify := func(err error, time time.Duration) {
-		logger.Errorf("Error getting challenge for token retrying in %s", time)
-	}
-
-	ebo := backoff.NewExponentialBackOff()
-	ebo.MaxElapsedTime = 60 * time.Second
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
-	if err != nil {
-		logger.Errorf("Cannot retrieve the ACME challenge for %s (token %q): %v", domain, token, err)
-		return []byte{}
+	result, ok := c.httpChallenges[token][domain]
+	if !ok {
+		logger.Errorf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
+		return nil
 	}
 
 	return result
