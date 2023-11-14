@@ -233,7 +233,7 @@ This instructs the reporter to send spans to the OpenTelemetry Collector using g
 ```yaml tab="File (YAML)"
 tracing:
   openTelemetry:
-    grpc: {}
+    grpc: true
 ```
 
 ```toml tab="File (TOML)"
