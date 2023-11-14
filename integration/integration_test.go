@@ -18,7 +18,7 @@ import (
 
 	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
-	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/command"
 	"github.com/docker/compose/v2/cmd/formatter"
 	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
@@ -123,7 +123,7 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	s.dockerClient, err = client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
 
-	s.dockerComposeService = compose.NewComposeService(s.dockerClient, &configfile.ConfigFile{})
+	s.dockerComposeService = compose.NewComposeService(&command.DockerCli{})
 	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 
@@ -142,7 +142,7 @@ func (s *BaseSuite) composeUp(c *check.C, services ...string) {
 	err := s.dockerComposeService.Create(context.Background(), s.composeProject, composeapi.CreateOptions{})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Restart(context.Background(), s.composeProject, composeapi.RestartOptions{Services: services})
+	err = s.dockerComposeService.Restart(context.Background(), s.composeProject.Name, composeapi.RestartOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -154,9 +154,6 @@ func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) {
 
 	_, err := s.dockerComposeService.Exec(context.Background(), s.composeProject.Name, composeapi.RunOptions{
 		Service: service,
-		Stdin:   os.Stdin,
-		Stdout:  os.Stdout,
-		Stderr:  os.Stderr,
 		Command: args,
 		Tty:     false,
 		Index:   1,
@@ -169,10 +166,10 @@ func (s *BaseSuite) composeStop(c *check.C, services ...string) {
 	c.Assert(s.dockerComposeService, check.NotNil)
 	c.Assert(s.composeProject, check.NotNil)
 
-	err := s.dockerComposeService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{Services: services})
+	err := s.dockerComposeService.Stop(context.Background(), s.composeProject.Name, composeapi.StopOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Remove(context.Background(), s.composeProject, composeapi.RemoveOptions{
+	err = s.dockerComposeService.Remove(context.Background(), s.composeProject.Name, composeapi.RemoveOptions{
 		Services: services,
 		Force:    true,
 	})
@@ -239,7 +236,7 @@ func (s *BaseSuite) displayLogCompose(c *check.C) {
 	log.WithoutContext().Infof("%s: docker compose logs: ", c.TestName())
 
 	logWriter := log.WithoutContext().WriterLevel(log.GetLevel())
-	logConsumer := formatter.NewLogConsumer(context.Background(), logWriter, false, true)
+	logConsumer := formatter.NewLogConsumer(context.Background(), logWriter, logWriter, false, true, true)
 
 	err := s.dockerComposeService.Logs(context.Background(), s.composeProject.Name, logConsumer, composeapi.LogOptions{})
 	c.Assert(err, checker.IsNil)
