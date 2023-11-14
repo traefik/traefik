@@ -242,5 +242,5 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.grpc=true
+--tracing.openTelemetry.grpc
 ```
