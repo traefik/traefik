@@ -13,7 +13,7 @@ require (
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/docker/cli v20.10.13+incompatible
+	github.com/docker/cli v23.0.7+incompatible
 	github.com/docker/compose/v2 v2.0.1
 	github.com/docker/docker v23.0.7+incompatible
 	github.com/docker/go-connections v0.4.0
