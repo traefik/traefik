@@ -19,6 +19,7 @@ import (
 	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
+	"github.com/docker/cli/cli/flags"
 	"github.com/docker/compose/v2/cmd/formatter"
 	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
@@ -123,7 +124,13 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	s.dockerClient, err = client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
 
-	s.dockerComposeService = compose.NewComposeService(&command.DockerCli{})
+	dcli, err := command.NewDockerCli(command.WithAPIClient(s.dockerClient))
+	c.Assert(err, checker.IsNil)
+
+	err = dcli.Initialize(flags.NewClientOptions())
+	c.Assert(err, checker.IsNil)
+
+	s.dockerComposeService = compose.NewComposeService(dcli)
 	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 
