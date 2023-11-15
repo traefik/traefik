@@ -123,7 +123,10 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	s.dockerClient, err = client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
 
-	s.dockerComposeService = compose.NewComposeService(&command.DockerCli{})
+	dcli, err := command.NewDockerCli()
+	c.Assert(err, checker.IsNil)
+
+	s.dockerComposeService = compose.NewComposeService(dcli)
 	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 
