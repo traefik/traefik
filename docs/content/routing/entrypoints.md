@@ -589,9 +589,69 @@ Controls the behavior of Traefik during the shutdown phase.
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     ```
 
+#### `keepAliveMaxRequests`
+
+_Optional, Default=0_
+
+Maximum requests, Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY).
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      name:
+        address: ":8888"
+        transport:
+          keepAliveMaxRequests: 42
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.name]
+        address = ":8888"
+        [entryPoints.name.transport]
+          keepAliveMaxRequests = 42
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.name.address=:8888
+    --entryPoints.name.transport.keepAliveRequests=42
+    ```
+
+#### `KeepAliveMaxTime`
+
+_Optional, Default=0s_
+
+Maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY).
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      name:
+        address: ":8888"
+        transport:
+          keepAliveMaxTime: 42s
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.name]
+        address = ":8888"
+        [entryPoints.name.transport]
+          keepAliveMaxTime = 42s
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.name.address=:8888
+    --entryPoints.name.transport.keepAliveTime=42s
+    ```
+
 ### ProxyProtocol
 
-Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
+Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
 
 If Proxy Protocol header parsing is enabled for the entry point, this entry point can accept connections with or without Proxy Protocol headers.
 
