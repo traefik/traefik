@@ -569,18 +569,18 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	var lastHandler http.Handler
-	if configuration.KeepAliveMaxTime > 0 || configuration.KeepAliveMaxRequests > 0 || debug {
+	if debug || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		lastHandler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			state, ok := req.Context().Value(connStateKey).(*connState)
 			if ok {
 				state.IdleCycle++
-				if configuration.KeepAliveMaxRequests > 0 && state.IdleCycle > configuration.KeepAliveMaxRequests {
+				if configuration.Transport.KeepAliveMaxRequests > 0 && state.IdleCycle > configuration.Transport.KeepAliveMaxRequests {
 					log.WithoutContext().Debug("Close because of too many requests")
 					state.KeepAliveState = "Close because of too many requests"
 					rw.Header().Set("Connection", "close")
 
 				}
-				if configuration.KeepAliveMaxTime > 0 && time.Now().After(state.Start.Add(time.Duration(configuration.KeepAliveMaxTime))) {
+				if configuration.Transport.KeepAliveMaxTime > 0 && time.Now().After(state.Start.Add(time.Duration(configuration.Transport.KeepAliveMaxTime))) {
 					log.WithoutContext().Debug("Close because of too long connection")
 					state.KeepAliveState = "Close because of too long connection"
 					rw.Header().Set("Connection", "close")
@@ -599,7 +599,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 	}
-	if configuration.KeepAliveMaxTime > 0 || configuration.KeepAliveMaxRequests > 0 && debug {
+	if debug || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
 			cState := &connState{Start: time.Now()}
 			if debug {
