@@ -811,8 +811,8 @@ func Test_buildConfiguration(t *testing.T) {
 			Certificates: []*tls.CertAndStores{
 				{
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("foobar"),
-						KeyFile:  tls.FileOrContent("foobar"),
+						CertFile: types.FileOrContent("foobar"),
+						KeyFile:  types.FileOrContent("foobar"),
 					},
 					Stores: []string{
 						"foobar",
@@ -821,8 +821,8 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				{
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("foobar"),
-						KeyFile:  tls.FileOrContent("foobar"),
+						CertFile: types.FileOrContent("foobar"),
+						KeyFile:  types.FileOrContent("foobar"),
 					},
 					Stores: []string{
 						"foobar",
@@ -843,9 +843,9 @@ func Test_buildConfiguration(t *testing.T) {
 						"foobar",
 					},
 					ClientAuth: tls.ClientAuth{
-						CAFiles: []tls.FileOrContent{
-							tls.FileOrContent("foobar"),
-							tls.FileOrContent("foobar"),
+						CAFiles: []types.FileOrContent{
+							types.FileOrContent("foobar"),
+							types.FileOrContent("foobar"),
 						},
 						ClientAuthType: "foobar",
 					},
@@ -868,9 +868,9 @@ func Test_buildConfiguration(t *testing.T) {
 						"foobar",
 					},
 					ClientAuth: tls.ClientAuth{
-						CAFiles: []tls.FileOrContent{
-							tls.FileOrContent("foobar"),
-							tls.FileOrContent("foobar"),
+						CAFiles: []types.FileOrContent{
+							types.FileOrContent("foobar"),
+							types.FileOrContent("foobar"),
 						},
 						ClientAuthType: "foobar",
 					},
@@ -885,14 +885,14 @@ func Test_buildConfiguration(t *testing.T) {
 			Stores: map[string]tls.Store{
 				"Store0": {
 					DefaultCertificate: &tls.Certificate{
-						CertFile: tls.FileOrContent("foobar"),
-						KeyFile:  tls.FileOrContent("foobar"),
+						CertFile: types.FileOrContent("foobar"),
+						KeyFile:  types.FileOrContent("foobar"),
 					},
 				},
 				"Store1": {
 					DefaultCertificate: &tls.Certificate{
-						CertFile: tls.FileOrContent("foobar"),
-						KeyFile:  tls.FileOrContent("foobar"),
+						CertFile: types.FileOrContent("foobar"),
+						KeyFile:  types.FileOrContent("foobar"),
 					},
 				},
 			},

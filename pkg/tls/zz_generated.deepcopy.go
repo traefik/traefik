@@ -60,7 +60,7 @@ func (in *ClientAuth) DeepCopyInto(out *ClientAuth) {
 	*out = *in
 	if in.CAFiles != nil {
 		in, out := &in.CAFiles, &out.CAFiles
-		*out = make([]FileOrContent, len(*in))
+		*out = make([]types.FileOrContent, len(*in))
 		copy(*out, *in)
 	}
 	return
