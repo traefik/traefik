@@ -1480,3 +1480,31 @@ func (s *SimpleSuite) TestEncodeSemicolons(c *check.C) {
 		}
 	}
 }
+
+func (s *SimpleSuite) TestDenyFragment(c *check.C) {
+	s.createComposeProject(c, "base")
+
+	s.composeUp(c)
+	defer s.composeDown(c)
+
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_default.toml"))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	conn, err := net.Dial("tcp", "127.0.0.1:8000")
+	c.Assert(err, checker.IsNil)
+
+	_, err = conn.Write([]byte("GET /#/?bar=toto;boo=titi HTTP/1.1\nHost: other.localhost\n\n"))
+	c.Assert(err, checker.IsNil)
+
+	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusBadRequest)
+}
