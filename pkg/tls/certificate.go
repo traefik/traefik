@@ -73,7 +73,6 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	return certs
 }
 
-
 // AppendCertificate appends a Certificate to a certificates map keyed by store name.
 func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, storeName string) error {
 	certContent, err := c.CertFile.Read()
