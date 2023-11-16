@@ -18,7 +18,7 @@ set +e
 
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048
-go test ${TESTFLAGS[*]} ./pkg/...
+go test ${TESTFLAGS[*]} ./pkg/... ./cmd/...
 
 CODE=$?
 if [ ${CODE} != 0 ]; then

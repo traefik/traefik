@@ -248,7 +248,7 @@ EntryPoints in this list are used (by default) on HTTP and TCP routers that do n
     If at least one EntryPoint has the `AsDefault` option set to `true`,
     then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
 
-    Some built-in EntryPoints are always excluded from the list, namely: `traefik`, `traefikhub-api`, and `traefikhub-tunl`.
+    Some built-in EntryPoints are always excluded from the list, namely: `traefik`.
 
 !!! warning "Only TCP and HTTP"
 
