@@ -1174,7 +1174,7 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 	*out = *in
 	if in.RootCAs != nil {
 		in, out := &in.RootCAs, &out.RootCAs
-		*out = make([]tls.FileOrContent, len(*in))
+		*out = make([]types.FileOrContent, len(*in))
 		copy(*out, *in)
 	}
 	if in.Certificates != nil {
@@ -1712,7 +1712,7 @@ func (in *TLSClientConfig) DeepCopyInto(out *TLSClientConfig) {
 	*out = *in
 	if in.RootCAs != nil {
 		in, out := &in.RootCAs, &out.RootCAs
-		*out = make([]tls.FileOrContent, len(*in))
+		*out = make([]types.FileOrContent, len(*in))
 		copy(*out, *in)
 	}
 	if in.Certificates != nil {

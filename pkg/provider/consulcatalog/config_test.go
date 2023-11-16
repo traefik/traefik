@@ -12,6 +12,8 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
+
 )
 
 func Int(v int) *int    { return &v }
@@ -423,7 +425,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"tls-ns-dc1-dev-Test": {
 							ServerName:         "ns-dc1-dev/Test",
 							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
+							RootCAs: []types.FileOrContent{
 								"root",
 							},
 							Certificates: []tls.Certificate{
@@ -513,7 +515,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"tls-ns-dc1-dev-Test": {
 							ServerName:         "ns-dc1-dev/Test",
 							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
+							RootCAs: []types.FileOrContent{
 								"root",
 							},
 							Certificates: []tls.Certificate{
@@ -2257,7 +2259,7 @@ func Test_buildConfiguration(t *testing.T) {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "ns-dc1-Test",
 								InsecureSkipVerify: true,
-								RootCAs: []tls.FileOrContent{
+								RootCAs: []types.FileOrContent{
 									"root",
 								},
 								Certificates: []tls.Certificate{
@@ -2872,7 +2874,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"tls-ns-dc1-Test": {
 							ServerName:         "ns-dc1-Test",
 							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
+							RootCAs: []types.FileOrContent{
 								"root",
 							},
 							Certificates: []tls.Certificate{

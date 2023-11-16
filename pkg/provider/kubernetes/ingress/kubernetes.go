@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -463,8 +464,8 @@ func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Clie
 
 			tlsConfigs[configKey] = &tls.CertAndStores{
 				Certificate: tls.Certificate{
-					CertFile: tls.FileOrContent(cert),
-					KeyFile:  tls.FileOrContent(key),
+					CertFile: types.FileOrContent(cert),
+					KeyFile:  types.FileOrContent(key),
 				},
 			}
 		}

@@ -337,7 +337,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	for _, serversTransport := range client.GetServersTransports() {
 		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransport.Name).Logger()
 
-		var rootCAs []tls.FileOrContent
+		var rootCAs []types.FileOrContent
 		for _, secret := range serversTransport.Spec.RootCAsSecrets {
 			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 			if err != nil {
@@ -345,7 +345,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 				continue
 			}
 
-			rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+			rootCAs = append(rootCAs, types.FileOrContent(caSecret))
 		}
 
 		var certs tls.Certificates
@@ -357,8 +357,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 
 			certs = append(certs, tls.Certificate{
-				CertFile: tls.FileOrContent(tlsSecret),
-				KeyFile:  tls.FileOrContent(tlsKey),
+				CertFile: types.FileOrContent(tlsSecret),
+				KeyFile:  types.FileOrContent(tlsKey),
 			})
 		}
 
@@ -444,7 +444,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 
 		if serversTransportTCP.Spec.TLS != nil {
-			var rootCAs []tls.FileOrContent
+			var rootCAs []types.FileOrContent
 			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
 				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
 				if err != nil {
@@ -455,7 +455,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 					continue
 				}
 
-				rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+				rootCAs = append(rootCAs, types.FileOrContent(caSecret))
 			}
 
 			var certs tls.Certificates
@@ -470,8 +470,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 				}
 
 				certs = append(certs, tls.Certificate{
-					CertFile: tls.FileOrContent(tlsCert),
-					KeyFile:  tls.FileOrContent(tlsKey),
+					CertFile: types.FileOrContent(tlsCert),
+					KeyFile:  types.FileOrContent(tlsKey),
 				})
 			}
 
@@ -961,7 +961,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 
 	for _, tlsOption := range tlsOptionsCRD {
 		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOption.Name).Str("namespace", tlsOption.Namespace).Logger()
-		var clientCAs []tls.FileOrContent
+		var clientCAs []types.FileOrContent
 
 		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
 			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
@@ -981,7 +981,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 				continue
 			}
 
-			clientCAs = append(clientCAs, tls.FileOrContent(cert))
+			clientCAs = append(clientCAs, types.FileOrContent(cert))
 		}
 
 		id := makeID(tlsOption.Namespace, tlsOption.Name)
@@ -1061,8 +1061,8 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			}
 
 			tlsStore.DefaultCertificate = &tls.Certificate{
-				CertFile: tls.FileOrContent(cert),
-				KeyFile:  tls.FileOrContent(key),
+				CertFile: types.FileOrContent(cert),
+				KeyFile:  types.FileOrContent(key),
 			}
 		}
 
@@ -1147,8 +1147,8 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores,
 
 	return &tls.CertAndStores{
 		Certificate: tls.Certificate{
-			CertFile: tls.FileOrContent(cert),
-			KeyFile:  tls.FileOrContent(key),
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
 		},
 	}, nil
 }

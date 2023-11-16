@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -1406,8 +1407,8 @@ func getTLS(k8sClient Client, secretName gatev1alpha2.ObjectName, namespace stri
 
 	return &tls.CertAndStores{
 		Certificate: tls.Certificate{
-			CertFile: tls.FileOrContent(cert),
-			KeyFile:  tls.FileOrContent(key),
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
 		},
 	}, nil
 }
