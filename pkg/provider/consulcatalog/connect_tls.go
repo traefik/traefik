@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/consul/agent/connect"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // connectCert holds our certificates as a client of the Consul Connect protocol.
@@ -14,18 +15,18 @@ type connectCert struct {
 	leaf keyPair
 }
 
-func (c *connectCert) getRoot() []traefiktls.FileOrContent {
-	var result []traefiktls.FileOrContent
+func (c *connectCert) getRoot() []types.FileOrContent {
+	var result []types.FileOrContent
 	for _, r := range c.root {
-		result = append(result, traefiktls.FileOrContent(r))
+		result = append(result, types.FileOrContent(r))
 	}
 	return result
 }
 
 func (c *connectCert) getLeaf() traefiktls.Certificate {
 	return traefiktls.Certificate{
-		CertFile: traefiktls.FileOrContent(c.leaf.cert),
-		KeyFile:  traefiktls.FileOrContent(c.leaf.key),
+		CertFile: types.FileOrContent(c.leaf.cert),
+		KeyFile:  types.FileOrContent(c.leaf.key),
 	}
 }
 

@@ -877,8 +877,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -1834,14 +1834,14 @@ func TestGetCertificates(t *testing.T) {
 			result: map[string]*tls.CertAndStores{
 				"testing-test-secret": {
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("tls-crt"),
-						KeyFile:  tls.FileOrContent("tls-key"),
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
 					},
 				},
 				"testing-test-secret2": {
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("tls-crt"),
-						KeyFile:  tls.FileOrContent("tls-key"),
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
 					},
 				},
 			},

@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert
@@ -196,7 +197,7 @@ func TestTLS(t *testing.T) {
 		"test": {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
-				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 			},
 		},
 	}
@@ -246,7 +247,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 		"test": {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName:         "bad-domain.com",
-				RootCAs:            []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+				RootCAs:            []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 				InsecureSkipVerify: true,
 			},
 		},
@@ -308,13 +309,13 @@ func TestMTLS(t *testing.T) {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
 				// For TLS
-				RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+				RootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 
 				// For mTLS
 				Certificates: traefiktls.Certificates{
 					traefiktls.Certificate{
-						CertFile: traefiktls.FileOrContent(mTLSCert),
-						KeyFile:  traefiktls.FileOrContent(mTLSKey),
+						CertFile: types.FileOrContent(mTLSCert),
+						KeyFile:  types.FileOrContent(mTLSKey),
 					},
 				},
 			},
