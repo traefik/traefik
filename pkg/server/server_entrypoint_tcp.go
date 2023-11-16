@@ -39,8 +39,10 @@ type key string
 
 const connStateKey key = "connState"
 
-var connStates = map[string]*connState{}
-var connStatesMu = sync.RWMutex{}
+var (
+	connStates   = map[string]*connState{}
+	connStatesMu = sync.RWMutex{}
+)
 
 type connState struct {
 	State          string
@@ -87,7 +89,6 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 		expvar.Publish("connsState", expvar.Func(func() any {
 			return connStates
 		}))
-
 	}
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
@@ -579,7 +580,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 					log.WithoutContext().Debug("Close because of too many requests")
 					state.KeepAliveState = "Close because of too many requests"
 					rw.Header().Set("Connection", "close")
-
 				}
 				if configuration.Transport.KeepAliveMaxTime > 0 && time.Now().After(state.Start.Add(time.Duration(configuration.Transport.KeepAliveMaxTime))) {
 					log.WithoutContext().Debug("Close because of too long connection")
