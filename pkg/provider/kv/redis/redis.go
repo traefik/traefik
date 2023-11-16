@@ -60,7 +60,6 @@ func (p *Provider) Init() error {
 	}
 
 	if p.Sentinel != nil {
-
 		switch {
 		case p.Sentinel.LatencyStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.ReplicaStrategy):
 		case p.Sentinel.RandomStrategy && !(p.Sentinel.LatencyStrategy || p.Sentinel.ReplicaStrategy):
