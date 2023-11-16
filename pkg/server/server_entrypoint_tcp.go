@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -33,6 +34,20 @@ import (
 )
 
 var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
+
+type key string
+
+const connStateKey key = "connState"
+
+var connStates = map[string]*connState{}
+var connStatesMu = sync.RWMutex{}
+
+type connState struct {
+	State          string
+	KeepAliveState string
+	Start          time.Time
+	IdleCycle      int
+}
 
 type httpForwarder struct {
 	net.Listener
@@ -67,7 +82,13 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
-func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig) (TCPEntryPoints, error) {
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, debug bool) (TCPEntryPoints, error) {
+	if debug {
+		expvar.Publish("connsState", expvar.Func(func() any {
+			return connStates
+		}))
+
+	}
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -81,7 +102,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
 
-		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig)
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, debug)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -137,7 +158,7 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig) (*TCPEntryPoint, error) {
+func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, debug bool) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker()
 
 	listener, err := buildListener(ctx, configuration)
@@ -149,14 +170,14 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator)
+	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator, debug)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
+	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator, debug)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
@@ -514,7 +535,7 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
+func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator, debug bool) (*httpServer, error) {
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
@@ -548,12 +569,57 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		})
 	}
 
+	var lastHandler http.Handler
+	if debug || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		lastHandler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			state, ok := req.Context().Value(connStateKey).(*connState)
+			if ok {
+				state.IdleCycle++
+				if configuration.Transport.KeepAliveMaxRequests > 0 && state.IdleCycle > configuration.Transport.KeepAliveMaxRequests {
+					log.WithoutContext().Debug("Close because of too many requests")
+					state.KeepAliveState = "Close because of too many requests"
+					rw.Header().Set("Connection", "close")
+
+				}
+				if configuration.Transport.KeepAliveMaxTime > 0 && time.Now().After(state.Start.Add(time.Duration(configuration.Transport.KeepAliveMaxTime))) {
+					log.WithoutContext().Debug("Close because of too long connection")
+					state.KeepAliveState = "Close because of too long connection"
+					rw.Header().Set("Connection", "close")
+				}
+			}
+			handler.ServeHTTP(rw, req)
+		})
+	} else {
+		lastHandler = handler
+	}
+
 	serverHTTP := &http.Server{
-		Handler:      handler,
+		Handler:      lastHandler,
 		ErrorLog:     httpServerLogger,
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+	}
+	if debug || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+			cState := &connState{Start: time.Now()}
+			if debug {
+				connStatesMu.Lock()
+				connStates[getConnKey(c)] = cState
+				connStatesMu.Unlock()
+			}
+			return context.WithValue(ctx, connStateKey, cState)
+		}
+
+		if debug {
+			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
+				connStatesMu.Lock()
+				if connStates[getConnKey(c)] != nil {
+					connStates[getConnKey(c)].State = state.String()
+				}
+				connStatesMu.Unlock()
+			}
+		}
 	}
 
 	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
@@ -582,6 +648,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		Forwarder: listener,
 		Switcher:  httpSwitcher,
 	}, nil
+}
+
+func getConnKey(conn net.Conn) string {
+	return fmt.Sprintf("%s => %s", conn.RemoteAddr(), conn.LocalAddr())
 }
 
 func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *trackedConnection {
