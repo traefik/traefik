@@ -13,6 +13,7 @@ import (
 	traefikinformers "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
@@ -120,23 +121,20 @@ func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, tokenFilePath, caFilePath string) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
-	var tokenData string
-	if tokenFilePath != "" {
-		tokenDataByte, err := os.ReadFile(tokenFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read Token file %s: %w", tokenFilePath, err)
-		}
-		tokenData = string(tokenDataByte)
+	tokenData, err := token.Read()
+	if err != nil {
+		log.Error().Err(err).Send()
+		return nil, err
 	}
 
 	config := &rest.Config{
 		Host:        endpoint,
-		BearerToken: tokenData,
+		BearerToken: string(tokenData),
 	}
 
 	if caFilePath != "" {
