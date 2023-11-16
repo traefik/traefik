@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -128,14 +129,20 @@ func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
 
 // newExternalClusterClient returns a new Provider client that may run outside of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
+	tokenData,err := token.Read()
+	if err != nil {
+		log.Error().Err(err).Send()
+		return nil,err
+	}
+
 	config := &rest.Config{
 		Host:        endpoint,
-		BearerToken: token,
+		BearerToken: string(tokenData),
 	}
 
 	if caFilePath != "" {
