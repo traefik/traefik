@@ -79,7 +79,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil)
+	}, nil, false)
 	require.NoError(t, err)
 
 	conn, err := startEntrypoint(entryPoint, router)
@@ -164,7 +164,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil)
+	}, nil, false)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
@@ -201,7 +201,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil)
+	}, nil, false)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
@@ -229,4 +229,98 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	case <-time.Tick(5 * time.Second):
 		t.Error("Timeout while read")
 	}
+}
+
+func TestKeepAliveMaxRequests(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.KeepAliveMaxRequests = 3
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil, false)
+	require.NoError(t, err)
+
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	conn, err := startEntrypoint(entryPoint, router)
+	require.NoError(t, err)
+
+	http.DefaultClient.Transport = &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return conn, nil
+		},
+	}
+
+	resp, err := http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.False(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	resp, err = http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.False(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	resp, err = http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.False(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	resp, err = http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.True(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+}
+
+func TestKeepAliveMaxTime(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.KeepAliveMaxTime = ptypes.Duration(time.Millisecond)
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil, false)
+	require.NoError(t, err)
+
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	conn, err := startEntrypoint(entryPoint, router)
+	require.NoError(t, err)
+
+	http.DefaultClient.Transport = &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return conn, nil
+		},
+	}
+
+	resp, err := http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.False(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	time.Sleep(time.Millisecond)
+
+	resp, err = http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.True(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
 }
