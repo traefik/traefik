@@ -275,6 +275,14 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
+    sentinel:
+      masterName: foobar
+      username: foobar
+      password: foobar
+      latencyStrategy: true
+      randomStrategy: true
+      replicaStrategy: true
+      useDisconnectedReplicas: true
   http:
     endpoint: foobar
     pollInterval: 42s
