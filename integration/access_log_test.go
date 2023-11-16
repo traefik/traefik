@@ -3,6 +3,7 @@ package integration
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -265,7 +266,8 @@ func getMD5(data string) string {
 	if _, err := digest.Write([]byte(data)); err != nil {
 		log.WithoutContext().Error(err)
 	}
-	return fmt.Sprintf("%x", digest.Sum(nil))
+
+	return hex.EncodeToString(digest.Sum(nil))
 }
 
 func getCnonce() string {
@@ -273,7 +275,8 @@ func getCnonce() string {
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		log.WithoutContext().Error(err)
 	}
-	return fmt.Sprintf("%x", b)[:16]
+
+	return hex.EncodeToString(b)[:16]
 }
 
 func getDigestAuthorization(digestParts map[string]string) string {

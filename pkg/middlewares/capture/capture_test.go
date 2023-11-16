@@ -165,7 +165,7 @@ func runBenchmark(b *testing.B, size int, req *http.Request, handler http.Handle
 		b.Fatalf("Expected 200 but got %d", code)
 	}
 
-	assert.Equal(b, size, len(recorder.Body.String()))
+	assert.Len(b, recorder.Body.String(), size)
 }
 
 func generateBytes(length int) []byte {

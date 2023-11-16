@@ -129,7 +129,7 @@ func TestTruncateString(t *testing.T) {
 			actual := truncateString(test.text, test.limit)
 
 			assert.Equal(t, test.expected, actual)
-			assert.True(t, len(actual) <= test.limit)
+			assert.LessOrEqual(t, len(actual), test.limit)
 		})
 	}
 }
