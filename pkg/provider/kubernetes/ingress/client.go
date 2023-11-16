@@ -87,10 +87,10 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
-	tokenData,err := token.Read()
+	tokenData, err := token.Read()
 	if err != nil {
 		log.Error().Err(err).Send()
-		return nil,err
+		return nil, err
 	}
 
 	config := &rest.Config{
