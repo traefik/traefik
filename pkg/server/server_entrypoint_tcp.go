@@ -499,7 +499,7 @@ func (c *connectionTracker) Close() {
 }
 
 type stoppable interface {
-	Shutdown(context.Context) error
+	Shutdown(ctx context.Context) error
 	Close() error
 }
 

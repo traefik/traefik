@@ -21,6 +21,8 @@ const (
 	healthCheckTimeout  = 100 * time.Millisecond
 )
 
+const delta float64 = 1e-10
+
 type testHandler struct {
 	done           func()
 	healthSequence []int
@@ -149,7 +151,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 			assert.Equal(t, test.expectedNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expectedNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
-			assert.Equal(t, test.expectedGaugeValue, collectingMetrics.GaugeValue, "ServerUp Gauge")
+			assert.InDelta(t, test.expectedGaugeValue, collectingMetrics.GaugeValue, delta, "ServerUp Gauge")
 		})
 	}
 }
@@ -402,7 +404,7 @@ func TestBalancers_Servers(t *testing.T) {
 	want, err := url.Parse("http://foo.com")
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, len(balancers.Servers()))
+	assert.Len(t, balancers.Servers(), 1)
 	assert.Equal(t, want, balancers.Servers()[0])
 }
 
@@ -421,10 +423,10 @@ func TestBalancers_UpsertServer(t *testing.T) {
 	err = balancers.UpsertServer(want)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, len(balancer1.Servers()))
+	assert.Len(t, balancer1.Servers(), 1)
 	assert.Equal(t, want, balancer1.Servers()[0])
 
-	assert.Equal(t, 1, len(balancer2.Servers()))
+	assert.Len(t, balancer2.Servers(), 1)
 	assert.Equal(t, want, balancer2.Servers()[0])
 }
 
@@ -449,8 +451,8 @@ func TestBalancers_RemoveServer(t *testing.T) {
 	err = balancers.RemoveServer(server)
 	require.NoError(t, err)
 
-	assert.Equal(t, 0, len(balancer1.Servers()))
-	assert.Equal(t, 0, len(balancer2.Servers()))
+	assert.Empty(t, balancer1.Servers())
+	assert.Empty(t, balancer2.Servers())
 }
 
 type testLoadBalancer struct {
@@ -541,23 +543,23 @@ func TestLBStatusUpdater(t *testing.T) {
 	assert.NoError(t, err)
 	err = lbsu.UpsertServer(newServer, roundrobin.Weight(1))
 	assert.NoError(t, err)
-	assert.Equal(t, len(lbsu.Servers()), 1)
-	assert.Equal(t, len(lbsu.BalancerHandler.(*testLoadBalancer).Options()), 1)
+	assert.Len(t, lbsu.Servers(), 1)
+	assert.Len(t, lbsu.BalancerHandler.(*testLoadBalancer).Options(), 1)
 	statuses := svInfo.GetAllStatus()
-	assert.Equal(t, len(statuses), 1)
+	assert.Len(t, statuses, 1)
 	for k, v := range statuses {
-		assert.Equal(t, k, newServer.String())
-		assert.Equal(t, v, serverUp)
+		assert.Equal(t, newServer.String(), k)
+		assert.Equal(t, serverUp, v)
 		break
 	}
 	err = lbsu.RemoveServer(newServer)
 	assert.NoError(t, err)
-	assert.Equal(t, len(lbsu.Servers()), 0)
+	assert.Empty(t, lbsu.Servers())
 	statuses = svInfo.GetAllStatus()
-	assert.Equal(t, len(statuses), 1)
+	assert.Len(t, statuses, 1)
 	for k, v := range statuses {
-		assert.Equal(t, k, newServer.String())
-		assert.Equal(t, v, serverDown)
+		assert.Equal(t, newServer.String(), k)
+		assert.Equal(t, serverDown, v)
 		break
 	}
 }

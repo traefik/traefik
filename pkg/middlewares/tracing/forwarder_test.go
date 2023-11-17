@@ -123,7 +123,7 @@ func TestNewForwarder(t *testing.T) {
 
 				tags := span.Tags
 				assert.Equal(t, test.expected.Tags, tags)
-				assert.True(t, len(test.expected.OperationName) <= test.spanNameLimit,
+				assert.LessOrEqual(t, len(test.expected.OperationName), test.spanNameLimit,
 					"the len of the operation name %q [len: %d] doesn't respect limit %d",
 					test.expected.OperationName, len(test.expected.OperationName), test.spanNameLimit)
 				assert.Equal(t, test.expected.OperationName, span.OpName)

@@ -319,7 +319,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				portString := pa.Backend.Service.Port.Name
 
 				if len(pa.Backend.Service.Port.Name) == 0 {
-					portString = fmt.Sprint(pa.Backend.Service.Port.Number)
+					portString = strconv.Itoa(int(pa.Backend.Service.Port.Number))
 				}
 
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)

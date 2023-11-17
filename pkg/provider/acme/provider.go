@@ -30,6 +30,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/version"
 )
 
+const resolverSuffix = ".acme"
+
 // ocspMustStaple enables OCSP stapling as from https://github.com/go-acme/lego/issues/270.
 var ocspMustStaple = false
 
@@ -131,7 +133,7 @@ func (p *Provider) ListenConfiguration(config dynamic.Configuration) {
 
 // Init for compatibility reason the BaseProvider implements an empty Init.
 func (p *Provider) Init() error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+resolverSuffix))
 	logger := log.FromContext(ctx)
 
 	if len(p.Configuration.Storage) == 0 {
@@ -195,7 +197,7 @@ func (p *Provider) ThrottleDuration() time.Duration {
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctx := log.With(context.Background(),
-		log.Str(log.ProviderName, p.ResolverName+".acme"),
+		log.Str(log.ProviderName, p.ResolverName+resolverSuffix),
 		log.Str("ACME CA", p.Configuration.CAServer))
 
 	p.pool = pool
@@ -236,7 +238,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	p.clientMutex.Lock()
 	defer p.clientMutex.Unlock()
 
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+resolverSuffix))
 	logger := log.FromContext(ctx)
 
 	if p.client != nil {
@@ -406,7 +408,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 }
 
 func (p *Provider) watchNewDomains(ctx context.Context) {
-	ctx = log.With(ctx, log.Str(log.ProviderName, p.ResolverName+".acme"))
+	ctx = log.With(ctx, log.Str(log.ProviderName, p.ResolverName+resolverSuffix))
 	p.pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
@@ -765,7 +767,7 @@ func deleteUnnecessaryDomains(ctx context.Context, domains []types.Domain) []typ
 
 func (p *Provider) buildMessage() dynamic.Message {
 	conf := dynamic.Message{
-		ProviderName: p.ResolverName + ".acme",
+		ProviderName: p.ResolverName + resolverSuffix,
 		Configuration: &dynamic.Configuration{
 			HTTP: &dynamic.HTTPConfiguration{
 				Routers:     map[string]*dynamic.Router{},

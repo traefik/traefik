@@ -137,5 +137,5 @@ func (r *digestRequest) makeAuthorization(req *http.Request, parts map[string]st
 func generateRandom(n int) string {
 	b := make([]byte, 8)
 	_, _ = io.ReadFull(rand.Reader, b)
-	return fmt.Sprintf("%x", b)[:n]
+	return hex.EncodeToString(b)[:n]
 }

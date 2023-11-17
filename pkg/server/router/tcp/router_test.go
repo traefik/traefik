@@ -618,12 +618,12 @@ func Test_Routing(t *testing.T) {
 				err := check.checkRouter(epListener.Addr().String(), timeout)
 
 				if check.expectedError != "" {
-					require.NotNil(t, err, check.desc)
+					require.Error(t, err, check.desc)
 					assert.Contains(t, err.Error(), check.expectedError, check.desc)
 					continue
 				}
 
-				assert.Nil(t, err, check.desc)
+				assert.NoError(t, err, check.desc)
 			}
 
 			epListener.Close()
