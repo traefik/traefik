@@ -388,18 +388,28 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			continue
 		}
 
-		if len(router.Service) == 0 {
-			if len(configuration.Services) > 1 {
-				delete(configuration.Routers, routerName)
-				loggerRouter.Error().
-					Msg("Could not define the service name for the router: too many services")
-				continue
-			}
+		if len(router.Service) > 0 {
+			continue
+		}
 
+		// When the router does not have a service, we try to find one in the following order:
+		// - a service with the same name as the router
+		// - the only service defined in the configuration
+		if _, isServiceDefined := configuration.Services[routerName]; isServiceDefined {
+			router.Service = routerName
+			continue
+		}
+		if len(configuration.Services) == 1 {
 			for serviceName := range configuration.Services {
 				router.Service = serviceName
 			}
+			loggerRouter.Info().
+				Msg("No service defined matching the router name, using the only one defined in the configuration")
+			continue
 		}
+		delete(configuration.Routers, routerName)
+		loggerRouter.Error().
+			Msg("Could not define the service name for the router. More than 1 service and none match the router name. Please specify the service name in the router configuration.")
 	}
 }
 
@@ -412,17 +422,24 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 			continue
 		}
 
-		if len(configuration.Services) > 1 {
-			delete(configuration.Routers, routerName)
-			loggerRouter.
-				Error().Msg("Could not define the service name for the router: too many services")
+		// When the router does not have a service, we try to find one in the following order:
+		// - a service with the same name as the router
+		// - the only service defined in the configuration
+		if _, isServiceDefined := configuration.Services[routerName]; isServiceDefined {
+			router.Service = routerName
 			continue
 		}
-
-		for serviceName := range configuration.Services {
-			router.Service = serviceName
-			break
+		if len(configuration.Services) == 1 {
+			for serviceName := range configuration.Services {
+				router.Service = serviceName
+			}
+			loggerRouter.Info().
+				Msg("No service defined matching the router name, using the only one defined in the configuration")
+			continue
 		}
+		delete(configuration.Routers, routerName)
+		loggerRouter.Error().
+			Msg("Could not define the service name for the router. More than 1 service and none match the router name. Please specify the service name in the router configuration.")
 	}
 }
 
@@ -456,18 +473,28 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			}
 		}
 
-		if len(router.Service) == 0 {
-			if len(configuration.Services) > 1 {
-				delete(configuration.Routers, routerName)
-				loggerRouter.Error().
-					Msg("Could not define the service name for the router: too many services")
-				continue
-			}
+		if len(router.Service) > 0 {
+			continue
+		}
 
+		// When the router does not have a service, we try to find one in the following order:
+		// - a service with the same name as the router
+		// - the only service defined in the configuration
+		if _, isServiceDefined := configuration.Services[routerName]; isServiceDefined {
+			router.Service = routerName
+			continue
+		}
+		if len(configuration.Services) == 1 {
 			for serviceName := range configuration.Services {
 				router.Service = serviceName
 			}
+			loggerRouter.Info().
+				Msg("No service defined matching the router name, using the only one defined in the configuration")
+			continue
 		}
+		delete(configuration.Routers, routerName)
+		loggerRouter.Error().
+			Msg("Could not define the service name for the router. More than 1 service and none match the router name. Please specify the service name in the router configuration.")
 	}
 }
 
