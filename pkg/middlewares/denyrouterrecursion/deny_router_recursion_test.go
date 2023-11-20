@@ -16,9 +16,9 @@ func TestServeHTTP(t *testing.T) {
 	_, err = New("", http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 	require.Error(t, err)
 
-	next := false
+	next := 0
 	m, err := New("myRouter", http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		next = true
+		next++
 	}))
 	require.NoError(t, err)
 
@@ -27,12 +27,16 @@ func TestServeHTTP(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
 
+	assert.Equal(t, "995d26092d19a224", m.routerNameHash)
+
 	assert.Equal(t, m.routerNameHash, req.Header.Get(xTraefikRouter))
 
-	assert.True(t, next)
+	assert.Equal(t, 1, next)
 
 	recorder = httptest.NewRecorder()
 	m.ServeHTTP(recorder, req)
+
+	assert.Equal(t, 1, next)
 
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
