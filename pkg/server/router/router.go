@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/middlewares/loopstop"
+	"github.com/traefik/traefik/v2/pkg/middlewares/denyrouterrecursion"
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
@@ -203,8 +203,8 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service)))
 	}
 
-	if router.LoopStop {
-		chain = chain.Append(loopstop.WrapHandler(routerName))
+	if router.IsDefaultRule {
+		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
 	}
 
 	return chain.Extend(*mHandler).Append(tHandler).Then(sHandler)
