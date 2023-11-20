@@ -36,8 +36,8 @@ import (
 )
 
 var (
-	integration = flag.Bool("integration", false, "run integration tests")
-	showLog     = flag.Bool("tlog", false, "always show Traefik logs")
+	integration = flag.Bool("integration", true, "run integration tests")
+	showLog     = flag.Bool("tlog", true, "always show Traefik logs")
 )
 
 func Test(t *testing.T) {
@@ -68,6 +68,8 @@ func Test(t *testing.T) {
 			useVPN = true
 		}
 	}
+
+	fmt.Println(useVPN)
 
 	check.Suite(&AccessLogSuite{})
 	if !useVPN {
@@ -364,6 +366,7 @@ func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
 		if !errors.Is(err, fs.ErrNotExist) {
 			log.Fatal().Err(err).Send()
 		}
+		fmt.Println("file does not exist")
 		return nil
 	}
 	authKey := strings.TrimSpace(string(data))
