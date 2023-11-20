@@ -14,9 +14,10 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
@@ -24,34 +25,44 @@ import (
 
 // Config provides configuration settings for the open-telemetry tracer.
 type Config struct {
-	// NOTE: as no gRPC option is implemented yet, the type is empty and is used as a boolean for upward compatibility purposes.
-	GRPC *struct{} `description:"gRPC specific configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-
-	Address    string            `description:"Sets the address (host:port) of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	Path       string            `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
-	Insecure   bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	Headers    map[string]string `description:"Defines additional connection headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
-	GlobalTags map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
-	SampleRate float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
-	TLS        *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	GRPC *GRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true"`
+	HTTP *HTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
-	c.Address = "localhost:4318"
-	c.SampleRate = 1.0
+	c.HTTP = &HTTP{
+		Endpoint: "localhost:4318",
+	}
+}
+
+// GRPC provides configuration settings for the gRPC open-telemetry tracer.
+type GRPC struct {
+	Endpoint string `description:"Sets the gRPC endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+
+	Insecure bool             `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+}
+
+// HTTP provides configuration settings for the HTTP open-telemetry tracer.
+type HTTP struct {
+	Endpoint string `description:"Sets the HTTP endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Path     string `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+
+	Insecure bool             `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string, sampleRate float64, globalTags map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
 	)
 	if c.GRPC != nil {
-		exporter, err = c.setupGRPCExporter()
+		exporter, err = c.setupGRPCExporter(headers)
 	} else {
-		exporter, err = c.setupHTTPExporter()
+		exporter, err = c.setupHTTPExporter(headers)
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
@@ -62,7 +73,7 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range c.GlobalTags {
+	for k, v := range globalTags {
 		attr = append(attr, attribute.String(k, v))
 	}
 
@@ -75,40 +86,45 @@ func (c *Config) Setup(serviceName string) (trace.Tracer, io.Closer, error) {
 		return nil, nil, fmt.Errorf("building resource: %w", err)
 	}
 
+	// Register the trace exporter with a TracerProvider, using a batch
+	// span processor to aggregate spans before export.
+	bsp := sdktrace.NewBatchSpanProcessor(exporter)
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(c.SampleRate)),
+		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(sampleRate)),
 		sdktrace.WithResource(res),
-		sdktrace.WithBatcher(exporter),
+		sdktrace.WithSpanProcessor(bsp),
 	)
+
 	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
-	return tracerProvider.Tracer("github.com/traefik/traefik", trace.WithInstrumentationVersion(version.Version)), tpCloser{provider: tracerProvider}, err
+	return tracerProvider.Tracer("github.com/traefik/traefik"), tpCloser{provider: tracerProvider}, err
 }
 
-func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
-	host, port, err := net.SplitHostPort(c.Address)
+func (c *Config) setupHTTPExporter(headers map[string]string) (*otlptrace.Exporter, error) {
+	host, port, err := net.SplitHostPort(c.HTTP.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid collector address %q: %w", c.Address, err)
+		return nil, fmt.Errorf("invalid collector address %q: %w", c.HTTP.Endpoint, err)
 	}
 
 	opts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
-		otlptracehttp.WithHeaders(c.Headers),
+		otlptracehttp.WithHeaders(headers),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	}
 
-	if c.Insecure {
+	if c.HTTP.Insecure {
 		opts = append(opts, otlptracehttp.WithInsecure())
 	}
 
-	if c.Path != "" {
-		opts = append(opts, otlptracehttp.WithURLPath(c.Path))
+	if c.HTTP.Path != "" {
+		opts = append(opts, otlptracehttp.WithURLPath(c.HTTP.Path))
 	}
 
-	if c.TLS != nil {
-		tlsConfig, err := c.TLS.CreateTLSConfig(context.Background())
+	if c.HTTP.TLS != nil {
+		tlsConfig, err := c.HTTP.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}
@@ -119,24 +135,24 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	return otlptrace.New(context.Background(), otlptracehttp.NewClient(opts...))
 }
 
-func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
-	host, port, err := net.SplitHostPort(c.Address)
+func (c *Config) setupGRPCExporter(headers map[string]string) (*otlptrace.Exporter, error) {
+	host, port, err := net.SplitHostPort(c.GRPC.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid collector address %q: %w", c.Address, err)
+		return nil, fmt.Errorf("invalid collector address %q: %w", c.GRPC.Endpoint, err)
 	}
 
 	opts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
-		otlptracegrpc.WithHeaders(c.Headers),
+		otlptracegrpc.WithHeaders(headers),
 		otlptracegrpc.WithCompressor(gzip.Name),
 	}
 
-	if c.Insecure {
+	if c.GRPC.Insecure {
 		opts = append(opts, otlptracegrpc.WithInsecure())
 	}
 
-	if c.TLS != nil {
-		tlsConfig, err := c.TLS.CreateTLSConfig(context.Background())
+	if c.GRPC.TLS != nil {
+		tlsConfig, err := c.GRPC.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}

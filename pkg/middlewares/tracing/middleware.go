@@ -16,8 +16,8 @@ type Traceable interface {
 	GetTracingInformation() (name string, spanKind trace.SpanKind)
 }
 
-// Wrap adds traceability to an alice.Constructor.
-func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor {
+// WrapMiddleware adds traceability to an alice.Constructor.
+func WrapMiddleware(ctx context.Context, constructor alice.Constructor, tracer tracing.Tracer) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if constructor == nil {
 			return nil, nil
@@ -30,38 +30,36 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 		if traceableHandler, ok := handler.(Traceable); ok {
 			name, spanKind := traceableHandler.GetTracingInformation()
 			log.Ctx(ctx).Debug().Str(logs.MiddlewareName, name).Msg("Adding tracing to middleware")
-			return NewWrapper(handler, name, spanKind), nil
+			return newMiddleware(handler, name, spanKind, tracer), nil
 		}
 		return handler, nil
 	}
 }
 
-// NewWrapper returns a http.Handler struct.
-func NewWrapper(next http.Handler, name string, spanKind trace.SpanKind) http.Handler {
-	return &Wrapper{
+// newMiddleware returns a http.Handler struct.
+func newMiddleware(next http.Handler, name string, spanKind trace.SpanKind, tracer tracing.Tracer) http.Handler {
+	return &middlewareTracing{
 		next:     next,
 		name:     name,
 		spanKind: spanKind,
+		tracer:   tracer,
 	}
 }
 
-// Wrapper is used to wrap http handler middleware.
-type Wrapper struct {
+// middlewareTracing is used to wrap http handler middleware.
+type middlewareTracing struct {
 	next     http.Handler
 	name     string
 	spanKind trace.SpanKind
+	tracer   tracing.Tracer
 }
 
-func (w *Wrapper) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	t, err := tracing.FromContext(req.Context())
-	if err != nil {
-		w.next.ServeHTTP(rw, req)
-		return
-	}
+func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	ctxTracing := tracing.Propagator(req.Context(), req.Header)
+	ctxTracing, span := w.tracer.Start(ctxTracing, w.name, trace.WithSpanKind(w.spanKind))
+	defer span.End()
 
-	var finish func()
-	_, req, finish = tracing.StartSpan(t.GetTracer(), req, w.name, w.spanKind)
-	defer finish()
+	req = req.WithContext(ctxTracing)
 
 	if w.next != nil {
 		w.next.ServeHTTP(rw, req)

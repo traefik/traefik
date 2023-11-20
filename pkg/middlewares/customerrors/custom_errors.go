@@ -63,7 +63,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 }
 
 func (c *customErrors) GetTracingInformation() (string, trace.SpanKind) {
-	return c.name, tracing.SpanKindNoneEnum
+	return c.name, trace.SpanKindInternal
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -71,7 +71,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if c.backendHandler == nil {
 		logger.Error().Msg("Error pages: no backend handler.")
-		tracing.SetErrorWithEvent(req, "Error pages: no backend handler.")
+		tracing.SetErrorWithEvent(req.Context(), "Error pages: no backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
 	}

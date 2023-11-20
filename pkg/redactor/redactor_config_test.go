@@ -30,10 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
-	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/instana"
-	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -850,31 +847,20 @@ func TestDo_staticConfiguration(t *testing.T) {
 	config.Tracing = &static.Tracing{
 		ServiceName:   "myServiceName",
 		SpanNameLimit: 42,
-		Zipkin: &zipkin.Config{
-			HTTPEndpoint: "foobar",
-			GlobalTags:   map[string]string{"foobar": "foobar"},
-			SampleRate:   42,
+		Headers: map[string]string{
+			"foobar": "foobar",
 		},
-		Datadog: &datadog.Config{
-			LocalAgentHostPort:         "foobar",
-			LocalAgentSocket:           "foobar",
-			GlobalTags:                 map[string]string{"foobar": "foobar"},
-			Debug:                      true,
-			TraceIDHeaderName:          "foobar",
-			ParentIDHeaderName:         "foobar",
-			SamplingPriorityHeaderName: "foobar",
-			BagagePrefixHeaderName:     "foobar",
+		GlobalTags: map[string]string{
+			"foobar": "foobar",
 		},
-		Instana: &instana.Config{
-			GlobalTags: map[string]string{"foobar": "foobar"},
-			SampleRate: 42,
-		},
-		Elastic: &elastic.Config{
-			ServerURL:          "foobar",
-			SecretToken:        "foobar",
-			ServiceEnvironment: "foobar",
-			GlobalTags:         map[string]string{"foobar": "foobar"},
-			SampleRate:         42,
+		SampleRate: 42,
+		OTLP: &opentelemetry.Config{
+			HTTP: &opentelemetry.HTTP{
+				Endpoint: "foobar",
+				Path:     "foobar",
+				Insecure: false,
+				TLS:      nil,
+			},
 		},
 	}
 
