@@ -44,9 +44,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service:  "Test",
-							Rule:     "Host(`Test.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test",
+							Rule:          "Host(`Test.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -99,14 +99,14 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test1": {
-							Service:  "Test1",
-							Rule:     "Host(`Test1.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test1",
+							Rule:          "Host(`Test1.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 						"Test2": {
-							Service:  "Test2",
-							Rule:     "Host(`Test2.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test2",
+							Rule:          "Host(`Test2.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -169,14 +169,14 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test1": {
-							Service:  "Test1",
-							Rule:     "Host(`Test1.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test1",
+							Rule:          "Host(`Test1.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 						"Test2": {
-							Service:  "Test2",
-							Rule:     "Host(`Test2.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test2",
+							Rule:          "Host(`Test2.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -426,9 +426,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service:  "Test",
-							Rule:     "Host(`Test.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test",
+							Rule:          "Host(`Test.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -476,10 +476,10 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
-							Middlewares: []string{"Middleware1"},
-							LoopStop:    true,
+							Service:       "Test",
+							Rule:          "Host(`Test.traefik.wtf`)",
+							Middlewares:   []string{"Middleware1"},
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -592,9 +592,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service:  "Test",
-							Rule:     "Host(`Test.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Test",
+							Rule:          "Host(`Test.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -901,9 +901,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service:  "Service1",
-							Rule:     "Host(`Test.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Service1",
+							Rule:          "Host(`Test.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -973,9 +973,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service:  "Service1",
-							Rule:     "Host(`Test.traefik.wtf`)",
-							LoopStop: true,
+							Service:       "Service1",
+							Rule:          "Host(`Test.traefik.wtf`)",
+							IsDefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},

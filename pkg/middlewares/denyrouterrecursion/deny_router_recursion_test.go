@@ -1,4 +1,4 @@
-package loopstop
+package denyrouterrecursion
 
 import (
 	"net/http"
@@ -13,7 +13,13 @@ func TestServeHTTP(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 
-	m, err := NewLoopStop("myRouter", http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+	_, err = New("", http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+	require.Error(t, err)
+
+	next := false
+	m, err := New("myRouter", http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		next = true
+	}))
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
@@ -21,7 +27,9 @@ func TestServeHTTP(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
 
-	require.Equal(t, m.routerNameHash, req.Header.Get(xTraefikRouter))
+	assert.Equal(t, m.routerNameHash, req.Header.Get(xTraefikRouter))
+
+	assert.True(t, next)
 
 	recorder = httptest.NewRecorder()
 	m.ServeHTTP(recorder, req)
