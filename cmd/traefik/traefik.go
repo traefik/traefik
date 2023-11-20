@@ -43,7 +43,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tracing"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
@@ -259,18 +258,17 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		log.Info().Msg("Successfully obtained SPIFFE SVID.")
 	}
 
+	tracer := setupTracing(staticConfiguration.Tracing)
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, tracer, roundTripperManager, acmeHTTPHandler)
 
 	// Router factory
-
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	tracer := setupTracing(staticConfiguration.Tracing)
 
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager, tracer)
 
 	// Watcher
 
@@ -564,73 +562,12 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) *tracing.Tracing {
+func setupTracing(conf *static.Tracing) tracing.Tracer {
 	if conf == nil {
 		return nil
 	}
 
-	var backend tracing.Backend
-
-	if conf.Jaeger != nil {
-		backend = conf.Jaeger
-	}
-
-	if conf.Zipkin != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Zipkin backend.")
-		} else {
-			backend = conf.Zipkin
-		}
-	}
-
-	if conf.Datadog != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Datadog backend.")
-		} else {
-			backend = conf.Datadog
-		}
-	}
-
-	if conf.Instana != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Instana backend.")
-		} else {
-			backend = conf.Instana
-		}
-	}
-
-	if conf.Haystack != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Haystack backend.")
-		} else {
-			backend = conf.Haystack
-		}
-	}
-
-	if conf.Elastic != nil {
-		if backend != nil {
-			log.Error().Msg("Multiple tracing backend are not supported: cannot create Elastic backend.")
-		} else {
-			backend = conf.Elastic
-		}
-	}
-
-	if conf.OpenTelemetry != nil {
-		if backend != nil {
-			log.Error().Msg("Tracing backends are all mutually exclusive: cannot create OpenTelemetry backend.")
-		} else {
-			backend = conf.OpenTelemetry
-		}
-	}
-
-	if backend == nil {
-		log.Debug().Msg("Could not initialize tracing, using Jaeger by default")
-		defaultBackend := &jaeger.Config{}
-		defaultBackend.SetDefaults()
-		backend = defaultBackend
-	}
-
-	tracer, err := tracing.NewTracing(conf.ServiceName, conf.SpanNameLimit, backend)
+	tracer, err := tracing.NewTracing(conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create tracer")
 		return nil
