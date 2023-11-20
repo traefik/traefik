@@ -1,7 +1,11 @@
 package integration
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -32,20 +36,20 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.whoamiPort = 80
 }
 
-func (s *TracingSuite) startZipkin(c *check.C) {
-	s.composeUp(c, "zipkin")
-	s.tracerIP = s.getComposeServiceIP(c, "zipkin")
+func (s *TracingSuite) startTempo(c *check.C) {
+	s.composeUp(c, "tempo", "whoami")
+	s.tracerIP = s.getComposeServiceIP(c, "tempo")
 
-	// Wait for Zipkin to turn ready.
-	err := try.GetRequest("http://"+s.tracerIP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
+	// Wait for tempo to turn ready.
+	err := try.GetRequest("http://"+s.tracerIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
-	s.startZipkin(c)
-	// defer s.composeStop(c, "zipkin")
+func (s *TracingSuite) TestOpentelemetryBasic(c *check.C) {
+	s.startTempo(c)
+	defer s.composeStop(c, "tempo")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerIP,
@@ -54,7 +58,33 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
 
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	checkTraceContent(c, s.tracerIP, "entry_point", "router")
+}
+
+func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
+	s.startTempo(c)
+	defer s.composeStop(c, "tempo")
+
+	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+		WhoamiIP:   s.whoamiIP,
+		WhoamiPort: s.whoamiPort,
+		IP:         s.tracerIP,
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
@@ -85,19 +115,17 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.tracerIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service1/router1@file", "ratelimit-1@file"))
-	c.Assert(err, checker.IsNil)
+	checkTraceContent(c, s.tracerIP, "entry_point", "router", "ratelimit-1@file")
 }
 
-func (s *TracingSuite) TestZipkinRetry(c *check.C) {
-	s.startZipkin(c)
-	defer s.composeStop(c, "zipkin")
+func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
+	s.startTempo(c)
+	defer s.composeStop(c, "tempo")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: 81,
 		IP:         s.tracerIP,
@@ -117,15 +145,14 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.tracerIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service2/router2@file", "retry@file"))
-	c.Assert(err, checker.IsNil)
+	checkTraceContent(c, s.tracerIP, "entry_point", "retry@file")
 }
 
-func (s *TracingSuite) TestZipkinAuth(c *check.C) {
-	s.startZipkin(c)
-	defer s.composeStop(c, "zipkin")
+func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
+	s.startTempo(c)
+	defer s.composeStop(c, "tempo")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerIP,
@@ -145,181 +172,105 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.tracerIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("entrypoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+	checkTraceContent(c, s.tracerIP, "entry_point", "router", "retry@file", "basic-auth@file")
 }
 
-func (s *TracingSuite) startJaeger(c *check.C) {
-	s.composeUp(c, "jaeger", "whoami")
-	s.tracerIP = s.getComposeServiceIP(c, "jaeger")
-
-	// Wait for Jaeger to turn ready.
-	err := try.GetRequest("http://"+s.tracerIP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
+func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
+	baseURL, err := url.Parse("http://" + tracerIP + ":3200/api/search")
 	c.Assert(err, checker.IsNil)
+
+	req := &http.Request{
+		Method: http.MethodGet,
+		URL:    baseURL,
+	}
+	// Wait for traces to be available.
+	time.Sleep(10 * time.Second)
+	resp, err := try.Response(req, 5*time.Second)
+	c.Assert(err, checker.IsNil)
+
+	out := &TraceResponse{}
+	content, err := io.ReadAll(resp.Body)
+	c.Assert(err, checker.IsNil)
+	err = json.Unmarshal(content, &out)
+	c.Assert(err, checker.IsNil)
+
+	if len(out.Traces) == 0 {
+		c.Fatalf("expected at least one trace, got %d (%s)", len(out.Traces), string(content))
+	}
+
+	containsMap := make(map[string]struct{}, len(bodyContains))
+	for _, b := range bodyContains {
+		containsMap[b] = struct{}{}
+	}
+
+	for _, t := range out.Traces {
+		baseURL, err := url.Parse("http://" + tracerIP + ":3200/api/traces/" + t.TraceID)
+		c.Assert(err, checker.IsNil)
+
+		req := &http.Request{
+			Method: http.MethodGet,
+			URL:    baseURL,
+		}
+
+		resp, err := try.Response(req, 5*time.Second)
+		c.Assert(err, checker.IsNil)
+
+		content, err := io.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		fmt.Println(string(content))
+
+		out := &BatchesResponse{}
+		err = json.Unmarshal(content, &out)
+		c.Assert(err, checker.IsNil)
+
+		for _, b := range out.Batches {
+			for _, s := range b.ScopeSpans {
+				for _, span := range s.Spans {
+					delete(containsMap, span.Name)
+					c.Logf("found %s", span.Name)
+				}
+			}
+		}
+	}
+
+	if len(containsMap) > 0 {
+		var notFound []string
+		for v := range containsMap {
+			notFound = append(notFound, v)
+		}
+		c.Errorf("expected traces to contain %v, but not found %v", bodyContains, notFound)
+	}
 }
 
-func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
-	s.startJaeger(c)
-	defer s.composeStop(c, "jaeger")
-
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoamiIP:               s.whoamiIP,
-		WhoamiPort:             s.whoamiPort,
-		IP:                     s.tracerIP,
-		TraceContextHeaderName: "uber-trace-id",
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
-
-	// sleep for 4 seconds to be certain the configured time period has elapsed
-	// then test another request and verify a 200 status code
-	time.Sleep(4 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	// continue requests at 3 second intervals to test the other rate limit time period
-	time.Sleep(3 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	time.Sleep(3 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://"+s.tracerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("forward service1/router1@file", "ratelimit-1@file"))
-	c.Assert(err, checker.IsNil)
+// TraceResponse contains a list of traces.
+type TraceResponse struct {
+	Traces []Trace `json:"traces"`
 }
 
-func (s *TracingSuite) TestJaegerRetry(c *check.C) {
-	s.startJaeger(c)
-	defer s.composeStop(c, "jaeger")
-
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoamiIP:               s.whoamiIP,
-		WhoamiPort:             81,
-		IP:                     s.tracerIP,
-		TraceContextHeaderName: "uber-trace-id",
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://"+s.tracerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("forward service2/router2@file", "retry@file"))
-	c.Assert(err, checker.IsNil)
+// Trace represents a simplified grafana tempo trace.
+type Trace struct {
+	TraceID       string `json:"traceID"`
+	RootTraceName string `json:"rootTraceName"`
+	DurationMs    int    `json:"durationMs"`
 }
 
-func (s *TracingSuite) TestJaegerAuth(c *check.C) {
-	s.startJaeger(c)
-	defer s.composeStop(c, "jaeger")
-
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoamiIP:               s.whoamiIP,
-		WhoamiPort:             s.whoamiPort,
-		IP:                     s.tracerIP,
-		TraceContextHeaderName: "uber-trace-id",
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://"+s.tracerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+// BatchesResponse contains a list of batches.
+type BatchesResponse struct {
+	Batches []Batch `json:"batches"`
 }
 
-func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
-	s.startJaeger(c)
-	defer s.composeStop(c, "jaeger")
-
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoamiIP:               s.whoamiIP,
-		WhoamiPort:             s.whoamiPort,
-		IP:                     s.tracerIP,
-		TraceContextHeaderName: "powpow",
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://"+s.tracerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+// Batch represents a simplified grafana tempo batch.
+type Batch struct {
+	ScopeSpans []ScopeSpan `json:"scopeSpans"`
 }
 
-func (s *TracingSuite) TestJaegerAuthCollector(c *check.C) {
-	s.startJaeger(c)
-	defer s.composeStop(c, "jaeger")
+// ScopeSpan represents a simplified grafana tempo scope span.
+type ScopeSpan struct {
+	Spans []Span `json:"spans"`
+}
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger-collector.toml", TracingTemplate{
-		WhoamiIP:   s.whoamiIP,
-		WhoamiPort: s.whoamiPort,
-		IP:         s.tracerIP,
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://"+s.tracerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+// Span represents a simplified grafana tempo Span.
+type Span struct {
+	Name string `json:"name"`
 }
