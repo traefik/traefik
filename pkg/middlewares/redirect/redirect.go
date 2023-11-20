@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/utils"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -46,7 +45,7 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, r
 }
 
 func (r *redirect) GetTracingInformation() (string, trace.SpanKind) {
-	return r.name, tracing.SpanKindNoneEnum
+	return r.name, trace.SpanKindInternal
 }
 
 func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

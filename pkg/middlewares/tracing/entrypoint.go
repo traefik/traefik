@@ -15,31 +15,34 @@ const (
 	entryPointTypeName = "TracingEntryPoint"
 )
 
-// NewEntryPoint creates a new middleware that the incoming request.
-func NewEntryPoint(ctx context.Context, t *tracing.Tracing, entryPointName string, next http.Handler) http.Handler {
-	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
-
-	return &entryPointMiddleware{
-		entryPoint: entryPointName,
-		Tracing:    t,
-		next:       next,
-	}
-}
-
-type entryPointMiddleware struct {
-	*tracing.Tracing
+type entryPointTracing struct {
+	tracer     tracing.Tracer
 	entryPoint string
 	next       http.Handler
 }
 
-func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	span, req, finish := e.StartSpanf(req, trace.SpanKindServer, "EntryPoint", []string{e.entryPoint, req.Host}, " ", trace.WithSpanKind(trace.SpanKindServer))
-	defer finish()
+// newEntryPoint creates a new tracing middleware for incoming requests.
+func newEntryPoint(ctx context.Context, tracer tracing.Tracer, entryPointName string, next http.Handler) http.Handler {
+	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
-	span.SetAttributes(attribute.String("component", e.ServiceName))
-	tracing.LogRequest(span, req)
+	return &entryPointTracing{
+		entryPoint: entryPointName,
+		tracer:     tracer,
+		next:       next,
+	}
+}
 
-	req = req.WithContext(tracing.WithTracing(req.Context(), e.Tracing))
+func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	ctxTracing := tracing.Propagator(req.Context(), req.Header)
+	ctxTracing, span := e.tracer.Start(ctxTracing, "entry_point", trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	req = req.WithContext(ctxTracing)
+
+	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
+	span.SetAttributes(attribute.String("component", e.tracer.GetServiceName()))
+
+	tracing.LogRequest(span, req, trace.SpanKindServer)
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
@@ -48,8 +51,8 @@ func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 }
 
 // WrapEntryPointHandler Wraps tracing to alice.Constructor.
-func WrapEntryPointHandler(ctx context.Context, tracer *tracing.Tracing, entryPointName string) alice.Constructor {
+func WrapEntryPointHandler(ctx context.Context, tracer tracing.Tracer, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		return NewEntryPoint(ctx, tracer, entryPointName, next), nil
+		return newEntryPoint(ctx, tracer, entryPointName, next), nil
 	}
 }
