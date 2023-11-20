@@ -7,7 +7,6 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -41,7 +40,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.AddPrefix, name 
 }
 
 func (a *addPrefix) GetTracingInformation() (string, trace.SpanKind) {
-	return a.name, tracing.SpanKindNoneEnum
+	return a.name, trace.SpanKindInternal
 }
 
 func (a *addPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
