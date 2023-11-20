@@ -64,7 +64,6 @@ func (p *Provider) Init() error {
 		case p.Sentinel.LatencyStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.ReplicaStrategy):
 		case p.Sentinel.RandomStrategy && !(p.Sentinel.LatencyStrategy || p.Sentinel.ReplicaStrategy):
 		case p.Sentinel.ReplicaStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.LatencyStrategy):
-		default:
 			return errors.New("latencyStrategy, randomStrategy and replicaStrategy options are mutually exclusive, please use only one of those options")
 		}
 
