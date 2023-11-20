@@ -7,7 +7,6 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/plugins"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -55,5 +54,5 @@ func (s *traceablePlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *traceablePlugin) GetTracingInformation() (string, trace.SpanKind) {
-	return s.name, tracing.SpanKindNoneEnum
+	return s.name, trace.SpanKindInternal
 }

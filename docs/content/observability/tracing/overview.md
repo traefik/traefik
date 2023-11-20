@@ -12,12 +12,8 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 Traefik uses OpenTelemetry, an open standard designed for distributed tracing.
 
-Traefik supports five tracing backends:
+Traefik supports OpenTelemetry tracing backends:
 
-- [Zipkin](./zipkin.md)
-- [Datadog](./datadog.md)
-- [Instana](./instana.md)
-- [Elastic](./elastic.md)
 - [OpenTelemetry](./opentelemetry.md)
 
 ## Configuration

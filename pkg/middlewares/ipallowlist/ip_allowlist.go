@@ -56,7 +56,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 }
 
 func (al *ipAllowLister) GetTracingInformation() (string, trace.SpanKind) {
-	return al.name, tracing.SpanKindNoneEnum
+	return al.name, trace.SpanKindInternal
 }
 
 func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -68,7 +68,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug().Msg(msg)
-		tracing.SetErrorWithEvent(req, msg)
+		tracing.SetErrorWithEvent(req.Context(), msg)
 		reject(ctx, rw)
 		return
 	}
