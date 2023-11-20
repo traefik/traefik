@@ -414,7 +414,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 				continue
 			}
 
-			// Flag default rule routers to add the loopStop middleware.
+			// Flag default rule routers to add the denyRouterRecursion middleware.
 			router.IsDefaultRule = true
 		}
 
