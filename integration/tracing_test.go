@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -44,89 +45,11 @@ func (s *TracingSuite) startTempo(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
+func (s *TracingSuite) TestOpentelemetryBasic(c *check.C) {
 	s.startTempo(c)
 	defer s.composeStop(c, "tempo")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
-		WhoamiIP:   s.whoamiIP,
-		WhoamiPort: s.whoamiPort,
-		IP:         s.tracerIP,
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
-
-	// sleep for 4 seconds to be certain the configured time period has elapsed
-	// then test another request and verify a 200 status code
-	time.Sleep(4 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	// continue requests at 3 second intervals to test the other rate limit time period
-	time.Sleep(3 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	time.Sleep(3 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	time.Sleep(3 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
-
-	checkTraceContent(c, s.tracerIP, "forward service1/router1@file", "ratelimit-1@file")
-}
-
-func (s *TracingSuite) TestZipkinRetry(c *check.C) {
-	s.startTempo(c)
-	defer s.composeStop(c, "tempo")
-
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
-		WhoamiIP:   s.whoamiIP,
-		WhoamiPort: 81,
-		IP:         s.tracerIP,
-	})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
-	c.Assert(err, checker.IsNil)
-
-	checkTraceContent(c, s.tracerIP, "forward service2/router2@file", "retry@file")
-}
-
-func (s *TracingSuite) TestZipkinAuth(c *check.C) {
-	s.startTempo(c)
-	defer s.composeStop(c, "tempo")
-
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerIP,
@@ -143,10 +66,10 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
+	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "entrypoint web 127.0.0.1:8000", "basic-auth@file")
+	checkTraceContent(c, s.tracerIP, "entry_point", "router")
 }
 
 func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
@@ -195,7 +118,7 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "forward service1/router1@file", "ratelimit-1@file")
+	checkTraceContent(c, s.tracerIP, "entry_point", "router", "ratelimit-1@file")
 }
 
 func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
@@ -222,7 +145,7 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "forward service2/router2@file", "retry@file")
+	checkTraceContent(c, s.tracerIP, "entry_point", "retry@file")
 }
 
 func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
@@ -249,7 +172,7 @@ func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "EntryPoint web 127.0.0.1:8000", "basic-auth@file")
+	checkTraceContent(c, s.tracerIP, "entry_point", "router", "retry@file", "basic-auth@file")
 }
 
 func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
@@ -295,6 +218,8 @@ func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
 		content, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
+		fmt.Println(string(content))
+
 		out := &BatchesResponse{}
 		err = json.Unmarshal(content, &out)
 		c.Assert(err, checker.IsNil)
@@ -310,7 +235,7 @@ func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
 	}
 
 	if len(containsMap) > 0 {
-		notFound := []string{}
+		var notFound []string
 		for v := range containsMap {
 			notFound = append(notFound, v)
 		}

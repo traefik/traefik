@@ -990,110 +990,59 @@ Defines the allowed SPIFFE trust domain.
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
-`TRAEFIK_TRACING_DATADOG`:  
-Settings for Datadog. (Default: ```false```)
-
-`TRAEFIK_TRACING_DATADOG_BAGAGEPREFIXHEADERNAME`:  
-Sets the header name prefix used to store baggage items in a map.
-
-`TRAEFIK_TRACING_DATADOG_DEBUG`:  
-Enables Datadog debug. (Default: ```false```)
-
-`TRAEFIK_TRACING_DATADOG_GLOBALTAGS_<NAME>`:  
+`TRAEFIK_TRACING_GLOBALTAGS_<NAME>`:  
 Sets a list of key:value tags on all spans.
 
-`TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
-Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
-
-`TRAEFIK_TRACING_DATADOG_LOCALAGENTSOCKET`:  
-Sets the socket for the Datadog Agent.
-
-`TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
-Sets the header name used to store the parent ID.
-
-`TRAEFIK_TRACING_DATADOG_SAMPLINGPRIORITYHEADERNAME`:  
-Sets the header name used to store the sampling priority.
-
-`TRAEFIK_TRACING_DATADOG_TRACEIDHEADERNAME`:  
-Sets the header name used to store the trace ID.
-
-`TRAEFIK_TRACING_ELASTIC`:  
-Settings for Elastic. (Default: ```false```)
-
-`TRAEFIK_TRACING_ELASTIC_GLOBALTAGS_<NAME>`:  
-Sets a list of key:value tags on all spans.
-
-`TRAEFIK_TRACING_ELASTIC_SAMPLERATE`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
-
-`TRAEFIK_TRACING_ELASTIC_SECRETTOKEN`:  
-Sets the token used to connect to Elastic APM Server.
-
-`TRAEFIK_TRACING_ELASTIC_SERVERURL`:  
-Sets the URL of the Elastic APM server.
-
-`TRAEFIK_TRACING_ELASTIC_SERVICEENVIRONMENT`:  
-Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
-
-`TRAEFIK_TRACING_INSTANA`:  
-Settings for Instana. (Default: ```false```)
-
-`TRAEFIK_TRACING_INSTANA_GLOBALTAGS_<NAME>`:  
-Sets a list of key:value tags on all spans.
-
-`TRAEFIK_TRACING_INSTANA_SAMPLERATE`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY`:  
-Settings for OpenTelemetry. (Default: ```false```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
-Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_GLOBALTAGS_<NAME>`:  
-Sets a list of key:value tags on all spans.
-
-`TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
-gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
+`TRAEFIK_TRACING_HEADERS_<NAME>`:  
 Defines additional connection headers to be sent with the payloads.
 
-`TRAEFIK_TRACING_OPENTELEMETRY_INSECURE`:  
+`TRAEFIK_TRACING_OTLP`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`TRAEFIK_TRACING_OTLP_GRPC_ENDPOINT`:  
+Sets the gRPC endpoint (host:port) of the collector.
+
+`TRAEFIK_TRACING_OTLP_GRPC_INSECURE`:  
 Disables client transport security for the exporter. (Default: ```false```)
 
-`TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
-Sets the URL path of the collector endpoint.
-
-`TRAEFIK_TRACING_OPENTELEMETRY_SAMPLERATE`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
+`TRAEFIK_TRACING_OTLP_GRPC_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CERT`:  
+`TRAEFIK_TRACING_OTLP_GRPC_TLS_CERT`:  
 TLS cert
 
-`TRAEFIK_TRACING_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+`TRAEFIK_TRACING_OTLP_GRPC_TLS_INSECURESKIPVERIFY`:  
 TLS insecure skip verify (Default: ```false```)
 
-`TRAEFIK_TRACING_OPENTELEMETRY_TLS_KEY`:  
+`TRAEFIK_TRACING_OTLP_GRPC_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_TRACING_OTLP_HTTP_ENDPOINT`:  
+Sets the HTTP endpoint (host:port) of the collector. (Default: ```localhost:4318```)
+
+`TRAEFIK_TRACING_OTLP_HTTP_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`TRAEFIK_TRACING_OTLP_HTTP_PATH`:  
+Sets the URL path of the collector endpoint.
+
+`TRAEFIK_TRACING_OTLP_HTTP_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_TRACING_OTLP_HTTP_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_TRACING_OTLP_HTTP_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_TRACING_OTLP_HTTP_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_TRACING_SAMPLERATE`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
 
 `TRAEFIK_TRACING_SPANNAMELIMIT`:  
 Set the maximum character limit for Span names (default 0 = no limit). (Default: ```0```)
-
-`TRAEFIK_TRACING_ZIPKIN`:  
-Settings for Zipkin. (Default: ```false```)
-
-`TRAEFIK_TRACING_ZIPKIN_GLOBALTAGS_<NAME>`:  
-Sets a list of key:value tags on all spans.
-
-`TRAEFIK_TRACING_ZIPKIN_HTTPENDPOINT`:  
-Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
-
-`TRAEFIK_TRACING_ZIPKIN_SAMPLERATE`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

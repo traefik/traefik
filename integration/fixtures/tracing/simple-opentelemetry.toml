@@ -15,10 +15,10 @@
 
 [tracing]
   servicename = "tracing"
-  [tracing.opentelemetry]
-    address = "{{.IP}}:4318"
+  sampleRate = 1.0
+  [tracing.otlp.http]
+    endpoint = "{{.IP}}:4318"
     insecure = true
-    sampleRate = 1.0
 
 [providers.file]
   filename = "{{ .SelfFilename }}"
@@ -26,6 +26,10 @@
 ## dynamic configuration ##
 
 [http.routers]
+  [http.routers.router0]
+    Service = "service0"
+    Middlewares = []
+    Rule = "Path(`/basic`)"
   [http.routers.router1]
     Service = "service1"
     Middlewares = ["retry", "ratelimit-1"]
@@ -49,6 +53,12 @@
     burst = 2
 
 [http.services]
+  [http.services.service0]
+    [http.services.service0.loadBalancer]
+      passHostHeader = true
+      [[http.services.service0.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"
+
   [http.services.service1]
     [http.services.service1.loadBalancer]
       passHostHeader = true

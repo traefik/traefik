@@ -12,7 +12,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress/brotli"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -115,7 +114,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (c *compress) GetTracingInformation() (string, trace.SpanKind) {
-	return c.name, tracing.SpanKindNoneEnum
+	return c.name, trace.SpanKindInternal
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {
