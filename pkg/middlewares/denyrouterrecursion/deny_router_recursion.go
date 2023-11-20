@@ -2,9 +2,9 @@ package denyrouterrecursion
 
 import (
 	"errors"
-	"fmt"
 	"hash/fnv"
 	"net/http"
+	"strconv"
 
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -57,5 +57,5 @@ func makeHash(routerName string) string {
 	hasher := fnv.New64()
 	// purposely ignoring the error, as no error can be returned from the implementation.
 	_, _ = hasher.Write([]byte(routerName))
-	return fmt.Sprintf("%d", hasher.Sum64())
+	return strconv.FormatUint(hasher.Sum64(), 16)
 }
