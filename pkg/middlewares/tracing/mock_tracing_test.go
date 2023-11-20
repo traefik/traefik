@@ -2,14 +2,15 @@ package tracing
 
 import (
 	"context"
-	"io"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/embedded"
 )
 
 type MockTracer struct {
+	embedded.Tracer
 	Span *MockSpan
 }
 
@@ -18,19 +19,28 @@ func (n MockTracer) Start(ctx context.Context, operationName string, opts ...tra
 	c := trace.NewSpanStartConfig(opts...)
 	n.Span.SetAttributes(c.Attributes()...)
 	n.Span.SetAttributes(attribute.String("span.kind", c.SpanKind().String()))
-	n.Span.OpName = operationName
+	n.Span.SpanName = operationName
 	return ctx, n.Span
 }
 
 // StartSpan belongs to the Tracer interface.
 func (n MockTracer) StartSpan(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-	n.Span.OpName = operationName
+	n.Span.SpanName = operationName
 	return ctx, n.Span
 }
 
+// GetServiceName returns the service name.
+func (n MockTracer) GetServiceName() string {
+	return ""
+}
+
+// Close mocks of Close.
+func (n MockTracer) Close() {}
+
 // MockSpan a span mock.
 type MockSpan struct {
-	OpName   string
+	embedded.Span
+	SpanName string
 	Tags     map[string]interface{}
 	Conf     trace.SpanContextConfig
 	Provider trace.TracerProvider
@@ -49,11 +59,3 @@ func (n MockSpan) SetAttributes(kv ...attribute.KeyValue) {
 	}
 }
 func (n MockSpan) TracerProvider() trace.TracerProvider { return n.Provider }
-
-type trackingBackenMock struct {
-	tracer trace.Tracer
-}
-
-func (t *trackingBackenMock) Setup(componentName string) (trace.Tracer, io.Closer, error) {
-	return t.tracer, io.NopCloser(nil), nil
-}
