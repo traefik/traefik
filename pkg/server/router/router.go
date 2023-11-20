@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	tracing2 "github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 type middlewareBuilder interface {
@@ -36,6 +37,7 @@ type Manager struct {
 	routerHandlers     map[string]http.Handler
 	serviceManager     serviceManager
 	metricsRegistry    metrics.Registry
+	tracer             tracing2.Tracer
 	middlewaresBuilder middlewareBuilder
 	chainBuilder       *middleware.ChainBuilder
 	conf               *runtime.Configuration
@@ -43,11 +45,12 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, chainBuilder *middleware.ChainBuilder, metricsRegistry metrics.Registry, tlsManager *tls.Manager) *Manager {
+func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, chainBuilder *middleware.ChainBuilder, metricsRegistry metrics.Registry, tlsManager *tls.Manager, tracer tracing2.Tracer) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
 		serviceManager:     serviceManager,
 		metricsRegistry:    metricsRegistry,
+		tracer:             tracer,
 		middlewaresBuilder: middlewaresBuilder,
 		chainBuilder:       chainBuilder,
 		conf:               conf,
@@ -198,11 +201,11 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	tHandler := func(next http.Handler) (http.Handler, error) {
-		return tracing.NewForwarder(ctx, routerName, router.Service, next), nil
-	}
-
 	chain := alice.New()
+
+	if m.tracer != nil {
+		chain = chain.Append(tracing.WrapRouterHandler(ctx, m.tracer, routerName, router.Service))
+	}
 
 	if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
 		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service)))
@@ -212,7 +215,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
 	}
 
-	return chain.Extend(*mHandler).Append(tHandler).Then(sHandler)
+	return chain.Extend(*mHandler).Append().Then(sHandler)
 }
 
 // BuildDefaultHTTPRouter creates a default HTTP router.

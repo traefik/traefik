@@ -56,7 +56,7 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 }
 
 func (b *basicAuth) GetTracingInformation() (string, trace.SpanKind) {
-	return b.name, tracing.SpanKindNoneEnum
+	return b.name, trace.SpanKindInternal
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -77,7 +77,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if !ok {
 		logger.Debug().Msg("Authentication failed")
-		tracing.SetErrorWithEvent(req, "Authentication failed")
+		tracing.SetErrorWithEvent(req.Context(), "Authentication failed")
 
 		b.auth.RequireAuth(rw, req)
 		return

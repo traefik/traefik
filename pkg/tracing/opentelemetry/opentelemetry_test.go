@@ -1,4 +1,4 @@
-package opentelemetry
+package opentelemetry_test
 
 import (
 	"compress/gzip"
@@ -11,10 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 	mtracing "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
 )
 
@@ -68,15 +71,24 @@ func TestTracing(t *testing.T) {
 	}))
 	t.Cleanup(collector.Close)
 
-	newTracing, err := tracing.NewTracing("traefik", 0, &Config{
-		Insecure:   true,
-		Address:    strings.TrimPrefix(collector.URL, "http://"),
-		SampleRate: 1.0,
-	})
+	tracingConfig := &static.Tracing{
+		ServiceName: "traefik",
+		SampleRate:  1.0,
+		OTLP: &opentelemetry.Config{
+			HTTP: &opentelemetry.HTTP{
+				Endpoint: strings.TrimPrefix(collector.URL, "http://"),
+				Insecure: true,
+			},
+		},
+	}
+
+	newTracing, err := tracing.NewTracing(tracingConfig)
 	require.NoError(t, err)
 	t.Cleanup(newTracing.Close)
 
-	epHandler := mtracing.NewEntryPoint(context.Background(), newTracing, "test", http.NotFoundHandler())
+	chain := alice.New(mtracing.WrapEntryPointHandler(context.Background(), newTracing, "test"))
+	epHandler, err := chain.Then(http.NotFoundHandler())
+	require.NoError(t, err)
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {

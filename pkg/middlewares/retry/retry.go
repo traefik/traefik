@@ -14,7 +14,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -61,7 +60,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 }
 
 func (r *retry) GetTracingInformation() (string, trace.SpanKind) {
-	return r.name, tracing.SpanKindNoneEnum
+	return r.name, trace.SpanKindInternal
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

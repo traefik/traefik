@@ -364,6 +364,7 @@ func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
 		if !errors.Is(err, fs.ErrNotExist) {
 			log.Fatal().Err(err).Send()
 		}
+		fmt.Println("file does not exist")
 		return nil
 	}
 	authKey := strings.TrimSpace(string(data))

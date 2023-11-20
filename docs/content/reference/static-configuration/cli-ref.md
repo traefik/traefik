@@ -987,110 +987,59 @@ Defines the allowed SPIFFE trust domain.
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
-`--tracing.datadog`:  
-Settings for Datadog. (Default: ```false```)
-
-`--tracing.datadog.bagageprefixheadername`:  
-Sets the header name prefix used to store baggage items in a map.
-
-`--tracing.datadog.debug`:  
-Enables Datadog debug. (Default: ```false```)
-
-`--tracing.datadog.globaltags.<name>`:  
+`--tracing.globaltags.<name>`:  
 Sets a list of key:value tags on all spans.
 
-`--tracing.datadog.localagenthostport`:  
-Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
-
-`--tracing.datadog.localagentsocket`:  
-Sets the socket for the Datadog Agent.
-
-`--tracing.datadog.parentidheadername`:  
-Sets the header name used to store the parent ID.
-
-`--tracing.datadog.samplingpriorityheadername`:  
-Sets the header name used to store the sampling priority.
-
-`--tracing.datadog.traceidheadername`:  
-Sets the header name used to store the trace ID.
-
-`--tracing.elastic`:  
-Settings for Elastic. (Default: ```false```)
-
-`--tracing.elastic.globaltags.<name>`:  
-Sets a list of key:value tags on all spans.
-
-`--tracing.elastic.samplerate`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
-
-`--tracing.elastic.secrettoken`:  
-Sets the token used to connect to Elastic APM Server.
-
-`--tracing.elastic.serverurl`:  
-Sets the URL of the Elastic APM server.
-
-`--tracing.elastic.serviceenvironment`:  
-Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
-
-`--tracing.instana`:  
-Settings for Instana. (Default: ```false```)
-
-`--tracing.instana.globaltags.<name>`:  
-Sets a list of key:value tags on all spans.
-
-`--tracing.instana.samplerate`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
-
-`--tracing.opentelemetry`:  
-Settings for OpenTelemetry. (Default: ```false```)
-
-`--tracing.opentelemetry.address`:  
-Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
-
-`--tracing.opentelemetry.globaltags.<name>`:  
-Sets a list of key:value tags on all spans.
-
-`--tracing.opentelemetry.grpc`:  
-gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
-
-`--tracing.opentelemetry.headers.<name>`:  
+`--tracing.headers.<name>`:  
 Defines additional connection headers to be sent with the payloads.
 
-`--tracing.opentelemetry.insecure`:  
+`--tracing.otlp`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--tracing.otlp.grpc.endpoint`:  
+Sets the gRPC endpoint (host:port) of the collector.
+
+`--tracing.otlp.grpc.insecure`:  
 Disables client transport security for the exporter. (Default: ```false```)
 
-`--tracing.opentelemetry.path`:  
-Sets the URL path of the collector endpoint.
-
-`--tracing.opentelemetry.samplerate`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
-
-`--tracing.opentelemetry.tls.ca`:  
+`--tracing.otlp.grpc.tls.ca`:  
 TLS CA
 
-`--tracing.opentelemetry.tls.cert`:  
+`--tracing.otlp.grpc.tls.cert`:  
 TLS cert
 
-`--tracing.opentelemetry.tls.insecureskipverify`:  
+`--tracing.otlp.grpc.tls.insecureskipverify`:  
 TLS insecure skip verify (Default: ```false```)
 
-`--tracing.opentelemetry.tls.key`:  
+`--tracing.otlp.grpc.tls.key`:  
 TLS key
+
+`--tracing.otlp.http.endpoint`:  
+Sets the HTTP endpoint (host:port) of the collector. (Default: ```localhost:4318```)
+
+`--tracing.otlp.http.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--tracing.otlp.http.path`:  
+Sets the URL path of the collector endpoint.
+
+`--tracing.otlp.http.tls.ca`:  
+TLS CA
+
+`--tracing.otlp.http.tls.cert`:  
+TLS cert
+
+`--tracing.otlp.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--tracing.otlp.http.tls.key`:  
+TLS key
+
+`--tracing.samplerate`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
 
 `--tracing.spannamelimit`:  
 Set the maximum character limit for Span names (default 0 = no limit). (Default: ```0```)
-
-`--tracing.zipkin`:  
-Settings for Zipkin. (Default: ```false```)
-
-`--tracing.zipkin.globaltags.<name>`:  
-Sets a list of key:value tags on all spans.
-
-`--tracing.zipkin.httpendpoint`:  
-Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
-
-`--tracing.zipkin.samplerate`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
