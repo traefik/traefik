@@ -8,7 +8,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	oxybuffer "github.com/vulcand/oxy/v2/buffer"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -50,7 +49,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 }
 
 func (b *buffer) GetTracingInformation() (string, trace.SpanKind) {
-	return b.name, tracing.SpanKindNoneEnum
+	return b.name, trace.SpanKindInternal
 }
 
 func (b *buffer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

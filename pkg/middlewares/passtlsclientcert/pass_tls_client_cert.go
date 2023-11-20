@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -141,7 +140,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 }
 
 func (p *passTLSClientCert) GetTracingInformation() (string, trace.SpanKind) {
-	return p.name, tracing.SpanKindNoneEnum
+	return p.name, trace.SpanKindInternal
 }
 
 func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

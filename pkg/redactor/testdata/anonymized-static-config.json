@@ -345,39 +345,18 @@
   "tracing": {
     "serviceName": "myServiceName",
     "spanNameLimit": 42,
-    "zipkin": {
-      "httpEndpoint": "xxxx",
-      "sampleRate": 42,
-      "globalTags": {
-        "foobar": "foobar"
+    "headers": {
+      "foobar": "foobar"
+    },
+    "globalTags": {
+      "foobar": "foobar"
+    },
+    "sampleRate": 42,
+    "otlp": {
+      "http": {
+        "endpoint": "xxxx",
+        "path": "foobar"
       }
-    },
-    "datadog": {
-      "localAgentHostPort": "xxxx",
-      "localAgentSocket": "xxxx",
-      "globalTags": {
-        "foobar": "foobar"
-      },
-      "debug": true,
-      "traceIDHeaderName": "foobar",
-      "parentIDHeaderName": "foobar",
-      "samplingPriorityHeaderName": "foobar",
-      "bagagePrefixHeaderName": "foobar"
-    },
-    "instana": {
-      "globalTags": {
-        "foobar": "foobar"
-      },
-      "sampleRate": 42
-    },
-    "elastic": {
-      "serverURL": "xxxx",
-      "secretToken": "xxxx",
-      "serviceEnvironment": "foobar",
-      "globalTags": {
-        "foobar": "foobar"
-      },
-      "sampleRate": 42
     }
   },
   "hostResolver": {
