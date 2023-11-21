@@ -558,7 +558,7 @@ func (p *Provider) makeGatewayStatus(listenerStatuses []gatev1.ListenerStatus) (
 	if result != nil {
 		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
-			Type:               string(gatev1.GatewayReasonAccepted),
+			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.GatewayReasonListenersNotValid),
@@ -571,20 +571,12 @@ func (p *Provider) makeGatewayStatus(listenerStatuses []gatev1.ListenerStatus) (
 	gatewayStatus.Listeners = listenerStatuses
 
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
-		// update "Scheduled" status with "ResourcesAvailable" reason
+		// update "Accepted" status with "Accepted" reason
 		metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
-			Reason:             "ResourcesAvailable",
-			Message:            "Resources available",
-			LastTransitionTime: metav1.Now(),
-		},
-		// update "Ready" status with "ListenersValid" reason
-		metav1.Condition{
-			Type:               string(gatev1.GatewayConditionAccepted),
-			Status:             metav1.ConditionTrue,
-			Reason:             "ListenersValid",
-			Message:            "Listeners valid",
+			Reason:             string(gatev1.GatewayConditionAccepted),
+			Message:            "Gateway successfully scheduled",
 			LastTransitionTime: metav1.Now(),
 		},
 	)
@@ -629,7 +621,7 @@ func supportedRouteKinds(protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind,
 
 	return nil, []metav1.Condition{{
 		Type:               string(gatev1.ListenerConditionAccepted),
-		Status:             metav1.ConditionTrue,
+		Status:             metav1.ConditionFalse,
 		LastTransitionTime: metav1.Now(),
 		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
