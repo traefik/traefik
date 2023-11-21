@@ -203,7 +203,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service)))
 	}
 
-	if router.IsDefaultRule {
+	if router.DefaultRule {
 		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
 	}
 

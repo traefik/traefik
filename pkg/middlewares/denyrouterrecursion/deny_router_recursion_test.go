@@ -26,17 +26,13 @@ func TestServeHTTP(t *testing.T) {
 	m.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
-
 	assert.Equal(t, "995d26092d19a224", m.routerNameHash)
-
 	assert.Equal(t, m.routerNameHash, req.Header.Get(xTraefikRouter))
-
 	assert.Equal(t, 1, next)
 
 	recorder = httptest.NewRecorder()
 	m.ServeHTTP(recorder, req)
 
 	assert.Equal(t, 1, next)
-
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
