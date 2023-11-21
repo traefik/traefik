@@ -850,7 +850,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Headers: map[string]string{
 			"foobar": "foobar",
 		},
-		GlobalTags: map[string]string{
+		GlobalAttributes: map[string]string{
 			"foobar": "foobar",
 		},
 		SampleRate: 42,

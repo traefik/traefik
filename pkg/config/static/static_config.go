@@ -1,6 +1,7 @@
 package static
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -181,11 +182,11 @@ func (a *LifeCycle) SetDefaults() {
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
-	ServiceName   string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	SpanNameLimit int               `description:"Set the maximum character limit for Span names (default 0 = no limit)." json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
-	Headers       map[string]string `description:"Defines additional connection headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
-	GlobalTags    map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
-	SampleRate    float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	ServiceName      string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	SpanNameLimit    int               `description:"Set the maximum character limit for Span names (default 0 = no limit)." json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
+	Headers          map[string]string `description:"Defines additional connection headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	GlobalAttributes map[string]string `description:"Defines additional attributes (key:value) on all spans." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
+	SampleRate       float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 
 	OTLP *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
@@ -317,6 +318,24 @@ func (c *Configuration) ValidateConfiguration() error {
 			return fmt.Errorf("unable to initialize certificates resolver %q, as all ACME resolvers must use the same email", name)
 		}
 		acmeEmail = resolver.ACME.Email
+	}
+
+	if c.Tracing != nil && c.Tracing.OTLP != nil {
+		if c.Tracing.OTLP.HTTP == nil && c.Tracing.OTLP.GRPC == nil {
+			return errors.New("tracing OTLP: at least one of HTTP and gRPC options should be defined")
+		}
+
+		if c.Tracing.OTLP.HTTP != nil && c.Tracing.OTLP.GRPC != nil {
+			return errors.New("tracing OTLP: HTTP and gRPC options are mutually exclusive")
+		}
+
+		if c.Tracing.OTLP.HTTP != nil && c.Tracing.OTLP.HTTP.TLS != nil && c.Tracing.OTLP.HTTP.Insecure {
+			return errors.New("tracing OTLP HTTP: TLS and Insecure options are mutually exclusive")
+		}
+
+		if c.Tracing.OTLP.GRPC != nil && c.Tracing.OTLP.GRPC.TLS != nil && c.Tracing.OTLP.GRPC.Insecure {
+			return errors.New("tracing OTLP GRPC: TLS and Insecure options are mutually exclusive")
+		}
 	}
 
 	return nil

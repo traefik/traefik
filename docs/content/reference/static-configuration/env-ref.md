@@ -997,7 +997,7 @@ Defines additional connection headers to be sent with the payloads.
 Settings for OpenTelemetry. (Default: ```false```)
 
 `TRAEFIK_TRACING_OTLP_GRPC_ENDPOINT`:  
-Sets the gRPC endpoint (host:port) of the collector.
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
 
 `TRAEFIK_TRACING_OTLP_GRPC_INSECURE`:  
 Disables client transport security for the exporter. (Default: ```false```)
@@ -1018,7 +1018,7 @@ TLS key
 Sets the HTTP endpoint (host:port) of the collector. (Default: ```localhost:4318```)
 
 `TRAEFIK_TRACING_OTLP_HTTP_INSECURE`:  
-Disables client transport security for the exporter. (Default: ```false```)
+Controls whether to use HTTP (insecure) or HTTPS scheme. (Default: ```false```)
 
 `TRAEFIK_TRACING_OTLP_HTTP_PATH`:  
 Sets the URL path of the collector endpoint.

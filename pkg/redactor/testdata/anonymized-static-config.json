@@ -348,7 +348,7 @@
     "headers": {
       "foobar": "foobar"
     },
-    "globalTags": {
+    "globalAttributes": {
       "foobar": "foobar"
     },
     "sampleRate": 42,
