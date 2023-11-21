@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -55,8 +55,8 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	return ba, nil
 }
 
-func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return b.name, tracing.SpanKindNoneEnum
+func (b *basicAuth) GetTracingInformation() (string, trace.SpanKind) {
+	return b.name, trace.SpanKindInternal
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -77,7 +77,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if !ok {
 		logger.Debug().Msg("Authentication failed")
-		tracing.SetErrorWithEvent(req, "Authentication failed")
+		tracing.SetErrorWithEvent(req.Context(), "Authentication failed")
 
 		b.auth.RequireAuth(rw, req)
 		return

@@ -2,7 +2,7 @@
 	"features": {
 		"accessLog": false,
 		"metrics": "Prometheus",
-		"tracing": "Jaeger"
+		"tracing": ""
 	},
 	"http": {
 		"middlewares": {

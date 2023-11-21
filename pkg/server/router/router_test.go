@@ -317,12 +317,12 @@ func TestRouterManager_Get(t *testing.T) {
 
 			roundTripperManager := service.NewRoundTripperManager(nil)
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, nil, roundTripperManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -424,12 +424,12 @@ func TestAccessLog(t *testing.T) {
 
 			roundTripperManager := service.NewRoundTripperManager(nil)
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, nil, roundTripperManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -786,13 +786,13 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			roundTripperManager := service.NewRoundTripperManager(nil)
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, nil, roundTripperManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, true)
@@ -864,12 +864,12 @@ func TestProviderOnMiddlewares(t *testing.T) {
 
 	roundTripperManager := service.NewRoundTripperManager(nil)
 	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, nil, roundTripperManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil, nil)
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -933,12 +933,12 @@ func BenchmarkRouterServe(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, nil, staticRoundTripperGetter{res})
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil, nil)
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -976,7 +976,7 @@ func BenchmarkService(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, nil, staticRoundTripperGetter{res})
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
