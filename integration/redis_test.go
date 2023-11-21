@@ -78,8 +78,10 @@ func (s *RedisSuite) setupStore(c *check.C) {
 func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	endpoints := strings.Join(s.redisEndpoints, ",")
-	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{endpoints})
+```suggestion
+	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{
+		RedisAddress: strings.Join(s.redisEndpoints, ","),
+	})
 	defer os.Remove(file)
 
 	data := map[string]string{
@@ -185,11 +187,11 @@ func (s *RedisSuite) setupSentinelStore(c *check.C) {
 	s.createComposeProject(c, "redis_sentinel")
 	s.composeUp(c)
 
-	var endpoints []string
-	endpoints = append(endpoints, net.JoinHostPort(s.getComposeServiceIP(c, "sentinel1"), "26379"))
-	endpoints = append(endpoints, net.JoinHostPort(s.getComposeServiceIP(c, "sentinel2"), "36379"))
-	endpoints = append(endpoints, net.JoinHostPort(s.getComposeServiceIP(c, "sentinel3"), "46379"))
-	s.redisEndpoints = endpoints
+	s.redisEndpoints = []string{
+		net.JoinHostPort(s.getComposeServiceIP(c, "sentinel1"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP(c, "sentinel2"), "36379"),
+		net.JoinHostPort(s.getComposeServiceIP(c, "sentinel3"), "46379"),
+	}
 
 	kv, err := valkeyrie.NewStore(
 		context.Background(),
@@ -241,8 +243,9 @@ func (s *RedisSuite) setupSentinelConfiguration(c *check.C, ports []string) {
 func (s *RedisSuite) TestSentinelConfiguration(c *check.C) {
 	s.setupSentinelStore(c)
 
-	endpoints := strings.Join(s.redisEndpoints, `","`)
-	file := s.adaptFile(c, "fixtures/redis/sentinel.toml", struct{ RedisAddress string }{endpoints})
+	file := s.adaptFile(c, "fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
+		RedisAddress: strings.Join(s.redisEndpoints, `","`),
+	})
 	defer os.Remove(file)
 
 	data := map[string]string{
