@@ -990,8 +990,8 @@ Defines the allowed SPIFFE trust domain.
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
-`TRAEFIK_TRACING_GLOBALTAGS_<NAME>`:  
-Sets a list of key:value tags on all spans.
+`TRAEFIK_TRACING_GLOBALATTRIBUTES_<NAME>`:  
+Defines additional attributes (key:value) on all spans.
 
 `TRAEFIK_TRACING_HEADERS_<NAME>`:  
 Defines additional connection headers to be sent with the payloads.
@@ -1043,6 +1043,3 @@ Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
-
-`TRAEFIK_TRACING_SPANNAMELIMIT`:  
-Set the maximum character limit for Span names (default 0 = no limit). (Default: ```0```)

@@ -367,57 +367,29 @@
 
 [tracing]
   serviceName = "foobar"
-  spanNameLimit = 42
-  [tracing.zipkin]
-    httpEndpoint = "foobar"
-    sampleRate = 42.0
-    [tracing.zipkin.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
-  [tracing.datadog]
-    localAgentHostPort = "foobar"
-    localAgentSocket = "foobar"
-    [tracing.datadog.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
-    debug = true
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    samplingPriorityHeaderName = "foobar"
-    bagagePrefixHeaderName = "foobar"
-  [tracing.instana]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    sampleRate = 42.0
-    [tracing.instana.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
-  [tracing.elastic]
-    serverURL = "foobar"
-    secretToken = "foobar"
-    serviceEnvironment = "foobar"
-    sampleRate = 42.0
-    [tracing.elastic.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
-  [tracing.openTelemetry]
-    address = "foobar"
+  sampleRate = 42
+  [tracing.headers]
+    header1 = "foobar"
+    header2 = "foobar"
+  [tracing.globalAttributes]
+    tag1 = "foobar"
+    tag2 = "foobar"
+  [tracing.otlp.grpc]
+    endpoint = "foobar"
     insecure = true
-    path = "foobar"
-    sampleRate = 42.0
-    [tracing.openTelemetry.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
-    [tracing.openTelemetry.headers]
-      name0 = "foobar"
-      name1 = "foobar"
-    [tracing.openTelemetry.tls]
+    [tracing.otlp.grpc.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
-    [tracing.openTelemetry.grpc]
+  [tracing.otlp.http]
+    endpoint = "foobar"
+    insecure = true
+    [tracing.otlp.http.tls]
+    ca = "foobar"
+    cert = "foobar"
+    key = "foobar"
+    insecureSkipVerify = true
 
 [hostResolver]
   cnameFlattening = true
