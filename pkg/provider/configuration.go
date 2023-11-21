@@ -415,7 +415,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			}
 
 			// Flag default rule routers to add the denyRouterRecursion middleware.
-			router.IsDefaultRule = true
+			router.DefaultRule = true
 		}
 
 		if router.Service == "" {
