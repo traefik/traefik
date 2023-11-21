@@ -963,8 +963,8 @@ Defines the allowed SPIFFE trust domain.
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
-`--tracing.globaltags.<name>`:  
-Sets a list of key:value tags on all spans.
+`--tracing.globalattributes.<name>`:  
+Defines additional attributes (key:value) on all spans.
 
 `--tracing.headers.<name>`:  
 Defines additional connection headers to be sent with the payloads.
@@ -1016,6 +1016,3 @@ Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
-
-`--tracing.spannamelimit`:  
-Set the maximum character limit for Span names (default 0 = no limit). (Default: ```0```)
