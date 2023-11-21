@@ -122,21 +122,29 @@
 
 [tracing]
   serviceName = "foobar"
-  spanNameLimit = 42
-  [tracing.zipkin]
-    httpEndpoint = "foobar"
-    debug = true
-    sampleRate = 42.0
-  [tracing.datadog]
-    localAgentHostPort = "foobar"
-    localAgentSocket = "foobar"
-    debug = true
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    samplingPriorityHeaderName = "foobar"
-    bagagePrefixHeaderName = "foobar"
-  [tracing.instana]
-    sampleRate = 42.0
+  sampleRate = 42
+  [tracing.headers]
+    header1 = "foobar"
+    header2 = "foobar"
+  [tracing.globalAttributes]
+    tag1 = "foobar"
+    tag2 = "foobar"
+  [tracing.otlp.grpc]
+    endpoint = "foobar"
+    insecure = true
+    [tracing.otlp.grpc.tls]
+      ca = "foobar"
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [tracing.otlp.http]
+    endpoint = "foobar"
+    insecure = true
+    [tracing.otlp.http.tls]
+      ca = "foobar"
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
 
 [hostResolver]
   cnameFlattening = true

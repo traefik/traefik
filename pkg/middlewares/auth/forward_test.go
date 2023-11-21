@@ -16,6 +16,7 @@ import (
 	tracingMiddleware "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"github.com/vulcand/oxy/v2/forward"
 	"go.opentelemetry.io/otel"
@@ -487,7 +488,16 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 	)
 	otel.SetTracerProvider(tracerProvider)
 
-	tr, _ := tracing.NewTracing(&static.Tracing{ServiceName: "testApp", SampleRate: 100})
+	config := &static.Tracing{
+		ServiceName: "testApp",
+		SampleRate:  100,
+		OTLP: &opentelemetry.Config{
+			HTTP: &opentelemetry.HTTP{
+				Endpoint: "127.0.0.1:8080",
+			},
+		},
+	}
+	tr, _ := tracing.NewTracing(config)
 	next, err = NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
 
