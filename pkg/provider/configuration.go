@@ -349,7 +349,7 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			continue
 		}
 
-		if len(router.Service) == 0 {
+		if router.Service == "" {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
@@ -368,7 +368,7 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDPConfiguration) {
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.FromContext(ctx).WithField(log.RouterName, routerName)
-		if len(router.Service) > 0 {
+		if router.Service != "" {
 			continue
 		}
 
@@ -413,9 +413,12 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 				delete(configuration.Routers, routerName)
 				continue
 			}
+
+			// Flag default rule routers to add the denyRouterRecursion middleware.
+			router.DefaultRule = true
 		}
 
-		if len(router.Service) == 0 {
+		if router.Service == "" {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
