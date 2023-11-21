@@ -16,9 +16,10 @@ import (
 
 type TracingSuite struct {
 	BaseSuite
-	whoamiIP   string
-	whoamiPort int
-	tracerIP   string
+	whoamiIP        string
+	whoamiPort      int
+	tempoIP         string
+	otelCollectorIP string
 }
 
 type TracingTemplate struct {
@@ -26,6 +27,7 @@ type TracingTemplate struct {
 	WhoamiPort             int
 	IP                     string
 	TraceContextHeaderName string
+	IsHTTP                 bool
 }
 
 func (s *TracingSuite) SetUpSuite(c *check.C) {
@@ -36,23 +38,31 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.whoamiPort = 80
 }
 
-func (s *TracingSuite) startTempo(c *check.C) {
-	s.composeUp(c, "tempo", "whoami")
-	s.tracerIP = s.getComposeServiceIP(c, "tempo")
+func (s *TracingSuite) SetUpTest(c *check.C) {
+	s.composeUp(c, "tempo", "otel-collector", "whoami")
+	s.tempoIP = s.getComposeServiceIP(c, "tempo")
 
 	// Wait for tempo to turn ready.
-	err := try.GetRequest("http://"+s.tracerIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest("http://"+s.tempoIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	s.otelCollectorIP = s.getComposeServiceIP(c, "otel-collector")
+
+	// Wait for otel collector to turn ready.
+	err = try.GetRequest("http://"+s.otelCollectorIP+":13133/", 30*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *TracingSuite) TestOpentelemetryBasic(c *check.C) {
-	s.startTempo(c)
-	defer s.composeStop(c, "tempo")
+func (s *TracingSuite) TearDownTest(c *check.C) {
+	s.composeStop(c, "tempo")
+}
 
+func (s *TracingSuite) TestOpentelemetryBasic_HTTP(c *check.C) {
 	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
-		IP:         s.tracerIP,
+		IP:         s.otelCollectorIP,
+		IsHTTP:     true,
 	})
 	defer os.Remove(file)
 
@@ -69,17 +79,39 @@ func (s *TracingSuite) TestOpentelemetryBasic(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "entry_point", "router")
+	checkTraceContent(c, s.tempoIP, "entry_point", "router")
 }
 
-func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
-	s.startTempo(c)
-	defer s.composeStop(c, "tempo")
-
+func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
 	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
-		IP:         s.tracerIP,
+		IP:         s.otelCollectorIP,
+		IsHTTP:     false,
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	checkTraceContent(c, s.tempoIP, "entry_point", "router")
+}
+
+func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+		WhoamiIP:   s.whoamiIP,
+		WhoamiPort: s.whoamiPort,
+		IP:         s.otelCollectorIP,
 	})
 	defer os.Remove(file)
 
@@ -118,17 +150,14 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "entry_point", "router", "ratelimit-1@file")
+	checkTraceContent(c, s.tempoIP, "entry_point", "router", "ratelimit-1@file")
 }
 
 func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
-	s.startTempo(c)
-	defer s.composeStop(c, "tempo")
-
 	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: 81,
-		IP:         s.tracerIP,
+		IP:         s.otelCollectorIP,
 	})
 	defer os.Remove(file)
 
@@ -145,17 +174,14 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "entry_point", "retry@file")
+	checkTraceContent(c, s.tempoIP, "entry_point", "retry@file")
 }
 
 func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
-	s.startTempo(c)
-	defer s.composeStop(c, "tempo")
-
 	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
-		IP:         s.tracerIP,
+		IP:         s.otelCollectorIP,
 	})
 	defer os.Remove(file)
 
@@ -172,11 +198,11 @@ func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tracerIP, "entry_point", "router", "retry@file", "basic-auth@file")
+	checkTraceContent(c, s.tempoIP, "entry_point", "router", "retry@file", "basic-auth@file")
 }
 
-func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
-	baseURL, err := url.Parse("http://" + tracerIP + ":3200/api/search")
+func checkTraceContent(c *check.C, tempoIP string, bodyContains ...string) {
+	baseURL, err := url.Parse("http://" + tempoIP + ":3200/api/search")
 	c.Assert(err, checker.IsNil)
 
 	req := &http.Request{
@@ -204,7 +230,7 @@ func checkTraceContent(c *check.C, tracerIP string, bodyContains ...string) {
 	}
 
 	for _, t := range out.Traces {
-		baseURL, err := url.Parse("http://" + tracerIP + ":3200/api/traces/" + t.TraceID)
+		baseURL, err := url.Parse("http://" + tempoIP + ":3200/api/traces/" + t.TraceID)
 		c.Assert(err, checker.IsNil)
 
 		req := &http.Request{
