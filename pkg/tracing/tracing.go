@@ -18,14 +18,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const (
-	// SpanKindNoneEnum Span kind enum none.
-	SpanKindNoneEnum trace.SpanKind = -1
-)
-
-// Backend is an abstraction for tracking backend (OpenTracing, ...).
+// Backend is an abstraction for tracking backend (OpenTelemetry, ...).
 type Backend interface {
-	Setup(serviceName string, sampleRate float64, globalTags map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error)
+	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error)
 }
 
 // Tracer is an abstraction for trace.Tracer.
@@ -57,11 +52,10 @@ func NewTracing(conf *static.Tracing) (*Tracing, error) {
 	if backend == nil {
 		log.Debug().Msg("Could not initialize tracing, using OpenTelemetry by default")
 		defaultBackend := &opentelemetry.Config{}
-		defaultBackend.SetDefaults()
 		backend = defaultBackend
 	}
 
-	tracer, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalTags, conf.Headers)
+	tracer, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes, conf.Headers)
 	if err != nil {
 		return nil, err
 	}
