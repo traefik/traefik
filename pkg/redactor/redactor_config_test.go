@@ -845,8 +845,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Tracing = &static.Tracing{
-		ServiceName:   "myServiceName",
-		SpanNameLimit: 42,
+		ServiceName: "myServiceName",
 		Headers: map[string]string{
 			"foobar": "foobar",
 		},

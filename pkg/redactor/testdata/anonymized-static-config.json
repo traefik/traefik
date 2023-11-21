@@ -344,7 +344,6 @@
   },
   "tracing": {
     "serviceName": "myServiceName",
-    "spanNameLimit": 42,
     "headers": {
       "foobar": "foobar"
     },
