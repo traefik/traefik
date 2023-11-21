@@ -58,8 +58,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -124,8 +125,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -169,6 +171,7 @@ func TestBuildConfiguration(t *testing.T) {
 							Service:     "app",
 							Rule:        "Host(`app.marathon.localhost`)",
 							Middlewares: []string{"Middleware1"},
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -387,12 +390,14 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"foo": {
-							Service: "foo",
-							Rule:    "Host(`foo.marathon.localhost`)",
+							Service:     "foo",
+							Rule:        "Host(`foo.marathon.localhost`)",
+							DefaultRule: true,
 						},
 						"bar": {
-							Service: "bar",
-							Rule:    "Host(`bar.marathon.localhost`)",
+							Service:     "bar",
+							Rule:        "Host(`bar.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -439,8 +444,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -485,8 +491,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "Service1",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "Service1",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -714,12 +721,14 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "Service1",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "Service1",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 						"app2": {
-							Service: "Service1",
-							Rule:    "Host(`app2.marathon.localhost`)",
+							Service:     "Service1",
+							Rule:        "Host(`app2.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -756,12 +765,14 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 						"app2": {
-							Service: "app2",
-							Rule:    "Host(`app2.marathon.localhost`)",
+							Service:     "app2",
+							Rule:        "Host(`app2.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -825,12 +836,14 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 						"app2": {
-							Service: "app2",
-							Rule:    "Host(`app2.marathon.localhost`)",
+							Service:     "app2",
+							Rule:        "Host(`app2.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1041,8 +1054,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1085,8 +1099,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "Service1",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "Service1",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1341,8 +1356,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1385,8 +1401,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "app",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1428,8 +1445,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"a_b_app": {
-							Service: "a_b_app",
-							Rule:    `Host("app.b.a.marathon.localhost")`,
+							Service:     "a_b_app",
+							Rule:        `Host("app.b.a.marathon.localhost")`,
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1752,8 +1770,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "bar",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "bar",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1812,8 +1831,9 @@ func TestBuildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"app": {
-							Service: "bar",
-							Rule:    "Host(`app.marathon.localhost`)",
+							Service:     "bar",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
