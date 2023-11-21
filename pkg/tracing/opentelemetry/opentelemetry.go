@@ -29,13 +29,6 @@ type Config struct {
 	HTTP *HTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values.
-func (c *Config) SetDefaults() {
-	c.HTTP = &HTTP{
-		Endpoint: "localhost:4318",
-	}
-}
-
 // GRPC provides configuration settings for the gRPC open-telemetry tracer.
 type GRPC struct {
 	Endpoint string `description:"Sets the gRPC endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -44,17 +37,27 @@ type GRPC struct {
 	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
+// SetDefaults sets the default values.
+func (c *GRPC) SetDefaults() {
+	c.Endpoint = "localhost:4317"
+}
+
 // HTTP provides configuration settings for the HTTP open-telemetry tracer.
 type HTTP struct {
 	Endpoint string `description:"Sets the HTTP endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	Path     string `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 
-	Insecure bool             `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Insecure bool             `description:"Controls whether to use HTTP (insecure) or HTTPS scheme." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
+// SetDefaults sets the default values.
+func (c *HTTP) SetDefaults() {
+	c.Endpoint = "localhost:4318"
+}
+
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string, sampleRate float64, globalTags map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -73,7 +76,7 @@ func (c *Config) Setup(serviceName string, sampleRate float64, globalTags map[st
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range globalTags {
+	for k, v := range globalAttributes {
 		attr = append(attr, attribute.String(k, v))
 	}
 
