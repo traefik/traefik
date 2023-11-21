@@ -387,57 +387,30 @@ accessLog:
   bufferingSize: 42
 tracing:
   serviceName: foobar
-  spanNameLimit: 42
-  zipkin:
-    httpEndpoint: foobar
-    sampleRate: 42
-    globalTags:
-      tag1: foobar
-      tag2: foobar
-  datadog:
-    localAgentHostPort: foobar
-    localAgentSocket: foobar
-    globalTags:
-      tag1: foobar
-      tag2: foobar
-    debug: true
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    samplingPriorityHeaderName: foobar
-    bagagePrefixHeaderName: foobar
-  instana:
-    localAgentHost: foobar
-    localAgentPort: 42
-    sampleRate: 42
-    globalTags:
-      tag1: foobar
-      tag2: foobar
-  elastic:
-    serverURL: foobar
-    secretToken: foobar
-    serviceEnvironment: foobar
-    sampleRate: 42
-    globalTags:
-      tag1: foobar
-      tag2: foobar
-  openTelemetry:
-    address: foobar
-    headers:
-      name0: foobar
-      name1: foobar
-    insecure: true
-    path: foobar
-    sampleRate: 42
-    globalTags:
-      tag1: foobar
-      tag2: foobar
-    tls:
-      ca: foobar
-      caOptional: true
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
-    grpc: {}
+  sampleRate: 42
+  headers:
+    header1: foobar
+    header2: foobar
+  globalAttributes:
+    tag1: foobar
+    tag2: foobar
+  otlp:
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+    http:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
