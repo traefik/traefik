@@ -17,11 +17,11 @@ import (
 type ChainBuilder struct {
 	metricsRegistry        metrics.Registry
 	accessLoggerMiddleware *accesslog.Handler
-	tracer                 *tracing.Tracing
+	tracer                 tracing.Tracer
 }
 
 // NewChainBuilder Creates a new ChainBuilder.
-func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracing) *ChainBuilder {
+func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer tracing.Tracer) *ChainBuilder {
 	return &ChainBuilder{
 		metricsRegistry:        metricsRegistry,
 		accessLoggerMiddleware: accessLoggerMiddleware,

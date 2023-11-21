@@ -80,7 +80,7 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
+	sm := NewManager(nil, nil, nil, nil, &RoundTripperManager{
 		roundTrippers: map[string]http.RoundTripper{
 			"default@internal": http.DefaultTransport,
 		},
@@ -361,7 +361,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
+	sm := NewManager(nil, nil, nil, nil, &RoundTripperManager{
 		roundTrippers: map[string]http.RoundTripper{
 			"default@internal": http.DefaultTransport,
 		},
@@ -502,7 +502,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, nil, nil, &RoundTripperManager{
+			manager := NewManager(test.configs, nil, nil, nil, &RoundTripperManager{
 				roundTrippers: map[string]http.RoundTripper{
 					"default@internal": http.DefaultTransport,
 				},
@@ -529,7 +529,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 		},
 	}
 
-	manager := NewManager(services, nil, nil, &RoundTripperManager{
+	manager := NewManager(services, nil, nil, nil, &RoundTripperManager{
 		roundTrippers: map[string]http.RoundTripper{
 			"default@internal": http.DefaultTransport,
 		},
