@@ -35,8 +35,7 @@ type Tracer interface {
 type Tracing struct {
 	trace.Tracer
 
-	spanNameLimit int
-	serviceName   string
+	serviceName string
 
 	closer io.Closer
 }
@@ -61,10 +60,9 @@ func NewTracing(conf *static.Tracing) (*Tracing, error) {
 	}
 
 	return &Tracing{
-		spanNameLimit: conf.SpanNameLimit,
-		serviceName:   conf.ServiceName,
-		Tracer:        tracer,
-		closer:        closer,
+		serviceName: conf.ServiceName,
+		Tracer:      tracer,
+		closer:      closer,
 	}, nil
 }
 
