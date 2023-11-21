@@ -17,6 +17,7 @@
   servicename = "tracing"
   [tracing.zipkin]
     httpEndpoint = "http://{{.IP}}:9411/api/v2/spans"
+    sampleRate = 1.0
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

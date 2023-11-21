@@ -5,10 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/plugins"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // PluginsBuilder the plugin's builder interface.
@@ -54,6 +53,6 @@ func (s *traceablePlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.h.ServeHTTP(rw, req)
 }
 
-func (s *traceablePlugin) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return s.name, tracing.SpanKindNoneEnum
+func (s *traceablePlugin) GetTracingInformation() (string, trace.SpanKind) {
+	return s.name, trace.SpanKindInternal
 }
