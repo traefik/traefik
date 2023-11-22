@@ -394,3 +394,22 @@ One should use the `ContentType` middleware to enable the `Content-Type` header 
 #### gRPC Metrics
 
 In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.  
+
+#### Tracing
+
+In v3, the tracing feature has been revamped and is now powered exclusively by OpenTelemetry (OTel).
+It's important to note that Traefik v3 no longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
+Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
+
+Here are two possible transition strategies:
+
+1. OTLP Ingestion Endpoints:
+
+Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
+You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
+
+2. Legacy Stack Compatibility:
+
+For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
+using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
+This allows continued compatibility with the existing infrastructure.
