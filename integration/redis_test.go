@@ -36,19 +36,11 @@ type RedisSuite struct {
 func (s *RedisSuite) TearDownSuite(c *check.C) {
 	s.composeDown(c)
 
-	err := os.Remove("./resources/compose/config/sentinel1.conf")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		c.Fatal("unable to clean configuration file for sentinel: ", err)
-	}
-
-	err = os.Remove("./resources/compose/config/sentinel2.conf")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		c.Fatal("unable to clean configuration file for sentinel: ", err)
-	}
-
-	err = os.Remove("./resources/compose/config/sentinel3.conf")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		c.Fatal("unable to clean configuration file for sentinel: ", err)
+	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
+		err := os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			c.Fatal("unable to clean configuration file for sentinel: ", err)
+		}
 	}
 }
 
@@ -78,7 +70,6 @@ func (s *RedisSuite) setupStore(c *check.C) {
 func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-```suggestion
 	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, ","),
 	})
@@ -234,8 +225,8 @@ func (s *RedisSuite) setupSentinelConfiguration(c *check.C, ports []string) {
 
 		err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
 		c.Assert(err, checker.IsNil)
-		err = tmpFile.Sync()
 
+		err = tmpFile.Sync()
 		c.Assert(err, checker.IsNil)
 	}
 }
