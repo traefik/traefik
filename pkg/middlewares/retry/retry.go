@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -60,8 +59,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}, nil
 }
 
-func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
+func (r *retry) GetTracingInformation() (string, trace.SpanKind) {
+	return r.name, trace.SpanKindInternal
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
