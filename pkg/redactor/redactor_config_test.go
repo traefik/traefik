@@ -856,8 +856,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		OTLP: &opentelemetry.Config{
 			HTTP: &opentelemetry.HTTP{
 				Endpoint: "foobar",
-				Path:     "foobar",
-				Insecure: false,
 				TLS:      nil,
 			},
 		},

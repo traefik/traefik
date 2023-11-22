@@ -327,10 +327,6 @@ func (c *Configuration) ValidateConfiguration() error {
 			return errors.New("tracing OTLP: HTTP and gRPC options are mutually exclusive")
 		}
 
-		if c.Tracing.OTLP.HTTP != nil && c.Tracing.OTLP.HTTP.TLS != nil && c.Tracing.OTLP.HTTP.Insecure {
-			return errors.New("tracing OTLP HTTP: TLS and Insecure options are mutually exclusive")
-		}
-
 		if c.Tracing.OTLP.GRPC != nil && c.Tracing.OTLP.GRPC.TLS != nil && c.Tracing.OTLP.GRPC.Insecure {
 			return errors.New("tracing OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -76,8 +75,7 @@ func TestTracing(t *testing.T) {
 		SampleRate:  1.0,
 		OTLP: &opentelemetry.Config{
 			HTTP: &opentelemetry.HTTP{
-				Endpoint: strings.TrimPrefix(collector.URL, "http://"),
-				Insecure: true,
+				Endpoint: collector.URL,
 			},
 		},
 	}

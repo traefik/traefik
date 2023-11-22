@@ -18,14 +18,12 @@
   sampleRate = 1.0
 {{if .IsHTTP}}
   [tracing.otlp.http]
-    endpoint = "{{.IP}}:4318"
-    insecure = true
+    endpoint = "http://{{.IP}}:4318"
 {{else}}
   [tracing.otlp.grpc]
     endpoint = "{{.IP}}:4317"
     insecure = true
 {{end}}
-
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

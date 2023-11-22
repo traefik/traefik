@@ -490,14 +490,17 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 
 	config := &static.Tracing{
 		ServiceName: "testApp",
-		SampleRate:  100,
+		SampleRate:  1,
 		OTLP: &opentelemetry.Config{
 			HTTP: &opentelemetry.HTTP{
-				Endpoint: "127.0.0.1:8080",
+				Endpoint: "http://127.0.0.1:8080",
 			},
 		},
 	}
-	tr, _ := tracing.NewTracing(config)
+	tr, err := tracing.NewTracing(config)
+	require.NoError(t, err)
+	t.Cleanup(tr.Close)
+
 	next, err = NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
 
