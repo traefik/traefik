@@ -8,15 +8,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/mocktracer"
+	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 	tracingMiddleware "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"github.com/traefik/traefik/v3/pkg/version"
 	"github.com/vulcand/oxy/v2/forward"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 func TestForwardAuthFail(t *testing.T) {
@@ -452,8 +459,8 @@ func Test_writeHeader(t *testing.T) {
 
 func TestForwardAuthUsesTracing(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Mockpfx-Ids-Traceid") == "" {
-			t.Errorf("expected Mockpfx-Ids-Traceid header to be present in request")
+		if r.Header.Get("Traceparent") == "" {
+			t.Errorf("expected Traceparent header to be present in request")
 		}
 	}))
 	t.Cleanup(server.Close)
@@ -464,15 +471,39 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 		Address: server.URL,
 	}
 
-	tracer := mocktracer.New()
-	opentracing.SetGlobalTracer(tracer)
+	exporter := tracetest.NewInMemoryExporter()
 
-	tr, _ := tracing.NewTracing("testApp", 100, &mockBackend{tracer})
-
-	next, err := NewForward(context.Background(), next, auth, "authTest")
+	tres, err := resource.New(context.Background(),
+		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
+		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+	)
 	require.NoError(t, err)
 
-	next = tracingMiddleware.NewEntryPoint(context.Background(), tr, "tracingTest", next)
+	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithResource(tres),
+		sdktrace.WithBatcher(exporter),
+	)
+	otel.SetTracerProvider(tracerProvider)
+
+	config := &static.Tracing{
+		ServiceName: "testApp",
+		SampleRate:  100,
+		OTLP: &opentelemetry.Config{
+			HTTP: &opentelemetry.HTTP{
+				Endpoint: "127.0.0.1:8080",
+			},
+		},
+	}
+	tr, _ := tracing.NewTracing(config)
+	next, err = NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	chain := alice.New(tracingMiddleware.WrapEntryPointHandler(context.Background(), tr, "tracingTest"))
+	next, err = chain.Then(next)
+	require.NoError(t, err)
 
 	ts := httptest.NewServer(next)
 	t.Cleanup(ts.Close)
@@ -481,12 +512,4 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-type mockBackend struct {
-	opentracing.Tracer
-}
-
-func (b *mockBackend) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	return b.Tracer, io.NopCloser(nil), nil
 }
