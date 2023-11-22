@@ -69,7 +69,7 @@ helm install traefik traefik/traefik
 
     All [Helm features](https://helm.sh/docs/intro/using_helm/) are supported.
 
-    Examples are provided [here](https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md). 
+    Examples are provided [here](https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md).
 
     For instance, installing the chart in a dedicated namespace:
 
@@ -106,7 +106,7 @@ helm install traefik traefik/traefik
 
 ### Exposing the Traefik dashboard
 
-This HelmChart does not expose the Traefik dashboard by default, for security concerns.
+This Helm chart does not expose the Traefik dashboard by default, for security concerns.
 Thus, there are multiple ways to expose the dashboard.
 For instance, the dashboard access could be achieved through a port-forward:
 
