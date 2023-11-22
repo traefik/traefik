@@ -402,8 +402,8 @@ tracing:
     header1: foobar
     header2: foobar
   globalAttributes:
-    tag1: foobar
-    tag2: foobar
+    attr1: foobar
+    attr2: foobar
   otlp:
     grpc:
       endpoint: foobar
@@ -415,7 +415,6 @@ tracing:
         insecureSkipVerify: true
     http:
       endpoint: foobar
-      insecure: true
       tls:
         ca: foobar
         cert: foobar
