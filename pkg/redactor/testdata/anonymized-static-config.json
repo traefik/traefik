@@ -353,8 +353,7 @@
     "sampleRate": 42,
     "otlp": {
       "http": {
-        "endpoint": "xxxx",
-        "path": "foobar"
+        "endpoint": "xxxx"
       }
     }
   },

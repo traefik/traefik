@@ -991,13 +991,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_TRACING_OTLP_HTTP_ENDPOINT`:  
-Sets the HTTP endpoint (host:port) of the collector. (Default: ```localhost:4318```)
-
-`TRAEFIK_TRACING_OTLP_HTTP_INSECURE`:  
-Controls whether to use HTTP (insecure) or HTTPS scheme. (Default: ```false```)
-
-`TRAEFIK_TRACING_OTLP_HTTP_PATH`:  
-Sets the URL path of the collector endpoint.
+Sets the HTTP endpoint (scheme://host:port/v1/traces) of the collector. (Default: ```localhost:4318```)
 
 `TRAEFIK_TRACING_OTLP_HTTP_TLS_CA`:  
 TLS CA
