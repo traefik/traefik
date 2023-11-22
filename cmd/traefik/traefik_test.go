@@ -131,12 +131,6 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 				"traefik": {
 					Address: ":8080",
 				},
-				"traefikhub-api": {
-					Address: ":9900",
-				},
-				"traefikhub-tunl": {
-					Address: ":9901",
-				},
 			},
 			expected: []string{"web"},
 		},
