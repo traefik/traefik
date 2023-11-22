@@ -117,11 +117,11 @@ Here are two possible transition strategies:
 
  1. OTLP Ingestion Endpoints:
 
-Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
-You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
+    Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
+    You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
 
  2. Legacy Stack Compatibility:
 
-For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
-using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
-This allows continued compatibility with the existing infrastructure.
+    For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
+    using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
+    This allows continued compatibility with the existing infrastructure.
