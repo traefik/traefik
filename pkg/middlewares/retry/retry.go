@@ -97,7 +97,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
+		r.next.ServeHTTP(retryResponseWriter, req.Clone(newCtx))
 
 		if !retryResponseWriter.ShouldRetry() {
 			return nil
