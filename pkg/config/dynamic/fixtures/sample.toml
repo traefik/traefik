@@ -127,8 +127,8 @@
     header1 = "foobar"
     header2 = "foobar"
   [tracing.globalAttributes]
-    tag1 = "foobar"
-    tag2 = "foobar"
+    attr1 = "foobar"
+    attr2 = "foobar"
   [tracing.otlp.grpc]
     endpoint = "foobar"
     insecure = true
