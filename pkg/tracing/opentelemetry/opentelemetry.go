@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -44,10 +45,7 @@ func (c *GRPC) SetDefaults() {
 
 // HTTP provides configuration settings for the HTTP open-telemetry tracer.
 type HTTP struct {
-	Endpoint string `description:"Sets the HTTP endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Path     string `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
-
-	Insecure bool             `description:"Controls whether to use HTTP (insecure) or HTTPS scheme." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Endpoint string           `description:"Sets the HTTP endpoint (scheme://host:port/v1/traces) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
@@ -107,23 +105,23 @@ func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes 
 }
 
 func (c *Config) setupHTTPExporter(headers map[string]string) (*otlptrace.Exporter, error) {
-	host, port, err := net.SplitHostPort(c.HTTP.Endpoint)
+	endpoint, err := url.Parse(c.HTTP.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid collector address %q: %w", c.HTTP.Endpoint, err)
+		return nil, fmt.Errorf("invalid collector endpoint %q: %w", c.HTTP.Endpoint, err)
 	}
 
 	opts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
+		otlptracehttp.WithEndpoint(endpoint.Host),
 		otlptracehttp.WithHeaders(headers),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	}
 
-	if c.HTTP.Insecure {
+	if endpoint.Scheme == "http" {
 		opts = append(opts, otlptracehttp.WithInsecure())
 	}
 
-	if c.HTTP.Path != "" {
-		opts = append(opts, otlptracehttp.WithURLPath(c.HTTP.Path))
+	if endpoint.Path != "" {
+		opts = append(opts, otlptracehttp.WithURLPath(endpoint.Path))
 	}
 
 	if c.HTTP.TLS != nil {
