@@ -10,21 +10,15 @@ Visualize the Requests Flow
 
 The tracing system allows developers to visualize call flows in their infrastructure.
 
-Traefik uses OpenTracing, an open standard designed for distributed tracing.
+Traefik uses OpenTelemetry, an open standard designed for distributed tracing.
 
-Traefik supports seven tracing backends:
+Traefik supports OpenTelemetry tracing backends:
 
-- [Jaeger](./jaeger.md)
-- [Zipkin](./zipkin.md)
-- [Datadog](./datadog.md)
-- [Instana](./instana.md)
-- [Haystack](./haystack.md)
-- [Elastic](./elastic.md)
 - [OpenTelemetry](./opentelemetry.md)
 
 ## Configuration
 
-By default, Traefik uses Jaeger as tracing backend.
+By default, Traefik uses OpenTelemetry as tracing backend.
 
 To enable the tracing:
 

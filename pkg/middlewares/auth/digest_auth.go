@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -54,8 +54,8 @@ func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.Digest
 	return da, nil
 }
 
-func (d *digestAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return d.name, tracing.SpanKindNoneEnum
+func (d *digestAuth) GetTracingInformation() (string, trace.SpanKind) {
+	return d.name, trace.SpanKindInternal
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -78,13 +78,13 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if authinfo != nil && *authinfo == "stale" {
 			logger.Debug().Msg("Digest authentication failed, possibly because out of order requests")
-			tracing.SetErrorWithEvent(req, "Digest authentication failed, possibly because out of order requests")
+			tracing.SetErrorWithEvent(req.Context(), "Digest authentication failed, possibly because out of order requests")
 			d.auth.RequireAuthStale(rw, req)
 			return
 		}
 
 		logger.Debug().Msg("Digest authentication failed")
-		tracing.SetErrorWithEvent(req, "Digest authentication failed")
+		tracing.SetErrorWithEvent(req.Context(), "Digest authentication failed")
 		d.auth.RequireAuth(rw, req)
 		return
 	}
