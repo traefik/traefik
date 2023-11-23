@@ -21,10 +21,11 @@ import (
 )
 
 const (
-	xForwardedURI     = "X-Forwarded-Uri"
-	xForwardedMethod  = "X-Forwarded-Method"
-	forwardedTypeName = "ForwardedAuthType"
+	xForwardedURI    = "X-Forwarded-Uri"
+	xForwardedMethod = "X-Forwarded-Method"
 )
+
+const typeNameForward = "ForwardAuth"
 
 // hopHeaders Hop-by-hop headers to be removed in the authentication request.
 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
@@ -51,7 +52,7 @@ type forwardAuth struct {
 
 // NewForward creates a forward auth middleware.
 func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, forwardedTypeName).Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeNameForward).Debug().Msg("Creating middleware")
 
 	fa := &forwardAuth{
 		address:             config.Address,
@@ -92,15 +93,15 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	return connectionheader.Remover(fa), nil
 }
 
-func (fa *forwardAuth) GetTracingInformation() (string, trace.SpanKind) {
-	return fa.name, trace.SpanKindClient
+func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) {
+	return fa.name, typeNameForward, trace.SpanKindClient
 }
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), fa.name, forwardedTypeName)
+	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
 	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
-	tracing.LogRequest(trace.SpanFromContext(req.Context()), forwardReq, trace.SpanKindClient)
+	tracing.LogClientRequest(trace.SpanFromContext(req.Context()), forwardReq)
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
 		logger.Debug().Msg(logMessage)
@@ -162,7 +163,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Set("Location", redirectURL.String())
 		}
 
-		tracing.LogResponseCode(trace.SpanFromContext(req.Context()), forwardResponse.StatusCode)
+		tracing.LogResponseCode(trace.SpanFromContext(req.Context()), forwardResponse.StatusCode, trace.SpanKindClient)
 		rw.WriteHeader(forwardResponse.StatusCode)
 
 		if _, err = rw.Write(body); err != nil {

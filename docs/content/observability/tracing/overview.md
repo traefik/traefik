@@ -56,25 +56,71 @@ tracing:
 --tracing.serviceName=traefik
 ```
 
-#### `spanNameLimit`
+#### `sampleRate`
 
-_Required, Default=0_
+_Optional, Default=1.0_
 
-Span name limit allows for name truncation in case of very long names.
-This can prevent certain tracing providers to drop traces that exceed their length limits.
-
-`0` means no truncation will occur.
+The proportion of requests to trace, specified between 0.0 and 1.0.
 
 ```yaml tab="File (YAML)"
 tracing:
-  spanNameLimit: 150
+  sampleRate: 0.2
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  spanNameLimit = 150
+    sampleRate = 0.2
 ```
 
 ```bash tab="CLI"
---tracing.spanNameLimit=150
+--tracing.sampleRate=0.2
+```
+
+#### `headers`
+
+_Optional, Default={}_
+
+Defines additional headers to be sent with the span's payload.
+
+```yaml tab="File (YAML)"
+tracing:
+  headers:
+    foo: bar
+    baz: buz
+```
+
+```toml tab="File (TOML)"
+[tracing]
+    [tracing.headers]
+        foo = "bar"
+        baz = "buz"
+```
+
+```bash tab="CLI"
+--tracing.headers.foo=bar --tracing.headers.baz=buz
+```
+
+#### `globalAttributes`
+
+_Optional, Default=empty_
+
+Applies a list of shared key:value attributes on all spans.
+
+```yaml tab="File (YAML)"
+tracing:
+  globalAttributes:
+    attr1: foo
+    attr2: bar
+```
+
+```toml tab="File (TOML)"
+[tracing]
+    [tracing.globalAttributes]
+      attr1 = "foo"
+      attr2 = "bar"
+```
+
+```bash tab="CLI"
+--tracing.globalAttributes.attr1=foo
+--tracing.globalAttributes.attr2=bar
 ```

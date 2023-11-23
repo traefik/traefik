@@ -101,7 +101,7 @@ func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes 
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
-	return tracerProvider.Tracer("github.com/traefik/traefik"), tpCloser{provider: tracerProvider}, err
+	return tracerProvider.Tracer("github.com/traefik/traefik"), &tpCloser{provider: tracerProvider}, err
 }
 
 func (c *Config) setupHTTPExporter(headers map[string]string) (*otlptrace.Exporter, error) {
@@ -169,6 +169,9 @@ type tpCloser struct {
 	provider *sdktrace.TracerProvider
 }
 
-func (t tpCloser) Close() error {
+func (t *tpCloser) Close() error {
+	if t == nil {
+		return nil
+	}
 	return t.provider.Shutdown(context.Background())
 }

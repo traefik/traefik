@@ -113,8 +113,8 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	c.next.ServeHTTP(rw, req)
 }
 
-func (c *compress) GetTracingInformation() (string, trace.SpanKind) {
-	return c.name, trace.SpanKindInternal
+func (c *compress) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {
