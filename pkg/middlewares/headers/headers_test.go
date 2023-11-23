@@ -109,9 +109,10 @@ func Test_headers_getTracingInformation(t *testing.T) {
 		name:    "testing",
 	}
 
-	name, spanKind := mid.GetTracingInformation()
+	name, typeName, spanKind := mid.GetTracingInformation()
 
 	assert.Equal(t, "testing", name)
+	assert.Equal(t, "Headers", typeName)
 	assert.Equal(t, trace.SpanKindInternal, spanKind)
 }
 

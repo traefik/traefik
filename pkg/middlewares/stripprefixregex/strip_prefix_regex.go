@@ -43,8 +43,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.StripPrefixRegex
 	return &stripPrefix, nil
 }
 
-func (s *stripPrefixRegex) GetTracingInformation() (string, trace.SpanKind) {
-	return s.name, trace.SpanKindInternal
+func (s *stripPrefixRegex) GetTracingInformation() (string, string, trace.SpanKind) {
+	return s.name, typeName, trace.SpanKindInternal
 }
 
 func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

@@ -33,8 +33,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, nam
 	}, nil
 }
 
-func (s *stripPrefix) GetTracingInformation() (string, trace.SpanKind) {
-	return s.name, trace.SpanKindUnspecified
+func (s *stripPrefix) GetTracingInformation() (string, string, trace.SpanKind) {
+	return s.name, typeName, trace.SpanKindUnspecified
 }
 
 func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

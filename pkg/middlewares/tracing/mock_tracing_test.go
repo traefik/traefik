@@ -9,53 +9,53 @@ import (
 	"go.opentelemetry.io/otel/trace/embedded"
 )
 
-type MockTracer struct {
+type mockTracerProvider struct {
+	embedded.TracerProvider
+}
+
+var _ trace.TracerProvider = mockTracerProvider{}
+
+func (p mockTracerProvider) Tracer(string, ...trace.TracerOption) trace.Tracer {
+	return &mockTracer{}
+}
+
+type mockTracer struct {
 	embedded.Tracer
-	Span *MockSpan
+
+	spans []*mockSpan
 }
 
-// Start belongs to the Tracer interface.
-func (n MockTracer) Start(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-	c := trace.NewSpanStartConfig(opts...)
-	n.Span.SetAttributes(c.Attributes()...)
-	n.Span.SetAttributes(attribute.String("span.kind", c.SpanKind().String()))
-	n.Span.SpanName = operationName
-	return ctx, n.Span
+var _ trace.Tracer = &mockTracer{}
+
+func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	config := trace.NewSpanStartConfig(opts...)
+	span := &mockSpan{}
+	span.SetName(name)
+	span.SetAttributes(config.Attributes()...)
+	t.spans = append(t.spans, span)
+	return trace.ContextWithSpan(ctx, span), span
 }
 
-// StartSpan belongs to the Tracer interface.
-func (n MockTracer) StartSpan(ctx context.Context, operationName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-	n.Span.SpanName = operationName
-	return ctx, n.Span
-}
-
-// GetServiceName returns the service name.
-func (n MockTracer) GetServiceName() string {
-	return ""
-}
-
-// Close mocks of Close.
-func (n MockTracer) Close() {}
-
-// MockSpan a span mock.
-type MockSpan struct {
+// mockSpan is an implementation of Span that preforms no operations.
+type mockSpan struct {
 	embedded.Span
-	SpanName string
-	Tags     map[string]interface{}
-	Conf     trace.SpanContextConfig
-	Provider trace.TracerProvider
+
+	name       string
+	attributes []attribute.KeyValue
 }
 
-func (n MockSpan) AddEvent(event string, foo ...trace.EventOption)     {}
-func (n MockSpan) End(options ...trace.SpanEndOption)                  {}
-func (n MockSpan) IsRecording() bool                                   { return false }
-func (n MockSpan) RecordError(err error, options ...trace.EventOption) {}
-func (n MockSpan) SpanContext() trace.SpanContext                      { return trace.NewSpanContext(n.Conf) }
-func (n MockSpan) SetStatus(code codes.Code, description string)       {}
-func (n MockSpan) SetName(name string)                                 {}
-func (n MockSpan) SetAttributes(kv ...attribute.KeyValue) {
-	for _, v := range kv {
-		n.Tags[string(v.Key)] = v.Value.AsInterface()
-	}
+var _ trace.Span = &mockSpan{}
+
+func (*mockSpan) SpanContext() trace.SpanContext     { return trace.SpanContext{} }
+func (*mockSpan) IsRecording() bool                  { return false }
+func (s *mockSpan) SetStatus(_ codes.Code, _ string) {}
+func (s *mockSpan) SetAttributes(kv ...attribute.KeyValue) {
+	s.attributes = append(s.attributes, kv...)
 }
-func (n MockSpan) TracerProvider() trace.TracerProvider { return n.Provider }
+func (s *mockSpan) End(...trace.SpanEndOption)                  {}
+func (s *mockSpan) RecordError(_ error, _ ...trace.EventOption) {}
+func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
+
+func (s *mockSpan) SetName(name string) { s.name = name }
+
+func (*mockSpan) TracerProvider() trace.TracerProvider { return mockTracerProvider{} }

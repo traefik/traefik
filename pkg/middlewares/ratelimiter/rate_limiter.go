@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	typeName   = "RateLimiterType"
+	typeName   = "RateLimiter"
 	maxSources = 65536
 )
 
@@ -121,8 +121,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, trace.SpanKind) {
-	return rl.name, trace.SpanKindInternal
+func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
+	return rl.name, typeName, trace.SpanKindInternal
 }
 
 func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

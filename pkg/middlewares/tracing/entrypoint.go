@@ -16,13 +16,13 @@ const (
 )
 
 type entryPointTracing struct {
-	tracer     tracing.Tracer
+	tracer     trace.Tracer
 	entryPoint string
 	next       http.Handler
 }
 
 // newEntryPoint creates a new tracing middleware for incoming requests.
-func newEntryPoint(ctx context.Context, tracer tracing.Tracer, entryPointName string, next http.Handler) http.Handler {
+func newEntryPoint(ctx context.Context, tracer trace.Tracer, entryPointName string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
 	return &entryPointTracing{
@@ -33,25 +33,24 @@ func newEntryPoint(ctx context.Context, tracer tracing.Tracer, entryPointName st
 }
 
 func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctxTracing := tracing.Propagator(req.Context(), req.Header)
-	ctxTracing, span := e.tracer.Start(ctxTracing, "entry_point", trace.WithSpanKind(trace.SpanKindServer))
+	tracingCtx := tracing.Propagator(req.Context(), req.Header)
+	tracingCtx, span := e.tracer.Start(tracingCtx, "entry_point", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
-	req = req.WithContext(ctxTracing)
+	req = req.WithContext(tracingCtx)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
-	span.SetAttributes(attribute.String("component", e.tracer.GetServiceName()))
 
-	tracing.LogRequest(span, req, trace.SpanKindServer)
+	tracing.LogServerRequest(span, req)
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
 
-	tracing.LogResponseCode(span, recorder.Status())
+	tracing.LogResponseCode(span, recorder.Status(), trace.SpanKindServer)
 }
 
 // WrapEntryPointHandler Wraps tracing to alice.Constructor.
-func WrapEntryPointHandler(ctx context.Context, tracer tracing.Tracer, entryPointName string) alice.Constructor {
+func WrapEntryPointHandler(ctx context.Context, tracer trace.Tracer, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		return newEntryPoint(ctx, tracer, entryPointName, next), nil
 	}

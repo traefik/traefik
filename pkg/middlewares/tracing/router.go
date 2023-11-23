@@ -19,47 +19,41 @@ const (
 type routerTracing struct {
 	router  string
 	service string
-	tracer  tracing.Tracer
 	next    http.Handler
 }
 
 // newRouter creates a new tracing middleware that traces the internal requests.
-func newRouter(ctx context.Context, tracer tracing.Tracer, router, service string, next http.Handler) http.Handler {
+func newRouter(ctx context.Context, router, service string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", routerTypeName).
 		Debug().Str(logs.RouterName, router).Str(logs.ServiceName, service).Msg("Added outgoing tracing middleware")
 
 	return &routerTracing{
 		router:  router,
 		service: service,
-		tracer:  tracer,
 		next:    next,
 	}
 }
 
 func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	tracingCtx := tracing.Propagator(req.Context(), req.Header)
-	tracingCtx, span := f.tracer.Start(tracingCtx, "router", trace.WithSpanKind(trace.SpanKindInternal))
-	defer span.End()
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+		tracingCtx := tracing.Propagator(req.Context(), req.Header)
+		tracingCtx, span := tracer.Start(tracingCtx, "router", trace.WithSpanKind(trace.SpanKindInternal))
+		defer span.End()
 
-	req = req.WithContext(tracingCtx)
+		req = req.WithContext(tracingCtx)
 
-	span.SetAttributes(attribute.String("traefik.service.name", f.service))
-	span.SetAttributes(attribute.String("traefik.router.name", f.router))
+		span.SetAttributes(attribute.String("traefik.service.name", f.service))
+		span.SetAttributes(attribute.String("traefik.router.name", f.router))
 
-	tracing.LogRequest(span, req, trace.SpanKindInternal)
+		tracing.InjectRequestHeaders(req.Context(), req.Header)
+	}
 
-	tracing.InjectRequestHeaders(req.Context(), req.Header)
-
-	recorder := newStatusCodeRecorder(rw, 200)
-
-	f.next.ServeHTTP(recorder, req)
-
-	tracing.LogResponseCode(span, recorder.Status())
+	f.next.ServeHTTP(rw, req)
 }
 
 // WrapRouterHandler Wraps tracing to alice.Constructor.
-func WrapRouterHandler(ctx context.Context, tracer tracing.Tracer, router, service string) alice.Constructor {
+func WrapRouterHandler(ctx context.Context, router, service string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		return newRouter(ctx, tracer, router, service, next), nil
+		return newRouter(ctx, router, service, next), nil
 	}
 }

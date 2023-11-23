@@ -14,6 +14,8 @@ const (
 	schemeHTTPS = "https"
 )
 
+const typeName = "Redirect"
+
 var uriRegexp = regexp.MustCompile(`^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`)
 
 type redirect struct {
@@ -44,8 +46,8 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, r
 	}, nil
 }
 
-func (r *redirect) GetTracingInformation() (string, trace.SpanKind) {
-	return r.name, trace.SpanKindInternal
+func (r *redirect) GetTracingInformation() (string, string, trace.SpanKind) {
+	return r.name, typeName, trace.SpanKindInternal
 }
 
 func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
