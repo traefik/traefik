@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	digestTypeName = "digestAuth"
+	typeNameDigest = "digestAuth"
 )
 
 type digestAuth struct {
@@ -30,7 +30,7 @@ type digestAuth struct {
 
 // NewDigest creates a digest auth middleware.
 func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.DigestAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, digestTypeName).Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeNameDigest).Debug().Msg("Creating middleware")
 
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, digestUserParser)
 	if err != nil {
@@ -54,12 +54,12 @@ func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.Digest
 	return da, nil
 }
 
-func (d *digestAuth) GetTracingInformation() (string, trace.SpanKind) {
-	return d.name, trace.SpanKindInternal
+func (d *digestAuth) GetTracingInformation() (string, string, trace.SpanKind) {
+	return d.name, typeNameDigest, trace.SpanKindInternal
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), d.name, digestTypeName)
+	logger := middlewares.GetLogger(req.Context(), d.name, typeNameDigest)
 
 	username, authinfo := d.auth.CheckAuth(req)
 	if username == "" {

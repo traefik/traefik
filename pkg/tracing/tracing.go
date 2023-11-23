@@ -23,25 +23,8 @@ type Backend interface {
 	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error)
 }
 
-// Tracer is an abstraction for trace.Tracer.
-type Tracer interface {
-	trace.Tracer
-
-	GetServiceName() string
-	Close()
-}
-
-// Tracing middleware.
-type Tracing struct {
-	trace.Tracer
-
-	serviceName string
-
-	closer io.Closer
-}
-
 // NewTracing Creates a Tracing.
-func NewTracing(conf *static.Tracing) (*Tracing, error) {
+func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
 	var backend Backend
 
 	if conf.OTLP != nil {
@@ -54,31 +37,7 @@ func NewTracing(conf *static.Tracing) (*Tracing, error) {
 		backend = defaultBackend
 	}
 
-	tracer, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes, conf.Headers)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Tracing{
-		serviceName: conf.ServiceName,
-		Tracer:      tracer,
-		closer:      closer,
-	}, nil
-}
-
-// GetServiceName returns the serviceName.
-func (t *Tracing) GetServiceName() string {
-	return t.serviceName
-}
-
-// Close tracer.
-func (t *Tracing) Close() {
-	if t.closer != nil {
-		err := t.closer.Close()
-		if err != nil {
-			log.Warn().Err(err).Send()
-		}
-	}
+	return backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes, conf.Headers)
 }
 
 func Propagator(ctx context.Context, headers http.Header) context.Context {
@@ -86,27 +45,25 @@ func Propagator(ctx context.Context, headers http.Header) context.Context {
 	return propgator.Extract(ctx, propagation.HeaderCarrier(headers))
 }
 
-// LogRequest used to create span tags from the request.
-func LogRequest(span trace.Span, r *http.Request, spanKind trace.SpanKind) {
-	if span != nil && r != nil {
-		// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
-		// TODO: the semconv does not implement Semantic Convention v1.23.0.
-		span.SetAttributes(attribute.String("http.request.method", r.Method))
-		span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
-		// TODO: recommended in OpenTelemetry
-		// span.SetAttributes(attribute.String("network.peer.address", "127.0.0.1"))
-		// span.SetAttributes(attribute.String("network.peer.port", 80))
-
-		switch spanKind {
-		case trace.SpanKindServer:
-			logServerRequest(span, r)
-		case trace.SpanKindInternal, trace.SpanKindClient:
-			logClientRequest(span, r)
-		}
+func TracerFromContext(ctx context.Context) trace.Tracer {
+	span := trace.SpanFromContext(ctx)
+	if span != nil && span.TracerProvider() != nil {
+		return span.TracerProvider().Tracer("github.com/traefik/traefik")
 	}
+
+	return nil
 }
 
-func logClientRequest(span trace.Span, r *http.Request) {
+// LogClientRequest used to add span attributes from the request as a Client.
+func LogClientRequest(span trace.Span, r *http.Request) {
+	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
+	// TODO: the semconv does not implement Semantic Convention v1.23.0.
+	span.SetAttributes(attribute.String("http.request.method", r.Method))
+	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
+	// TODO: recommended in OpenTelemetry
+	// span.SetAttributes(attribute.String("network.peer.address", "127.0.0.1"))
+	// span.SetAttributes(attribute.String("network.peer.port", 80))
+
 	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-client
 	span.SetAttributes(attribute.String("http.request.method", r.Method))
 	span.SetAttributes(semconv.URLFull(r.URL.String()))
@@ -129,13 +86,21 @@ func logClientRequest(span trace.Span, r *http.Request) {
 	}
 }
 
-func logServerRequest(span trace.Span, r *http.Request) {
+// LogServerRequest used to add span attributes from the request as a Server.
+func LogServerRequest(span trace.Span, r *http.Request) {
+	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
+	// TODO: the semconv does not implement Semantic Convention v1.23.0.
+	span.SetAttributes(attribute.String("http.request.method", r.Method))
+	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
+	// TODO: recommended in OpenTelemetry
+	// span.SetAttributes(attribute.String("network.peer.address", "127.0.0.1"))
+	// span.SetAttributes(attribute.String("network.peer.port", 80))
+
 	// Server attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-server-semantic-conventions
 	span.SetAttributes(attribute.Int("http.request.body.size", int(r.ContentLength)))
-	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 	span.SetAttributes(semconv.URLPath(r.URL.Path))
 	span.SetAttributes(semconv.URLQuery(r.URL.RawQuery))
-	span.SetAttributes(semconv.URLScheme(r.URL.Scheme))
+	span.SetAttributes(semconv.URLScheme(r.Header.Get("X-Forwarded-Proto")))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 	span.SetAttributes(semconv.ServerAddress(r.Host))
 	// TODO: how to retrieve the entrypoint port?
@@ -169,9 +134,19 @@ func proto(proto string) string {
 }
 
 // LogResponseCode used to log response code in span.
-func LogResponseCode(span trace.Span, code int) {
+func LogResponseCode(span trace.Span, code int, spanKind trace.SpanKind) {
 	if span != nil {
-		span.SetStatus(ServerStatus(code))
+		var status codes.Code
+		var desc string
+		switch spanKind {
+		case trace.SpanKindServer:
+			status, desc = ServerStatus(code)
+		case trace.SpanKindClient:
+			status, desc = ClientStatus(code)
+		default:
+			status, desc = DefaultStatus(code)
+		}
+		span.SetStatus(status, desc)
 		if code > 0 {
 			// TODO: the semconv does not implement Semantic Convention v1.23.0.
 			span.SetAttributes(attribute.Int("http.response.status_code", code))
@@ -183,6 +158,31 @@ func LogResponseCode(span trace.Span, code int) {
 // value returned by a server. Status codes in the 400-499 range are not
 // returned as errors.
 func ServerStatus(code int) (codes.Code, string) {
+	if code < 100 || code >= 600 {
+		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
+	}
+	if code >= 500 {
+		return codes.Error, ""
+	}
+	return codes.Unset, ""
+}
+
+// ClientStatus returns a span status code and message for an HTTP status code
+// value returned by a server. Status codes in the 400-499 range are not
+// returned as errors.
+func ClientStatus(code int) (codes.Code, string) {
+	if code < 100 || code >= 600 {
+		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
+	}
+	if code >= 400 {
+		return codes.Error, ""
+	}
+	return codes.Unset, ""
+}
+
+// DefaultStatus returns a span status code and message for an HTTP status code
+// value generated internally.
+func DefaultStatus(code int) (codes.Code, string) {
 	if code < 100 || code >= 600 {
 		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
 	}

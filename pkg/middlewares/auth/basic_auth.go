@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	basicTypeName = "BasicAuth"
+	typeNameBasic = "BasicAuth"
 )
 
 type basicAuth struct {
@@ -30,7 +30,7 @@ type basicAuth struct {
 
 // NewBasic creates a basicAuth middleware.
 func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, basicTypeName).Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeNameBasic).Debug().Msg("Creating middleware")
 
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {
@@ -55,12 +55,12 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	return ba, nil
 }
 
-func (b *basicAuth) GetTracingInformation() (string, trace.SpanKind) {
-	return b.name, trace.SpanKindInternal
+func (b *basicAuth) GetTracingInformation() (string, string, trace.SpanKind) {
+	return b.name, typeNameBasic, trace.SpanKindInternal
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), b.name, basicTypeName)
+	logger := middlewares.GetLogger(req.Context(), b.name, typeNameBasic)
 
 	user, password, ok := req.BasicAuth()
 	if ok {

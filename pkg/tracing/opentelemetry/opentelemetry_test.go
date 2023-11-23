@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	mtracing "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
@@ -80,11 +80,13 @@ func TestTracing(t *testing.T) {
 		},
 	}
 
-	newTracing, err := tracing.NewTracing(tracingConfig)
+	newTracing, closer, err := tracing.NewTracing(tracingConfig)
 	require.NoError(t, err)
-	t.Cleanup(newTracing.Close)
+	t.Cleanup(func() {
+		_ = closer.Close()
+	})
 
-	chain := alice.New(mtracing.WrapEntryPointHandler(context.Background(), newTracing, "test"))
+	chain := alice.New(tracingMiddle.WrapEntryPointHandler(context.Background(), newTracing, "test"))
 	epHandler, err := chain.Then(http.NotFoundHandler())
 	require.NoError(t, err)
 

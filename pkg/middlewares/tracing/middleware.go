@@ -8,16 +8,17 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // Traceable embeds tracing information.
 type Traceable interface {
-	GetTracingInformation() (name string, spanKind trace.SpanKind)
+	GetTracingInformation() (name string, typeName string, spanKind trace.SpanKind)
 }
 
 // WrapMiddleware adds traceability to an alice.Constructor.
-func WrapMiddleware(ctx context.Context, constructor alice.Constructor, tracer tracing.Tracer) alice.Constructor {
+func WrapMiddleware(ctx context.Context, constructor alice.Constructor) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if constructor == nil {
 			return nil, nil
@@ -28,21 +29,21 @@ func WrapMiddleware(ctx context.Context, constructor alice.Constructor, tracer t
 		}
 
 		if traceableHandler, ok := handler.(Traceable); ok {
-			name, spanKind := traceableHandler.GetTracingInformation()
+			name, typeName, spanKind := traceableHandler.GetTracingInformation()
 			log.Ctx(ctx).Debug().Str(logs.MiddlewareName, name).Msg("Adding tracing to middleware")
-			return newMiddleware(handler, name, spanKind, tracer), nil
+			return NewMiddleware(handler, name, typeName, spanKind), nil
 		}
 		return handler, nil
 	}
 }
 
-// newMiddleware returns a http.Handler struct.
-func newMiddleware(next http.Handler, name string, spanKind trace.SpanKind, tracer tracing.Tracer) http.Handler {
+// NewMiddleware returns a http.Handler struct.
+func NewMiddleware(next http.Handler, name string, typeName string, spanKind trace.SpanKind) http.Handler {
 	return &middlewareTracing{
 		next:     next,
 		name:     name,
+		typeName: typeName,
 		spanKind: spanKind,
-		tracer:   tracer,
 	}
 }
 
@@ -50,16 +51,20 @@ func newMiddleware(next http.Handler, name string, spanKind trace.SpanKind, trac
 type middlewareTracing struct {
 	next     http.Handler
 	name     string
+	typeName string
 	spanKind trace.SpanKind
-	tracer   tracing.Tracer
 }
 
 func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctxTracing := tracing.Propagator(req.Context(), req.Header)
-	ctxTracing, span := w.tracer.Start(ctxTracing, w.name, trace.WithSpanKind(w.spanKind))
-	defer span.End()
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+		tracingCtx := tracing.Propagator(req.Context(), req.Header)
+		tracingCtx, span := tracer.Start(tracingCtx, w.typeName, trace.WithSpanKind(w.spanKind))
+		defer span.End()
 
-	req = req.WithContext(ctxTracing)
+		req = req.WithContext(tracingCtx)
+
+		span.SetAttributes(attribute.String("traefik.middleware.name", w.name))
+	}
 
 	if w.next != nil {
 		w.next.ServeHTTP(rw, req)

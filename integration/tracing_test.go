@@ -2,14 +2,15 @@ package integration
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/tidwall/gjson"
 	"github.com/traefik/traefik/v3/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
@@ -79,7 +80,35 @@ func (s *TracingSuite) TestOpentelemetryBasic_HTTP(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tempoIP, "entry_point", "router")
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/basic",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router0@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
+
+			"batches.0.scopeSpans.0.spans.2.name": "service",
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
+
+			"batches.0.scopeSpans.0.spans.3.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+		},
+	}
+
+	checkTraceContent(c, s.tempoIP, contains)
 }
 
 func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
@@ -104,7 +133,35 @@ func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tempoIP, "entry_point", "router")
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/basic",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router0@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
+
+			"batches.0.scopeSpans.0.spans.2.name": "service",
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
+
+			"batches.0.scopeSpans.0.spans.3.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+		},
+	}
+
+	checkTraceContent(c, s.tempoIP, contains)
 }
 
 func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
@@ -150,7 +207,84 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tempoIP, "entry_point", "router", "ratelimit-1@file")
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
+
+			"batches.0.scopeSpans.0.spans.2.name": "Retry",
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+
+			"batches.0.scopeSpans.0.spans.3.name": "RateLimiter",
+			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+
+			"batches.0.scopeSpans.0.spans.4.name": "service",
+			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
+
+			"batches.0.scopeSpans.0.spans.5.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.5.kind":                                                           "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+		},
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "429",
+
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
+
+			"batches.0.scopeSpans.0.spans.2.name": "Retry",
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+
+			"batches.0.scopeSpans.0.spans.3.name": "RateLimiter",
+			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+
+			"batches.0.scopeSpans.0.spans.4.name": "Retry",
+			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.resend_count\").value.intValue":          "1",
+
+			"batches.0.scopeSpans.0.spans.5.name": "RateLimiter",
+			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+
+			"batches.0.scopeSpans.0.spans.6.name": "Retry",
+			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.resend_count\").value.intValue":          "2",
+
+			"batches.0.scopeSpans.0.spans.7.name": "RateLimiter",
+			"batches.0.scopeSpans.0.spans.7.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+		},
+	}
+
+	checkTraceContent(c, s.tempoIP, contains)
 }
 
 func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
@@ -174,7 +308,68 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tempoIP, "entry_point", "retry@file")
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/retry",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
+			"batches.0.scopeSpans.0.spans.0.status.code":                                                    "STATUS_CODE_ERROR",
+
+			"batches.0.scopeSpans.0.spans.1.name": "router",
+			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router2@file",
+
+			"batches.0.scopeSpans.0.spans.2.name": "Retry",
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+
+			"batches.0.scopeSpans.0.spans.3.name": "service",
+			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+
+			"batches.0.scopeSpans.0.spans.4.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.4.kind":                                                           "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+
+			"batches.0.scopeSpans.0.spans.5.name": "Retry",
+			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.resend_count\").value.intValue":          "1",
+
+			"batches.0.scopeSpans.0.spans.6.name": "service",
+			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+
+			"batches.0.scopeSpans.0.spans.7.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.7.kind":                                                           "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
+			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
+			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+
+			"batches.0.scopeSpans.0.spans.8.name": "Retry",
+			"batches.0.scopeSpans.0.spans.8.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"http.resend_count\").value.intValue":          "2",
+
+			"batches.0.scopeSpans.0.spans.9.name": "service",
+			"batches.0.scopeSpans.0.spans.9.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.9.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+
+			"batches.0.scopeSpans.0.spans.10.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.10.kind":                                                           "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
+			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
+			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+		},
+	}
+
+	checkTraceContent(c, s.tempoIP, contains)
 }
 
 func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
@@ -198,10 +393,32 @@ func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
-	checkTraceContent(c, s.tempoIP, "entry_point", "router", "retry@file", "basic-auth@file")
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/auth",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "401",
+
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
+
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+
+			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
+		},
+	}
+
+	checkTraceContent(c, s.tempoIP, contains)
 }
 
-func checkTraceContent(c *check.C, tempoIP string, bodyContains ...string) {
+func checkTraceContent(c *check.C, tempoIP string, expectedJSON []map[string]string) {
 	baseURL, err := url.Parse("http://" + tempoIP + ":3200/api/search")
 	c.Assert(err, checker.IsNil)
 
@@ -224,11 +441,7 @@ func checkTraceContent(c *check.C, tempoIP string, bodyContains ...string) {
 		c.Fatalf("expected at least one trace, got %d (%s)", len(out.Traces), string(content))
 	}
 
-	containsMap := make(map[string]struct{}, len(bodyContains))
-	for _, b := range bodyContains {
-		containsMap[b] = struct{}{}
-	}
-
+	var contents []string
 	for _, t := range out.Traces {
 		baseURL, err := url.Parse("http://" + tempoIP + ":3200/api/traces/" + t.TraceID)
 		c.Assert(err, checker.IsNil)
@@ -244,28 +457,28 @@ func checkTraceContent(c *check.C, tempoIP string, bodyContains ...string) {
 		content, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
-		fmt.Println(string(content))
-
-		out := &BatchesResponse{}
-		err = json.Unmarshal(content, &out)
-		c.Assert(err, checker.IsNil)
-
-		for _, b := range out.Batches {
-			for _, s := range b.ScopeSpans {
-				for _, span := range s.Spans {
-					delete(containsMap, span.Name)
-					c.Logf("found %s", span.Name)
-				}
-			}
-		}
+		contents = append(contents, string(content))
 	}
 
-	if len(containsMap) > 0 {
-		var notFound []string
-		for v := range containsMap {
-			notFound = append(notFound, v)
+	for _, expected := range expectedJSON {
+		containsAll(c, expected, contents)
+	}
+}
+
+func containsAll(c *check.C, expectedJSON map[string]string, contents []string) {
+	for k, v := range expectedJSON {
+		found := false
+		for _, content := range contents {
+			if gjson.Get(content, k).String() == v {
+				found = true
+				break
+			}
 		}
-		c.Errorf("expected traces to contain %v, but not found %v", bodyContains, notFound)
+
+		if !found {
+			c.Log("[" + strings.Join(contents, ",") + "]")
+			c.Errorf("missing element: \nKey: %q\nValue: %q ", k, v)
+		}
 	}
 }
 
@@ -276,27 +489,5 @@ type TraceResponse struct {
 
 // Trace represents a simplified grafana tempo trace.
 type Trace struct {
-	TraceID       string `json:"traceID"`
-	RootTraceName string `json:"rootTraceName"`
-	DurationMs    int    `json:"durationMs"`
-}
-
-// BatchesResponse contains a list of batches.
-type BatchesResponse struct {
-	Batches []Batch `json:"batches"`
-}
-
-// Batch represents a simplified grafana tempo batch.
-type Batch struct {
-	ScopeSpans []ScopeSpan `json:"scopeSpans"`
-}
-
-// ScopeSpan represents a simplified grafana tempo scope span.
-type ScopeSpan struct {
-	Spans []Span `json:"spans"`
-}
-
-// Span represents a simplified grafana tempo Span.
-type Span struct {
-	Name string `json:"name"`
+	TraceID string `json:"traceID"`
 }
