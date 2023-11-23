@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -45,6 +46,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func main() {
@@ -258,7 +260,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		log.Info().Msg("Successfully obtained SPIFFE SVID.")
 	}
 
-	tracer := setupTracing(staticConfiguration.Tracing)
+	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
@@ -268,7 +270,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager, tracer)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
 
 	// Watcher
 
@@ -349,7 +351,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	})
 
-	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
+	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog, tracerCloser), nil
 }
 
 func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvider http.Handler) http.Handler {
@@ -562,17 +564,18 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) tracing.Tracer {
+func setupTracing(conf *static.Tracing) (trace.Tracer, io.Closer) {
 	if conf == nil {
-		return nil
+		return nil, nil
 	}
 
-	tracer, err := tracing.NewTracing(conf)
+	tracer, closer, err := tracing.NewTracing(conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create tracer")
-		return nil
+		return nil, nil
 	}
-	return tracer
+
+	return tracer, closer
 }
 
 func checkNewVersion() {

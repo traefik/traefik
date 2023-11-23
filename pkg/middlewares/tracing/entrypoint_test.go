@@ -7,45 +7,41 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/tracing"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func TestEntryPointMiddleware(t *testing.T) {
 	type expected struct {
-		Tags     map[string]interface{}
-		SpanName string
+		name       string
+		attributes []attribute.KeyValue
 	}
 
 	testCases := []struct {
 		desc       string
 		entryPoint string
-		tracing    tracing.Tracer
 		expected   expected
 	}{
 		{
 			desc:       "basic test",
 			entryPoint: "test",
-			tracing:    &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
 			expected: expected{
-				Tags: map[string]interface{}{
-					"span.kind":                 trace.SpanKindServer.String(),
-					"http.request.method":       http.MethodGet,
-					"http.response.status_code": int64(http.StatusNotFound),
-					"client.port":               int64(1234),
-					"client.socket.address":     "",
-					"http.request.body.size":    int64(0),
-					"network.protocol.version":  "1.1",
-					"client.address":            "10.0.0.1",
-					"server.address":            "www.test.com",
-					"url.path":                  "/search",
-					"url.query":                 "q=Opentelemetry",
-					"url.scheme":                "http",
-					"user_agent.original":       "MyUserAgent",
-					"component":                 "",
-					"entry_point":               "test",
+				name: "entry_point",
+				attributes: []attribute.KeyValue{
+					// attribute.String("span.kind", "server"),
+					attribute.String("entry_point", "test"),
+					attribute.String("http.request.method", "GET"),
+					attribute.String("network.protocol.version", "1.1"),
+					attribute.Int64("http.request.body.size", int64(0)),
+					attribute.String("url.path", "/search"),
+					attribute.String("url.query", "q=Opentelemetry"),
+					attribute.String("url.scheme", "http"),
+					attribute.String("user_agent.original", "MyUserAgent"),
+					attribute.String("server.address", "www.test.com"),
+					attribute.String("client.address", "10.0.0.1"),
+					attribute.Int64("client.port", int64(1234)),
+					attribute.String("client.socket.address", ""),
+					attribute.Int64("http.response.status_code", int64(404)),
 				},
-				SpanName: "entry_point",
 			},
 		},
 	}
@@ -56,18 +52,21 @@ func TestEntryPointMiddleware(t *testing.T) {
 			rw := httptest.NewRecorder()
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "MyUserAgent")
+			req.Header.Set("X-Forwarded-Proto", "http")
+
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			handler := newEntryPoint(context.Background(), test.tracing, test.entryPoint, next)
+			tracer := &mockTracer{}
+
+			handler := newEntryPoint(context.Background(), tracer, test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
-			span := test.tracing.(*MockTracer).Span
-
-			tags := span.Tags
-			assert.Equal(t, test.expected.Tags, tags)
-			assert.Equal(t, test.expected.SpanName, span.SpanName)
+			for _, span := range tracer.spans {
+				assert.Equal(t, test.expected.name, span.name)
+				assert.Equal(t, test.expected.attributes, span.attributes)
+			}
 		})
 	}
 }

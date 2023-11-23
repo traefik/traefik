@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
@@ -29,7 +30,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 const defaultMaxBodySize int64 = -1
@@ -43,7 +43,6 @@ type RoundTripperGetter interface {
 type Manager struct {
 	routinePool         *safe.Pool
 	metricsRegistry     metrics.Registry
-	tracer              tracing.Tracer
 	bufferPool          httputil.BufferPool
 	roundTripperManager RoundTripperGetter
 
@@ -54,11 +53,10 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, tracer tracing.Tracer, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
-		tracer:              tracer,
 		bufferPool:          newBufferPool(),
 		roundTripperManager: roundTripperManager,
 		services:            make(map[string]http.Handler),
@@ -308,13 +306,18 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 
-		if m.tracer != nil {
-			proxy = tracingMiddle.NewService(ctx, m.tracer, serviceName, proxy)
+		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
+			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName)
+
+			proxy, err = alice.New().
+				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
+				Then(proxy)
+			if err != nil {
+				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
+			}
 		}
 
-		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
-			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
-		}
+		proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
 
 		lb.Add(proxyName, proxy, nil)
 

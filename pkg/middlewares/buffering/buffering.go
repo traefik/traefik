@@ -48,8 +48,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	}, nil
 }
 
-func (b *buffer) GetTracingInformation() (string, trace.SpanKind) {
-	return b.name, trace.SpanKindInternal
+func (b *buffer) GetTracingInformation() (string, string, trace.SpanKind) {
+	return b.name, typeName, trace.SpanKindInternal
 }
 
 func (b *buffer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

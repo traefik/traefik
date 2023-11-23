@@ -991,7 +991,7 @@ OpenTracing configuration. (Default: ```false```)
 Defines additional attributes (key:value) on all spans.
 
 `TRAEFIK_TRACING_HEADERS_<NAME>`:  
-Defines additional connection headers to be sent with the payloads.
+Defines additional headers to be sent with the payloads.
 
 `TRAEFIK_TRACING_OTLP`:  
 Settings for OpenTelemetry. (Default: ```false```)

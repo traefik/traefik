@@ -55,8 +55,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 	}, nil
 }
 
-func (al *ipAllowLister) GetTracingInformation() (string, trace.SpanKind) {
-	return al.name, trace.SpanKindInternal
+func (al *ipAllowLister) GetTracingInformation() (string, string, trace.SpanKind) {
+	return al.name, typeName, trace.SpanKindInternal
 }
 
 func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

@@ -10,6 +10,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const typeName = "Plugin"
+
 // PluginsBuilder the plugin's builder interface.
 type PluginsBuilder interface {
 	Build(pName string, config map[string]interface{}, middlewareName string) (plugins.Constructor, error)
@@ -53,6 +55,6 @@ func (s *traceablePlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.h.ServeHTTP(rw, req)
 }
 
-func (s *traceablePlugin) GetTracingInformation() (string, trace.SpanKind) {
-	return s.name, trace.SpanKindInternal
+func (s *traceablePlugin) GetTracingInformation() (string, string, trace.SpanKind) {
+	return s.name, typeName, trace.SpanKindInternal
 }
