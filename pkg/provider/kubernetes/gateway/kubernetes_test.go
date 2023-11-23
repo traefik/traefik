@@ -5494,7 +5494,7 @@ func Test_getAllowedRoutes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got, conditions := getAllowedRouteKinds(test.listener, test.supportedRouteKinds)
+			got, conditions := getAllowedRouteKinds(&gatev1.Gateway{}, test.listener, test.supportedRouteKinds)
 			if test.wantErr {
 				require.NotEmpty(t, conditions, "no conditions")
 				return
