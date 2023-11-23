@@ -66,8 +66,8 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	}, nil
 }
 
-func (c *circuitBreaker) GetTracingInformation() (string, trace.SpanKind) {
-	return c.name, trace.SpanKindInternal
+func (c *circuitBreaker) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *circuitBreaker) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
