@@ -17,38 +17,32 @@ const (
 
 type serviceTracing struct {
 	service string
-	tracer  tracing.Tracer
 	next    http.Handler
 }
 
 // NewService creates a new tracing middleware that traces the outgoing requests.
-func NewService(ctx context.Context, tracer tracing.Tracer, service string, next http.Handler) http.Handler {
+func NewService(ctx context.Context, service string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", serviceTypeName).
 		Debug().Str(logs.ServiceName, service).Msg("Added outgoing tracing middleware")
 
 	return &serviceTracing{
 		service: service,
-		tracer:  tracer,
 		next:    next,
 	}
 }
 
-func (f *serviceTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	tracingCtx := tracing.Propagator(req.Context(), req.Header)
-	tracingCtx, span := f.tracer.Start(tracingCtx, "router", trace.WithSpanKind(trace.SpanKindClient))
-	defer span.End()
+func (t *serviceTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+		tracingCtx := tracing.Propagator(req.Context(), req.Header)
+		tracingCtx, span := tracer.Start(tracingCtx, "service", trace.WithSpanKind(trace.SpanKindInternal))
+		defer span.End()
 
-	req = req.WithContext(tracingCtx)
+		req = req.WithContext(tracingCtx)
 
-	span.SetAttributes(attribute.String("traefik.service.name", f.service))
+		span.SetAttributes(attribute.String("traefik.service.name", t.service))
 
-	tracing.LogRequest(span, req, trace.SpanKindClient)
+		tracing.InjectRequestHeaders(req.Context(), req.Header)
+	}
 
-	tracing.InjectRequestHeaders(req.Context(), req.Header)
-
-	recorder := newStatusCodeRecorder(rw, 200)
-
-	f.next.ServeHTTP(recorder, req)
-
-	tracing.LogResponseCode(span, recorder.Status())
+	t.next.ServeHTTP(rw, req)
 }

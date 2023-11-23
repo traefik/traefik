@@ -139,8 +139,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	}, nil
 }
 
-func (p *passTLSClientCert) GetTracingInformation() (string, trace.SpanKind) {
-	return p.name, trace.SpanKindInternal
+func (p *passTLSClientCert) GetTracingInformation() (string, string, trace.SpanKind) {
+	return p.name, typeName, trace.SpanKindInternal
 }
 
 func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

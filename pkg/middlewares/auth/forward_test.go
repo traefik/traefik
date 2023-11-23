@@ -497,9 +497,11 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 			},
 		},
 	}
-	tr, err := tracing.NewTracing(config)
+	tr, closer, err := tracing.NewTracing(config)
 	require.NoError(t, err)
-	t.Cleanup(tr.Close)
+	t.Cleanup(func() {
+		_ = closer.Close()
+	})
 
 	next, err = NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)

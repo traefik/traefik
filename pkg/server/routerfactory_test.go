@@ -56,7 +56,7 @@ func TestReuseService(t *testing.T) {
 
 	dialerManager := tcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry(), dialerManager, nil)
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry(), dialerManager)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 
@@ -194,7 +194,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			dialerManager := tcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry(), dialerManager, nil)
+			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry(), dialerManager)
 
 			entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)}))
 
@@ -239,7 +239,7 @@ func TestInternalServices(t *testing.T) {
 
 	dialerManager := tcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(voidRegistry, nil, nil), nil, voidRegistry, dialerManager, nil)
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(voidRegistry, nil, nil), nil, voidRegistry, dialerManager)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 

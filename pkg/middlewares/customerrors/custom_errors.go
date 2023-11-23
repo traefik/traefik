@@ -62,8 +62,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}, nil
 }
 
-func (c *customErrors) GetTracingInformation() (string, trace.SpanKind) {
-	return c.name, trace.SpanKindInternal
+func (c *customErrors) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
