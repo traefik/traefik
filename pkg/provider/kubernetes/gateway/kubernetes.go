@@ -33,7 +33,6 @@ import (
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 const (
@@ -619,13 +618,13 @@ func supportedRouteKinds(protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind,
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		return []gatev1alpha2.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
 
 	case gatev1.TLSProtocolType:
-		return []gatev1alpha2.RouteGroupKind{
+		return []gatev1.RouteGroupKind{
 			{Kind: kindTCPRoute, Group: &group},
 			{Kind: kindTLSRoute, Group: &group},
 		}, nil
