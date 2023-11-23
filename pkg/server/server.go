@@ -107,8 +107,10 @@ func (s *Server) Close() {
 
 	s.chainBuilder.Close()
 
-	if err := s.tracerCloser.Close(); err != nil {
-		log.Error().Err(err).Msg("Could not close the tracer")
+	if s.tracerCloser != nil {
+		if err := s.tracerCloser.Close(); err != nil {
+			log.Error().Err(err).Msg("Could not close the tracer")
+		}
 	}
 
 	cancel()
