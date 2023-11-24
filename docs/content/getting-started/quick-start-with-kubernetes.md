@@ -5,7 +5,7 @@ description: "Get started with Traefik Proxy and Kubernetes."
 
 # Quick Start
 
-A Use Case of Traefik Proxy and Kubernetes.
+A Use Case of Traefik Proxy and Kubernetes
 {: .subtitle }
 
 This guide is an introduction to using Traefik Proxy in a Kubernetes environment.  
