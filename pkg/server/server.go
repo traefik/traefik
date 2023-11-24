@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/signal"
 	"time"
@@ -27,12 +28,12 @@ type Server struct {
 	stopChan chan bool
 
 	routinesPool *safe.Pool
+
+	tracerCloser io.Closer
 }
 
 // NewServer returns an initialized Server.
-func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher,
-	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler,
-) *Server {
+func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher, chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler, tracerCloser io.Closer) *Server {
 	srv := &Server{
 		watcher:                watcher,
 		tcpEntryPoints:         entryPoints,
@@ -42,6 +43,7 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 		stopChan:               make(chan bool, 1),
 		routinesPool:           routinesPool,
 		udpEntryPoints:         entryPointsUDP,
+		tracerCloser:           tracerCloser,
 	}
 
 	srv.configureSignals()
@@ -104,6 +106,10 @@ func (s *Server) Close() {
 	close(s.stopChan)
 
 	s.chainBuilder.Close()
+
+	if err := s.tracerCloser.Close(); err != nil {
+		log.Error().Err(err).Msg("Could not close the tracer")
+	}
 
 	cancel()
 }

@@ -10,11 +10,13 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ManagerFactory a factory of service manager.
 type ManagerFactory struct {
 	metricsRegistry metrics.Registry
+	tracer          trace.Tracer
 
 	roundTripperManager *RoundTripperManager
 
@@ -29,9 +31,10 @@ type ManagerFactory struct {
 }
 
 // NewManagerFactory creates a new ManagerFactory.
-func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, roundTripperManager *RoundTripperManager, acmeHTTPHandler http.Handler) *ManagerFactory {
+func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, tracer trace.Tracer, roundTripperManager *RoundTripperManager, acmeHTTPHandler http.Handler) *ManagerFactory {
 	factory := &ManagerFactory{
 		metricsRegistry:     metricsRegistry,
+		tracer:              tracer,
 		routinesPool:        routinesPool,
 		roundTripperManager: roundTripperManager,
 		acmeHTTPHandler:     acmeHTTPHandler,
