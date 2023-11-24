@@ -14,7 +14,6 @@ Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"
 
 Please check our dedicated [OTel docs](./opentelemetry.md) to learn more.
 
-- [OpenTelemetry](./opentelemetry.md)
 
 ## Configuration
 
