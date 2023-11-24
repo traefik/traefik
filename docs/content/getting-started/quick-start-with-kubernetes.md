@@ -1,11 +1,11 @@
 ---
 title: "Traefik Getting Started With Kubernetes"
-description: "Looking to get started with Traefik Proxy? Read the technical documentation to learn a simple use case that leverages Kubernetes."
+description: "Get started with Traefik Proxy and Kubernetes."
 ---
 
 # Quick Start
 
-A Use Case of Traefik Proxy and Kubernetes
+A Use Case of Traefik Proxy and Kubernetes.
 {: .subtitle }
 
 This guide is an introduction to using Traefik Proxy in a Kubernetes environment.  
@@ -88,7 +88,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: traefik-account
-    namespace: default # Using "default" because we did not specify a namespace when creating the ClusterAccount.
+    namespace: default # This tutorial uses the "default" K8s namespace.
 ```
 
 !!! info "`roleRef` is the Kubernetes reference to the role created in `00-role.yml`."
@@ -214,7 +214,7 @@ The only part still missing is the business application behind the reverse proxy
 For this guide, we use the example application [traefik/whoami](https://github.com/traefik/whoami),
 but the principles are applicable to any other application.
 
-The `whoami` application is a simple HTTP server running on port 80 which answers host-related information to the incoming requests.  
+The `whoami` application is an HTTP server running on port 80 which answers host-related information to the incoming requests.  
 As usual, start by creating a file called `03-whoami.yml` and paste the following `Deployment` resource:
 
 ```yaml tab="03-whoami.yml"
