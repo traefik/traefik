@@ -197,17 +197,16 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	tHandler := func(next http.Handler) (http.Handler, error) {
-		return tracing.NewForwarder(ctx, routerName, router.Service, next), nil
-	}
-
 	chain := alice.New()
 
+	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, provider.GetQualifiedName(ctx, router.Service)))
+
 	if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service)))
+		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service))
+		chain = chain.Append(tracing.WrapMiddleware(ctx, metricsHandler))
 	}
 
-	return chain.Extend(*mHandler).Append(tHandler).Then(sHandler)
+	return chain.Extend(*mHandler).Then(sHandler)
 }
 
 // BuildDefaultHTTPRouter creates a default HTTP router.
