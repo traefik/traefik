@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -55,8 +55,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 	}, nil
 }
 
-func (al *ipAllowLister) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return al.name, tracing.SpanKindNoneEnum
+func (al *ipAllowLister) GetTracingInformation() (string, string, trace.SpanKind) {
+	return al.name, typeName, trace.SpanKindInternal
 }
 
 func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -68,7 +68,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug().Msg(msg)
-		tracing.SetErrorWithEvent(req, msg)
+		tracing.SetErrorWithEvent(req.Context(), msg)
 		reject(ctx, rw)
 		return
 	}

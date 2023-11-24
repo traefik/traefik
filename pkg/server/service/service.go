@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
@@ -21,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
@@ -304,8 +306,17 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 
 		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
-			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
+			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName)
+
+			proxy, err = alice.New().
+				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
+				Then(proxy)
+			if err != nil {
+				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
+			}
 		}
+
+		proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
 
 		lb.Add(proxyName, proxy, nil)
 
