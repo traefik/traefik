@@ -106,3 +106,22 @@ Please use the API Group `networking.k8s.io/v1` instead.
 In v3, the Traefik CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
 
 Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` instead.
+
+## Tracing
+
+In v3, the tracing feature has been revamped and is now powered exclusively by OpenTelemetry (OTel).
+It's important to note that Traefik v3 no longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
+Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
+
+Here are two possible transition strategies:
+
+ 1. OTLP Ingestion Endpoints:
+
+    Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
+    You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
+
+ 2. Legacy Stack Compatibility:
+
+    For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
+    using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
+    This allows continued compatibility with the existing infrastructure.

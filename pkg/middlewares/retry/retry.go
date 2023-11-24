@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -60,8 +62,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}, nil
 }
 
-func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
+func (r *retry) GetTracingInformation() (string, string, trace.SpanKind) {
+	return r.name, typeName, trace.SpanKindInternal
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -84,7 +86,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		retryResponseWriter := newResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
-		trace := &httptrace.ClientTrace{
+		clientTrace := &httptrace.ClientTrace{
 			WroteHeaders: func() {
 				retryResponseWriter.DisableRetries()
 			},
@@ -92,12 +94,23 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				retryResponseWriter.DisableRetries()
 			},
 		}
-		newCtx := httptrace.WithClientTrace(req.Context(), trace)
+		newCtx := httptrace.WithClientTrace(req.Context(), clientTrace)
 
 		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
 
 		if !retryResponseWriter.ShouldRetry() {
 			return nil
+		}
+
+		if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+			tracingCtx := tracing.Propagator(req.Context(), req.Header)
+			tracingCtx, span := tracer.Start(tracingCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
+			defer span.End()
+
+			span.SetAttributes(attribute.String("traefik.middleware.name", r.name))
+			span.SetAttributes(semconv.HTTPResendCount(attempts))
+
+			req = req.WithContext(tracingCtx)
 		}
 
 		attempts++
