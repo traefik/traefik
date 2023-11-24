@@ -247,6 +247,6 @@ then it could be due to `CNAME` support.
 In which case, you should make sure your infrastructure is properly set up for a
 `DNS` challenge that does not rely on `CNAME`, and you should try disabling `CNAME` support with:
 
-```bash
+```shell
 LEGO_DISABLE_CNAME_SUPPORT=true
 ```
