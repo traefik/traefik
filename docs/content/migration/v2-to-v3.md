@@ -109,8 +109,10 @@ Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` ins
 
 ## Tracing
 
-In v3, the tracing feature has been revamped and is now powered exclusively by OpenTelemetry (OTel).
-It's important to note that Traefik v3 no longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
+In v3, the tracing feature has been revamped and is now powered exclusively by [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel") (OTel).
+!!! warning "Important"
+
+    Traefik v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
 Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
 
 Here are two possible transition strategies:
