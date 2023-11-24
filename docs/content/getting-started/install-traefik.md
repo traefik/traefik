@@ -19,7 +19,7 @@ Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and
 * [YAML](https://raw.githubusercontent.com/traefik/traefik/v2.10/traefik.sample.yml)
 * [TOML](https://raw.githubusercontent.com/traefik/traefik/v2.10/traefik.sample.toml)
 
-```bash
+```shell
 docker run -d -p 8080:8080 -p 80:80 \
     -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v2.10
 ```
@@ -59,7 +59,7 @@ You can update the chart repository by running:
 helm repo update
 ```
 
-And install it with the `helm` command line:
+And install it with the Helm command line:
 
 ```bash
 helm install traefik traefik/traefik
