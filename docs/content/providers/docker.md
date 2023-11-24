@@ -89,6 +89,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
         deploy:
           labels:
             - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.routers.my-container.service=my-container-service
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
@@ -738,7 +739,7 @@ providers:
 _Optional, Default=false_
 
 If the parameter is set to `true`,
-any [servers load balancer](../routing/services/index.md#servers-load-balancer) defined for Docker containers is created 
+any [servers load balancer](../routing/services/index.md#servers-load-balancer) defined for Docker containers is created
 regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers.
 It also then stays alive and responsive even at times when it becomes empty,
 i.e. when all its children containers become unhealthy.
