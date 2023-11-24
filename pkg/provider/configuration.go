@@ -353,7 +353,7 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
+					Errorf("No service name for the router: %s", routerName)
 				continue
 			}
 
@@ -375,7 +375,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
 			loggerRouter.
-				Error("Could not define the service name for the router: too many services")
+				Errorf("No service name for the router: %s", routerName)
 			continue
 		}
 
@@ -390,7 +390,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
-			log.FromContext(ctx).Info("Could not create a router for the container: too many services")
+			log.FromContext(ctx).Info("When there is more than one service, routers must be explicitely configured")
 		} else {
 			configuration.Routers = make(map[string]*dynamic.Router)
 			configuration.Routers[defaultRouterName] = &dynamic.Router{}
@@ -422,7 +422,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
+					Errorf("No service name for the router: %s", routerName)
 				continue
 			}
 
