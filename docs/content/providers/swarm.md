@@ -54,10 +54,9 @@ This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swar
     version: "3"
     services:
       my-container:
-        deploy:
-          labels:
-            - traefik.http.routers.my-container.rule=Host(`example.com`)
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
+        labels:
+          - traefik.http.routers.my-container.rule=Host(`example.com`)
+          - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
 ## Routing Configuration
