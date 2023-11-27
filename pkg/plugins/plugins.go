@@ -138,14 +138,18 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 	var errs *multierror.Error
 
 	switch m.Type {
-	case typeMiddleware, typeProvider:
-		// noop
+	case typeMiddleware:
+		if m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
+		}
+
+	case typeProvider:
+		if m.Runtime != RuntimeYaegi && m.Runtime != "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
+		}
+
 	default:
 		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
-	}
-
-	if m.Type == typeMiddleware && (m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "") {
-		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
 	}
 
 	if m.IsYaegiPlugin() {
