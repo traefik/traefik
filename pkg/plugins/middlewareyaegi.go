@@ -11,6 +11,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
@@ -21,10 +22,10 @@ type yaegiMiddlewareBuilder struct {
 	fnCreateConfig reflect.Value
 }
 
-func newYaegiMiddlewareBuilder(logger zerolog.Logger, goPath string, manifest *Manifest) (*yaegiMiddlewareBuilder, error) {
-	i, err := initInterp(logger, goPath, manifest.Import)
+func newYaegiMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest) (*yaegiMiddlewareBuilder, error) {
+	i, err := newInterpreter(ctx, goPath, manifest.Import)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initInterp: %w", err)
+		return nil, fmt.Errorf("failed to craete Yaegi intepreter: %w", err)
 	}
 
 	basePkg := manifest.BasePkg
@@ -70,6 +71,7 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 		if !ok {
 			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
 		}
+
 		return nil, err
 	}
 
@@ -77,6 +79,7 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}
+
 	return handler, nil
 }
 
@@ -122,12 +125,12 @@ func (m *YaegiMiddleware) NewHandler(ctx context.Context, next http.Handler) (ht
 	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
 }
 
-func initInterp(logger zerolog.Logger, goPath string, manifestImport string) (*interp.Interpreter, error) {
+func newInterpreter(ctx context.Context, goPath string, manifestImport string) (*interp.Interpreter, error) {
 	i := interp.New(interp.Options{
 		GoPath: goPath,
 		Env:    os.Environ(),
-		Stdout: logs.NoLevel(logger, zerolog.DebugLevel),
-		Stderr: logs.NoLevel(logger, zerolog.ErrorLevel),
+		Stdout: logs.NoLevel(*log.Ctx(ctx), zerolog.DebugLevel),
+		Stderr: logs.NoLevel(*log.Ctx(ctx), zerolog.ErrorLevel),
 	})
 
 	err := i.Use(stdlib.Symbols)
@@ -144,5 +147,6 @@ func initInterp(logger zerolog.Logger, goPath string, manifestImport string) (*i
 	if err != nil {
 		return nil, fmt.Errorf("failed to import plugin code %q: %w", manifestImport, err)
 	}
+
 	return i, nil
 }

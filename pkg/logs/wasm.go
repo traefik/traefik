@@ -1,4 +1,4 @@
-package plugins
+package logs
 
 import (
 	"context"
@@ -7,18 +7,18 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func initWasmLogger(logger *zerolog.Logger) *WasmLogger {
-	return &WasmLogger{
-		logger: logger,
-	}
-}
-
 // compile-time check to ensure ConsoleLogger implements api.Logger.
 var _ api.Logger = WasmLogger{}
 
 // WasmLogger is a convenience which writes anything above LogLevelInfo to os.Stdout.
 type WasmLogger struct {
 	logger *zerolog.Logger
+}
+
+func NewWasmLogger(logger *zerolog.Logger) *WasmLogger {
+	return &WasmLogger{
+		logger: logger,
+	}
 }
 
 // IsEnabled implements the same method as documented on api.Logger.

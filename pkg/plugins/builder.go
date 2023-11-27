@@ -27,6 +27,8 @@ type Builder struct {
 
 // NewBuilder creates a new Builder.
 func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor) (*Builder, error) {
+	ctx := context.Background()
+
 	pb := &Builder{
 		middlewareBuilders: map[string]middlewareBuilder{},
 		providerBuilders:   map[string]providerBuilder{},
@@ -39,24 +41,24 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			return nil, fmt.Errorf("%s: failed to read manifest: %w", desc.ModuleName, err)
 		}
 
-		logger := log.With().Str("plugin", "plugin-"+pName).Str("module", desc.ModuleName).Logger()
+		logger := log.With().
+			Str("plugin", "plugin-"+pName).
+			Str("module", desc.ModuleName).
+			Str("runtime", manifest.Runtime).
+			Logger()
+		logCtx := logger.WithContext(ctx)
 
 		switch manifest.Type {
 		case middleware:
-			switch manifest.Runtime {
-			case RuntimeWasm:
-				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(client.GoPath(), desc.ModuleName)
-			case RuntimeYaegi, "":
-				middleware, err := newYaegiMiddlewareBuilder(logger, client.GoPath(), manifest)
-				if err != nil {
-					return nil, err
-				}
-				pb.middlewareBuilders[pName] = middleware
-			default:
-				return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
+			middleware, err := newMiddlewareBuilder(logCtx, manifest, desc.ModuleName)
+			if err != nil {
+				return nil, err
 			}
+
+			pb.middlewareBuilders[pName] = middleware
+
 		case provider:
-			i, err := initInterp(logger, client.GoPath(), manifest.Import)
+			i, err := newInterpreter(logCtx, client.GoPath(), manifest.Import)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -66,6 +68,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 				Import:      manifest.Import,
 				BasePkg:     manifest.BasePkg,
 			}
+
 		default:
 			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
 		}
@@ -77,24 +80,24 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			return nil, fmt.Errorf("%s: failed to read manifest: %w", desc.ModuleName, err)
 		}
 
-		logger := log.With().Str("plugin", "plugin-"+pName).Str("module", desc.ModuleName).Logger()
+		logger := log.With().
+			Str("plugin", "plugin-"+pName).
+			Str("module", desc.ModuleName).
+			Str("runtime", manifest.Runtime).
+			Logger()
+		logCtx := logger.WithContext(ctx)
 
 		switch manifest.Type {
 		case middleware:
-			switch manifest.Runtime {
-			case RuntimeWasm:
-				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(localGoPath, desc.ModuleName)
-			case RuntimeYaegi, "":
-				middleware, err := newYaegiMiddlewareBuilder(logger, localGoPath, manifest)
-				if err != nil {
-					return nil, err
-				}
-				pb.middlewareBuilders[pName] = middleware
-			default:
-				return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
+			middleware, err := newMiddlewareBuilder(logCtx, manifest, desc.ModuleName)
+			if err != nil {
+				return nil, err
 			}
+
+			pb.middlewareBuilders[pName] = middleware
+
 		case provider:
-			i, err := initInterp(logger, localGoPath, manifest.Import)
+			i, err := newInterpreter(logCtx, localGoPath, manifest.Import)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -104,6 +107,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 				Import:      manifest.Import,
 				BasePkg:     manifest.BasePkg,
 			}
+
 		default:
 			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
 		}
@@ -127,4 +131,17 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 	}
 
 	return nil, fmt.Errorf("unknown plugin type: %s", pName)
+}
+
+func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName string) (middlewareBuilder, error) {
+	switch manifest.Runtime {
+	case RuntimeWasm:
+		return newWasmMiddlewareBuilder(localGoPath, moduleName), nil
+
+	case RuntimeYaegi, "":
+		return newYaegiMiddlewareBuilder(ctx, localGoPath, manifest)
+
+	default:
+		return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
+	}
 }
