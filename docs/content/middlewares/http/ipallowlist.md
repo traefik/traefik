@@ -193,3 +193,45 @@ http:
     [http.middlewares.test-ipallowlist.ipAllowList.ipStrategy]
       excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```
+
+### `rejectStatusCode`
+
+The `rejectStatusCode` option sets HTTP status code for refused requests. If not set, the default is 403 (Forbidden).
+
+```yaml tab="Docker & Swarm"
+# Reject requests with a 404 rather than a 403
+labels:
+    - "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
+```
+
+```yaml tab="Kubernetes"
+# Reject requests with a 404 rather than a 403
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ipallowlist
+spec:
+  ipAllowList:
+    rejectStatusCode: 404
+```
+
+```yaml tab="Consul Catalog"
+# Reject requests with a 404 rather than a 403
+- "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
+```
+
+```yaml tab="File (YAML)"
+# Reject requests with a 404 rather than a 403
+http:
+  middlewares:
+    test-ipallowlist:
+      ipAllowList:
+        rejectStatusCode: 404
+```
+
+```toml tab="File (TOML)"
+# Reject requests with a 404 rather than a 403
+[http.middlewares]
+  [http.middlewares.test-ipallowlist.ipAllowList]
+    rejectStatusCode = 404
+```
