@@ -22,7 +22,7 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker & Deploying / Exposing one Service"
 
     Enabling the docker provider
 
@@ -50,49 +50,7 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
           - traefik.http.routers.my-container.rule=Host(`example.com`)
     ```
 
-??? example "Specify a Custom Port for the Container"
-
-    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        # ...
-        labels:
-          - traefik.http.routers.my-container.rule=Host(`example.com`)
-          # Tell Traefik to use the port 12345 to connect to `my-container`
-          - traefik.http.services.my-service.loadbalancer.server.port=12345
-    ```
-
-    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
-        By default, Traefik uses the lowest exposed port of a container as detailed in
-        [Port Detection](../providers/docker.md#port-detection) of the Docker provider.
-
-        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
-        overrides this behavior.
-
-??? example "Specifying more than one router and service per container"
-
-    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
-
-    In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        # ...
-        labels:
-          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
-          - traefik.http.routers.www-router.service=www-service
-          - traefik.http.services.www-service.loadbalancer.server.port=8000
-          - traefik.http.routers.admin-router.rule=Host(`example-b.com`)
-          - traefik.http.routers.admin-router.service=admin-service
-          - traefik.http.services.admin-service.loadbalancer.server.port=9000
-    ```
-
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
 
     Enabling the docker provider (Swarm Mode)
 
@@ -124,6 +82,8 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
     ```
 
     Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+    When there is only one service and the router does not specify any service,
+    then that service is automatically assigned to the router.
 
     ```yaml
     version: "3"
@@ -139,6 +99,49 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
         While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
         Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
+
+??? example "Specify a Custom Port for the Container"
+
+    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.my-container.rule=Host(`example.com`)
+          - traefik.http.routers.my-container.service=my-service"
+          # Tell Traefik to use the port 12345 to connect to `my-container`
+          - traefik.http.services.my-service.loadbalancer.server.port=12345
+    ```
+
+    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
+        By default, Traefik uses the lowest exposed port of a container as detailed in
+        [Port Detection](../providers/docker.md#port-detection) of the Docker provider.
+
+        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
+        overrides this behavior.
+
+??? example "Specifying more than one router and service per container"
+
+    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+
+    In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+          - traefik.http.routers.www-router.service=www-service
+          - traefik.http.services.www-service.loadbalancer.server.port=8000
+          - traefik.http.routers.admin-router.rule=Host(`example-b.com`)
+          - traefik.http.routers.admin-router.service=admin-service
+          - traefik.http.services.admin-service.loadbalancer.server.port=9000
+    ```
 
 ## Routing Configuration
 
@@ -158,18 +161,18 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 
 --8<-- "content/routing/providers/service-by-label.md"
 
-??? example "Automatic service assignment with labels"
+??? example "Automatic assignment with one Service"
 
     With labels in a compose file
 
     ```yaml
     labels:
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
-      # service myservice gets automatically assigned to router myproxy
+      # No link specified, and yet myproxy router is linked to myservice
       - "traefik.http.services.myservice.loadbalancer.server.port=80"
     ```
 
-??? example "Automatic service creation and assignment with labels"
+??? example "Automatic service creation with one Router"
 
     With labels in a compose file
 
@@ -179,6 +182,22 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
       # and assigned to router myproxy.
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
     ```
+
+??? example "Explicit definition with multiple Services"
+
+    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+          # Explicit link between the router and the service
+          - traefik.http.routers.www-router.service=www-service
+          - traefik.http.services.www-service.loadbalancer.server.port=8000
+
 
 ### Routers
 
@@ -469,7 +488,7 @@ More information about available middlewares in the dedicated [middlewares secti
 
 You can declare TCP Routers and/or Services using labels.
 
-??? example "Declaring TCP Routers and Services"
+??? example "Declaring TCP Routers with one Service"
 
     ```yaml
        services:
@@ -598,7 +617,7 @@ You can declare TCP Routers and/or Services using labels.
 
 You can declare UDP Routers and/or Services using labels.
 
-??? example "Declaring UDP Routers and Services"
+??? example "Declaring UDP Routers with one Service"
 
     ```yaml
        services:
