@@ -19,9 +19,9 @@ type wasmMiddlewareBuilder struct {
 	wasmPath string
 }
 
-func newWasmMiddlewareBuilder(goPath string, moduleName string, manifest *Manifest) *wasmMiddlewareBuilder {
+func newWasmMiddlewareBuilder(goPath string, moduleName string) *wasmMiddlewareBuilder {
 	return &wasmMiddlewareBuilder{
-		wasmPath: filepath.Join(goPath, "src", moduleName, manifest.WasmPath),
+		wasmPath: filepath.Join(goPath, "src", moduleName, "plugin.wasm"),
 	}
 }
 

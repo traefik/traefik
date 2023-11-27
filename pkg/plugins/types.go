@@ -31,7 +31,6 @@ type Manifest struct {
 	BasePkg       string                 `yaml:"basePkg"`
 	Compatibility string                 `yaml:"compatibility"`
 	Summary       string                 `yaml:"summary"`
-	WasmPath      string                 `yaml:"wasmPath"`
 	TestData      map[string]interface{} `yaml:"testData"`
 }
 
