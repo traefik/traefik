@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
+	tprovider "github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/yaegi/interp"
 )
@@ -53,7 +53,7 @@ func ppSymbols() map[string]map[string]reflect.Value {
 }
 
 // BuildProvider builds a plugin's provider.
-func (b Builder) BuildProvider(pName string, config map[string]interface{}) (provider.Provider, error) {
+func (b Builder) BuildProvider(pName string, config map[string]interface{}) (tprovider.Provider, error) {
 	if b.providerBuilders == nil {
 		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
