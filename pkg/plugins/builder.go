@@ -119,6 +119,7 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 		if err != nil {
 			return nil, err
 		}
+
 		return m.NewHandler, nil
 	}
 
