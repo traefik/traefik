@@ -1,8 +1,8 @@
 package plugins
 
 const (
-	RuntimeYaegi = "yaegi"
-	RuntimeWasm  = "wasm"
+	runtimeYaegi = "yaegi"
+	runtimeWasm  = "wasm"
 )
 
 const (
@@ -40,5 +40,5 @@ type Manifest struct {
 // IsYaegiPlugin returns true if the plugin is a Yaegi plugin.
 func (m *Manifest) IsYaegiPlugin() bool {
 	// defaults always Yaegi to have backwards compatibility to plugins without runtime
-	return m.Runtime == RuntimeYaegi || m.Runtime == ""
+	return m.Runtime == runtimeYaegi || m.Runtime == ""
 }
