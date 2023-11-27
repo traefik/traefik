@@ -12,6 +12,7 @@ import (
 	"github.com/http-wasm/http-wasm-host-go/handler"
 	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/tetratelabs/wazero"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
@@ -33,15 +34,17 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, midd
 	}, nil
 }
 
-func (b wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	code, err := os.ReadFile(b.wasmPath)
 	if err != nil {
 		return nil, fmt.Errorf("loading Wasm binary: %w", err)
 	}
+
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
+
 	opts := []handler.Option{
 		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
-		handler.Logger(initWasmLogger(logger)),
+		handler.Logger(logs.NewWasmLogger(logger)),
 	}
 	i := cfg.Interface()
 	if i != nil {
@@ -60,6 +63,7 @@ func (b wasmMiddlewareBuilder) newWasmHandler(ctx context.Context, next http.Han
 	if err != nil {
 		return nil, err
 	}
+
 	return mw.NewHandler(ctx, next), nil
 }
 
@@ -72,5 +76,5 @@ type WasmMiddleware struct {
 
 // NewHandler creates a new HTTP handler.
 func (y WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
-	return y.builder.newWasmHandler(ctx, next, y.config, y.middlewareName)
+	return y.builder.newHandler(ctx, next, y.config, y.middlewareName)
 }
