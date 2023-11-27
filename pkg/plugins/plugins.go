@@ -138,13 +138,13 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 	var errs *multierror.Error
 
 	switch m.Type {
-	case middleware, provider:
+	case typeMiddleware, typeProvider:
 		// noop
 	default:
 		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
 	}
 
-	if m.Type == middleware && (m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "") {
+	if m.Type == typeMiddleware && (m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "") {
 		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
 	}
 
