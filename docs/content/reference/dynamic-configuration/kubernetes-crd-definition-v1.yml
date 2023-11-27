@@ -1213,6 +1213,11 @@ spec:
                     items:
                       type: string
                     type: array
+                  rejectStatusCode:
+                    description: RejectStatusCode sets HTTP status code
+                      for refused requests. If not set, the default is
+                      403 (Forbidden).
+                    type: integer
                 type: object
               passTLSClientCert:
                 description: 'PassTLSClientCert holds the pass TLS client cert middleware

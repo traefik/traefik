@@ -127,7 +127,8 @@
             "excludedIPs": [
               "127.0.0.1"
             ]
-          }
+          },
+          "rejectStatusCode": 0
         },
         "headers": {
           "customRequestHeaders": {
