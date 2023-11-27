@@ -58,16 +58,12 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			i, err := newInterpreter(logCtx, client.GoPath(), manifest.Import)
+			pBuilder, err := newProviderBuilder(logCtx, manifest, client.GoPath())
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
 
-			pb.providerBuilders[pName] = providerBuilder{
-				interpreter: i,
-				Import:      manifest.Import,
-				BasePkg:     manifest.BasePkg,
-			}
+			pb.providerBuilders[pName] = pBuilder
 
 		default:
 			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
@@ -97,16 +93,12 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			i, err := newInterpreter(logCtx, localGoPath, manifest.Import)
+			builder, err := newProviderBuilder(logCtx, manifest, localGoPath)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
 
-			pb.providerBuilders[pName] = providerBuilder{
-				interpreter: i,
-				Import:      manifest.Import,
-				BasePkg:     manifest.BasePkg,
-			}
+			pb.providerBuilders[pName] = builder
 
 		default:
 			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
@@ -147,6 +139,25 @@ func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName st
 		return newYaegiMiddlewareBuilder(i, manifest.BasePkg, manifest.Import)
 
 	default:
-		return nil, fmt.Errorf("unknow plugin runtime: %s", manifest.Runtime)
+		return nil, fmt.Errorf("unknown plugin runtime: %s", manifest.Runtime)
+	}
+}
+
+func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath string) (providerBuilder, error) {
+	switch manifest.Runtime {
+	case RuntimeYaegi, "":
+		i, err := newInterpreter(ctx, goPath, manifest.Import)
+		if err != nil {
+			return providerBuilder{}, err
+		}
+
+		return providerBuilder{
+			interpreter: i,
+			Import:      manifest.Import,
+			BasePkg:     manifest.BasePkg,
+		}, nil
+
+	default:
+		return providerBuilder{}, fmt.Errorf("unknown plugin runtime: %s", manifest.Runtime)
 	}
 }
