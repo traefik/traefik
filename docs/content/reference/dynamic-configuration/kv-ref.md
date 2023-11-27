@@ -83,6 +83,7 @@
 | `traefik/http/middlewares/Middleware11/ipAllowList/ipStrategy/excludedIPs/1` | `foobar` |
 | `traefik/http/middlewares/Middleware11/ipAllowList/sourceRange/0` | `foobar` |
 | `traefik/http/middlewares/Middleware11/ipAllowList/sourceRange/1` | `foobar` |
+| `traefik/http/middlewares/Middleware11/ipAllowList/rejectStatusCode` | `404` |
 | `traefik/http/middlewares/Middleware12/inFlightReq/amount` | `42` |
 | `traefik/http/middlewares/Middleware12/inFlightReq/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware12/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
