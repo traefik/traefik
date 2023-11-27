@@ -53,6 +53,7 @@ Attach labels to your containers and let Traefik do the rest!
         # ...
         labels:
           - traefik.http.routers.my-container.rule=Host(`example.com`)
+          - traefik.http.routers.my-container.service=my-service"
           # Tell Traefik to use the port 12345 to connect to `my-container`
           - traefik.http.services.my-service.loadbalancer.server.port=12345
     ```
@@ -123,6 +124,7 @@ Attach labels to your containers and let Traefik do the rest!
         deploy:
           labels:
             - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.routers.my-container.service=my-container-service
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
@@ -142,21 +144,21 @@ Attach labels to your containers and let Traefik do the rest!
 
 Traefik creates, for each container, a corresponding [service](../services/index.md) and [router](../routers/index.md).
 
-The Service automatically gets a server per instance of the container,
+The Service gets a server per instance of the container,
 and the router automatically gets a rule defined by `defaultRule` (if no rule for it was defined in labels).
 
 #### Service definition
 
 --8<-- "content/routing/providers/service-by-label.md"
 
-??? example "Automatic service assignment with labels"
+??? example "Service assignment with labels"
 
     With labels in a compose file
 
     ```yaml
     labels:
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
-      # service myservice gets automatically assigned to router myproxy
+      - "traefik.http.routers.myproxy.service=myservice"
       - "traefik.http.services.myservice.loadbalancer.server.port=80"
     ```
 
@@ -469,6 +471,7 @@ You can declare TCP Routers and/or Services using labels.
            labels:
              - "traefik.tcp.routers.my-router.rule=HostSNI(`example.com`)"
              - "traefik.tcp.routers.my-router.tls=true"
+             - "traefik.tcp.routers.my-router.service=my-service"
              - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
     ```
 
@@ -597,6 +600,7 @@ You can declare UDP Routers and/or Services using labels.
            # ...
            labels:
              - "traefik.udp.routers.my-router.entrypoints=udp"
+             - "traefik.udp.routers.my-router.service=my-service"
              - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
     ```
 
