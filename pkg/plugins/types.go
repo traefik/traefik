@@ -6,8 +6,8 @@ const (
 )
 
 const (
-	middleware = "middleware"
-	provider   = "provider"
+	typeMiddleware = "middleware"
+	typeProvider   = "provider"
 )
 
 // Descriptor The static part of a plugin configuration.
