@@ -77,7 +77,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug().Msg(msg)
 		tracing.SetErrorWithEvent(req, msg)
-		reject(al.rejectStatusCode, ctx, rw)
+		reject(ctx, al.rejectStatusCode, rw)
 		return
 	}
 	logger.Debug().Msgf("Accepting IP %s", clientIP)
@@ -85,7 +85,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	al.next.ServeHTTP(rw, req)
 }
 
-func reject(statusCode int, ctx context.Context, rw http.ResponseWriter) {
+func reject(ctx context.Context, statusCode int, rw http.ResponseWriter) {
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write([]byte(http.StatusText(statusCode)))
 	if err != nil {
