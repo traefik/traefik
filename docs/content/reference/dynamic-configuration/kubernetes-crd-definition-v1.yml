@@ -1207,17 +1207,16 @@ spec:
                           type: string
                         type: array
                     type: object
+                  rejectStatusCode:
+                    description: RejectStatusCode defines the HTTP status code used
+                      for refused requests. If not set, the default is 403 (Forbidden).
+                    type: integer
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation).
                     items:
                       type: string
                     type: array
-                  rejectStatusCode:
-                    description: RejectStatusCode sets HTTP status code
-                      for refused requests. If not set, the default is
-                      403 (Forbidden).
-                    type: integer
                 type: object
               passTLSClientCert:
                 description: 'PassTLSClientCert holds the pass TLS client cert middleware
