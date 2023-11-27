@@ -138,18 +138,24 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 	var errs *multierror.Error
 
 	switch m.Type {
-	case "middleware", "provider":
+	case middleware, provider:
 		// noop
 	default:
 		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
 	}
 
-	if m.Import == "" {
-		errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
+	if m.Type == middleware && (m.Runtime != RuntimeYaegi && m.Runtime != RuntimeWasm && m.Runtime != "") {
+		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
 	}
 
-	if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
-		errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
+	if m.IsYaegiPlugin() {
+		if m.Import == "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
+		}
+
+		if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
+			errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
+		}
 	}
 
 	if m.DisplayName == "" {
