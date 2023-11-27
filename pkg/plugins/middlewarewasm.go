@@ -17,12 +17,12 @@ import (
 )
 
 type wasmMiddlewareBuilder struct {
-	wasmPath string
+	path string
 }
 
 func newWasmMiddlewareBuilder(goPath string, moduleName string) *wasmMiddlewareBuilder {
 	return &wasmMiddlewareBuilder{
-		wasmPath: filepath.Join(goPath, "src", moduleName, "plugin.wasm"),
+		path: filepath.Join(goPath, "src", moduleName, "plugin.wasm"),
 	}
 }
 
@@ -35,7 +35,7 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, midd
 }
 
 func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
-	code, err := os.ReadFile(b.wasmPath)
+	code, err := os.ReadFile(b.path)
 	if err != nil {
 		return nil, fmt.Errorf("loading Wasm binary: %w", err)
 	}
@@ -46,17 +46,20 @@ func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler
 		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
 		handler.Logger(logs.NewWasmLogger(logger)),
 	}
+
 	i := cfg.Interface()
 	if i != nil {
 		config, ok := i.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("could not type assert config: %T", i)
 		}
-		b, err := json.Marshal(config)
+
+		data, err := json.Marshal(config)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling config: %w", err)
 		}
-		opts = append(opts, handler.GuestConfig(b))
+
+		opts = append(opts, handler.GuestConfig(data))
 	}
 
 	mw, err := wasm.NewMiddleware(context.Background(), code, opts...)
@@ -75,6 +78,6 @@ type WasmMiddleware struct {
 }
 
 // NewHandler creates a new HTTP handler.
-func (y WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
-	return y.builder.newHandler(ctx, next, y.config, y.middlewareName)
+func (m WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
+	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
 }
