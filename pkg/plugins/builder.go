@@ -45,7 +45,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 		case middleware:
 			switch manifest.Runtime {
 			case RuntimeWasm:
-				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(client.GoPath(), desc.ModuleName, manifest)
+				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(client.GoPath(), desc.ModuleName)
 			case RuntimeYaegi, "":
 				middleware, err := newYaegiMiddlewareBuilder(logger, client.GoPath(), manifest)
 				if err != nil {
@@ -83,7 +83,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 		case middleware:
 			switch manifest.Runtime {
 			case RuntimeWasm:
-				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(localGoPath, desc.ModuleName, manifest)
+				pb.middlewareBuilders[pName] = newWasmMiddlewareBuilder(localGoPath, desc.ModuleName)
 			case RuntimeYaegi, "":
 				middleware, err := newYaegiMiddlewareBuilder(logger, localGoPath, manifest)
 				if err != nil {
