@@ -128,10 +128,10 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 
 func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName string) (middlewareBuilder, error) {
 	switch manifest.Runtime {
-	case RuntimeWasm:
+	case runtimeWasm:
 		return newWasmMiddlewareBuilder(localGoPath, moduleName), nil
 
-	case RuntimeYaegi, "":
+	case runtimeYaegi, "":
 		i, err := newInterpreter(ctx, localGoPath, manifest.Import)
 		if err != nil {
 			return nil, fmt.Errorf("failed to craete Yaegi intepreter: %w", err)
@@ -146,7 +146,7 @@ func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName st
 
 func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath string) (providerBuilder, error) {
 	switch manifest.Runtime {
-	case RuntimeYaegi, "":
+	case runtimeYaegi, "":
 		i, err := newInterpreter(ctx, goPath, manifest.Import)
 		if err != nil {
 			return providerBuilder{}, err
