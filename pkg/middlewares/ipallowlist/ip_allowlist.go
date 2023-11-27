@@ -39,7 +39,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 	rejectStatusCode := config.RejectStatusCode
 	// If RejectStatusCode is not given, default to Forbidden (403).
 	if rejectStatusCode == 0 {
-		rejectStatusCode = 403
+		rejectStatusCode = http.StatusForbidden
 	}
 
 	checker, err := ip.NewChecker(config.SourceRange)
