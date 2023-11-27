@@ -14,7 +14,7 @@ Attach labels to your containers and let Traefik do the rest!
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker & Deploying / Exposing one Service"
 
     Enabling the docker provider
 
@@ -41,6 +41,56 @@ Attach labels to your containers and let Traefik do the rest!
         labels:
           - traefik.http.routers.my-container.rule=Host(`example.com`)
     ```
+
+??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
+
+    Enabling the docker provider (Swarm Mode)
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        # swarm classic (1.12-)
+        # endpoint: "tcp://127.0.0.1:2375"
+        # docker swarm mode (1.12+)
+        endpoint: "tcp://127.0.0.1:2377"
+        swarmMode: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      # swarm classic (1.12-)
+      # endpoint = "tcp://127.0.0.1:2375"
+      # docker swarm mode (1.12+)
+      endpoint = "tcp://127.0.0.1:2377"
+      swarmMode = true
+    ```
+
+    ```bash tab="CLI"
+    # swarm classic (1.12-)
+    # --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # docker swarm mode (1.12+)
+    --providers.docker.endpoint=tcp://127.0.0.1:2377
+    --providers.docker.swarmMode=true
+    ```
+
+    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+    When there is only one service and the router does not specify any service,
+    then that service is automatically assigned to the router.
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        deploy:
+          labels:
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
+    ```
+
+    !!! important "Labels in Docker Swarm Mode"
+        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
+        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
 
 ??? example "Specify a Custom Port for the Container"
 
@@ -84,55 +134,6 @@ Attach labels to your containers and let Traefik do the rest!
           - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
-
-    Enabling the docker provider (Swarm Mode)
-
-    ```yaml tab="File (YAML)"
-    providers:
-      docker:
-        # swarm classic (1.12-)
-        # endpoint: "tcp://127.0.0.1:2375"
-        # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2377"
-        swarmMode: true
-    ```
-
-    ```toml tab="File (TOML)"
-    [providers.docker]
-      # swarm classic (1.12-)
-      # endpoint = "tcp://127.0.0.1:2375"
-      # docker swarm mode (1.12+)
-      endpoint = "tcp://127.0.0.1:2377"
-      swarmMode = true
-    ```
-
-    ```bash tab="CLI"
-    # swarm classic (1.12-)
-    # --providers.docker.endpoint=tcp://127.0.0.1:2375
-    # docker swarm mode (1.12+)
-    --providers.docker.endpoint=tcp://127.0.0.1:2377
-    --providers.docker.swarmMode=true
-    ```
-
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        deploy:
-          labels:
-            - traefik.http.routers.my-container.rule=Host(`example.com`)
-            - traefik.http.routers.my-container.service=my-container-service
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
-    ```
-
-    !!! important "Labels in Docker Swarm Mode"
-        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
-        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
-        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
-
 ## Routing Configuration
 
 !!! info "Labels"
@@ -151,18 +152,18 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 
 --8<-- "content/routing/providers/service-by-label.md"
 
-??? example "Service assignment with labels"
+??? example "Automatic assignment with one Service"
 
     With labels in a compose file
 
     ```yaml
     labels:
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
-      - "traefik.http.routers.myproxy.service=myservice"
+      # No link specified, and yet myproxy router is linked to myservice
       - "traefik.http.services.myservice.loadbalancer.server.port=80"
     ```
 
-??? example "Automatic service creation and assignment with labels"
+??? example "Automatic service creation with one Router"
 
     With labels in a compose file
 
@@ -172,6 +173,22 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
       # and assigned to router myproxy.
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
     ```
+
+??? example "Explicit definition with multiple Services"
+
+    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+          # Explicit link between the router and the service
+          - traefik.http.routers.www-router.service=www-service
+          - traefik.http.services.www-service.loadbalancer.server.port=8000
+
 
 ### Routers
 
@@ -462,7 +479,7 @@ More information about available middlewares in the dedicated [middlewares secti
 
 You can declare TCP Routers and/or Services using labels.
 
-??? example "Declaring TCP Routers and Services"
+??? example "Declaring TCP Routers with one Service"
 
     ```yaml
        services:
@@ -471,7 +488,6 @@ You can declare TCP Routers and/or Services using labels.
            labels:
              - "traefik.tcp.routers.my-router.rule=HostSNI(`example.com`)"
              - "traefik.tcp.routers.my-router.tls=true"
-             - "traefik.tcp.routers.my-router.service=my-service"
              - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
     ```
 
@@ -592,7 +608,7 @@ You can declare TCP Routers and/or Services using labels.
 
 You can declare UDP Routers and/or Services using labels.
 
-??? example "Declaring UDP Routers and Services"
+??? example "Declaring UDP Routers with one Service"
 
     ```yaml
        services:
@@ -600,7 +616,6 @@ You can declare UDP Routers and/or Services using labels.
            # ...
            labels:
              - "traefik.udp.routers.my-router.entrypoints=udp"
-             - "traefik.udp.routers.my-router.service=my-service"
              - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
     ```
 
