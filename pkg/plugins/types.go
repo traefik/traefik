@@ -3,8 +3,11 @@ package plugins
 const (
 	RuntimeYaegi = "yaegi"
 	RuntimeWasm  = "wasm"
-	middleware   = "middleware"
-	provider     = "provider"
+)
+
+const (
+	middleware = "middleware"
+	provider   = "provider"
 )
 
 // Descriptor The static part of a plugin configuration.
