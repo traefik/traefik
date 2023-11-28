@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 )
@@ -129,7 +130,12 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName string) (middlewareBuilder, error) {
 	switch manifest.Runtime {
 	case runtimeWasm:
-		return newWasmMiddlewareBuilder(localGoPath, moduleName), nil
+		wasmPath, err := getWasmPath(manifest)
+		if err != nil {
+			return nil, fmt.Errorf("wasm path: %w", err)
+		}
+
+		return newWasmMiddlewareBuilder(localGoPath, moduleName, wasmPath), nil
 
 	case runtimeYaegi, "":
 		i, err := newInterpreter(ctx, localGoPath, manifest.Import)
@@ -161,4 +167,17 @@ func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath string) 
 	default:
 		return providerBuilder{}, fmt.Errorf("unknown plugin runtime: %s", manifest.Runtime)
 	}
+}
+
+func getWasmPath(manifest *Manifest) (string, error) {
+	wasmPath := manifest.WasmPath
+	if wasmPath == "" {
+		wasmPath = "plugin.wasm"
+	}
+
+	if !filepath.IsLocal(wasmPath) {
+		return "", fmt.Errorf("wasmPath must be a local path")
+	}
+
+	return wasmPath, nil
 }
