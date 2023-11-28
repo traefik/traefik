@@ -20,10 +20,8 @@ type wasmMiddlewareBuilder struct {
 	path string
 }
 
-func newWasmMiddlewareBuilder(goPath string, moduleName string) *wasmMiddlewareBuilder {
-	return &wasmMiddlewareBuilder{
-		path: filepath.Join(goPath, "src", moduleName, "plugin.wasm"),
-	}
+func newWasmMiddlewareBuilder(goPath string, moduleName, wasmPath string) *wasmMiddlewareBuilder {
+	return &wasmMiddlewareBuilder{path: filepath.Join(goPath, "src", moduleName, wasmPath)}
 }
 
 func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {

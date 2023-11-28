@@ -30,6 +30,7 @@ type Manifest struct {
 	DisplayName   string                 `yaml:"displayName"`
 	Type          string                 `yaml:"type"`
 	Runtime       string                 `yaml:"runtime"`
+	WasmPath      string                 `yaml:"wasmPath"`
 	Import        string                 `yaml:"import"`
 	BasePkg       string                 `yaml:"basePkg"`
 	Compatibility string                 `yaml:"compatibility"`
