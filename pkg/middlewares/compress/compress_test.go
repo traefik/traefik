@@ -582,7 +582,7 @@ func Test1xxResponses(t *testing.T) {
 	req.Header.Add(acceptEncodingHeader, gzipValue)
 
 	res, err := frontendClient.Do(req)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	defer res.Body.Close()
 

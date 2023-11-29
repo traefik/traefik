@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -85,4 +86,27 @@ func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
 	_, response, err = websocket.DefaultDialer.Dial("ws://127.0.0.1:8000/echo", nil)
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusSwitchingProtocols)
+}
+
+func (s *RetrySuite) TestRetryWithStripPrefix(c *check.C) {
+	file := s.adaptFile(c, "fixtures/retry/strip_prefix.toml", struct{ WhoamiIP string }{s.whoamiIP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	c.Assert(err, checker.IsNil)
+
+	response, err := http.Get("http://127.0.0.1:8000/test")
+	c.Assert(err, checker.IsNil)
+
+	body, err := io.ReadAll(response.Body)
+	c.Assert(err, checker.IsNil)
+
+	c.Assert(string(body), checker.Contains, "GET / HTTP/1.1")
+	c.Assert(string(body), checker.Contains, "X-Forwarded-Prefix: /test")
 }
