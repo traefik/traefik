@@ -2,7 +2,7 @@ package tracing
 
 import (
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -61,5 +61,5 @@ func computeHash(name string) string {
 		log.Error().Str("OperationName", name).Err(err).Msgf("Failed to create Span name hash for %s", name)
 	}
 
-	return fmt.Sprintf("%x", hash.Sum(nil))[:TraceNameHashLength]
+	return hex.EncodeToString(hash.Sum(nil))[:TraceNameHashLength]
 }

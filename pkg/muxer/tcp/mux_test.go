@@ -309,7 +309,7 @@ func Test_addTCPRoute(t *testing.T) {
 			matchingHandler.ServeTCP(conn)
 
 			n, ok := conn.call[msg]
-			assert.Equal(t, n, 1)
+			assert.Equal(t, 1, n)
 			assert.True(t, ok)
 		})
 	}
