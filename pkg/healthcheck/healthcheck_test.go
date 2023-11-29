@@ -18,6 +18,8 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
+const delta float64 = 1e-10
+
 func TestNewServiceHealthChecker_durations(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -448,8 +450,8 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
-			assert.Equal(t, test.expGaugeValue, gauge.GaugeValue, "ServerUp Gauge")
-			assert.Equal(t, serviceInfo.GetAllStatus(), map[string]string{targetURL.String(): test.targetStatus})
+			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
+			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
 }

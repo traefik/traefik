@@ -173,7 +173,7 @@ func TestManager_Get(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, config.MinVersion, test.expectedMinVersion)
+			assert.Equal(t, test.expectedMinVersion, config.MinVersion)
 		})
 	}
 }
@@ -317,10 +317,10 @@ func TestClientAuth(t *testing.T) {
 			if test.expectedRawSubject != nil {
 				subjects := config.ClientCAs.Subjects()
 				assert.Len(t, subjects, 1)
-				assert.Equal(t, subjects[0], test.expectedRawSubject)
+				assert.Equal(t, test.expectedRawSubject, subjects[0])
 			}
 
-			assert.Equal(t, config.ClientAuth, test.expectedClientAuth)
+			assert.Equal(t, test.expectedClientAuth, config.ClientAuth)
 		})
 	}
 }
@@ -330,9 +330,9 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 
 	// Ensures we won't break things for Traefik users when updating Go
 	config, _ := tlsManager.Get("default", "default")
-	assert.Equal(t, config.MinVersion, uint16(tls.VersionTLS12))
-	assert.Equal(t, config.NextProtos, []string{"h2", "http/1.1", "acme-tls/1"})
-	assert.Equal(t, config.CipherSuites, []uint16{
+	assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
+	assert.Equal(t, []string{"h2", "http/1.1", "acme-tls/1"}, config.NextProtos)
+	assert.Equal(t, []uint16{
 		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
@@ -350,5 +350,5 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-	})
+	}, config.CipherSuites)
 }

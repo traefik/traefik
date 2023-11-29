@@ -220,10 +220,10 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	assert.Equal(t, 10, len(ln.conns))
+	assert.Len(t, ln.conns, 10)
 
 	time.Sleep(ln.timeout + time.Second)
-	assert.Equal(t, 0, len(ln.conns))
+	assert.Empty(t, ln.conns)
 }
 
 func TestShutdown(t *testing.T) {

@@ -17,12 +17,9 @@ or the list of [confirmed bugs](https://github.com/traefik/traefik/labels/kind%2
 
 ## How We Prioritize
 
-We wish we could review every pull request right away.
-Unfortunately, our team has to prioritize pull requests (PRs) for review
-(but we are welcoming new [maintainers](https://github.com/traefik/traefik/blob/master/docs/content/contributing/maintainers-guidelines.md) to speed this up,
-if you are interested, check it out and apply).
+We wish we could review every pull request right away, but because it's a time consuming operation, it's not always possible.
 
-The PRs we are able to handle fastest are:
+The PRs we are able to handle the fastest are:
 
 * Documentation updates.
 * Bug fixes.
@@ -59,7 +56,7 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
 * Pass the validation check.
 * Pass all tests.
-* Receive 3 approving reviews maintainers.
+* Receive 3 approving reviews from maintainers.
 
 ## Pull Request Review Cycle
 
@@ -198,7 +195,7 @@ here are some things you can do to move the process along:
 * If you have fixed all the issues from a review,
   remember to re-request a review (using the designated button) to let your reviewer know that you are ready.
   You can choose to comment with the changes you made.
-* Ping `@tfny` if you have not been assigned to a reviewer.
+* Kindly comment on the pull request. Doing so will automatically give your PR visibility during the triage process.
 
 For more information on best practices, try these links:
 
