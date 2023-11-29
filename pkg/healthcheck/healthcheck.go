@@ -255,8 +255,8 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 		return fmt.Errorf("gRPC health check failed: %w", err)
 	}
 
-	if resp.Status != healthpb.HealthCheckResponse_SERVING {
-		return fmt.Errorf("received gRPC status code: %v", resp.Status)
+	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
+		return fmt.Errorf("received gRPC status code: %v", resp.GetStatus())
 	}
 
 	return nil
