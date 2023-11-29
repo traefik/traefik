@@ -833,7 +833,7 @@ func TestHandler_TCP(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
