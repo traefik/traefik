@@ -1,3 +1,12 @@
+## [v3.0.0-beta5](https://github.com/traefik/traefik/tree/v3.0.0-beta5) (2023-11-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta4...v3.0.0-beta5)
+
+**Enhancements:**
+- **[metrics]** Upgrade OpenTelemetry dependencies ([#10181](https://github.com/traefik/traefik/pull/10181) by [mmatur](https://github.com/mmatur))
+
+**Misc:**
+- Merge current v2.10 into v3.0 ([#10272](https://github.com/traefik/traefik/pull/10272) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.10.6](https://github.com/traefik/traefik/tree/v2.10.6) (2023-11-28)
 [All Commits](https://github.com/traefik/traefik/compare/v2.10.5...v2.10.6)
 
