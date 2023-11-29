@@ -48,7 +48,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
 
 	opts := []datadog.StartOption{
-		datadog.WithServiceName(serviceName),
+		datadog.WithService(serviceName),
 		datadog.WithDebugMode(c.Debug),
 		datadog.WithPropagator(datadog.NewPropagator(&datadog.PropagatorConfig{
 			TraceHeader:    c.TraceIDHeaderName,

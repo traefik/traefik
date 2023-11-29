@@ -267,7 +267,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 
 	providerAggregator := aggregator.ProviderAggregator{}
 	err := providerAggregator.AddProvider(pvd)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "")
 
@@ -342,7 +342,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, configurationReloads, 1, "Same configuration should not be published multiple times")
+	assert.Equal(t, 1, configurationReloads, "Same configuration should not be published multiple times")
 }
 
 func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
@@ -450,7 +450,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 
 	providerAggregator := aggregator.ProviderAggregator{}
 	err := providerAggregator.AddProvider(pvd)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{"defaultEP"}, "")
 
@@ -593,7 +593,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 
 	providerAggregator := aggregator.ProviderAggregator{}
 	err := providerAggregator.AddProvider(pvd)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{"defaultEP"}, "")
 
