@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -287,7 +288,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		hasher := fnv.New64a()
 		_, _ = hasher.Write([]byte(server.URL)) // this will never return an error.
 
-		proxyName := fmt.Sprintf("%x", hasher.Sum(nil))
+		proxyName := hex.EncodeToString(hasher.Sum(nil))
 
 		target, err := url.Parse(server.URL)
 		if err != nil {

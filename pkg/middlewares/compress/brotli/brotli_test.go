@@ -376,13 +376,13 @@ func Test_ExcludedContentTypes(t *testing.T) {
 				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(brotli.NewReader(rw.Body))
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			} else {
 				assert.NotEqual(t, "br", rw.Header().Get("Content-Encoding"))
 
 				got, err := io.ReadAll(rw.Body)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			}
 		})
@@ -496,13 +496,13 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(brotli.NewReader(rw.Body))
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			} else {
 				assert.NotEqual(t, "br", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(rw.Body)
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			}
 		})

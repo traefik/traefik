@@ -42,7 +42,7 @@ func (s *GRPCSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *myserver) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
-	return &helloworld.HelloReply{Message: "Hello " + in.Name}, nil
+	return &helloworld.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
 func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server helloworld.Greeter_StreamExampleServer) error {
@@ -121,7 +121,7 @@ func callHelloClientGRPC(name string, secure bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return r.Message, nil
+	return r.GetMessage(), nil
 }
 
 func callStreamExampleClientGRPC() (helloworld.Greeter_StreamExampleClient, func() error, error) {
@@ -351,7 +351,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	go func() {
 		tr, err := client.Recv()
 		c.Assert(err, check.IsNil)
-		c.Assert(len(tr.Data), check.Equals, 512)
+		c.Assert(len(tr.GetData()), check.Equals, 512)
 		received <- true
 	}()
 
@@ -414,7 +414,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 	go func() {
 		tr, err := client.Recv()
 		c.Assert(err, check.IsNil)
-		c.Assert(len(tr.Data), check.Equals, 512)
+		c.Assert(len(tr.GetData()), check.Equals, 512)
 		received <- true
 	}()
 
