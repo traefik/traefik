@@ -51,7 +51,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		switch manifest.Type {
 		case typeMiddleware:
-			middleware, err := newMiddlewareBuilder(logCtx, manifest, desc.ModuleName)
+			middleware, err := newMiddlewareBuilder(logCtx, client.GoPath(), manifest, desc.ModuleName)
 			if err != nil {
 				return nil, err
 			}
@@ -86,7 +86,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		switch manifest.Type {
 		case typeMiddleware:
-			middleware, err := newMiddlewareBuilder(logCtx, manifest, desc.ModuleName)
+			middleware, err := newMiddlewareBuilder(logCtx, localGoPath, manifest, desc.ModuleName)
 			if err != nil {
 				return nil, err
 			}
@@ -127,7 +127,7 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 	return nil, fmt.Errorf("unknown plugin type: %s", pName)
 }
 
-func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName string) (middlewareBuilder, error) {
+func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest, moduleName string) (middlewareBuilder, error) {
 	switch manifest.Runtime {
 	case runtimeWasm:
 		wasmPath, err := getWasmPath(manifest)
@@ -135,10 +135,10 @@ func newMiddlewareBuilder(ctx context.Context, manifest *Manifest, moduleName st
 			return nil, fmt.Errorf("wasm path: %w", err)
 		}
 
-		return newWasmMiddlewareBuilder(localGoPath, moduleName, wasmPath), nil
+		return newWasmMiddlewareBuilder(goPath, moduleName, wasmPath), nil
 
 	case runtimeYaegi, "":
-		i, err := newInterpreter(ctx, localGoPath, manifest.Import)
+		i, err := newInterpreter(ctx, goPath, manifest.Import)
 		if err != nil {
 			return nil, fmt.Errorf("failed to craete Yaegi intepreter: %w", err)
 		}
