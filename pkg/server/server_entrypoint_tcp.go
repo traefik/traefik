@@ -235,7 +235,8 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
+			conn := tcp.NewAccountedConnection(writeCloser, "raw")
+			e.switcher.ServeTCP(newTrackedConnection(conn, e.tracker))
 		})
 	}
 }
