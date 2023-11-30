@@ -13,7 +13,7 @@ import (
 type Constructor func(context.Context, http.Handler) (http.Handler, error)
 
 type pluginMiddleware interface {
-	NewHandler(context.Context, http.Handler) (http.Handler, error)
+	NewHandler(ctx context.Context, next http.Handler) (http.Handler, error)
 }
 
 type middlewareBuilder interface {
