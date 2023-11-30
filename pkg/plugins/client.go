@@ -278,8 +278,9 @@ func unzipFile(f *zipa.File, dest string) error {
 
 	defer func() { _ = rc.Close() }()
 
-	var pp string
 	pathParts := strings.SplitN(f.Name, "/", 2)
+
+	var pp string
 	if len(pathParts) < 2 {
 		pp = pathParts[0]
 	} else {
