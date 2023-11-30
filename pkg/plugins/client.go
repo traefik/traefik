@@ -279,7 +279,15 @@ func unzipFile(f *zipa.File, dest string) error {
 	defer func() { _ = rc.Close() }()
 
 	pathParts := strings.SplitN(f.Name, "/", 2)
-	p := filepath.Join(dest, pathParts[1])
+
+	var pp string
+	if len(pathParts) < 2 {
+		pp = pathParts[0]
+	} else {
+		pp = pathParts[1]
+	}
+
+	p := filepath.Join(dest, pp)
 
 	if f.FileInfo().IsDir() {
 		err = os.MkdirAll(p, f.Mode())
