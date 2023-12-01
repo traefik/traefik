@@ -7,6 +7,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -51,6 +52,7 @@ func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 	if err != nil {
 		middlewares.GetLogger(context.Background(), r.name, typeName).Error().Err(err).Send()
+		tracing.SetStatusErrorf(req.Context(), err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}

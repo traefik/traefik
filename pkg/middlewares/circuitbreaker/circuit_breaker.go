@@ -32,7 +32,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 
 	cbOpts := []cbreaker.Option{
 		cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			tracing.SetErrorWithEvent(req.Context(), "blocked by circuit-breaker (%q)", expression)
+			tracing.SetStatusErrorf(req.Context(), "blocked by circuit-breaker (%q)", expression)
 			rw.WriteHeader(http.StatusServiceUnavailable)
 
 			if _, err := rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
