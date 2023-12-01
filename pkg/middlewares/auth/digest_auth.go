@@ -78,13 +78,13 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if authinfo != nil && *authinfo == "stale" {
 			logger.Debug().Msg("Digest authentication failed, possibly because out of order requests")
-			tracing.SetErrorWithEvent(req.Context(), "Digest authentication failed, possibly because out of order requests")
+			tracing.SetStatusErrorf(req.Context(), "Digest authentication failed, possibly because out of order requests")
 			d.auth.RequireAuthStale(rw, req)
 			return
 		}
 
 		logger.Debug().Msg("Digest authentication failed")
-		tracing.SetErrorWithEvent(req.Context(), "Digest authentication failed")
+		tracing.SetStatusErrorf(req.Context(), "Digest authentication failed")
 		d.auth.RequireAuth(rw, req)
 		return
 	}

@@ -41,6 +41,8 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
+	tracing.InjectRequestHeaders(req.Context(), req.Header)
+
 	tracing.LogServerRequest(span, req)
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)

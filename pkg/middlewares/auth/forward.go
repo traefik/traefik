@@ -101,19 +101,24 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
 	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
-	tracing.LogClientRequest(trace.SpanFromContext(req.Context()), forwardReq)
+	var span trace.Span
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+		tracingCtx := tracing.Propagator(req.Context(), req.Header)
+		tracingCtx, span = tracer.Start(tracingCtx, "forward-auth", trace.WithSpanKind(trace.SpanKindClient))
+		defer span.End()
+
+		req = req.WithContext(tracingCtx)
+	}
+
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
 		logger.Debug().Msg(logMessage)
-		tracing.SetErrorWithEvent(req.Context(), logMessage)
-
+		tracing.SetStatusErrorf(req.Context(), logMessage)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Ensure tracing headers are in the request before we copy the headers to the
-	// forwardReq.
-	tracing.InjectRequestHeaders(req.Context(), req.Header)
+	tracing.LogClientRequest(span, forwardReq)
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
 
@@ -121,7 +126,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardErr != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
 		logger.Debug().Msg(logMessage)
-		tracing.SetErrorWithEvent(req.Context(), logMessage)
+		tracing.SetStatusErrorf(req.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -132,7 +137,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if readError != nil {
 		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
 		logger.Debug().Msg(logMessage)
-		tracing.SetErrorWithEvent(req.Context(), logMessage)
+		tracing.SetStatusErrorf(req.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -153,7 +158,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if !errors.Is(err, http.ErrNoLocation) {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
 				logger.Debug().Msg(logMessage)
-				tracing.SetErrorWithEvent(req.Context(), logMessage)
+				tracing.SetStatusErrorf(req.Context(), logMessage)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
@@ -194,7 +199,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	tracing.LogResponseCode(span, forwardResponse.StatusCode, trace.SpanKindClient)
+
 	req.RequestURI = req.URL.RequestURI()
+	span.End()
 	fa.next.ServeHTTP(rw, req)
 }
 

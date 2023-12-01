@@ -68,7 +68,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug().Msg(msg)
-		tracing.SetErrorWithEvent(req.Context(), msg)
+		tracing.SetStatusErrorf(req.Context(), msg)
 		reject(ctx, rw)
 		return
 	}

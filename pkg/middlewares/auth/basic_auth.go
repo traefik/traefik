@@ -77,7 +77,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if !ok {
 		logger.Debug().Msg("Authentication failed")
-		tracing.SetErrorWithEvent(req.Context(), "Authentication failed")
+		tracing.SetStatusErrorf(req.Context(), "Authentication failed")
 
 		b.auth.RequireAuth(rw, req)
 		return
