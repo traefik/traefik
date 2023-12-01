@@ -56,6 +56,10 @@ func TracerFromContext(ctx context.Context) trace.Tracer {
 
 // LogClientRequest used to add span attributes from the request as a Client.
 func LogClientRequest(span trace.Span, r *http.Request) {
+	if r == nil {
+		return
+	}
+
 	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
 	// TODO: the semconv does not implement Semantic Convention v1.23.0.
 	span.SetAttributes(attribute.String("http.request.method", r.Method))
@@ -87,6 +91,10 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 
 // LogServerRequest used to add span attributes from the request as a Server.
 func LogServerRequest(span trace.Span, r *http.Request) {
+	if r == nil {
+		return
+	}
+
 	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
 	// TODO: the semconv does not implement Semantic Convention v1.23.0.
 	span.SetAttributes(attribute.String("http.request.method", r.Method))
@@ -197,8 +205,8 @@ func InjectRequestHeaders(ctx context.Context, headers http.Header) {
 	propagator.Inject(ctx, propagation.HeaderCarrier(headers))
 }
 
-// SetErrorWithEvent flags the span as in error and log an event.
-func SetErrorWithEvent(ctx context.Context, format string, args ...interface{}) {
+// SetStatusErrorf flags the span as in error and log an event.
+func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
 	}
