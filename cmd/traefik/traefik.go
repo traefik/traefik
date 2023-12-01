@@ -260,15 +260,15 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		log.Info().Msg("Successfully obtained SPIFFE SVID.")
 	}
 
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, tracer, roundTripperManager, acmeHTTPHandler)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
 	// Router factory
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 
+	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
 
