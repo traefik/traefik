@@ -65,7 +65,6 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 	// span.SetAttributes(attribute.String("network.peer.port", 80))
 
 	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-client
-	span.SetAttributes(attribute.String("http.request.method", r.Method))
 	span.SetAttributes(semconv.URLFull(r.URL.String()))
 	span.SetAttributes(semconv.URLScheme(r.URL.Scheme))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
