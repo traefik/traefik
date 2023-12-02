@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"syscall"
 	"time"
@@ -19,10 +20,11 @@ type Proxy struct {
 	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
+	sourceIPs        []net.TCPAddr
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol, sourceIPs []net.TCPAddr) (*Proxy, error) {
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
@@ -43,6 +45,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
+		sourceIPs:        sourceIPs,
 	}, nil
 }
 
@@ -90,15 +93,21 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 }
 
 func (p Proxy) dialBackend() (*net.TCPConn, error) {
+	var sourceIP *net.TCPAddr
+	if len(p.sourceIPs) > 0 {
+		sourceIP = &p.sourceIPs[rand.Intn(len(p.sourceIPs))]
+	}
+
 	// Dial using directly the TCPAddr for IP based addresses.
 	if p.tcpAddr != nil {
-		return net.DialTCP("tcp", nil, p.tcpAddr)
+		return net.DialTCP("tcp", sourceIP, p.tcpAddr)
 	}
 
 	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
 
 	// Dial with DNS lookup for host based addresses.
-	conn, err := net.Dial("tcp", p.address)
+	dialer := net.Dialer{LocalAddr: sourceIP}
+	conn, err := dialer.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
 	}
