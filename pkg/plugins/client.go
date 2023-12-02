@@ -4,6 +4,7 @@ import (
 	zipa "archive/zip"
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -423,5 +424,5 @@ func computeHash(filepath string) (string, error) {
 
 	sum := hash.Sum(nil)
 
-	return fmt.Sprintf("%x", sum), nil
+	return hex.EncodeToString(sum), nil
 }

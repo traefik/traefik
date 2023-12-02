@@ -84,7 +84,10 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 	return c.tracker
 }
 
-var _ clientset.Interface = &Clientset{}
+var (
+	_ clientset.Interface = &Clientset{}
+	_ testing.FakeClient  = &Clientset{}
+)
 
 // TraefikContainousV1alpha1 retrieves the TraefikContainousV1alpha1Client
 func (c *Clientset) TraefikContainousV1alpha1() traefikcontainousv1alpha1.TraefikContainousV1alpha1Interface {

@@ -6551,7 +6551,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	username = components[0]
 	hashedPassword = components[1]
 
-	assert.Equal(t, username, "test2")
-	assert.Equal(t, hashedPassword, "$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0")
+	assert.Equal(t, "test2", username)
+	assert.Equal(t, "$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", hashedPassword)
 	assert.True(t, auth.CheckSecret("test2", hashedPassword))
 }
