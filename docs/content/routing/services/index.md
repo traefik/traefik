@@ -1363,6 +1363,10 @@ Currently, the two available kinds are `LoadBalancer`, and `Weighted`.
 
 The servers load balancer is in charge of balancing the requests between the servers of the same service.
 
+An additional option of `sourceIPs` is provided which should be a list of TCP
+source addresses belonging to your server to randomly use for the outbound
+connections if you have multiple IP addresses on an interface.
+
 ??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="YAML"
@@ -1374,6 +1378,9 @@ The servers load balancer is in charge of balancing the requests between the ser
             servers:
             - address: "xx.xx.xx.xx:xx"
             - address: "xx.xx.xx.xx:xx"
+            sourceIPs:
+            - 192.168.1.1
+            - 192.168.1.2
     ```
 
     ```toml tab="TOML"
