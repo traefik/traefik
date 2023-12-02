@@ -59,7 +59,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 			PriorityHeader: c.SamplingPriorityHeaderName,
 			BaggagePrefix:  c.BagagePrefixHeaderName,
 		})),
-		datadog.WithLogger(newDatadogLogger(log.FromContext(ctx))),
+		datadog.WithLogger(log.NewDatadogLogger(log.FromContext(ctx))),
 	}
 
 	if c.LocalAgentSocket != "" {
