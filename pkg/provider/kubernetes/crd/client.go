@@ -45,6 +45,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	GetNodes(namespace string) ([]*corev1.Node, bool, error)
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -211,6 +212,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -442,6 +447,16 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
+}
+
+func (c *clientWrapper) GetNodes(namespace string) ([]*corev1.Node, bool, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, false, fmt.Errorf("failed to list nodes in namespace %s", namespace)
+	}
+
+	nodes, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Nodes().Lister().List(labels.Everything())
+	exist, err := translateNotFoundError(err)
+	return nodes, exist, err
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
