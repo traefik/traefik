@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 
 	"github.com/rs/zerolog"
@@ -69,21 +70,22 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 	c.configurationListeners = append(c.configurationListeners, listener)
 }
 
-// ReloadFileConfig reload a dynamic file config
-func (c *ConfigurationWatcher) ReloadFileConfig() {
-	aggregator := c.providerAggregator.(aggregator.ProviderAggregator)
-	fileProvider := aggregator.FileProvider()
-	configuration, err := fileProvider.BuildConfiguration()
-	if err != nil {
-		log.Error().Err(err).Msg("ReloadFileConfig failed")
-		return
+// ReloadFileConfig reloads the dynamic file configuration.
+func (c *ConfigurationWatcher) ReloadAllProviders() error {
+	// Type assert to ProviderAggregator if necessary
+	if aggregator, ok := c.providerAggregator.(aggregator.ProviderAggregator); ok {
+		err := aggregator.ReloadProviders(c.allProvidersConfigs)
+		if err != nil {
+			log.Error().Err(err).Msg("Error occurred during reloading all providers")
+			return err
+		}
+		log.Info().Msg("All provider configurations reloaded successfully")
+	} else {
+		errMsg := "ProviderAggregator type assertion failed in ReloadAllProviders"
+		log.Error().Msg(errMsg)
+		return errors.New(errMsg)
 	}
-
-	log.Info().Msgf("Sending new configuration: %+v", configuration)
-	c.allProvidersConfigs <- dynamic.Message{
-		ProviderName:  "file",
-		Configuration: configuration,
-	}
+	return nil
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {

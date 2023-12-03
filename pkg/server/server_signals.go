@@ -31,8 +31,12 @@ func (s *Server) listenSignals(ctx context.Context) {
 					}
 				}
 			case syscall.SIGHUP:
-				log.Info().Msgf("%+v: Reloading file config", sig)
-				s.watcher.ReloadFileConfig()
+				log.Info().Msgf("%+v: Reloading provider configurations", sig)
+				// Assuming that s.watcher is an instance of ConfigurationWatcher
+				// and that it has a method to reload all reloadable providers.
+				if err := s.watcher.ReloadAllProviders(); err != nil {
+					log.Error().Err(err).Msg("Error reloading provider configurations")
+				}
 			}
 		}
 	}
