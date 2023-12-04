@@ -103,6 +103,9 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	utils.CopyHeaders(pageReq.Header, req.Header)
 
+	// Inject headers into the carrier to attach the span to the customError middleware parent internal span.
+	tracing.InjectRequestHeaders(req.Context(), pageReq.Header)
+
 	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
 		pageReq.WithContext(req.Context()))
 }

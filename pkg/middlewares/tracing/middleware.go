@@ -57,8 +57,7 @@ type middlewareTracing struct {
 
 func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-		tracingCtx := tracing.Propagator(req.Context(), req.Header)
-		tracingCtx, span := tracer.Start(tracingCtx, w.typeName, trace.WithSpanKind(w.spanKind))
+		tracingCtx, span := tracer.Start(req.Context(), w.typeName, trace.WithSpanKind(w.spanKind))
 		defer span.End()
 
 		req = req.WithContext(tracingCtx)

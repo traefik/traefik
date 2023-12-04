@@ -90,26 +90,19 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.authResponseHeadersRegex = re
 	}
 
-	return connectionheader.Remover(fa), nil
+	return fa, nil
 }
 
 func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) {
-	return fa.name, typeNameForward, trace.SpanKindClient
+	return fa.name, typeNameForward, trace.SpanKindInternal
 }
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
-	var span trace.Span
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-		tracingCtx := tracing.Propagator(req.Context(), req.Header)
-		tracingCtx, span = tracer.Start(tracingCtx, "forward-auth", trace.WithSpanKind(trace.SpanKindClient))
-		defer span.End()
+	req = connectionheader.Remove(req)
 
-		req = req.WithContext(tracingCtx)
-	}
-
+	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
 		logger.Debug().Msg(logMessage)
@@ -118,7 +111,17 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.LogClientRequest(span, forwardReq)
+	var span trace.Span
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+		var tracingCtx context.Context
+		tracingCtx, span = tracer.Start(req.Context(), "forward-auth-request", trace.WithSpanKind(trace.SpanKindClient))
+		defer span.End()
+
+		req = req.WithContext(tracingCtx)
+
+		tracing.InjectRequestHeaders(forwardReq.Context(), req.Header)
+		tracing.LogClientRequest(span, forwardReq)
+	}
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
 
@@ -126,7 +129,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardErr != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
 		logger.Debug().Msg(logMessage)
-		tracing.SetStatusErrorf(req.Context(), logMessage)
+		tracing.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -137,7 +140,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if readError != nil {
 		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
 		logger.Debug().Msg(logMessage)
-		tracing.SetStatusErrorf(req.Context(), logMessage)
+		tracing.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -158,7 +161,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if !errors.Is(err, http.ErrNoLocation) {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
 				logger.Debug().Msg(logMessage)
-				tracing.SetStatusErrorf(req.Context(), logMessage)
+				tracing.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
@@ -168,7 +171,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Set("Location", redirectURL.String())
 		}
 
-		tracing.LogResponseCode(trace.SpanFromContext(req.Context()), forwardResponse.StatusCode, trace.SpanKindClient)
+		tracing.LogResponseCode(span, forwardResponse.StatusCode, trace.SpanKindClient)
 		rw.WriteHeader(forwardResponse.StatusCode)
 
 		if _, err = rw.Write(body); err != nil {
