@@ -122,7 +122,7 @@ providers:
     debugLogGeneratedTemplate: true
   kubernetesIngress:
     endpoint: foobar
-    token: foobar
+    token: foobar or foobar.txt
     certAuthFilePath: foobar
     namespaces:
       - foobar
@@ -139,7 +139,7 @@ providers:
       publishedService: foobar
   kubernetesCRD:
     endpoint: foobar
-    token: foobar
+    token: foobar or foobar.txt
     certAuthFilePath: foobar
     namespaces:
       - foobar
@@ -152,7 +152,7 @@ providers:
     allowEmptyServices: true
   kubernetesGateway:
     endpoint: foobar
-    token: foobar
+    token: foobar or foobar.txt
     certAuthFilePath: foobar
     namespaces:
       - foobar
