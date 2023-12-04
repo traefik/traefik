@@ -56,7 +56,7 @@ func TracerFromContext(ctx context.Context) trace.Tracer {
 
 // LogClientRequest used to add span attributes from the request as a Client.
 func LogClientRequest(span trace.Span, r *http.Request) {
-	if r == nil {
+	if r == nil || span == nil {
 		return
 	}
 

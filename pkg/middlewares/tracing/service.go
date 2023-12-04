@@ -33,15 +33,12 @@ func NewService(ctx context.Context, service string, next http.Handler) http.Han
 
 func (t *serviceTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-		tracingCtx := tracing.Propagator(req.Context(), req.Header)
-		tracingCtx, span := tracer.Start(tracingCtx, "service", trace.WithSpanKind(trace.SpanKindInternal))
+		tracingCtx, span := tracer.Start(req.Context(), "service", trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
 
 		req = req.WithContext(tracingCtx)
 
 		span.SetAttributes(attribute.String("traefik.service.name", t.service))
-
-		tracing.InjectRequestHeaders(req.Context(), req.Header)
 	}
 
 	t.next.ServeHTTP(rw, req)

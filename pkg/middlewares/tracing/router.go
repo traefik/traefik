@@ -36,16 +36,13 @@ func newRouter(ctx context.Context, router, service string, next http.Handler) h
 
 func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-		tracingCtx := tracing.Propagator(req.Context(), req.Header)
-		tracingCtx, span := tracer.Start(tracingCtx, "router", trace.WithSpanKind(trace.SpanKindInternal))
+		tracingCtx, span := tracer.Start(req.Context(), "router", trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
 
 		req = req.WithContext(tracingCtx)
 
 		span.SetAttributes(attribute.String("traefik.service.name", f.service))
 		span.SetAttributes(attribute.String("traefik.router.name", f.router))
-
-		tracing.InjectRequestHeaders(req.Context(), req.Header)
 	}
 
 	f.next.ServeHTTP(rw, req)

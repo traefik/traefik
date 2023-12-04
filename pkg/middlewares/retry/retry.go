@@ -103,8 +103,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-			tracingCtx := tracing.Propagator(req.Context(), req.Header)
-			tracingCtx, span := tracer.Start(tracingCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
+			tracingCtx, span := tracer.Start(req.Context(), typeName, trace.WithSpanKind(trace.SpanKindInternal))
 			defer span.End()
 
 			span.SetAttributes(attribute.String("traefik.middleware.name", r.name))
