@@ -8,8 +8,8 @@ type StoredData struct {
 
 // Store is a generic interface that represents a storage.
 type Store interface {
-	GetAccount(string) (*Account, error)
-	SaveAccount(string, *Account) error
-	GetCertificates(string) ([]*CertAndStore, error)
-	SaveCertificates(string, []*CertAndStore) error
+	GetAccount(resolverName string) (*Account, error)
+	SaveAccount(resolverName string, account *Account) error
+	GetCertificates(resolverName string) ([]*CertAndStore, error)
+	SaveCertificates(resolverName string, certificates []*CertAndStore) error
 }

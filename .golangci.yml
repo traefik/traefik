@@ -87,8 +87,6 @@ linters-settings:
         pkg: "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
       # Traefik Kubernetes rewrites:
-      - alias: containousv1alpha1
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
       - alias: traefikv1alpha1
         pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
       - alias: traefikclientset
@@ -151,6 +149,19 @@ linters-settings:
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
+  testifylint:
+    enable:
+      - bool-compare
+      - compares
+      - empty
+      - error-is-as
+      - error-nil
+      - expected-actual
+      - float-compare
+      - len
+      - suite-dont-use-pkg
+      - suite-extra-assert-call
+      - suite-thelper
 
 linters:
   enable-all: true
