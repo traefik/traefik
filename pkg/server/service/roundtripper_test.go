@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Int32(i int32) *int32 {
@@ -144,7 +145,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
 			ServerName: "example.com",
-			RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 		},
 	}
 
@@ -167,7 +168,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	dynamicConf = map[string]*dynamic.ServersTransport{
 		"test": {
 			ServerName: "www.example.com",
-			RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 		},
 	}
 
@@ -213,13 +214,13 @@ func TestMTLS(t *testing.T) {
 		"test": {
 			ServerName: "example.com",
 			// For TLS
-			RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			RootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 
 			// For mTLS
 			Certificates: traefiktls.Certificates{
 				traefiktls.Certificate{
-					CertFile: traefiktls.FileOrContent(mTLSCert),
-					KeyFile:  traefiktls.FileOrContent(mTLSKey),
+					CertFile: types.FileOrContent(mTLSCert),
+					KeyFile:  types.FileOrContent(mTLSKey),
 				},
 			},
 		},

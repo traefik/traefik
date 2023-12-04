@@ -7,7 +7,7 @@ import (
 
 	"github.com/mitchellh/copystructure"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"mvdan.cc/xurls/v2"
 )
 
@@ -164,8 +164,8 @@ func reset(field reflect.Value, name string) error {
 		}
 	case reflect.String:
 		if field.String() != "" {
-			if field.Type().AssignableTo(reflect.TypeOf(tls.FileOrContent(""))) {
-				field.Set(reflect.ValueOf(tls.FileOrContent(maskShort)))
+			if field.Type().AssignableTo(reflect.TypeOf(types.FileOrContent(""))) {
+				field.Set(reflect.ValueOf(types.FileOrContent(maskShort)))
 			} else {
 				field.Set(reflect.ValueOf(maskShort))
 			}
