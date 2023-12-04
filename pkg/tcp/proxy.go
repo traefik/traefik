@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -47,7 +48,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 }
 
 // ServeTCP forwards the connection to a service.
-func (p *Proxy) ServeTCP(conn WriteCloser) {
+func (p *Proxy) ServeTCP(ctx context.Context, conn WriteCloser) {
 	log.WithoutContext().Debugf("Handling TCP connection from %s to %s", conn.RemoteAddr(), p.address)
 
 	// needed because of e.g. server.trackedConnection

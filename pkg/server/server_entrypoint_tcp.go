@@ -49,7 +49,7 @@ func newHTTPForwarder(ln net.Listener) *httpForwarder {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
+func (h *httpForwarder) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	h.connChan <- conn
 }
 
@@ -235,8 +235,9 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			conn := tcp.NewAccountedConnection(writeCloser, "raw")
-			e.switcher.ServeTCP(newTrackedConnection(conn, e.tracker))
+			ctx := context.Background()
+			ctx, writeCloser = tcp.NewConnectionLog(ctx, writeCloser)
+			e.switcher.ServeTCP(ctx, newTrackedConnection(writeCloser, e.tracker))
 		})
 	}
 }
