@@ -33,7 +33,7 @@ whose default value is `traefik` (port `8080`).
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
-| `/ping` | `GET`, `HEAD` | A endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
+| `/ping` | `GET`, `HEAD` | An endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 
 !!! note
     The `cli` comes with a [`healthcheck`](./cli.md#healthcheck) command which can be used for calling this endpoint.
