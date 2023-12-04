@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -28,7 +29,7 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 }
 
 // ServeTCP forwards the connection to the right service.
-func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
+func (b *WRRLoadBalancer) ServeTCP(ctx context.Context, conn WriteCloser) {
 	b.lock.Lock()
 	next, err := b.next()
 	b.lock.Unlock()
@@ -39,7 +40,7 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	next.ServeTCP(conn)
+	next.ServeTCP(ctx, conn)
 }
 
 // AddServer appends a server to the existing list.
