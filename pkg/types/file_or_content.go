@@ -2,9 +2,10 @@ package types
 
 import "os"
 
-// FileOrContent hold a file path or content.
+// FileOrContent holds a file path or content.
 type FileOrContent string
 
+// String returns the FileOrContent in string format
 func (f FileOrContent) String() string {
 	return string(f)
 }
@@ -15,6 +16,7 @@ func (f FileOrContent) IsPath() bool {
 	return err == nil
 }
 
+// Read returns the content after reading the FileOrContent variable
 func (f FileOrContent) Read() ([]byte, error) {
 	var content []byte
 	if f.IsPath() {

@@ -136,8 +136,7 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 
 	tokenData, err := token.Read()
 	if err != nil {
-		log.Error().Err(err).Send()
-		return nil, err
+		return nil, fmt.Errorf("read token: %w", err)
 	}
 
 	config := &rest.Config{
