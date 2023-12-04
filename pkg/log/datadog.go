@@ -9,5 +9,5 @@ func NewDatadogLogger(logger Logger) *DatadogLogger {
 }
 
 func (d DatadogLogger) Log(msg string) {
-	d.logger.Error(msg)
+	d.logger.Debug(msg)
 }
