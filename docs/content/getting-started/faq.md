@@ -71,7 +71,8 @@ Traefik returns a `502` response code when an error happens while contacting the
 
 ### `503 Service Unavailable`
 
-Traefik returns a `503` response code when a Router has been matched, but there are no servers ready to handle the request.
+Traefik returns a `503` response code when a Router has been matched,
+but there are no servers ready to handle the request.
 
 This situation is encountered when a service has been explicitly configured without servers,
 or when a service has healthcheck enabled and all servers are unhealthy.
