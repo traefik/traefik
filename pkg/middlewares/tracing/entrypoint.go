@@ -33,7 +33,7 @@ func newEntryPoint(ctx context.Context, tracer trace.Tracer, entryPointName stri
 }
 
 func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	tracingCtx := tracing.Propagator(req.Context(), req.Header)
+	tracingCtx := tracing.ExtractCarrierIntoContext(req.Context(), req.Header)
 	tracingCtx, span := e.tracer.Start(tracingCtx, "entry_point", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 

@@ -114,12 +114,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var span trace.Span
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
 		var tracingCtx context.Context
-		tracingCtx, span = tracer.Start(req.Context(), "forward-auth-request", trace.WithSpanKind(trace.SpanKindClient))
+		tracingCtx, span := tracer.Start(req.Context(), "forward-auth-request", trace.WithSpanKind(trace.SpanKindClient))
 		defer span.End()
 
-		req = req.WithContext(tracingCtx)
+		//req = req.WithContext(tracingCtx)
 
-		tracing.InjectRequestHeaders(forwardReq.Context(), req.Header)
+		tracing.InjectContextIntoCarrier(tracingCtx, forwardReq.Header)
 		tracing.LogClientRequest(span, forwardReq)
 	}
 

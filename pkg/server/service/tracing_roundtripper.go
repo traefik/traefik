@@ -22,7 +22,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		req = req.WithContext(tracingCtx)
 
 		tracing.LogClientRequest(span, req)
-		tracing.InjectRequestHeaders(req.Context(), req.Header)
+		tracing.InjectContextIntoCarrier(req.Context(), req.Header)
 	}
 
 	response, err := t.rt.RoundTrip(req)
