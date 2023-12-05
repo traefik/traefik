@@ -26,19 +26,6 @@ whoami:
 
 ```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: middlewaretcps.traefik.io
-spec:
-  group: traefik.io
-  version: v1alpha1
-  names:
-    kind: MiddlewareTCP
-    plural: middlewaretcps
-    singular: middlewaretcp
-  scope: Namespaced
-
 ---
 apiVersion: traefik.io/v1alpha1
 kind: MiddlewareTCP

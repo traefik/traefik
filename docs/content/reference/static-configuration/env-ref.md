@@ -45,6 +45,9 @@ Activate dashboard. (Default: ```true```)
 `TRAEFIK_API_DEBUG`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
+`TRAEFIK_API_DISABLEDASHBOARDAD`:  
+Disable ad in the dashboard. (Default: ```false```)
+
 `TRAEFIK_API_INSECURE`:  
 Activate API directly on the entryPoint named traefik. (Default: ```false```)
 
@@ -128,6 +131,9 @@ HTTP/3 configuration. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
+Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
