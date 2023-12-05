@@ -222,6 +222,8 @@ func (p *ProviderAggregator) ReloadProviders(configurationChan chan<- dynamic.Me
 			if err != nil {
 				return err
 			}
+		} else {
+			log.Debug().Msgf("provider %+v doesn't implement Reloadable interface", provider)
 		}
 	}
 

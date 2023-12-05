@@ -70,7 +70,7 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 	c.configurationListeners = append(c.configurationListeners, listener)
 }
 
-// ReloadFileConfig reloads the dynamic file configuration.
+// ReloadAllConfig reloads the dynamic file configuration.
 func (c *ConfigurationWatcher) ReloadAllProviders() error {
 	// Type assert to ProviderAggregator if necessary
 	if aggregator, ok := c.providerAggregator.(aggregator.ProviderAggregator); ok {
