@@ -154,6 +154,9 @@ type Compress struct {
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
+	// CompressionLevel defines the compression level (-1 = default, 0-9).
+	// Default: -1
+	CompressionLevel int `json:"compressionLevel,omitempty" toml:"compressionLevel,omitempty" yaml:"compressionLevel,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

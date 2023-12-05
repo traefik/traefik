@@ -21,10 +21,11 @@ const (
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
-	next     http.Handler
-	name     string
-	excludes []string
-	minSize  int
+	next             http.Handler
+	name             string
+	excludes         []string
+	minSize          int
+	compressionLevel int
 }
 
 // New creates a new compress middleware.
@@ -46,7 +47,12 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		minSize = conf.MinResponseBodyBytes
 	}
 
-	return &compress{next: next, name: name, excludes: excludes, minSize: minSize}, nil
+	compressionLevel := gzip.DefaultCompression
+	if conf.CompressionLevel >= gzip.BestSpeed && conf.CompressionLevel <= gzip.BestCompression {
+		compressionLevel = conf.CompressionLevel
+	}
+
+	return &compress{next: next, name: name, excludes: excludes, minSize: minSize, compressionLevel: compressionLevel}, nil
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -70,7 +76,7 @@ func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (c *compress) gzipHandler(ctx context.Context) http.Handler {
 	wrapper, err := gzhttp.NewWrapper(
 		gzhttp.ExceptContentTypes(c.excludes),
-		gzhttp.CompressionLevel(gzip.DefaultCompression),
+		gzhttp.CompressionLevel(c.compressionLevel),
 		gzhttp.MinSize(c.minSize))
 	if err != nil {
 		log.FromContext(ctx).Error(err)
