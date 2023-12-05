@@ -57,9 +57,9 @@ func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context
 }
 
 // InjectContextIntoCarrier sets cross-cutting concerns from the Context into the carrier.
-func InjectContextIntoCarrier(ctx context.Context, headers http.Header) {
+func InjectContextIntoCarrier(req *http.Request) {
 	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
-	propagator.Inject(ctx, propagation.HeaderCarrier(headers))
+	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 }
 
 // SetStatusErrorf flags the span as in error and log an event.
