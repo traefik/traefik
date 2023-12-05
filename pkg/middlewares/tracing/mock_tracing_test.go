@@ -31,6 +31,7 @@ func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanS
 	config := trace.NewSpanStartConfig(opts...)
 	span := &mockSpan{}
 	span.SetName(name)
+	span.SetAttributes(attribute.String("span.kind", config.SpanKind().String()))
 	span.SetAttributes(config.Attributes()...)
 	t.spans = append(t.spans, span)
 	return trace.ContextWithSpan(ctx, span), span

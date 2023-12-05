@@ -7,11 +7,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func TestNewRouter(t *testing.T) {
+func TestNewService(t *testing.T) {
 	type expected struct {
 		attributes []attribute.KeyValue
 		name       string
@@ -20,13 +21,11 @@ func TestNewRouter(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		service  string
-		router   string
 		expected []expected
 	}{
 		{
 			desc:    "base",
 			service: "myService",
-			router:  "myRouter",
 			expected: []expected{
 				{
 					name: "entry_point",
@@ -46,8 +45,7 @@ func TestNewRouter(t *testing.T) {
 						attribute.String("url.full", "http://www.test.com/traces?p=OpenTelemetry"),
 						attribute.String("url.scheme", "http"),
 						attribute.String("traefik.service.name", "myService"),
-						attribute.String("traefik.router.name", "myRouter"),
-						attribute.String("user_agent.original", "router-test"),
+						attribute.String("user_agent.original", "service-test"),
 					},
 				},
 			},
@@ -58,10 +56,11 @@ func TestNewRouter(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/traces?p=OpenTelemetry", nil)
 			req.RemoteAddr = "10.0.0.1:1234"
-			req.Header.Set("User-Agent", "router-test")
+			req.Header.Set("User-Agent", "service-test")
 
 			tracer := &mockTracer{}
-			tracingCtx, entryPointSpan := tracer.Start(req.Context(), "entry_point", trace.WithSpanKind(trace.SpanKindServer))
+			tracingCtx := tracing.Propagator(req.Context(), req.Header)
+			tracingCtx, entryPointSpan := tracer.Start(tracingCtx, "entry_point", trace.WithSpanKind(trace.SpanKindServer))
 			defer entryPointSpan.End()
 
 			req = req.WithContext(tracingCtx)
@@ -71,7 +70,7 @@ func TestNewRouter(t *testing.T) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			handler := newRouter(context.Background(), test.router, test.service, next)
+			handler := NewService(context.Background(), test.service, next)
 			handler.ServeHTTP(rw, req)
 
 			for i, span := range tracer.spans {

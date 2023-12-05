@@ -27,7 +27,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 			expected: expected{
 				name: "entry_point",
 				attributes: []attribute.KeyValue{
-					// attribute.String("span.kind", "server"),
+					attribute.String("span.kind", "server"),
 					attribute.String("entry_point", "test"),
 					attribute.String("http.request.method", "GET"),
 					attribute.String("network.protocol.version", "1.1"),
@@ -35,7 +35,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 					attribute.String("url.path", "/search"),
 					attribute.String("url.query", "q=Opentelemetry"),
 					attribute.String("url.scheme", "http"),
-					attribute.String("user_agent.original", "MyUserAgent"),
+					attribute.String("user_agent.original", "entrypoint-test"),
 					attribute.String("server.address", "www.test.com"),
 					attribute.String("client.address", "10.0.0.1"),
 					attribute.Int64("client.port", int64(1234)),
@@ -51,7 +51,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
 			rw := httptest.NewRecorder()
 			req.RemoteAddr = "10.0.0.1:1234"
-			req.Header.Set("User-Agent", "MyUserAgent")
+			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
