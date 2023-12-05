@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -59,8 +58,7 @@ func TestNewService(t *testing.T) {
 			req.Header.Set("User-Agent", "service-test")
 
 			tracer := &mockTracer{}
-			tracingCtx := tracing.Propagator(req.Context(), req.Header)
-			tracingCtx, entryPointSpan := tracer.Start(tracingCtx, "entry_point", trace.WithSpanKind(trace.SpanKindServer))
+			tracingCtx, entryPointSpan := tracer.Start(req.Context(), "entry_point", trace.WithSpanKind(trace.SpanKindServer))
 			defer entryPointSpan.End()
 
 			req = req.WithContext(tracingCtx)
