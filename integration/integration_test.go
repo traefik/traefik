@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -18,7 +19,14 @@ import (
 
 	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/context/docker"
+	"github.com/docker/cli/cli/context/store"
+	manifeststore "github.com/docker/cli/cli/manifest/store"
+	registryclient "github.com/docker/cli/cli/registry/client"
+	"github.com/docker/cli/cli/streams"
+	"github.com/docker/cli/cli/trust"
 	"github.com/docker/compose/v2/cmd/formatter"
 	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
@@ -27,6 +35,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
+	notaryclient "github.com/theupdateframework/notary/client"
 	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
@@ -123,7 +132,9 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	s.dockerClient, err = client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
 
-	s.dockerComposeService = compose.NewComposeService(s.dockerClient, &configfile.ConfigFile{})
+	fakeCLI := &FakeDockerCLI{client: s.dockerClient}
+
+	s.dockerComposeService = compose.NewComposeService(fakeCLI)
 	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 
@@ -142,7 +153,7 @@ func (s *BaseSuite) composeUp(c *check.C, services ...string) {
 	err := s.dockerComposeService.Create(context.Background(), s.composeProject, composeapi.CreateOptions{})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Restart(context.Background(), s.composeProject, composeapi.RestartOptions{Services: services})
+	err = s.dockerComposeService.Restart(context.Background(), s.composeProject.Name, composeapi.RestartOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -154,9 +165,6 @@ func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) {
 
 	_, err := s.dockerComposeService.Exec(context.Background(), s.composeProject.Name, composeapi.RunOptions{
 		Service: service,
-		Stdin:   os.Stdin,
-		Stdout:  os.Stdout,
-		Stderr:  os.Stderr,
 		Command: args,
 		Tty:     false,
 		Index:   1,
@@ -169,10 +177,10 @@ func (s *BaseSuite) composeStop(c *check.C, services ...string) {
 	c.Assert(s.dockerComposeService, check.NotNil)
 	c.Assert(s.composeProject, check.NotNil)
 
-	err := s.dockerComposeService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{Services: services})
+	err := s.dockerComposeService.Stop(context.Background(), s.composeProject.Name, composeapi.StopOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Remove(context.Background(), s.composeProject, composeapi.RemoveOptions{
+	err = s.dockerComposeService.Remove(context.Background(), s.composeProject.Name, composeapi.RemoveOptions{
 		Services: services,
 		Force:    true,
 	})
@@ -239,7 +247,7 @@ func (s *BaseSuite) displayLogCompose(c *check.C) {
 	log.WithoutContext().Infof("%s: docker compose logs: ", c.TestName())
 
 	logWriter := log.WithoutContext().WriterLevel(log.GetLevel())
-	logConsumer := formatter.NewLogConsumer(context.Background(), logWriter, false, true)
+	logConsumer := formatter.NewLogConsumer(context.Background(), logWriter, logWriter, false, true, true)
 
 	err := s.dockerComposeService.Logs(context.Background(), s.composeProject.Name, logConsumer, composeapi.LogOptions{})
 	c.Assert(err, checker.IsNil)
@@ -365,4 +373,80 @@ func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
 	// we need to change this one below correspondingly.
 	vpn.composeExec(c, "tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
 	return vpn
+}
+
+type FakeDockerCLI struct {
+	client client.APIClient
+}
+
+func (f FakeDockerCLI) Client() client.APIClient {
+	return f.client
+}
+
+func (f FakeDockerCLI) In() *streams.In {
+	return streams.NewIn(os.Stdin)
+}
+
+func (f FakeDockerCLI) Out() *streams.Out {
+	return streams.NewOut(os.Stdout)
+}
+
+func (f FakeDockerCLI) Err() io.Writer {
+	return streams.NewOut(os.Stderr)
+}
+
+func (f FakeDockerCLI) SetIn(in *streams.In) {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) Apply(ops ...command.DockerCliOption) error {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) ConfigFile() *configfile.ConfigFile {
+	return &configfile.ConfigFile{}
+}
+
+func (f FakeDockerCLI) ServerInfo() command.ServerInfo {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) NotaryClient(imgRefAndAuth trust.ImageRefAndAuth, actions []string) (notaryclient.Repository, error) {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) DefaultVersion() string {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) CurrentVersion() string {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) ManifestStore() manifeststore.Store {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) RegistryClient(b bool) registryclient.RegistryClient {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) ContentTrustEnabled() bool {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) BuildKitEnabled() (bool, error) {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) ContextStore() store.Store {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) CurrentContext() string {
+	panic("implement me if you need me")
+}
+
+func (f FakeDockerCLI) DockerEndpoint() docker.Endpoint {
+	panic("implement me if you need me")
 }
