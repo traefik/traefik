@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -173,5 +174,9 @@ func (t *tpCloser) Close() error {
 	if t == nil {
 		return nil
 	}
-	return t.provider.Shutdown(context.Background())
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	defer cancel()
+
+	return t.provider.Shutdown(ctx)
 }
