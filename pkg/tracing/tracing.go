@@ -40,11 +40,7 @@ func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
 	return backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes, conf.Headers)
 }
 
-func Propagator(ctx context.Context, headers http.Header) context.Context {
-	propgator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
-	return propgator.Extract(ctx, propagation.HeaderCarrier(headers))
-}
-
+// TracerFromContext extracts the trace.Tracer from the given context.
 func TracerFromContext(ctx context.Context) trace.Tracer {
 	span := trace.SpanFromContext(ctx)
 	if span != nil && span.TracerProvider() != nil {
@@ -52,6 +48,25 @@ func TracerFromContext(ctx context.Context) trace.Tracer {
 	}
 
 	return nil
+}
+
+// ExtractCarrierIntoContext reads cross-cutting concerns from the carrier into a Context.
+func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context.Context {
+	propgator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	return propgator.Extract(ctx, propagation.HeaderCarrier(headers))
+}
+
+// InjectContextIntoCarrier sets cross-cutting concerns from the Context into the carrier.
+func InjectContextIntoCarrier(ctx context.Context, headers http.Header) {
+	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	propagator.Inject(ctx, propagation.HeaderCarrier(headers))
+}
+
+// SetStatusErrorf flags the span as in error and log an event.
+func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
+	if span := trace.SpanFromContext(ctx); span != nil {
+		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
+	}
 }
 
 // LogClientRequest used to add span attributes from the request as a Client.
@@ -197,17 +212,4 @@ func DefaultStatus(code int) (codes.Code, string) {
 		return codes.Error, ""
 	}
 	return codes.Unset, ""
-}
-
-// InjectRequestHeaders used to inject OpenTelemetry headers into the context.
-func InjectRequestHeaders(ctx context.Context, headers http.Header) {
-	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
-	propagator.Inject(ctx, propagation.HeaderCarrier(headers))
-}
-
-// SetStatusErrorf flags the span as in error and log an event.
-func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
-	if span := trace.SpanFromContext(ctx); span != nil {
-		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
-	}
 }
