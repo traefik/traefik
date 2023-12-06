@@ -26,6 +26,7 @@ type Options struct {
 	SniStrict                bool       `json:"sniStrict,omitempty" toml:"sniStrict,omitempty" yaml:"sniStrict,omitempty" export:"true"`
 	PreferServerCipherSuites bool       `json:"preferServerCipherSuites,omitempty" toml:"preferServerCipherSuites,omitempty" yaml:"preferServerCipherSuites,omitempty" export:"true"` // Deprecated: https://github.com/golang/go/issues/45430
 	ALPNProtocols            []string   `json:"alpnProtocols,omitempty" toml:"alpnProtocols,omitempty" yaml:"alpnProtocols,omitempty" export:"true"`
+	SessionTicketKeys        []string   `json:"sessionTicketKeys,omitempty" toml:"sessionTicketKeys,omitempty" yaml:"sessionTicketKeys,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for an Options struct.

@@ -505,6 +505,76 @@ spec:
     - h2
 ```
 
+### TLS Session Ticket Keys
+
+_Optional_
+
+This option allows you to specify a list of TLS Session Ticket Keys which store
+the TLS connection state on the client and allow the TLS session resumption
+with less overhead than re-establishing it from scratch. This is used in both
+TLSv1.2 Session Tickets and TLSv1.3 PSK algorithms.
+
+The use-case for this is 3-fold:
+1. If you run a cluster of Traefik servers you can put the same Session Ticket
+   Keys on all servers and then a client can use it for lightweight session
+   re-establishment to any of the servers in the cluster. By default each
+   server will have its own random keys so a ticket valid for one server would
+   not be valid for the others.
+2. Restart traefik without loosing TLS ticket validity. As the default ticket
+   keys are stored in memory, when Traefik restarts they will be lost. By
+   writing them to the config file they are persisted across restarts
+3. Custom cycling and retention periods: The default daily rotation and 7-day
+   retention periods are not customizable. You may wish to write a cronjob to
+   update the Traefik config file more or less frequently, with longer or
+   shorter retention periods.
+
+If you use this option you are responsible for key rotation, which should occur
+at least on a daily basis or Perfect Forward Secrecy is compromised. These keys
+should be stored securely or your TLS sessions may be intercepted and
+decrypted.
+
+If not specified, the default golang crypto/tls algorithm is used which is to
+keep 7 days of keys and rotate on a daily basis. 
+
+These should be a list of 32-byte random strings which have been
+base64-encoded. You could generate valid key strings via a command like
+`openssl rand 32 | base64 -w0`. The first key will be used for creating new
+tickets, so newly created keys should always be **prepended** to the list.
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      sessionTicketKeys:
+        - Weh+llm9dIy/AEVGhSVuZn1Px+PeV6GgtdgjpOtEbuc=
+        - owcOtCw0oK1GcoFLA81BDvN0FrISKAwrkeHiII2q5YA=
+        - 8wN2dM+JG7XF3kYFQP33scrHlvaon0qpJTeMe7Z/ewM=
+```
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    sessionTicketKeys = ["Weh+llm9dIy/AEVGhSVuZn1Px+PeV6GgtdgjpOtEbuc=", "owcOtCw0oK1GcoFLA81BDvN0FrISKAwrkeHiII2q5YA=", "8wN2dM+JG7XF3kYFQP33scrHlvaon0qpJTeMe7Z/ewM="]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  sessionTicketKeys:
+    - Weh+llm9dIy/AEVGhSVuZn1Px+PeV6GgtdgjpOtEbuc=
+    - owcOtCw0oK1GcoFLA81BDvN0FrISKAwrkeHiII2q5YA=
+    - 8wN2dM+JG7XF3kYFQP33scrHlvaon0qpJTeMe7Z/ewM=
+```
+
 ### Client Authentication (mTLS)
 
 Traefik supports mutual authentication, through the `clientAuth` section.
