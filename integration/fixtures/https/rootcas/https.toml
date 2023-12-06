@@ -6,8 +6,20 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport]
-  # Use certificate in net/internal/testcert.go
+[entryPoints]
+  [entryPoints.web]
+    address = ":8081"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.serversTransports.default.tls]
+# Use certificate in net/internal/testcert.go
   rootCAs =  [ """
 -----BEGIN CERTIFICATE-----
 MIIDOTCCAiGgAwIBAgIQSRJrEpBGFc7tNb1fb5pKFzANBgkqhkiG9w0BAQsFADAS
@@ -30,18 +42,6 @@ grw/ZQTTIVjjh4JBSW3WyWgNo/ikC1lrVxzl4iPUGptxT36Cr7Zk2Bsg0XqwbOvK
 WkBKOclmOV2xlTVuPw==
 -----END CERTIFICATE-----
 """]
-
-[entryPoints]
-  [entryPoints.web]
-    address = ":8081"
-
-[api]
-  insecure = true
-
-[providers.file]
-  filename = "{{ .SelfFilename }}"
-
-## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
