@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"fmt"
 
+	"github.com/hashicorp/consul/agent/connect"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
@@ -51,13 +52,16 @@ func (c *connectCert) equals(other *connectCert) bool {
 }
 
 func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
-	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
-		item.Namespace,
-		item.Datacenter,
-		item.Name,
-	)
+	st := &dynamic.ServersTransport{}
+	st.SetDefaults()
 
-	return &dynamic.ServersTransport{
+	spiffeIDService := connect.SpiffeIDService{
+		Namespace:  item.Namespace,
+		Datacenter: item.Datacenter,
+		Service:    item.Name,
+	}
+
+	st.TLS = &dynamic.TLSClientConfig{
 		// This ensures that the config changes whenever the verifier function changes
 		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
 		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
@@ -66,8 +70,10 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 		Certificates: traefiktls.Certificates{
 			c.getLeaf(),
 		},
-		PeerCertURI: spiffeID,
+		PeerCertURI: spiffeIDService.URI().String(),
 	}
+
+	return st
 }
 
 func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTransport {
