@@ -46,7 +46,7 @@ type Dialer interface {
 }
 
 // Get gets a dialer by name.
-func (d *DialerManager) Get(name string, isTls bool, proxyURL *url.URL) (Dialer, error) {
+func (d *DialerManager) Get(name string, isTLS bool, proxyURL *url.URL) (Dialer, error) {
 	if len(name) == 0 {
 		name = "default"
 	}
@@ -66,7 +66,7 @@ func (d *DialerManager) Get(name string, isTls bool, proxyURL *url.URL) (Dialer,
 	dialer := dialer.NewDialer(dialer.Config{
 		DialKeepAlive: time.Duration(transport.DialKeepAlive),
 		DialTimeout:   time.Duration(transport.DialTimeout),
-		TLS:           isTls,
+		TLS:           isTLS,
 		ProxyURL:      proxyURL,
 	}, tlsConfig)
 

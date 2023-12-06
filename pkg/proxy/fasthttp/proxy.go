@@ -108,7 +108,7 @@ func (t timeoutError) Temporary() bool {
 
 // ReverseProxy is the FastHTTP reverse proxy implementation.
 type ReverseProxy struct {
-	connPool *connPool
+	connPool *ConnPool
 
 	bufferPool      pool[[]byte]
 	readerPool      pool[*bufio.Reader]
@@ -123,7 +123,7 @@ type ReverseProxy struct {
 }
 
 // NewReverseProxy creates a new ReverseProxy.
-func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
+func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *ConnPool) (*ReverseProxy, error) {
 	var proxyAuth string
 	if proxyURL != nil && proxyURL.User != nil && targetURL.Scheme == "http" {
 		username := proxyURL.User.Username()
@@ -247,7 +247,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	ctx := req.Context()
 	trace := httptrace.ContextClientTrace(ctx)
 
-	var co *conn
+	var co *Conn
 	for {
 		select {
 		case <-ctx.Done():
@@ -500,11 +500,11 @@ func isGraphic(s string) bool {
 }
 
 type fasthttpHeader interface {
-	Peek(string) []byte
-	Set(string, string)
-	SetBytesV(string, []byte)
-	DelBytes([]byte)
-	Del(string)
+	Peek(key string) []byte
+	Set(key string, value string)
+	SetBytesV(key string, value []byte)
+	DelBytes(key []byte)
+	Del(key string)
 }
 
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.

@@ -262,8 +262,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	// TCP Manager
-	tcpTlsClientConfigManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](spiffeX509Source)
-	dialerManager := tcp.NewDialerManager(tcpTlsClientConfigManager)
+	tcpTLSClientConfigManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](spiffeX509Source)
+	dialerManager := tcp.NewDialerManager(tcpTLSClientConfigManager)
 
 	// HTTP Manager
 	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](spiffeX509Source)
@@ -309,7 +309,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		tlsClientConfigManager.Update(conf.HTTP.ServersTransports)
-		tcpTlsClientConfigManager.Update(conf.TCP.ServersTransports)
+		tcpTLSClientConfigManager.Update(conf.TCP.ServersTransports)
 
 		proxyBuilder.Update(conf.HTTP.ServersTransports)
 		dialerManager.Update(conf.TCP.ServersTransports)

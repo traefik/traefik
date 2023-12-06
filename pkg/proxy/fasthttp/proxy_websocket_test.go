@@ -53,7 +53,7 @@ func TestWebSocketTCPClose(t *testing.T) {
 	serverErr := <-errChan
 
 	var wsErr *gorillawebsocket.CloseError
-	require.True(t, errors.As(serverErr, &wsErr))
+	require.ErrorAs(t, serverErr, &wsErr)
 	assert.Equal(t, 1006, wsErr.Code)
 }
 
@@ -661,7 +661,7 @@ func parseURI(t *testing.T, uri string) *url.URL {
 	return out
 }
 
-func createConnectionPool(target string, tlsConfig *tls.Config) *connPool {
+func createConnectionPool(target string, tlsConfig *tls.Config) *ConnPool {
 	u := testhelpers.MustParseURL(target)
 	return NewConnPool(200, 0, func() (net.Conn, error) {
 		if tlsConfig != nil {
@@ -672,7 +672,7 @@ func createConnectionPool(target string, tlsConfig *tls.Config) *connPool {
 	})
 }
 
-func createProxyWithForwarder(t *testing.T, uri string, pool *connPool) *httptest.Server {
+func createProxyWithForwarder(t *testing.T, uri string, pool *ConnPool) *httptest.Server {
 	t.Helper()
 
 	u := parseURI(t, uri)

@@ -1002,7 +1002,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with ingressClass",
+			desc: "v18 Ingress with ingressClass",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1028,7 +1028,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with multiple ingressClasses",
+			desc: "v18 Ingress with multiple ingressClasses",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1058,7 +1058,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with no pathType",
+			desc: "v18 Ingress with no pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1084,7 +1084,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with empty pathType",
+			desc: "v18 Ingress with empty pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1110,7 +1110,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with implementationSpecific pathType",
+			desc: "v18 Ingress with implementationSpecific pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1136,7 +1136,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with prefix pathType",
+			desc: "v18 Ingress with prefix pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1162,7 +1162,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with exact pathType",
+			desc: "v18 Ingress with exact pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1188,7 +1188,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with missing ingressClass",
+			desc: "v18 Ingress with missing ingressClass",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1199,7 +1199,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with ingress annotation",
+			desc: "v18 Ingress with ingress annotation",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1254,8 +1254,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with ingressClasses filter",
-			ingressClass:  "traefik-lb2",
+			desc:         "v18 Ingress with ingressClasses filter",
+			ingressClass: "traefik-lb2",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1385,7 +1385,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v19 Ingress with implementationSpecific pathType",
+			desc: "v19 Ingress with implementationSpecific pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1411,7 +1411,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v19 Ingress with ingress annotation",
+			desc: "v19 Ingress with ingress annotation",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1506,7 +1506,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v19 Ingress with ingressClassv1",
+			desc: "v19 Ingress with ingressClassv1",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1532,7 +1532,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v19 Ingress with named port",
+			desc: "v19 Ingress with named port",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{

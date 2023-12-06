@@ -64,7 +64,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, http.DefaultTransport, nil)
+			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, nil, nil)
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})

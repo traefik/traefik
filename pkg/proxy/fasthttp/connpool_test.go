@@ -11,12 +11,12 @@ import (
 func TestConnPool_ConnReuse(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		poolFn   func(pool *connPool)
+		poolFn   func(pool *ConnPool)
 		expected int
 	}{
 		{
 			desc: "One connection",
-			poolFn: func(pool *connPool) {
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				pool.ReleaseConn(c1)
 			},
@@ -24,7 +24,7 @@ func TestConnPool_ConnReuse(t *testing.T) {
 		},
 		{
 			desc: "Two connections with release",
-			poolFn: func(pool *connPool) {
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				pool.ReleaseConn(c1)
 
@@ -35,7 +35,7 @@ func TestConnPool_ConnReuse(t *testing.T) {
 		},
 		{
 			desc: "Two concurrent connections",
-			poolFn: func(pool *connPool) {
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				c2, _ := pool.AcquireConn()
 
@@ -68,13 +68,13 @@ func TestConnPool_ConnReuse(t *testing.T) {
 func TestConnPool_MaxIdleConn(t *testing.T) {
 	testCases := []struct {
 		desc        string
-		poolFn      func(pool *connPool)
+		poolFn      func(pool *ConnPool)
 		maxIdleConn int
 		expected    int
 	}{
 		{
 			desc: "One connection",
-			poolFn: func(pool *connPool) {
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				pool.ReleaseConn(c1)
 			},
@@ -83,7 +83,7 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 		},
 		{
 			desc: "Multiple connections with defered release",
-			poolFn: func(pool *connPool) {
+			poolFn: func(pool *ConnPool) {
 				for i := 0; i < 7; i++ {
 					c, _ := pool.AcquireConn()
 					defer pool.ReleaseConn(c)

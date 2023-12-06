@@ -163,13 +163,13 @@ func NewDialer(cfg Config, tlsConfig *tls.Config) dialer {
 	})
 }
 
-func buildDialer(cfg Config, tlsConfig *tls.Config, isTls bool) dialer {
+func buildDialer(cfg Config, tlsConfig *tls.Config, isTLS bool) dialer {
 	dialer := &net.Dialer{
 		Timeout:   cfg.DialTimeout,
 		KeepAlive: cfg.DialKeepAlive,
 	}
 
-	if !isTls {
+	if !isTLS {
 		return dialer
 	}
 

@@ -8,30 +8,31 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type conn struct {
+// Conn is an enriched net.Conn.
+type Conn struct {
 	net.Conn
 
 	idleAt      time.Time // the last time it was marked as idle.
 	idleTimeout time.Duration
 }
 
-func (c *conn) isExpired() bool {
+func (c *Conn) isExpired() bool {
 	expTime := c.idleAt.Add(c.idleTimeout)
 	return c.idleTimeout > 0 && time.Now().After(expTime)
 }
 
-// connPool is a net.Conn pool implementation using channels.
-type connPool struct {
+// ConnPool is a net.Conn pool implementation using channels.
+type ConnPool struct {
 	dialer          func() (net.Conn, error)
-	idleConns       chan *conn
+	idleConns       chan *Conn
 	idleConnTimeout time.Duration
 }
 
-// NewConnPool creates a new connPool.
-func NewConnPool(maxIdleConn int, idleConnTimeout time.Duration, dialer func() (net.Conn, error)) *connPool {
-	c := &connPool{
+// NewConnPool creates a new ConnPool.
+func NewConnPool(maxIdleConn int, idleConnTimeout time.Duration, dialer func() (net.Conn, error)) *ConnPool {
+	c := &ConnPool{
 		dialer:          dialer,
-		idleConns:       make(chan *conn, maxIdleConn),
+		idleConns:       make(chan *Conn, maxIdleConn),
 		idleConnTimeout: idleConnTimeout,
 	}
 	c.cleanIdleConns()
@@ -40,7 +41,7 @@ func NewConnPool(maxIdleConn int, idleConnTimeout time.Duration, dialer func() (
 }
 
 // AcquireConn returns an idle net.Conn from the pool.
-func (c *connPool) AcquireConn() (*conn, error) {
+func (c *ConnPool) AcquireConn() (*Conn, error) {
 	for {
 		co, err := c.acquireConn()
 		if err != nil {
@@ -62,13 +63,13 @@ func (c *connPool) AcquireConn() (*conn, error) {
 }
 
 // ReleaseConn releases the given net.Conn to the pool.
-func (c *connPool) ReleaseConn(co *conn) {
+func (c *ConnPool) ReleaseConn(co *Conn) {
 	co.idleAt = time.Now()
 	c.releaseConn(co)
 }
 
 // cleanIdleConns is a routine cleaning the expired connections at a regular basis.
-func (c *connPool) cleanIdleConns() {
+func (c *ConnPool) cleanIdleConns() {
 	defer time.AfterFunc(c.idleConnTimeout/2, c.cleanIdleConns)
 
 	for {
@@ -91,7 +92,7 @@ func (c *connPool) cleanIdleConns() {
 	}
 }
 
-func (c *connPool) acquireConn() (*conn, error) {
+func (c *ConnPool) acquireConn() (*Conn, error) {
 	select {
 	case co := <-c.idleConns:
 		return co, nil
@@ -110,7 +111,7 @@ func (c *connPool) acquireConn() (*conn, error) {
 	}
 }
 
-func (c *connPool) releaseConn(co *conn) {
+func (c *ConnPool) releaseConn(co *Conn) {
 	select {
 	case c.idleConns <- co:
 
@@ -125,14 +126,14 @@ func (c *connPool) releaseConn(co *conn) {
 	}
 }
 
-func (c *connPool) askForNewConn(errCh chan<- error) {
+func (c *ConnPool) askForNewConn(errCh chan<- error) {
 	co, err := c.dialer()
 	if err != nil {
 		errCh <- fmt.Errorf("create conn: %w", err)
 		return
 	}
 
-	c.releaseConn(&conn{
+	c.releaseConn(&Conn{
 		Conn:        co,
 		idleAt:      time.Now(),
 		idleTimeout: c.idleConnTimeout,

@@ -14,14 +14,14 @@ import (
 // ProxyBuilder handles the connection pools for the FastHTTP proxies.
 type ProxyBuilder struct {
 	// lock isn't needed because ProxyBuilder is not called concurrently.
-	pools map[string]map[string]*connPool
+	pools map[string]map[string]*ConnPool
 	proxy func(*http.Request) (*url.URL, error)
 }
 
 // NewProxyBuilder creates a new ProxyBuilder.
 func NewProxyBuilder() *ProxyBuilder {
 	return &ProxyBuilder{
-		pools: make(map[string]map[string]*connPool),
+		pools: make(map[string]map[string]*ConnPool),
 		proxy: http.ProxyFromEnvironment,
 	}
 }
@@ -46,10 +46,10 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.ServersTransport, tlsC
 	return NewReverseProxy(targetURL, proxyURL, cfg.PassHostHeader, responseHeaderTimeout, pool)
 }
 
-func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
+func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *ConnPool {
 	pool, ok := r.pools[cfgName]
 	if !ok {
-		pool = make(map[string]*connPool)
+		pool = make(map[string]*ConnPool)
 		r.pools[cfgName] = pool
 	}
 
