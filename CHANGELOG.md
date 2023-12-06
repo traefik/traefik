@@ -1,3 +1,12 @@
+## [v2.10.7](https://github.com/traefik/traefik/tree/v2.10.7) (2023-12-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.6...v2.10.7)
+
+**Bug fixes:**
+- **[logs]** Fixed datadog logs json format issue ([#10233](https://github.com/traefik/traefik/pull/10233) by [sssash18](https://github.com/sssash18))
+
+**Documentation:**
+- Prepare release v2.10.6 ([#10268](https://github.com/traefik/traefik/pull/10268) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.10.6](https://github.com/traefik/traefik/tree/v2.10.6) (2023-11-28)
 [All Commits](https://github.com/traefik/traefik/compare/v2.10.5...v2.10.6)
 
