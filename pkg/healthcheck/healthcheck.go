@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -54,7 +55,7 @@ type ServiceHealthChecker struct {
 	targets map[string]*url.URL
 }
 
-func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL) *ServiceHealthChecker {
+func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, tlsClientConfig *tls.Config, targets map[string]*url.URL) *ServiceHealthChecker {
 	logger := log.Ctx(ctx)
 
 	interval := time.Duration(config.Interval)
@@ -68,6 +69,9 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		logger.Error().Msg("Health check timeout smaller than zero")
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = tlsClientConfig
 
 	client := &http.Client{
 		Transport: transport,

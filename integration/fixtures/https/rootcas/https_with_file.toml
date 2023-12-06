@@ -6,10 +6,6 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport]
-  # Use certificate in net/internal/testcert.go
-  rootCAs =  [ "fixtures/https/rootcas/local.crt"]
-
 [entryPoints]
   [entryPoints.web]
     address = ":8081"
@@ -21,6 +17,10 @@
   filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
+
+[http.serversTransports.default.tls]
+  # Use certificate in net/internal/testcert.go
+  rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
 [http.routers]
   [http.routers.router1]
