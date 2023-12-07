@@ -84,7 +84,7 @@ func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes 
 		resource.WithFromEnv(),
 		resource.WithTelemetrySDK(),
 		resource.WithOSType(),
-		resource.WithProcess(),
+		resource.WithProcessCommandArgs(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("building resource: %w", err)
