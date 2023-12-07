@@ -37,6 +37,8 @@ func TestEntryPointMiddleware(t *testing.T) {
 					attribute.String("url.scheme", "http"),
 					attribute.String("user_agent.original", "entrypoint-test"),
 					attribute.String("server.address", "www.test.com"),
+					attribute.String("network.peer.address", "10.0.0.1"),
+					attribute.String("network.peer.port", "1234"),
 					attribute.String("client.address", "10.0.0.1"),
 					attribute.Int64("client.port", int64(1234)),
 					attribute.String("client.socket.address", ""),

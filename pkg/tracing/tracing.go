@@ -70,13 +70,13 @@ func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
 }
 
 // LogClientRequest used to add span attributes from the request as a Client.
+// TODO: the semconv does not implement Semantic Convention v1.23.0.
 func LogClientRequest(span trace.Span, r *http.Request) {
 	if r == nil || span == nil {
 		return
 	}
 
 	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
-	// TODO: the semconv does not implement Semantic Convention v1.23.0.
 	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 
@@ -87,11 +87,14 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 
 	host, port, err := net.SplitHostPort(r.URL.Host)
 	if err != nil {
+		span.SetAttributes(attribute.String("network.peer.address", host))
 		span.SetAttributes(semconv.ServerAddress(r.URL.Host))
 		switch r.URL.Scheme {
 		case "http":
+			span.SetAttributes(attribute.String("network.peer.port", "80"))
 			span.SetAttributes(semconv.ServerPort(80))
 		case "https":
+			span.SetAttributes(attribute.String("network.peer.port", "443"))
 			span.SetAttributes(semconv.ServerPort(443))
 		}
 	} else {
@@ -104,18 +107,18 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 }
 
 // LogServerRequest used to add span attributes from the request as a Server.
+// TODO: the semconv does not implement Semantic Convention v1.23.0.
 func LogServerRequest(span trace.Span, r *http.Request) {
 	if r == nil {
 		return
 	}
 
 	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
-	// TODO: the semconv does not implement Semantic Convention v1.23.0.
 	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 
 	// Server attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-server-semantic-conventions
-	span.SetAttributes(semconv.HTTPResponseStatusCode(int(r.ContentLength)))
+	span.SetAttributes(semconv.HTTPRequestBodySize(int(r.ContentLength)))
 	span.SetAttributes(semconv.URLPath(r.URL.Path))
 	span.SetAttributes(semconv.URLQuery(r.URL.RawQuery))
 	span.SetAttributes(semconv.URLScheme(r.Header.Get("X-Forwarded-Proto")))
