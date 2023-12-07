@@ -56,7 +56,7 @@ func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context
 	return propgator.Extract(ctx, propagation.HeaderCarrier(headers))
 }
 
-// InjectContextIntoCarrier sets cross-cutting concerns from the Context into the carrier.
+// InjectContextIntoCarrier sets cross-cutting concerns from the request context into the request headers.
 func InjectContextIntoCarrier(req *http.Request) {
 	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
 	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))

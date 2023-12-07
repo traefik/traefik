@@ -30,7 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
-	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
@@ -53,11 +53,7 @@ type serviceBuilder interface {
 
 // NewBuilder creates a new Builder.
 func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder, pluginBuilder PluginsBuilder) *Builder {
-	return &Builder{
-		configs:        configs,
-		serviceBuilder: serviceBuilder,
-		pluginBuilder:  pluginBuilder,
-	}
+	return &Builder{configs: configs, serviceBuilder: serviceBuilder, pluginBuilder: pluginBuilder}
 }
 
 // BuildChain creates a middleware chain.
@@ -376,7 +372,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	return tracingMiddle.WrapMiddleware(ctx, middleware), nil
+	return tracing.WrapMiddleware(ctx, middleware), nil
 }
 
 func inSlice(element string, stack []string) bool {

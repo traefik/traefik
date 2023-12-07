@@ -111,16 +111,16 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var span trace.Span
+	var forwardSpan trace.Span
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
 		var tracingCtx context.Context
-		tracingCtx, span = tracer.Start(req.Context(), "forward-auth-request", trace.WithSpanKind(trace.SpanKindClient))
-		defer span.End()
+		tracingCtx, forwardSpan = tracer.Start(req.Context(), "AuthRequest", trace.WithSpanKind(trace.SpanKindClient))
+		defer forwardSpan.End()
 
 		forwardReq = forwardReq.WithContext(tracingCtx)
 
 		tracing.InjectContextIntoCarrier(forwardReq)
-		tracing.LogClientRequest(span, forwardReq)
+		tracing.LogClientRequest(forwardSpan, forwardReq)
 	}
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
@@ -144,6 +144,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	// Ending the forward request span as soon as the response is handled.
+	// If any errors happen earlier, this span will be close by the defer instruction.
+	if forwardSpan != nil {
+		forwardSpan.End()
 	}
 
 	// Pass the forward response's body and selected headers if it
@@ -171,7 +177,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Set("Location", redirectURL.String())
 		}
 
-		tracing.LogResponseCode(span, forwardResponse.StatusCode, trace.SpanKindClient)
+		tracing.LogResponseCode(forwardSpan, forwardResponse.StatusCode, trace.SpanKindClient)
 		rw.WriteHeader(forwardResponse.StatusCode)
 
 		if _, err = rw.Write(body); err != nil {
@@ -202,12 +208,9 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	tracing.LogResponseCode(span, forwardResponse.StatusCode, trace.SpanKindClient)
+	tracing.LogResponseCode(forwardSpan, forwardResponse.StatusCode, trace.SpanKindClient)
 
 	req.RequestURI = req.URL.RequestURI()
-	if span != nil {
-		span.End()
-	}
 	fa.next.ServeHTTP(rw, req)
 }
 

@@ -27,13 +27,13 @@ func TestNewService(t *testing.T) {
 			service: "myService",
 			expected: []expected{
 				{
-					name: "entry_point",
+					name: "EntryPoint",
 					attributes: []attribute.KeyValue{
 						attribute.String("span.kind", "server"),
 					},
 				},
 				{
-					name: "router",
+					name: "Service",
 					attributes: []attribute.KeyValue{
 						attribute.String("span.kind", "internal"),
 						attribute.String("http.request.method", "GET"),
@@ -58,7 +58,7 @@ func TestNewService(t *testing.T) {
 			req.Header.Set("User-Agent", "service-test")
 
 			tracer := &mockTracer{}
-			tracingCtx, entryPointSpan := tracer.Start(req.Context(), "entry_point", trace.WithSpanKind(trace.SpanKindServer))
+			tracingCtx, entryPointSpan := tracer.Start(req.Context(), "EntryPoint", trace.WithSpanKind(trace.SpanKindServer))
 			defer entryPointSpan.End()
 
 			req = req.WithContext(tracingCtx)
