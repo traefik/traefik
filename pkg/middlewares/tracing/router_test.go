@@ -18,15 +18,17 @@ func TestNewRouter(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc     string
-		service  string
-		router   string
-		expected []expected
+		desc       string
+		service    string
+		router     string
+		routerRule string
+		expected   []expected
 	}{
 		{
-			desc:    "base",
-			service: "myService",
-			router:  "myRouter",
+			desc:       "base",
+			service:    "myService",
+			router:     "myRouter",
+			routerRule: "Path(`/`)",
 			expected: []expected{
 				{
 					name: "EntryPoint",
@@ -47,6 +49,7 @@ func TestNewRouter(t *testing.T) {
 						attribute.String("url.scheme", "http"),
 						attribute.String("traefik.service.name", "myService"),
 						attribute.String("traefik.router.name", "myRouter"),
+						attribute.String("http.route", "Path(`/`)"),
 						attribute.String("user_agent.original", "router-test"),
 					},
 				},
@@ -71,7 +74,7 @@ func TestNewRouter(t *testing.T) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			handler := newRouter(context.Background(), test.router, test.service, next)
+			handler := newRouter(context.Background(), test.router, test.routerRule, test.service, next)
 			handler.ServeHTTP(rw, req)
 
 			for i, span := range tracer.spans {
