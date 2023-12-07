@@ -211,7 +211,7 @@ plugin's version.
 Periodically check if a new version has been released. (Default: ```true```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
-Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
+Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default. (Default: ```false```)
 
 `TRAEFIK_HOSTRESOLVER`:  
 Enable CNAME Flattening. (Default: ```false```)
