@@ -84,23 +84,23 @@ func (s *TracingSuite) TestOpentelemetryBasic_HTTP(c *check.C) {
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
 
-			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "EntryPoint",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/basic",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
 
-			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "Router",
 			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router0@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
 
-			"batches.0.scopeSpans.0.spans.2.name": "service",
+			"batches.0.scopeSpans.0.spans.2.name": "Service",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
 
-			"batches.0.scopeSpans.0.spans.3.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.3.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_CLIENT",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
@@ -137,23 +137,23 @@ func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
 
-			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "EntryPoint",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/basic",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
 
-			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "Router",
 			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router0@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
 
-			"batches.0.scopeSpans.0.spans.2.name": "service",
+			"batches.0.scopeSpans.0.spans.2.name": "Service",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
 
-			"batches.0.scopeSpans.0.spans.3.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.3.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_CLIENT",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
@@ -211,14 +211,14 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
 
-			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "EntryPoint",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
 
-			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "Router",
 			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
@@ -231,11 +231,11 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
 
-			"batches.0.scopeSpans.0.spans.4.name": "service",
+			"batches.0.scopeSpans.0.spans.4.name": "Service",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
 
-			"batches.0.scopeSpans.0.spans.5.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.5.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.5.kind":                                                           "SPAN_KIND_CLIENT",
 			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
 			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
@@ -244,14 +244,14 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
 
-			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "EntryPoint",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                           "SPAN_KIND_SERVER",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"entry_point\").value.stringValue":            "web",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "429",
 
-			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "Router",
 			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
@@ -312,13 +312,13 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
 
-			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "EntryPoint",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/retry",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
 			"batches.0.scopeSpans.0.spans.0.status.code":                                                    "STATUS_CODE_ERROR",
 
-			"batches.0.scopeSpans.0.spans.1.name": "router",
+			"batches.0.scopeSpans.0.spans.1.name": "Router",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router2@file",
@@ -327,11 +327,11 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
 
-			"batches.0.scopeSpans.0.spans.3.name": "service",
+			"batches.0.scopeSpans.0.spans.3.name": "Service",
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
 
-			"batches.0.scopeSpans.0.spans.4.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.4.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.4.kind":                                                           "SPAN_KIND_CLIENT",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
@@ -342,11 +342,11 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
 			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.resend_count\").value.intValue":          "1",
 
-			"batches.0.scopeSpans.0.spans.6.name": "service",
+			"batches.0.scopeSpans.0.spans.6.name": "Service",
 			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
 
-			"batches.0.scopeSpans.0.spans.7.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.7.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.7.kind":                                                           "SPAN_KIND_CLIENT",
 			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
 			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
@@ -357,11 +357,11 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
 			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"http.resend_count\").value.intValue":          "2",
 
-			"batches.0.scopeSpans.0.spans.9.name": "service",
+			"batches.0.scopeSpans.0.spans.9.name": "Service",
 			"batches.0.scopeSpans.0.spans.9.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.9.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
 
-			"batches.0.scopeSpans.0.spans.10.name":                                                           "reverse-proxy",
+			"batches.0.scopeSpans.0.spans.10.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.10.kind":                                                           "SPAN_KIND_CLIENT",
 			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"url.scheme\").value.stringValue":             "http",
 			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"http.response.status_code\").value.intValue": "502",
@@ -397,12 +397,12 @@ func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
 
-			"batches.0.scopeSpans.0.spans.0.name":                                                           "entry_point",
+			"batches.0.scopeSpans.0.spans.0.name":                                                           "EntryPoint",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.path\").value.stringValue":               "/auth",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue": "401",
 
-			"batches.0.scopeSpans.0.spans.1.name":                                                         "router",
+			"batches.0.scopeSpans.0.spans.1.name":                                                         "Router",
 			"batches.0.scopeSpans.0.spans.1.kind":                                                         "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
