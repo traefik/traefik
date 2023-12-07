@@ -52,8 +52,8 @@ func TracerFromContext(ctx context.Context) trace.Tracer {
 
 // ExtractCarrierIntoContext reads cross-cutting concerns from the carrier into a Context.
 func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context.Context {
-	propgator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
-	return propgator.Extract(ctx, propagation.HeaderCarrier(headers))
+	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	return propagator.Extract(ctx, propagation.HeaderCarrier(headers))
 }
 
 // InjectContextIntoCarrier sets cross-cutting concerns from the request context into the request headers.
@@ -77,18 +77,15 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 
 	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
 	// TODO: the semconv does not implement Semantic Convention v1.23.0.
-	span.SetAttributes(attribute.String("http.request.method", r.Method))
+	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
-	// TODO: recommended in OpenTelemetry
-	// span.SetAttributes(attribute.String("network.peer.address", "127.0.0.1"))
-	// span.SetAttributes(attribute.String("network.peer.port", 80))
 
 	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-client
 	span.SetAttributes(semconv.URLFull(r.URL.String()))
 	span.SetAttributes(semconv.URLScheme(r.URL.Scheme))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 
-	host, sPort, err := net.SplitHostPort(r.URL.Host)
+	host, port, err := net.SplitHostPort(r.URL.Host)
 	if err != nil {
 		span.SetAttributes(semconv.ServerAddress(r.URL.Host))
 		switch r.URL.Scheme {
@@ -98,9 +95,11 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 			span.SetAttributes(semconv.ServerPort(443))
 		}
 	} else {
-		port, _ := strconv.Atoi(sPort)
+		span.SetAttributes(attribute.String("network.peer.address", host))
+		span.SetAttributes(attribute.String("network.peer.port", port))
+		intPort, _ := strconv.Atoi(port)
 		span.SetAttributes(semconv.ServerAddress(host))
-		span.SetAttributes(semconv.ServerPort(port))
+		span.SetAttributes(semconv.ServerPort(intPort))
 	}
 }
 
@@ -112,29 +111,27 @@ func LogServerRequest(span trace.Span, r *http.Request) {
 
 	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
 	// TODO: the semconv does not implement Semantic Convention v1.23.0.
-	span.SetAttributes(attribute.String("http.request.method", r.Method))
+	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
-	// TODO: recommended in OpenTelemetry
-	// span.SetAttributes(attribute.String("network.peer.address", "127.0.0.1"))
-	// span.SetAttributes(attribute.String("network.peer.port", 80))
 
 	// Server attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-server-semantic-conventions
-	span.SetAttributes(attribute.Int("http.request.body.size", int(r.ContentLength)))
+	span.SetAttributes(semconv.HTTPResponseStatusCode(int(r.ContentLength)))
 	span.SetAttributes(semconv.URLPath(r.URL.Path))
 	span.SetAttributes(semconv.URLQuery(r.URL.RawQuery))
 	span.SetAttributes(semconv.URLScheme(r.Header.Get("X-Forwarded-Proto")))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 	span.SetAttributes(semconv.ServerAddress(r.Host))
-	// TODO: how to retrieve the entrypoint port?
-	// span.SetAttributes(semconv.ServerPort(0))
 
-	rAddr, sPort, err := net.SplitHostPort(r.RemoteAddr)
+	host, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		span.SetAttributes(semconv.ClientAddress(r.RemoteAddr))
+		span.SetAttributes(attribute.String("network.peer.address", r.RemoteAddr))
 	} else {
-		span.SetAttributes(semconv.ClientAddress(rAddr))
-		port, _ := strconv.Atoi(sPort)
-		span.SetAttributes(semconv.ClientPort(port))
+		span.SetAttributes(attribute.String("network.peer.address", host))
+		span.SetAttributes(attribute.String("network.peer.port", port))
+		span.SetAttributes(semconv.ClientAddress(host))
+		intPort, _ := strconv.Atoi(port)
+		span.SetAttributes(semconv.ClientPort(intPort))
 	}
 
 	span.SetAttributes(semconv.ClientSocketAddress(r.Header.Get("X-Forwarded-For")))
@@ -170,8 +167,7 @@ func LogResponseCode(span trace.Span, code int, spanKind trace.SpanKind) {
 		}
 		span.SetStatus(status, desc)
 		if code > 0 {
-			// TODO: the semconv does not implement Semantic Convention v1.23.0.
-			span.SetAttributes(attribute.Int("http.response.status_code", code))
+			span.SetAttributes(semconv.HTTPResponseStatusCode(code))
 		}
 	}
 }
