@@ -1,70 +1,62 @@
 package tracing
 
 import (
-	"io"
+	"context"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/embedded"
 )
 
-type MockTracer struct {
-	Span *MockSpan
+type mockTracerProvider struct {
+	embedded.TracerProvider
 }
 
-// StartSpan belongs to the Tracer interface.
-func (n MockTracer) StartSpan(operationName string, opts ...opentracing.StartSpanOption) opentracing.Span {
-	n.Span.OpName = operationName
-	return n.Span
+var _ trace.TracerProvider = mockTracerProvider{}
+
+func (p mockTracerProvider) Tracer(string, ...trace.TracerOption) trace.Tracer {
+	return &mockTracer{}
 }
 
-// Inject belongs to the Tracer interface.
-func (n MockTracer) Inject(sp opentracing.SpanContext, format, carrier interface{}) error {
-	return nil
+type mockTracer struct {
+	embedded.Tracer
+
+	spans []*mockSpan
 }
 
-// Extract belongs to the Tracer interface.
-func (n MockTracer) Extract(format, carrier interface{}) (opentracing.SpanContext, error) {
-	return nil, opentracing.ErrSpanContextNotFound
+var _ trace.Tracer = &mockTracer{}
+
+func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	config := trace.NewSpanStartConfig(opts...)
+	span := &mockSpan{}
+	span.SetName(name)
+	span.SetAttributes(attribute.String("span.kind", config.SpanKind().String()))
+	span.SetAttributes(config.Attributes()...)
+	t.spans = append(t.spans, span)
+	return trace.ContextWithSpan(ctx, span), span
 }
 
-// MockSpanContext a span context mock.
-type MockSpanContext struct{}
+// mockSpan is an implementation of Span that preforms no operations.
+type mockSpan struct {
+	embedded.Span
 
-func (n MockSpanContext) ForeachBaggageItem(handler func(k, v string) bool) {}
-
-// MockSpan a span mock.
-type MockSpan struct {
-	OpName string
-	Tags   map[string]interface{}
+	name       string
+	attributes []attribute.KeyValue
 }
 
-func (n MockSpan) Context() opentracing.SpanContext { return MockSpanContext{} }
-func (n MockSpan) SetBaggageItem(key, val string) opentracing.Span {
-	return MockSpan{Tags: make(map[string]interface{})}
-}
-func (n MockSpan) BaggageItem(key string) string { return "" }
-func (n MockSpan) SetTag(key string, value interface{}) opentracing.Span {
-	n.Tags[key] = value
-	return n
-}
-func (n MockSpan) LogFields(fields ...log.Field)                          {}
-func (n MockSpan) LogKV(keyVals ...interface{})                           {}
-func (n MockSpan) Finish()                                                {}
-func (n MockSpan) FinishWithOptions(opts opentracing.FinishOptions)       {}
-func (n MockSpan) SetOperationName(operationName string) opentracing.Span { return n }
-func (n MockSpan) Tracer() opentracing.Tracer                             { return MockTracer{} }
-func (n MockSpan) LogEvent(event string)                                  {}
-func (n MockSpan) LogEventWithPayload(event string, payload interface{})  {}
-func (n MockSpan) Log(data opentracing.LogData)                           {}
-func (n *MockSpan) Reset() {
-	n.Tags = make(map[string]interface{})
-}
+var _ trace.Span = &mockSpan{}
 
-type trackingBackenMock struct {
-	tracer opentracing.Tracer
+func (*mockSpan) SpanContext() trace.SpanContext     { return trace.SpanContext{} }
+func (*mockSpan) IsRecording() bool                  { return false }
+func (s *mockSpan) SetStatus(_ codes.Code, _ string) {}
+func (s *mockSpan) SetAttributes(kv ...attribute.KeyValue) {
+	s.attributes = append(s.attributes, kv...)
 }
+func (s *mockSpan) End(...trace.SpanEndOption)                  {}
+func (s *mockSpan) RecordError(_ error, _ ...trace.EventOption) {}
+func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
 
-func (t *trackingBackenMock) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	opentracing.SetGlobalTracer(t.tracer)
-	return t.tracer, nil, nil
-}
+func (s *mockSpan) SetName(name string) { s.name = name }
+
+func (*mockSpan) TracerProvider() trace.TracerProvider { return mockTracerProvider{} }

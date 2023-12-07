@@ -372,7 +372,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	return tracing.Wrap(ctx, middleware), nil
+	return tracing.WrapMiddleware(ctx, middleware), nil
 }
 
 func inSlice(element string, stack []string) bool {
