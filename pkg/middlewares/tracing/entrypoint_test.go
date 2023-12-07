@@ -25,7 +25,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 			desc:       "basic test",
 			entryPoint: "test",
 			expected: expected{
-				name: "entry_point",
+				name: "EntryPoint",
 				attributes: []attribute.KeyValue{
 					attribute.String("span.kind", "server"),
 					attribute.String("entry_point", "test"),

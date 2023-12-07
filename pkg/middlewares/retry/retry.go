@@ -62,10 +62,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}, nil
 }
 
-func (r *retry) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, typeName, trace.SpanKindInternal
-}
-
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if r.attempts == 1 {
 		r.next.ServeHTTP(rw, req)
@@ -81,7 +77,26 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 
+	initialCtx := req.Context()
+	tracer := tracing.TracerFromContext(initialCtx)
+
 	operation := func() error {
+		if tracer != nil {
+			// Because multiple tracing spans may need to be created,
+			// the Retry middleware does not implement trace.Traceable,
+			// and creates directly a new span for each retry operation.
+			tracingCtx, span := tracer.Start(initialCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
+			defer span.End()
+
+			span.SetAttributes(attribute.String("traefik.middleware.name", r.name))
+			// Only add the attribute "http.resend_count" defined by semantic conventions starting from second attempt.
+			if attempts > 1 {
+				span.SetAttributes(semconv.HTTPResendCount(attempts - 1))
+			}
+
+			req = req.WithContext(tracingCtx)
+		}
+
 		shouldRetry := attempts < r.attempts
 		retryResponseWriter := newResponseWriter(rw, shouldRetry)
 
@@ -100,16 +115,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if !retryResponseWriter.ShouldRetry() {
 			return nil
-		}
-
-		if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-			tracingCtx, span := tracer.Start(req.Context(), typeName, trace.WithSpanKind(trace.SpanKindInternal))
-			defer span.End()
-
-			span.SetAttributes(attribute.String("traefik.middleware.name", r.name))
-			span.SetAttributes(semconv.HTTPResendCount(attempts))
-
-			req = req.WithContext(tracingCtx)
 		}
 
 		attempts++
