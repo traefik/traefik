@@ -21,6 +21,13 @@ type entryPointTracing struct {
 	next       http.Handler
 }
 
+// WrapEntryPointHandler Wraps tracing to alice.Constructor.
+func WrapEntryPointHandler(ctx context.Context, tracer trace.Tracer, entryPointName string) alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return newEntryPoint(ctx, tracer, entryPointName, next), nil
+	}
+}
+
 // newEntryPoint creates a new tracing middleware for incoming requests.
 func newEntryPoint(ctx context.Context, tracer trace.Tracer, entryPointName string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
@@ -47,11 +54,4 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	e.next.ServeHTTP(recorder, req)
 
 	tracing.LogResponseCode(span, recorder.Status(), trace.SpanKindServer)
-}
-
-// WrapEntryPointHandler Wraps tracing to alice.Constructor.
-func WrapEntryPointHandler(ctx context.Context, tracer trace.Tracer, entryPointName string) alice.Constructor {
-	return func(next http.Handler) (http.Handler, error) {
-		return newEntryPoint(ctx, tracer, entryPointName, next), nil
-	}
 }

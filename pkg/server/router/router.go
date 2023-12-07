@@ -200,7 +200,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	chain := alice.New()
 
-	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, provider.GetQualifiedName(ctx, router.Service)))
+	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
 
 	if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
 		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service))
