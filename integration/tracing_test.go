@@ -34,17 +34,22 @@ type TracingTemplate struct {
 func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tracing")
 	s.composeUp(c)
-
-	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
-	s.whoamiPort = 80
 }
 
 func (s *TracingSuite) SetUpTest(c *check.C) {
 	s.composeUp(c, "tempo", "otel-collector", "whoami")
+
+	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+	s.whoamiPort = 80
+
+	// Wait for whoami to turn ready.
+	err := try.GetRequest("http://"+s.whoamiIP+":80", 30*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	s.tempoIP = s.getComposeServiceIP(c, "tempo")
 
 	// Wait for tempo to turn ready.
-	err := try.GetRequest("http://"+s.tempoIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://"+s.tempoIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
 	s.otelCollectorIP = s.getComposeServiceIP(c, "otel-collector")
