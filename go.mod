@@ -9,7 +9,6 @@ require (
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go v1.44.327
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/compose-spec/compose-go v1.15.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -149,6 +148,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/civo/civogo v0.3.11 // indirect
 	github.com/cloudflare/cloudflare-go v0.70.0 // indirect
+	github.com/compose-spec/compose-go v1.15.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.7.2 // indirect
 	github.com/containerd/continuity v0.4.1 // indirect
