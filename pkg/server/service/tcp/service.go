@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -67,7 +69,17 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport, server.TLS)
+			targetURL, err := url.Parse("https://" + server.Address)
+			if err != nil {
+				return nil, err
+			}
+
+			proxyURL, err := http.ProxyFromEnvironment(&http.Request{URL: targetURL})
+			if err != nil {
+				return nil, err
+			}
+
+			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport, server.TLS, proxyURL)
 			if err != nil {
 				return nil, err
 			}

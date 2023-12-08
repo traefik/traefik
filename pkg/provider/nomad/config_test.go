@@ -3,11 +3,9 @@ package nomad
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
@@ -58,10 +56,6 @@ func Test_defaultRule(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -114,10 +108,6 @@ func Test_defaultRule(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -159,10 +149,6 @@ func Test_defaultRule(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -211,10 +197,6 @@ func Test_defaultRule(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -287,10 +269,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -351,10 +329,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://192.168.1.101:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 						"Test2": {
@@ -363,10 +337,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://192.168.1.102:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -428,10 +398,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -488,10 +454,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.2:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -553,10 +515,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -571,7 +529,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader=true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -601,14 +559,11 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -624,7 +579,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
 						"traefik.http.routers.Router1.service = Service1",
 					},
@@ -655,14 +610,11 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -706,10 +658,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -731,7 +679,7 @@ func Test_buildConfig(t *testing.T) {
 					Name: "Test",
 					Tags: []string{
 						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -760,14 +708,11 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -784,8 +729,8 @@ func Test_buildConfig(t *testing.T) {
 					Name: "Test",
 					Tags: []string{
 						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader= true",
-						"traefik.http.services.Service2.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
+						"traefik.http.services.Service2.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -809,27 +754,21 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
 						"Service2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -839,13 +778,13 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			desc: "two services with same traefik service and different passhostheader",
+			desc: "two services with same traefik service and different serverstransport",
 			items: []item{
 				{
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -855,7 +794,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = false",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = bar",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -888,13 +827,13 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			desc: "three services with same name and different passhostheader",
+			desc: "three services with same name and different serverstransport",
 			items: []item{
 				{
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = false",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -904,7 +843,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = bar",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -914,7 +853,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id3",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = bar",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -953,7 +892,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -963,7 +902,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -993,6 +932,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -1000,10 +940,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.2:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -1052,10 +988,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -1132,10 +1064,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1198,10 +1126,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1257,10 +1181,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.2:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -1323,10 +1243,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1375,10 +1291,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -1430,10 +1342,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "h2c://127.0.0.1:8080",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1478,10 +1386,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 						"Service2": {
@@ -1490,10 +1394,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:8080",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -1675,10 +1575,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1738,10 +1634,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.1:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -2060,7 +1952,7 @@ func Test_buildConfig(t *testing.T) {
 						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
 						"traefik.tcp.routers.foo.tls = true",
 						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2073,7 +1965,7 @@ func Test_buildConfig(t *testing.T) {
 						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
 						"traefik.tcp.routers.foo.tls = true",
 						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -2122,6 +2014,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -2129,10 +2022,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.2:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -2150,7 +2039,7 @@ func Test_buildConfig(t *testing.T) {
 					Tags: []string{
 						"traefik.udp.routers.foo.entrypoints = mydns",
 						"traefik.udp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2162,7 +2051,7 @@ func Test_buildConfig(t *testing.T) {
 					Tags: []string{
 						"traefik.udp.routers.foo.entrypoints = mydns",
 						"traefik.udp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.services.Service1.loadbalancer.serverstransport = foo",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -2210,6 +2099,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ServersTransport: "foo",
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -2217,10 +2107,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.2:9999",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
@@ -2423,10 +2309,6 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 						"Test-1234154071633021619": {
@@ -2435,10 +2317,6 @@ func Test_buildConfig(t *testing.T) {
 									{
 										URL: "http://127.0.0.2:80",
 									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},

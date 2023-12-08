@@ -445,31 +445,6 @@ Below are the available options for the health check mechanism:
             My-Header = "bar"
     ```
 
-#### Pass Host Header
-
-The `passHostHeader` allows to forward client Host header to server.
-
-By default, `passHostHeader` is true.
-
-??? example "Don't forward the host header -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        Service01:
-          loadBalancer:
-            passHostHeader: false
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.Service01]
-        [http.services.Service01.loadBalancer]
-          passHostHeader = false
-    ```
-
 #### ServersTransport
 
 `serversTransport` allows to reference an [HTTP ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
@@ -493,47 +468,24 @@ By default, `passHostHeader` is true.
           serversTransport = "mytransport"
     ```
 
-!!! info Default Servers Transport
-    If no serversTransport is specified, the `default@internal` will be used.
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#http-servers-transports).
+!!! info default serversTransport
 
-#### Response Forwarding
-
-This section is about configuring how Traefik forwards the response from the backend server to the client.
-
-Below are the available options for the Response Forwarding mechanism:
-
-- `FlushInterval` specifies the interval in between flushes to the client while copying the response body.
-  It is a duration in milliseconds, defaulting to 100.
-  A negative value means to flush immediately after each write to the client.
-  The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response;
-  for such responses, writes are flushed to the client immediately.
-
-??? example "Using a custom FlushInterval -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        Service-1:
-          loadBalancer:
-            responseForwarding:
-              flushInterval: 1s
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.Service-1]
-        [http.services.Service-1.loadBalancer.responseForwarding]
-          flushInterval = "1s"
-    ```
-
+    If no serversTransport is specified, the `default` will be used.
+    
 ### ServersTransport
 
 ServersTransport allows to configure the transport between Traefik and your HTTP servers.
 
-#### `serverName`
+!!! important "Default ServersTransport"
+
+    The `default` ServersTransport is used when no servers transport is configured in a servers load-balancer.
+    When specifying the `default` servers transport explicitly, make sure to not specify the provider namespace as the `default` servers transport does not have one.  
+    Conversely, for cross-provider references, for example, when referencing the file provider from a docker label,
+    the provider namespace must be specified, for example: `traefik.http.services.myservice.loadbalancer.serverstransport=mytransport@file`
+
+#### TLS
+
+##### `serverName`
 
 _Optional_
 
@@ -544,12 +496,13 @@ _Optional_
 http:
   serversTransports:
     mytransport:
-      serverName: "myhost"
+      tls:
+        serverName: myhost
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport]
+[http.serversTransports.mytransport.tls]
   serverName = "myhost"
 ```
 
@@ -561,7 +514,8 @@ metadata:
   namespace: default
 
 spec:
-  serverName: "test"
+  tls:
+      serverName: "test"
 ```
 
 #### `certificates`
@@ -621,12 +575,13 @@ _Optional_
 http:
   serversTransports:
     mytransport:
-      insecureSkipVerify: true
+      tls:
+        insecureSkipVerify: true
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport]
+[http.serversTransports.mytransport.tls]
   insecureSkipVerify = true
 ```
 
@@ -638,10 +593,11 @@ metadata:
   namespace: default
 
 spec:
-  insecureSkipVerify: true
+  tls:
+      insecureSkipVerify: true
 ```
 
-#### `rootCAs`
+##### `rootCAs`
 
 _Optional_
 
@@ -652,14 +608,15 @@ _Optional_
 http:
   serversTransports:
     mytransport:
-      rootCAs:
-        - foo.crt
-        - bar.crt
+      tls:
+        rootCAs:
+          - foo.crt
+          - bar.crt
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport]
+[http.serversTransports.mytransport.tls]
   rootCAs = ["foo.crt", "bar.crt"]
 ```
 
@@ -671,8 +628,9 @@ metadata:
   namespace: default
 
 spec:
-  rootCAsSecrets:
-    - myca
+  tls:
+      rootCAsSecrets:
+      - myca
 ---
 apiVersion: v1
 kind: Secret
@@ -683,7 +641,232 @@ data:
   ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
-#### `maxIdleConnsPerHost`
+##### `certificates`
+
+_Optional_
+
+`certificates` is the list of certificates (as file paths, or data bytes)
+that will be set as client certificates for mTLS.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      tls:
+        certificates:
+          - certFile: foo.crt
+            keyFile: bar.crt
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[[http.serversTransports.mytransport.certificates.tls]]
+  certFile = "foo.crt"
+  keyFile = "bar.crt"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+      certificatesSecrets:
+      - mycert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycert
+
+  data:
+    tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+    tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+##### `peerCertURI`
+
+_Optional, Default=false_
+
+`peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      tls:
+        peerCertURI: foobar
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.tls]
+  peerCertURI = "foobar"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+      peerCertURI: foobar
+```
+
+##### `spiffe`
+
+Please note that [SPIFFE](../../https/spiffe.md) must be enabled in the static configuration
+before using it to secure the connection between Traefik and the backends.
+
+###### `spiffe.ids`
+
+_Optional_
+
+`ids` defines the allowed SPIFFE IDs.
+This takes precedence over the SPIFFE TrustDomain.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      tls:
+        spiffe:
+          ids:
+            - spiffe://trust-domain/id1
+            - spiffe://trust-domain/id2
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.tls.spiffe]
+  ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    tls:
+      spiffe:
+        ids:
+          - spiffe://trust-domain/id1
+          - spiffe://trust-domain/id2
+```
+
+###### `spiffe.trustDomain`
+
+_Optional_
+
+`trustDomain` defines the allowed SPIFFE trust domain.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+        tls:
+          spiffe:
+            trustDomain: spiffe://trust-domain
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.tls.spiffe]
+  trustDomain = "spiffe://trust-domain"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    tls:
+      spiffe:
+        trustDomain: "spiffe://trust-domain"
+```
+
+#### HTTP
+
+##### `enableHTTP2`
+
+_Optional, Default=false_
+
+`enableHTTP2` enables HTTP/2 for connections with servers.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+    enableHTTP2: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  enableHTTP2 = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  enableHTTP2: true
+```
+
+##### `passHostHeader`
+
+_Optional, Default=true_
+
+`passHostHeader` allows to forward client Host header to the server.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      passHostHeader: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  passHostHeader = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  passHostHeader: true
+```
+
+##### `maxIdleConnsPerHost`
 
 _Optional, Default=2_
 
@@ -714,149 +897,11 @@ spec:
   maxIdleConnsPerHost: 7
 ```
 
-#### `disableHTTP2`
-
-_Optional, Default=false_
-
-`disableHTTP2` disables HTTP/2 for connections with servers.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      disableHTTP2: true
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  disableHTTP2 = true
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  disableHTTP2: true
-```
-
-#### `peerCertURI`
-
-_Optional, Default=false_
-
-`peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      peerCertURI: foobar
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  peerCertURI = "foobar"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  peerCertURI: foobar
-```
-
-#### `spiffe`
-
-Please note that [SPIFFE](../../https/spiffe.md) must be enabled in the static configuration
-before using it to secure the connection between Traefik and the backends.
-
-##### `spiffe.ids`
-
-_Optional_
-
-`ids` defines the allowed SPIFFE IDs. 
-This takes precedence over the SPIFFE TrustDomain.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      spiffe:
-        ids:
-          - spiffe://trust-domain/id1
-          - spiffe://trust-domain/id2
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport.spiffe]
-  ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-    spiffe:
-      ids:
-        - spiffe://trust-domain/id1
-        - spiffe://trust-domain/id2
-```
-
-##### `spiffe.trustDomain`
-
-_Optional_
-
-`trustDomain` defines the allowed SPIFFE trust domain.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-        spiffe:
-          trustDomain: spiffe://trust-domain
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport.spiffe]
-  trustDomain = "spiffe://trust-domain"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-    spiffe:
-      trustDomain: "spiffe://trust-domain"
-```
-
-#### `forwardingTimeouts`
+##### `forwardingTimeouts`
 
 `forwardingTimeouts` are the timeouts applied when forwarding requests to the servers.
 
-##### `forwardingTimeouts.dialTimeout`
+###### `forwardingTimeouts.dialTimeout`
 
 _Optional, Default=30s_
 
@@ -886,11 +931,11 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      dialTimeout: "1s"
+  forwardingTimeouts:
+    dialTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.responseHeaderTimeout`
+###### `forwardingTimeouts.responseHeaderTimeout`
 
 _Optional, Default=0s_
 
@@ -926,7 +971,7 @@ spec:
     responseHeaderTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.idleConnTimeout`
+###### `forwardingTimeouts.idleConnTimeout`
 
 _Optional, Default=90s_
 
@@ -944,7 +989,7 @@ http:
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   idleConnTimeout = "1s"
 ```
 
@@ -956,11 +1001,12 @@ metadata:
   namespace: default
 
 spec:
-  forwardingTimeouts:
-    idleConnTimeout: "1s"
+  http:
+      forwardingTimeouts:
+        idleConnTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.readIdleTimeout`
+###### `forwardingTimeouts.readIdleTimeout`
 
 _Optional, Default=0s_
 
@@ -976,13 +1022,14 @@ If zero, no health check is performed.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        readIdleTimeout: "1s"
+      http:    
+        forwardingTimeouts:
+          readIdleTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   readIdleTimeout = "1s"
 ```
 
@@ -994,11 +1041,12 @@ metadata:
   namespace: default
 
 spec:
-  forwardingTimeouts:
-    readIdleTimeout: "1s"
+  http:
+      forwardingTimeouts:
+        readIdleTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.pingTimeout`
+###### `forwardingTimeouts.pingTimeout`
 
 _Optional, Default=15s_
 
@@ -1010,13 +1058,14 @@ if a response to ping is not received.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        pingTimeout: "1s"
+      http:  
+        forwardingTimeouts:
+          pingTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   pingTimeout = "1s"
 ```
 
@@ -1028,8 +1077,9 @@ metadata:
   namespace: default
 
 spec:
-  forwardingTimeouts:
-    pingTimeout: "1s"
+  http:
+      forwardingTimeouts:
+        pingTimeout: "1s"
 ```
 
 ### Weighted Round Robin (service)
@@ -1544,8 +1594,7 @@ The `tls` determines whether to use TLS when dialing with the backend.
 
 !!! info "Default Servers Transport"
 
-    If no serversTransport is specified, the `default@internal` will be used.
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#tcp-servers-transports).
+    If no serversTransport is specified, the `default` will be used.
 
 #### PROXY Protocol
 

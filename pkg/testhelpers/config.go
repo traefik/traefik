@@ -149,3 +149,23 @@ func WithSticky(cookieName string) func(*dynamic.ServersLoadBalancer) {
 		}
 	}
 }
+
+// WithServersTransports is a helper to create a configuration.
+func WithServersTransports(opts ...func(*dynamic.ServersTransport) string) func(*dynamic.HTTPConfiguration) {
+	return func(b *dynamic.HTTPConfiguration) {
+		b.ServersTransports = make(map[string]*dynamic.ServersTransport)
+		for _, opt := range opts {
+			s := &dynamic.ServersTransport{}
+			name := opt(s)
+			b.ServersTransports[name] = s
+		}
+	}
+}
+
+// WithDefaultServersTransport is a helper to create a configuration.
+func WithDefaultServersTransport() func(transport *dynamic.ServersTransport) string {
+	return func(s *dynamic.ServersTransport) string {
+		s.SetDefaults()
+		return "default"
+	}
+}

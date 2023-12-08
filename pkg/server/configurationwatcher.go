@@ -204,8 +204,12 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 
 	if copyConf.HTTP != nil {
 		for _, transport := range copyConf.HTTP.ServersTransports {
-			transport.Certificates = tls.Certificates{}
-			transport.RootCAs = []tls.FileOrContent{}
+			if transport.TLS == nil {
+				continue
+			}
+
+			transport.TLS.Certificates = tls.Certificates{}
+			transport.TLS.RootCAs = []tls.FileOrContent{}
 		}
 	}
 
