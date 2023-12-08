@@ -1,11 +1,11 @@
 ---
 title: "Traefik Docker Documentation"
-description: "This guide covers a Docker Compose file exposing a service using the Docker provider in Traefik Proxy."
+description: "Learn how to use Docker Compose to expose a service with Traefik Proxy."
 ---
 
 # Docker Compose example
 
-In this section, you will see how to use [Docker Compose](https://docs.docker.com/compose/ "Link to Docker Compose") to expose a service using the Docker provider.
+In this section, you will learn how to use [Docker Compose](https://docs.docker.com/compose/ "Link to Docker Compose") to expose a service using the Docker provider.
 
 ## Setup
 
