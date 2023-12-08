@@ -495,6 +495,21 @@ func Test_Routing(t *testing.T) {
 			},
 		},
 		{
+			desc:    "HTTPS router && HTTPS CatchAll router",
+			routers: []applyRouter{routerHTTPS, routerHTTPSPathPrefix},
+			checks: []checkCase{
+				{
+					desc:          "HTTPS TLS 1.0 request should fail",
+					checkRouter:   checkHTTPSTLS10,
+					expectedError: "wrong TLS version",
+				},
+				{
+					desc:        "HTTPS TLS 1.2 request should be handled by HTTPS service",
+					checkRouter: checkHTTPSTLS12,
+				},
+			},
+		},
+		{
 			desc:    "All routers, all checks",
 			routers: []applyRouter{routerTCPCatchAll, routerHTTP, routerHTTPS, routerTCPTLS, routerTCPTLSCatchAll},
 			checks: []checkCase{
