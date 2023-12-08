@@ -133,7 +133,6 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 
 	fakeCLI := &FakeDockerCLI{client: s.dockerClient}
-
 	s.dockerComposeService = compose.NewComposeService(fakeCLI)
 
 	ops := cmdcompose.ProjectOptions{
@@ -314,7 +313,17 @@ func (s *BaseSuite) getComposeServiceIP(c *check.C, name string) string {
 	c.Assert(networkNames, checker.HasLen, 1)
 
 	network := s.composeProject.Networks[networkNames[0]]
-	return containers[0].NetworkSettings.Networks[network.Name].IPAddress
+
+	var ipAddress string
+	for _, n := range containers[0].NetworkSettings.Networks {
+		if n.NetworkID == network.Name {
+			return ipAddress
+		}
+	}
+
+	// Should never happen.
+	c.Error("No network found")
+	return ""
 }
 
 func (s *BaseSuite) getContainerIP(c *check.C, name string) string {
