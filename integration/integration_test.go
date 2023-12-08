@@ -17,7 +17,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/context/docker"
@@ -111,13 +110,13 @@ func Test(t *testing.T) {
 var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
-	composeProject       *types.Project
-	dockerComposeService composeapi.Service
-	dockerClient         *client.Client
+	composeProjectOptions *cmdcompose.ProjectOptions
+	dockerComposeService  composeapi.Service
+	dockerClient          *client.Client
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
-	if s.composeProject != nil && s.dockerComposeService != nil {
+	if s.composeProjectOptions != nil && s.dockerComposeService != nil {
 		s.composeDown(c)
 	}
 }
@@ -133,39 +132,42 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 
 	fakeCLI := &FakeDockerCLI{client: s.dockerClient}
-
 	s.dockerComposeService = compose.NewComposeService(fakeCLI)
 
-	ops := cmdcompose.ProjectOptions{
+	s.composeProjectOptions = &cmdcompose.ProjectOptions{
 		ProjectName: projectName,
 		ConfigPaths: []string{composeFile},
 	}
-	s.composeProject, err = ops.ToProject(nil)
-	c.Assert(err, checker.IsNil)
 }
 
 // composeUp starts the given services of the current docker compose project, if they are not already started.
 // Already running services are not affected (i.e. not stopped).
 func (s *BaseSuite) composeUp(c *check.C, services ...string) {
-	c.Assert(s.composeProject, check.NotNil)
+	c.Assert(s.composeProjectOptions, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
+
+	composeProject, err := s.composeProjectOptions.ToProject(nil)
+	c.Assert(err, checker.IsNil)
 
 	// We use Create and Restart instead of Up, because the only option that actually works to control which containers
 	// are started is within the RestartOptions.
-	err := s.dockerComposeService.Create(context.Background(), s.composeProject, composeapi.CreateOptions{})
+	err = s.dockerComposeService.Create(context.Background(), composeProject, composeapi.CreateOptions{})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Restart(context.Background(), s.composeProject.Name, composeapi.RestartOptions{Services: services})
+	err = s.dockerComposeService.Restart(context.Background(), composeProject.Name, composeapi.RestartOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 }
 
 // composeExec runs the command in the given args in the given compose service container.
 // Already running services are not affected (i.e. not stopped).
 func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) {
-	c.Assert(s.composeProject, check.NotNil)
+	c.Assert(s.composeProjectOptions, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
 
-	_, err := s.dockerComposeService.Exec(context.Background(), s.composeProject.Name, composeapi.RunOptions{
+	composeProject, err := s.composeProjectOptions.ToProject(nil)
+	c.Assert(err, checker.IsNil)
+
+	_, err = s.dockerComposeService.Exec(context.Background(), composeProject.Name, composeapi.RunOptions{
 		Service: service,
 		Command: args,
 		Tty:     false,
@@ -176,25 +178,22 @@ func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) {
 
 // composeStop stops the given services of the current docker compose project and removes the corresponding containers.
 func (s *BaseSuite) composeStop(c *check.C, services ...string) {
+	c.Assert(s.composeProjectOptions, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
-	c.Assert(s.composeProject, check.NotNil)
 
-	err := s.dockerComposeService.Stop(context.Background(), s.composeProject.Name, composeapi.StopOptions{Services: services})
+	err := s.dockerComposeService.Stop(context.Background(), s.composeProjectOptions.ProjectName, composeapi.StopOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Remove(context.Background(), s.composeProject.Name, composeapi.RemoveOptions{
-		Services: services,
-		Force:    true,
-	})
+	err = s.dockerComposeService.Remove(context.Background(), s.composeProjectOptions.ProjectName, composeapi.RemoveOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 // composeDown stops all compose project services and removes the corresponding containers.
 func (s *BaseSuite) composeDown(c *check.C) {
+	c.Assert(s.composeProjectOptions, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
-	c.Assert(s.composeProject, check.NotNil)
 
-	err := s.dockerComposeService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
+	err := s.dockerComposeService.Down(context.Background(), s.composeProjectOptions.ProjectName, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -241,7 +240,7 @@ func (s *BaseSuite) displayLogK3S() {
 }
 
 func (s *BaseSuite) displayLogCompose(c *check.C) {
-	if s.dockerComposeService == nil || s.composeProject == nil {
+	if s.dockerComposeService == nil || s.composeProjectOptions == nil {
 		log.WithoutContext().Infof("%s: No docker compose logs.", c.TestName())
 		return
 	}
@@ -251,7 +250,7 @@ func (s *BaseSuite) displayLogCompose(c *check.C) {
 	logWriter := log.WithoutContext().WriterLevel(log.GetLevel())
 	logConsumer := formatter.NewLogConsumer(context.Background(), logWriter, logWriter, false, true, true)
 
-	err := s.dockerComposeService.Logs(context.Background(), s.composeProject.Name, logConsumer, composeapi.LogOptions{})
+	err := s.dockerComposeService.Logs(context.Background(), s.composeProjectOptions.ProjectName, logConsumer, composeapi.LogOptions{})
 	c.Assert(err, checker.IsNil)
 
 	log.WithoutContext().Println()
@@ -301,8 +300,14 @@ func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) 
 }
 
 func (s *BaseSuite) getComposeServiceIP(c *check.C, name string) string {
+	c.Assert(s.composeProjectOptions, check.NotNil)
+	c.Assert(s.dockerComposeService, check.NotNil)
+
+	composeProject, err := s.composeProjectOptions.ToProject(nil)
+	c.Assert(err, checker.IsNil)
+
 	filter := filters.NewArgs(
-		filters.Arg("label", fmt.Sprintf("%s=%s", composeapi.ProjectLabel, s.composeProject.Name)),
+		filters.Arg("label", fmt.Sprintf("%s=%s", composeapi.ProjectLabel, composeProject.Name)),
 		filters.Arg("label", fmt.Sprintf("%s=%s", composeapi.ServiceLabel, name)),
 	)
 
@@ -310,10 +315,10 @@ func (s *BaseSuite) getComposeServiceIP(c *check.C, name string) string {
 	c.Assert(err, checker.IsNil)
 	c.Assert(containers, checker.HasLen, 1)
 
-	networkNames := s.composeProject.NetworkNames()
+	networkNames := composeProject.NetworkNames()
 	c.Assert(networkNames, checker.HasLen, 1)
 
-	network := s.composeProject.Networks[networkNames[0]]
+	network := composeProject.Networks[networkNames[0]]
 	return containers[0].NetworkSettings.Networks[network.Name].IPAddress
 }
 
