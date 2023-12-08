@@ -17,7 +17,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/config/configfile"
@@ -27,6 +26,7 @@ import (
 	registryclient "github.com/docker/cli/cli/registry/client"
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/cli/cli/trust"
+	cmdcompose "github.com/docker/compose/v2/cmd/compose"
 	"github.com/docker/compose/v2/cmd/formatter"
 	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
@@ -135,10 +135,12 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	fakeCLI := &FakeDockerCLI{client: s.dockerClient}
 
 	s.dockerComposeService = compose.NewComposeService(fakeCLI)
-	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
-	c.Assert(err, checker.IsNil)
 
-	s.composeProject, err = cli.ProjectFromOptions(ops)
+	ops := cmdcompose.ProjectOptions{
+		ProjectName: projectName,
+		ConfigPaths: []string{composeFile},
+	}
+	s.composeProject, err = ops.ToProject(nil)
 	c.Assert(err, checker.IsNil)
 }
 
