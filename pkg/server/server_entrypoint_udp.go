@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
@@ -87,12 +86,7 @@ type UDPEntryPoint struct {
 
 // NewUDPEntryPoint returns a UDP entry point.
 func NewUDPEntryPoint(cfg *static.EntryPoint) (*UDPEntryPoint, error) {
-	addr, err := net.ResolveUDPAddr("udp", cfg.GetAddress())
-	if err != nil {
-		return nil, err
-	}
-
-	listener, err := udp.Listen("udp", addr, time.Duration(cfg.UDP.Timeout))
+	listener, err := udp.Listen(cfg.GetListenConfig(), "udp", cfg.GetAddress(), time.Duration(cfg.UDP.Timeout))
 	if err != nil {
 		return nil, err
 	}
