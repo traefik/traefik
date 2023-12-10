@@ -279,7 +279,7 @@ export default {
         return data.service
       }
 
-      return `${data.service}@${data.provider}`
+      return `${encodeURIComponent(data.service)}@${data.provider}`
     }
   },
   created () {
