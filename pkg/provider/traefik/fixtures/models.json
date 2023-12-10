@@ -27,10 +27,17 @@
               ]
             }
           ]
-        }
+        },
+        "defaultRuleSyntax": "v2"
       }
     }
   },
-  "tcp": {},
+  "tcp": {
+    "models": {
+      "websecure": {
+        "defaultRuleSyntax": "v2"
+      }
+    }
+  },
   "tls": {}
 }
