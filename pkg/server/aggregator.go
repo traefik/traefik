@@ -24,6 +24,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			Routers:           make(map[string]*dynamic.TCPRouter),
 			Services:          make(map[string]*dynamic.TCPService),
 			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			Models:            make(map[string]*dynamic.TCPModel),
 			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		UDP: &dynamic.UDPConfiguration{
@@ -152,6 +153,13 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	for name, rt := range cfg.HTTP.Routers {
 		router := rt.DeepCopy()
 
+		if !router.DefaultRule && router.RuleSyntax == "" {
+			for _, model := range cfg.HTTP.Models {
+				router.RuleSyntax = model.DefaultRuleSyntax
+				break
+			}
+		}
+
 		eps := router.EntryPoints
 		router.EntryPoints = nil
 
@@ -182,6 +190,25 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	}
 
 	cfg.HTTP.Routers = rts
+
+	if cfg.TCP == nil || len(cfg.TCP.Models) == 0 {
+		return cfg
+	}
+
+	tcpRouters := make(map[string]*dynamic.TCPRouter)
+
+	for _, rt := range cfg.TCP.Routers {
+		router := rt.DeepCopy()
+
+		if router.RuleSyntax == "" {
+			for _, model := range cfg.TCP.Models {
+				router.RuleSyntax = model.DefaultRuleSyntax
+				break
+			}
+		}
+	}
+
+	cfg.TCP.Routers = tcpRouters
 
 	return cfg
 }

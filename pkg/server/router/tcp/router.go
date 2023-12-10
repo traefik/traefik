@@ -201,9 +201,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	conn.Close()
 }
 
-// AddRoute defines a handler for the given rule.
-func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
-	return r.muxerTCP.AddRoute(rule, priority, target)
+// AddTCPRoute defines a handler for the given rule.
+func (r *Router) AddTCPRoute(rule string, priority int, target tcp.Handler) error {
+	return r.muxerTCP.AddRoute(rule, "", priority, target)
 }
 
 // AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
@@ -267,7 +267,7 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 		}
 
 		rule := "HostSNI(`" + sniHost + "`)"
-		if err := r.muxerHTTPS.AddRoute(rule, tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
+		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
 			log.Error().Err(err).Msg("Error while adding route for host")
 		}
 	}

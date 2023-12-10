@@ -158,6 +158,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router0/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router0/priority` | `42` |
 | `traefik/http/routers/Router0/rule` | `foobar` |
+| `traefik/http/routers/Router0/ruleSyntax` | `foobar` |
 | `traefik/http/routers/Router0/service` | `foobar` |
 | `traefik/http/routers/Router0/tls/certResolver` | `foobar` |
 | `traefik/http/routers/Router0/tls/domains/0/main` | `foobar` |
@@ -173,6 +174,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router1/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router1/priority` | `42` |
 | `traefik/http/routers/Router1/rule` | `foobar` |
+| `traefik/http/routers/Router1/ruleSyntax` | `foobar` |
 | `traefik/http/routers/Router1/service` | `foobar` |
 | `traefik/http/routers/Router1/tls/certResolver` | `foobar` |
 | `traefik/http/routers/Router1/tls/domains/0/main` | `foobar` |
@@ -267,12 +269,15 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/middlewares/TCPMiddleware02/ipWhiteList/sourceRange/0` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware02/ipWhiteList/sourceRange/1` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware03/inFlightConn/amount` | `42` |
+| `traefik/tcp/models/TCPModel0` | `` |
+| `traefik/tcp/models/TCPModel1` | `` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter0/rule` | `foobar` |
+| `traefik/tcp/routers/TCPRouter0/ruleSyntax` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/certResolver` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/domains/0/main` | `foobar` |
@@ -289,6 +294,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/routers/TCPRouter1/middlewares/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter1/rule` | `foobar` |
+| `traefik/tcp/routers/TCPRouter1/ruleSyntax` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/certResolver` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/domains/0/main` | `foobar` |
