@@ -14,7 +14,7 @@ function getAllRouters (params) {
 }
 
 function getRouterByName (name) {
-  return APP.api.get(`${apiBase}/routers/${name}`)
+  return APP.api.get(`${apiBase}/routers/${encodeURIComponent(name)}`)
     .then(body => {
       console.log('Success -> HttpService -> getRouterByName', body.data)
       return body.data
