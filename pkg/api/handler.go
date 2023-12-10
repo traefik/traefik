@@ -76,7 +76,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 
 // createRouter creates API routes and router.
 func (h Handler) createRouter() *mux.Router {
-	router := mux.NewRouter()
+	router := mux.NewRouter().UseEncodedPath()
 
 	if h.staticConfig.API.Debug {
 		DebugHandler{}.Append(router)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -97,7 +98,11 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 }
 
 func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
-	routerID := mux.Vars(request)["routerID"]
+	scapedRouterID := mux.Vars(request)["routerID"]
+	routerID, err := url.PathUnescape(scapedRouterID)
+	if err != nil {
+		writeError(rw, fmt.Sprintf("unable to decode router: %s", scapedRouterID), http.StatusBadRequest)
+	}
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -109,7 +114,7 @@ func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 
 	result := newRouterRepresentation(routerID, router)
 
-	err := json.NewEncoder(rw).Encode(result)
+	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
