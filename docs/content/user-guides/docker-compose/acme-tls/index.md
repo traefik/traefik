@@ -55,7 +55,7 @@ ports:
   - "443:443"
 ```
 
-- We configure the Https let's encrypt challenge:
+- We configure the TLS let's encrypt challenge:
 
 ```yaml
 command:
