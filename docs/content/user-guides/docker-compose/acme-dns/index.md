@@ -175,7 +175,7 @@ services:
       - "ovh_consumer_key"
 ```
 
-- The environment variable within our `whoami` service are suffixed by `_FILE` which allow us to point to files containing the value, instead of exposing the value itself.  
+- The environment variable within our `traefik` service are suffixed by `_FILE` which allow us to point to files containing the value, instead of exposing the value itself.  
 	The acme client will read the content of those file to get the required configuration values.
 
 ```yaml
