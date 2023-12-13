@@ -688,7 +688,7 @@ Kubernetes namespaces.
 Ingress refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
-Kubernetes bearer token (not needed for in-cluster client).
+Kubernetes bearer token (not needed for in-cluster client). It accepts either token value or file path to the token.
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY`:  
 Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
@@ -709,7 +709,7 @@ Kubernetes namespaces.
 Kubernetes refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_TOKEN`:  
-Kubernetes bearer token (not needed for in-cluster client).
+Kubernetes bearer token (not needed for in-cluster client). It accepts either token value or file path to the token.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
@@ -751,7 +751,7 @@ Kubernetes namespaces.
 Ingress refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
-Kubernetes bearer token (not needed for in-cluster client).
+Kubernetes bearer token (not needed for in-cluster client). It accepts either token value or file path to the token.
 
 `TRAEFIK_PROVIDERS_NOMAD`:  
 Enable Nomad backend with default settings. (Default: ```false```)

@@ -87,11 +87,11 @@ func run(dest string) error {
 }
 
 func cleanType(typ types.Type, base string) string {
-	if typ.String() == "github.com/traefik/traefik/v3/pkg/tls.FileOrContent" {
+	if typ.String() == "github.com/traefik/traefik/v3/pkg/types.FileOrContent" {
 		return "string"
 	}
 
-	if typ.String() == "[]github.com/traefik/traefik/v3/pkg/tls.FileOrContent" {
+	if typ.String() == "[]github.com/traefik/traefik/v3/pkg/types.FileOrContent" {
 		return "[]string"
 	}
 
