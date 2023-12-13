@@ -712,7 +712,7 @@ Kubernetes namespaces.
 Kubernetes refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_TOKEN`:  
-Kubernetes bearer token (not needed for in-cluster client). It accepts either token value or file path to the token.
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
