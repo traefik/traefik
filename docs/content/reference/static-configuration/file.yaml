@@ -141,7 +141,7 @@ providers:
       publishedService: foobar
   kubernetesCRD:
     endpoint: foobar
-    token: foobar or foobar.txt
+    token: foobar
     certAuthFilePath: foobar
     namespaces:
       - foobar
