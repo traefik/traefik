@@ -688,7 +688,7 @@ Kubernetes namespaces.
 Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetescrd.token`:  
-Kubernetes bearer token (not needed for in-cluster client). It accepts either token value or file path to the token.
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
 
 `--providers.kubernetesgateway`:  
 Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
