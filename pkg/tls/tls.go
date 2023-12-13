@@ -8,7 +8,7 @@ const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
 // ClientAuth defines the parameters of the client authentication part of the TLS connection, if any.
 type ClientAuth struct {
-	CAFiles []FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty"`
+	CAFiles []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty"`
 	// ClientAuthType defines the client authentication type to apply.
 	// The available values are: "NoClientCert", "RequestClientCert", "VerifyClientCertIfGiven" and "RequireAndVerifyClientCert".
 	ClientAuthType string `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
