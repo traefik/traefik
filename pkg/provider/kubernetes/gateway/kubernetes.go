@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -48,7 +49,7 @@ const (
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token            string                `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	Token            types.FileOrContent   `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	CertAuthFilePath string                `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces       []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	LabelSelector    string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
@@ -101,7 +102,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
 		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
-		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
+		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
 	}
 
 	if err != nil {
@@ -1406,8 +1407,8 @@ func getTLS(k8sClient Client, secretName gatev1alpha2.ObjectName, namespace stri
 
 	return &tls.CertAndStores{
 		Certificate: tls.Certificate{
-			CertFile: tls.FileOrContent(cert),
-			KeyFile:  tls.FileOrContent(key),
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
 		},
 	}, nil
 }
