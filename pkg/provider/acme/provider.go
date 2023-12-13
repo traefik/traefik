@@ -783,8 +783,8 @@ func (p *Provider) buildMessage() dynamic.Message {
 	for _, cert := range p.certificates {
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
-				CertFile: traefiktls.FileOrContent(cert.Certificate.Certificate),
-				KeyFile:  traefiktls.FileOrContent(cert.Key),
+				CertFile: types.FileOrContent(cert.Certificate.Certificate),
+				KeyFile:  types.FileOrContent(cert.Key),
 			},
 			Stores: []string{cert.Store},
 		}

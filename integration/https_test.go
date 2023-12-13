@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -962,8 +963,8 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName str
 				Certificates: []*traefiktls.CertAndStores{
 					{
 						Certificate: traefiktls.Certificate{
-							CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-							KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+							CertFile: types.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+							KeyFile:  types.FileOrContent("fixtures/https/" + certFileName + ".key"),
 						},
 					},
 				},
