@@ -14,7 +14,8 @@ func (h *Handler) putLogLevel(rw http.ResponseWriter, request *http.Request) {
     level, err := logrus.ParseLevel(levelStr)
     if err != nil {
         // Respond with an error if the log level is not recognized
-        http.Error(rw, err.Error(), http.StatusBadRequest)
+        log.FromContext(request.Context()).Error(err)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
         return
     }
 

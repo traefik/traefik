@@ -40,7 +40,7 @@ func TestPutLogLevel(t *testing.T) {
 	}{
 		{"Valid LogLevel Debug", "debug", http.StatusOK, "Log level set to debug"},
 		{"Valid LogLevel Error", "error", http.StatusOK, "Log level set to error"},
-		{"Invalid LogLevel", "invalid", http.StatusBadRequest, "not a valid logrus Level: \"invalid\""},
+		{"Invalid LogLevel", "invalid", http.StatusInternalServerError, "not a valid logrus Level: \"invalid\""},
 	}
 
 	for _, tc := range tests {
