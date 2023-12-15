@@ -109,6 +109,8 @@ func (h Handler) createRouter() *mux.Router {
 	router.Methods(http.MethodGet).Path("/api/udp/services").HandlerFunc(h.getUDPServices)
 	router.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
 
+    router.Methods(http.MethodPut).Path("/api/config/loglevel/{logLevel}").HandlerFunc(h.putLogLevel)
+
 	version.Handler{}.Append(router)
 
 	return router
