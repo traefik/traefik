@@ -2,10 +2,18 @@ package tls
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/hex"
 	"encoding/pem"
+	"math/big"
+	"net"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,7 +87,7 @@ func TestTLSInStore(t *testing.T) {
 	tlsManager := NewManager()
 	tlsManager.UpdateConfigs(context.Background(), nil, nil, dynamicConfigs)
 
-	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
+	certs := tlsManager.GetStore("default").CertificatesMap()
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
@@ -104,7 +112,7 @@ func TestTLSInvalidStore(t *testing.T) {
 			},
 		}, nil, dynamicConfigs)
 
-	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
+	certs := tlsManager.GetStore("default").CertificatesMap()
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
@@ -351,4 +359,83 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
 	}, config.CipherSuites)
+}
+
+func BenchmarkManager_UpdateConfigs(b *testing.B) {
+	manager := NewManager()
+
+	var certConfigs []*CertAndStores
+	for i := 0; i < 100; i++ {
+		randBytes := make([]byte, 8)
+		rand.Read(randBytes)
+
+		cert, certKey, err := generateCertificate(hex.EncodeToString(randBytes))
+		assert.NoError(b, err)
+
+		certConfigs = append(certConfigs, &CertAndStores{
+			Certificate: Certificate{
+				CertFile: FileOrContent(cert),
+				KeyFile:  FileOrContent(certKey),
+			},
+		})
+	}
+
+	// Benchmark calls to UpdateConfigs with 10 certificates at a time from a pool of 100. Expecting adds, skips and removals from the store.
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		start, err := rand.Int(rand.Reader, big.NewInt(int64(len(certConfigs)-11)))
+		assert.NoError(b, err)
+
+		manager.UpdateConfigs(context.Background(), nil, nil, certConfigs[start.Int64():start.Int64()+10])
+	}
+}
+
+// generateCertificate generates a self-signed certificate for the given host and returns the PEM encoded certificate and key.
+func generateCertificate(host string) ([]byte, []byte, error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	notBefore := time.Now()
+	notAfter := notBefore.Add(24 * time.Hour)
+	keyUsage := x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Acme Co"},
+		},
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
+
+		KeyUsage:              keyUsage,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	hosts := strings.Split(host, ",")
+	for _, h := range hosts {
+		if ip := net.ParseIP(h); ip != nil {
+			template.IPAddresses = append(template.IPAddresses, ip)
+		} else {
+			template.DNSNames = append(template.DNSNames, h)
+		}
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
+	certKey := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
+
+	return cert, certKey, nil
 }
