@@ -99,6 +99,11 @@ test-unit:
 test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
+## Run the conformance tests
+.PHONY: test-gateway-api-conformance
+test-gateway-api-conformance: binary
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance=true $(TESTFLAGS)
+
 ## Pull all Docker images to avoid timeout during integration tests
 .PHONY: pull-images
 pull-images:

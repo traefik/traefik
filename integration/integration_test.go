@@ -35,7 +35,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var showLog = flag.Bool("tlog", false, "always show Traefik logs")
+var (
+	showLog        = flag.Bool("tlog", false, "always show Traefik logs")
+	k8sConformance = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
+)
 
 const tailscaleSecretFilePath = "tailscale.secret"
 

@@ -230,6 +230,7 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 			err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
 				Type:               string(gatev1.GatewayClassConditionStatusAccepted),
 				Status:             metav1.ConditionTrue,
+				ObservedGeneration: gatewayClass.Generation,
 				Reason:             "Handled",
 				Message:            "Handled by Traefik controller",
 				LastTransitionTime: metav1.Now(),
@@ -587,7 +588,16 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses [
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gateway.Generation,
-			Reason:             string(gatev1.GatewayConditionAccepted),
+			Reason:             string(gatev1.GatewayReasonAccepted),
+			Message:            "Gateway successfully scheduled",
+			LastTransitionTime: metav1.Now(),
+		},
+		// update "Programmed" status with "Programmed" reason
+		metav1.Condition{
+			Type:               string(gatev1.GatewayConditionProgrammed),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: gateway.Generation,
+			Reason:             string(gatev1.GatewayReasonProgrammed),
 			Message:            "Gateway successfully scheduled",
 			LastTransitionTime: metav1.Now(),
 		},
