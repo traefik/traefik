@@ -367,7 +367,8 @@ func BenchmarkManager_UpdateConfigs(b *testing.B) {
 	var certConfigs []*CertAndStores
 	for i := 0; i < 100; i++ {
 		randBytes := make([]byte, 8)
-		rand.Read(randBytes)
+		_, err := rand.Read(randBytes)
+		assert.NoError(b, err)
 
 		cert, certKey, err := generateCertificate(hex.EncodeToString(randBytes))
 		assert.NoError(b, err)
