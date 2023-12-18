@@ -593,7 +593,7 @@ Controls the behavior of Traefik during the shutdown phase.
 
 _Optional, Default=0_
 
-Maximum requests, Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY).
+The maximum number of requests Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -619,11 +619,11 @@ Maximum requests, Traefik can handle before sending a `Connection: Close` header
     --entryPoints.name.transport.keepAliveRequests=42
     ```
 
-#### `KeepAliveMaxTime`
+#### `keepAliveMaxTime`
 
 _Optional, Default=0s_
 
-Maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY).
+The maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
