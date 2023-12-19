@@ -172,10 +172,10 @@ Trust all. (Default: ```false```)
 Trust only selected IPs.
 
 `--entrypoints.<name>.transport.keepalivemaxrequests`:  
-Max requests before closing a keep alive connection. (Default: ```0```)
+Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
 
 `--entrypoints.<name>.transport.keepalivemaxtime`:  
-Max time before closing a keep alive connection. (Default: ```0```)
+Maximum duration before closing a keep-alive connection. (Default: ```0```)
 
 `--entrypoints.<name>.transport.lifecycle.gracetimeout`:  
 Duration to give active requests a chance to finish before Traefik stops. (Default: ```10```)

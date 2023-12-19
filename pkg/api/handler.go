@@ -80,6 +80,8 @@ func (h Handler) createRouter() *mux.Router {
 
 	if h.staticConfig.API.Debug {
 		DebugHandler{}.Append(router)
+	} else if h.staticConfig.API.DebugConnection {
+		DebugHandler{}.AppendExpvar(router)
 	}
 
 	router.Methods(http.MethodGet).Path("/api/rawdata").HandlerFunc(h.getRuntimeConfiguration)
