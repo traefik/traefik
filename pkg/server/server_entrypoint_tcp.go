@@ -40,15 +40,15 @@ type key string
 const connStateKey key = "connState"
 
 var (
-	connStates   = map[string]*connState{}
-	connStatesMu = sync.RWMutex{}
+	clientConnectionsState   = map[string]*connState{}
+	clientConnectionsStateMu = sync.RWMutex{}
 )
 
 type connState struct {
-	State          string
-	KeepAliveState string
-	Start          time.Time
-	IdleCycle      int
+	State            string
+	KeepAliveState   string
+	Start            time.Time
+	HTTPRequestCount int
 }
 
 type httpForwarder struct {
@@ -84,13 +84,13 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
-func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, debug bool) (TCPEntryPoints, error) {
-	if debug {
-		expvar.Publish("connsState", expvar.Func(func() any {
-			return connStates
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, debugConnection bool) (TCPEntryPoints, error) {
+	if debugConnection {
+		expvar.Publish("clientConnectionsState", expvar.Func(func() any {
+			return clientConnectionsState
 		}))
 	}
-	
+
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -104,7 +104,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
 
-		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, debug)
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, debugConnection)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -160,7 +160,7 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, debug bool) (*TCPEntryPoint, error) {
+func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, debugConnection bool) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker()
 
 	listener, err := buildListener(ctx, configuration)
@@ -172,14 +172,14 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator, debug)
+	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator, debugConnection)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator, debug)
+	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator, debugConnection)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
@@ -537,7 +537,7 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator, debug bool) (*httpServer, error) {
+func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator, debugConnection bool) (*httpServer, error) {
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
@@ -572,24 +572,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	var lastHandler http.Handler
-	if debug || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		lastHandler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			state, ok := req.Context().Value(connStateKey).(*connState)
-			if ok {
-				state.IdleCycle++
-				if configuration.Transport.KeepAliveMaxRequests > 0 && state.IdleCycle > configuration.Transport.KeepAliveMaxRequests {
-					log.WithoutContext().Debug("Close because of too many requests")
-					state.KeepAliveState = "Close because of too many requests"
-					rw.Header().Set("Connection", "close")
-				}
-				if configuration.Transport.KeepAliveMaxTime > 0 && time.Now().After(state.Start.Add(time.Duration(configuration.Transport.KeepAliveMaxTime))) {
-					log.WithoutContext().Debug("Close because of too long connection")
-					state.KeepAliveState = "Close because of too long connection"
-					rw.Header().Set("Connection", "close")
-				}
-			}
-			handler.ServeHTTP(rw, req)
-		})
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		lastHandler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	} else {
 		lastHandler = handler
 	}
@@ -601,24 +585,24 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 	}
-	if debug || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
 			cState := &connState{Start: time.Now()}
-			if debug {
-				connStatesMu.Lock()
-				connStates[getConnKey(c)] = cState
-				connStatesMu.Unlock()
+			if debugConnection {
+				clientConnectionsStateMu.Lock()
+				clientConnectionsState[getConnKey(c)] = cState
+				clientConnectionsStateMu.Unlock()
 			}
 			return context.WithValue(ctx, connStateKey, cState)
 		}
 
-		if debug {
+		if debugConnection {
 			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
-				connStatesMu.Lock()
-				if connStates[getConnKey(c)] != nil {
-					connStates[getConnKey(c)].State = state.String()
+				clientConnectionsStateMu.Lock()
+				if clientConnectionsState[getConnKey(c)] != nil {
+					clientConnectionsState[getConnKey(c)].State = state.String()
 				}
-				connStatesMu.Unlock()
+				clientConnectionsStateMu.Unlock()
 			}
 		}
 	}

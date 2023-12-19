@@ -191,7 +191,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Entrypoints
 
-	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver, staticConfiguration.API != nil && staticConfiguration.API.Debug)
+	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver, staticConfiguration.API != nil && staticConfiguration.API.DebugConnection)
 	if err != nil {
 		return nil, err
 	}

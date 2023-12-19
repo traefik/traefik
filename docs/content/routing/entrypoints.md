@@ -653,7 +653,7 @@ The maximum duration Traefik can handle requests before sending a `Connection: C
 
 Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
 
-If Proxy Protocol header parsing is enabled for the entry point, this entry point can accept connections with or without Proxy Protocol headers.
+If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without Proxy Protocol headers.
 
 If the Proxy Protocol header is passed, then the version is determined automatically.
 
