@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 
@@ -78,9 +79,11 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 func (h Handler) createRouter() *mux.Router {
 	router := mux.NewRouter()
 
+	debugConnection := os.Getenv("DEBUG_CONNECTION")
+
 	if h.staticConfig.API.Debug {
 		DebugHandler{}.Append(router)
-	} else if h.staticConfig.API.DebugConnection {
+	} else if debugConnection != "" {
 		DebugHandler{}.AppendExpvar(router)
 	}
 

@@ -49,5 +49,4 @@ func (g DebugHandler) AppendExpvar(router *mux.Router) {
 			})
 			fmt.Fprint(w, "\n}\n")
 		})
-
 }
