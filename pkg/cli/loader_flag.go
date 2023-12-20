@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rs/zerolog/log"
@@ -17,6 +18,11 @@ func (*FlagLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		return false, nil
 	}
 
+	if deprecationNotice(args) {
+		// An incompatible configuration is in use and need to be removed/adapted.
+		return false, errors.New("incompatible static configuration detected")
+	}
+
 	if err := flag.Decode(args, cmd.Configuration); err != nil {
 		return false, fmt.Errorf("failed to decode configuration from flags: %w", err)
 	}
@@ -24,4 +30,15 @@ func (*FlagLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	log.Print("Configuration loaded from flags")
 
 	return true, nil
+}
+
+func deprecationNotice(args []string) bool {
+	rawConfig := &rawConfiguration{}
+	if err := flag.Decode(args, rawConfig); err != nil {
+		log.Debug().Err(err).Msgf("failed to decode configuration from flags")
+		return false
+	}
+
+	logger := log.With().Str("loader", "FLAG").Logger()
+	return rawConfig.deprecationNotice(logger)
 }
