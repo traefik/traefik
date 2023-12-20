@@ -162,7 +162,7 @@ const GetTablePropsMixin = {
       return {
         onRowClick: row =>
           this.$router.push({
-            path: `/${type.replace('-', '/', 'gi')}/${row.name}`
+            path: `/${type.replace('-', '/', 'gi')}/${encodeURIComponent(row.name)}`
           }),
         columns: allColumns.filter(c =>
           get(propsByType, `${type}.columns`, []).includes(c.name)
