@@ -14,8 +14,14 @@ import (
 type FileSuite struct{ BaseSuite }
 
 func (s *FileSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "file")
 	s.composeUp(c)
+}
+
+func (s *FileSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {

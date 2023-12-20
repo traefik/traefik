@@ -18,12 +18,18 @@ type ProxyProtocolSuite struct {
 }
 
 func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "proxy-protocol")
 	s.composeUp(c)
 
 	s.gatewayIP = s.getContainerIP(c, "traefik")
 	s.haproxyIP = s.getComposeServiceIP(c, "haproxy")
 	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+}
+
+func (s *ProxyProtocolSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {

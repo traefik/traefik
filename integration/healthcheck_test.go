@@ -24,6 +24,8 @@ type HealthCheckSuite struct {
 }
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "healthcheck")
 	s.composeUp(c)
 
@@ -31,6 +33,10 @@ func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 	s.whoami2IP = s.getComposeServiceIP(c, "whoami2")
 	s.whoami3IP = s.getComposeServiceIP(c, "whoami3")
 	s.whoami4IP = s.getComposeServiceIP(c, "whoami4")
+}
+
+func (s *HealthCheckSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {

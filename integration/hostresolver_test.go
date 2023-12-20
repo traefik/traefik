@@ -12,8 +12,14 @@ import (
 type HostResolverSuite struct{ BaseSuite }
 
 func (s *HostResolverSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "hostresolver")
 	s.composeUp(c)
+}
+
+func (s *HostResolverSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {

@@ -16,10 +16,16 @@ type RateLimitSuite struct {
 }
 
 func (s *RateLimitSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "ratelimit")
 	s.composeUp(c)
 
 	s.ServerIP = s.getComposeServiceIP(c, "whoami1")
+}
+
+func (s *RateLimitSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *RateLimitSuite) TestSimpleConfiguration(c *check.C) {

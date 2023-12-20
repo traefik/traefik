@@ -44,7 +44,9 @@ func (s *RedisSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-func (s *RedisSuite) setupStore(c *check.C) {
+func (s *RedisSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "redis")
 	s.composeUp(c)
 
@@ -67,9 +69,11 @@ func (s *RedisSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
+func (s *RedisSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
+}
 
+func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, ","),
 	})

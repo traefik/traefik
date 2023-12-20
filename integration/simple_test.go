@@ -26,6 +26,14 @@ import (
 // SimpleSuite tests suite.
 type SimpleSuite struct{ BaseSuite }
 
+func (s *SimpleSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+}
+
+func (s *SimpleSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
+}
+
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	cmd, output := s.cmdTraefik(withConfigFile("fixtures/invalid_configuration.toml"))
 
@@ -363,10 +371,10 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 		c.Assert(err, checker.IsNil)
 
 		// Reqs count of 1 for both routers
-		c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router1@docker\",service=\"whoami1-traefik-integration-test-base@docker\"} 1")
-		c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router2@docker\",service=\"whoami1-traefik-integration-test-base@docker\"} 1")
+		c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router1@docker\",service=\"whoami1@docker\"} 1")
+		c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router2@docker\",service=\"whoami1@docker\"} 1")
 		// Reqs count of 2 for service behind both routers
-		c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"whoami1-traefik-integration-test-base@docker\"} 2")
+		c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"whoami1@docker\"} 2")
 	}
 }
 

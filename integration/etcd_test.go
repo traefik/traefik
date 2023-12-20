@@ -28,6 +28,8 @@ type EtcdSuite struct {
 }
 
 func (s *EtcdSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "etcd")
 	s.composeUp(c)
 
@@ -48,6 +50,10 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	// wait for etcd
 	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
 	c.Assert(err, checker.IsNil)
+}
+
+func (s *EtcdSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {

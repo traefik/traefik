@@ -15,8 +15,14 @@ import (
 type TimeoutSuite struct{ BaseSuite }
 
 func (s *TimeoutSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "timeout")
 	s.composeUp(c)
+}
+
+func (s *TimeoutSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {

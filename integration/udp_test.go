@@ -15,8 +15,14 @@ import (
 type UDPSuite struct{ BaseSuite }
 
 func (s *UDPSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "udp")
 	s.composeUp(c)
+}
+
+func (s *UDPSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func guessWhoUDP(addr string) (string, error) {

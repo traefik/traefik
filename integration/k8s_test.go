@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-check/check"
@@ -27,6 +28,8 @@ var updateExpected = flag.Bool("update_expected", false, "Update expected files 
 type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "k8s")
 	s.composeUp(c)
 
@@ -39,12 +42,20 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
+	data, err := os.ReadFile(abs)
+	c.Assert(err, checker.IsNil)
+
+	content := strings.ReplaceAll(string(data), "https://server:6443", fmt.Sprintf("https://%s:6443", s.getComposeServiceIP(c, "server")))
+
+	err = os.WriteFile(abs, []byte(content), 0644)
+	c.Assert(err, checker.IsNil)
+
 	err = os.Setenv("KUBECONFIG", abs)
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.composeDown(c)
+	s.BaseSuite.TearDownSuite(c)
 
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",

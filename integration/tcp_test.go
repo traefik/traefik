@@ -20,8 +20,14 @@ import (
 type TCPSuite struct{ BaseSuite }
 
 func (s *TCPSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "tcp")
 	s.composeUp(c)
+}
+
+func (s *TCPSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *TCPSuite) TestMixed(c *check.C) {

@@ -19,11 +19,17 @@ type ErrorPagesSuite struct {
 }
 
 func (s *ErrorPagesSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "error_pages")
 	s.composeUp(c)
 
 	s.ErrorPageIP = s.getComposeServiceIP(c, "nginx2")
 	s.BackendIP = s.getComposeServiceIP(c, "nginx1")
+}
+
+func (s *ErrorPagesSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {

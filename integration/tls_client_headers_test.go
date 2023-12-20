@@ -20,8 +20,14 @@ const (
 type TLSClientHeadersSuite struct{ BaseSuite }
 
 func (s *TLSClientHeadersSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "tlsclientheaders")
 	s.composeUp(c)
+}
+
+func (s *TLSClientHeadersSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *TLSClientHeadersSuite) TestTLSClientHeaders(c *check.C) {

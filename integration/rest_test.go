@@ -21,10 +21,16 @@ type RestSuite struct {
 }
 
 func (s *RestSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "rest")
 	s.composeUp(c)
 
 	s.whoamiAddr = net.JoinHostPort(s.getComposeServiceIP(c, "whoami1"), "80")
+}
+
+func (s *RestSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {

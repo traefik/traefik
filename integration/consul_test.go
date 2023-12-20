@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kvtools/consul"
+	"github.com/kvtools/valkeyrie"
 	"net"
 	"net/http"
 	"os"
@@ -13,8 +15,6 @@ import (
 	"time"
 
 	"github.com/go-check/check"
-	"github.com/kvtools/consul"
-	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -29,14 +29,8 @@ type ConsulSuite struct {
 	consulURL string
 }
 
-func (s *ConsulSuite) resetStore(c *check.C) {
-	err := s.kvClient.DeleteTree(context.Background(), "traefik")
-	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
-		c.Fatal(err)
-	}
-}
-
-func (s *ConsulSuite) setupStore(c *check.C) {
+func (s *ConsulSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
 	s.createComposeProject(c, "consul")
 	s.composeUp(c)
 
@@ -61,9 +55,18 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
+func (s *ConsulSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
+}
 
+func (s *ConsulSuite) TearDownTest(c *check.C) {
+	err := s.kvClient.DeleteTree(context.Background(), "traefik")
+	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
+		c.Fatal(err)
+	}
+}
+
+func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 	defer os.Remove(file)
 
@@ -178,8 +181,6 @@ func (s *ConsulSuite) assertWhoami(c *check.C, host string, expectedStatusCode i
 
 func (s *ConsulSuite) TestDeleteRootKey(c *check.C) {
 	// This test case reproduce the issue: https://github.com/traefik/traefik/issues/8092
-	s.setupStore(c)
-	s.resetStore(c)
 
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 	defer os.Remove(file)

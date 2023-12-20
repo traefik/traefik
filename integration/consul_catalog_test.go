@@ -21,6 +21,8 @@ type ConsulCatalogSuite struct {
 }
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "consul_catalog")
 	s.composeUp(c)
 
@@ -40,6 +42,10 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 		Address: "http://" + net.JoinHostPort(s.getComposeServiceIP(c, "consul-agent"), "8500"),
 	})
 	c.Check(err, check.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *ConsulCatalogSuite) waitToElectConsulLeader() error {

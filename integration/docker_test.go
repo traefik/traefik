@@ -17,12 +17,17 @@ type DockerSuite struct {
 	BaseSuite
 }
 
-func (s *DockerSuite) SetUpTest(c *check.C) {
+func (s *DockerSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
 	s.createComposeProject(c, "docker")
 }
 
+func (s *DockerSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
+}
+
 func (s *DockerSuite) TearDownTest(c *check.C) {
-	s.composeDown(c)
+	s.composeStop(c)
 }
 
 func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
@@ -75,7 +80,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-	// req.Host = fmt.Sprintf("simple-%s.docker.localhost", s.composeProject.Name)
+	req.Host = "simple.docker.localhost"
 
 	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)

@@ -37,8 +37,13 @@ type accessLogValue struct {
 }
 
 func (s *AccessLogSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
 	s.createComposeProject(c, "access_log")
 	s.composeUp(c)
+}
+
+func (s *AccessLogSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *AccessLogSuite) TearDownTest(c *check.C) {
@@ -119,7 +124,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 			code:       "200",
 			user:       "test",
 			routerName: "rt-authFrontend",
-			serviceURL: "http://172.17.0",
+			serviceURL: "http://172.31.42",
 		},
 	}
 
@@ -188,7 +193,7 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 			code:       "200",
 			user:       "test",
 			routerName: "rt-digestAuthMiddleware",
-			serviceURL: "http://172.17.0",
+			serviceURL: "http://172.31.42",
 		},
 	}
 
@@ -558,7 +563,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
 			code:       "200",
 			user:       "test",
 			routerName: "rt-authFrontend",
-			serviceURL: "http://172.17.0",
+			serviceURL: "http://172.31.42",
 		},
 	}
 

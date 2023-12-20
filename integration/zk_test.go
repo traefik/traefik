@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/kvtools/valkeyrie"
+	"github.com/kvtools/zookeeper"
 	"net"
 	"net/http"
 	"os"
@@ -11,9 +13,7 @@ import (
 	"time"
 
 	"github.com/go-check/check"
-	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/kvtools/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -27,7 +27,9 @@ type ZookeeperSuite struct {
 	zookeeperAddr string
 }
 
-func (s *ZookeeperSuite) setupStore(c *check.C) {
+func (s *ZookeeperSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "zookeeper")
 	s.composeUp(c)
 
@@ -51,9 +53,11 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
+func (s *ZookeeperSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
+}
 
+func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{s.zookeeperAddr})
 	defer os.Remove(file)
 
@@ -115,7 +119,7 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	defer s.killCmd(cmd)
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
 		try.BodyContains(`"striper@zookeeper":`, `"compressor@zookeeper":`, `"srvcA@zookeeper":`, `"srvcB@zookeeper":`),
 	)
 	c.Assert(err, checker.IsNil)

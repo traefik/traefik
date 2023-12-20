@@ -18,10 +18,16 @@ type RetrySuite struct {
 }
 
 func (s *RetrySuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "retry")
 	s.composeUp(c)
 
 	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+}
+
+func (s *RetrySuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *RetrySuite) TestRetry(c *check.C) {

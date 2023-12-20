@@ -20,8 +20,13 @@ type DockerComposeSuite struct {
 }
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
 	s.createComposeProject(c, "minimal")
 	s.composeUp(c)
+}
+
+func (s *DockerComposeSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
 }
 
 func (s *DockerComposeSuite) TestComposeScale(c *check.C) {

@@ -26,12 +26,14 @@ const (
 type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "access_log")
 	s.composeUp(c)
 }
 
 func (s *LogRotationSuite) TearDownSuite(c *check.C) {
-	s.composeDown(c)
+	s.BaseSuite.TearDownSuite(c)
 
 	generatedFiles := []string{
 		traefikTestLogFile,
