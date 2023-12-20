@@ -98,7 +98,6 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 
 func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 	routerID := mux.Vars(request)["routerID"]
-
 	rw.Header().Set("Content-Type", "application/json")
 
 	router, ok := h.runtimeConfiguration.Routers[routerID]
@@ -149,6 +148,10 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 
 func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 	serviceID := mux.Vars(request)["serviceID"]
+	// serviceID, err := url.PathUnescape(scapedServiceID)
+	// if err != nil {
+	// 	writeError(rw, fmt.Sprintf("unable to decode service: %s", scapedServiceID), http.StatusBadRequest)
+	// }
 
 	rw.Header().Add("Content-Type", "application/json")
 
