@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -33,6 +34,23 @@ import (
 )
 
 var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
+
+type key string
+
+const connStateKey key = "connState"
+const debugConnectionEnv = "DEBUG_CONNECTION"
+
+var (
+	clientConnectionsState   = map[string]*connState{}
+	clientConnectionsStateMu = sync.RWMutex{}
+)
+
+type connState struct {
+	State            string
+	KeepAliveState   string
+	Start            time.Time
+	HTTPRequestCount int
+}
 
 type httpForwarder struct {
 	net.Listener
@@ -68,6 +86,12 @@ type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
 func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig) (TCPEntryPoints, error) {
+	if os.Getenv(debugConnectionEnv) != "" {
+		expvar.Publish("clientConnectionsState", expvar.Func(func() any {
+			return clientConnectionsState
+		}))
+	}
+
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -548,12 +572,41 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		})
 	}
 
+	var lastHandler http.Handler
+	debugConnection := os.Getenv(debugConnectionEnv) != ""
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		lastHandler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
+	} else {
+		lastHandler = handler
+	}
+
 	serverHTTP := &http.Server{
-		Handler:      handler,
+		Handler:      lastHandler,
 		ErrorLog:     httpServerLogger,
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+	}
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+			cState := &connState{Start: time.Now()}
+			if debugConnection {
+				clientConnectionsStateMu.Lock()
+				clientConnectionsState[getConnKey(c)] = cState
+				clientConnectionsStateMu.Unlock()
+			}
+			return context.WithValue(ctx, connStateKey, cState)
+		}
+
+		if debugConnection {
+			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
+				clientConnectionsStateMu.Lock()
+				if clientConnectionsState[getConnKey(c)] != nil {
+					clientConnectionsState[getConnKey(c)].State = state.String()
+				}
+				clientConnectionsStateMu.Unlock()
+			}
+		}
 	}
 
 	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
@@ -582,6 +635,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		Forwarder: listener,
 		Switcher:  httpSwitcher,
 	}, nil
+}
+
+func getConnKey(conn net.Conn) string {
+	return fmt.Sprintf("%s => %s", conn.RemoteAddr(), conn.LocalAddr())
 }
 
 func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *trackedConnection {

@@ -93,7 +93,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		HTTP3: &static.HTTP3Config{
 			AdvertisedPort: 8080,
 		},
-	}, nil)
+	}, nil, false)
 	require.NoError(t, err)
 
 	router, err := tcprouter.NewRouter()
