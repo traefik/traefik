@@ -280,3 +280,9 @@ issues:
       text: 'unusedwrite: unused write to field'
       linters:
         - govet
+    - path: pkg/cli/deprecation.go
+      linters:
+        - goconst
+    - path: pkg/cli/loader_file.go
+      linters:
+        - goconst
