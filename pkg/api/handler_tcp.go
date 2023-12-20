@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -92,7 +93,13 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 }
 
 func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
-	routerID := mux.Vars(request)["routerID"]
+	scapedRouterID := mux.Vars(request)["routerID"]
+
+	routerID, err := url.PathUnescape(scapedRouterID)
+	if err != nil {
+		writeError(rw, fmt.Sprintf("unable to decode routerID: %s", scapedRouterID), http.StatusBadRequest)
+		return
+	}
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -104,7 +111,7 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 
 	result := newTCPRouterRepresentation(routerID, router)
 
-	err := json.NewEncoder(rw).Encode(result)
+	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
 		writeError(rw, err.Error(), http.StatusInternalServerError)
@@ -144,7 +151,13 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 }
 
 func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
-	serviceID := mux.Vars(request)["serviceID"]
+	scapedServiceID := mux.Vars(request)["serviceID"]
+
+	serviceID, err := url.PathUnescape(scapedServiceID)
+	if err != nil {
+		writeError(rw, fmt.Sprintf("unable to decode serviceID: %s", scapedServiceID), http.StatusBadRequest)
+		return
+	}
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -156,7 +169,7 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 
 	result := newTCPServiceRepresentation(serviceID, service)
 
-	err := json.NewEncoder(rw).Encode(result)
+	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
 		writeError(rw, err.Error(), http.StatusInternalServerError)
@@ -196,7 +209,13 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 }
 
 func (h Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request) {
-	middlewareID := mux.Vars(request)["middlewareID"]
+	scapedMiddlewareID := mux.Vars(request)["middlewareID"]
+
+	middlewareID, err := url.PathUnescape(scapedMiddlewareID)
+	if err != nil {
+		writeError(rw, fmt.Sprintf("unable to decode middlewareID: %s", scapedMiddlewareID), http.StatusBadRequest)
+		return
+	}
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -208,7 +227,7 @@ func (h Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request)
 
 	result := newTCPMiddlewareRepresentation(middlewareID, middleware)
 
-	err := json.NewEncoder(rw).Encode(result)
+	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
 		writeError(rw, err.Error(), http.StatusInternalServerError)
