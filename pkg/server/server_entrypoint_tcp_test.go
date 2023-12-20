@@ -79,7 +79,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil, false)
+	}, nil)
 	require.NoError(t, err)
 
 	conn, err := startEntrypoint(entryPoint, router)
@@ -164,7 +164,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil, false)
+	}, nil)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
@@ -201,7 +201,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil, false)
+	}, nil)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
@@ -241,7 +241,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil, false)
+	}, nil)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
@@ -272,12 +272,6 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 
 	resp, err = http.Get("http://" + entryPoint.listener.Addr().String())
 	require.NoError(t, err)
-	require.False(t, resp.Close)
-	err = resp.Body.Close()
-	require.NoError(t, err)
-
-	resp, err = http.Get("http://" + entryPoint.listener.Addr().String())
-	require.NoError(t, err)
 	require.True(t, resp.Close)
 	err = resp.Body.Close()
 	require.NoError(t, err)
@@ -293,7 +287,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil, false)
+	}, nil)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
