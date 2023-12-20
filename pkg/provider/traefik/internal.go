@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"os"
 	"regexp"
 	"time"
 
@@ -243,7 +244,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 			}
 		}
 
-		if i.staticCfg.API.Debug {
+		if i.staticCfg.API.Debug || os.Getenv("DEBUG_CONNECTION") != "" {
 			cfg.HTTP.Routers["debug"] = &dynamic.Router{
 				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "api@internal",
