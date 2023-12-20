@@ -13,7 +13,7 @@ func newKeepAliveMiddleware(next http.Handler, maxRequests int, maxTime ptypes.D
 		state, ok := req.Context().Value(connStateKey).(*connState)
 		if ok {
 			state.HTTPRequestCount++
-			if maxRequests > 0 && state.HTTPRequestCount > maxRequests {
+			if maxRequests > 0 && state.HTTPRequestCount >= maxRequests {
 				log.WithoutContext().Debug("Close because of too many requests")
 				state.KeepAliveState = "Close because of too many requests"
 				rw.Header().Set("Connection", "close")
