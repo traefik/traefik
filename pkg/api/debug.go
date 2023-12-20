@@ -24,17 +24,6 @@ type DebugHandler struct{}
 
 // Append add debug routes on a router.
 func (g DebugHandler) Append(router *mux.Router) {
-	g.AppendExpvar(router)
-	runtime.SetBlockProfileRate(1)
-	runtime.SetMutexProfileFraction(5)
-	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/cmdline").HandlerFunc(pprof.Cmdline)
-	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/profile").HandlerFunc(pprof.Profile)
-	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/symbol").HandlerFunc(pprof.Symbol)
-	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/trace").HandlerFunc(pprof.Trace)
-	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/").HandlerFunc(pprof.Index)
-}
-
-func (g DebugHandler) AppendExpvar(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/debug/vars").
 		HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -50,4 +39,11 @@ func (g DebugHandler) AppendExpvar(router *mux.Router) {
 			fmt.Fprint(w, "\n}\n")
 		})
 
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(5)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/cmdline").HandlerFunc(pprof.Cmdline)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/profile").HandlerFunc(pprof.Profile)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/symbol").HandlerFunc(pprof.Symbol)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/trace").HandlerFunc(pprof.Trace)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/").HandlerFunc(pprof.Index)
 }
