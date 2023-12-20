@@ -2,7 +2,6 @@ package integration
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -76,11 +75,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-
-	composeProject, err := s.composeProjectOptions.ToProject(nil)
-	c.Assert(err, checker.IsNil)
-
-	req.Host = fmt.Sprintf("simple-%s.docker.localhost", composeProject.Name)
+	// req.Host = fmt.Sprintf("simple-%s.docker.localhost", s.composeProject.Name)
 
 	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)

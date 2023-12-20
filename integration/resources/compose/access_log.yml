@@ -40,7 +40,7 @@ services:
       traefik.http.routers.rt-authFrontend.entryPoints: httpFrontendAuth
       traefik.http.routers.rt-authFrontend.rule: Host(`frontend.auth.docker.local`)
       traefik.http.routers.rt-authFrontend.middlewares: basicauth
-      traefik.http.middlewares.basicauth.basicauth.users: test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
+      traefik.http.middlewares.basicauth.basicauth.users: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   digestAuthMiddleware:
