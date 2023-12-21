@@ -11,13 +11,13 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/fsnotify/fsnotify"
 	"github.com/traefik/paerser/file"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
-	"gopkg.in/fsnotify.v1"
 )
 
 const providerName = "file"
