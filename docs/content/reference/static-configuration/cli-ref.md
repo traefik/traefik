@@ -171,6 +171,12 @@ Trust all. (Default: ```false```)
 `--entrypoints.<name>.proxyprotocol.trustedips`:  
 Trust only selected IPs.
 
+`--entrypoints.<name>.transport.keepalivemaxrequests`:  
+Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
+
+`--entrypoints.<name>.transport.keepalivemaxtime`:  
+Maximum duration before closing a keep-alive connection. (Default: ```0```)
+
 `--entrypoints.<name>.transport.lifecycle.gracetimeout`:  
 Duration to give active requests a chance to finish before Traefik stops. (Default: ```10```)
 
