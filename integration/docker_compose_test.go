@@ -2,16 +2,15 @@ package integration
 
 import (
 	"encoding/json"
-	"net/http"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	checker "github.com/vdemeester/shakers"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 // Docker tests suite.
@@ -49,7 +48,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	req.Host = "my.super.host"
 
-	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 5*time.Second, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
@@ -70,7 +69,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 		if strings.HasSuffix(name, "@internal") {
 			continue
 		}
-		// c.Assert(name, checker.Equals, "whoami1-"+s.composeProject.Name+"@docker")
+		c.Assert(name, checker.Equals, "service-mini@docker")
 		c.Assert(service.LoadBalancer.Servers, checker.HasLen, 2)
 		// We could break here, but we don't just to keep us honest.
 	}

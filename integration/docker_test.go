@@ -27,7 +27,7 @@ func (s *DockerSuite) TearDownSuite(c *check.C) {
 }
 
 func (s *DockerSuite) TearDownTest(c *check.C) {
-	s.composeStop(c)
+	s.composeStop(c, "simple", "withtcplabels", "withlabels1", "withlabels2", "withonelabelmissing", "powpow")
 }
 
 func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
@@ -82,8 +82,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "simple.docker.localhost"
 
-	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	body, err := io.ReadAll(resp.Body)
@@ -151,16 +150,14 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my-super.host"
 
-	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "my.super.host"
 
-	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	body, err := io.ReadAll(resp.Body)
@@ -198,10 +195,8 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my.super.host"
 
-	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
-	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 

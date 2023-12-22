@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/go-check/check"
@@ -88,10 +89,19 @@ func setupPebbleRootCA() (*http.Transport, error) {
 }
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
+	s.BaseSuite.SetUpSuite(c)
+
 	s.createComposeProject(c, "pebble")
 	s.composeUp(c)
 
-	s.fakeDNSServer = startFakeDNSServer(s.getContainerIP(c, "traefik"))
+	// Retrieving the Docker host ip.
+	content := s.composeExec(c, "pebble", "getent", "hosts", "host.docker.internal")
+	c.Assert(content, checker.Contains, "powpow")
+	ipRegex := regexp.MustCompile(`\b(?:\d{1,3}\.){3}\d{1,3}\b`)
+	matches := ipRegex.FindAllString(content, -1)
+	c.Assert(matches, checker.HasLen, 1)
+
+	s.fakeDNSServer = startFakeDNSServer(matches[0])
 	s.pebbleIP = s.getComposeServiceIP(c, "pebble")
 
 	pebbleTransport, err := setupPebbleRootCA()
@@ -117,6 +127,8 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *AcmeSuite) TearDownSuite(c *check.C) {
+	s.BaseSuite.TearDownSuite(c)
+
 	if s.fakeDNSServer != nil {
 		err := s.fakeDNSServer.Shutdown()
 		if err != nil {

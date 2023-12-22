@@ -50,7 +50,6 @@ func (s *TracingSuite) startZipkin(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	s.startZipkin(c)
-	// defer s.composeStop(c, "zipkin")
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
@@ -102,7 +101,6 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	s.startZipkin(c)
-	defer s.composeStop(c, "zipkin")
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
@@ -130,7 +128,6 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 
 func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	s.startZipkin(c)
-	defer s.composeStop(c, "zipkin")
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,

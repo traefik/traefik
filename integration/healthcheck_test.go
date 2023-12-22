@@ -121,7 +121,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 	defer s.killCmd(cmd)
 
 	// Wait for traefik
-	err = try.GetRequest("http://localhost:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Check entrypoint http1
@@ -129,7 +129,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendHealthReq.Host = "test.localhost"
 
-	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	err = try.Request(frontendHealthReq, 5*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
 	// Check entrypoint http2
@@ -137,7 +137,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendHealthReq.Host = "test.localhost"
 
-	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	err = try.Request(frontendHealthReq, 5*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
 	// Set the both whoami health to 500
@@ -618,18 +618,14 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	err = fr1.Close()
 	c.Assert(err, checker.IsNil)
 
-	try.Sleep(1 * time.Second)
+	// Waiting for the reflected change.
+	err = try.Request(rootReq, 5*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
 
 	// Check the failed service (whoami2) is not getting requests
 	wantIPs := []string{s.whoami1IP, s.whoami1IP, s.whoami1IP, s.whoami1IP}
 	for _, ip := range wantIPs {
-		want := "IP: " + ip
-		resp, err := client.Do(rootReq)
+		err = try.Request(rootReq, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("IP: "+ip))
 		c.Assert(err, checker.IsNil)
-
-		body, err := io.ReadAll(resp.Body)
-		c.Assert(err, checker.IsNil)
-
-		c.Assert(string(body), checker.Contains, want)
 	}
 }

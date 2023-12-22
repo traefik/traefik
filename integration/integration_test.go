@@ -7,12 +7,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
-	"k8s.io/utils/strings/slices"
 	stdlog "log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"text/template"
@@ -22,15 +23,18 @@ import (
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
-	notaryclient "github.com/theupdateframework/notary/client"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/sirupsen/logrus"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	integration = flag.Bool("integration", true, "run integration tests")
+	integration = flag.Bool("integration", false, "run integration tests")
 	showLog     = flag.Bool("tlog", false, "always show Traefik logs")
 )
 
@@ -47,13 +51,20 @@ type composeService struct {
 	Command     []string          `yaml:"command"`
 	Environment map[string]string `yaml:"environment"`
 	Privileged  bool              `yaml:"privileged"`
+	Deploy      composeDeploy     `yaml:"deploy"`
+}
+
+type composeDeploy struct {
+	Replicas int `yaml:"replicas"`
 }
 
 func Test(t *testing.T) {
 	if !*integration {
 		log.WithoutContext().Info("Integration tests disabled.")
-		// return
+		return
 	}
+
+	_ = os.Setenv("CI", "ci")
 
 	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).
 		With().Timestamp().Caller().Logger()
@@ -67,9 +78,7 @@ func Test(t *testing.T) {
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
 
 	check.Suite(&AccessLogSuite{})
-	//if !useVPN {
-	// check.Suite(&AcmeSuite{})
-	//}
+	//check.Suite(&AcmeSuite{})
 	check.Suite(&ConsulCatalogSuite{})
 	check.Suite(&ConsulSuite{})
 	check.Suite(&DockerComposeSuite{})
@@ -83,16 +92,12 @@ func Test(t *testing.T) {
 	check.Suite(&HostResolverSuite{})
 	check.Suite(&HTTPSSuite{})
 	check.Suite(&HTTPSuite{})
-	//if !useVPN {
 	check.Suite(&K8sSuite{})
-	//}
 	check.Suite(&KeepAliveSuite{})
 	check.Suite(&LogRotationSuite{})
 	check.Suite(&MarathonSuite{})
 	check.Suite(&MarathonSuite15{})
-	//if !useVPN {
 	check.Suite(&ProxyProtocolSuite{})
-	//}
 	check.Suite(&RateLimitSuite{})
 	check.Suite(&RedisSuite{})
 	check.Suite(&RestSuite{})
@@ -120,7 +125,6 @@ type BaseSuite struct {
 }
 
 func (s *BaseSuite) SetUpSuite(c *check.C) {
-	_ = os.Setenv("TESTCONTAINERS_HOST_OVERRIDE", "host.docker.internal")
 	// Create docker network
 	// docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	req := testcontainers.GenericNetworkRequest{
@@ -144,7 +148,7 @@ func (s *BaseSuite) SetUpSuite(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	if os.Getenv("IN_DOCKER") != "true" {
-		setupVPN(nil, "tailscale.secret")
+		s.setupVPN(c, "tailscale.secret")
 	}
 
 	s.network = network
@@ -153,10 +157,18 @@ func (s *BaseSuite) SetUpSuite(c *check.C) {
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	s.composeDown(c)
 
-	if s.network != nil {
-		err := s.network.Remove(context.Background())
-		c.Assert(err, checker.IsNil)
-	}
+	err := try.Do(5*time.Second, func() error {
+		if s.network != nil {
+			err := s.network.Remove(context.Background())
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
 }
 
 // createComposeProject creates the docker compose project stored as a field in the BaseSuite.
@@ -197,31 +209,44 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 			mounts = append(mounts, testcontainers.BindMount(split[0], testcontainers.ContainerMountTarget(split[1])))
 		}
 
-		req := testcontainers.ContainerRequest{
-			Image:    containerConfig.Image,
-			Name:     id,
-			Hostname: containerConfig.Hostname,
-			HostConfigModifier: func(config *container.HostConfig) {
-				if containerConfig.CapAdd != nil {
-					config.CapAdd = containerConfig.CapAdd
-				}
-			},
-			Cmd:        containerConfig.Command,
-			Mounts:     testcontainers.Mounts(mounts...),
-			Labels:     containerConfig.Labels,
-			Networks:   []string{networkName},
-			Env:        containerConfig.Environment,
-			Privileged: containerConfig.Privileged,
+		if containerConfig.Deploy.Replicas > 0 {
+			for i := 0; i < containerConfig.Deploy.Replicas; i++ {
+				id = fmt.Sprintf("%s-%d", id, i+1)
+				con, err := createContainer(containerConfig, id, mounts, ctx)
+				c.Assert(err, checker.IsNil)
+				s.containers[id] = con
+			}
+			continue
 		}
-		con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-			ContainerRequest: req,
-			Started:          false,
-		})
 
-		s.containers[id] = con
-
+		con, err := createContainer(containerConfig, id, mounts, ctx)
 		c.Assert(err, checker.IsNil)
+		s.containers[id] = con
 	}
+}
+
+func createContainer(containerConfig composeService, id string, mounts testcontainers.ContainerMounts, ctx context.Context) (testcontainers.Container, error) {
+	req := testcontainers.ContainerRequest{
+		Image:    containerConfig.Image,
+		Name:     id,
+		Hostname: containerConfig.Hostname,
+		HostConfigModifier: func(config *container.HostConfig) {
+			if containerConfig.CapAdd != nil {
+				config.CapAdd = containerConfig.CapAdd
+			}
+		},
+		Cmd:        containerConfig.Command,
+		Mounts:     testcontainers.Mounts(mounts...),
+		Labels:     containerConfig.Labels,
+		Networks:   []string{networkName},
+		Env:        containerConfig.Environment,
+		Privileged: containerConfig.Privileged,
+	}
+	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          false,
+	})
+	return con, err
 }
 
 // composeUp starts the given services of the current docker compose project, if they are not already started.
@@ -405,7 +430,7 @@ type tailscaleNotSuite struct{ BaseSuite }
 //	    "172.0.0.0/8": ["your_tailscale_identity"],
 //	  },
 //	},
-func setupVPN(c *check.C, keyFile string) {
+func (s *BaseSuite) setupVPN(c *check.C, keyFile string) {
 	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
@@ -416,22 +441,26 @@ func setupVPN(c *check.C, keyFile string) {
 	}
 	authKey := strings.TrimSpace(string(data))
 	// // TODO: copy and create versions that don't need a check.C?
-	vpn := &tailscaleNotSuite{}
-	vpn.createComposeProject(c, "tailscale")
-	vpn.composeUp(c)
+	s.createComposeProject(c, "tailscale")
+	s.composeUp(c)
 	time.Sleep(5 * time.Second)
 	// If we ever change the docker subnet in the Makefile,
 	// we need to change this one below correspondingly.
-	vpn.composeExec(c, "tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
+	s.composeExec(c, "tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
 }
 
 // composeExec runs the command in the given args in the given compose service container.
 // Already running services are not affected (i.e. not stopped).
-func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) {
+func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) string {
 	c.Assert(s.containers[service], check.NotNil)
 
-	_, _, err := s.containers[service].Exec(context.Background(), args)
+	_, reader, err := s.containers[service].Exec(context.Background(), args)
 	c.Assert(err, checker.IsNil)
+
+	content, err := io.ReadAll(reader)
+	c.Assert(err, checker.IsNil)
+
+	return string(content)
 }
 
 type FakeDockerCLI struct {

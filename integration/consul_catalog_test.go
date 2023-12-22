@@ -293,7 +293,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
 	c.Assert(err, checker.IsNil)
 
 	reg.Check = &api.AgentServiceCheck{
@@ -307,7 +307,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)

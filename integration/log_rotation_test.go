@@ -28,6 +28,10 @@ type LogRotationSuite struct{ BaseSuite }
 func (s *LogRotationSuite) SetUpSuite(c *check.C) {
 	s.BaseSuite.SetUpSuite(c)
 
+	os.Remove(traefikTestAccessLogFile)
+	os.Remove(traefikTestLogFile)
+	os.Remove(traefikTestAccessLogFileRotated)
+
 	s.createComposeProject(c, "access_log")
 	s.composeUp(c)
 }

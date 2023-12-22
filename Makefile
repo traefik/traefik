@@ -119,6 +119,11 @@ test-integration: build-dev-image
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate binary test-integration
 
+## Run the integration tests
+.PHONY: test-integration-without-docker
+test-integration-without-docker:
+	./script/make.sh generate binary test-integration
+
 ## Pull all images for integration tests
 .PHONY: pull-images
 pull-images:

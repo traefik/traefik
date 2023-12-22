@@ -32,17 +32,20 @@ global_job_config:
 
 blocks:
   - name: Test Integration
-    dependencies: []
+    dependencies: [ ]
     run:
       when: "branch =~ '.*' OR pull_request =~'.*'"
     task:
+      agent:
+        machine:
+          type: e1-standard-8
+          os_image: ubuntu2004
       jobs:
         - name: Test Integration
           commands:
             - make pull-images
             - touch webui/static/index.html # Avoid generating webui
-            - IN_DOCKER="" make binary
-            - make test-integration
+            - make test-integration-without-docker
             - df -h
       epilogue:
         always:
