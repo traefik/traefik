@@ -78,7 +78,7 @@ func Test(t *testing.T) {
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
 
 	check.Suite(&AccessLogSuite{})
-	//check.Suite(&AcmeSuite{})
+	check.Suite(&AcmeSuite{})
 	check.Suite(&ConsulCatalogSuite{})
 	check.Suite(&ConsulSuite{})
 	check.Suite(&DockerComposeSuite{})
@@ -227,25 +227,27 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 
 func createContainer(containerConfig composeService, id string, mounts testcontainers.ContainerMounts, ctx context.Context) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
-		Image:    containerConfig.Image,
-		Name:     id,
-		Hostname: containerConfig.Hostname,
+		Image:      containerConfig.Image,
+		Env:        containerConfig.Environment,
+		Cmd:        containerConfig.Command,
+		Labels:     containerConfig.Labels,
+		Mounts:     testcontainers.Mounts(mounts...),
+		Name:       id,
+		Hostname:   containerConfig.Hostname,
+		Privileged: containerConfig.Privileged,
+		Networks:   []string{networkName},
 		HostConfigModifier: func(config *container.HostConfig) {
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
+			config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:172.31.42.1")
 		},
-		Cmd:        containerConfig.Command,
-		Mounts:     testcontainers.Mounts(mounts...),
-		Labels:     containerConfig.Labels,
-		Networks:   []string{networkName},
-		Env:        containerConfig.Environment,
-		Privileged: containerConfig.Privileged,
 	}
 	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          false,
 	})
+
 	return con, err
 }
 

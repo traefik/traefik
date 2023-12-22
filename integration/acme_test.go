@@ -95,13 +95,12 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.composeUp(c)
 
 	// Retrieving the Docker host ip.
-	content := s.composeExec(c, "pebble", "getent", "hosts", "host.docker.internal")
-	c.Assert(content, checker.Contains, "powpow")
-	ipRegex := regexp.MustCompile(`\b(?:\d{1,3}\.){3}\d{1,3}\b`)
-	matches := ipRegex.FindAllString(content, -1)
-	c.Assert(matches, checker.HasLen, 1)
 
-	s.fakeDNSServer = startFakeDNSServer(matches[0])
+	content := s.composeExec(c, "pebble", "ip", "route")
+	ipRegex := regexp.MustCompile(`default via (\b(?:\d{1,3}\.){3}\d{1,3}\b)`)
+	matches := ipRegex.FindStringSubmatch(content)
+	c.Assert(matches, checker.HasLen, 2)
+	s.fakeDNSServer = startFakeDNSServer(matches[1])
 	s.pebbleIP = s.getComposeServiceIP(c, "pebble")
 
 	pebbleTransport, err := setupPebbleRootCA()
