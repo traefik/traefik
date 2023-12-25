@@ -2,29 +2,37 @@ package ratelimiter
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"net/http"
 	"time"
 
-	"github.com/go-redis/redis_rate/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/redisrate"
 	"golang.org/x/time/rate"
 )
 
 type RedisLimiter struct {
-	rate    rate.Limit // reqs/s
-	burst   int64
-	logger  *zerolog.Logger
-	limiter *redis_rate.Limiter
+	rate     rate.Limit // reqs/s
+	burst    int64
+	maxDelay time.Duration
+
 	period  ptypes.Duration
+	logger  *zerolog.Logger
+	limiter *redisrate.Limiter
 }
 
 func NewRedisLimiter(
 	rate rate.Limit,
 	burst int64,
-	config dynamic.RateLimit, logger *zerolog.Logger,
+	maxDelay time.Duration,
+	ttl int,
+	config dynamic.RateLimit,
+	logger *zerolog.Logger,
 ) (Limiter, error) {
 	options := &redis.UniversalOptions{
 		Addrs:        config.Redis.Endpoints,
@@ -45,27 +53,33 @@ func NewRedisLimiter(
 		options.TLSConfig = tlsConfig
 	}
 	rdb := redis.NewUniversalClient(options)
-	limiter := redis_rate.NewLimiter(rdb)
+
+	limiter := redisrate.NewLimiter(rdb, ttl, maxDelay)
 
 	return &RedisLimiter{
-		rate:    rate,
-		burst:   burst,
-		period:  config.Period,
-		logger:  logger,
-		limiter: limiter,
+		rate:     rate,
+		burst:    burst,
+		period:   config.Period,
+		maxDelay: maxDelay,
+		logger:   logger,
+		limiter:  limiter,
 	}, nil
 }
 
 func (r *RedisLimiter) Allow(
 	ctx context.Context, source string, _ int64, req *http.Request, rw http.ResponseWriter,
 ) (bool, error) {
+	// start := time.Now()
+	// // Code to measure
+	// defer fmt.Println(measurement(start).Nanoseconds())
+
 	res, err := r.limiter.Allow(
 		ctx,
 		source,
-		redis_rate.Limit{
-			Rate:   int(r.rate),
+		redisrate.Limit{
+			Rate:   r.rate,
 			Period: time.Duration(r.period),
-			Burst:  int(r.burst),
+			Burst:  r.burst,
 		},
 	)
 	if err != nil {
@@ -74,10 +88,30 @@ func (r *RedisLimiter) Allow(
 		return false, err
 	}
 
-	if res.Allowed == 0 {
+	if !res.Ok {
 		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
 		return false, nil
 	}
 
+	if res.Delay > r.maxDelay {
+		r.serveDelayError(ctx, rw, res.Delay)
+		return false, nil
+	}
+
+	// if res.Delay != 0 {
+	// 	fmt.Println("here", res.Delay.Milliseconds(), r.maxDelay.Milliseconds())
+	// }
+	time.Sleep(res.Delay)
+
 	return true, nil
+}
+
+func (r *RedisLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
+	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
+	w.Header().Set("X-Retry-In", delay.String())
+	w.WriteHeader(http.StatusTooManyRequests)
+
+	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Could not serve 429")
+	}
 }

@@ -3,16 +3,30 @@ name: Test Unit
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
 
 env:
-  GO_VERSION: '1.20'
+  GO_VERSION: "1.20"
   IN_DOCKER: ""
 
 jobs:
-
   test-unit:
     runs-on: ubuntu-20.04
+
+    services:
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps port 6379 on service container to the host
+          - 6379:6379
 
     defaults:
       run:

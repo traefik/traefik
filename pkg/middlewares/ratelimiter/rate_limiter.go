@@ -101,12 +101,12 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}
 	var limiter Limiter
 	if config.Redis != nil {
-		limiter, err = NewRedisLimiter(rate.Limit(rtl), burst, config, logger)
+		limiter, err = NewRedisLimiter(rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		limiter, err = NewBaseLimiter(logger, rate.Limit(rtl), burst, maxDelay, ttl)
+		limiter, err = NewBaseLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
 		if err != nil {
 			return nil, err
 		}

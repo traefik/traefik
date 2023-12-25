@@ -13,6 +13,7 @@
 /traefik.yml
 *.log
 *.exe
+*.lua
 cover.out
 vendor/
 plugins-storage/

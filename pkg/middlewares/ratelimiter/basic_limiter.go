@@ -30,11 +30,11 @@ type BasicLimiter struct {
 }
 
 func NewBaseLimiter(
-	logger *zerolog.Logger,
 	rate rate.Limit,
 	burst int64,
 	maxDelay time.Duration,
 	ttl int,
+	logger *zerolog.Logger,
 ) (Limiter, error) {
 	buckets, err := ttlmap.NewConcurrent(maxSources)
 	if err != nil {
@@ -54,6 +54,7 @@ func NewBaseLimiter(
 func (b *BasicLimiter) Allow(
 	ctx context.Context, source string, amount int64, req *http.Request, rw http.ResponseWriter,
 ) (bool, error) {
+	// Get bucket which contain limiter information.
 	var bucket *rate.Limiter
 	if rlSource, exists := b.buckets.Get(source); exists {
 		bucket = rlSource.(*rate.Limiter)
