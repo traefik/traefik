@@ -392,7 +392,12 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
-	proxyListener := &proxyproto.Listener{Listener: listener}
+	timeout := entryPoint.Transport.RespondingTimeouts.ReadTimeout
+	// proxyproto use 200ms if ReadHeaderTimeout is set to 0 and not no timeout
+	if timeout == 0 {
+		timeout = -1
+	}
+	proxyListener := &proxyproto.Listener{Listener: listener, ReadHeaderTimeout: time.Duration(timeout)}
 
 	if entryPoint.ProxyProtocol.Insecure {
 		log.FromContext(ctx).Infof("Enabling ProxyProtocol without trusted IPs: Insecure")
