@@ -68,6 +68,13 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	defer m.lock.Unlock()
 
 	m.configs = configs
+	for optionName, option := range m.configs {
+		// Handle `PreferServerCipherSuites` depreciation
+		if option.PreferServerCipherSuites != nil {
+			log.Ctx(ctx).Warn().Msgf("TLSOption %q uses `PreferServerCipherSuites` option, but this option is deprecated and ineffective, please remove this option.", optionName)
+		}
+	}
+
 	m.storesConfig = stores
 	m.certs = certs
 

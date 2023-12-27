@@ -203,6 +203,10 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		}
 	}
 
+	if service.ServersTransport == "" && service.TerminationDelay != nil {
+		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
+	}
+
 	if service.ServersTransport != "" {
 		tcpService.LoadBalancer.ServersTransport, err = p.makeTCPServersTransportKey(parentNamespace, service.ServersTransport)
 		if err != nil {
