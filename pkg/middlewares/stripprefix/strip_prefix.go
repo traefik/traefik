@@ -21,15 +21,27 @@ type stripPrefix struct {
 	next     http.Handler
 	prefixes []string
 	name     string
+
+	// Deprecated: Must be removed (breaking), the default behavior must be forceSlash=false
+	forceSlash bool
 }
 
 // New creates a new strip prefix middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
+
+	if config.ForceSlash != nil {
+		logger.Warn().Msgf("`ForceSlash` option is deprecated, please remove any usage of this option.")
+	}
+	// Handle default value (here because of deprecation and the removal of setDefault).
+	forceSlash := config.ForceSlash != nil && *config.ForceSlash
+
 	return &stripPrefix{
-		prefixes: config.Prefixes,
-		next:     next,
-		name:     name,
+		prefixes:   config.Prefixes,
+		next:       next,
+		name:       name,
+		forceSlash: forceSlash,
 	}, nil
 }
 
@@ -58,6 +70,13 @@ func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, pr
 }
 
 func (s *stripPrefix) getPrefixStripped(urlPath, prefix string) string {
+	if s.forceSlash {
+		// Only for compatibility reason with the previous behavior,
+		// but the previous behavior is wrong.
+		// This needs to be removed in the next breaking version.
+		return "/" + strings.TrimPrefix(strings.TrimPrefix(urlPath, prefix), "/")
+	}
+
 	return ensureLeadingSlash(strings.TrimPrefix(urlPath, prefix))
 }
 

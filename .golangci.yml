@@ -161,7 +161,10 @@ linters-settings:
       - len
       - suite-extra-assert-call
       - suite-thelper
-
+  staticcheck:
+    checks:
+      - all
+      - -SA1019
 linters:
   enable-all: true
   disable:

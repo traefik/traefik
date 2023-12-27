@@ -52,3 +52,16 @@ http:
 [http.middlewares]
   [http.middlewares.autodetect.contentType]
 ```
+
+## Configuration Options
+
+### `autoDetect`
+
+!!! warning
+
+    `autoDetect` option is deprecated and should not be used.
+    Moreover, it is redundant with an empty ContentType middleware declaration.
+
+`autoDetect` specifies whether to let the `Content-Type` header,
+if it has not been set by the backend,
+be automatically set to a value derived from the contents of the response.

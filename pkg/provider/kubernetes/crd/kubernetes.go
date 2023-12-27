@@ -735,7 +735,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		return forwardAuth, nil
 	}
 
-	forwardAuth.TLS = &types.ClientTLS{
+	forwardAuth.TLS = &dynamic.ClientTLS{
 		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 	}
 
@@ -755,6 +755,8 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		forwardAuth.TLS.Cert = authSecretCert
 		forwardAuth.TLS.Key = authSecretKey
 	}
+
+	forwardAuth.TLS.CAOptional = auth.TLS.CAOptional
 
 	return forwardAuth, nil
 }
@@ -1008,8 +1010,9 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 				CAFiles:        clientCAs,
 				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
 			},
-			SniStrict:     tlsOption.Spec.SniStrict,
-			ALPNProtocols: alpnProtocols,
+			SniStrict:                tlsOption.Spec.SniStrict,
+			ALPNProtocols:            alpnProtocols,
+			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
 		}
 	}
 
