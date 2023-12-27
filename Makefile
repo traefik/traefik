@@ -109,7 +109,6 @@ test: build-dev-image
 .PHONY: test-unit
 test-unit: build-dev-image
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
-	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit
 
 ## Run the integration tests
