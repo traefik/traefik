@@ -146,6 +146,9 @@ func TestStripPrefix(t *testing.T) {
 				requestURI = r.RequestURI
 			})
 
+			pointer := func(v bool) *bool { return &v }
+			test.config.ForceSlash = pointer(false)
+
 			handler, err := New(context.Background(), next, test.config, "foo-strip-prefix")
 			require.NoError(t, err)
 

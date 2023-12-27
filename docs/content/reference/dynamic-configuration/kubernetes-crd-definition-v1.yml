@@ -389,6 +389,18 @@ spec:
                               between Traefik and your servers. Can only be used on
                               a Kubernetes Service.
                             type: string
+                          terminationDelay:
+                            description: 'TerminationDelay defines the deadline that
+                              the proxy sets, after one of its connected peers indicates
+                              it has closed the writing capability of its connection,
+                              to close the reading capability as well, hence fully
+                              terminating the connection. It is a duration in milliseconds,
+                              defaulting to 100. A negative value means an infinite
+                              deadline (i.e. the reading capability is never closed).
+                              Deprecated: TerminationDelay is not supported APIVersion
+                              traefik.io/v1, please use ServersTransport to configure
+                              the TerminationDelay instead.'
+                            type: integer
                           tls:
                             description: TLS determines whether to use TLS when dialing
                               with the backend.
@@ -771,9 +783,17 @@ spec:
                 type: object
               contentType:
                 description: ContentType holds the content-type middleware configuration.
-                  This middleware sets the `Content-Type` header value to the media
-                  type detected from the response content, when it is not set by the
-                  backend.
+                  This middleware exists to enable the correct behavior until at least
+                  the default one can be changed in a future version.
+                properties:
+                  autoDetect:
+                    description: 'AutoDetect specifies whether to let the `Content-Type`
+                      header, if it has not been set by the backend, be automatically
+                      set to a value derived from the contents of the response. Deprecated:
+                      AutoDetect option is deprecated, Content-Type middleware is
+                      only meant to be used to enable the content-type detection,
+                      please remove any usage of this option.'
+                    type: boolean
                 type: object
               digestAuth:
                 description: 'DigestAuth holds the digest auth middleware configuration.
@@ -964,6 +984,10 @@ spec:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
                     properties:
+                      caOptional:
+                        description: 'Deprecated: TLS client authentication is a server
+                          side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).'
+                        type: boolean
                       caSecret:
                         description: CASecret is the name of the referenced Kubernetes
                           Secret containing the CA to validate the server certificate.
@@ -1082,6 +1106,10 @@ spec:
                     description: CustomResponseHeaders defines the header names and
                       values to apply to the response.
                     type: object
+                  featurePolicy:
+                    description: 'Deprecated: FeaturePolicy option is deprecated,
+                      please use PermissionsPolicy instead.'
+                    type: string
                   forceSTSHeader:
                     description: ForceSTSHeader defines whether to add the STS header
                       even when the connection is HTTP.
@@ -1117,6 +1145,14 @@ spec:
                       value. This allows sites to control whether browsers forward
                       the Referer header to other sites.
                     type: string
+                  sslForceHost:
+                    description: 'Deprecated: SSLForceHost option is deprecated, please
+                      use RedirectRegex instead.'
+                    type: boolean
+                  sslHost:
+                    description: 'Deprecated: SSLHost option is deprecated, please
+                      use RedirectRegex instead.'
+                    type: string
                   sslProxyHeaders:
                     additionalProperties:
                       type: string
@@ -1125,6 +1161,14 @@ spec:
                       useful when using other proxies (example: "X-Forwarded-Proto":
                       "https").'
                     type: object
+                  sslRedirect:
+                    description: 'Deprecated: SSLRedirect option is deprecated, please
+                      use EntryPoint redirection or RedirectScheme instead.'
+                    type: boolean
+                  sslTemporaryRedirect:
+                    description: 'Deprecated: SSLTemporaryRedirect option is deprecated,
+                      please use EntryPoint redirection or RedirectScheme instead.'
+                    type: boolean
                   stsIncludeSubdomains:
                     description: STSIncludeSubdomains defines whether the includeSubDomains
                       directive is appended to the Strict-Transport-Security header.
@@ -1496,6 +1540,12 @@ spec:
                   This middleware removes the specified prefixes from the URL path.
                   More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/stripprefix/'
                 properties:
+                  forceSlash:
+                    description: 'Deprecated: ForceSlash option is deprecated, please
+                      remove any usage of this option. ForceSlash ensures that the
+                      resulting stripped path is not the empty string, by replacing
+                      it with / when necessary. Default: true.'
+                    type: boolean
                   prefixes:
                     description: Prefixes defines the prefixes to strip from the request
                       URL.
@@ -1570,7 +1620,9 @@ spec:
                     type: integer
                 type: object
               ipAllowList:
-                description: IPAllowList defines the IPAllowList middleware configuration.
+                description: 'IPAllowList defines the IPAllowList middleware configuration.
+                  This middleware accepts/refuses connections based on the client
+                  IP. More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/'
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -1581,7 +1633,8 @@ spec:
                 type: object
               ipWhiteList:
                 description: 'IPWhiteList defines the IPWhiteList middleware configuration.
-                  Deprecated: please use IPAllowList instead.'
+                  This middleware accepts/refuses connections based on the client
+                  IP. Deprecated: please use IPAllowList instead. More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipwhitelist/'
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -1932,6 +1985,12 @@ spec:
                   will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
                   VersionTLS13. Default: VersionTLS10.'
                 type: string
+              preferServerCipherSuites:
+                description: 'PreferServerCipherSuites defines whether the server
+                  chooses a cipher suite among his own instead of among the client''s.
+                  It is enabled automatically when minVersion or maxVersion is set.
+                  Deprecated: https://github.com/golang/go/issues/45430'
+                type: boolean
               sniStrict:
                 description: SniStrict defines whether Traefik allows connections
                   from clients connections that do not specify a server_name extension.

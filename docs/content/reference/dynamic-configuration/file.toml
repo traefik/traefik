@@ -140,6 +140,7 @@
         minResponseBodyBytes = 42
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]
+        autoDetect = true
     [http.middlewares.Middleware08]
       [http.middlewares.Middleware08.digestAuth]
         users = ["foobar", "foobar"]
@@ -165,6 +166,7 @@
           cert = "foobar"
           key = "foobar"
           insecureSkipVerify = true
+          caOptional = true
     [http.middlewares.Middleware11]
       [http.middlewares.Middleware11.grpcWeb]
         allowOrigins = ["foobar", "foobar"]
@@ -194,6 +196,11 @@
         referrerPolicy = "foobar"
         permissionsPolicy = "foobar"
         isDevelopment = true
+        featurePolicy = "foobar"
+        sslRedirect = true
+        sslTemporaryRedirect = true
+        sslHost = "foobar"
+        sslForceHost = true
         [http.middlewares.Middleware12.headers.customRequestHeaders]
           name0 = "foobar"
           name1 = "foobar"
@@ -293,6 +300,7 @@
     [http.middlewares.Middleware24]
       [http.middlewares.Middleware24.stripPrefix]
         prefixes = ["foobar", "foobar"]
+        forceSlash = true
     [http.middlewares.Middleware25]
       [http.middlewares.Middleware25.stripPrefixRegex]
         regex = ["foobar", "foobar"]
@@ -388,6 +396,7 @@
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
         serversTransport = "foobar"
+        terminationDelay = 42
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
 
@@ -507,6 +516,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       alpnProtocols = ["foobar", "foobar"]
+      preferServerCipherSuites = true
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
@@ -517,6 +527,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       alpnProtocols = ["foobar", "foobar"]
+      preferServerCipherSuites = true
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
