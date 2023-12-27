@@ -2,14 +2,14 @@
 
 This page is maintained and updated periodically to reflect our roadmap and any decisions around feature deprecation.
 
-| Feature                                                                                             | Deprecated | End of Support | Removal |
-|-----------------------------------------------------------------------------------------------------|------------|----------------|---------|
-| [Pilot](#pilot)                                                                                     | 2.7        | 2.8            | 2.9     |
-| [Consul Enterprise Namespace](#consul-enterprise-namespace)                                         | 2.8        | N/A            | 3.0     |
-| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                                                           | N/A        | 2.8            | N/A     |
-| [Nomad Namespace](#nomad-namespace)                                                                 | 2.10       | N/A            | 3.0     |
-| [Kubernetes CRDs API Group `traefik.containo.us`](#kubernetes-crds-api-group-traefikcontainous)     | 2.10       | N/A            | 3.0     |
-| [Kubernetes CRDs API Version `traefik.io/v1alpha1`](#kubernetes-crds-api-version-traefikiov1alpha1) | 3.0        | N/A            | 4.0     |
+| Feature                                                                                                     | Deprecated | End of Support | Removal |
+|-------------------------------------------------------------------------------------------------------------|------------|----------------|---------|
+| [Pilot](#pilot)                                                                                             | 2.7        | 2.8            | 2.9     |
+| [Consul Enterprise Namespace](#consul-enterprise-namespace)                                                 | 2.8        | N/A            | 3.0     |
+| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                                                                   | N/A        | 2.8            | N/A     |
+| [Nomad Namespace](#nomad-namespace)                                                                         | 2.10       | N/A            | 3.0     |
+| [Kubernetes CRDs API Group `traefik.containo.us`](#kubernetes-crd-provider-api-group-traefikcontainous)     | 2.10       | N/A            | 3.0     |
+| [Kubernetes CRDs API Version `traefik.io/v1alpha1`](#kubernetes-crd-provider-api-version-traefikiov1alpha1) | 3.0        | N/A            | 4.0     |
 
 ## Impact
 
