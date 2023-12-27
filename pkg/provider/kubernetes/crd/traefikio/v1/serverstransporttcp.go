@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"

@@ -25,7 +25,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-passtlsclientcert
@@ -83,7 +83,7 @@ http:
 
     ```yaml tab="Kubernetes"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: Middleware
     metadata:
       name: test-passtlsclientcert

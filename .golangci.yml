@@ -162,7 +162,10 @@ linters-settings:
       - suite-dont-use-pkg
       - suite-extra-assert-call
       - suite-thelper
-
+  staticcheck:
+    checks:
+      - all
+      - -SA1019
 linters:
   enable-all: true
   disable:

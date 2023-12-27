@@ -29,8 +29,8 @@ package fake
 import (
 	"context"
 
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -39,29 +39,29 @@ import (
 
 // FakeServersTransportTCPs implements ServersTransportTCPInterface
 type FakeServersTransportTCPs struct {
-	Fake *FakeTraefikV1alpha1
+	Fake *FakeTraefikV1
 	ns   string
 }
 
-var serverstransporttcpsResource = v1alpha1.SchemeGroupVersion.WithResource("serverstransporttcps")
+var serverstransporttcpsResource = v1.SchemeGroupVersion.WithResource("serverstransporttcps")
 
-var serverstransporttcpsKind = v1alpha1.SchemeGroupVersion.WithKind("ServersTransportTCP")
+var serverstransporttcpsKind = v1.SchemeGroupVersion.WithKind("ServersTransportTCP")
 
 // Get takes name of the serversTransportTCP, and returns the corresponding serversTransportTCP object, and an error if there is any.
-func (c *FakeServersTransportTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServersTransportTCP, err error) {
+func (c *FakeServersTransportTCPs) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ServersTransportTCP, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(serverstransporttcpsResource, c.ns, name), &v1alpha1.ServersTransportTCP{})
+		Invokes(testing.NewGetAction(serverstransporttcpsResource, c.ns, name), &v1.ServersTransportTCP{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ServersTransportTCP), err
+	return obj.(*v1.ServersTransportTCP), err
 }
 
 // List takes label and field selectors, and returns the list of ServersTransportTCPs that match those selectors.
-func (c *FakeServersTransportTCPs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ServersTransportTCPList, err error) {
+func (c *FakeServersTransportTCPs) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ServersTransportTCPList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(serverstransporttcpsResource, serverstransporttcpsKind, c.ns, opts), &v1alpha1.ServersTransportTCPList{})
+		Invokes(testing.NewListAction(serverstransporttcpsResource, serverstransporttcpsKind, c.ns, opts), &v1.ServersTransportTCPList{})
 
 	if obj == nil {
 		return nil, err
@@ -71,8 +71,8 @@ func (c *FakeServersTransportTCPs) List(ctx context.Context, opts v1.ListOptions
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.ServersTransportTCPList{ListMeta: obj.(*v1alpha1.ServersTransportTCPList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ServersTransportTCPList).Items {
+	list := &v1.ServersTransportTCPList{ListMeta: obj.(*v1.ServersTransportTCPList).ListMeta}
+	for _, item := range obj.(*v1.ServersTransportTCPList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -81,57 +81,57 @@ func (c *FakeServersTransportTCPs) List(ctx context.Context, opts v1.ListOptions
 }
 
 // Watch returns a watch.Interface that watches the requested serversTransportTCPs.
-func (c *FakeServersTransportTCPs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeServersTransportTCPs) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(serverstransporttcpsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a serversTransportTCP and creates it.  Returns the server's representation of the serversTransportTCP, and an error, if there is any.
-func (c *FakeServersTransportTCPs) Create(ctx context.Context, serversTransportTCP *v1alpha1.ServersTransportTCP, opts v1.CreateOptions) (result *v1alpha1.ServersTransportTCP, err error) {
+func (c *FakeServersTransportTCPs) Create(ctx context.Context, serversTransportTCP *v1.ServersTransportTCP, opts metav1.CreateOptions) (result *v1.ServersTransportTCP, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(serverstransporttcpsResource, c.ns, serversTransportTCP), &v1alpha1.ServersTransportTCP{})
+		Invokes(testing.NewCreateAction(serverstransporttcpsResource, c.ns, serversTransportTCP), &v1.ServersTransportTCP{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ServersTransportTCP), err
+	return obj.(*v1.ServersTransportTCP), err
 }
 
 // Update takes the representation of a serversTransportTCP and updates it. Returns the server's representation of the serversTransportTCP, and an error, if there is any.
-func (c *FakeServersTransportTCPs) Update(ctx context.Context, serversTransportTCP *v1alpha1.ServersTransportTCP, opts v1.UpdateOptions) (result *v1alpha1.ServersTransportTCP, err error) {
+func (c *FakeServersTransportTCPs) Update(ctx context.Context, serversTransportTCP *v1.ServersTransportTCP, opts metav1.UpdateOptions) (result *v1.ServersTransportTCP, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(serverstransporttcpsResource, c.ns, serversTransportTCP), &v1alpha1.ServersTransportTCP{})
+		Invokes(testing.NewUpdateAction(serverstransporttcpsResource, c.ns, serversTransportTCP), &v1.ServersTransportTCP{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ServersTransportTCP), err
+	return obj.(*v1.ServersTransportTCP), err
 }
 
 // Delete takes name of the serversTransportTCP and deletes it. Returns an error if one occurs.
-func (c *FakeServersTransportTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+func (c *FakeServersTransportTCPs) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(serverstransporttcpsResource, c.ns, name, opts), &v1alpha1.ServersTransportTCP{})
+		Invokes(testing.NewDeleteActionWithOptions(serverstransporttcpsResource, c.ns, name, opts), &v1.ServersTransportTCP{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeServersTransportTCPs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+func (c *FakeServersTransportTCPs) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(serverstransporttcpsResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.ServersTransportTCPList{})
+	_, err := c.Fake.Invokes(action, &v1.ServersTransportTCPList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched serversTransportTCP.
-func (c *FakeServersTransportTCPs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServersTransportTCP, err error) {
+func (c *FakeServersTransportTCPs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ServersTransportTCP, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(serverstransporttcpsResource, c.ns, name, pt, data, subresources...), &v1alpha1.ServersTransportTCP{})
+		Invokes(testing.NewPatchSubresourceAction(serverstransporttcpsResource, c.ns, name, pt, data, subresources...), &v1.ServersTransportTCP{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ServersTransportTCP), err
+	return obj.(*v1.ServersTransportTCP), err
 }

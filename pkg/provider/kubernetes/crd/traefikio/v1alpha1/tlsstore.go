@@ -8,11 +8,12 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 TLSStore is deprecated, please use traefik.io/v1 TLSStore instead"
 
 // TLSStore is the CRD implementation of a Traefik TLS Store.
 // For the time being, only the TLSStore named default is supported.
 // This means that you cannot have two stores that are named default in different Kubernetes namespaces.
-// More info: https://doc.traefik.io/traefik/v3.0/https/tls/#certificates-stores
+// More info: https://doc.traefik.io/traefik/v2.11/https/tls/#certificates-stores
 type TLSStore struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.

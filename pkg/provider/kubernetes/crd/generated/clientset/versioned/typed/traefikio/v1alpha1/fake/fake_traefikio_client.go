@@ -60,10 +60,6 @@ func (c *FakeTraefikV1alpha1) ServersTransports(namespace string) v1alpha1.Serve
 	return &FakeServersTransports{c, namespace}
 }
 
-func (c *FakeTraefikV1alpha1) ServersTransportTCPs(namespace string) v1alpha1.ServersTransportTCPInterface {
-	return &FakeServersTransportTCPs{c, namespace}
-}
-
 func (c *FakeTraefikV1alpha1) TLSOptions(namespace string) v1alpha1.TLSOptionInterface {
 	return &FakeTLSOptions{c, namespace}
 }

@@ -116,6 +116,11 @@ func (in *Options) DeepCopyInto(out *Options) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.PreferServerCipherSuites != nil {
+		in, out := &in.PreferServerCipherSuites, &out.PreferServerCipherSuites
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

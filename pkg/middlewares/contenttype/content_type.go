@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
@@ -18,8 +19,19 @@ type contentType struct {
 }
 
 // New creates a new handler.
-func New(ctx context.Context, next http.Handler, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
+func New(ctx context.Context, next http.Handler, config dynamic.ContentType, name string) (http.Handler, error) {
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
+
+	if config.AutoDetect != nil {
+		logger.Warn().Msg("AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.")
+
+		// Disable content-type detection (idempotent).
+		if !*config.AutoDetect {
+			return next, nil
+		}
+	}
+
 	return &contentType{next: next, name: name}, nil
 }
 

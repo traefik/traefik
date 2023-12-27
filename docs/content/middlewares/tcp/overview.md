@@ -27,7 +27,7 @@ whoami:
 ```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: MiddlewareTCP
 metadata:
   name: foo-ip-allowlist
@@ -38,7 +38,7 @@ spec:
       - 192.168.1.7
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRouteTCP
 metadata:
   name: ingressroute

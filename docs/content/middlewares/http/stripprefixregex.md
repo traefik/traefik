@@ -18,7 +18,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-stripprefixregex

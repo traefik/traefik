@@ -1,7 +1,6 @@
 package v1alpha1
 
 import (
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -9,11 +8,12 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 ServersTransport is deprecated, please use traefik.io/v1 ServersTransport instead"
 
 // ServersTransport is the CRD implementation of a ServersTransport.
 // If no serversTransport is specified, the default@internal will be used.
 // The default@internal serversTransport is created from the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_1
+// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#serverstransport_1
 type ServersTransport struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -43,8 +43,6 @@ type ServersTransportSpec struct {
 	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	PeerCertURI string `json:"peerCertURI,omitempty"`
-	// Spiffe defines the SPIFFE configuration.
-	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
