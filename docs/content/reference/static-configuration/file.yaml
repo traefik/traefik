@@ -479,7 +479,6 @@ certificatesResolvers:
     tailscale: {}
 experimental:
   kubernetesGateway: true
-  http3: true
   plugins:
     Descriptor0:
       moduleName: foobar
