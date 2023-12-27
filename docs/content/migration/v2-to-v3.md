@@ -45,7 +45,8 @@ This configuration is now unsupported and would prevent Traefik to start.
 
 #### Remediation
 
-In v3, the `swarmMode` should not be used with the Docker provider, and, to use Swarm, the Swarm provider should be used instead.
+In v3, the `swarmMode` should not be used with the Docker provider.
+To use Swarm, use the Swarm provider instead.
 
 ??? example "An example usage of the Swarm provider"
 
@@ -67,7 +68,7 @@ In v3, the `swarmMode` should not be used with the Docker provider, and, to use 
 ### HTTP3 Experimental Configuration
 
 In v3, HTTP/3 is no longer an experimental feature,
-and the associated `experimental.http3` option is now removed in v3.
+the associated `experimental.http3` option is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
 
 ??? example "An example usage of v2 Experimental `http3` option"
@@ -93,7 +94,7 @@ The `http3` option should be removed from the static configuration experimental 
 ### Consul provider
 
 The Consul provider `namespace` option was deprecated in v2 and is now removed in v3.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and will prevent Traefik to start.
 
 ??? example "An example usage of v2 Consul `namespace` option"
 
@@ -135,7 +136,7 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
 ### ConsulCatalog provider
 
 The ConsulCatalog provider `namespace` option was deprecated in v2 and is now removed in v3.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and will prevent Traefik to start.
 
 ??? example "An example usage of v2 ConsulCatalog `namespace` option"
 
@@ -177,7 +178,7 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
 ### Nomad provider
 
 The Nomad provider `namespace` option was deprecated in v2 and is now removed in v3.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and will prevent Traefik to start.
 
 ??? example "An example usage of v2 Nomad `namespace` option"
 
@@ -265,7 +266,7 @@ In v3, the Marathon provider has been removed.
     --providers.marathon=true
     ```
 
-This configuration is now unsupported and would prevent Traefik to start.
+This configuration is now unsupported and will prevent Traefik to start.
 
 #### Remediation
 
@@ -291,7 +292,7 @@ In v3, the InfluxDB v1 metrics provider has been removed.
     --metrics.influxDB=true
     ```
 
-This configuration is now unsupported and would prevent Traefik to start.
+This configuration is now unsupported and will prevent Traefik to start.
 
 #### Remediation
 
@@ -318,7 +319,7 @@ Traefik Pilot is no longer available since October 4th, 2022.
     ```
 
 In v2, Pilot configuration was deprecated and ineffective,
-it is now unsupported and would prevent Traefik to start.
+it is now unsupported and will prevent Traefik to start.
 
 #### Remediation
 
