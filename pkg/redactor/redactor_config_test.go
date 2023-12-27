@@ -263,7 +263,7 @@ func init() {
 				},
 				ForwardAuth: &dynamic.ForwardAuth{
 					Address: "127.0.0.1",
-					TLS: &types.ClientTLS{
+					TLS: &dynamic.ClientTLS{
 						CA:                 "ca.pem",
 						Cert:               "cert.pem",
 						Key:                "cert.pem",
