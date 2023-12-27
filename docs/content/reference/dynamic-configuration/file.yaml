@@ -150,7 +150,8 @@ http:
           - foobar
         minResponseBodyBytes: 42
     Middleware07:
-      contentType: {}
+      contentType:
+        autoDetect: true
     Middleware08:
       digestAuth:
         users:
@@ -175,6 +176,7 @@ http:
           cert: foobar
           key: foobar
           insecureSkipVerify: true
+          caOptional: true
         trustForwardHeader: true
         authResponseHeaders:
           - foobar
@@ -240,6 +242,11 @@ http:
         referrerPolicy: foobar
         permissionsPolicy: foobar
         isDevelopment: true
+        featurePolicy: foobar
+        sslRedirect: true
+        sslTemporaryRedirect: true
+        sslHost: foobar
+        sslForceHost: true
     Middleware13:
       ipAllowList:
         sourceRange:
@@ -344,6 +351,7 @@ http:
         prefixes:
           - foobar
           - foobar
+        forceSlash: true
     Middleware25:
       stripPrefixRegex:
         regex:
@@ -461,6 +469,7 @@ tcp:
           - address: foobar
             tls: true
         serversTransport: foobar
+        terminationDelay: 42
     TCPService02:
       weighted:
         services:
@@ -581,6 +590,7 @@ tls:
       alpnProtocols:
         - foobar
         - foobar
+      preferServerCipherSuites: true
     Options1:
       minVersion: foobar
       maxVersion: foobar
@@ -599,6 +609,7 @@ tls:
       alpnProtocols:
         - foobar
         - foobar
+      preferServerCipherSuites: true
   stores:
     Store0:
       defaultCertificate:

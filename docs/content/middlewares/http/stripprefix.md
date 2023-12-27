@@ -76,3 +76,72 @@ For instance, `/products` also matches `/products/shoes` and `/products/shirts`.
 
 If your backend is serving assets (e.g., images or JavaScript files), it can use the `X-Forwarded-Prefix` header to properly construct relative URLs.
 Using the previous example, the backend should return `/products/shoes/image.png` (and not `/image.png`, which Traefik would likely not be able to associate with the same backend).
+
+### `forceSlash`
+
+_Optional, Default=true_
+
+!!! warning
+
+    `forceSlash` option is deprecated and should not be used.
+
+The `forceSlash` option ensures the resulting stripped path is not the empty string, by replacing it with `/` when necessary.
+
+??? info "Behavior examples"
+
+    - `forceSlash=true`
+
+    | Path       | Prefix to strip | Result |
+    |------------|-----------------|--------|
+    | `/`        | `/`             | `/`    |
+    | `/foo`     | `/foo`          | `/`    |
+    | `/foo/`    | `/foo`          | `/`    |
+    | `/foo/`    | `/foo/`         | `/`    |
+    | `/bar`     | `/foo`          | `/bar` |
+    | `/foo/bar` | `/foo`          | `/bar` |
+
+    - `forceSlash=false`
+
+    | Path       | Prefix to strip | Result |
+    |------------|-----------------|--------|
+    | `/`        | `/`             | empty  |
+    | `/foo`     | `/foo`          | empty  |
+    | `/foo/`    | `/foo`          | `/`    |
+    | `/foo/`    | `/foo/`         | empty  |
+    | `/bar`     | `/foo`          | `/bar` |
+    | `/foo/bar` | `/foo`          | `/bar` |
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.example.stripprefix.prefixes=/foobar"
+  - "traefik.http.middlewares.example.stripprefix.forceSlash=false"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: example
+spec:
+  stripPrefix:
+    prefixes:
+      - "/foobar"
+    forceSlash: false
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    example:
+      stripPrefix:
+        prefixes:
+          - "/foobar"
+        forceSlash: false
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.example.stripPrefix]
+    prefixes = ["/foobar"]
+    forceSlash = false
+```
