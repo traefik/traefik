@@ -2,14 +2,17 @@ package integration
 
 import (
 	"bufio"
-	"github.com/pires/go-proxyproto"
 	"net"
 	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/pires/go-proxyproto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/traefik/traefik/v2/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type ProxyProtocolSuite struct {
@@ -17,67 +20,71 @@ type ProxyProtocolSuite struct {
 	whoamiIP string
 }
 
-func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
-	s.BaseSuite.SetUpSuite(c)
-
-	s.createComposeProject(c, "proxy-protocol")
-	s.composeUp(c)
-
-	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+func TestProxyProtocolSuite(t *testing.T) {
+	suite.Run(t, new(ProxyProtocolSuite))
 }
 
-func (s *ProxyProtocolSuite) TearDownSuite(c *check.C) {
-	s.BaseSuite.TearDownSuite(c)
+func (s *ProxyProtocolSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("proxy-protocol")
+	s.composeUp()
+
+	s.whoamiIP = s.getComposeServiceIP("whoami")
 }
 
-func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
-	file := s.adaptFile(c, "fixtures/proxy-protocol/proxy-protocol.toml", struct {
+func (s *ProxyProtocolSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *ProxyProtocolSuite) TestProxyProtocolTrusted() {
+	file := s.adaptFile("fixtures/proxy-protocol/proxy-protocol.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
 	}{WhoamiIP: s.whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	content, err := proxyProtoRequest("127.0.0.1:8000", 1)
-	c.Assert(err, checker.IsNil)
-	c.Assert(content, checker.Contains, "X-Forwarded-For: 1.2.3.4")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 1.2.3.4")
 
 	content, err = proxyProtoRequest("127.0.0.1:8000", 2)
-	c.Assert(err, checker.IsNil)
-	c.Assert(content, checker.Contains, "X-Forwarded-For: 1.2.3.4")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 1.2.3.4")
 }
 
-func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
-	file := s.adaptFile(c, "fixtures/proxy-protocol/proxy-protocol.toml", struct {
+func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted() {
+	file := s.adaptFile("fixtures/proxy-protocol/proxy-protocol.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
 	}{WhoamiIP: s.whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:9000/whoami", 10*time.Second)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	content, err := proxyProtoRequest("127.0.0.1:9000", 1)
-	c.Assert(err, checker.IsNil)
-	c.Assert(content, checker.Contains, "X-Forwarded-For: 127.0.0.1")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 127.0.0.1")
 
 	content, err = proxyProtoRequest("127.0.0.1:9000", 2)
-	c.Assert(err, checker.IsNil)
-	c.Assert(content, checker.Contains, "X-Forwarded-For: 127.0.0.1")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 127.0.0.1")
 }
 
 func proxyProtoRequest(address string, version byte) (string, error) {

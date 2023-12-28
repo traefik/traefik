@@ -3,11 +3,12 @@ package integration
 import (
 	"net/http"
 	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type RateLimitSuite struct {
@@ -15,39 +16,43 @@ type RateLimitSuite struct {
 	ServerIP string
 }
 
-func (s *RateLimitSuite) SetUpSuite(c *check.C) {
-	s.BaseSuite.SetUpSuite(c)
-
-	s.createComposeProject(c, "ratelimit")
-	s.composeUp(c)
-
-	s.ServerIP = s.getComposeServiceIP(c, "whoami1")
+func TestRateLimitSuite(t *testing.T) {
+	suite.Run(t, new(RateLimitSuite))
 }
 
-func (s *RateLimitSuite) TearDownSuite(c *check.C) {
-	s.BaseSuite.TearDownSuite(c)
+func (s *RateLimitSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("ratelimit")
+	s.composeUp()
+
+	s.ServerIP = s.getComposeServiceIP("whoami1")
 }
 
-func (s *RateLimitSuite) TestSimpleConfiguration(c *check.C) {
-	file := s.adaptFile(c, "fixtures/ratelimit/simple.toml", struct {
+func (s *RateLimitSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *RateLimitSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/ratelimit/simple.toml", struct {
 		Server1 string
 	}{s.ServerIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("ratelimit"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	start := time.Now()
 	count := 0
 	for {
 		err = try.GetRequest("http://127.0.0.1:8081/", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 		count++
 		if count > 100 {
 			break
@@ -56,6 +61,6 @@ func (s *RateLimitSuite) TestSimpleConfiguration(c *check.C) {
 	stop := time.Now()
 	elapsed := stop.Sub(start)
 	if elapsed < time.Second*99/100 {
-		c.Fatalf("requests throughput was too fast wrt to rate limiting: 100 requests in %v", elapsed)
+		s.T().Fatalf("requests throughput was too fast wrt to rate limiting: 100 requests in %v", elapsed)
 	}
 }

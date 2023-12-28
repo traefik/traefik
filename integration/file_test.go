@@ -3,66 +3,71 @@ package integration
 import (
 	"net/http"
 	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 // File tests suite.
 type FileSuite struct{ BaseSuite }
 
-func (s *FileSuite) SetUpSuite(c *check.C) {
-	s.BaseSuite.SetUpSuite(c)
-
-	s.createComposeProject(c, "file")
-	s.composeUp(c)
+func TestFileSuite(t *testing.T) {
+	suite.Run(t, new(FileSuite))
 }
 
-func (s *FileSuite) TearDownSuite(c *check.C) {
-	s.BaseSuite.TearDownSuite(c)
+func (s *FileSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("file")
+	s.composeUp()
 }
 
-func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
-	file := s.adaptFile(c, "fixtures/file/simple.toml", struct{}{})
+func (s *FileSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *FileSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/file/simple.toml", struct{}{})
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// Expected a 404 as we did not configure anything
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
 // #56 regression test, make sure it does not fail?
-func (s *FileSuite) TestSimpleConfigurationNoPanic(c *check.C) {
+func (s *FileSuite) TestSimpleConfigurationNoPanic() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/56-simple-panic.toml"))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// Expected a 404 as we did not configure anything
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *FileSuite) TestDirectoryConfiguration(c *check.C) {
+func (s *FileSuite) TestDirectoryConfiguration() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/directory.toml"))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// Expected a 404 as we did not configure anything at /test
 	err = try.GetRequest("http://127.0.0.1:8000/test", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// Expected a 502 as there is no backend server
 	err = try.GetRequest("http://127.0.0.1:8000/test2", 1000*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }

@@ -2,32 +2,37 @@ package integration
 
 import (
 	"net/http"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type HostResolverSuite struct{ BaseSuite }
 
-func (s *HostResolverSuite) SetUpSuite(c *check.C) {
-	s.BaseSuite.SetUpSuite(c)
-
-	s.createComposeProject(c, "hostresolver")
-	s.composeUp(c)
+func TestHostResolverSuite(t *testing.T) {
+	suite.Run(t, new(HostResolverSuite))
 }
 
-func (s *HostResolverSuite) TearDownSuite(c *check.C) {
-	s.BaseSuite.TearDownSuite(c)
+func (s *HostResolverSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("hostresolver")
+	s.composeUp()
 }
 
-func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
+func (s *HostResolverSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *HostResolverSuite) TestSimpleConfig() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	testCase := []struct {
@@ -49,10 +54,10 @@ func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
 
 	for _, test := range testCase {
 		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 		req.Host = test.host
 
 		err = try.Request(req, 5*time.Second, try.StatusCodeIs(test.status), try.HasBody())
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 }

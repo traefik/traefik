@@ -3,11 +3,12 @@ package integration
 import (
 	"net/http"
 	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type TracingSuite struct {
@@ -18,6 +19,10 @@ type TracingSuite struct {
 	tracerJaegerIP string
 }
 
+func TestTracingSuite(t *testing.T) {
+	suite.Run(t, new(TracingSuite))
+}
+
 type TracingTemplate struct {
 	WhoamiIP               string
 	WhoamiPort             int
@@ -25,33 +30,33 @@ type TracingTemplate struct {
 	TraceContextHeaderName string
 }
 
-func (s *TracingSuite) SetUpSuite(c *check.C) {
-	s.BaseSuite.SetUpSuite(c)
+func (s *TracingSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
 
-	s.createComposeProject(c, "tracing")
-	s.composeUp(c)
+	s.createComposeProject("tracing")
+	s.composeUp()
 
-	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+	s.whoamiIP = s.getComposeServiceIP("whoami")
 	s.whoamiPort = 80
 }
 
-func (s *TracingSuite) TearDownSuite(c *check.C) {
-	s.BaseSuite.TearDownSuite(c)
+func (s *TracingSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
 }
 
-func (s *TracingSuite) startZipkin(c *check.C) {
-	s.composeUp(c, "zipkin")
-	s.tracerZipkinIP = s.getComposeServiceIP(c, "zipkin")
+func (s *TracingSuite) startZipkin() {
+	s.composeUp("zipkin")
+	s.tracerZipkinIP = s.getComposeServiceIP("zipkin")
 
 	// Wait for Zipkin to turn ready.
 	err := try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
-	s.startZipkin(c)
+func (s *TracingSuite) TestZipkinRateLimit() {
+	s.startZipkin()
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerZipkinIP,
@@ -59,50 +64,50 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// sleep for 4 seconds to be certain the configured time period has elapsed
 	// then test another request and verify a 200 status code
 	time.Sleep(4 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// continue requests at 3 second intervals to test the other rate limit time period
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service1/router1@file", "ratelimit-1@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestZipkinRetry(c *check.C) {
-	s.startZipkin(c)
+func (s *TracingSuite) TestZipkinRetry() {
+	s.startZipkin()
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: 81,
 		IP:         s.tracerZipkinIP,
@@ -110,26 +115,26 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service2/router2@file", "retry@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestZipkinAuth(c *check.C) {
-	s.startZipkin(c)
+func (s *TracingSuite) TestZipkinAuth() {
+	s.startZipkin()
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerZipkinIP,
@@ -137,36 +142,36 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("entrypoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) startJaeger(c *check.C) {
-	s.composeUp(c, "jaeger", "whoami")
-	s.tracerJaegerIP = s.getComposeServiceIP(c, "jaeger")
+func (s *TracingSuite) startJaeger() {
+	s.composeUp("jaeger", "whoami")
+	s.tracerJaegerIP = s.getComposeServiceIP("jaeger")
 
 	// Wait for Jaeger to turn ready.
 	err := try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
-	s.startJaeger(c)
-	//defer s.composeStop(c, "jaeger")
+func (s *TracingSuite) TestJaegerRateLimit() {
+	s.startJaeger()
+	// defer s.composeStop(c, "jaeger")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoamiIP:               s.whoamiIP,
 		WhoamiPort:             s.whoamiPort,
 		IP:                     s.tracerJaegerIP,
@@ -175,49 +180,49 @@ func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// sleep for 4 seconds to be certain the configured time period has elapsed
 	// then test another request and verify a 200 status code
 	time.Sleep(4 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// continue requests at 3 second intervals to test the other rate limit time period
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("forward service1/router1@file", "ratelimit-1@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestJaegerRetry(c *check.C) {
-	s.startJaeger(c)
-	//defer s.composeStop(c, "jaeger")
+func (s *TracingSuite) TestJaegerRetry() {
+	s.startJaeger()
+	// defer s.composeStop(c, "jaeger")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoamiIP:               s.whoamiIP,
 		WhoamiPort:             81,
 		IP:                     s.tracerJaegerIP,
@@ -226,27 +231,27 @@ func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("forward service2/router2@file", "retry@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestJaegerAuth(c *check.C) {
-	s.startJaeger(c)
-	//defer s.composeStop(c, "jaeger")
+func (s *TracingSuite) TestJaegerAuth() {
+	s.startJaeger()
+	// defer s.composeStop(c, "jaeger")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoamiIP:               s.whoamiIP,
 		WhoamiPort:             s.whoamiPort,
 		IP:                     s.tracerJaegerIP,
@@ -255,27 +260,27 @@ func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
-	s.startJaeger(c)
-	//defer s.composeStop(c, "jaeger")
+func (s *TracingSuite) TestJaegerCustomHeader() {
+	s.startJaeger()
+	// defer s.composeStop(c, "jaeger")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoamiIP:               s.whoamiIP,
 		WhoamiPort:             s.whoamiPort,
 		IP:                     s.tracerJaegerIP,
@@ -284,27 +289,27 @@ func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TestJaegerAuthCollector(c *check.C) {
-	s.startJaeger(c)
-	//defer s.composeStop(c, "jaeger")
+func (s *TracingSuite) TestJaegerAuthCollector() {
+	s.startJaeger()
+	// defer s.composeStop(c, "jaeger")
 
-	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger-collector.toml", TracingTemplate{
+	file := s.adaptFile("fixtures/tracing/simple-jaeger-collector.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerJaegerIP,
@@ -312,18 +317,18 @@ func (s *TracingSuite) TestJaegerAuthCollector(c *check.C) {
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }

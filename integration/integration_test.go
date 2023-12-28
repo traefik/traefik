@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	stdlog "log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,14 +23,14 @@ import (
 	"github.com/docker/docker/api/types/container"
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
-	"github.com/go-check/check"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/integration/try"
-	checker "github.com/vdemeester/shakers"
 	"gopkg.in/yaml.v3"
 )
 
@@ -58,7 +59,7 @@ type composeDeploy struct {
 	Replicas int `yaml:"replicas"`
 }
 
-func Test(t *testing.T) {
+func Tst(t *testing.T) {
 	if !*integration {
 		log.WithoutContext().Info("Integration tests disabled.")
 		return
@@ -77,42 +78,40 @@ func Test(t *testing.T) {
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
 
-	check.Suite(&AccessLogSuite{})
-	check.Suite(&AcmeSuite{})
-	check.Suite(&ConsulCatalogSuite{})
-	check.Suite(&ConsulSuite{})
-	check.Suite(&DockerComposeSuite{})
-	check.Suite(&DockerSuite{})
-	check.Suite(&ErrorPagesSuite{})
-	check.Suite(&EtcdSuite{})
-	check.Suite(&FileSuite{})
-	check.Suite(&GRPCSuite{})
-	check.Suite(&HeadersSuite{})
-	check.Suite(&HealthCheckSuite{})
-	check.Suite(&HostResolverSuite{})
-	check.Suite(&HTTPSSuite{})
-	check.Suite(&HTTPSuite{})
-	check.Suite(&K8sSuite{})
-	check.Suite(&KeepAliveSuite{})
-	check.Suite(&LogRotationSuite{})
-	check.Suite(&MarathonSuite{})
-	check.Suite(&MarathonSuite15{})
-	check.Suite(&ProxyProtocolSuite{})
-	check.Suite(&RateLimitSuite{})
-	check.Suite(&RedisSuite{})
-	check.Suite(&RestSuite{})
-	check.Suite(&RetrySuite{})
-	check.Suite(&SimpleSuite{})
-	check.Suite(&TCPSuite{})
-	check.Suite(&TimeoutSuite{})
-	check.Suite(&ThrottlingSuite{})
-	check.Suite(&TLSClientHeadersSuite{})
-	check.Suite(&TracingSuite{})
-	check.Suite(&UDPSuite{})
-	check.Suite(&WebsocketSuite{})
-	check.Suite(&ZookeeperSuite{})
-
-	check.TestingT(t)
+	suite.Run(t, &AccessLogSuite{})
+	// suite.Run(t, &AcmeSuite{})
+	suite.Run(t, &ConsulCatalogSuite{})
+	suite.Run(t, &ConsulSuite{})
+	suite.Run(t, &DockerComposeSuite{})
+	suite.Run(t, &DockerSuite{})
+	suite.Run(t, &ErrorPagesSuite{})
+	suite.Run(t, &EtcdSuite{})
+	suite.Run(t, &FileSuite{})
+	suite.Run(t, &GRPCSuite{})
+	suite.Run(t, &HeadersSuite{})
+	suite.Run(t, &HealthCheckSuite{})
+	suite.Run(t, &HostResolverSuite{})
+	suite.Run(t, &HTTPSSuite{})
+	suite.Run(t, &HTTPSuite{})
+	suite.Run(t, &K8sSuite{})
+	suite.Run(t, &KeepAliveSuite{})
+	suite.Run(t, &LogRotationSuite{})
+	suite.Suite(&MarathonSuite{})
+	suite.Suite(&MarathonSuite15{})
+	suite.Run(t, &ProxyProtocolSuite{})
+	suite.Run(t, &RateLimitSuite{})
+	suite.Run(t, &RedisSuite{})
+	suite.Run(t, &RestSuite{})
+	suite.Run(t, &RetrySuite{})
+	suite.Run(t, &SimpleSuite{})
+	suite.Run(t, &TCPSuite{})
+	suite.Run(t, &TimeoutSuite{})
+	suite.Run(t, &ThrottlingSuite{})
+	suite.Run(t, &TLSClientHeadersSuite{})
+	suite.Run(t, &TracingSuite{})
+	suite.Run(t, &UDPSuite{})
+	suite.Run(t, &WebsocketSuite{})
+	suite.Run(t, &ZookeeperSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
@@ -120,11 +119,57 @@ var traefikBinary = "../dist/traefik"
 var networkName = "traefik-test-network"
 
 type BaseSuite struct {
+	suite.Suite
 	containers map[string]testcontainers.Container
 	network    testcontainers.Network
+	hostIP     string
 }
 
-func (s *BaseSuite) SetUpSuite(c *check.C) {
+func (s *BaseSuite) waitForTraefik(containerName string) {
+	time.Sleep(1 * time.Second)
+
+	// Wait for Traefik to turn ready.
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/rawdata", nil)
+	require.NoError(s.T(), err)
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(containerName))
+	require.NoError(s.T(), err)
+}
+
+func (s *BaseSuite) displayTraefikLogFile(path string) {
+	// if s..Failed() {
+	// 	if _, err := os.Stat(path); !os.IsNotExist(err) {
+	// 		content, errRead := os.ReadFile(path)
+	// 		fmt.Printf("%s: Traefik logs: \n", c.TestName())
+	// 		if errRead == nil {
+	// 			fmt.Println(content)
+	// 		} else {
+	// 			fmt.Println(errRead)
+	// 		}
+	// 	} else {
+	// 		fmt.Printf("%s: No Traefik logs.\n", c.TestName())
+	// 	}
+	// 	errRemove := os.Remove(path)
+	// 	if errRemove != nil {
+	// 		fmt.Println(errRemove)
+	// 	}
+	// }
+}
+
+func (s *BaseSuite) SetupSuite() {
+	os.Setenv("CI", "ci")
+
+	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).
+		With().Timestamp().Caller().Logger()
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	// Global logrus replacement
+	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
+
+	// configure default standard log.
+	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
+	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
+
 	// Create docker network
 	// docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	req := testcontainers.GenericNetworkRequest{
@@ -134,8 +179,7 @@ func (s *BaseSuite) SetUpSuite(c *check.C) {
 			CheckDuplicate: true,
 			Driver:         "bridge",
 			IPAM: &dockernetwork.IPAM{
-				Driver:  "default",
-				Options: nil,
+				Driver: "default",
 				Config: []dockernetwork.IPAMConfig{
 					{
 						Subnet: "172.31.42.0/24",
@@ -145,17 +189,18 @@ func (s *BaseSuite) SetUpSuite(c *check.C) {
 		},
 	}
 	network, err := testcontainers.GenericNetwork(context.Background(), req)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if os.Getenv("IN_DOCKER") != "true" {
-		s.setupVPN(c, "tailscale.secret")
+		s.setupVPN("tailscale.secret")
 	}
 
 	s.network = network
+	s.hostIP = "172.31.42.1"
 }
 
-func (s *BaseSuite) TearDownSuite(c *check.C) {
-	s.composeDown(c)
+func (s *BaseSuite) TearDownSuite() {
+	s.composeDown()
 
 	err := try.Do(5*time.Second, func() error {
 		if s.network != nil {
@@ -167,21 +212,21 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 
 		return nil
 	})
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 }
 
 // createComposeProject creates the docker compose project stored as a field in the BaseSuite.
 // This method should be called before starting and/or stopping compose services.
-func (s *BaseSuite) createComposeProject(c *check.C, name string) {
+func (s *BaseSuite) createComposeProject(name string) {
 	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
 
 	file, err := os.ReadFile(composeFile)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	var composeConfigData composeConfig
 	err = yaml.Unmarshal(file, &composeConfigData)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if s.containers == nil {
 		s.containers = map[string]testcontainers.Container{}
@@ -212,20 +257,20 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 		if containerConfig.Deploy.Replicas > 0 {
 			for i := 0; i < containerConfig.Deploy.Replicas; i++ {
 				id = fmt.Sprintf("%s-%d", id, i+1)
-				con, err := createContainer(containerConfig, id, mounts, ctx)
-				c.Assert(err, checker.IsNil)
+				con, err := s.createContainer(containerConfig, id, mounts, ctx)
+				require.NoError(s.T(), err)
 				s.containers[id] = con
 			}
 			continue
 		}
 
-		con, err := createContainer(containerConfig, id, mounts, ctx)
-		c.Assert(err, checker.IsNil)
+		con, err := s.createContainer(containerConfig, id, mounts, ctx)
+		require.NoError(s.T(), err)
 		s.containers[id] = con
 	}
 }
 
-func createContainer(containerConfig composeService, id string, mounts testcontainers.ContainerMounts, ctx context.Context) (testcontainers.Container, error) {
+func (s *BaseSuite) createContainer(containerConfig composeService, id string, mounts testcontainers.ContainerMounts, ctx context.Context) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
 		Image:      containerConfig.Image,
 		Env:        containerConfig.Environment,
@@ -240,7 +285,7 @@ func createContainer(containerConfig composeService, id string, mounts testconta
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
-			config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:172.31.42.1")
+			config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:"+s.hostIP)
 		},
 	}
 	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -253,31 +298,31 @@ func createContainer(containerConfig composeService, id string, mounts testconta
 
 // composeUp starts the given services of the current docker compose project, if they are not already started.
 // Already running services are not affected (i.e. not stopped).
-func (s *BaseSuite) composeUp(c *check.C, services ...string) {
+func (s *BaseSuite) composeUp(services ...string) {
 	for name, con := range s.containers {
 		if len(services) == 0 || slices.Contains(services, name) {
 			err := con.Start(context.Background())
-			c.Assert(err, checker.IsNil)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
 // composeStop stops the given services of the current docker compose project and removes the corresponding containers.
-func (s *BaseSuite) composeStop(c *check.C, services ...string) {
+func (s *BaseSuite) composeStop(services ...string) {
 	for name, con := range s.containers {
 		if len(services) == 0 || slices.Contains(services, name) {
 			timeout := 10 * time.Second
 			err := con.Stop(context.Background(), &timeout)
-			c.Assert(err, checker.IsNil)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
 // composeDown stops all compose project services and removes the corresponding containers.
-func (s *BaseSuite) composeDown(c *check.C) {
+func (s *BaseSuite) composeDown() {
 	for _, container := range s.containers {
 		err := container.Terminate(context.Background())
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 	s.containers = map[string]testcontainers.Container{}
 }
@@ -299,13 +344,14 @@ func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
+func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func()) {
 	cmd, out := s.cmdTraefik(args...)
-	return cmd, func(c *check.C) {
-		if c.Failed() || *showLog {
+	return cmd, func() {
+		// TODO Show only when failed
+		if *showLog {
 			s.displayLogK3S()
-			s.displayLogCompose(c)
-			s.displayTraefikLog(c, out)
+			s.displayLogCompose()
+			s.displayTraefikLog(out)
 		}
 	}
 }
@@ -324,7 +370,7 @@ func (s *BaseSuite) displayLogK3S() {
 	log.WithoutContext().Println()
 }
 
-func (s *BaseSuite) displayLogCompose(c *check.C) {
+func (s *BaseSuite) displayLogCompose() {
 	// if s.dockerComposeService == nil || s.composeProject == nil {
 	// 	log.Info().Str("testName", c.TestName()).Msg("No docker compose logs.")
 	// 	return
@@ -335,14 +381,30 @@ func (s *BaseSuite) displayLogCompose(c *check.C) {
 	// logConsumer := formatter.NewLogConsumer(context.Background(), logs.NoLevel(log.Logger, zerolog.InfoLevel), false, true)
 	//
 	// err := s.dockerComposeService.Logs(context.Background(), s.composeProject.Name, logConsumer, composeapi.LogOptions{})
-	// c.Assert(err, checker.IsNil)
+	// require.NoError(err)
 	//
 	// log.Print()
 	// log.Print("################################")
 	// log.Print()
+
+	for name, ctn := range s.containers {
+		readCloser, err := ctn.Logs(context.Background())
+		require.NoError(s.T(), err)
+		for {
+			b := make([]byte, 1024)
+			_, err := readCloser.Read(b)
+			if err == io.EOF {
+				break
+			}
+			require.NoError(s.T(), err)
+			if len(bytes.TrimSpace(b)) > 0 {
+				log.Info().Str("container", name).Msg(string(b))
+			}
+		}
+	}
 }
 
-func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
+func (s *BaseSuite) displayTraefikLog(output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
 		log.WithoutContext().Infof("%s: No Traefik logs.", c.TestName())
 	} else {
@@ -361,29 +423,29 @@ func (s *BaseSuite) getDockerHost() string {
 	return dockerHost
 }
 
-func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) string {
+func (s *BaseSuite) adaptFile(path string, tempObjects interface{}) string {
 	// Load file
 	tmpl, err := template.ParseFiles(path)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	folder, prefix := filepath.Split(path)
 	tmpFile, err := os.CreateTemp(folder, strings.TrimSuffix(prefix, filepath.Ext(prefix))+"_*"+filepath.Ext(prefix))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer tmpFile.Close()
 
 	model := structs.Map(tempObjects)
 	model["SelfFilename"] = tmpFile.Name()
 
 	err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = tmpFile.Sync()
 
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	return tmpFile.Name()
 }
 
-func (s *BaseSuite) getComposeServiceIP(c *check.C, name string) string {
+func (s *BaseSuite) getComposeServiceIP(name string) string {
 	container, ok := s.containers[name]
 	if !ok {
 		return ""
@@ -395,19 +457,19 @@ func (s *BaseSuite) getComposeServiceIP(c *check.C, name string) string {
 	return ip
 }
 
-func (s *BaseSuite) getContainerIP(c *check.C, name string) string {
-	// container, err := s.dockerClient.ContainerInspect(context.Background(), name)
-	// c.Assert(err, checker.IsNil)
-	// c.Assert(container.NetworkSettings.Networks, check.NotNil)
-	//
-	// for _, network := range container.NetworkSettings.Networks {
-	// 	return network.IPAddress
-	// }
-	//
-	// // Should never happen.
-	// c.Error("No network found")
-	return ""
-}
+// func (s *BaseSuite) getContainerIP(c *check.C, name string) string {
+// 	// container, err := s.dockerClient.ContainerInspect(context.Background(), name)
+// 	// require.NoError(err)
+// 	// c.Assert(container.NetworkSettings.Networks, check.NotNil)
+// 	//
+// 	// for _, network := range container.NetworkSettings.Networks {
+// 	// 	return network.IPAddress
+// 	// }
+// 	//
+// 	// // Should never happen.
+// 	// c.Error("No network found")
+// 	return ""
+// }
 
 func withConfigFile(file string) string {
 	return "--configFile=" + file
@@ -432,7 +494,7 @@ type tailscaleNotSuite struct{ BaseSuite }
 //	    "172.0.0.0/8": ["your_tailscale_identity"],
 //	  },
 //	},
-func (s *BaseSuite) setupVPN(c *check.C, keyFile string) {
+func (s *BaseSuite) setupVPN(keyFile string) {
 	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
@@ -443,24 +505,24 @@ func (s *BaseSuite) setupVPN(c *check.C, keyFile string) {
 	}
 	authKey := strings.TrimSpace(string(data))
 	// // TODO: copy and create versions that don't need a check.C?
-	s.createComposeProject(c, "tailscale")
-	s.composeUp(c)
+	s.createComposeProject("tailscale")
+	s.composeUp()
 	time.Sleep(5 * time.Second)
 	// If we ever change the docker subnet in the Makefile,
 	// we need to change this one below correspondingly.
-	s.composeExec(c, "tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
+	s.composeExec("tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
 }
 
 // composeExec runs the command in the given args in the given compose service container.
 // Already running services are not affected (i.e. not stopped).
-func (s *BaseSuite) composeExec(c *check.C, service string, args ...string) string {
-	c.Assert(s.containers[service], check.NotNil)
+func (s *BaseSuite) composeExec(service string, args ...string) string {
+	require.NotNil(s.T(), s.containers[service])
 
 	_, reader, err := s.containers[service].Exec(context.Background(), args)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	content, err := io.ReadAll(reader)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	return string(content)
 }

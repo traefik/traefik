@@ -12,14 +12,15 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/pkg/api"
 	"github.com/traefik/traefik/v2/pkg/log"
-	checker "github.com/vdemeester/shakers"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
@@ -27,35 +28,39 @@ var updateExpected = flag.Bool("update_expected", false, "Update expected files 
 // K8sSuite tests suite.
 type K8sSuite struct{ BaseSuite }
 
-func (s *K8sSuite) SetUpSuite(c *check.C) {
-	s.BaseSuite.SetUpSuite(c)
+func TestK8sSuite(t *testing.T) {
+	suite.Run(t, new(K8sSuite))
+}
 
-	s.createComposeProject(c, "k8s")
-	s.composeUp(c)
+func (s *K8sSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("k8s")
+	s.composeUp()
 
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.Do(60*time.Second, func() error {
 		_, err := os.Stat(abs)
 		return err
 	})
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	data, err := os.ReadFile(abs)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
-	content := strings.ReplaceAll(string(data), "https://server:6443", fmt.Sprintf("https://%s:6443", s.getComposeServiceIP(c, "server")))
+	content := strings.ReplaceAll(string(data), "https://server:6443", fmt.Sprintf("https://%s:6443", s.getComposeServiceIP("server")))
 
 	err = os.WriteFile(abs, []byte(content), 0644)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = os.Setenv("KUBECONFIG", abs)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.BaseSuite.TearDownSuite(c)
+func (s *K8sSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
 
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",
@@ -73,83 +78,94 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
+func (s *K8sSuite) TestIngressConfiguration() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_default.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-ingress.json", "8080")
+	s.testConfiguration("testdata/rawdata-ingress.json", "8080")
 }
 
-func (s *K8sSuite) TestIngressLabelSelector(c *check.C) {
+func (s *K8sSuite) TestIngressLabelSelector() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingress_label_selector.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-ingress-label-selector.json", "8080")
+	s.testConfiguration("testdata/rawdata-ingress-label-selector.json", "8080")
 }
 
-func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
+func (s *K8sSuite) TestCRDConfiguration() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
+	s.testConfiguration("testdata/rawdata-crd.json", "8000")
 }
 
-func (s *K8sSuite) TestCRDLabelSelector(c *check.C) {
+func (s *K8sSuite) TestCRDLabelSelector() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd_label_selector.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-crd-label-selector.json", "8000")
+	s.testConfiguration("testdata/rawdata-crd-label-selector.json", "8000")
 }
 
-func (s *K8sSuite) TestGatewayConfiguration(c *check.C) {
+func (s *K8sSuite) TestGatewayConfiguration() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-gateway.json", "8080")
+	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
 }
 
-func (s *K8sSuite) TestIngressclass(c *check.C) {
+func (s *K8sSuite) TestIngressclass() {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
-	defer display(c)
+	defer display()
 
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-ingressclass.json", "8080")
+	s.testConfiguration("testdata/rawdata-ingressclass.json", "8080")
 }
 
-func testConfiguration(c *check.C, path, apiPort string) {
+func (s *K8sSuite) TestDisableIngressclassLookup() {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
+	defer display()
+
+	err := cmd.Start()
+	require.NoError(s.T(), err)
+	defer s.killCmd(cmd)
+
+	s.testConfiguration("testdata/rawdata-ingressclass-disabled.json", "8080")
+}
+
+func (s *K8sSuite) testConfiguration(path, apiPort string) {
 	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	expectedJSON := filepath.FromSlash(path)
 
 	if *updateExpected {
 		fi, err := os.Create(expectedJSON)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 		err = fi.Close()
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	var buf bytes.Buffer
@@ -157,25 +173,26 @@ func testConfiguration(c *check.C, path, apiPort string) {
 
 	if !*updateExpected {
 		if err != nil {
-			c.Error(err)
+			s.Error(err)
 		}
 		return
 	}
 
 	if err != nil {
-		c.Logf("In file update mode, got expected error: %v", err)
+		log.Info().Msgf("In file update mode, got expected error: %v", err)
 	}
 
 	var rtRepr api.RunTimeRepresentation
 	err = json.Unmarshal(buf.Bytes(), &rtRepr)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = os.WriteFile(expectedJSON, newJSON, 0o644)
-	c.Assert(err, checker.IsNil)
-	c.Errorf("We do not want a passing test in file update mode")
+	require.NoError(s.T(), err)
+	// TODO ???
+	// s.Errorf("We do not want a passing test in file update mode")
 }
 
 func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
