@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -188,15 +189,58 @@ func (s *BaseSuite) SetupSuite() {
 			},
 		},
 	}
-	network, err := testcontainers.GenericNetwork(context.Background(), req)
+	ctx := context.Background()
+	network, err := testcontainers.GenericNetwork(ctx, req)
 	require.NoError(s.T(), err)
-
-	if os.Getenv("IN_DOCKER") != "true" {
-		s.setupVPN("tailscale.secret")
-	}
 
 	s.network = network
 	s.hostIP = "172.31.42.1"
+	if isDockerDesktop(s.T(), ctx) {
+		s.hostIP = getDockerDesktopHostIp(s.T(), ctx)
+		s.setupVPN("tailscale.secret")
+	}
+}
+
+func getDockerDesktopHostIp(t *testing.T, ctx context.Context) string {
+	req := testcontainers.ContainerRequest{
+		Image: "alpine",
+		HostConfigModifier: func(config *container.HostConfig) {
+			config.AutoRemove = true
+		},
+		Cmd: []string{"getent", "hosts", "host.docker.internal"},
+	}
+
+	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	require.NoError(t, err)
+
+	closer, err := con.Logs(ctx)
+	require.NoError(t, err)
+
+	all, err := io.ReadAll(closer)
+	require.NoError(t, err)
+
+	ipRegex := regexp.MustCompile(`\b(?:\d{1,3}\.){3}\d{1,3}\b`)
+	matches := ipRegex.FindAllString(string(all), -1)
+	require.Len(t, matches, 1)
+
+	return matches[0]
+}
+
+func isDockerDesktop(t *testing.T, ctx context.Context) bool {
+	cli, err := testcontainers.NewDockerClientWithOpts(ctx)
+	if err != nil {
+		t.Fatalf("failed to create docker client: %s", err)
+	}
+
+	info, err := cli.Info(ctx)
+	if err != nil {
+		t.Fatalf("failed to get docker info: %s", err)
+	}
+
+	return info.OperatingSystem == "Docker Desktop"
 }
 
 func (s *BaseSuite) TearDownSuite() {
@@ -285,7 +329,9 @@ func (s *BaseSuite) createContainer(containerConfig composeService, id string, m
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
-			config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:"+s.hostIP)
+			if !isDockerDesktop(s.T(), ctx) {
+				config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:"+s.hostIP)
+			}
 		},
 	}
 	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -510,13 +556,13 @@ func (s *BaseSuite) setupVPN(keyFile string) {
 	time.Sleep(5 * time.Second)
 	// If we ever change the docker subnet in the Makefile,
 	// we need to change this one below correspondingly.
-	s.composeExec("tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
+	s.composeExec("tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
 }
 
 // composeExec runs the command in the given args in the given compose service container.
 // Already running services are not affected (i.e. not stopped).
 func (s *BaseSuite) composeExec(service string, args ...string) string {
-	require.NotNil(s.T(), s.containers[service])
+	require.Contains(s.T(), s.containers, service)
 
 	_, reader, err := s.containers[service].Exec(context.Background(), args)
 	require.NoError(s.T(), err)
