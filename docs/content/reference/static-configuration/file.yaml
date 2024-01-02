@@ -15,6 +15,8 @@ entryPoints:
   EntryPoint0:
     address: foobar
     transport:
+      keepAliveMaxRequests: 42
+      keepAliveMaxTime: 42s
       lifeCycle:
         requestAcceptGraceTimeout: 42s
         graceTimeOut: 42s
@@ -275,6 +277,14 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
+    sentinel:
+      masterName: foobar
+      username: foobar
+      password: foobar
+      latencyStrategy: true
+      randomStrategy: true
+      replicaStrategy: true
+      useDisconnectedReplicas: true
   http:
     endpoint: foobar
     pollInterval: 42s
