@@ -284,6 +284,12 @@
     [http.middlewares.Middleware22]
       [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
+    [http.middlewares.Middleware23]
+      [http.middlewares.Middleware23.ipAllowList]
+        sourceRange = ["foobar", "foobar"]
+        [http.middlewares.Middleware23.ipAllowList.ipStrategy]
+          depth = 42
+          excludedIPs = ["foobar", "foobar"]
   [http.serversTransports]
     [http.serversTransports.ServersTransport0]
       serverName = "foobar"

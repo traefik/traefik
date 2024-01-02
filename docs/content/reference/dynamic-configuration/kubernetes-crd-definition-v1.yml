@@ -1151,7 +1151,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1176,14 +1176,43 @@ spec:
                         type: boolean
                     type: object
                 type: object
-              ipWhiteList:
-                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+              ipAllowList:
+                description: 'IPAllowList holds the IP allowlist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/'
+                  More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/'
                 properties:
                   ipStrategy:
                     description: 'IPStrategy holds the IP strategy configuration used
-                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy'
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
+                    properties:
+                      depth:
+                        description: Depth tells Traefik to use the X-Forwarded-For
+                          header and take the IP located at the depth position (starting
+                          from the right).
+                        type: integer
+                      excludedIPs:
+                        description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
+                          header and select the first IP not in the list.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  sourceRange:
+                    description: SourceRange defines the set of allowed IPs (or ranges
+                      of allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
+              ipWhiteList:
+                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+                  This middleware accepts / refuses requests based on the client IP.
+                  More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/
+                  Deprecated: please use IPAllowList instead.'
+                properties:
+                  ipStrategy:
+                    description: 'IPStrategy holds the IP strategy configuration used
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -1347,7 +1376,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1535,8 +1564,22 @@ spec:
                     format: int64
                     type: integer
                 type: object
+              ipAllowList:
+                description: 'IPAllowList defines the IPAllowList middleware configuration.
+                  This middleware accepts/refuses connections based on the client
+                  IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/tcp/ipallowlist/'
+                properties:
+                  sourceRange:
+                    description: SourceRange defines the allowed IPs (or ranges of
+                      allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
               ipWhiteList:
-                description: IPWhiteList defines the IPWhiteList middleware configuration.
+                description: 'IPWhiteList defines the IPWhiteList middleware configuration.
+                  This middleware accepts/refuses connections based on the client
+                  IP. Deprecated: please use IPAllowList instead. More info: https://doc.traefik.io/traefik/v2.10/middlewares/tcp/ipwhitelist/'
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -3415,7 +3458,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -3440,14 +3483,43 @@ spec:
                         type: boolean
                     type: object
                 type: object
-              ipWhiteList:
-                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+              ipAllowList:
+                description: 'IPAllowList holds the IP allowlist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/'
+                  More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/'
                 properties:
                   ipStrategy:
                     description: 'IPStrategy holds the IP strategy configuration used
-                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy'
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
+                    properties:
+                      depth:
+                        description: Depth tells Traefik to use the X-Forwarded-For
+                          header and take the IP located at the depth position (starting
+                          from the right).
+                        type: integer
+                      excludedIPs:
+                        description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
+                          header and select the first IP not in the list.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  sourceRange:
+                    description: SourceRange defines the set of allowed IPs (or ranges
+                      of allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
+              ipWhiteList:
+                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+                  This middleware accepts / refuses requests based on the client IP.
+                  More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/
+                  Deprecated: please use IPAllowList instead.'
+                properties:
+                  ipStrategy:
+                    description: 'IPStrategy holds the IP strategy configuration used
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -3611,7 +3683,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -3799,8 +3871,22 @@ spec:
                     format: int64
                     type: integer
                 type: object
+              ipAllowList:
+                description: 'IPAllowList defines the IPAllowList middleware configuration.
+                  This middleware accepts/refuses connections based on the client
+                  IP. More info: https://doc.traefik.io/traefik/v2.10/middlewares/tcp/ipallowlist/'
+                properties:
+                  sourceRange:
+                    description: SourceRange defines the allowed IPs (or ranges of
+                      allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
               ipWhiteList:
-                description: IPWhiteList defines the IPWhiteList middleware configuration.
+                description: 'IPWhiteList defines the IPWhiteList middleware configuration.
+                  This middleware accepts/refuses connections based on the client
+                  IP. Deprecated: please use IPAllowList instead. More info: https://doc.traefik.io/traefik/v2.10/middlewares/tcp/ipwhitelist/'
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of

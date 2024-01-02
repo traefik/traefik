@@ -19,6 +19,7 @@ type Middleware struct {
 	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
 	Chain             *Chain             `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
+	IPAllowList       *IPAllowList       `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty" toml:"rateLimit,omitempty" yaml:"rateLimit,omitempty" export:"true"`
@@ -346,7 +347,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // +k8s:deepcopy-gen=true
 
 // IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-// More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/#ipstrategy
+// More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
 	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
@@ -388,7 +389,19 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the IP whitelist middleware configuration.
 // This middleware accepts / refuses requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipwhitelist/
+// Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
+	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// IPAllowList holds the IP allowlist middleware configuration.
+// This middleware accepts / refuses requests based on the client IP.
+// More info: https://doc.traefik.io/traefik/v2.10/middlewares/http/ipallowlist/
+type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
