@@ -906,6 +906,27 @@ Password for authentication.
 `--providers.redis.rootkey`:  
 Root key used for KV store. (Default: ```traefik```)
 
+`--providers.redis.sentinel.latencystrategy`:  
+Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.mastername`:  
+Name of the master.
+
+`--providers.redis.sentinel.password`:  
+Password for Sentinel authentication.
+
+`--providers.redis.sentinel.randomstrategy`:  
+Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.replicastrategy`:  
+Defines whether to route all commands to replica nodes (mutually exclusive with LatencyStrategy and RandomStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.usedisconnectedreplicas`:  
+Use replicas disconnected with master when cannot get connected replicas. (Default: ```false```)
+
+`--providers.redis.sentinel.username`:  
+Username for Sentinel authentication.
+
 `--providers.redis.tls.ca`:  
 TLS CA
 
