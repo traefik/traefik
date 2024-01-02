@@ -2,6 +2,7 @@ package requestdecorator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"sort"
@@ -65,9 +66,7 @@ func (hr *Resolver) CNAMEFlatten(ctx context.Context, host string) string {
 		request = resolv.Record
 	}
 
-	if err := hr.cache.Add(host, result, cacheDuration); err != nil {
-		logger.Error().Err(err).Send()
-	}
+	hr.cache.Set(host, result, cacheDuration)
 
 	return result
 }
@@ -79,6 +78,10 @@ func cnameResolve(ctx context.Context, host, resolvPath string) (*cnameResolv, e
 		return nil, fmt.Errorf("invalid resolver configuration file: %s", resolvPath)
 	}
 
+	if net.ParseIP(host) != nil {
+		return nil, nil
+	}
+
 	client := &dns.Client{Timeout: 30 * time.Second}
 
 	m := &dns.Msg{}
@@ -88,7 +91,11 @@ func cnameResolve(ctx context.Context, host, resolvPath string) (*cnameResolv, e
 	for _, server := range config.Servers {
 		tempRecord, err := getRecord(client, m, server, config.Port)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msgf("Failed to resolve host %s", host)
+			if errors.Is(err, errNoCNAMERecord) {
+				log.Ctx(ctx).Debug().Err(err).Msgf("CNAME lookup for hostname %q", host)
+				continue
+			}
+			log.Ctx(ctx).Error().Err(err).Msgf("CNAME lookup for hostname %q", host)
 			continue
 		}
 		result = append(result, tempRecord)
@@ -102,6 +109,8 @@ func cnameResolve(ctx context.Context, host, resolvPath string) (*cnameResolv, e
 	return result[0], nil
 }
 
+var errNoCNAMERecord = errors.New("no CNAME record for host")
+
 func getRecord(client *dns.Client, msg *dns.Msg, server, port string) (*cnameResolv, error) {
 	resp, _, err := client.Exchange(msg, net.JoinHostPort(server, port))
 	if err != nil {
@@ -109,7 +118,7 @@ func getRecord(client *dns.Client, msg *dns.Msg, server, port string) (*cnameRes
 	}
 
 	if resp == nil || len(resp.Answer) == 0 {
-		return nil, fmt.Errorf("empty answer for server %s", server)
+		return nil, fmt.Errorf("%w: %s", errNoCNAMERecord, server)
 	}
 
 	rr, ok := resp.Answer[0].(*dns.CNAME)

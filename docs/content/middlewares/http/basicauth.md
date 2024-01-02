@@ -10,7 +10,7 @@ Adding Basic Authentication
 
 ![BasicAuth](../../assets/img/middleware/basicauth.png)
 
-The BasicAuth middleware restricts access to your services to known users.
+The BasicAuth middleware grants access to services to authorized users only.
 
 ## Configuration Examples
 

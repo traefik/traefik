@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -26,6 +27,13 @@ type ConsulSuite struct {
 	BaseSuite
 	kvClient  store.Store
 	consulURL string
+}
+
+func (s *ConsulSuite) resetStore(c *check.C) {
+	err := s.kvClient.DeleteTree(context.Background(), "traefik")
+	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
+		c.Fatal(err)
+	}
 }
 
 func (s *ConsulSuite) setupStore(c *check.C) {
@@ -153,4 +161,72 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		c.Error(text)
 	}
+}
+
+func (s *ConsulSuite) assertWhoami(c *check.C, host string, expectedStatusCode int) {
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	if err != nil {
+		c.Fatal(err)
+	}
+	req.Host = host
+
+	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
+	resp.Body.Close()
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulSuite) TestDeleteRootKey(c *check.C) {
+	// This test case reproduce the issue: https://github.com/traefik/traefik/issues/8092
+	s.setupStore(c)
+	s.resetStore(c)
+
+	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
+	defer os.Remove(file)
+
+	ctx := context.Background()
+	svcaddr := net.JoinHostPort(s.getComposeServiceIP(c, "whoami"), "80")
+
+	data := map[string]string{
+		"traefik/http/routers/Router0/entryPoints/0": "web",
+		"traefik/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
+		"traefik/http/routers/Router0/service":       "simplesvc0",
+
+		"traefik/http/routers/Router1/entryPoints/0": "web",
+		"traefik/http/routers/Router1/rule":          "Host(`kv2.localhost`)",
+		"traefik/http/routers/Router1/service":       "simplesvc1",
+
+		"traefik/http/services/simplesvc0/loadBalancer/servers/0/url": "http://" + svcaddr,
+		"traefik/http/services/simplesvc1/loadBalancer/servers/0/url": "http://" + svcaddr,
+	}
+
+	for k, v := range data {
+		err := s.kvClient.Put(ctx, k, []byte(v), nil)
+		c.Assert(err, checker.IsNil)
+	}
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+		try.BodyContains(`"Router0@consul":`, `"Router1@consul":`, `"simplesvc0@consul":`, `"simplesvc1@consul":`),
+	)
+	c.Assert(err, checker.IsNil)
+	s.assertWhoami(c, "kv1.localhost", http.StatusOK)
+	s.assertWhoami(c, "kv2.localhost", http.StatusOK)
+
+	// delete router1
+	err = s.kvClient.DeleteTree(ctx, "traefik/http/routers/Router1")
+	c.Assert(err, checker.IsNil)
+	s.assertWhoami(c, "kv1.localhost", http.StatusOK)
+	s.assertWhoami(c, "kv2.localhost", http.StatusNotFound)
+
+	// delete simple services and router0
+	err = s.kvClient.DeleteTree(ctx, "traefik")
+	c.Assert(err, checker.IsNil)
+	s.assertWhoami(c, "kv1.localhost", http.StatusNotFound)
+	s.assertWhoami(c, "kv2.localhost", http.StatusNotFound)
 }

@@ -271,4 +271,4 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

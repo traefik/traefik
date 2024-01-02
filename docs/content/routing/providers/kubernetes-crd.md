@@ -2011,4 +2011,4 @@ If the ServersTransportTCP CRD is defined in another provider the cross-provider
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

@@ -177,6 +177,9 @@ Trust all. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL_TRUSTEDIPS`:  
 Trust only selected IPs.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_REUSEPORT`:  
+Enables EntryPoints from the same or different processes listening on the same TCP/UDP port. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_LIFECYCLE_GRACETIMEOUT`:  
 Duration to give active requests a chance to finish before Traefik stops. (Default: ```10```)
 

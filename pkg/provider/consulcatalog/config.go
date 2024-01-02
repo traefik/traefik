@@ -229,6 +229,7 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 
 	if item.ExtraConf.ConsulCatalog.Connect {
 		loadBalancer.ServersTransport = itemServersTransportKey(item)
+		loadBalancer.Servers[0].TLS = true
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)

@@ -228,3 +228,11 @@ The following metric is produced :
 ```bash
 traefik_entrypoint_requests_total{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"} 1
 ```
+
+!!! info "`Host` header value"
+
+    The `Host` header is never present in the Header map of a request, as per go documentation says:
+    // For incoming requests, the Host header is promoted to the
+    // Request.Host field and removed from the Header map.
+
+    As a workaround, to obtain the Host of a request as a label, one should use instead the `X-Forwarded-For` header.
