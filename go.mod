@@ -19,7 +19,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.14.0
-	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.5.3
 	github.com/google/go-github/v28 v28.1.1
