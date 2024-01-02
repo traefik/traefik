@@ -323,6 +323,16 @@ http:
         regex:
           - foobar
           - foobar
+    Middleware23:
+      ipAllowList:
+        sourceRange:
+          - foobar
+          - foobar
+        ipStrategy:
+          depth: 42
+          excludedIPs:
+            - foobar
+            - foobar
   serversTransports:
     ServersTransport0:
       serverName: foobar
@@ -437,6 +447,11 @@ tcp:
     TCPMiddleware01:
       inFlightConn:
         amount: 42
+    TCPMiddleware02:
+      ipAllowList:
+        sourceRange:
+          - foobar
+          - foobar
 udp:
   routers:
     UDPRouter0:
