@@ -139,7 +139,7 @@ type CircuitBreaker struct {
 	FallbackDuration ptypes.Duration `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
 	RecoveryDuration ptypes.Duration `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
-	// ResponseCode is the code that the circuit breaker will return while it is in the tripped state.
+	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
 	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
