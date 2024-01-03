@@ -130,7 +130,7 @@ spec:
       serviceAccountName: traefik-account
       containers:
         - name: traefik
-          image: traefik:v2.10
+          image: traefik:v2.11
           args:
             - --api.insecure
             - --providers.kubernetesingress
