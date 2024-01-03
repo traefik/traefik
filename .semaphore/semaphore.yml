@@ -64,7 +64,7 @@ blocks:
         - name: GH_VERSION
           value: 2.32.1
         - name: CODENAME
-          value: "saintmarcelin"
+          value: "mimolette"
         - name: IN_DOCKER
           value: ""
       prologue:
