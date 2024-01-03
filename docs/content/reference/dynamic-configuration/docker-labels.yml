@@ -163,6 +163,7 @@
 - "traefik.http.services.service01.loadbalancer.server.scheme=foobar"
 - "traefik.tcp.middlewares.tcpmiddleware00.ipallowlist.sourcerange=foobar, foobar"
 - "traefik.tcp.middlewares.tcpmiddleware01.inflightconn.amount=42"
+- "traefik.tcp.middlewares.tcpmiddleware02.ipallowlist.sourcerange=foobar, foobar"
 - "traefik.tcp.routers.tcprouter0.entrypoints=foobar, foobar"
 - "traefik.tcp.routers.tcprouter0.middlewares=foobar, foobar"
 - "traefik.tcp.routers.tcprouter0.rule=foobar"
