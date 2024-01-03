@@ -27,7 +27,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: 'Traefik Labs • Copyright &copy; 2016-2023'
+copyright: 'Traefik Labs • Copyright &copy; 2016-2024'
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
@@ -125,7 +125,8 @@ nav:
         - 'ForwardAuth': 'middlewares/http/forwardauth.md'
         - 'GrpcWeb': 'middlewares/http/grpcweb.md'
         - 'Headers': 'middlewares/http/headers.md'
-        - 'IpAllowList': 'middlewares/http/ipallowlist.md'
+        - 'IPWhiteList': 'middlewares/http/ipwhitelist.md'
+        - 'IPAllowList': 'middlewares/http/ipallowlist.md'
         - 'InFlightReq': 'middlewares/http/inflightreq.md'
         - 'PassTLSClientCert': 'middlewares/http/passtlsclientcert.md'
         - 'RateLimit': 'middlewares/http/ratelimit.md'
@@ -139,7 +140,8 @@ nav:
     - 'TCP':
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
-        - 'IpAllowList': 'middlewares/tcp/ipallowlist.md'
+        - 'IPWhiteList': 'middlewares/tcp/ipwhitelist.md'
+        - 'IPAllowList': 'middlewares/tcp/ipallowlist.md'
   - 'Plugins & Plugin Catalog': 'plugins/index.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'

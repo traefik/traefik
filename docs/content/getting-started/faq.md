@@ -29,7 +29,7 @@ Not to mention that dynamic configuration changes potentially make that kind of 
 Therefore, in this dynamic context,
 the static configuration of an `entryPoint` does not give any hint whatsoever about how the traffic going through that `entryPoint` is going to be routed.
 Or whether it's even going to be routed at all,
-i.e. whether there is a Router matching the kind of traffic going through it.
+that is whether there is a Router matching the kind of traffic going through it.
 
 ### `404 Not found`
 
@@ -71,7 +71,7 @@ Traefik returns a `502` response code when an error happens while contacting the
 
 ### `503 Service Unavailable`
 
-Traefik returns a `503` response code when a Router has been matched
+Traefik returns a `503` response code when a Router has been matched,
 but there are no servers ready to handle the request.
 
 This situation is encountered when a service has been explicitly configured without servers,
@@ -84,7 +84,7 @@ Sometimes, the `404` response code doesn't play well with other parties or servi
 In these situations, you may want Traefik to always reply with a `503` response code,
 instead of a `404` response code.
 
-To achieve this behavior, a simple catchall router,
+To achieve this behavior, a catchall router,
 with the lowest possible priority and routing to a service without servers,
 can handle all the requests when no other router has been matched.
 
@@ -130,7 +130,7 @@ http:
     the principle of the above example above (a catchall router) still stands,
     but the `unavailable` service should be adapted to fit such a need.
 
-## Why Is My TLS Certificate Not Reloaded When Its Contents Change? 
+## Why Is My TLS Certificate Not Reloaded When Its Contents Change?
 
 With the file provider,
 a configuration update is only triggered when one of the [watched](../providers/file.md#provider-configuration) configuration files is modified.
@@ -216,7 +216,7 @@ error: field not found, node: -badField-
 
 The "field not found" error occurs, when an unknown property is encountered in the dynamic or static configuration.
 
-One easy way to check whether a configuration file is well-formed, is to validate it with:
+One way to check whether a configuration file is well-formed, is to validate it with:
 
 - [JSON Schema of the static configuration](https://json.schemastore.org/traefik-v2.json)
 - [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json)
@@ -226,11 +226,11 @@ One easy way to check whether a configuration file is well-formed, is to validat
 As a common tip, if a resource is dropped/not created by Traefik after the dynamic configuration was evaluated,
 one should look for an error in the logs.
 
-If found, the error obviously confirms that something went wrong while creating the resource,
+If found, the error confirms that something went wrong while creating the resource,
 and the message should help in figuring out the mistake(s) in the configuration, and how to fix it.
 
 When using the file provider,
-one easy way to check if the dynamic configuration is well-formed is to validate it with the [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json).
+one way to check if the dynamic configuration is well-formed is to validate it with the [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json).
 
 ## Why does Let's Encrypt wildcard certificate renewal/generation with DNS challenge fail?
 
@@ -248,6 +248,6 @@ then it could be due to `CNAME` support.
 In which case, you should make sure your infrastructure is properly set up for a
 `DNS` challenge that does not rely on `CNAME`, and you should try disabling `CNAME` support with:
 
-```bash
+```shell
 LEGO_DISABLE_CNAME_SUPPORT=true
 ```

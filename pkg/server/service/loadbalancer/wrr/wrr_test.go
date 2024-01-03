@@ -247,6 +247,8 @@ func TestSticky(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for i := 0; i < 3; i++ {
 		for _, cookie := range recorder.Result().Cookies() {
+			assert.NotContains(t, "test=first", cookie.Value)
+			assert.NotContains(t, "test=second", cookie.Value)
 			req.AddCookie(cookie)
 		}
 		recorder.ResponseRecorder = httptest.NewRecorder()
@@ -259,6 +261,35 @@ func TestSticky(t *testing.T) {
 	assert.True(t, recorder.cookies["test"].HttpOnly)
 	assert.True(t, recorder.cookies["test"].Secure)
 	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
+}
+
+func TestSticky_FallBack(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{Name: "test"},
+	}, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(1))
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(2))
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.AddCookie(&http.Cookie{Name: "test", Value: "second"})
+	for i := 0; i < 3; i++ {
+		recorder.ResponseRecorder = httptest.NewRecorder()
+
+		balancer.ServeHTTP(recorder, req)
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 3, recorder.save["second"])
 }
 
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
