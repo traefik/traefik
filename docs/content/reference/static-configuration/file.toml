@@ -35,6 +35,8 @@
     address = "foobar"
     asDefault = true
     [entryPoints.EntryPoint0.transport]
+      keepAliveMaxRequests = 42
+      keepAliveMaxTime = "42s"
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = "42s"
         graceTimeOut = "42s"
@@ -242,6 +244,14 @@
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
+    [providers.redis.sentinel]
+      masterName = "foobar"
+      username = "foobar"
+      password = "foobar"
+      latencyStrategy = true
+      randomStrategy = true
+      replicaStrategy = true
+      useDisconnectedReplicas = true
   [providers.http]
     endpoint = "foobar"
     pollInterval = "42s"
