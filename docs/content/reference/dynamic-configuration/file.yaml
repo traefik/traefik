@@ -450,6 +450,11 @@ tcp:
     TCPMiddleware01:
       inFlightConn:
         amount: 42
+    TCPMiddleware02:
+      ipAllowList:
+        sourceRange:
+          - foobar
+          - foobar
   serversTransports:
     TCPServersTransport0:
       dialTimeout: 42s

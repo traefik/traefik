@@ -177,6 +177,12 @@ Trust all. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL_TRUSTEDIPS`:  
 Trust only selected IPs.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_KEEPALIVEMAXREQUESTS`:  
+Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_KEEPALIVEMAXTIME`:  
+Maximum duration before closing a keep-alive connection. (Default: ```0```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_LIFECYCLE_GRACETIMEOUT`:  
 Duration to give active requests a chance to finish before Traefik stops. (Default: ```10```)
 
@@ -217,7 +223,7 @@ plugin's version.
 Periodically check if a new version has been released. (Default: ```true```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
-Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
+Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default. (Default: ```false```)
 
 `TRAEFIK_HOSTRESOLVER`:  
 Enable CNAME Flattening. (Default: ```false```)
@@ -821,6 +827,27 @@ Password for authentication.
 
 `TRAEFIK_PROVIDERS_REDIS_ROOTKEY`:  
 Root key used for KV store. (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_LATENCYSTRATEGY`:  
+Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy). (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_MASTERNAME`:  
+Name of the master.
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_PASSWORD`:  
+Password for Sentinel authentication.
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_RANDOMSTRATEGY`:  
+Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_REPLICASTRATEGY`:  
+Defines whether to route all commands to replica nodes (mutually exclusive with LatencyStrategy and RandomStrategy). (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_USEDISCONNECTEDREPLICAS`:  
+Use replicas disconnected with master when cannot get connected replicas. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_SENTINEL_USERNAME`:  
+Username for Sentinel authentication.
 
 `TRAEFIK_PROVIDERS_REDIS_TLS_CA`:  
 TLS CA
