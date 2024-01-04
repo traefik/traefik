@@ -117,13 +117,10 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@etcd":`, `"compressor@etcd":`, `"srvcA@etcd":`, `"srvcB@etcd":`),
 	)
 	require.NoError(s.T(), err)

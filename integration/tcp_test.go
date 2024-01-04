@@ -51,13 +51,9 @@ func (s *TCPSuite) TestMixed() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
 	require.NoError(s.T(), err)
 
 	// Traefik passes through, termination handled by whoami-a
@@ -104,13 +100,9 @@ func (s *TCPSuite) TestTLSOptions() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
 	require.NoError(s.T(), err)
 
 	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-c.test'
@@ -150,13 +142,9 @@ func (s *TCPSuite) TestNonTLSFallback() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
 	// Traefik passes through, termination handled by whoami-a
@@ -187,13 +175,9 @@ func (s *TCPSuite) TestNonTlsTcp() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
 	// Traefik will forward every requests on the given port to whoami-no-tls
@@ -210,13 +194,9 @@ func (s *TCPSuite) TestCatchAllNoTLS() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
 	// Traefik will forward every requests on the given port to whoami-no-tls
@@ -235,13 +215,9 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
 	req := httptest.NewRequest(http.MethodGet, "https://127.0.0.1:8093/test", nil)
@@ -265,13 +241,9 @@ func (s *TCPSuite) TestMiddlewareAllowList() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	require.NoError(s.T(), err)
 
 	// Traefik not passes through, ipWhitelist closes connection
@@ -294,13 +266,9 @@ func (s *TCPSuite) TestWRR() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
 	require.NoError(s.T(), err)
 
 	call := map[string]int{}

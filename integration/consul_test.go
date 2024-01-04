@@ -127,13 +127,10 @@ func (s *ConsulSuite) TestSimpleConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@consul":`, `"compressor@consul":`, `"srvcA@consul":`, `"srvcB@consul":`),
 	)
 	require.NoError(s.T(), err)
@@ -211,13 +208,10 @@ func (s *ConsulSuite) TestDeleteRootKey() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"Router0@consul":`, `"Router1@consul":`, `"simplesvc0@consul":`, `"simplesvc1@consul":`),
 	)
 	require.NoError(s.T(), err)

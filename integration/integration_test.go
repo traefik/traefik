@@ -325,13 +325,25 @@ func (s *BaseSuite) composeDown() {
 
 func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 	cmd := exec.Command(traefikBinary, args...)
+
+	s.T().Cleanup(func() {
+		s.killCmd(cmd)
+	})
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
+
+	err := cmd.Start()
+	require.NoError(s.T(), err)
+
 	return cmd, &out
 }
 
 func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
+	if cmd.Process == nil {
+		log.Error().Msg("No process to kill")
+		return
+	}
 	err := cmd.Process.Kill()
 	if err != nil {
 		log.WithoutContext().Errorf("Kill: %v", err)
@@ -340,19 +352,17 @@ func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (s *BaseSuite) traefikCmd(args ...string) *exec.Cmd {
-	cmd, out := s.cmdTraefik(args...)
-	display := func() {
+func (s *BaseSuite) traefikCmd(args ...string) {
+	_, out := s.cmdTraefik(args...)
+
+	s.T().Cleanup(func() {
 		if s.T().Failed() || *showLog {
 			s.displayLogK3S()
 			s.displayLogCompose()
 			s.displayTraefikLog(out)
 		}
-	}
-	s.T().Cleanup(func() {
-		display()
 	})
-	return cmd
+	return
 }
 
 func (s *BaseSuite) displayLogK3S() {

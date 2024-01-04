@@ -63,14 +63,10 @@ func (s *TracingSuite) TestZipkinRateLimit() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
@@ -113,13 +109,10 @@ func (s *TracingSuite) TestZipkinRetry() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
@@ -139,13 +132,10 @@ func (s *TracingSuite) TestZipkinAuth() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
@@ -176,13 +166,10 @@ func (s *TracingSuite) TestJaegerRateLimit() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
@@ -226,13 +213,10 @@ func (s *TracingSuite) TestJaegerRetry() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
@@ -254,13 +238,10 @@ func (s *TracingSuite) TestJaegerAuth() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
@@ -282,13 +263,10 @@ func (s *TracingSuite) TestJaegerCustomHeader() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
@@ -309,13 +287,10 @@ func (s *TracingSuite) TestJaegerAuthCollector() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))

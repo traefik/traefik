@@ -118,13 +118,10 @@ func (s *ZookeeperSuite) TestSimpleConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
 		try.BodyContains(`"striper@zookeeper":`, `"compressor@zookeeper":`, `"srvcA@zookeeper":`, `"srvcB@zookeeper":`),
 	)
 	require.NoError(s.T(), err)

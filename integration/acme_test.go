@@ -442,13 +442,10 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// Expected traefik works
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 }
 
@@ -471,10 +468,8 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 	file := s.adaptFile(testCase.traefikConfFilePath, testCase.template)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
+
 	// A real file is needed to have the right mode on acme.json file
 	defer os.Remove("/tmp/acme.json")
 
@@ -488,7 +483,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 	}
 
 	// wait for traefik (generating acme account take some seconds)
-	err = try.Do(60*time.Second, func() error {
+	err := try.Do(60*time.Second, func() error {
 		_, errGet := client.Get("https://127.0.0.1:5001")
 		return errGet
 	})
@@ -514,7 +509,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 		var resp *http.Response
 
 		// Retry to send a Request which uses the LE generated certificate
-		err = try.Do(60*time.Second, func() error {
+		err := try.Do(60*time.Second, func() error {
 			resp, err = client.Do(req)
 			if err != nil {
 				return err

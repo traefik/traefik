@@ -53,13 +53,10 @@ func (s *HealthCheckSuite) TestSimpleConfiguration() {
 	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
 	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
@@ -120,13 +117,10 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints() {
 	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// Wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
 	// Check entrypoint http1
@@ -195,10 +189,7 @@ func (s *HealthCheckSuite) TestPortOverload() {
 	}{s.whoami1IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("Host(`test.localhost`)"))
@@ -230,13 +221,10 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService() {
 	}{s.whoami1IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
 	// Set whoami health to 200 to be sure to start with the wanted status
@@ -297,13 +285,10 @@ func (s *HealthCheckSuite) TestPropagate() {
 	}{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
 	require.NoError(s.T(), err)
 
 	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
@@ -548,13 +533,10 @@ func (s *HealthCheckSuite) TestPropagateNoHealthCheck() {
 	}{s.whoami1IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`noop.localhost`)"), try.BodyNotContains("Host(`root.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`noop.localhost`)"), try.BodyNotContains("Host(`root.localhost`)"))
 	require.NoError(s.T(), err)
 
 	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
@@ -578,13 +560,10 @@ func (s *HealthCheckSuite) TestPropagateReload() {
 	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(withHealthCheck)
 
-	cmd := s.traefikCmd(withConfigFile(withoutHealthCheck))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(withoutHealthCheck))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
 	require.NoError(s.T(), err)
 
 	// Allow one of the underlying services on it to fail all servers HC (whoami2)

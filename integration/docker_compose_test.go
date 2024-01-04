@@ -46,15 +46,12 @@ func (s *DockerComposeSuite) TestComposeScale() {
 	file := s.adaptFile("fixtures/docker/minimal.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	req.Host = "my.super.host"
 
-	_, err = try.ResponseUntilStatusCode(req, 5*time.Second, http.StatusOK)
+	_, err := try.ResponseUntilStatusCode(req, 5*time.Second, http.StatusOK)
 	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")

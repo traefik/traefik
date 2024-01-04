@@ -39,12 +39,9 @@ func (s *RateLimitSuite) TestSimpleConfiguration() {
 	}{s.ServerIP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("ratelimit"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("ratelimit"))
 	require.NoError(s.T(), err)
 
 	start := time.Now()

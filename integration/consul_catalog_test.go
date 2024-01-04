@@ -135,10 +135,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -193,10 +190,7 @@ func (s *ConsulCatalogSuite) TestByLabels() {
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
 	require.NoError(s.T(), err)
@@ -227,10 +221,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -265,10 +256,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -338,10 +326,7 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/http/services", nil)
 	require.NoError(s.T(), err)
@@ -375,10 +360,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -420,10 +402,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	require.NoError(s.T(), err)
@@ -477,10 +456,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -543,10 +519,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -596,10 +569,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -648,10 +618,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
@@ -738,10 +705,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 	file := s.adaptFile("fixtures/consul_catalog/connect.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
@@ -818,10 +782,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 	file := s.adaptFile("fixtures/consul_catalog/connect_by_default.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
@@ -888,10 +849,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 	file := s.adaptFile("fixtures/consul_catalog/connect_not_aware.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)

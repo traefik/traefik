@@ -43,12 +43,9 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted() {
 	}{WhoamiIP: s.whoamiIP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second)
+	err := try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second)
 	require.NoError(s.T(), err)
 
 	content, err := proxyProtoRequest("127.0.0.1:8000", 1)
@@ -67,12 +64,9 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted() {
 	}{WhoamiIP: s.whoamiIP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://127.0.0.1:9000/whoami", 10*time.Second)
+	err := try.GetRequest("http://127.0.0.1:9000/whoami", 10*time.Second)
 	require.NoError(s.T(), err)
 
 	content, err := proxyProtoRequest("127.0.0.1:9000", 1)

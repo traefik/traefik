@@ -40,14 +40,10 @@ func (s *RestSuite) TearDownSuite() {
 }
 
 func (s *RestSuite) TestSimpleConfigurationInsecure() {
-	cmd := s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
 	require.NoError(s.T(), err)
 
 	// Expected a 404 as we did not configure anything.
@@ -137,14 +133,10 @@ func (s *RestSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/rest/simple_secure.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// Expected a 404 as we did not configure anything.
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2000*time.Millisecond, try.BodyContains("PathPrefix(`/secure`)"))

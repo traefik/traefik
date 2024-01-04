@@ -28,11 +28,7 @@ func (s *HostResolverSuite) TearDownSuite() {
 }
 
 func (s *HostResolverSuite) TestSimpleConfig() {
-	cmd := s.traefikCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
 
 	testCase := []struct {
 		desc   string

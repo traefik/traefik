@@ -119,14 +119,10 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@redis":`, `"compressor@redis":`, `"srvcA@redis":`, `"srvcB@redis":`),
 	)
 	require.NoError(s.T(), err)

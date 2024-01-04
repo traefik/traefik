@@ -42,13 +42,9 @@ func (s *SimpleSuite) TearDownSuite() {
 }
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail() {
-	cmd, output := s.cmdTraefik(withConfigFile("fixtures/invalid_configuration.toml"))
+	_, output := s.cmdTraefik(withConfigFile("fixtures/invalid_configuration.toml"))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.Do(500*time.Millisecond, func() error {
+	err := try.Do(500*time.Millisecond, func() error {
 		expected := "expected '.' or '=', but got '{' instead"
 		actual := output.String()
 
@@ -62,36 +58,24 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail() {
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig() {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/simple_default.toml"))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.cmdTraefik(withConfigFile("fixtures/simple_default.toml"))
 
 	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 }
 
 func (s *SimpleSuite) TestWithWebConfig() {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/simple_web.toml"))
+	s.cmdTraefik(withConfigFile("fixtures/simple_web.toml"))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 }
 
 func (s *SimpleSuite) TestPrintHelp() {
-	cmd, output := s.cmdTraefik("--help")
+	_, output := s.cmdTraefik("--help")
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.Do(500*time.Millisecond, func() error {
+	err := try.Do(500*time.Millisecond, func() error {
 		expected := "Usage:"
 		notExpected := "panic:"
 		actual := output.String()
@@ -121,14 +105,10 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout() {
 	}{whoamiURL})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 
 	// Wait for Traefik to turn ready.
-	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	// Make sure exposed service is ready.
@@ -183,14 +163,10 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout() {
 func (s *SimpleSuite) TestCustomPingTerminationStatusCode() {
 	file := s.adaptFile("fixtures/custom_ping_termination_status_code.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 
 	// Wait for Traefik to turn ready.
-	err = try.GetRequest("http://127.0.0.1:8001/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8001/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	// Check that /ping endpoint is responding with 200.
@@ -222,13 +198,9 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint() {
 		Server1 string
 		Server2 string
 	}{whoami1URL, whoami2URL})
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
@@ -254,13 +226,9 @@ func (s *SimpleSuite) TestNoAuthOnPing() {
 
 	file := s.adaptFile("./fixtures/simple_auth.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8001/api/rawdata", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
+	err := try.GetRequest("http://127.0.0.1:8001/api/rawdata", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8001/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -273,13 +241,9 @@ func (s *SimpleSuite) TestDefaultEntryPointHTTP() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
+	s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -292,13 +256,9 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
+	s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -311,13 +271,9 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
+	s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/whoami`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/whoami`)"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -342,13 +298,9 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
+	s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -397,13 +349,9 @@ func (s *SimpleSuite) TestMetricsWithBufferingMiddleware() {
 	file := s.adaptFile("fixtures/simple_metrics_with_buffer_middleware.toml", struct{ IP string }{IP: strings.TrimPrefix(server.URL, "http://")})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/without`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/without`)"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8001/without", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -465,13 +413,9 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName() {
 	file := s.adaptFile("fixtures/multiple_provider.toml", struct{ IP string }{IP: whoami2IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.BodyContains(whoami1IP))
@@ -557,13 +501,9 @@ func (s *SimpleSuite) TestIPStrategyAllowlist() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
+	s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.allowlist.docker.local"))
@@ -626,13 +566,9 @@ func (s *SimpleSuite) TestXForwardedHeaders() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
+	s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains("override.remoteaddr.whitelist.docker.local"))
 	require.NoError(s.T(), err)
 
@@ -660,13 +596,9 @@ func (s *SimpleSuite) TestMultiProvider() {
 	file := s.adaptFile("fixtures/multiprovider.toml", struct{ Server string }{Server: whoamiURL})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("service"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("service"))
 	require.NoError(s.T(), err)
 
 	config := dynamic.Configuration{
@@ -710,11 +642,7 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 	file := s.adaptFile("fixtures/file/simple-hosts.toml", struct{ Server string }{Server: whoamiURL})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	testCases := []struct {
 		desc        string
@@ -753,14 +681,10 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// All errors
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
 	require.NoError(s.T(), err)
 
 	// router3 has an error because it uses an unknown entrypoint
@@ -780,13 +704,9 @@ func (s *SimpleSuite) TestServiceConfigErrors() {
 	file := s.adaptFile("fixtures/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
@@ -800,14 +720,10 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// router3 has an error because it uses an unknown entrypoint
-	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
 	require.NoError(s.T(), err)
 
 	// router4 has an unsupported Rule
@@ -819,13 +735,9 @@ func (s *SimpleSuite) TestTCPServiceConfigErrors() {
 	file := s.adaptFile("fixtures/tcp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/tcp/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
@@ -839,13 +751,9 @@ func (s *SimpleSuite) TestUDPRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/udp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/udp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
 	require.NoError(s.T(), err)
 }
 
@@ -853,13 +761,9 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors() {
 	file := s.adaptFile("fixtures/udp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
@@ -884,13 +788,9 @@ func (s *SimpleSuite) TestWRR() {
 	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
 	require.NoError(s.T(), err)
 
 	repartition := map[string]int{}
@@ -932,13 +832,9 @@ func (s *SimpleSuite) TestWRRSticky() {
 	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
 	require.NoError(s.T(), err)
 
 	repartition := map[string]int{}
@@ -995,13 +891,9 @@ func (s *SimpleSuite) TestMirror() {
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
 	require.NoError(s.T(), err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
@@ -1074,11 +966,7 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
 	require.NoError(s.T(), err)
@@ -1170,13 +1058,9 @@ func (s *SimpleSuite) TestMirrorCanceled() {
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
 	require.NoError(s.T(), err)
 
 	for i := 0; i < 5; i++ {
@@ -1207,13 +1091,9 @@ func (s *SimpleSuite) TestSecureAPI() {
 	file := s.adaptFile("./fixtures/simple_secure_api.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8000/secure/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest("http://127.0.0.1:8000/secure/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
@@ -1260,14 +1140,10 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
@@ -1342,13 +1218,9 @@ func (s *SimpleSuite) TestMuxer() {
 	}{whoami1URL})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("!Host"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("!Host"))
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
@@ -1456,13 +1328,9 @@ func (s *SimpleSuite) TestDebugLog() {
 	file := s.adaptFile("fixtures/simple_debug_log.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.cmdTraefik(withConfigFile(file))
+	_, output := s.cmdTraefik(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/whoami`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/whoami`)"))
 	require.NoError(s.T(), err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://localhost:8000/whoami", http.NoBody)
@@ -1493,13 +1361,9 @@ func (s *SimpleSuite) TestEncodeSemicolons() {
 	}{whoami1URL})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`other.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`other.localhost`)"))
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
@@ -1553,14 +1417,10 @@ func (s *SimpleSuite) TestDenyFragment() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd := s.traefikCmd(withConfigFile("fixtures/simple_default.toml"))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile("fixtures/simple_default.toml"))
 
 	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	conn, err := net.Dial("tcp", "127.0.0.1:8000")

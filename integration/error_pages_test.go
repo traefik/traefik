@@ -44,10 +44,7 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration() {
 	}{"http://" + s.BackendIP + ":80", s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	require.NoError(s.T(), err)
@@ -65,10 +62,7 @@ func (s *ErrorPagesSuite) TestErrorPage() {
 	}{s.BackendIP, s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	require.NoError(s.T(), err)
@@ -91,10 +85,7 @@ func (s *ErrorPagesSuite) TestErrorPageFlush() {
 	}{srv.URL, s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	require.NoError(s.T(), err)

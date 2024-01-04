@@ -166,11 +166,7 @@ func (s *GRPCSuite) TestGRPC() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -204,11 +200,7 @@ func (s *GRPCSuite) TestGRPCh2c() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -246,11 +238,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -288,11 +276,7 @@ func (s *GRPCSuite) TestGRPCInsecure() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -334,11 +318,7 @@ func (s *GRPCSuite) TestGRPCBuffer() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -393,11 +373,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval() {
 	})
 	defer os.Remove(file)
 
-	cmd := s.traefikCmd(withConfigFile(file))
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
+	s.traefikCmd(withConfigFile(file))
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
 	assert.NoError(s.T(), err)
@@ -452,11 +428,7 @@ func (s *GRPCSuite) TestGRPCWithRetry() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err = cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))

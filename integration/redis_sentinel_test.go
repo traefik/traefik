@@ -134,7 +134,7 @@ func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
 }
 
 func (s *RedisSentinelSuite) TestSentinelConfiguration() {
-	//s.setupSentinelStore()
+	// s.setupSentinelStore()
 
 	file := s.adaptFile("fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, `","`),
@@ -191,14 +191,10 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@redis":`, `"compressor@redis":`, `"srvcA@redis":`, `"srvcB@redis":`),
 	)
 	require.NoError(s.T(), err)

@@ -54,14 +54,10 @@ func (s *WebsocketSuite) TestBase() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
@@ -103,14 +99,10 @@ func (s *WebsocketSuite) TestWrongOrigin() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:800")
@@ -151,14 +143,10 @@ func (s *WebsocketSuite) TestOrigin() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
@@ -210,14 +198,10 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:80")
@@ -266,14 +250,10 @@ func (s *WebsocketSuite) TestSSLTermination() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	// Add client self-signed cert
@@ -327,14 +307,10 @@ func (s *WebsocketSuite) TestBasicAuth() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
@@ -370,14 +346,10 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
@@ -414,14 +386,10 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws/http%3A%2F%2Ftest", nil)
@@ -467,14 +435,10 @@ func (s *WebsocketSuite) TestSSLhttp2() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	// Add client self-signed cert
@@ -525,14 +489,10 @@ func (s *WebsocketSuite) TestHeaderAreForwarded() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-
-	err := cmd.Start()
-	assert.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	headers := http.Header{}

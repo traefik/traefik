@@ -31,14 +31,10 @@ func (s *ThrottlingSuite) SetupSuite() {
 }
 
 func (s *ThrottlingSuite) TestThrottleConfReload() {
-	cmd := s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
 	require.NoError(s.T(), err)
 
 	// Expected a 404 as we did not configure anything.

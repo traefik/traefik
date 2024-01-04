@@ -21,15 +21,10 @@ func TestHTTPSuite(t *testing.T) {
 }
 
 func (s *HTTPSuite) TestSimpleConfiguration() {
-	cmd := s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
 
 	// Expect a 404 as we configured nothing.
-	err = try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	// Provide a configuration, fetched by Traefik provider.

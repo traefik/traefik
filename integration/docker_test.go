@@ -50,14 +50,10 @@ func (s *DockerSuite) TestSimpleConfiguration() {
 
 	s.composeUp()
 
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 }
 
@@ -76,11 +72,7 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 	s.composeUp("simple")
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -113,13 +105,9 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels() {
 	s.composeUp("withtcplabels")
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	require.NoError(s.T(), err)
 
 	who, err := guessWho("127.0.0.1:8000", "my.super.host", true)
@@ -143,10 +131,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 	s.composeUp("withlabels1", "withlabels2")
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -186,11 +171,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels() {
 	s.composeUp("withonelabelmissing")
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -216,11 +197,7 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 	s.composeUp("powpow")
 
 	// Start traefik
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)

@@ -33,14 +33,10 @@ func TestHTTPSSuite(t *testing.T) {
 func (s *HTTPSSuite) TestWithSNIConfigHandshake() {
 	file := s.adaptFile("fixtures/https/https_sni.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.org`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.org`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -69,13 +65,10 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake() {
 func (s *HTTPSSuite) TestWithSNIConfigRoute() {
 	file := s.adaptFile("fixtures/https/https_sni.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	require.NoError(s.T(), err)
 
 	backend1 := startTestServer("9010", http.StatusNoContent, "")
@@ -125,13 +118,10 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute() {
 func (s *HTTPSSuite) TestWithTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	require.NoError(s.T(), err)
 
 	backend1 := startTestServer("9010", http.StatusNoContent, "")
@@ -211,13 +201,10 @@ func (s *HTTPSSuite) TestWithTLSOptions() {
 func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.net`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.net`)"))
 	require.NoError(s.T(), err)
 
 	backend1 := startTestServer("9010", http.StatusNoContent, "")
@@ -280,13 +267,10 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest() {
 	file := s.adaptFile("fixtures/https/https_sni_strict.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -306,13 +290,10 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest() {
 func (s *HTTPSSuite) TestWithDefaultCertificate() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -342,13 +323,10 @@ func (s *HTTPSSuite) TestWithDefaultCertificate() {
 func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -378,13 +356,10 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -415,13 +390,10 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 	file := s.adaptFile("fixtures/https/dynamic_https_sni_default_cert.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -450,13 +422,10 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication() {
 	file := s.adaptFile("fixtures/https/clientca/https_1ca1config.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.org`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.org`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -522,13 +491,10 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 	})
 
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	require.NoError(s.T(), err)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
@@ -618,13 +584,10 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 		Server2: server2.URL,
 	})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	require.NoError(s.T(), err)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
@@ -701,13 +664,10 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend() {
 
 	file := s.adaptFile("fixtures/https/rootcas/https.toml", struct{ BackendHost string }{backend.URL})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(backend.URL))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(backend.URL))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8081/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -722,13 +682,10 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend() {
 
 	file := s.adaptFile("fixtures/https/rootcas/https_with_file.toml", struct{ BackendHost string }{backend.URL})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(backend.URL))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(backend.URL))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8081/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -768,10 +725,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange() {
 		DynamicConfFileName: dynamicConfFileName,
 	})
 	defer os.Remove(confFileName)
-	cmd := s.traefikCmd(withConfigFile(confFileName))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(confFileName))
 
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -788,7 +742,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange() {
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr1.TLSClientConfig.ServerName+"`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr1.TLSClientConfig.ServerName+"`)"))
 	require.NoError(s.T(), err)
 
 	backend1 := startTestServer("9010", http.StatusNoContent, "")
@@ -837,10 +791,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange() {
 		DynamicConfFileName: dynamicConfFileName,
 	})
 	defer os.Remove(confFileName)
-	cmd := s.traefikCmd(withConfigFile(confFileName))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(confFileName))
 
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -857,7 +808,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange() {
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr2.TLSClientConfig.ServerName+"`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr2.TLSClientConfig.ServerName+"`)"))
 	require.NoError(s.T(), err)
 
 	backend1 := startTestServer("9010", http.StatusNoContent, "")
@@ -907,10 +858,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion()
 		DynamicConfFileName: dynamicConfFileName,
 	})
 	defer os.Remove(confFileName)
-	cmd := s.traefikCmd(withConfigFile(confFileName))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(confFileName))
 
 	tr2 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -920,7 +868,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion()
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr2.TLSClientConfig.ServerName+"`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr2.TLSClientConfig.ServerName+"`)"))
 	require.NoError(s.T(), err)
 
 	backend2 := startTestServer("9020", http.StatusResetContent, "")
@@ -983,13 +931,10 @@ func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName
 func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 	file := s.adaptFile("fixtures/https/https_redirect.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("Host(`example.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("Host(`example.com`)"))
 	require.NoError(s.T(), err)
 
 	client := &http.Client{
@@ -1085,13 +1030,10 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive() {
 	file := s.adaptFile("fixtures/https/https_sni_case_insensitive_dynamic.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{
@@ -1125,13 +1067,10 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 
 	file := s.adaptFile("fixtures/https/https_domain_fronting.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
@@ -1239,13 +1178,10 @@ func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 
 	file := s.adaptFile("fixtures/https/https_invalid_tls_options.toml", struct{}{})
 	defer os.Remove(file)
-	cmd := s.traefikCmd(withConfigFile(file))
-	err := cmd.Start()
-	require.NoError(s.T(), err)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
