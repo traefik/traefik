@@ -343,8 +343,7 @@ func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func()) {
 	cmd, out := s.cmdTraefik(args...)
 	return cmd, func() {
-		// TODO Show only when failed
-		if *showLog {
+		if s.T().Failed() || *showLog {
 			s.displayLogK3S()
 			s.displayLogCompose()
 			s.displayTraefikLog(out)
@@ -377,8 +376,10 @@ func (s *BaseSuite) displayLogCompose() {
 				break
 			}
 			require.NoError(s.T(), err)
-			if len(bytes.TrimSpace(b)) > 0 {
-				log.Info().Str("container", name).Msg(string(b))
+
+			trimLogs := bytes.Trim(bytes.TrimSpace(b), string([]byte{0}))
+			if len(trimLogs) > 0 {
+				log.Info().Str("container", name).Msg(string(trimLogs))
 			}
 		}
 	}
@@ -386,10 +387,12 @@ func (s *BaseSuite) displayLogCompose() {
 
 func (s *BaseSuite) displayTraefikLog(output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		log.WithoutContext().Infof("%s: No Traefik logs.", c.TestName())
+		log.WithoutContext().Info("No Traefik logs.")
 	} else {
-		log.WithoutContext().Infof("%s: Traefik logs: ", c.TestName())
-		log.WithoutContext().Infof(output.String())
+		for _, line := range strings.Split(output.String(), "\n") {
+			log.WithoutContext().Info(line)
+		}
+
 	}
 }
 
