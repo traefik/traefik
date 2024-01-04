@@ -8,7 +8,21 @@ description: "Learn how to use IPAllowList in HTTP middleware for limiting clien
 Limiting Clients to Specific IPs
 {: .subtitle }
 
+<<<<<<<< HEAD:docs/content/middlewares/http/ipallowlist.md
 IPAllowList accepts / refuses requests based on the client IP.
+|||||||| dae0491b6:docs/content/middlewares/http/ipwhitelist.md
+![IpWhiteList](../../assets/img/middleware/ipwhitelist.png)
+
+IPWhitelist accepts / refuses requests based on the client IP.
+========
+![IPWhiteList](../../assets/img/middleware/ipwhitelist.png)
+
+IPWhiteList accepts / refuses requests based on the client IP.
+
+!!! warning
+
+    This middleware is deprecated, please use the [IPAllowList](./ipallowlist.md) middleware instead.
+>>>>>>>> upstream/v2.11:docs/content/middlewares/http/ipwhitelist.md
 
 ## Configuration Examples
 
