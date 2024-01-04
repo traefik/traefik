@@ -10,7 +10,6 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 func TestGetBestCertificate(t *testing.T) {
@@ -68,7 +67,7 @@ func TestGetBestCertificate(t *testing.T) {
 			}
 
 			store := &CertificateStore{
-				DynamicCerts: safe.New(dynamicMap),
+				dynamicCerts: dynamicMap,
 				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 			}
 

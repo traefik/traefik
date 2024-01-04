@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 
@@ -67,7 +68,7 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 			continue
 		}
 
-		certs = append(certs, cert)
+		certs = append(certs, *cert)
 	}
 
 	return certs
@@ -135,35 +136,66 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	return err
 }
 
+// FileOrContent hold a file path or content.
+type FileOrContent string
+
+func (f FileOrContent) String() string {
+	return string(f)
+}
+
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
+func (f FileOrContent) IsPath() bool {
+	_, err := os.Stat(f.String())
+	return err == nil
+}
+
+func (f FileOrContent) Read() ([]byte, error) {
+	var content []byte
+	if f.IsPath() {
+		var err error
+		content, err = os.ReadFile(f.String())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		content = []byte(f)
+	}
+	return content, nil
+}
+
 // GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
-func (c *Certificate) GetCertificate() (tls.Certificate, error) {
+func (c *Certificate) GetCertificate() (*tls.Certificate, error) {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read CertFile: %w", err)
+		return nil, fmt.Errorf("unable to read CertFile: %w", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile: %w", err)
+		return nil, fmt.Errorf("unable to read KeyFile: %w", err)
 	}
 
 	cert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
+		return nil, fmt.Errorf("unable to parse TLS certificate key pair: %w", err)
 	}
 
-	return cert, nil
+	if err := parseCertificate(&cert); err != nil {
+		return nil, fmt.Errorf("unable to parse TLS certificate: %w", err)
+	}
+
+	return &cert, nil
 }
 
 // GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
 // It assumes that the configured CertFile and KeyFile are of byte type.
-func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
+func (c *Certificate) GetCertificateFromBytes() (*tls.Certificate, error) {
 	cert, err := tls.X509KeyPair([]byte(c.CertFile), []byte(c.KeyFile))
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
+		return nil, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
 
-	return cert, nil
+	return &cert, nil
 }
 
 // GetTruncatedCertificateName truncates the certificate name.
@@ -295,4 +327,19 @@ func verifyChain(rootCAs *x509.CertPool, rawCerts [][]byte) (*x509.Certificate, 
 	}
 
 	return certs[0], nil
+}
+
+// parseCertificate parses the first certificate from the certificate chain and sets it as the leaf certificate.
+func parseCertificate(cert *tls.Certificate) error {
+	if cert.Leaf != nil {
+		return nil
+	}
+
+	parsedCert, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return err
+	}
+	cert.Leaf = parsedCert
+
+	return nil
 }
