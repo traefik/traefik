@@ -26,7 +26,6 @@ type HealthCheckSuite struct {
 }
 
 func TestHealthCheckSuite(t *testing.T) {
-	t.Setenv("CI", "ci")
 	suite.Run(t, new(HealthCheckSuite))
 }
 

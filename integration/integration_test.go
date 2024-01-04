@@ -105,8 +105,6 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 }
 
 func (s *BaseSuite) SetupSuite() {
-	os.Setenv("CI", "ci")
-
 	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).
 		With().Timestamp().Caller().Logger()
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)

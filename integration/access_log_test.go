@@ -44,7 +44,6 @@ type accessLogValue struct {
 }
 
 func (s *AccessLogSuite) SetupSuite() {
-	os.Setenv("CI", "ci")
 	s.BaseSuite.SetupSuite()
 	s.createComposeProject("access_log")
 	s.composeUp()
