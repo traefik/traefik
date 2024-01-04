@@ -4,49 +4,62 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
+	"github.com/fatih/structs"
 	"github.com/kvtools/redis"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 // Redis test suites.
-type RedisSuite struct {
+type RedisSentinelSuite struct {
 	BaseSuite
 	kvClient       store.Store
 	redisEndpoints []string
 }
 
-func TestRedisSuite(t *testing.T) {
-	suite.Run(t, new(RedisSuite))
+func TestRedisSentinelSuite(t *testing.T) {
+	suite.Run(t, new(RedisSentinelSuite))
 }
 
-func (s *RedisSuite) SetupSuite() {
+func (s *RedisSentinelSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
-	s.createComposeProject("redis")
+	s.setupSentinelConfiguration([]string{"26379", "26379", "26379"})
+
+	s.createComposeProject("redis_sentinel")
 	s.composeUp()
 
-	s.redisEndpoints = []string{}
-	s.redisEndpoints = append(s.redisEndpoints, net.JoinHostPort(s.getComposeServiceIP("redis"), "6379"))
-
+	s.redisEndpoints = []string{
+		net.JoinHostPort(s.getComposeServiceIP("sentinel1"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel2"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "26379"),
+	}
 	kv, err := valkeyrie.NewStore(
 		context.Background(),
 		redis.StoreName,
 		s.redisEndpoints,
-		&redis.Config{},
+		&redis.Config{
+			Sentinel: &redis.Sentinel{
+				MasterName: "mymaster",
+			},
+		},
 	)
 	if err != nil {
 		s.T().Fatal("Cannot create store redis: ", err)
@@ -58,13 +71,73 @@ func (s *RedisSuite) SetupSuite() {
 	require.NoError(s.T(), err)
 }
 
-func (s *RedisSuite) TearDownSuite() {
+func (s *RedisSentinelSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
+
+	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
+		err := os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
+		require.NotErrorIs(s.T(), err, fs.ErrNotExist)
+	}
 }
 
-func (s *RedisSuite) TestSimpleConfiguration() {
-	file := s.adaptFile("fixtures/redis/simple.toml", struct{ RedisAddress string }{
-		RedisAddress: strings.Join(s.redisEndpoints, ","),
+func (s *RedisSentinelSuite) setupSentinelStore() {
+
+	s.redisEndpoints = []string{
+		net.JoinHostPort(s.getComposeServiceIP("sentinel1"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel2"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "26379"),
+	}
+
+	kv, err := valkeyrie.NewStore(
+		context.Background(),
+		redis.StoreName,
+		s.redisEndpoints,
+		&redis.Config{
+			Sentinel: &redis.Sentinel{
+				MasterName: "mymaster",
+			},
+		},
+	)
+	require.NoError(s.T(), err)
+	s.kvClient = kv
+
+	// wait for redis
+	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
+	require.NoError(s.T(), err)
+}
+
+func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
+	for i, port := range ports {
+		templateValue := struct{ SentinelPort string }{SentinelPort: port}
+
+		// Load file
+		templateFile := "resources/compose/config/sentinel_template.conf"
+		tmpl, err := template.ParseFiles(templateFile)
+		require.NoError(s.T(), err)
+
+		folder, prefix := filepath.Split(templateFile)
+
+		fileName := fmt.Sprintf("%s/sentinel%d.conf", folder, i+1)
+		tmpFile, err := os.Create(fileName)
+		require.NoError(s.T(), err)
+		defer tmpFile.Close()
+
+		model := structs.Map(templateValue)
+		model["SelfFilename"] = tmpFile.Name()
+
+		err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
+		require.NoError(s.T(), err)
+
+		err = tmpFile.Sync()
+		require.NoError(s.T(), err)
+	}
+}
+
+func (s *RedisSentinelSuite) TestSentinelConfiguration() {
+	//s.setupSentinelStore()
+
+	file := s.adaptFile("fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
+		RedisAddress: strings.Join(s.redisEndpoints, `","`),
 	})
 	defer os.Remove(file)
 
@@ -111,7 +184,6 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 		"traefik/http/middlewares/compressor/compress":            "true",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
-		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
 	}
 
 	for k, v := range data {
@@ -160,6 +232,7 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		require.NoError(s.T(), err, text)
+		require.NoError(s.T(), err)
+		log.Info().Msg(text)
 	}
 }
