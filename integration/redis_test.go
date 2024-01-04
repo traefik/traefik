@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"net"
@@ -12,12 +11,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/fatih/structs"
-	"github.com/go-check/check"
 	"github.com/kvtools/redis"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
@@ -34,17 +32,6 @@ type RedisSuite struct {
 	BaseSuite
 	kvClient       store.Store
 	redisEndpoints []string
-}
-
-func (s *RedisSuite) TearDownSuite(c *check.C) {
-	s.composeDown(c)
-
-	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
-		err := os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
-		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			c.Fatal("unable to clean configuration file for sentinel: ", err)
-		}
-	}
 }
 
 func TestRedisSuite(t *testing.T) {
@@ -78,6 +65,11 @@ func (s *RedisSuite) SetupSuite() {
 
 func (s *RedisSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
+
+	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
+		err := os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
+		require.NotErrorIs(s.T(), err, fs.ErrNotExist)
+	}
 }
 
 func (s *RedisSuite) TestSimpleConfiguration() {
@@ -134,39 +126,39 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 
 	for k, v := range data {
 		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	defer display()
 	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@redis":`, `"compressor@redis":`, `"srvcA@redis":`, `"srvcB@redis":`),
 	)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	got, err := json.MarshalIndent(obtained, "", "  ")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")
 
 	if *updateExpected {
 		err = os.WriteFile(expectedJSON, got, 0o666)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	expected, err := os.ReadFile(expectedJSON)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if !bytes.Equal(expected, got) {
 		diff := difflib.UnifiedDiff{
@@ -178,21 +170,20 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		c.Assert(err, checker.IsNil)
-		c.Error(text)
+		require.NoError(s.T(), err, text)
 	}
 }
 
-func (s *RedisSuite) setupSentinelStore(c *check.C) {
-	s.setupSentinelConfiguration(c, []string{"26379", "36379", "46379"})
+func (s *RedisSuite) setupSentinelStore() {
+	s.setupSentinelConfiguration([]string{"26379", "36379", "46379"})
 
-	s.createComposeProject(c, "redis_sentinel")
-	s.composeUp(c)
+	s.createComposeProject("redis_sentinel")
+	s.composeUp("redis_sentinel")
 
 	s.redisEndpoints = []string{
-		net.JoinHostPort(s.getComposeServiceIP(c, "sentinel1"), "26379"),
-		net.JoinHostPort(s.getComposeServiceIP(c, "sentinel2"), "36379"),
-		net.JoinHostPort(s.getComposeServiceIP(c, "sentinel3"), "46379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel1"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel2"), "36379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "46379"),
 	}
 
 	kv, err := valkeyrie.NewStore(
@@ -205,47 +196,45 @@ func (s *RedisSuite) setupSentinelStore(c *check.C) {
 			},
 		},
 	)
-	if err != nil {
-		c.Fatal("Cannot create store redis sentinel")
-	}
+	require.NoError(s.T(), err)
 	s.kvClient = kv
 
 	// wait for redis
 	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *RedisSuite) setupSentinelConfiguration(c *check.C, ports []string) {
+func (s *RedisSuite) setupSentinelConfiguration(ports []string) {
 	for i, port := range ports {
 		templateValue := struct{ SentinelPort string }{SentinelPort: port}
 
 		// Load file
 		templateFile := "resources/compose/config/sentinel_template.conf"
 		tmpl, err := template.ParseFiles(templateFile)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		folder, prefix := filepath.Split(templateFile)
 
 		fileName := fmt.Sprintf("%s/sentinel%d.conf", folder, i+1)
 		tmpFile, err := os.Create(fileName)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 		defer tmpFile.Close()
 
 		model := structs.Map(templateValue)
 		model["SelfFilename"] = tmpFile.Name()
 
 		err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		err = tmpFile.Sync()
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 }
 
-func (s *RedisSuite) TestSentinelConfiguration(c *check.C) {
-	s.setupSentinelStore(c)
+func (s *RedisSuite) TestSentinelConfiguration() {
+	s.setupSentinelStore()
 
-	file := s.adaptFile(c, "fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
+	file := s.adaptFile("fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, `","`),
 	})
 	defer os.Remove(file)
