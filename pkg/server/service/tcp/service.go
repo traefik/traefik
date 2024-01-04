@@ -50,6 +50,11 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	case conf.LoadBalancer != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
+		var sourceIPs []net.TCPAddr
+		for _, sourceIP := range conf.LoadBalancer.SourceIPs {
+			sourceIPs = append(sourceIPs, net.TCPAddr{IP: net.ParseIP(sourceIP)})
+		}
+
 		if conf.LoadBalancer.TerminationDelay == nil {
 			defaultTerminationDelay := 100
 			conf.LoadBalancer.TerminationDelay = &defaultTerminationDelay
@@ -62,7 +67,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
+			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol, sourceIPs)
 			if err != nil {
 				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
 				continue
