@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -397,6 +398,21 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 				return nil, fmt.Errorf("invalid CurveID in curvePreferences: %s", curve)
 			}
 		}
+	}
+
+	if tlsOption.SessionTicketKeys != nil {
+		sessionTicketKeys := make([][32]byte, len(tlsOption.SessionTicketKeys))
+		for i, key := range tlsOption.SessionTicketKeys {
+			decoded, err := base64.StdEncoding.DecodeString(key)
+			if err != nil {
+				return nil, fmt.Errorf("invalid sessionTicketKey, must be in base64 encoding: %s", key)
+			}
+			if len(decoded) != 32 {
+				return nil, fmt.Errorf("sessionTicketKey length is not 32 bytes: %s", key)
+			}
+			copy(sessionTicketKeys[i][:], decoded)
+		}
+		conf.SetSessionTicketKeys(sessionTicketKeys)
 	}
 
 	return conf, nil
