@@ -8,7 +8,6 @@ on:
 env:
   GO_VERSION: '1.21'
   CGO_ENABLED: 0
-  IN_DOCKER: ""
 
 jobs:
 

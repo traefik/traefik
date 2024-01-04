@@ -36,16 +36,12 @@ blocks:
     run:
       when: "branch =~ '.*' OR pull_request =~'.*'"
     task:
-      agent:
-        machine:
-          type: e1-standard-8
-          os_image: ubuntu2004
       jobs:
         - name: Test Integration
           commands:
             - make pull-images
             - touch webui/static/index.html # Avoid generating webui
-            - make test-integration-without-docker
+            - make test-integration
             - df -h
       epilogue:
         always:
@@ -68,8 +64,6 @@ blocks:
           value: 2.32.1
         - name: CODENAME
           value: "mimolette"
-        - name: IN_DOCKER
-          value: ""
       prologue:
         commands:
           - export VERSION=${SEMAPHORE_GIT_TAG_NAME}

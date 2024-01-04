@@ -3,13 +3,7 @@ set -e
 
 export DEST=.
 
-TESTFLAGS+=("-test.timeout=20m -failfast")
-
-if [ -n "${VERBOSE}" ]; then
-    TESTFLAGS+=(-v)
-elif [ -n "${VERBOSE_INTEGRATION}" ]; then
-    TESTFLAGS+=(-v)
-fi
+TESTFLAGS+=("-test.timeout=20m -failfast -v")
 
 cd integration
 echo "Testing against..."
@@ -17,4 +11,4 @@ docker version
 
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048
-CGO_ENABLED=0 go test ${TESTFLAGS[*]}
+go test -v ${TESTFLAGS[*]}
