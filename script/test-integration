@@ -3,12 +3,9 @@ set -e
 
 export DEST=.
 
-TESTFLAGS+=("-test.timeout=20m -failfast -v")
-
-cd integration
 echo "Testing against..."
 docker version
 
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048
-go test -v ${TESTFLAGS[*]}
+go test ./integration -test.timeout=20m -failfast -v ${TESTFLAGS[*]}
