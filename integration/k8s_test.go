@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -50,9 +51,9 @@ func (s *K8sSuite) SetupSuite() {
 	data, err := os.ReadFile(abs)
 	require.NoError(s.T(), err)
 
-	content := strings.ReplaceAll(string(data), "https://server:6443", fmt.Sprintf("https://%s:6443", s.getComposeServiceIP("server")))
+	content := strings.ReplaceAll(string(data), "https://server:6443", fmt.Sprintf("https://%s", net.JoinHostPort(s.getComposeServiceIP("server"), "6443")))
 
-	err = os.WriteFile(abs, []byte(content), 0644)
+	err = os.WriteFile(abs, []byte(content), 0o644)
 	require.NoError(s.T(), err)
 
 	err = os.Setenv("KUBECONFIG", abs)

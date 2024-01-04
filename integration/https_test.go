@@ -49,15 +49,15 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake() {
 		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	defer conn.Close()
 	err = conn.Handshake()
-	assert.Nil(s.T(), err, "TLS handshake error")
+	assert.NoError(s.T(), err, "TLS handshake error")
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
-	assert.Nil(s.T(), err, "certificate did not match SNI servername")
+	assert.NoError(s.T(), err, "certificate did not match SNI servername")
 
 	proto := conn.ConnectionState().NegotiatedProtocol
 	assert.Equal(s.T(), "h2", proto)
@@ -326,15 +326,15 @@ func (s *HTTPSSuite) TestWithDefaultCertificate() {
 		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	defer conn.Close()
 	err = conn.Handshake()
-	assert.Nil(s.T(), err, "TLS handshake error")
+	assert.NoError(s.T(), err, "TLS handshake error")
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
-	assert.Nil(s.T(), err, "server did not serve correct default certificate")
+	assert.NoError(s.T(), err, "server did not serve correct default certificate")
 
 	proto := cs.NegotiatedProtocol
 	assert.Equal(s.T(), "h2", proto)
@@ -362,15 +362,15 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	defer conn.Close()
 	err = conn.Handshake()
-	assert.Nil(s.T(), err, "TLS handshake error")
+	assert.NoError(s.T(), err, "TLS handshake error")
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
-	assert.Nil(s.T(), err, "server did not serve correct default certificate")
+	assert.NoError(s.T(), err, "server did not serve correct default certificate")
 
 	proto := cs.NegotiatedProtocol
 	assert.Equal(s.T(), "h2", proto)
@@ -400,15 +400,15 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	defer conn.Close()
 	err = conn.Handshake()
-	assert.Nil(s.T(), err, "TLS handshake error")
+	assert.NoError(s.T(), err, "TLS handshake error")
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
-	assert.Nil(s.T(), err, "server did not serve correct default certificate")
+	assert.NoError(s.T(), err, "server did not serve correct default certificate")
 
 	proto := cs.NegotiatedProtocol
 	assert.Equal(s.T(), "h2", proto)
@@ -438,15 +438,15 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	defer conn.Close()
 	err = conn.Handshake()
-	assert.Nil(s.T(), err, "TLS handshake error")
+	assert.NoError(s.T(), err, "TLS handshake error")
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
-	assert.Nil(s.T(), err, "server did not serve correct default certificate")
+	assert.NoError(s.T(), err, "server did not serve correct default certificate")
 
 	proto := cs.NegotiatedProtocol
 	assert.Equal(s.T(), "h2", proto)
@@ -475,25 +475,25 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication() {
 	}
 	// Connection without client certificate should fail
 	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "should be allowed to connect to server")
+	assert.NoError(s.T(), err, "should be allowed to connect to server")
 
 	// Connect with client certificate signed by ca1
 	cert, err := tls.LoadX509KeyPair("fixtures/https/clientca/client1.crt", "fixtures/https/clientca/client1.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	conn.Close()
 
 	// Connect with client certificate not signed by ca1
 	cert, err = tls.LoadX509KeyPair("fixtures/https/snitest.org.cert", "fixtures/https/snitest.org.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	conn.Close()
 
@@ -504,11 +504,11 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication() {
 		Certificates:       []tls.Certificate{},
 	}
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client2.crt", "fixtures/https/clientca/client2.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "should be allowed to connect to server")
+	assert.NoError(s.T(), err, "should be allowed to connect to server")
 }
 
 // TestWithClientCertificateAuthentication
@@ -561,7 +561,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 	assert.Error(s.T(), err)
 
 	cert, err := tls.LoadX509KeyPair("fixtures/https/clientca/client1.crt", "fixtures/https/clientca/client1.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	// Connect with client signed by ca1
@@ -576,7 +576,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 	}
 
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client2.crt", "fixtures/https/clientca/client2.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	client = http.Client{
@@ -596,7 +596,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 	}
 
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client3.crt", "fixtures/https/clientca/client3.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	client = http.Client{
@@ -659,7 +659,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 
 	// Connect with client signed by ca1
 	cert, err := tls.LoadX509KeyPair("fixtures/https/clientca/client1.crt", "fixtures/https/clientca/client1.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	_, err = client.Do(req)
@@ -673,7 +673,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 	}
 
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client2.crt", "fixtures/https/clientca/client2.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	client = http.Client{
@@ -692,7 +692,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 	}
 
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client3.crt", "fixtures/https/clientca/client3.key")
-	assert.Nil(s.T(), err, "unable to load client certificate and key")
+	assert.NoError(s.T(), err, "unable to load client certificate and key")
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
 	client = http.Client{
@@ -1118,15 +1118,15 @@ func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive() {
 		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	assert.Nil(s.T(), err, "failed to connect to server")
+	assert.NoError(s.T(), err, "failed to connect to server")
 
 	defer conn.Close()
 	err = conn.Handshake()
-	assert.Nil(s.T(), err, "TLS handshake error")
+	assert.NoError(s.T(), err, "TLS handshake error")
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("*.WWW.SNITEST.COM")
-	assert.Nil(s.T(), err, "certificate did not match SNI servername")
+	assert.NoError(s.T(), err, "certificate did not match SNI servername")
 
 	proto := conn.ConnectionState().NegotiatedProtocol
 	assert.Equal(s.T(), "h2", proto)

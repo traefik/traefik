@@ -72,7 +72,7 @@ func (s *KeepAliveSuite) TestShouldRespectConfiguredBackendHttpKeepAliveTime() {
 			}
 		}
 
-		require.Equal(s.T(), connCount, 1)
+		require.Equal(s.T(), 1, connCount)
 
 		for _, idlePeriod := range idlePeriodLengthMap {
 			// Our method of measuring the actual idle period is not precise, so allow some sub-ms deviation

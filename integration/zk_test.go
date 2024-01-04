@@ -12,13 +12,12 @@ import (
 	"time"
 
 	"github.com/kvtools/valkeyrie"
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/kvtools/zookeeper"
+	"github.com/pmezard/go-difflib/difflib"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/kvtools/valkeyrie/store"
-	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
 )

@@ -36,8 +36,7 @@ import (
 )
 
 var (
-	integration = flag.Bool("integration", false, "run integration tests")
-	showLog     = flag.Bool("tlog", false, "always show Traefik logs")
+	showLog = flag.Bool("tlog", false, "always show Traefik logs")
 )
 
 type composeConfig struct {
@@ -58,61 +57,6 @@ type composeService struct {
 
 type composeDeploy struct {
 	Replicas int `yaml:"replicas"`
-}
-
-func Tst(t *testing.T) {
-	if !*integration {
-		log.WithoutContext().Info("Integration tests disabled.")
-		return
-	}
-
-	_ = os.Setenv("CI", "ci")
-
-	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).
-		With().Timestamp().Caller().Logger()
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
-	// Global logrus replacement
-	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
-
-	// configure default standard log.
-	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
-	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
-
-	suite.Run(t, &AccessLogSuite{})
-	// suite.Run(t, &AcmeSuite{})
-	suite.Run(t, &ConsulCatalogSuite{})
-	suite.Run(t, &ConsulSuite{})
-	suite.Run(t, &DockerComposeSuite{})
-	suite.Run(t, &DockerSuite{})
-	suite.Run(t, &ErrorPagesSuite{})
-	suite.Run(t, &EtcdSuite{})
-	suite.Run(t, &FileSuite{})
-	suite.Run(t, &GRPCSuite{})
-	suite.Run(t, &HeadersSuite{})
-	suite.Run(t, &HealthCheckSuite{})
-	suite.Run(t, &HostResolverSuite{})
-	suite.Run(t, &HTTPSSuite{})
-	suite.Run(t, &HTTPSuite{})
-	suite.Run(t, &K8sSuite{})
-	suite.Run(t, &KeepAliveSuite{})
-	suite.Run(t, &LogRotationSuite{})
-	suite.Suite(&MarathonSuite{})
-	suite.Suite(&MarathonSuite15{})
-	suite.Run(t, &ProxyProtocolSuite{})
-	suite.Run(t, &RateLimitSuite{})
-	suite.Run(t, &RedisSuite{})
-	suite.Run(t, &RestSuite{})
-	suite.Run(t, &RetrySuite{})
-	suite.Run(t, &SimpleSuite{})
-	suite.Run(t, &TCPSuite{})
-	suite.Run(t, &TimeoutSuite{})
-	suite.Run(t, &ThrottlingSuite{})
-	suite.Run(t, &TLSClientHeadersSuite{})
-	suite.Run(t, &TracingSuite{})
-	suite.Run(t, &UDPSuite{})
-	suite.Run(t, &WebsocketSuite{})
-	suite.Run(t, &ZookeeperSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
@@ -138,23 +82,26 @@ func (s *BaseSuite) waitForTraefik(containerName string) {
 }
 
 func (s *BaseSuite) displayTraefikLogFile(path string) {
-	// if s..Failed() {
-	// 	if _, err := os.Stat(path); !os.IsNotExist(err) {
-	// 		content, errRead := os.ReadFile(path)
-	// 		fmt.Printf("%s: Traefik logs: \n", c.TestName())
-	// 		if errRead == nil {
-	// 			fmt.Println(content)
-	// 		} else {
-	// 			fmt.Println(errRead)
-	// 		}
-	// 	} else {
-	// 		fmt.Printf("%s: No Traefik logs.\n", c.TestName())
-	// 	}
-	// 	errRemove := os.Remove(path)
-	// 	if errRemove != nil {
-	// 		fmt.Println(errRemove)
-	// 	}
-	// }
+	if s.T().Failed() {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			content, errRead := os.ReadFile(path)
+			// TODO TestName
+			// fmt.Printf("%s: Traefik logs: \n", c.TestName())
+			fmt.Print("Traefik logs: \n")
+			if errRead == nil {
+				fmt.Println(content)
+			} else {
+				fmt.Println(errRead)
+			}
+		} else {
+			// fmt.Printf("%s: No Traefik logs.\n", c.TestName())
+			fmt.Print("No Traefik logs.\n")
+		}
+		errRemove := os.Remove(path)
+		if errRemove != nil {
+			fmt.Println(errRemove)
+		}
+	}
 }
 
 func (s *BaseSuite) SetupSuite() {
@@ -195,13 +142,15 @@ func (s *BaseSuite) SetupSuite() {
 
 	s.network = network
 	s.hostIP = "172.31.42.1"
-	if isDockerDesktop(s.T(), ctx) {
-		s.hostIP = getDockerDesktopHostIp(s.T(), ctx)
+	if isDockerDesktop(ctx, s.T()) {
+		s.hostIP = getDockerDesktopHostIP(ctx, s.T())
 		s.setupVPN("tailscale.secret")
 	}
 }
 
-func getDockerDesktopHostIp(t *testing.T, ctx context.Context) string {
+func getDockerDesktopHostIP(ctx context.Context, t *testing.T) string {
+	t.Helper()
+
 	req := testcontainers.ContainerRequest{
 		Image: "alpine",
 		HostConfigModifier: func(config *container.HostConfig) {
@@ -229,7 +178,9 @@ func getDockerDesktopHostIp(t *testing.T, ctx context.Context) string {
 	return matches[0]
 }
 
-func isDockerDesktop(t *testing.T, ctx context.Context) bool {
+func isDockerDesktop(ctx context.Context, t *testing.T) bool {
+	t.Helper()
+
 	cli, err := testcontainers.NewDockerClientWithOpts(ctx)
 	if err != nil {
 		t.Fatalf("failed to create docker client: %s", err)
@@ -257,7 +208,6 @@ func (s *BaseSuite) TearDownSuite() {
 		return nil
 	})
 	require.NoError(s.T(), err)
-
 }
 
 // createComposeProject creates the docker compose project stored as a field in the BaseSuite.
@@ -301,20 +251,20 @@ func (s *BaseSuite) createComposeProject(name string) {
 		if containerConfig.Deploy.Replicas > 0 {
 			for i := 0; i < containerConfig.Deploy.Replicas; i++ {
 				id = fmt.Sprintf("%s-%d", id, i+1)
-				con, err := s.createContainer(containerConfig, id, mounts, ctx)
+				con, err := s.createContainer(ctx, containerConfig, id, mounts)
 				require.NoError(s.T(), err)
 				s.containers[id] = con
 			}
 			continue
 		}
 
-		con, err := s.createContainer(containerConfig, id, mounts, ctx)
+		con, err := s.createContainer(ctx, containerConfig, id, mounts)
 		require.NoError(s.T(), err)
 		s.containers[id] = con
 	}
 }
 
-func (s *BaseSuite) createContainer(containerConfig composeService, id string, mounts testcontainers.ContainerMounts, ctx context.Context) (testcontainers.Container, error) {
+func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts testcontainers.ContainerMounts) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
 		Image:      containerConfig.Image,
 		Env:        containerConfig.Environment,
@@ -329,7 +279,7 @@ func (s *BaseSuite) createContainer(containerConfig composeService, id string, m
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
-			if !isDockerDesktop(s.T(), ctx) {
+			if !isDockerDesktop(ctx, s.T()) {
 				config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:"+s.hostIP)
 			}
 		},
@@ -417,29 +367,13 @@ func (s *BaseSuite) displayLogK3S() {
 }
 
 func (s *BaseSuite) displayLogCompose() {
-	// if s.dockerComposeService == nil || s.composeProject == nil {
-	// 	log.Info().Str("testName", c.TestName()).Msg("No docker compose logs.")
-	// 	return
-	// }
-	//
-	// log.Info().Str("testName", c.TestName()).Msg("docker compose logs")
-	//
-	// logConsumer := formatter.NewLogConsumer(context.Background(), logs.NoLevel(log.Logger, zerolog.InfoLevel), false, true)
-	//
-	// err := s.dockerComposeService.Logs(context.Background(), s.composeProject.Name, logConsumer, composeapi.LogOptions{})
-	// require.NoError(err)
-	//
-	// log.Print()
-	// log.Print("################################")
-	// log.Print()
-
 	for name, ctn := range s.containers {
 		readCloser, err := ctn.Logs(context.Background())
 		require.NoError(s.T(), err)
 		for {
 			b := make([]byte, 1024)
 			_, err := readCloser.Read(b)
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			require.NoError(s.T(), err)
@@ -503,27 +437,9 @@ func (s *BaseSuite) getComposeServiceIP(name string) string {
 	return ip
 }
 
-// func (s *BaseSuite) getContainerIP(c *check.C, name string) string {
-// 	// container, err := s.dockerClient.ContainerInspect(context.Background(), name)
-// 	// require.NoError(err)
-// 	// c.Assert(container.NetworkSettings.Networks, check.NotNil)
-// 	//
-// 	// for _, network := range container.NetworkSettings.Networks {
-// 	// 	return network.IPAddress
-// 	// }
-// 	//
-// 	// // Should never happen.
-// 	// c.Error("No network found")
-// 	return ""
-// }
-
 func withConfigFile(file string) string {
 	return "--configFile=" + file
 }
-
-// tailscaleNotSuite includes a BaseSuite out of convenience, so we can benefit
-// from composeUp et co., but it is not meant to function as a TestSuite per se.
-type tailscaleNotSuite struct{ BaseSuite }
 
 // setupVPN starts Tailscale on the corresponding container, and makes it a subnet
 // router, for all the other containers (whoamis, etc) subsequently started for the

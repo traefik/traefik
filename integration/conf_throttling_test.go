@@ -96,7 +96,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 	require.NoError(s.T(), err)
 
 	fields := reloadsRegexp.FindStringSubmatch(string(body))
-	assert.Equal(s.T(), 2, len(fields))
+	assert.Len(s.T(), fields, 2)
 
 	reloads, err := strconv.Atoi(fields[1])
 	if err != nil {

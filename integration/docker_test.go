@@ -96,7 +96,7 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 
 	var version map[string]interface{}
 
-	assert.Nil(s.T(), json.Unmarshal(body, &version))
+	assert.NoError(s.T(), json.Unmarshal(body, &version))
 	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 }
 
@@ -171,7 +171,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 
 	var version map[string]interface{}
 
-	assert.Nil(s.T(), json.Unmarshal(body, &version))
+	assert.NoError(s.T(), json.Unmarshal(body, &version))
 	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 }
 
@@ -241,7 +241,7 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 
 	var version map[string]interface{}
 
-	assert.Nil(s.T(), json.Unmarshal(body, &version))
+	assert.NoError(s.T(), json.Unmarshal(body, &version))
 	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))

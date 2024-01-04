@@ -108,7 +108,7 @@ func (s *LogRotationSuite) TestAccessLogRotation() {
 		_, err := os.Stat(traefikTestAccessLogFile)
 		return err
 	})
-	assert.Nil(s.T(), err, "access log file was not created in time")
+	assert.NoError(s.T(), err, "access log file was not created in time")
 
 	// Verify access.log output as expected
 	s.logAccessLogFile(traefikTestAccessLogFile)
@@ -172,7 +172,7 @@ func (s *LogRotationSuite) verifyEmptyErrorLog(name string) {
 		if e2 != nil {
 			return e2
 		}
-		assert.Len(s.T(), string(traefikLog), 0)
+		assert.Empty(s.T(), string(traefikLog))
 
 		return nil
 	})

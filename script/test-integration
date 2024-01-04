@@ -17,4 +17,4 @@ docker version
 
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048
-CGO_ENABLED=0 go test -integration ${TESTFLAGS[*]}
+CGO_ENABLED=0 go test ${TESTFLAGS[*]}
