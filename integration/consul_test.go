@@ -74,7 +74,6 @@ func (s *ConsulSuite) TearDownTest() {
 
 func (s *ConsulSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
-	defer os.Remove(file)
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -185,7 +184,6 @@ func (s *ConsulSuite) TestDeleteRootKey() {
 	// This test case reproduce the issue: https://github.com/traefik/traefik/issues/8092
 
 	file := s.adaptFile("fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
-	defer os.Remove(file)
 
 	ctx := context.Background()
 	svcaddr := net.JoinHostPort(s.getComposeServiceIP("whoami"), "80")

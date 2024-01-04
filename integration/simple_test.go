@@ -162,7 +162,6 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout() {
 
 func (s *SimpleSuite) TestCustomPingTerminationStatusCode() {
 	file := s.adaptFile("fixtures/custom_ping_termination_status_code.toml", struct{}{})
-	defer os.Remove(file)
 	cmd, _ := s.cmdTraefik(withConfigFile(file))
 
 	// Wait for Traefik to turn ready.
@@ -225,7 +224,6 @@ func (s *SimpleSuite) TestNoAuthOnPing() {
 	defer s.composeDown()
 
 	file := s.adaptFile("./fixtures/simple_auth.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8001/api/rawdata", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
@@ -347,7 +345,6 @@ func (s *SimpleSuite) TestMetricsWithBufferingMiddleware() {
 	defer server.Close()
 
 	file := s.adaptFile("fixtures/simple_metrics_with_buffer_middleware.toml", struct{ IP string }{IP: strings.TrimPrefix(server.URL, "http://")})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -411,7 +408,6 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName() {
 	whoami1IP := s.getComposeServiceIP("whoami1")
 	whoami2IP := s.getComposeServiceIP("whoami2")
 	file := s.adaptFile("fixtures/multiple_provider.toml", struct{ IP string }{IP: whoami2IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -594,7 +590,6 @@ func (s *SimpleSuite) TestMultiProvider() {
 	whoamiURL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
 
 	file := s.adaptFile("fixtures/multiprovider.toml", struct{ Server string }{Server: whoamiURL})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -640,7 +635,6 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 	whoamiURL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
 
 	file := s.adaptFile("fixtures/file/simple-hosts.toml", struct{ Server string }{Server: whoamiURL})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -679,7 +673,6 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 
 func (s *SimpleSuite) TestRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -702,7 +695,6 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 
 func (s *SimpleSuite) TestServiceConfigErrors() {
 	file := s.adaptFile("fixtures/service_errors.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -718,7 +710,6 @@ func (s *SimpleSuite) TestServiceConfigErrors() {
 
 func (s *SimpleSuite) TestTCPRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -733,7 +724,6 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors() {
 
 func (s *SimpleSuite) TestTCPServiceConfigErrors() {
 	file := s.adaptFile("fixtures/tcp/service_errors.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -749,7 +739,6 @@ func (s *SimpleSuite) TestTCPServiceConfigErrors() {
 
 func (s *SimpleSuite) TestUDPRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -759,7 +748,6 @@ func (s *SimpleSuite) TestUDPRouterConfigErrors() {
 
 func (s *SimpleSuite) TestUDPServiceConfigErrors() {
 	file := s.adaptFile("fixtures/udp/service_errors.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -1089,7 +1077,6 @@ func (s *SimpleSuite) TestSecureAPI() {
 	defer s.composeDown()
 
 	file := s.adaptFile("./fixtures/simple_secure_api.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -1326,7 +1313,6 @@ func (s *SimpleSuite) TestDebugLog() {
 	defer s.composeDown()
 
 	file := s.adaptFile("fixtures/simple_debug_log.toml", struct{}{})
-	defer os.Remove(file)
 
 	_, output := s.cmdTraefik(withConfigFile(file))
 

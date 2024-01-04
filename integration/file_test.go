@@ -2,7 +2,6 @@ package integration
 
 import (
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -31,7 +30,6 @@ func (s *FileSuite) TearDownSuite() {
 
 func (s *FileSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/file/simple.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// Expected a 404 as we did not configure anything

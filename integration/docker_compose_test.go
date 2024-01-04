@@ -6,7 +6,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/api"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -44,7 +43,6 @@ func (s *DockerComposeSuite) TestComposeScale() {
 		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
 	file := s.adaptFile("fixtures/docker/minimal.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

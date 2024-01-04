@@ -32,7 +32,6 @@ func TestHTTPSSuite(t *testing.T) {
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIConfigHandshake() {
 	file := s.adaptFile("fixtures/https/https_sni.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -64,7 +63,6 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake() {
 // that traefik routes the requests to the expected backends.
 func (s *HTTPSSuite) TestWithSNIConfigRoute() {
 	file := s.adaptFile("fixtures/https/https_sni.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -117,7 +115,6 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute() {
 
 func (s *HTTPSSuite) TestWithTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -200,7 +197,6 @@ func (s *HTTPSSuite) TestWithTLSOptions() {
 
 func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -266,7 +262,6 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 
 func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest() {
 	file := s.adaptFile("fixtures/https/https_sni_strict.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -289,7 +284,6 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest() {
 
 func (s *HTTPSSuite) TestWithDefaultCertificate() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -322,7 +316,6 @@ func (s *HTTPSSuite) TestWithDefaultCertificate() {
 
 func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -355,7 +348,6 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 
 func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -389,7 +381,6 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 
 func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 	file := s.adaptFile("fixtures/https/dynamic_https_sni_default_cert.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -421,7 +412,6 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication() {
 	file := s.adaptFile("fixtures/https/clientca/https_1ca1config.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -663,7 +653,6 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend() {
 	defer backend.Close()
 
 	file := s.adaptFile("fixtures/https/rootcas/https.toml", struct{ BackendHost string }{backend.URL})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -681,7 +670,6 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend() {
 	defer backend.Close()
 
 	file := s.adaptFile("fixtures/https/rootcas/https_with_file.toml", struct{ BackendHost string }{backend.URL})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -930,7 +918,6 @@ func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName
 
 func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 	file := s.adaptFile("fixtures/https/https_redirect.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -1029,7 +1016,6 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive() {
 	file := s.adaptFile("fixtures/https/https_sni_case_insensitive_dynamic.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -1066,7 +1052,6 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 	defer backend3.Close()
 
 	file := s.adaptFile("fixtures/https/https_domain_fronting.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -1177,7 +1162,6 @@ func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 	defer backend.Close()
 
 	file := s.adaptFile("fixtures/https/https_invalid_tls_options.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik

@@ -360,7 +360,6 @@ func (s *BaseSuite) traefikCmd(args ...string) {
 			s.displayTraefikLog(out)
 		}
 	})
-	return
 }
 
 func (s *BaseSuite) displayLogK3S() {
@@ -437,6 +436,9 @@ func (s *BaseSuite) adaptFile(path string, tempObjects interface{}) string {
 
 	require.NoError(s.T(), err)
 
+	s.T().Cleanup(func() {
+		os.Remove(tmpFile.Name())
+	})
 	return tmpFile.Name()
 }
 

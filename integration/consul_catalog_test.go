@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -133,7 +132,6 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -188,7 +186,6 @@ func (s *ConsulCatalogSuite) TestByLabels() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -209,7 +206,6 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
@@ -244,7 +240,6 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple_watch.toml", tempObjects)
-	defer os.Remove(file)
 
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
@@ -314,7 +309,6 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
@@ -348,7 +342,6 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
@@ -383,7 +376,6 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	// Start a container with some tags
 	reg := &api.AgentServiceRegistration{
@@ -426,7 +418,6 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	// Start a container with some tags
 	reg1 := &api.AgentServiceRegistration{
@@ -489,7 +480,6 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
-	defer os.Remove(file)
 
 	// Start a container with some tags
 	tags := []string{
@@ -552,7 +542,6 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	// Start a container with some tags
 	reg := &api.AgentServiceRegistration{
@@ -616,7 +605,6 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 	}
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -703,7 +691,6 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 		ConsulAddress: s.consulURL,
 	}
 	file := s.adaptFile("fixtures/consul_catalog/connect.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -780,7 +767,6 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 		ConsulAddress: s.consulURL,
 	}
 	file := s.adaptFile("fixtures/consul_catalog/connect_by_default.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -847,7 +833,6 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 		ConsulAddress: s.consulURL,
 	}
 	file := s.adaptFile("fixtures/consul_catalog/connect_not_aware.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

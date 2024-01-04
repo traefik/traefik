@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -34,7 +33,6 @@ func (s *TimeoutSuite) TearDownSuite() {
 func (s *TimeoutSuite) TestForwardingTimeouts() {
 	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
 	file := s.adaptFile("fixtures/timeout/forwarding_timeouts.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

@@ -64,7 +64,6 @@ func (s *EtcdSuite) TearDownSuite() {
 
 func (s *EtcdSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/etcd/simple.toml", struct{ EtcdAddress string }{s.etcdAddr})
-	defer os.Remove(file)
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",

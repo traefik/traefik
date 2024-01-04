@@ -65,7 +65,6 @@ func (s *ZookeeperSuite) TearDownSuite() {
 
 func (s *ZookeeperSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{s.zookeeperAddr})
-	defer os.Remove(file)
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",

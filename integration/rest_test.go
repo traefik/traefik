@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -131,7 +130,6 @@ func (s *RestSuite) TestSimpleConfigurationInsecure() {
 
 func (s *RestSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/rest/simple_secure.toml", struct{}{})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -31,7 +30,6 @@ func (s *HeadersSuite) TestSimpleConfiguration() {
 
 func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 	file := s.adaptFile("fixtures/headers/remove_reverseproxy_headers.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +64,6 @@ func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 
 func (s *HeadersSuite) TestCorsResponses() {
 	file := s.adaptFile("fixtures/headers/cors.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	backend := startTestServer("9000", http.StatusOK, "")
@@ -150,7 +147,6 @@ func (s *HeadersSuite) TestCorsResponses() {
 
 func (s *HeadersSuite) TestSecureHeadersResponses() {
 	file := s.adaptFile("fixtures/headers/secure.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	backend := startTestServer("9000", http.StatusOK, "")
@@ -194,7 +190,6 @@ func (s *HeadersSuite) TestSecureHeadersResponses() {
 
 func (s *HeadersSuite) TestMultipleSecureHeadersResponses() {
 	file := s.adaptFile("fixtures/headers/secure_multiple.toml", struct{}{})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	backend := startTestServer("9000", http.StatusOK, "")

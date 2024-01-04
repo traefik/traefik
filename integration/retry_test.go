@@ -3,7 +3,6 @@ package integration
 import (
 	"io"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -38,7 +37,6 @@ func (s *RetrySuite) TearDownSuite() {
 
 func (s *RetrySuite) TestRetry() {
 	file := s.adaptFile("fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -54,7 +52,6 @@ func (s *RetrySuite) TestRetry() {
 
 func (s *RetrySuite) TestRetryBackoff() {
 	file := s.adaptFile("fixtures/retry/backoff.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -70,7 +67,6 @@ func (s *RetrySuite) TestRetryBackoff() {
 
 func (s *RetrySuite) TestRetryWebsocket() {
 	file := s.adaptFile("fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -90,7 +86,6 @@ func (s *RetrySuite) TestRetryWebsocket() {
 
 func (s *RetrySuite) TestRetryWithStripPrefix() {
 	file := s.adaptFile("fixtures/retry/strip_prefix.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

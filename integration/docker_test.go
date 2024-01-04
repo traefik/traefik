@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -46,7 +45,6 @@ func (s *DockerSuite) TestSimpleConfiguration() {
 	}
 
 	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.composeUp()
 
@@ -67,7 +65,6 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 	}
 
 	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.composeUp("simple")
 
@@ -100,7 +97,6 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels() {
 	}
 
 	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.composeUp("withtcplabels")
 
@@ -126,7 +122,6 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 	}
 
 	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.composeUp("withlabels1", "withlabels2")
 
@@ -166,7 +161,6 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels() {
 	}
 
 	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.composeUp("withonelabelmissing")
 
@@ -192,7 +186,6 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 	}
 
 	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-	defer os.Remove(file)
 
 	s.composeUp("powpow")
 

@@ -466,7 +466,6 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 	}
 
 	file := s.adaptFile(testCase.traefikConfFilePath, testCase.template)
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
