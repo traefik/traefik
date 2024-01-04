@@ -16,6 +16,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 )
 
@@ -39,6 +41,7 @@ type metricsMiddleware struct {
 	reqsBytesCounter     gokitmetrics.Counter
 	respsBytesCounter    gokitmetrics.Counter
 	baseLabels           []string
+	name                 string
 }
 
 // NewEntryPointMiddleware creates a new metrics middleware for an Entrypoint.
@@ -53,6 +56,7 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		reqsBytesCounter:     registry.EntryPointReqsBytesCounter(),
 		respsBytesCounter:    registry.EntryPointRespsBytesCounter(),
 		baseLabels:           []string{"entrypoint", entryPointName},
+		name:                 nameEntrypoint,
 	}
 }
 
@@ -68,6 +72,7 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		reqsBytesCounter:     registry.RouterReqsBytesCounter(),
 		respsBytesCounter:    registry.RouterRespsBytesCounter(),
 		baseLabels:           []string{"router", routerName, "service", serviceName},
+		name:                 nameRouter,
 	}
 }
 
@@ -83,6 +88,7 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		reqsBytesCounter:     registry.ServiceReqsBytesCounter(),
 		respsBytesCounter:    registry.ServiceRespsBytesCounter(),
 		baseLabels:           []string{"service", serviceName},
+		name:                 nameService,
 	}
 }
 
@@ -98,6 +104,17 @@ func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerNam
 	return func(next http.Handler) (http.Handler, error) {
 		return NewRouterMiddleware(ctx, next, registry, routerName, serviceName), nil
 	}
+}
+
+// WrapServiceHandler Wraps metrics service to alice.Constructor.
+func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceName string) alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return NewServiceMiddleware(ctx, next, registry, serviceName), nil
+	}
+}
+
+func (m *metricsMiddleware) GetTracingInformation() (string, string, trace.SpanKind) {
+	return m.name, typeName, trace.SpanKindInternal
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -127,6 +144,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		}
 		logger := with.Logger()
 		logger.Error().Err(err).Msg("Could not get Capture")
+		tracing.SetStatusErrorf(req.Context(), "Could not get Capture")
 		return
 	}
 
