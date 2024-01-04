@@ -249,8 +249,8 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/ip-whitelist.toml", struct {
+func (s *TCPSuite) TestMiddlewareAllowList(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/ip-allowlist.toml", struct {
 		WhoamiA string
 		WhoamiB string
 	}{
