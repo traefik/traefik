@@ -63,8 +63,7 @@ func (s *AccessLogSuite) TestAccessLog() {
 	ensureWorkingDirectoryIsClean()
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	defer func() {
 		traefikLog, err := os.ReadFile(traefikTestLogFile)
@@ -137,8 +136,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -206,8 +204,7 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -321,8 +318,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -378,8 +374,7 @@ func (s *AccessLogSuite) TestAccessLogJSONFrontendRedirect() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_json_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_json_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -437,8 +432,7 @@ func (s *AccessLogSuite) TestAccessLogRateLimit() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -486,8 +480,7 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -531,8 +524,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -576,8 +568,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -622,8 +613,7 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

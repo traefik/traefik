@@ -40,9 +40,8 @@ func (s *RestSuite) TearDownSuite() {
 }
 
 func (s *RestSuite) TestSimpleConfigurationInsecure() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
+	cmd := s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
 
-	defer display()
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -138,9 +137,8 @@ func (s *RestSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/rest/simple_secure.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
+	cmd := s.traefikCmd(withConfigFile(file))
 
-	defer display()
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

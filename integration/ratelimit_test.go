@@ -39,8 +39,7 @@ func (s *RateLimitSuite) TestSimpleConfiguration() {
 	}{s.ServerIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

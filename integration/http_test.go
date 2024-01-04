@@ -21,8 +21,7 @@ func TestHTTPSuite(t *testing.T) {
 }
 
 func (s *HTTPSuite) TestSimpleConfiguration() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

@@ -36,8 +36,7 @@ func (s *TimeoutSuite) TestForwardingTimeouts() {
 	file := s.adaptFile("fixtures/timeout/forwarding_timeouts.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

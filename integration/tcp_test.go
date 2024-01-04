@@ -51,8 +51,7 @@ func (s *TCPSuite) TestMixed() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -105,8 +104,7 @@ func (s *TCPSuite) TestTLSOptions() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -152,8 +150,7 @@ func (s *TCPSuite) TestNonTLSFallback() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -190,8 +187,7 @@ func (s *TCPSuite) TestNonTlsTcp() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -214,8 +210,7 @@ func (s *TCPSuite) TestCatchAllNoTLS() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -240,8 +235,7 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -271,8 +265,7 @@ func (s *TCPSuite) TestMiddlewareAllowList() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -301,8 +294,7 @@ func (s *TCPSuite) TestWRR() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

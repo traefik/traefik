@@ -166,8 +166,7 @@ func (s *GRPCSuite) TestGRPC() {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	assert.NoError(s.T(), err)
@@ -205,8 +204,7 @@ func (s *GRPCSuite) TestGRPCh2c() {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	assert.NoError(s.T(), err)
@@ -248,8 +246,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination() {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	assert.NoError(s.T(), err)
@@ -291,8 +288,7 @@ func (s *GRPCSuite) TestGRPCInsecure() {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	assert.NoError(s.T(), err)
@@ -338,8 +334,7 @@ func (s *GRPCSuite) TestGRPCBuffer() {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	assert.NoError(s.T(), err)
@@ -398,8 +393,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	assert.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -458,8 +452,7 @@ func (s *GRPCSuite) TestGRPCWithRetry() {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	assert.NoError(s.T(), err)

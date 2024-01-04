@@ -121,8 +121,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout() {
 	}{whoamiURL})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -184,8 +183,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout() {
 func (s *SimpleSuite) TestCustomPingTerminationStatusCode() {
 	file := s.adaptFile("fixtures/custom_ping_termination_status_code.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -224,8 +222,7 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint() {
 		Server1 string
 		Server2 string
 	}{whoami1URL, whoami2URL})
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -257,8 +254,7 @@ func (s *SimpleSuite) TestNoAuthOnPing() {
 
 	file := s.adaptFile("./fixtures/simple_auth.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -277,8 +273,7 @@ func (s *SimpleSuite) TestDefaultEntryPointHTTP() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
-	defer output()
+	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -297,8 +292,7 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
-	defer output()
+	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -317,8 +311,7 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
-	defer output()
+	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -349,8 +342,7 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
-	defer output()
+	cmd := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -405,8 +397,7 @@ func (s *SimpleSuite) TestMetricsWithBufferingMiddleware() {
 	file := s.adaptFile("fixtures/simple_metrics_with_buffer_middleware.toml", struct{ IP string }{IP: strings.TrimPrefix(server.URL, "http://")})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -474,8 +465,7 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName() {
 	file := s.adaptFile("fixtures/multiple_provider.toml", struct{ IP string }{IP: whoami2IP})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -567,8 +557,7 @@ func (s *SimpleSuite) TestIPStrategyAllowlist() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -637,8 +626,7 @@ func (s *SimpleSuite) TestXForwardedHeaders() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -672,8 +660,7 @@ func (s *SimpleSuite) TestMultiProvider() {
 	file := s.adaptFile("fixtures/multiprovider.toml", struct{ Server string }{Server: whoamiURL})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -723,8 +710,7 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 	file := s.adaptFile("fixtures/file/simple-hosts.toml", struct{ Server string }{Server: whoamiURL})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -767,8 +753,7 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -795,8 +780,7 @@ func (s *SimpleSuite) TestServiceConfigErrors() {
 	file := s.adaptFile("fixtures/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -816,8 +800,7 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -836,8 +819,7 @@ func (s *SimpleSuite) TestTCPServiceConfigErrors() {
 	file := s.adaptFile("fixtures/tcp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -857,8 +839,7 @@ func (s *SimpleSuite) TestUDPRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -872,8 +853,7 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors() {
 	file := s.adaptFile("fixtures/udp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -904,8 +884,7 @@ func (s *SimpleSuite) TestWRR() {
 	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -953,8 +932,7 @@ func (s *SimpleSuite) TestWRRSticky() {
 	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -1017,8 +995,7 @@ func (s *SimpleSuite) TestMirror() {
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -1097,8 +1074,7 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err = cmd.Start()
 	require.NoError(s.T(), err)
@@ -1194,8 +1170,7 @@ func (s *SimpleSuite) TestMirrorCanceled() {
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -1232,8 +1207,7 @@ func (s *SimpleSuite) TestSecureAPI() {
 	file := s.adaptFile("./fixtures/simple_secure_api.toml", struct{}{})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -1286,8 +1260,7 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	err := cmd.Start()
 	assert.NoError(s.T(), err)
@@ -1369,8 +1342,7 @@ func (s *SimpleSuite) TestMuxer() {
 	}{whoami1URL})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -1521,8 +1493,7 @@ func (s *SimpleSuite) TestEncodeSemicolons() {
 	}{whoami1URL})
 	defer os.Remove(file)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -1582,8 +1553,7 @@ func (s *SimpleSuite) TestDenyFragment() {
 	s.composeUp()
 	defer s.composeDown()
 
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_default.toml"))
-	defer output()
+	cmd := s.traefikCmd(withConfigFile("fixtures/simple_default.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

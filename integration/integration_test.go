@@ -340,15 +340,19 @@ func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func()) {
+func (s *BaseSuite) traefikCmd(args ...string) *exec.Cmd {
 	cmd, out := s.cmdTraefik(args...)
-	return cmd, func() {
+	display := func() {
 		if s.T().Failed() || *showLog {
 			s.displayLogK3S()
 			s.displayLogCompose()
 			s.displayTraefikLog(out)
 		}
 	}
+	s.T().Cleanup(func() {
+		display()
+	})
+	return cmd
 }
 
 func (s *BaseSuite) displayLogK3S() {

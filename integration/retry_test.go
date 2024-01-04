@@ -40,8 +40,7 @@ func (s *RetrySuite) TestRetry() {
 	file := s.adaptFile("fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -60,8 +59,7 @@ func (s *RetrySuite) TestRetryBackoff() {
 	file := s.adaptFile("fixtures/retry/backoff.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -80,8 +78,7 @@ func (s *RetrySuite) TestRetryWebsocket() {
 	file := s.adaptFile("fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -104,8 +101,7 @@ func (s *RetrySuite) TestRetryWithStripPrefix() {
 	file := s.adaptFile("fixtures/retry/strip_prefix.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

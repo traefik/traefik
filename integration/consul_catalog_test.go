@@ -135,8 +135,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -194,8 +193,7 @@ func (s *ConsulCatalogSuite) TestByLabels() {
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -229,8 +227,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -268,8 +265,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -342,8 +338,7 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -380,8 +375,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -426,8 +420,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -484,8 +477,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -551,8 +543,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -605,8 +596,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels() {
 	require.NoError(s.T(), err)
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -658,8 +648,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -749,8 +738,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 	file := s.adaptFile("fixtures/consul_catalog/connect.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -830,8 +818,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 	file := s.adaptFile("fixtures/consul_catalog/connect_by_default.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -901,8 +888,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 	file := s.adaptFile("fixtures/consul_catalog/connect_not_aware.toml", tempObjects)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

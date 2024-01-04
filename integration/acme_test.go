@@ -442,8 +442,7 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer() {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -472,8 +471,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 	file := s.adaptFile(testCase.traefikConfFilePath, testCase.template)
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

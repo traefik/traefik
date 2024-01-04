@@ -80,8 +80,7 @@ func (s *K8sSuite) TearDownSuite() {
 }
 
 func (s *K8sSuite) TestIngressConfiguration() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_default.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_default.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -91,8 +90,7 @@ func (s *K8sSuite) TestIngressConfiguration() {
 }
 
 func (s *K8sSuite) TestIngressLabelSelector() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingress_label_selector.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_ingress_label_selector.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -102,8 +100,7 @@ func (s *K8sSuite) TestIngressLabelSelector() {
 }
 
 func (s *K8sSuite) TestCRDConfiguration() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_crd.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -113,8 +110,7 @@ func (s *K8sSuite) TestCRDConfiguration() {
 }
 
 func (s *K8sSuite) TestCRDLabelSelector() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd_label_selector.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_crd_label_selector.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -124,8 +120,7 @@ func (s *K8sSuite) TestCRDLabelSelector() {
 }
 
 func (s *K8sSuite) TestGatewayConfiguration() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -135,8 +130,7 @@ func (s *K8sSuite) TestGatewayConfiguration() {
 }
 
 func (s *K8sSuite) TestIngressclass() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -146,8 +140,7 @@ func (s *K8sSuite) TestIngressclass() {
 }
 
 func (s *K8sSuite) TestDisableIngressclassLookup() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

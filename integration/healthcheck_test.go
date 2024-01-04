@@ -53,8 +53,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration() {
 	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -121,8 +120,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints() {
 	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -197,8 +195,7 @@ func (s *HealthCheckSuite) TestPortOverload() {
 	}{s.whoami1IP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err = cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -233,8 +230,7 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService() {
 	}{s.whoami1IP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -301,8 +297,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 	}{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -553,8 +548,7 @@ func (s *HealthCheckSuite) TestPropagateNoHealthCheck() {
 	}{s.whoami1IP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -584,8 +578,7 @@ func (s *HealthCheckSuite) TestPropagateReload() {
 	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(withHealthCheck)
 
-	cmd, display := s.traefikCmd(withConfigFile(withoutHealthCheck))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(withoutHealthCheck))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

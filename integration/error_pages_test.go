@@ -44,8 +44,7 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration() {
 	}{"http://" + s.BackendIP + ":80", s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -66,8 +65,7 @@ func (s *ErrorPagesSuite) TestErrorPage() {
 	}{s.BackendIP, s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -93,8 +91,7 @@ func (s *ErrorPagesSuite) TestErrorPageFlush() {
 	}{srv.URL, s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

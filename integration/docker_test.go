@@ -50,8 +50,7 @@ func (s *DockerSuite) TestSimpleConfiguration() {
 
 	s.composeUp()
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -77,8 +76,7 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 	s.composeUp("simple")
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -115,8 +113,7 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels() {
 	s.composeUp("withtcplabels")
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -146,8 +143,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 	s.composeUp("withlabels1", "withlabels2")
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -190,8 +186,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels() {
 	s.composeUp("withonelabelmissing")
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -221,8 +216,7 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 	s.composeUp("powpow")
 
 	// Start traefik
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

@@ -117,8 +117,7 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

@@ -31,9 +31,8 @@ func (s *ThrottlingSuite) SetupSuite() {
 }
 
 func (s *ThrottlingSuite) TestThrottleConfReload() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
+	cmd := s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
 
-	defer display()
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)

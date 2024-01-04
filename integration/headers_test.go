@@ -22,8 +22,7 @@ func TestHeadersSuite(t *testing.T) {
 }
 
 func (s *HeadersSuite) TestSimpleConfiguration() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/basic.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/headers/basic.toml"))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -36,8 +35,7 @@ func (s *HeadersSuite) TestSimpleConfiguration() {
 func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 	file := s.adaptFile("fixtures/headers/remove_reverseproxy_headers.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -76,8 +74,7 @@ func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 func (s *HeadersSuite) TestCorsResponses() {
 	file := s.adaptFile("fixtures/headers/cors.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -165,8 +162,7 @@ func (s *HeadersSuite) TestCorsResponses() {
 func (s *HeadersSuite) TestSecureHeadersResponses() {
 	file := s.adaptFile("fixtures/headers/secure.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)
@@ -214,8 +210,7 @@ func (s *HeadersSuite) TestSecureHeadersResponses() {
 func (s *HeadersSuite) TestMultipleSecureHeadersResponses() {
 	file := s.adaptFile("fixtures/headers/secure_multiple.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 
 	err := cmd.Start()
 	require.NoError(s.T(), err)

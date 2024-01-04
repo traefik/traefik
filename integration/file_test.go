@@ -32,8 +32,7 @@ func (s *FileSuite) TearDownSuite() {
 func (s *FileSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/file/simple.toml", struct{}{})
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile(file))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -45,8 +44,7 @@ func (s *FileSuite) TestSimpleConfiguration() {
 
 // #56 regression test, make sure it does not fail?
 func (s *FileSuite) TestSimpleConfigurationNoPanic() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/56-simple-panic.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/file/56-simple-panic.toml"))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
@@ -57,8 +55,7 @@ func (s *FileSuite) TestSimpleConfigurationNoPanic() {
 }
 
 func (s *FileSuite) TestDirectoryConfiguration() {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/directory.toml"))
-	defer display()
+	cmd := s.traefikCmd(withConfigFile("fixtures/file/directory.toml"))
 	err := cmd.Start()
 	require.NoError(s.T(), err)
 	defer s.killCmd(cmd)
