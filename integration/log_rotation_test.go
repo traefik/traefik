@@ -5,6 +5,8 @@ package integration
 
 import (
 	"bufio"
+	checker "github.com/vdemeester/shakers"
+	"gopkg.in/check.v1"
 	"net/http"
 	"os"
 	"strings"
@@ -12,13 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-check/check"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
-	checker "github.com/vdemeester/shakers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 const (
