@@ -44,8 +44,6 @@ type Interface interface {
 	MiddlewareTCPs() MiddlewareTCPInformer
 	// ServersTransports returns a ServersTransportInformer.
 	ServersTransports() ServersTransportInformer
-	// ServersTransportTCPs returns a ServersTransportTCPInformer.
-	ServersTransportTCPs() ServersTransportTCPInformer
 	// TLSOptions returns a TLSOptionInformer.
 	TLSOptions() TLSOptionInformer
 	// TLSStores returns a TLSStoreInformer.
@@ -93,11 +91,6 @@ func (v *version) MiddlewareTCPs() MiddlewareTCPInformer {
 // ServersTransports returns a ServersTransportInformer.
 func (v *version) ServersTransports() ServersTransportInformer {
 	return &serversTransportInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
-}
-
-// ServersTransportTCPs returns a ServersTransportTCPInformer.
-func (v *version) ServersTransportTCPs() ServersTransportTCPInformer {
-	return &serversTransportTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // TLSOptions returns a TLSOptionInformer.

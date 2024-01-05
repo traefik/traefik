@@ -14,7 +14,7 @@ spec:
     singular: serverstransporttcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'ServersTransportTCP is the CRD implementation of a TCPServersTransport.

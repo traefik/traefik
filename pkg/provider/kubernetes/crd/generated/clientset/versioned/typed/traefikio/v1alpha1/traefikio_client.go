@@ -42,7 +42,6 @@ type TraefikV1alpha1Interface interface {
 	MiddlewaresGetter
 	MiddlewareTCPsGetter
 	ServersTransportsGetter
-	ServersTransportTCPsGetter
 	TLSOptionsGetter
 	TLSStoresGetter
 	TraefikServicesGetter
@@ -75,10 +74,6 @@ func (c *TraefikV1alpha1Client) MiddlewareTCPs(namespace string) MiddlewareTCPIn
 
 func (c *TraefikV1alpha1Client) ServersTransports(namespace string) ServersTransportInterface {
 	return newServersTransports(c, namespace)
-}
-
-func (c *TraefikV1alpha1Client) ServersTransportTCPs(namespace string) ServersTransportTCPInterface {
-	return newServersTransportTCPs(c, namespace)
 }
 
 func (c *TraefikV1alpha1Client) TLSOptions(namespace string) TLSOptionInterface {

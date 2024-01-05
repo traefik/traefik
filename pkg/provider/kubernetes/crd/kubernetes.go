@@ -25,11 +25,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikv1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -68,7 +67,7 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1.IngressRoute) {
 	if p.routerTransform == nil {
 		return
 	}
@@ -281,15 +280,35 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		// For StripPrefix middleware the copy of traefik.io/v1alpha1 deprecated options is needed.
+		var stripPrefix *dynamic.StripPrefix
+		if middleware.Spec.StripPrefix != nil {
+			stripPrefix = &dynamic.StripPrefix{
+				Prefixes:   middleware.Spec.StripPrefix.Prefixes,
+				ForceSlash: middleware.Spec.StripPrefix.ForceSlash,
+			}
+		}
+
+		// For Headers middleware the copy of traefik.io/v1alpha1 deprecated options is needed.
+		headers := createHeadersMiddleware(middleware.Spec.Headers)
+
+		var contentType *dynamic.ContentType
+		if middleware.Spec.ContentType != nil {
+			contentType = &dynamic.ContentType{
+				AutoDetect: middleware.Spec.ContentType.AutoDetect,
+			}
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
-			StripPrefix:       middleware.Spec.StripPrefix,
+			StripPrefix:       stripPrefix,
 			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
 			ReplacePath:       middleware.Spec.ReplacePath,
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
 			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			IPWhiteList:       middleware.Spec.IPWhiteList,
 			IPAllowList:       middleware.Spec.IPAllowList,
-			Headers:           middleware.Spec.Headers,
+			Headers:           headers,
 			Errors:            errorPage,
 			RateLimit:         rateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
@@ -303,7 +322,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             retry,
-			ContentType:       middleware.Spec.ContentType,
+			ContentType:       contentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
 			Plugin:            plugin,
 		}
@@ -617,7 +636,50 @@ func getSecretValue(c Client, ns, urn string) (string, error) {
 	return string(secretValue), nil
 }
 
-func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
+func createHeadersMiddleware(headers *traefikv1.Headers) *dynamic.Headers {
+	if headers == nil {
+		return nil
+	}
+
+	h := &dynamic.Headers{
+		CustomRequestHeaders:              headers.CustomRequestHeaders,
+		CustomResponseHeaders:             headers.CustomResponseHeaders,
+		AccessControlAllowCredentials:     headers.AccessControlAllowCredentials,
+		AccessControlAllowHeaders:         headers.AccessControlAllowHeaders,
+		AccessControlAllowMethods:         headers.AccessControlAllowMethods,
+		AccessControlAllowOriginList:      headers.AccessControlAllowOriginList,
+		AccessControlAllowOriginListRegex: headers.AccessControlAllowOriginListRegex,
+		AccessControlExposeHeaders:        headers.AccessControlExposeHeaders,
+		AccessControlMaxAge:               headers.AccessControlMaxAge,
+		AddVaryHeader:                     headers.AddVaryHeader,
+		AllowedHosts:                      headers.AllowedHosts,
+		HostsProxyHeaders:                 headers.HostsProxyHeaders,
+		SSLRedirect:                       headers.SSLRedirect,
+		SSLTemporaryRedirect:              headers.SSLTemporaryRedirect,
+		SSLHost:                           headers.SSLHost,
+		SSLProxyHeaders:                   headers.SSLProxyHeaders,
+		SSLForceHost:                      headers.SSLForceHost,
+		STSSeconds:                        headers.STSSeconds,
+		STSIncludeSubdomains:              headers.STSIncludeSubdomains,
+		STSPreload:                        headers.STSPreload,
+		ForceSTSHeader:                    headers.ForceSTSHeader,
+		FrameDeny:                         headers.FrameDeny,
+		CustomFrameOptionsValue:           headers.CustomFrameOptionsValue,
+		ContentTypeNosniff:                headers.ContentTypeNosniff,
+		BrowserXSSFilter:                  headers.BrowserXSSFilter,
+		CustomBrowserXSSValue:             headers.CustomBrowserXSSValue,
+		ContentSecurityPolicy:             headers.ContentSecurityPolicy,
+		PublicKey:                         headers.PublicKey,
+		ReferrerPolicy:                    headers.ReferrerPolicy,
+		FeaturePolicy:                     headers.FeaturePolicy,
+		PermissionsPolicy:                 headers.PermissionsPolicy,
+		IsDevelopment:                     headers.IsDevelopment,
+	}
+
+	return h
+}
+
+func createCircuitBreakerMiddleware(circuitBreaker *traefikv1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
 	if circuitBreaker == nil {
 		return nil, nil
 	}
@@ -646,7 +708,7 @@ func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreak
 	return cb, nil
 }
 
-func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(rateLimit *traefikv1.RateLimit) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -672,7 +734,7 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 	return rl, nil
 }
 
-func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error) {
+func createRetryMiddleware(retry *traefikv1.Retry) (*dynamic.Retry, error) {
 	if retry == nil {
 		return nil, nil
 	}
@@ -687,7 +749,7 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	return r, nil
 }
 
-func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -712,7 +774,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 	return errorPageMiddleware, balancerServerHTTP, nil
 }
 
-func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
+func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1.ForwardAuth) (*dynamic.ForwardAuth, error) {
 	if auth == nil {
 		return nil, nil
 	}
@@ -732,7 +794,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		return forwardAuth, nil
 	}
 
-	forwardAuth.TLS = &types.ClientTLS{
+	forwardAuth.TLS = &dynamic.ClientTLS{
 		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 	}
 
@@ -752,6 +814,8 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		forwardAuth.TLS.Cert = authSecretCert
 		forwardAuth.TLS.Key = authSecretKey
 	}
+
+	forwardAuth.TLS.CAOptional = auth.TLS.CAOptional
 
 	return forwardAuth, nil
 }
@@ -803,7 +867,7 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth) (*dynamic.BasicAuth, error) {
+func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1.BasicAuth) (*dynamic.BasicAuth, error) {
 	if basicAuth == nil {
 		return nil, nil
 	}
@@ -850,7 +914,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}, nil
 }
 
-func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
+func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1.DigestAuth) (*dynamic.DigestAuth, error) {
 	if digestAuth == nil {
 		return nil, nil
 	}
@@ -925,7 +989,7 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
-func createChainMiddleware(ctx context.Context, namespace string, chain *traefikv1alpha1.Chain) *dynamic.Chain {
+func createChainMiddleware(ctx context.Context, namespace string, chain *traefikv1.Chain) *dynamic.Chain {
 	if chain == nil {
 		return nil
 	}
@@ -1005,8 +1069,9 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 				CAFiles:        clientCAs,
 				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
 			},
-			SniStrict:     tlsOption.Spec.SniStrict,
-			ALPNProtocols: alpnProtocols,
+			SniStrict:                tlsOption.Spec.SniStrict,
+			ALPNProtocols:            alpnProtocols,
+			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
 		}
 	}
 
@@ -1090,7 +1155,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 }
 
 // buildCertificates loads TLSStore certificates from secrets and sets them into tlsConfigs.
-func buildCertificates(client Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
+func buildCertificates(client Client, tlsStore, namespace string, certificates []traefikv1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
 	for _, c := range certificates {
 		configKey := namespace + "/" + c.SecretName
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {

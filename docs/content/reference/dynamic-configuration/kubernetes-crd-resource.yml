@@ -1,4 +1,4 @@
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: TraefikService
 metadata:
   name: wrr2
@@ -17,7 +17,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: TraefikService
 metadata:
   name: wrr1
@@ -34,7 +34,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: TraefikService
 metadata:
   name: mirror1
@@ -53,7 +53,7 @@ spec:
         percent: 20
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: TraefikService
 metadata:
   name: mirror2
@@ -73,7 +73,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRoute
 metadata:
   name: ingressroute
@@ -133,7 +133,7 @@ spec:
       namespace: default
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRouteTCP
 metadata:
   name: ingressroutetcp.crd
@@ -158,7 +158,7 @@ spec:
       namespace: default
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRouteUDP
 metadata:
   name: ingressrouteudp.crd
@@ -173,7 +173,7 @@ spec:
           port: 8080
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: TLSOption
 metadata:
   name: tlsoption
@@ -199,7 +199,7 @@ spec:
     - foobar
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: ServersTransport
 metadata:
   name: mytransport
@@ -223,7 +223,7 @@ spec:
   disableHTTP2: true
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: ServersTransportTCP
 metadata:
   name: mytransporttcp

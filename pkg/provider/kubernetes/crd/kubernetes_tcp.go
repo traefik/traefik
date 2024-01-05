@@ -12,7 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikv1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -144,7 +144,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespace string, middlewares []traefikv1alpha1.ObjectReference) ([]string, error) {
+func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespace string, middlewares []traefikv1.ObjectReference) ([]string, error) {
 	var mds []string
 
 	for _, mi := range middlewares {
@@ -173,7 +173,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 	return mds, nil
 }
 
-func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service traefikv1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
+func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service traefikv1.ServiceTCP) (*dynamic.TCPService, error) {
 	ns := parentNamespace
 	if len(service.Namespace) > 0 {
 		if !isNamespaceAllowed(p.AllowCrossNamespace, parentNamespace, service.Namespace) {
@@ -203,6 +203,10 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		}
 	}
 
+	if service.ServersTransport == "" && service.TerminationDelay != nil {
+		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
+	}
+
 	if service.ServersTransport != "" {
 		tcpService.LoadBalancer.ServersTransport, err = p.makeTCPServersTransportKey(parentNamespace, service.ServersTransport)
 		if err != nil {
@@ -213,7 +217,7 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 	return tcpService, nil
 }
 
-func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
+func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1.ServiceTCP) ([]dynamic.TCPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -304,7 +308,7 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 }
 
 // getTLSTCP mutates tlsConfigs.
-func getTLSTCP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+func getTLSTCP(ctx context.Context, ingressRoute *traefikv1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}

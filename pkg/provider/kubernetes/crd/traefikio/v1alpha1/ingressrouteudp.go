@@ -11,7 +11,7 @@ type IngressRouteUDPSpec struct {
 	Routes []RouteUDP `json:"routes"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 }
@@ -43,6 +43,7 @@ type ServiceUDP struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 IngressRouteUDP is deprecated, please use traefik.io/v1 IngressRouteUDP instead"
 
 // IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
 type IngressRouteUDP struct {

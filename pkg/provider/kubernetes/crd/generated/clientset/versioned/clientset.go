@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"net/http"
 
+	traefikv1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -38,13 +39,20 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	TraefikV1() traefikv1.TraefikV1Interface
 	TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface
 }
 
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	traefikV1       *traefikv1.TraefikV1Client
 	traefikV1alpha1 *traefikv1alpha1.TraefikV1alpha1Client
+}
+
+// TraefikV1 retrieves the TraefikV1Client
+func (c *Clientset) TraefikV1() traefikv1.TraefikV1Interface {
+	return c.traefikV1
 }
 
 // TraefikV1alpha1 retrieves the TraefikV1alpha1Client
@@ -96,6 +104,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
+	cs.traefikV1, err = traefikv1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.traefikV1alpha1, err = traefikv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -121,6 +133,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.traefikV1 = traefikv1.New(c)
 	cs.traefikV1alpha1 = traefikv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)

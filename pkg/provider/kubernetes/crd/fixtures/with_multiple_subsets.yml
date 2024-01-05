@@ -35,7 +35,7 @@ subsets:
       - name: web2
         port: 8080
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRoute
 metadata:
   name: test.route

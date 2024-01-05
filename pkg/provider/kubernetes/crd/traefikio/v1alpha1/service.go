@@ -8,12 +8,13 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 TraefikService is deprecated, please use traefik.io/v1 TraefikService instead"
 
 // TraefikService is the CRD implementation of a Traefik Service.
 // TraefikService object allows to:
 // - Apply weight to Services on load-balancing
 // - Mirror traffic on services
-// More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-traefikservice
+// More info: https://doc.traefik.io/traefik/v2.11/routing/providers/kubernetes-crd/#kind-traefikservice
 type TraefikService struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -49,7 +50,7 @@ type TraefikServiceSpec struct {
 // +k8s:deepcopy-gen=true
 
 // Mirroring holds the mirroring service configuration.
-// More info: https://doc.traefik.io/traefik/v3.0/routing/services/#mirroring-service
+// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#mirroring-service
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
@@ -75,11 +76,11 @@ type MirrorService struct {
 // +k8s:deepcopy-gen=true
 
 // WeightedRoundRobin holds the weighted round-robin configuration.
-// More info: https://doc.traefik.io/traefik/v3.0/routing/services/#weighted-round-robin-service
+// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#weighted-round-robin-service
 type WeightedRoundRobin struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
 	// Sticky defines whether sticky sessions are enabled.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+	// More info: https://doc.traefik.io/traefik/v2.11/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }
