@@ -13,30 +13,16 @@ jobs:
   test-unit:
     runs-on: ubuntu-20.04
 
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
-
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          path: go/src/github.com/traefik/traefik
-          fetch-depth: 0
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-test-unit-go-
 
       - name: Avoid generating webui
         run: touch webui/static/index.html
