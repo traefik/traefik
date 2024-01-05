@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -13,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/cbreaker"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "CircuitBreaker"
@@ -32,7 +32,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 
 	cbOpts := []cbreaker.Option{
 		cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
+			tracing.SetStatusErrorf(req.Context(), "blocked by circuit-breaker (%q)", expression)
 			rw.WriteHeader(http.StatusServiceUnavailable)
 
 			if _, err := rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
@@ -66,8 +66,8 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	}, nil
 }
 
-func (c *circuitBreaker) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return c.name, tracing.SpanKindNoneEnum
+func (c *circuitBreaker) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *circuitBreaker) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
