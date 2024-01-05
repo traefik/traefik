@@ -49,7 +49,7 @@ You need:
     ## ... and the list goes on
     ```
 
-#### Build Traefik
+### Build Traefik
 
 Once you've set up your go environment and cloned the source repository, you can build Traefik.
 
@@ -93,4 +93,3 @@ TESTFLAGS="-test.run TestAccessLogSuite" make test-integration
 # Run the test "MyTest" in the MyTest suite
 TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog$" make test-integration
 ```
-
