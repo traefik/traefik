@@ -276,7 +276,7 @@ All Marathon provider related configuration should be removed from the static co
 InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
 In v3, the InfluxDB v1 metrics provider has been removed.
 
-??? example "An example of v2 InfluxDB v1 metrics configuration"
+??? example "An example of Traefik v2 InfluxDB v1 metrics configuration"
 
     ```yaml tab="File (YAML)"
     metrics:
