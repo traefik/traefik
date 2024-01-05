@@ -35,9 +35,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	showLog = flag.Bool("tlog", false, "always show Traefik logs")
-)
+var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
 type composeConfig struct {
 	Services map[string]composeService `yaml:"services"`
@@ -403,7 +401,6 @@ func (s *BaseSuite) displayTraefikLog(output *bytes.Buffer) {
 		for _, line := range strings.Split(output.String(), "\n") {
 			log.WithoutContext().Info(line)
 		}
-
 	}
 }
 

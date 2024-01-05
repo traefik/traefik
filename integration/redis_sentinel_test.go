@@ -80,32 +80,6 @@ func (s *RedisSentinelSuite) TearDownSuite() {
 	}
 }
 
-func (s *RedisSentinelSuite) setupSentinelStore() {
-
-	s.redisEndpoints = []string{
-		net.JoinHostPort(s.getComposeServiceIP("sentinel1"), "26379"),
-		net.JoinHostPort(s.getComposeServiceIP("sentinel2"), "26379"),
-		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "26379"),
-	}
-
-	kv, err := valkeyrie.NewStore(
-		context.Background(),
-		redis.StoreName,
-		s.redisEndpoints,
-		&redis.Config{
-			Sentinel: &redis.Sentinel{
-				MasterName: "mymaster",
-			},
-		},
-	)
-	require.NoError(s.T(), err)
-	s.kvClient = kv
-
-	// wait for redis
-	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
-	require.NoError(s.T(), err)
-}
-
 func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
 	for i, port := range ports {
 		templateValue := struct{ SentinelPort string }{SentinelPort: port}
@@ -134,8 +108,6 @@ func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
 }
 
 func (s *RedisSentinelSuite) TestSentinelConfiguration() {
-	// s.setupSentinelStore()
-
 	file := s.adaptFile("fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, `","`),
 	})

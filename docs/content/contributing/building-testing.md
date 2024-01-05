@@ -102,7 +102,7 @@ For development purposes, you can specify which tests to run by using (only work
           // Allow myself to automatically
           // advertize routes for docker networks
           "routes": {
-            "172.0.0.0/8": ["your_tailscale_identity"],
+            "172.31.42.0/24": ["your_tailscale_identity"],
           },
         },
     ```
