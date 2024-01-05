@@ -50,7 +50,6 @@ func (s *HealthCheckSuite) TestSimpleConfiguration() {
 		Server1 string
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -114,7 +113,6 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints() {
 		Server1 string
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -186,7 +184,6 @@ func (s *HealthCheckSuite) TestPortOverload() {
 	file := s.adaptFile("fixtures/healthcheck/port_overload.toml", struct {
 		Server1 string
 	}{s.whoami1IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -218,7 +215,6 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService() {
 	file := s.adaptFile("fixtures/healthcheck/multiple-routers-one-same-service.toml", struct {
 		Server1 string
 	}{s.whoami1IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -282,7 +278,6 @@ func (s *HealthCheckSuite) TestPropagate() {
 		Server3 string
 		Server4 string
 	}{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -530,7 +525,6 @@ func (s *HealthCheckSuite) TestPropagateNoHealthCheck() {
 	file := s.adaptFile("fixtures/healthcheck/propagate_no_healthcheck.toml", struct {
 		Server1 string
 	}{s.whoami1IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -552,12 +546,10 @@ func (s *HealthCheckSuite) TestPropagateReload() {
 		Server1 string
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
-	defer os.Remove(withoutHealthCheck)
 	withHealthCheck := s.adaptFile("fixtures/healthcheck/reload_with_healthcheck.toml", struct {
 		Server1 string
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
-	defer os.Remove(withHealthCheck)
 
 	s.traefikCmd(withConfigFile(withoutHealthCheck))
 

@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -95,7 +94,6 @@ func (s *KeepAliveSuite) TestShouldRespectConfiguredBackendHttpKeepAliveTime() {
 	config := KeepAliveConfig{KeepAliveServer: server.URL, IdleConnTimeout: idleTimeout.String()}
 	file := s.adaptFile("fixtures/timeout/keepalive.toml", config)
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// Wait for Traefik

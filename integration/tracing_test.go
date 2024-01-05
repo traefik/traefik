@@ -2,7 +2,6 @@ package integration
 
 import (
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -61,7 +60,6 @@ func (s *TracingSuite) TestZipkinRateLimit() {
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerZipkinIP,
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -107,7 +105,6 @@ func (s *TracingSuite) TestZipkinRetry() {
 		WhoamiPort: 81,
 		IP:         s.tracerZipkinIP,
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -130,7 +127,6 @@ func (s *TracingSuite) TestZipkinAuth() {
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerZipkinIP,
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -164,7 +160,6 @@ func (s *TracingSuite) TestJaegerRateLimit() {
 		IP:                     s.tracerJaegerIP,
 		TraceContextHeaderName: "uber-trace-id",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -211,7 +206,6 @@ func (s *TracingSuite) TestJaegerRetry() {
 		IP:                     s.tracerJaegerIP,
 		TraceContextHeaderName: "uber-trace-id",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -236,7 +230,6 @@ func (s *TracingSuite) TestJaegerAuth() {
 		IP:                     s.tracerJaegerIP,
 		TraceContextHeaderName: "uber-trace-id",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -261,7 +254,6 @@ func (s *TracingSuite) TestJaegerCustomHeader() {
 		IP:                     s.tracerJaegerIP,
 		TraceContextHeaderName: "powpow",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -285,7 +277,6 @@ func (s *TracingSuite) TestJaegerAuthCollector() {
 		WhoamiPort: s.whoamiPort,
 		IP:         s.tracerJaegerIP,
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

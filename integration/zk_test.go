@@ -51,9 +51,7 @@ func (s *ZookeeperSuite) SetupSuite() {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		s.T().Fatal("Cannot create store zookeeper")
-	}
+	require.NoError(s.T(), err, "Cannot create store zookeeper")
 
 	// wait for zk
 	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))

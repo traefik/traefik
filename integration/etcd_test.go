@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"net"
 	"net/http"
 	"os"
@@ -50,9 +49,7 @@ func (s *EtcdSuite) SetupSuite() {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		s.T().Fatal("Cannot create store etcd")
-	}
+	require.NoError(s.T(), err)
 
 	// wait for etcd
 	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
@@ -154,7 +151,6 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		require.NoError(s.T(), err)
-		log.WithoutContext().Info(text)
+		require.NoError(s.T(), err, text)
 	}
 }

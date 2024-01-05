@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -15,6 +13,8 @@ import (
 	"testing"
 	"text/template"
 	"time"
+
+	"github.com/traefik/traefik/v2/pkg/log"
 
 	"github.com/fatih/structs"
 	"github.com/kvtools/redis"
@@ -62,9 +62,7 @@ func (s *RedisSentinelSuite) SetupSuite() {
 			},
 		},
 	)
-	if err != nil {
-		s.T().Fatal("Cannot create store redis: ", err)
-	}
+	require.NoError(s.T(), err, "Cannot create store redis")
 	s.kvClient = kv
 
 	// wait for redis
@@ -76,8 +74,7 @@ func (s *RedisSentinelSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
 
 	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
-		err := os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
-		require.NotErrorIs(s.T(), err, fs.ErrNotExist)
+		_ = os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
 	}
 }
 
@@ -112,7 +109,6 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 	file := s.adaptFile("fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, `","`),
 	})
-	defer os.Remove(file)
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",

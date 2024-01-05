@@ -2,7 +2,6 @@ package integration
 
 import (
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -37,7 +36,6 @@ func (s *RateLimitSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/ratelimit/simple.toml", struct {
 		Server1 string
 	}{s.ServerIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

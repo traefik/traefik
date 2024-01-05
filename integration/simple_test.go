@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"io"
 	"net"
 	"net/http"
@@ -18,6 +17,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/traefik/traefik/v2/pkg/log"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,7 +104,6 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout() {
 	file := s.adaptFile("fixtures/reqacceptgrace.toml", struct {
 		Server string
 	}{whoamiURL})
-	defer os.Remove(file)
 
 	cmd, _ := s.cmdTraefik(withConfigFile(file))
 
@@ -545,9 +545,7 @@ func (s *SimpleSuite) TestIPStrategyAllowlist() {
 		req.RequestURI = ""
 
 		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
-		if err != nil {
-			s.T().Fatalf("Error while %s: %v", test.desc, err)
-		}
+		require.NoErrorf(s.T(), err, "Error during %s: %v", test.desc, err)
 	}
 }
 
@@ -660,9 +658,7 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 		require.NoError(s.T(), err)
 		req.Host = test.requestHost
 		err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
-		if err != nil {
-			s.T().Fatalf("Error while testing %s: %v", test.desc, err)
-		}
+		require.NoErrorf(s.T(), err, "Error while testing %s: %v", test.desc, err)
 	}
 }
 
@@ -769,7 +765,6 @@ func (s *SimpleSuite) TestWRR() {
 		Server1 string
 		Server2 string
 	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -813,7 +808,6 @@ func (s *SimpleSuite) TestWRRSticky() {
 		Server1 string
 		Server2 string
 	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -872,7 +866,6 @@ func (s *SimpleSuite) TestMirror() {
 		Mirror1Server string
 		Mirror2Server string
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -911,13 +904,9 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 		b, _ := io.ReadAll(req.Body)
 		switch req.Header.Get("Size") {
 		case "20":
-			if !bytes.Equal(b, body20) {
-				s.T().Fatalf("Not Equals \n%v \n%v", body20, b)
-			}
+			require.Equal(s.T(), body20, b)
 		case "5":
-			if !bytes.Equal(b, body5) {
-				s.T().Fatalf("Not Equals \n%v \n%v", body5, b)
-			}
+			require.Equal(s.T(), body5, b)
 		default:
 			s.T().Fatal("Size header not present")
 		}
@@ -947,7 +936,6 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 		Mirror1Server string
 		Mirror2Server string
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -1039,7 +1027,6 @@ func (s *SimpleSuite) TestMirrorCanceled() {
 		Mirror1Server string
 		Mirror2Server string
 	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -1120,7 +1107,6 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	}{
 		Server: srv1.URL,
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
@@ -1186,7 +1172,6 @@ func (s *SimpleSuite) TestMuxer() {
 	file := s.adaptFile("fixtures/simple_muxer.toml", struct {
 		Server1 string
 	}{whoami1URL})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -1328,7 +1313,6 @@ func (s *SimpleSuite) TestEncodeSemicolons() {
 	file := s.adaptFile("fixtures/simple_encode_semicolons.toml", struct {
 		Server1 string
 	}{whoami1URL})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

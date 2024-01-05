@@ -480,7 +480,6 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 		Server2: server2.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -573,7 +572,6 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 		Server1: server1.URL,
 		Server2: server2.URL,
 	})
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -706,13 +704,11 @@ func startTestServer(port string, statusCode int, textContent string) (ts *httpt
 // otherwise thanks to the default one.
 func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange() {
 	dynamicConfFileName := s.adaptFile("fixtures/https/dynamic_https.toml", struct{}{})
-	defer os.Remove(dynamicConfFileName)
 	confFileName := s.adaptFile("fixtures/https/dynamic_https_sni.toml", struct {
 		DynamicConfFileName string
 	}{
 		DynamicConfFileName: dynamicConfFileName,
 	})
-	defer os.Remove(confFileName)
 	s.traefikCmd(withConfigFile(confFileName))
 
 	tr1 := &http.Transport{
@@ -772,13 +768,11 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange() {
 
 func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange() {
 	dynamicConfFileName := s.adaptFile("fixtures/https/dynamic_https.toml", struct{}{})
-	defer os.Remove(dynamicConfFileName)
 	confFileName := s.adaptFile("fixtures/https/dynamic_https_sni.toml", struct {
 		DynamicConfFileName string
 	}{
 		DynamicConfFileName: dynamicConfFileName,
 	})
-	defer os.Remove(confFileName)
 	s.traefikCmd(withConfigFile(confFileName))
 
 	tr1 := &http.Transport{
@@ -839,13 +833,11 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange() {
 
 func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion() {
 	dynamicConfFileName := s.adaptFile("fixtures/https/dynamic_https.toml", struct{}{})
-	defer os.Remove(dynamicConfFileName)
 	confFileName := s.adaptFile("fixtures/https/dynamic_https_sni.toml", struct {
 		DynamicConfFileName string
 	}{
 		DynamicConfFileName: dynamicConfFileName,
 	})
-	defer os.Remove(confFileName)
 	s.traefikCmd(withConfigFile(confFileName))
 
 	tr2 := &http.Transport{

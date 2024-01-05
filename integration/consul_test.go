@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"net"
 	"net/http"
 	"os"
@@ -52,9 +51,7 @@ func (s *ConsulSuite) SetupSuite() {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		s.T().Fatal("Cannot create store consul")
-	}
+	require.NoError(s.T(), err, "Cannot create store consul")
 	s.kvClient = kv
 
 	// wait for consul
@@ -69,7 +66,7 @@ func (s *ConsulSuite) TearDownSuite() {
 func (s *ConsulSuite) TearDownTest() {
 	err := s.kvClient.DeleteTree(context.Background(), "traefik")
 	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
-		s.T().Fatal(err)
+		require.ErrorIs(s.T(), err, store.ErrKeyNotFound)
 	}
 }
 
@@ -164,21 +161,18 @@ func (s *ConsulSuite) TestSimpleConfiguration() {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		require.NoError(s.T(), err)
-		log.WithoutContext().Info(text)
+		require.NoError(s.T(), err, text)
 	}
 }
 
 func (s *ConsulSuite) assertWhoami(host string, expectedStatusCode int) {
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
-	if err != nil {
-		s.T().Fatal(err)
-	}
+	require.NoError(s.T(), err)
 	req.Host = host
 
 	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
-	resp.Body.Close()
 	require.NoError(s.T(), err)
+	resp.Body.Close()
 }
 
 func (s *ConsulSuite) TestDeleteRootKey() {

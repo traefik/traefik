@@ -3,7 +3,6 @@ package integration
 import (
 	"bufio"
 	"net"
-	"os"
 	"testing"
 	"time"
 
@@ -41,7 +40,6 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted() {
 		HaproxyIP string
 		WhoamiIP  string
 	}{WhoamiIP: s.whoamiIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -62,7 +60,6 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted() {
 		HaproxyIP string
 		WhoamiIP  string
 	}{WhoamiIP: s.whoamiIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

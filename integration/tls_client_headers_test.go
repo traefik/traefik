@@ -53,7 +53,6 @@ func (s *TLSClientHeadersSuite) TestTLSClientHeaders() {
 		ServerCertContent: string(serverCertContent),
 		ServerKeyContent:  string(ServerKeyContent),
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

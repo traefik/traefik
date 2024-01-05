@@ -151,7 +151,6 @@ func (s *GRPCSuite) TestGRPC() {
 
 	go func() {
 		err := startGRPCServer(lis, &myserver{})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -165,7 +164,6 @@ func (s *GRPCSuite) TestGRPC() {
 		GRPCServerPort: port,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -189,7 +187,6 @@ func (s *GRPCSuite) TestGRPCh2c() {
 
 	go func() {
 		err := starth2cGRPCServer(lis, &myserver{})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -199,7 +196,6 @@ func (s *GRPCSuite) TestGRPCh2c() {
 		GRPCServerPort: port,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -223,7 +219,6 @@ func (s *GRPCSuite) TestGRPCh2cTermination() {
 
 	go func() {
 		err := starth2cGRPCServer(lis, &myserver{})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -237,7 +232,6 @@ func (s *GRPCSuite) TestGRPCh2cTermination() {
 		GRPCServerPort: port,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -261,7 +255,6 @@ func (s *GRPCSuite) TestGRPCInsecure() {
 
 	go func() {
 		err := startGRPCServer(lis, &myserver{})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -275,7 +268,6 @@ func (s *GRPCSuite) TestGRPCInsecure() {
 		GRPCServerPort: port,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -303,7 +295,6 @@ func (s *GRPCSuite) TestGRPCBuffer() {
 		err := startGRPCServer(lis, &myserver{
 			stopStreamExample: stopStreamExample,
 		})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -317,7 +308,6 @@ func (s *GRPCSuite) TestGRPCBuffer() {
 		GRPCServerPort: port,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
@@ -358,7 +348,6 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval() {
 		err := startGRPCServer(lis, &myserver{
 			stopStreamExample: stopStreamExample,
 		})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -371,7 +360,6 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval() {
 		KeyContent:     string(LocalhostKey),
 		GRPCServerPort: port,
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 	// wait for Traefik
@@ -413,7 +401,6 @@ func (s *GRPCSuite) TestGRPCWithRetry() {
 
 	go func() {
 		err := startGRPCServer(lis, &myserver{})
-		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -427,7 +414,6 @@ func (s *GRPCSuite) TestGRPCWithRetry() {
 		GRPCServerPort: port,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik

@@ -4,7 +4,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -71,7 +70,6 @@ func (s *UDPSuite) TestWRR() {
 		WhoamiCIP: s.getComposeServiceIP("whoami-c"),
 		WhoamiDIP: s.getComposeServiceIP("whoami-d"),
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

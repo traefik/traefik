@@ -138,9 +138,7 @@ func (s *K8sSuite) testConfiguration(path, apiPort string) {
 	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 1*time.Minute, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
 
 	if !*updateExpected {
-		if err != nil {
-			s.Error(err)
-		}
+		require.NoError(s.T(), err)
 		return
 	}
 
@@ -157,8 +155,8 @@ func (s *K8sSuite) testConfiguration(path, apiPort string) {
 
 	err = os.WriteFile(expectedJSON, newJSON, 0o644)
 	require.NoError(s.T(), err)
-	// TODO ???
-	// s.Errorf("We do not want a passing test in file update mode")
+
+	s.T().Fatal("We do not want a passing test in file update mode")
 }
 
 func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {

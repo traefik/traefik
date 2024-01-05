@@ -53,7 +53,6 @@ func (s *WebsocketSuite) TestBase() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -98,7 +97,6 @@ func (s *WebsocketSuite) TestWrongOrigin() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -142,7 +140,6 @@ func (s *WebsocketSuite) TestOrigin() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -197,7 +194,6 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -249,7 +245,6 @@ func (s *WebsocketSuite) TestSSLTermination() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -306,7 +301,6 @@ func (s *WebsocketSuite) TestBasicAuth() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -345,7 +339,6 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -385,7 +378,6 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
@@ -434,7 +426,6 @@ func (s *WebsocketSuite) TestSSLhttp2() {
 		WebsocketServer: ts.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
 
 	// wait for traefik
@@ -488,7 +479,6 @@ func (s *WebsocketSuite) TestHeaderAreForwarded() {
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
 	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik

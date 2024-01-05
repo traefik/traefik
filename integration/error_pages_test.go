@@ -3,7 +3,6 @@ package integration
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -42,7 +41,6 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration() {
 		Server1 string
 		Server2 string
 	}{"http://" + s.BackendIP + ":80", s.ErrorPageIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -60,7 +58,6 @@ func (s *ErrorPagesSuite) TestErrorPage() {
 		Server1 string
 		Server2 string
 	}{s.BackendIP, s.ErrorPageIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -83,7 +80,6 @@ func (s *ErrorPagesSuite) TestErrorPageFlush() {
 		Server1 string
 		Server2 string
 	}{srv.URL, s.ErrorPageIP})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

@@ -154,7 +154,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend() {
 
 	req.SetBasicAuth("test", "test")
 
-	err = try.Request(req, 50000*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	require.NoError(s.T(), err)
 
 	// Verify access.log output as expected

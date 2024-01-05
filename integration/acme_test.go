@@ -106,9 +106,7 @@ func (s *AcmeSuite) SetupSuite() {
 	s.pebbleIP = s.getComposeServiceIP("pebble")
 
 	pebbleTransport, err := setupPebbleRootCA()
-	if err != nil {
-		s.T().Fatal(err)
-	}
+	require.NoError(s.T(), err)
 
 	// wait for pebble
 	req := testhelpers.MustNewRequest(http.MethodGet, s.getAcmeURL(), nil)
@@ -441,7 +439,6 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer() {
 			}},
 		},
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

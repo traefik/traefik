@@ -161,7 +161,6 @@ linters-settings:
       - expected-actual
       - float-compare
       - len
-      - suite-dont-use-pkg
       - suite-extra-assert-call
       - suite-thelper
 
@@ -233,7 +232,6 @@ issues:
     - 'SA1019: c.Providers.ConsulCatalog.Namespace is deprecated'
     - 'SA1019: c.Providers.Consul.Namespace is deprecated'
     - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
-    - "suite-dont-use-pkg:"
   exclude-rules:
     - path: '(.+)_test.go'
       linters:

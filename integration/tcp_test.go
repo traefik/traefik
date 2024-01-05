@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -49,7 +48,6 @@ func (s *TCPSuite) TestMixed() {
 		WhoamiB:      s.getComposeServiceIP("whoami-b") + ":8080",
 		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -98,7 +96,6 @@ func (s *TCPSuite) TestTLSOptions() {
 	}{
 		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -140,7 +137,6 @@ func (s *TCPSuite) TestNonTLSFallback() {
 		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 		WhoamiNoTLS:  s.getComposeServiceIP("whoami-no-tls") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -173,7 +169,6 @@ func (s *TCPSuite) TestNonTlsTcp() {
 	}{
 		WhoamiNoTLS: s.getComposeServiceIP("whoami-no-tls") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -192,7 +187,6 @@ func (s *TCPSuite) TestCatchAllNoTLS() {
 	}{
 		WhoamiBannerAddress: s.getComposeServiceIP("whoami-banner") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -213,7 +207,6 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS() {
 		WhoamiNoTLSAddress: s.getComposeServiceIP("whoami-no-tls") + ":8080",
 		WhoamiURL:          "http://" + s.getComposeServiceIP("whoami") + ":80",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -239,7 +232,6 @@ func (s *TCPSuite) TestMiddlewareAllowList() {
 		WhoamiA: s.getComposeServiceIP("whoami-a") + ":8080",
 		WhoamiB: s.getComposeServiceIP("whoami-b") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -264,7 +256,6 @@ func (s *TCPSuite) TestWRR() {
 		WhoamiB:  s.getComposeServiceIP("whoami-b") + ":8080",
 		WhoamiAB: s.getComposeServiceIP("whoami-ab") + ":8080",
 	})
-	defer os.Remove(file)
 
 	s.traefikCmd(withConfigFile(file))
 

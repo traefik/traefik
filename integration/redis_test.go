@@ -48,9 +48,8 @@ func (s *RedisSuite) SetupSuite() {
 		s.redisEndpoints,
 		&redis.Config{},
 	)
-	if err != nil {
-		s.T().Fatal("Cannot create store redis: ", err)
-	}
+	require.NoError(s.T(), err, "Cannot create store redis")
+
 	s.kvClient = kv
 
 	// wait for redis
@@ -66,7 +65,6 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/redis/simple.toml", struct{ RedisAddress string }{
 		RedisAddress: strings.Join(s.redisEndpoints, ","),
 	})
-	defer os.Remove(file)
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
