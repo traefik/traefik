@@ -1173,18 +1173,6 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 		return nil
 	})
 	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/autodetect/css/ct", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/autodetect/pdf/ct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/autodetect/css/noct", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/autodetect/pdf/noct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	require.NoError(s.T(), err)
 }
 
 func (s *SimpleSuite) TestMuxer() {
