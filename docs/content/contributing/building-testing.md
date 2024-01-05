@@ -17,6 +17,8 @@ You need:
     - [Docker](https://github.com/docker/docker "Link to website of Docker") 
     - `make`
     - [Go](https://go.dev/ "Link to website of Go")
+    - [misspell](https://github.com/golangci/misspell)
+    - [shellcheck](https://github.com/koalaman/shellcheck)
     - [Tailscale](https://tailscale.com/) if you are using Docker Desktop 
 
 !!! tip "Source Directory"

@@ -80,15 +80,21 @@ pull-images:
 		| uniq \
 		| xargs -P 6 -n 1 docker pull
 
+EXECUTABLES = misspell shellcheck
+
 ## Validate code and docs
 .PHONY: validate-files
 validate-files:
+	$(foreach exec,$(EXECUTABLES),\
+            $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
 	./script/make.sh generate validate-lint validate-misspell
 	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Validate code, docs, and vendor
 .PHONY: validate
 validate:
+	$(foreach exec,$(EXECUTABLES),\
+            $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
 	./script/make.sh generate validate-lint validate-misspell validate-vendor
 	bash $(CURDIR)/script/validate-shell-script.sh
 
