@@ -51,8 +51,3 @@ services:
       - /usr/local/etc/redis/conf/sentinel3.conf
     volumes:
       - ./resources/compose/config:/usr/local/etc/redis/conf
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

@@ -57,8 +57,3 @@ services:
       - -name
       - whoami-banner
       - --banner
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

@@ -43,8 +43,3 @@ services:
       PORT: 443
       BIND: 0.0.0.0
       CONSUL_HTTP_ADDR: http://consul:8500
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

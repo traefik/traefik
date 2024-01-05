@@ -31,8 +31,3 @@ services:
       K3S_TOKEN: somethingtotallyrandom
       K3S_URL: https://server:6443
       K3S_CLUSTER_SECRET: somethingtotallyrandom
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

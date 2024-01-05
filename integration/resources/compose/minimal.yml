@@ -9,8 +9,3 @@ services:
       traefik.enable: true
     deploy:
       replicas: 2
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

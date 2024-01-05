@@ -11,8 +11,3 @@ services:
       PEBBLE_VA_NOSLEEP: 1
       # https://github.com/letsencrypt/pebble#invalid-anti-replay-nonce-errors
       PEBBLE_WFE_NONCEREJECT: 0
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

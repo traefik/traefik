@@ -94,8 +94,3 @@ services:
       traefik.http.routers.rt-preflightCORS.middlewares: preflightCORS
       traefik.http.middlewares.preflightCORS.headers.accessControlAllowMethods: OPTIONS, GET
       traefik.http.services.preflightCORS.loadbalancer.server.port: 80
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

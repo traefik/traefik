@@ -5,8 +5,3 @@ services:
 
   nginx2:
     image: nginx:1.25.3-alpine3.18
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

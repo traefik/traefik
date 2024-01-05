@@ -11,8 +11,3 @@ services:
       - sys_module
     command:
       - tailscaled
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true
