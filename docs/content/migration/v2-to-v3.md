@@ -66,8 +66,8 @@ In v3, the `swarmMode` should not be used with the Docker provider, and, to use 
 
 ### HTTP3 Experimental Configuration
 
-In v3, HTTP/3 is no longer an experimental feature,
-and the associated `experimental.http3` option is now removed in v3.
+In v3, HTTP/3 is no longer an experimental feature.
+It can be enabled on entry points without the associated `experimental.http3` option, which is now removed.
 It is now unsupported and would prevent Traefik to start.
 
 ??? example "An example usage of v2 Experimental `http3` option"
