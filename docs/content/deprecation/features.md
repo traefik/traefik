@@ -12,12 +12,15 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 
 ### Kubernetes CRD Provider API Version `traefik.io/v1alpha1`
 
-The Kubernetes CRD provider API Version `traefik.io/v1alpha1` is deprecated in Traefik v3. Please use the API Group `traefik.io/v1` instead.
+The Kubernetes CRD provider API Version `traefik.io/v1alpha1` is deprecated in Traefik v3.
+Please use the API Group `traefik.io/v1` instead.
 
 ### Kubernetes Ingress API Version `networking.k8s.io/v1beta1`
 
-The Kubernetes Ingress API Version `networking.k8s.io/v1beta1` support is removed in v3. Please use the API Group `networking.k8s.io/v1` instead.
+The Kubernetes Ingress API Version `networking.k8s.io/v1beta1` support is removed in v3. 
+Please use the API Group `networking.k8s.io/v1` instead.
 
 ### Traefik CRD Definitions API Version `apiextensions.k8s.io/v1beta1`
 
-The Traefik CRD definitions API Version `apiextensions.k8s.io/v1beta1` support is removed in v3. Please use the API Group `apiextensions.k8s.io/v1` instead.
+The Traefik CRD definitions API Version `apiextensions.k8s.io/v1beta1` support is removed in v3.
+Please use the API Group `apiextensions.k8s.io/v1` instead.
