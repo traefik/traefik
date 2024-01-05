@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
 	"github.com/stretchr/testify/require"
@@ -102,7 +103,7 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 func (s *BaseSuite) SetupSuite() {
 	// configure default standard log.
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
-	//TODO
+	// TODO
 	// stdlog.SetOutput(log.Logger)
 
 	// Create docker network
@@ -216,7 +217,7 @@ func (s *BaseSuite) createComposeProject(name string) {
 	ctx := context.Background()
 
 	for id, containerConfig := range composeConfigData.Services {
-		var mounts testcontainers.ContainerMounts
+		var mounts []mount.Mount
 		for _, volume := range containerConfig.Volumes {
 			split := strings.Split(volume, ":")
 			if len(split) != 2 {
@@ -232,7 +233,10 @@ func (s *BaseSuite) createComposeProject(name string) {
 				split[0] = strings.Replace(split[0], "./", path+"/", 1)
 			}
 
-			mounts = append(mounts, testcontainers.BindMount(split[0], testcontainers.ContainerMountTarget(split[1])))
+			abs, err := filepath.Abs(split[0])
+			require.NoError(s.T(), err)
+
+			mounts = append(mounts, mount.Mount{Source: abs, Target: split[1], Type: mount.TypeBind})
 		}
 
 		if containerConfig.Deploy.Replicas > 0 {
@@ -251,13 +255,12 @@ func (s *BaseSuite) createComposeProject(name string) {
 	}
 }
 
-func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts testcontainers.ContainerMounts) (testcontainers.Container, error) {
+func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts []mount.Mount) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
 		Image:      containerConfig.Image,
 		Env:        containerConfig.Environment,
 		Cmd:        containerConfig.Command,
 		Labels:     containerConfig.Labels,
-		Mounts:     testcontainers.Mounts(mounts...),
 		Name:       id,
 		Hostname:   containerConfig.Hostname,
 		Privileged: containerConfig.Privileged,
@@ -269,6 +272,7 @@ func (s *BaseSuite) createContainer(ctx context.Context, containerConfig compose
 			if !isDockerDesktop(ctx, s.T()) {
 				config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:"+s.hostIP)
 			}
+			config.Mounts = mounts
 		},
 	}
 	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
