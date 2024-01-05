@@ -17,7 +17,7 @@ jobs:
 
       # https://github.com/marketplace/actions/checkout
       - name: Check out code
-        uses: actions/setup-go@v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 

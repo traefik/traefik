@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/setup-go@v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -49,7 +49,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Check out code
-        uses: actions/setup-go@v4
+        uses: actions/checkout@v4
         with:
           path: go/src/github.com/traefik/traefik
           fetch-depth: 0
