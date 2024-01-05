@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"net"
 	"net/http"
 	"os"
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/rs/zerolog/log"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -133,7 +134,7 @@ func (s *AcmeSuite) TearDownSuite() {
 	if s.fakeDNSServer != nil {
 		err := s.fakeDNSServer.Shutdown()
 		if err != nil {
-			log.Info().Msg(err.Error())
+			log.WithoutContext().Info(err.Error())
 		}
 	}
 

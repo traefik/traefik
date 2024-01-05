@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/traefik/traefik/v2/pkg/log"
 	"net"
 	"net/http"
 	"os"
@@ -8,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -105,6 +105,6 @@ func (s *UDPSuite) TestWRR() {
 	select {
 	case <-stop:
 	case <-time.Tick(5 * time.Second):
-		log.Info().Msg("Timeout")
+		log.WithoutContext().Info("Timeout")
 	}
 }

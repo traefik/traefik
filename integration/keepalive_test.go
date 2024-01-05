@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/traefik/traefik/v2/pkg/log"
 	"math"
 	"net"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -65,7 +65,7 @@ func (s *KeepAliveSuite) TestShouldRespectConfiguredBackendHttpKeepAliveTime() {
 			case <-noMoreRequests:
 				moreRequestsExpected = false
 			case <-maxWaitTimeExceeded:
-				log.Info().Msgf("timeout waiting for all connections to close, waited for %v, configured idle timeout was %v", maxWaitDuration, idleTimeout)
+				log.WithoutContext().Infof("timeout waiting for all connections to close, waited for %v, configured idle timeout was %v", maxWaitDuration, idleTimeout)
 				s.T().Fail()
 				close(completed)
 				return

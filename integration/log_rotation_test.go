@@ -5,8 +5,6 @@ package integration
 
 import (
 	"bufio"
-	checker "github.com/vdemeester/shakers"
-	"gopkg.in/check.v1"
 	"net/http"
 	"os"
 	"strings"
@@ -113,52 +111,46 @@ func (s *LogRotationSuite) TestAccessLogRotation() {
 	s.verifyEmptyErrorLog(traefikTestLogFile)
 }
 
-func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
+func (s *LogRotationSuite) TestTraefikLogRotation() {
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
-	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
+	cmd := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	waitForTraefik(c, "server1")
+	s.waitForTraefik("server1")
 
 	// Rename traefik log
-	err = os.Rename(traefikTestLogFile, traefikTestLogFileRotated)
-	c.Assert(err, checker.IsNil)
+	err := os.Rename(traefikTestLogFile, traefikTestLogFileRotated)
+	require.NoError(s.T(), err)
 
 	// issue SIGUSR1 signal to server process
 	err = cmd.Process.Signal(syscall.SIGUSR1)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = cmd.Process.Signal(syscall.SIGTERM)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// Allow time for switch to be processed
 	err = try.Do(3*time.Second, func() error {
 		_, err = os.Stat(traefikTestLogFile)
 		return err
 	})
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// we have at least 6 lines in traefik.log.rotated
-	lineCount := verifyLogLines(c, traefikTestLogFileRotated, 0, false)
+	lineCount := s.verifyLogLines(traefikTestLogFileRotated, 0, false)
 
 	// GreaterOrEqualThan used to ensure test doesn't break
 	// If more log entries are output on startup
-	c.Assert(lineCount, checker.GreaterOrEqualThan, 5)
+	assert.GreaterOrEqual(s.T(), lineCount, 5)
 
 	// Verify traefik.log output as expected
-	lineCount = verifyLogLines(c, traefikTestLogFile, lineCount, false)
-	c.Assert(lineCount, checker.GreaterOrEqualThan, 7)
+	lineCount = s.verifyLogLines(traefikTestLogFile, lineCount, false)
+	assert.GreaterOrEqual(s.T(), lineCount, 7)
 }
 
 func (s *LogRotationSuite) logAccessLogFile(fileName string) {
 	output, err := os.ReadFile(fileName)
 	require.NoError(s.T(), err)
-	log.Info().Msgf("Contents of file %s\n%s", fileName, string(output))
+	log.WithoutContext().Infof("Contents of file %s\n%s", fileName, string(output))
 }
 
 func (s *LogRotationSuite) verifyEmptyErrorLog(name string) {

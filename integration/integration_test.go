@@ -24,14 +24,11 @@ import (
 	"github.com/docker/docker/api/types/container"
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -103,16 +100,10 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 }
 
 func (s *BaseSuite) SetupSuite() {
-	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).
-		With().Timestamp().Caller().Logger()
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
-	// Global logrus replacement
-	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
-
 	// configure default standard log.
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
-	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
+	//TODO
+	// stdlog.SetOutput(log.Logger)
 
 	// Create docker network
 	// docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
@@ -235,7 +226,7 @@ func (s *BaseSuite) createComposeProject(name string) {
 			if strings.HasPrefix(split[0], "./") {
 				path, err := os.Getwd()
 				if err != nil {
-					log.Err(err).Msg("can't determine current directory")
+					log.WithoutContext().Errorf("can't determine current directory: %v", err)
 					continue
 				}
 				split[0] = strings.Replace(split[0], "./", path+"/", 1)
@@ -337,7 +328,7 @@ func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 
 func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	if cmd.Process == nil {
-		log.Error().Msg("No process to kill")
+		log.WithoutContext().Error("No process to kill")
 		return
 	}
 	err := cmd.Process.Kill()
@@ -348,8 +339,8 @@ func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (s *BaseSuite) traefikCmd(args ...string) {
-	_, out := s.cmdTraefik(args...)
+func (s *BaseSuite) traefikCmd(args ...string) *exec.Cmd {
+	cmd, out := s.cmdTraefik(args...)
 
 	s.T().Cleanup(func() {
 		if s.T().Failed() || *showLog {
@@ -358,6 +349,8 @@ func (s *BaseSuite) traefikCmd(args ...string) {
 			s.displayTraefikLog(out)
 		}
 	})
+
+	return cmd
 }
 
 func (s *BaseSuite) displayLogK3S() {
@@ -388,7 +381,7 @@ func (s *BaseSuite) displayLogCompose() {
 
 			trimLogs := bytes.Trim(bytes.TrimSpace(b), string([]byte{0}))
 			if len(trimLogs) > 0 {
-				log.Info().Str("container", name).Msg(string(trimLogs))
+				log.WithoutContext().WithField("container", name).Info(string(trimLogs))
 			}
 		}
 	}
@@ -474,7 +467,7 @@ func (s *BaseSuite) setupVPN(keyFile string) {
 	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
-			log.Fatal().Err(err).Send()
+			log.WithoutContext().Error(err)
 		}
 
 		return
@@ -501,80 +494,4 @@ func (s *BaseSuite) composeExec(service string, args ...string) string {
 	require.NoError(s.T(), err)
 
 	return string(content)
-}
-
-type FakeDockerCLI struct {
-	client client.APIClient
-}
-
-func (f FakeDockerCLI) Client() client.APIClient {
-	return f.client
-}
-
-func (f FakeDockerCLI) In() *streams.In {
-	return streams.NewIn(os.Stdin)
-}
-
-func (f FakeDockerCLI) Out() *streams.Out {
-	return streams.NewOut(os.Stdout)
-}
-
-func (f FakeDockerCLI) Err() io.Writer {
-	return streams.NewOut(os.Stderr)
-}
-
-func (f FakeDockerCLI) SetIn(in *streams.In) {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) Apply(ops ...command.DockerCliOption) error {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) ConfigFile() *configfile.ConfigFile {
-	return &configfile.ConfigFile{}
-}
-
-func (f FakeDockerCLI) ServerInfo() command.ServerInfo {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) NotaryClient(imgRefAndAuth trust.ImageRefAndAuth, actions []string) (notaryclient.Repository, error) {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) DefaultVersion() string {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) CurrentVersion() string {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) ManifestStore() manifeststore.Store {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) RegistryClient(b bool) registryclient.RegistryClient {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) ContentTrustEnabled() bool {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) BuildKitEnabled() (bool, error) {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) ContextStore() store.Store {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) CurrentContext() string {
-	panic("implement me if you need me")
-}
-
-func (f FakeDockerCLI) DockerEndpoint() docker.Endpoint {
-	panic("implement me if you need me")
 }

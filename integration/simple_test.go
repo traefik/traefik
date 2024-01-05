@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"io"
 	"net"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -421,24 +421,19 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName() {
 	require.NoError(s.T(), err)
 }
 
-func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
-	s.createComposeProject(c, "whitelist")
+func (s *SimpleSuite) TestIPStrategyWhitelist() {
+	s.createComposeProject("whitelist")
 
-	s.composeUp(c)
-	defer s.composeDown(c)
+	s.composeUp()
+	defer s.composeDown()
 
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
-	defer output(c)
+	s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	testCases := []struct {
 		desc               string
@@ -486,7 +481,7 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 
 		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
 		if err != nil {
-			c.Fatalf("Error while %s: %v", test.desc, err)
+			s.T().Fatalf("Error while %s: %v", test.desc, err)
 		}
 	}
 }
@@ -1134,34 +1129,34 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
@@ -1328,8 +1323,8 @@ func (s *SimpleSuite) TestDebugLog() {
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 
 	if regexp.MustCompile("ThisIsABearerToken").MatchReader(output) {
-		log.Info().Msgf("Traefik Logs: %s", output.String())
-		log.Info().Msg("Found Authorization Header in Traefik DEBUG logs")
+		log.WithoutContext().Infof("Traefik Logs: %s", output.String())
+		log.WithoutContext().Info("Found Authorization Header in Traefik DEBUG logs")
 		s.T().Fail()
 	}
 }
@@ -1386,7 +1381,7 @@ func (s *SimpleSuite) TestEncodeSemicolons() {
 		require.NoError(s.T(), err)
 
 		if resp.StatusCode != test.expected {
-			log.Info().Msgf("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
+			log.WithoutContext().Infof("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
 		}
 
 		if test.body != "" {

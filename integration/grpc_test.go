@@ -189,7 +189,7 @@ func (s *GRPCSuite) TestGRPCh2c() {
 
 	go func() {
 		err := starth2cGRPCServer(lis, &myserver{})
-		log.Info().Msg(err.Error())
+		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -223,7 +223,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination() {
 
 	go func() {
 		err := starth2cGRPCServer(lis, &myserver{})
-		log.Info().Msg(err.Error())
+		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -261,7 +261,7 @@ func (s *GRPCSuite) TestGRPCInsecure() {
 
 	go func() {
 		err := startGRPCServer(lis, &myserver{})
-		log.Info().Msg(err.Error())
+		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -303,7 +303,7 @@ func (s *GRPCSuite) TestGRPCBuffer() {
 		err := startGRPCServer(lis, &myserver{
 			stopStreamExample: stopStreamExample,
 		})
-		log.Info().Msg(err.Error())
+		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -358,7 +358,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval() {
 		err := startGRPCServer(lis, &myserver{
 			stopStreamExample: stopStreamExample,
 		})
-		log.Info().Msg(err.Error())
+		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 
@@ -413,7 +413,7 @@ func (s *GRPCSuite) TestGRPCWithRetry() {
 
 	go func() {
 		err := startGRPCServer(lis, &myserver{})
-		log.Info().Msg(err.Error())
+		log.WithoutContext().Info(err.Error())
 		assert.NoError(s.T(), err)
 	}()
 

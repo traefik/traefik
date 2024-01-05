@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"io/fs"
 	"net"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
-	"github.com/rs/zerolog/log"
+
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -201,6 +202,6 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 
 		text, err := difflib.GetUnifiedDiffString(diff)
 		require.NoError(s.T(), err)
-		log.Info().Msg(text)
+		log.WithoutContext().Info(text)
 	}
 }

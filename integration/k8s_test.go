@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/pmezard/go-difflib/difflib"
-	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
@@ -145,7 +145,7 @@ func (s *K8sSuite) testConfiguration(path, apiPort string) {
 	}
 
 	if err != nil {
-		log.Info().Msgf("In file update mode, got expected error: %v", err)
+		log.WithoutContext().Infof("In file update mode, got expected error: %v", err)
 	}
 
 	var rtRepr api.RunTimeRepresentation
