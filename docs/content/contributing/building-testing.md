@@ -17,6 +17,7 @@ You need:
     - [Docker](https://github.com/docker/docker "Link to website of Docker") 
     - `make`
     - [Go](https://go.dev/ "Link to website of Go")
+    - [Tailscale](https://tailscale.com/) if you are using Docker Desktop 
 
 !!! tip "Source Directory"
 
@@ -86,6 +87,26 @@ Test success
 
 For development purposes, you can specify which tests to run by using (only works the `test-integration` target):
 
+??? note "Configuring Tailscale for Docker Desktop user"
+
+    Create `tailscale.secret` file in `integration` directory.
+    
+    This file need to contains a [Tailscale auth key](https://tailscale.com/kb/1085/auth-keys) 
+    (an ephemeral, but reusable, one is recommended).
+
+    Add this section to your tailscale ACLs to auto-approve the routes for the
+    containers in the docker subnet:
+
+    ```json 
+        "autoApprovers": {
+          // Allow myself to automatically
+          // advertize routes for docker networks
+          "routes": {
+            "172.0.0.0/8": ["your_tailscale_identity"],
+          },
+        },
+    ```
+    
 ```bash
 # Run every tests in the MyTest suite
 TESTFLAGS="-test.run TestAccessLogSuite" make test-integration
