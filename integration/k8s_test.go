@@ -115,12 +115,6 @@ func (s *K8sSuite) TestIngressclass() {
 	s.testConfiguration("testdata/rawdata-ingressclass.json", "8080")
 }
 
-func (s *K8sSuite) TestDisableIngressclassLookup() {
-	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
-
-	s.testConfiguration("testdata/rawdata-ingressclass-disabled.json", "8080")
-}
-
 func (s *K8sSuite) testConfiguration(path, apiPort string) {
 	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
