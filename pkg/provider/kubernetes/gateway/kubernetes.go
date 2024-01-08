@@ -34,10 +34,13 @@ import (
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
 	providerName = "kubernetesgateway"
+
+	groupCore = "core"
 
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
@@ -474,7 +477,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				certificateRef := listener.TLS.CertificateRefs[0]
 
 				if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" ||
-					certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != "core") {
+					certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
 					// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
 					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -482,29 +485,50 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 						ObservedGeneration: gateway.Generation,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
-						Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %v/%v", certificateRef.Group, certificateRef.Kind),
+						Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", certificateRef.Group, certificateRef.Kind),
 					})
 
 					continue
 				}
 
-				// TODO Support ReferencePolicy to support cross namespace references.
+				certificateNamespace := gateway.Namespace
 				if certificateRef.Namespace != nil && string(*certificateRef.Namespace) != gateway.Namespace {
-					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-						Type:               string(gatev1.ListenerConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: gateway.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
-						Message:            "Cross namespace secrets are not supported",
-					})
-
-					continue
+					certificateNamespace = string(*certificateRef.Namespace)
 				}
 
-				configKey := gateway.Namespace + "/" + string(certificateRef.Name)
+				if certificateNamespace != gateway.Namespace {
+					referenceGrants, err := client.GetReferenceGrants(certificateNamespace)
+					if err != nil {
+						listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: gateway.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+							Message:            fmt.Sprintf("Cannot find ReferenceGrant for cross-namespace secret reference by CertificateRef: %v", err),
+						})
+						continue
+					}
+
+					referenceGrants = filterReferenceGrantsFrom(referenceGrants, "gateway.networking.k8s.io", "Gateway", gateway.Namespace)
+					referenceGrants = filterReferenceGrantsTo(referenceGrants, groupCore, "Secret", string(certificateRef.Name))
+					if len(referenceGrants) == 0 {
+						listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: gateway.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+							Message:            "Required ReferenceGrant for cross namespace secret reference is missing",
+						})
+
+						continue
+					}
+				}
+
+				configKey := certificateNamespace + "/" + string(certificateRef.Name)
 				if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
-					tlsConf, err := getTLS(client, certificateRef.Name, gateway.Namespace)
+					tlsConf, err := getTLS(client, certificateRef.Name, certificateNamespace)
 					if err != nil {
 						// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
 						listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
@@ -712,7 +736,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 
 	routes, err := client.GetHTTPRoutes(namespaces)
 	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
+		// update "ResolvedRefs" status true with "RefNotPermitted" reason
 		return []metav1.Condition{{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -1526,7 +1550,7 @@ func loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBack
 			continue
 		}
 
-		if *backendRef.Group != "" && *backendRef.Group != "core" && *backendRef.Kind != "Service" {
+		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
 			return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 		}
 
@@ -1649,7 +1673,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 			continue
 		}
 
-		if *backendRef.Group != "" && *backendRef.Group != "core" && *backendRef.Kind != "Service" {
+		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
 			return nil, nil, fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 		}
 
@@ -1879,4 +1903,52 @@ func makeListenerKey(l gatev1.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
+	matchingReferenceGrants := []*gatev1beta1.ReferenceGrant{}
+	for _, referenceGrant := range referenceGrants {
+		if referenceGrantMatchesFrom(referenceGrant, group, kind, namespace) {
+			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
+		}
+	}
+	return matchingReferenceGrants
+}
+
+func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, namespace string) bool {
+	for _, from := range referenceGrant.Spec.From {
+		sanitizedGroup := string(from.Group)
+		if sanitizedGroup == "" {
+			sanitizedGroup = groupCore
+		}
+		if string(from.Namespace) != namespace || string(from.Kind) != kind || sanitizedGroup != group {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, name string) []*gatev1beta1.ReferenceGrant {
+	matchingReferenceGrants := []*gatev1beta1.ReferenceGrant{}
+	for _, referenceGrant := range referenceGrants {
+		if referenceGrantMatchesTo(referenceGrant, group, kind, name) {
+			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
+		}
+	}
+	return matchingReferenceGrants
+}
+
+func referenceGrantMatchesTo(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, name string) bool {
+	for _, to := range referenceGrant.Spec.To {
+		sanitizedGroup := string(to.Group)
+		if sanitizedGroup == "" {
+			sanitizedGroup = groupCore
+		}
+		if string(to.Kind) != kind || sanitizedGroup != group || (to.Name != nil && string(*to.Name) != name) {
+			continue
+		}
+		return true
+	}
+	return false
 }
