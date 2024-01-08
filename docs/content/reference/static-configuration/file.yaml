@@ -397,68 +397,29 @@ accessLog:
   bufferingSize: 42
 tracing:
   serviceName: foobar
-  spanNameLimit: 42
-  jaeger:
-    samplingServerURL: foobar
-    samplingType: foobar
-    samplingParam: 42
-    localAgentHostPort: foobar
-    gen128Bit: true
-    propagation: foobar
-    traceContextHeaderName: foobar
-    disableAttemptReconnecting: true
-    collector:
+  sampleRate: 42
+  headers:
+    header1: foobar
+    header2: foobar
+  globalAttributes:
+    attr1: foobar
+    attr2: foobar
+  otlp:
+    grpc:
       endpoint: foobar
-      user: foobar
-      password: foobar
-  zipkin:
-    httpEndpoint: foobar
-    sameSpan: true
-    id128Bit: true
-    sampleRate: 42
-  datadog:
-    localAgentHostPort: foobar
-    localAgentSocket: foobar
-    globalTags:
-      tag1: foobar
-      tag2: foobar
-    debug: true
-    prioritySampling: true
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    samplingPriorityHeaderName: foobar
-    bagagePrefixHeaderName: foobar
-  instana:
-    localAgentHost: foobar
-    localAgentPort: 42
-    logLevel: foobar
-    enableAutoProfile: true
-  haystack:
-    localAgentHost: foobar
-    localAgentPort: 42
-    globalTag: foobar
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    spanIDHeaderName: foobar
-    baggagePrefixHeaderName: foobar
-  elastic:
-    serverURL: foobar
-    secretToken: foobar
-    serviceEnvironment: foobar
-  openTelemetry:
-    address: foobar
-    headers:
-      name0: foobar
-      name1: foobar
-    insecure: true
-    path: foobar
-    tls:
-      ca: foobar
-      caOptional: true
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
-    grpc: {}
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar

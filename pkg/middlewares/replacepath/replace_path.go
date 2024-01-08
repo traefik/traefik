@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -35,8 +35,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePath, nam
 	}, nil
 }
 
-func (r *replacePath) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
+func (r *replacePath) GetTracingInformation() (string, string, trace.SpanKind) {
+	return r.name, typeName, trace.SpanKindInternal
 }
 
 func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -52,6 +52,7 @@ func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 	if err != nil {
 		middlewares.GetLogger(context.Background(), r.name, typeName).Error().Err(err).Send()
+		tracing.SetStatusErrorf(req.Context(), err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
