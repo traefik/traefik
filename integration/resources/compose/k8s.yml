@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   server:
-    image: rancher/k3s:v1.28.4-k3s2
+    image: rancher/k3s:v1.20.15-k3s1
     privileged: true
     command:
       - server
@@ -17,6 +17,7 @@ services:
       - --tls-san=172.31.42.3
       - --tls-san=172.31.42.4
     environment:
+      K3S_CLUSTER_SECRET: somethingtotallyrandom
       K3S_TOKEN: somethingtotallyrandom
       K3S_KUBECONFIG_OUTPUT: /output/kubeconfig.yaml
       K3S_KUBECONFIG_MODE: 666
@@ -25,7 +26,7 @@ services:
       - ./fixtures/k8s:/var/lib/rancher/k3s/server/manifests
 
   node:
-    image: rancher/k3s:v1.28.4-k3s2
+    image: rancher/k3s:v1.20.15-k3s1
     privileged: true
     environment:
       K3S_TOKEN: somethingtotallyrandom
