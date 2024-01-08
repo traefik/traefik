@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
@@ -59,6 +60,7 @@ type Client interface {
 	GetHTTPRoutes(namespaces []string) ([]*gatev1.HTTPRoute, error)
 	GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error)
 	GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRoute, error)
+	GetReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
@@ -189,9 +191,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
-	// TODO manage Reference Policy
-	// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.ReferencePolicy
-
 	for _, ns := range namespaces {
 		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns))
 		_, err = factoryGateway.Gateway().V1().Gateways().Informer().AddEventHandler(eventHandler)
@@ -207,6 +206,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 		_, err = factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryGateway.Gateway().V1beta1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -361,6 +364,19 @@ func (c *clientWrapper) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRo
 		tlsRoutes = append(tlsRoutes, routes...)
 	}
 	return tlsRoutes, nil
+}
+
+func (c *clientWrapper) GetReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get ReferenceGrants: namespace %s is not within watched namespaces", namespace)
+	}
+
+	referenceGrants, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1beta1().ReferenceGrants().Lister().ReferenceGrants(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	return referenceGrants, nil
 }
 
 func (c *clientWrapper) GetGateways() []*gatev1.Gateway {
