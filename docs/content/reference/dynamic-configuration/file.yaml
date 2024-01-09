@@ -225,6 +225,7 @@ http:
         isDevelopment: true
     Middleware11:
       ipAllowList:
+        rejectStatusCode: 404
         sourceRange:
           - foobar
           - foobar

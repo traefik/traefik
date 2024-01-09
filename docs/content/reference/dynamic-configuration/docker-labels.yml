@@ -68,6 +68,7 @@
 - "traefik.http.middlewares.middleware11.ipallowlist.ipstrategy.depth=42"
 - "traefik.http.middlewares.middleware11.ipallowlist.ipstrategy.excludedips=foobar, foobar"
 - "traefik.http.middlewares.middleware11.ipallowlist.sourcerange=foobar, foobar"
+- "traefik.http.middlewares.middleware11.ipallowlist.rejectstatuscode=404"
 - "traefik.http.middlewares.middleware12.inflightreq.amount=42"
 - "traefik.http.middlewares.middleware12.inflightreq.sourcecriterion.ipstrategy.depth=42"
 - "traefik.http.middlewares.middleware12.inflightreq.sourcecriterion.ipstrategy.excludedips=foobar, foobar"
