@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"net"
 	"net/http"
 	"os"
@@ -16,11 +15,11 @@ import (
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/kvtools/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
-
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Zk test suites.
