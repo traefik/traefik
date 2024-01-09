@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"gopkg.in/yaml.v3"
@@ -57,12 +58,10 @@ type composeDeploy struct {
 
 var traefikBinary = "../dist/traefik"
 
-var networkName = "traefik-test-network"
-
 type BaseSuite struct {
 	suite.Suite
 	containers map[string]testcontainers.Container
-	network    testcontainers.Network
+	network    *testcontainers.DockerNetwork
 	hostIP     string
 }
 
@@ -106,29 +105,23 @@ func (s *BaseSuite) SetupSuite() {
 	// TODO
 	// stdlog.SetOutput(log.Logger)
 
+	ctx := context.Background()
 	// Create docker network
 	// docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
-	req := testcontainers.GenericNetworkRequest{
-		ProviderType: testcontainers.ProviderDocker,
-		NetworkRequest: testcontainers.NetworkRequest{
-			Name:           networkName,
-			CheckDuplicate: true,
-			Driver:         "bridge",
-			IPAM: &dockernetwork.IPAM{
-				Driver: "default",
-				Config: []dockernetwork.IPAMConfig{
-					{
-						Subnet: "172.31.42.0/24",
-					},
-				},
+	var opts []network.NetworkCustomizer
+	opts = append(opts, network.WithDriver("bridge"))
+	opts = append(opts, network.WithIPAM(&dockernetwork.IPAM{
+		Driver: "default",
+		Config: []dockernetwork.IPAMConfig{
+			{
+				Subnet: "172.31.42.0/24",
 			},
 		},
-	}
-	ctx := context.Background()
-	network, err := testcontainers.GenericNetwork(ctx, req)
+	}))
+	dockerNetwork, err := network.New(ctx, opts...)
 	require.NoError(s.T(), err)
 
-	s.network = network
+	s.network = dockerNetwork
 	s.hostIP = "172.31.42.1"
 	if isDockerDesktop(ctx, s.T()) {
 		s.hostIP = getDockerDesktopHostIP(ctx, s.T())
@@ -264,7 +257,7 @@ func (s *BaseSuite) createContainer(ctx context.Context, containerConfig compose
 		Name:       id,
 		Hostname:   containerConfig.Hostname,
 		Privileged: containerConfig.Privileged,
-		Networks:   []string{networkName},
+		Networks:   []string{s.network.Name},
 		HostConfigModifier: func(config *container.HostConfig) {
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
@@ -307,8 +300,8 @@ func (s *BaseSuite) composeStop(services ...string) {
 
 // composeDown stops all compose project services and removes the corresponding containers.
 func (s *BaseSuite) composeDown() {
-	for _, container := range s.containers {
-		err := container.Terminate(context.Background())
+	for _, c := range s.containers {
+		err := c.Terminate(context.Background())
 		require.NoError(s.T(), err)
 	}
 	s.containers = map[string]testcontainers.Container{}
