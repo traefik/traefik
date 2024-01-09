@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"github.com/traefik/traefik/v2/pkg/log"
 	"math"
 	"net"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type KeepAliveSuite struct {

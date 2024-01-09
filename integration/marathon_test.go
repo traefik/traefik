@@ -1,13 +1,13 @@
 package integration
 
 import (
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/gambol99/go-marathon"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
 )
 
