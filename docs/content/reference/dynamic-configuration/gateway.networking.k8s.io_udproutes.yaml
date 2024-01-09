@@ -1,5 +1,5 @@
 #
-# config/crd/experimental/gateway.networking.k8s.io_tcproutes.yaml
+# config/crd/experimental/gateway.networking.k8s.io_udproutes.yaml
 #
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -9,16 +9,16 @@ metadata:
     gateway.networking.k8s.io/bundle-version: v1.0.0
     gateway.networking.k8s.io/channel: experimental
   creationTimestamp: null
-  name: tcproutes.gateway.networking.k8s.io
+  name: udproutes.gateway.networking.k8s.io
 spec:
   group: gateway.networking.k8s.io
   names:
     categories:
       - gateway-api
-    kind: TCPRoute
-    listKind: TCPRouteList
-    plural: tcproutes
-    singular: tcproute
+    kind: UDPRoute
+    listKind: UDPRouteList
+    plural: udproutes
+    singular: udproute
   scope: Namespaced
   versions:
     - additionalPrinterColumns:
@@ -28,7 +28,7 @@ spec:
       name: v1alpha2
       schema:
         openAPIV3Schema:
-          description: TCPRoute provides a way to route TCP requests. When combined with a Gateway listener, it can be used to forward connections on the port specified by the listener to a set of backends specified by the TCPRoute.
+          description: UDPRoute provides a way to route UDP traffic. When combined with a Gateway listener, it can be used to forward traffic on the port specified by the listener to a set of backends specified by the UDPRoute.
           properties:
             apiVersion:
               description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -39,7 +39,7 @@ spec:
             metadata:
               type: object
             spec:
-              description: Spec defines the desired state of TCPRoute.
+              description: Spec defines the desired state of UDPRoute.
               properties:
                 parentRefs:
                   description: "ParentRefs references the resources (usually Gateways) that a Route wants to be attached to. Note that the referenced parent resource needs to allow this for the attachment to be complete. For Gateways, that means the Gateway needs to allow attachment from Routes of this kind and namespace. For Services, that means the Service must either be in the same namespace for a \"producer\" route, or the mesh implementation must support and allow \"consumer\" routes for the referenced Service. ReferenceGrant is not applicable for governing ParentRefs to Services - it is not possible to create a \"producer\" route for a Service in a different namespace from the Route. \n There are two kinds of parent resources with \"Core\" support: \n * Gateway (Gateway conformance profile)  * Service (Mesh conformance profile, experimental, ClusterIP Services only)  This API may be extended in the future to support additional kinds of parent resources. \n ParentRefs must be _distinct_. This means either that: \n * They select different objects.  If this is the case, then parentRef entries are distinct. In terms of fields, this means that the multi-part key defined by `group`, `kind`, `namespace`, and `name` must be unique across all parentRef entries in the Route. * They do not select different objects, but for each optional field used, each ParentRef that selects the same object must set the same set of optional fields to different values. If one ParentRef sets a combination of optional fields, all must set the same combination. \n Some examples: \n * If one ParentRef sets `sectionName`, all ParentRefs referencing the same object must also set `sectionName`. * If one ParentRef sets `port`, all ParentRefs referencing the same object must also set `port`. * If one ParentRef sets `sectionName` and `port`, all ParentRefs referencing the same object must also set `sectionName` and `port`. \n It is possible to separately reference multiple distinct objects that may be collapsed by an implementation. For example, some implementations may choose to merge compatible Gateway Listeners together. If that is the case, the list of routes attached to those resources should also be merged. \n Note that for ParentRefs that cross namespace boundaries, there are specific rules. Cross-namespace references are only valid if they are explicitly allowed by something in the namespace they are referring to. For example, Gateway has the AllowedRoutes field, and ReferenceGrant provides a generic way to enable other kinds of cross-namespace reference. \n  ParentRefs from a Route to a Service in the same namespace are \"producer\" routes, which apply default routing rules to inbound connections from any namespace to the Service. \n ParentRefs from a Route to a Service in a different namespace are \"consumer\" routes, and these routing rules are only applied to outbound connections originating from the same namespace as the Route, for which the intended destination of the connections are a Service targeted as a ParentRef of the Route.  \n "
@@ -93,12 +93,12 @@ spec:
                     - message: sectionName or port must be unique when parentRefs includes 2 or more references to the same parent
                       rule: self.all(p1, self.exists_one(p2, p1.group == p2.group && p1.kind == p2.kind && p1.name == p2.name && (((!has(p1.__namespace__) || p1.__namespace__ == '') && (!has(p2.__namespace__) || p2.__namespace__ == '')) || (has(p1.__namespace__) && has(p2.__namespace__) && p1.__namespace__ == p2.__namespace__ )) && (((!has(p1.sectionName) || p1.sectionName == '') && (!has(p2.sectionName) || p2.sectionName == '')) || ( has(p1.sectionName) && has(p2.sectionName) && p1.sectionName == p2.sectionName)) && (((!has(p1.port) || p1.port == 0) && (!has(p2.port) || p2.port == 0)) || (has(p1.port) && has(p2.port) && p1.port == p2.port))))
                 rules:
-                  description: Rules are a list of TCP matchers and actions.
+                  description: Rules are a list of UDP matchers and actions.
                   items:
-                    description: TCPRouteRule is the configuration for a given rule.
+                    description: UDPRouteRule is the configuration for a given rule.
                     properties:
                       backendRefs:
-                        description: "BackendRefs defines the backend(s) where matching requests should be sent. If unspecified or invalid (refers to a non-existent resource or a Service with no endpoints), the underlying implementation MUST actively reject connection attempts to this backend. Connection rejections must respect weight; if an invalid backend is requested to have 80% of connections, then 80% of connections must be rejected instead. \n Support: Core for Kubernetes Service \n Support: Extended for Kubernetes ServiceImport \n Support: Implementation-specific for any other resource \n Support for weight: Extended"
+                        description: "BackendRefs defines the backend(s) where matching requests should be sent. If unspecified or invalid (refers to a non-existent resource or a Service with no endpoints), the underlying implementation MUST actively reject connection attempts to this backend. Packet drops must respect weight; if an invalid backend is requested to have 80% of the packets, then 80% of packets must be dropped instead. \n Support: Core for Kubernetes Service \n Support: Extended for Kubernetes ServiceImport \n Support: Implementation-specific for any other resource \n Support for weight: Extended"
                         items:
                           description: "BackendRef defines how a Route should forward a request to a Kubernetes resource. \n Note that when a namespace different than the local namespace is specified, a ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. \n <gateway:experimental:description> \n When the BackendRef points to a Kubernetes Service, implementations SHOULD honor the appProtocol field if it is set for the target Service Port. \n Implementations supporting appProtocol SHOULD recognize the Kubernetes Standard Application Protocols defined in KEP-3726. \n If a Service appProtocol isn't specified, an implementation MAY infer the backend protocol through its own means. Implementations MAY infer the protocol from the Route type referring to the backend Service. \n If a Route is not able to send traffic to the backend using the specified protocol then the backend is considered invalid. Implementations MUST set the \"ResolvedRefs\" condition to \"False\" with the \"UnsupportedProtocol\" reason. \n </gateway:experimental:description> \n Note that when the BackendTLSPolicy object is enabled by the implementation, there are some extra rules about validity to consider here. See the fields where this struct is used for more information about the exact behavior."
                           properties:
@@ -156,7 +156,7 @@ spec:
                 - rules
               type: object
             status:
-              description: Status defines the current state of TCPRoute.
+              description: Status defines the current state of UDPRoute.
               properties:
                 parents:
                   description: "Parents is a list of parent resources (usually Gateways) that are associated with the route, and the status of the route with respect to each parent. When this route attaches to a parent, the controller that manages the parent must add an entry to this list when the controller first sees the route and should update the entry as appropriate when the route or gateway is modified. \n Note that parent references that cannot be resolved by an implementation of this API will not be added to this list. Implementations of this API can only populate Route status for the Gateways/parent resources they are responsible for. \n A maximum of 32 Gateways will be represented in this list. An empty list means the route has not been attached to any Gateway."
