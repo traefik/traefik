@@ -25,7 +25,7 @@ The main features include dynamic configuration, automatic service discovery, an
 
 ## Edge Router
 
-Traefik is an *Edge Router*, this means that it's the door to your platform, and that it intercepts and routes every incoming request:
+Traefik is an *Edge Router*; this means that it's the door to your platform, and that it intercepts and routes every incoming request:
 it knows all the logic and every [rule](../routing/routers/index.md#rule "Link to docs about routing rules") that determine which services handle which requests (based on the *path*, the *host*, *headers*, etc.).
 
 ![The Door to Your Infrastructure](../assets/img/traefik-concepts-1.png "Picture explaining the infrastructure")
