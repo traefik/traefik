@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"text/template"
 	"time"
 
-	"github.com/kvtools/etcdv3"
+	"github.com/fatih/structs"
+	"github.com/kvtools/redis"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
@@ -19,48 +23,90 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
-// etcd test suites.
-type EtcdSuite struct {
+// Redis test suites.
+type RedisSentinelSuite struct {
 	BaseSuite
-	kvClient store.Store
-	etcdAddr string
+	kvClient       store.Store
+	redisEndpoints []string
 }
 
-func TestEtcdSuite(t *testing.T) {
-	suite.Run(t, new(EtcdSuite))
+func TestRedisSentinelSuite(t *testing.T) {
+	suite.Run(t, new(RedisSentinelSuite))
 }
 
-func (s *EtcdSuite) SetupSuite() {
+func (s *RedisSentinelSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
-	s.createComposeProject("etcd")
+	s.setupSentinelConfiguration([]string{"26379", "26379", "26379"})
+
+	s.createComposeProject("redis_sentinel")
 	s.composeUp()
 
-	var err error
-	s.etcdAddr = net.JoinHostPort(s.getComposeServiceIP("etcd"), "2379")
-	s.kvClient, err = valkeyrie.NewStore(
+	s.redisEndpoints = []string{
+		net.JoinHostPort(s.getComposeServiceIP("sentinel1"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel2"), "26379"),
+		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "26379"),
+	}
+	kv, err := valkeyrie.NewStore(
 		context.Background(),
-		etcdv3.StoreName,
-		[]string{s.etcdAddr},
-		&etcdv3.Config{
-			ConnectionTimeout: 10 * time.Second,
+		redis.StoreName,
+		s.redisEndpoints,
+		&redis.Config{
+			Sentinel: &redis.Sentinel{
+				MasterName: "mymaster",
+			},
 		},
 	)
-	require.NoError(s.T(), err)
+	require.NoError(s.T(), err, "Cannot create store redis")
+	s.kvClient = kv
 
-	// wait for etcd
-	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
+	// wait for redis
+	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
 	require.NoError(s.T(), err)
 }
 
-func (s *EtcdSuite) TearDownSuite() {
+func (s *RedisSentinelSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
+
+	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
+		_ = os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
+	}
 }
 
-func (s *EtcdSuite) TestSimpleConfiguration() {
-	file := s.adaptFile("fixtures/etcd/simple.toml", struct{ EtcdAddress string }{s.etcdAddr})
+func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
+	for i, port := range ports {
+		templateValue := struct{ SentinelPort string }{SentinelPort: port}
+
+		// Load file
+		templateFile := "resources/compose/config/sentinel_template.conf"
+		tmpl, err := template.ParseFiles(templateFile)
+		require.NoError(s.T(), err)
+
+		folder, prefix := filepath.Split(templateFile)
+
+		fileName := fmt.Sprintf("%s/sentinel%d.conf", folder, i+1)
+		tmpFile, err := os.Create(fileName)
+		require.NoError(s.T(), err)
+		defer tmpFile.Close()
+
+		model := structs.Map(templateValue)
+		model["SelfFilename"] = tmpFile.Name()
+
+		err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
+		require.NoError(s.T(), err)
+
+		err = tmpFile.Sync()
+		require.NoError(s.T(), err)
+	}
+}
+
+func (s *RedisSentinelSuite) TestSentinelConfiguration() {
+	file := s.adaptFile("fixtures/redis/sentinel.toml", struct{ RedisAddress string }{
+		RedisAddress: strings.Join(s.redisEndpoints, `","`),
+	})
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -69,7 +115,7 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 		"traefik/http/routers/Router0/service":       "simplesvc",
 		"traefik/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
 		"traefik/http/routers/Router0/priority":      "42",
-		"traefik/http/routers/Router0/tls":           "",
+		"traefik/http/routers/Router0/tls":           "true",
 
 		"traefik/http/routers/Router1/rule":                 "Host(`kv2.localhost`)",
 		"traefik/http/routers/Router1/priority":             "42",
@@ -102,10 +148,9 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 		"traefik/http/services/Service03/weighted/services/1/name":   "srvcB",
 		"traefik/http/services/Service03/weighted/services/1/weight": "42",
 
-		"traefik/http/middlewares/compressor/compress":            "",
+		"traefik/http/middlewares/compressor/compress":            "true",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
-		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
 	}
 
 	for k, v := range data {
@@ -117,7 +162,7 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 
 	// wait for traefik
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
-		try.BodyContains(`"striper@etcd":`, `"compressor@etcd":`, `"srvcA@etcd":`, `"srvcB@etcd":`),
+		try.BodyContains(`"striper@redis":`, `"compressor@redis":`, `"srvcA@redis":`, `"srvcB@redis":`),
 	)
 	require.NoError(s.T(), err)
 
@@ -130,7 +175,7 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 	got, err := json.MarshalIndent(obtained, "", "  ")
 	require.NoError(s.T(), err)
 
-	expectedJSON := filepath.FromSlash("testdata/rawdata-etcd.json")
+	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")
 
 	if *updateExpected {
 		err = os.WriteFile(expectedJSON, got, 0o666)
@@ -150,6 +195,7 @@ func (s *EtcdSuite) TestSimpleConfiguration() {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		require.NoError(s.T(), err, text)
+		require.NoError(s.T(), err)
+		log.WithoutContext().Info(text)
 	}
 }
