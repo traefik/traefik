@@ -140,7 +140,6 @@ type MiddlewareRef struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:storageversion
 // +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 IngressRoute is deprecated, please use traefik.io/v1 IngressRoute instead"
 
 // IngressRoute is the CRD implementation of a Traefik HTTP Router.

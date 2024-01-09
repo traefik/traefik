@@ -520,7 +520,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -931,7 +931,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -1112,7 +1112,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -2944,7 +2944,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -3073,7 +3073,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -3313,7 +3313,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -3618,7 +3618,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -3787,7 +3787,7 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -4568,4 +4568,4 @@ spec:
         - spec
         type: object
     served: true
-    storage: true
+    storage: false

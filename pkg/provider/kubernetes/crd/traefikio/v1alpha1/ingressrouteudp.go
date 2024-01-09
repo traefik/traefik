@@ -42,7 +42,6 @@ type ServiceUDP struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:storageversion
 // +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 IngressRouteUDP is deprecated, please use traefik.io/v1 IngressRouteUDP instead"
 
 // IngressRouteUDP is a CRD implementation of a Traefik UDP Router.

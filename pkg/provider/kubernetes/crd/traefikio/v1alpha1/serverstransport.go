@@ -7,7 +7,6 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:storageversion
 // +kubebuilder:deprecatedversion:warning="traefik.io/v1alpha1 ServersTransport is deprecated, please use traefik.io/v1 ServersTransport instead"
 
 // ServersTransport is the CRD implementation of a ServersTransport.
