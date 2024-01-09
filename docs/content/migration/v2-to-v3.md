@@ -17,6 +17,61 @@ and how it now looks like in v3.
 
 ## Static configuration
 
+### Configure the Default Syntax
+
+The default rule matchers syntax (the expected syntax for any router that is not self opt-out from this default) can be configured in the static configuration.
+
+??? example "An example configuration for the default rule matchers syntax"
+
+    ```yaml tab="File (YAML)"
+    core:
+      defaultRuleSyntax: v3
+    ```
+
+    ```toml tab="File (TOML)"
+    [core]
+        defaultRuleSyntax="v3"
+    ```
+
+    ```bash tab="CLI"
+    --core.defaultRuleSyntax=v3
+    ```
+
+### Configure the Syntax Per Router
+
+The rule syntax can also be configured on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+??? example "An example router with syntax configuration"
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.routers.test.ruleSyntax="
+```
+
+```yaml tab="Kubernetes"
+
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.routers.test.ruleSyntax="
+```
+
+```yaml tab="File (YAML)"
+# Declaring the user list
+http:
+  routers:
+    test:
+      ruleSyntax:
+```
+
+```toml tab="File (TOML)"
+# Declaring the user list
+[http.routers]
+  [http.routers.test]
+    ruleSyntax = ""
+```
+
 ### Docker & Docker Swarm
 
 In v3, the provider Docker has been split into 2 providers:
@@ -340,7 +395,14 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 
 ### Matchers
 
-In v3, the `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
+In v3, a new rule matchers syntax has been introduced for HTTP and TCP routers.
+The default rule matchers syntax is still the v2 one for backward compatibility reasons.
+Nonetheless, this default is configurable and the v2 rule matchers syntax is deprecated and its support will be removed in the next major version.
+For this reason, we encourage migrating to the new syntax.
+
+### New Syntax Notable Changes
+
+The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
 
 `PathPrefix` no longer uses regular expressions to match path prefixes.
 

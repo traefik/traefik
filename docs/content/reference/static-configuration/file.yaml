@@ -1,6 +1,8 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+core:
+  defaultRuleSyntax: foobar
 serversTransports:
   insecureSkipVerify: true
   rootCAs:
