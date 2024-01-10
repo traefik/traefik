@@ -3,12 +3,9 @@ services:
   whoami1:
     image: traefik/whoami
     labels:
-      traefik.http.Routers.RouterMini.Rule: PathPrefix(`/whoami`)
+      traefik.http.routers.router-mini.Rule: PathPrefix(`/whoami`)
+      traefik.http.routers.router-mini.service: service-mini
+      traefik.http.services.service-mini.loadbalancer.server.port: 80
       traefik.enable: true
     deploy:
       replicas: 2
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

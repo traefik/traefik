@@ -146,11 +146,11 @@ linters-settings:
   gomoddirectives:
     replace-allow-list:
       - github.com/abbot/go-http-auth
-      - github.com/go-check/check
       - github.com/gorilla/mux
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
+      - github.com/cucumber/godog
   testifylint:
     enable:
       - bool-compare
@@ -161,7 +161,6 @@ linters-settings:
       - expected-actual
       - float-compare
       - len
-      - suite-dont-use-pkg
       - suite-extra-assert-call
       - suite-thelper
 
