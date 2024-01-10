@@ -8,7 +8,7 @@ description: "Learn how to use IPAllowList in TCP middleware for limiting client
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-IPWhitelist accepts / refuses connections based on the client IP.
+IPAllowList accepts / refuses connections based on the client IP.
 
 ## Configuration Examples
 
