@@ -7,12 +7,14 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type TracingSuite struct {
@@ -23,6 +25,10 @@ type TracingSuite struct {
 	otelCollectorIP string
 }
 
+func TestTracingSuite(t *testing.T) {
+	suite.Run(t, new(TracingSuite))
+}
+
 type TracingTemplate struct {
 	WhoamiIP               string
 	WhoamiPort             int
@@ -31,59 +37,60 @@ type TracingTemplate struct {
 	IsHTTP                 bool
 }
 
-func (s *TracingSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "tracing")
-	s.composeUp(c)
-}
+func (s *TracingSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
 
-func (s *TracingSuite) SetUpTest(c *check.C) {
-	s.composeUp(c, "tempo", "otel-collector", "whoami")
+	s.createComposeProject("tracing")
+	s.composeUp()
 
-	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+	s.whoamiIP = s.getComposeServiceIP("whoami")
 	s.whoamiPort = 80
 
 	// Wait for whoami to turn ready.
 	err := try.GetRequest("http://"+s.whoamiIP+":80", 30*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
-	s.tempoIP = s.getComposeServiceIP(c, "tempo")
-
-	// Wait for tempo to turn ready.
-	err = try.GetRequest("http://"+s.tempoIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	s.otelCollectorIP = s.getComposeServiceIP(c, "otel-collector")
+	s.otelCollectorIP = s.getComposeServiceIP("otel-collector")
 
 	// Wait for otel collector to turn ready.
 	err = try.GetRequest("http://"+s.otelCollectorIP+":13133/", 30*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TracingSuite) TearDownTest(c *check.C) {
-	s.composeStop(c, "tempo")
+func (s *TracingSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
 }
 
-func (s *TracingSuite) TestOpentelemetryBasic_HTTP(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+func (s *TracingSuite) SetupTest() {
+	s.composeUp("tempo")
+
+	s.tempoIP = s.getComposeServiceIP("tempo")
+
+	// Wait for tempo to turn ready.
+	err := try.GetRequest("http://"+s.tempoIP+":3200/ready", 30*time.Second, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+}
+
+func (s *TracingSuite) TearDownTest() {
+	s.composeStop("tempo")
+}
+
+func (s *TracingSuite) TestOpentelemetryBasic_HTTP() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.otelCollectorIP,
 		IsHTTP:     true,
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	contains := []map[string]string{
 		{
@@ -113,11 +120,11 @@ func (s *TracingSuite) TestOpentelemetryBasic_HTTP(c *check.C) {
 		},
 	}
 
-	checkTraceContent(c, s.tempoIP, contains)
+	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+func (s *TracingSuite) TestOpentelemetryBasic_gRPC() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.otelCollectorIP,
@@ -125,18 +132,14 @@ func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	contains := []map[string]string{
 		{
@@ -166,51 +169,47 @@ func (s *TracingSuite) TestOpentelemetryBasic_gRPC(c *check.C) {
 		},
 	}
 
-	checkTraceContent(c, s.tempoIP, contains)
+	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+func (s *TracingSuite) TestOpentelemetryRateLimit() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.otelCollectorIP,
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// sleep for 4 seconds to be certain the configured time period has elapsed
 	// then test another request and verify a 200 status code
 	time.Sleep(4 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// continue requests at 3 second intervals to test the other rate limit time period
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	time.Sleep(3 * time.Second)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	contains := []map[string]string{
 		{
@@ -289,29 +288,25 @@ func (s *TracingSuite) TestOpentelemetryRateLimit(c *check.C) {
 		},
 	}
 
-	checkTraceContent(c, s.tempoIP, contains)
+	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+func (s *TracingSuite) TestOpentelemetryRetry() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: 81,
 		IP:         s.otelCollectorIP,
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	contains := []map[string]string{
 		{
@@ -374,29 +369,25 @@ func (s *TracingSuite) TestOpentelemetryRetry(c *check.C) {
 		},
 	}
 
-	checkTraceContent(c, s.tempoIP, contains)
+	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+func (s *TracingSuite) TestOpentelemetryAuth() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
 		IP:         s.otelCollectorIP,
 	})
 	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	contains := []map[string]string{
 		{
@@ -420,12 +411,14 @@ func (s *TracingSuite) TestOpentelemetryAuth(c *check.C) {
 		},
 	}
 
-	checkTraceContent(c, s.tempoIP, contains)
+	s.checkTraceContent(contains)
 }
 
-func checkTraceContent(c *check.C, tempoIP string, expectedJSON []map[string]string) {
-	baseURL, err := url.Parse("http://" + tempoIP + ":3200/api/search")
-	c.Assert(err, checker.IsNil)
+func (s *TracingSuite) checkTraceContent(expectedJSON []map[string]string) {
+	s.T().Helper()
+
+	baseURL, err := url.Parse("http://" + s.tempoIP + ":3200/api/search")
+	require.NoError(s.T(), err)
 
 	req := &http.Request{
 		Method: http.MethodGet,
@@ -434,22 +427,20 @@ func checkTraceContent(c *check.C, tempoIP string, expectedJSON []map[string]str
 	// Wait for traces to be available.
 	time.Sleep(10 * time.Second)
 	resp, err := try.Response(req, 5*time.Second)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	out := &TraceResponse{}
 	content, err := io.ReadAll(resp.Body)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = json.Unmarshal(content, &out)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
-	if len(out.Traces) == 0 {
-		c.Fatalf("expected at least one trace, got %d (%s)", len(out.Traces), string(content))
-	}
+	s.NotEmptyf(len(out.Traces), "expected at least one trace")
 
 	var contents []string
 	for _, t := range out.Traces {
-		baseURL, err := url.Parse("http://" + tempoIP + ":3200/api/traces/" + t.TraceID)
-		c.Assert(err, checker.IsNil)
+		baseURL, err := url.Parse("http://" + s.tempoIP + ":3200/api/traces/" + t.TraceID)
+		require.NoError(s.T(), err)
 
 		req := &http.Request{
 			Method: http.MethodGet,
@@ -457,20 +448,20 @@ func checkTraceContent(c *check.C, tempoIP string, expectedJSON []map[string]str
 		}
 
 		resp, err := try.Response(req, 5*time.Second)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		content, err := io.ReadAll(resp.Body)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		contents = append(contents, string(content))
 	}
 
 	for _, expected := range expectedJSON {
-		containsAll(c, expected, contents)
+		containsAll(expected, contents)
 	}
 }
 
-func containsAll(c *check.C, expectedJSON map[string]string, contents []string) {
+func containsAll(expectedJSON map[string]string, contents []string) {
 	for k, v := range expectedJSON {
 		found := false
 		for _, content := range contents {
@@ -481,8 +472,8 @@ func containsAll(c *check.C, expectedJSON map[string]string, contents []string) 
 		}
 
 		if !found {
-			c.Log("[" + strings.Join(contents, ",") + "]")
-			c.Errorf("missing element: \nKey: %q\nValue: %q ", k, v)
+			log.Info().Msgf("[" + strings.Join(contents, ",") + "]")
+			log.Error().Msgf("missing element: \nKey: %q\nValue: %q ", k, v)
 		}
 	}
 }

@@ -12,8 +12,3 @@ services:
       - ./fixtures/tracing/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
   whoami:
     image: traefik/whoami
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

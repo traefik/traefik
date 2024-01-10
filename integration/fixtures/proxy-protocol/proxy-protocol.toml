@@ -7,10 +7,14 @@
   noColor = true
 
 [entryPoints]
-  [entryPoints.web]
+  [entryPoints.trust]
     address = ":8000"
-    [entryPoints.web.proxyProtocol]
-      trustedIPs = ["{{.HaproxyIP}}"]
+    [entryPoints.trust.proxyProtocol]
+      trustedIPs = ["127.0.0.1"]
+  [entryPoints.nottrust]
+      address = ":9000"
+      [entryPoints.nottrust.proxyProtocol]
+        trustedIPs = ["1.2.3.4"]
 
 [api]
   insecure = true

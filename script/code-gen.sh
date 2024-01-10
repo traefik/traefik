@@ -5,7 +5,7 @@ set -e -o pipefail
 
 source /go/src/k8s.io/code-generator/kube_codegen.sh
 
-git config --global --add safe.directory /go/src/${PROJECT_MODULE}
+git config --global --add safe.directory "/go/src/${PROJECT_MODULE}"
 
 rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"
 mkdir -p "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"

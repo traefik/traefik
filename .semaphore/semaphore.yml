@@ -31,24 +31,6 @@ global_job_config:
       - cache restore traefik-$(checksum go.sum)
 
 blocks:
-  - name: Test Integration
-    dependencies: []
-    run:
-      when: "branch =~ '.*' OR pull_request =~'.*'"
-    task:
-      jobs:
-        - name: Test Integration
-          commands:
-            - make pull-images
-            - touch webui/static/index.html # Avoid generating webui
-            - IN_DOCKER="" make binary
-            - make test-integration
-            - df -h
-      epilogue:
-        always:
-          commands:
-            - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
-
   - name: Release
     dependencies: []
     run:
@@ -65,8 +47,6 @@ blocks:
           value: 2.32.1
         - name: CODENAME
           value: "beaufort"
-        - name: IN_DOCKER
-          value: ""
       prologue:
         commands:
           - export VERSION=${SEMAPHORE_GIT_TAG_NAME}
