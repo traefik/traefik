@@ -689,6 +689,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(Chain)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.IPWhiteList != nil {
+		in, out := &in.IPWhiteList, &out.IPWhiteList
+		*out = new(dynamic.IPWhiteList)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.IPAllowList != nil {
 		in, out := &in.IPAllowList, &out.IPAllowList
 		*out = new(dynamic.IPAllowList)

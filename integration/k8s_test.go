@@ -24,7 +24,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/api"
 )
 
-var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
+var updateExpected = flag.Bool("update_expected", true, "Update expected files in testdata")
 
 // K8sSuite tests suite.
 type K8sSuite struct{ BaseSuite }
