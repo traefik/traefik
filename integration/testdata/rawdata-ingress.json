@@ -119,10 +119,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "XXXX"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "XXXX"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -136,18 +136,18 @@
 				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://XXXX": "UP",
-				"http://XXXX": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-whoami-http@kubernetes": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.10:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -161,8 +161,8 @@
 				"default-test-ingress-whoami-test-whoami@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.10:80": "UP",
-				"http://10.42.0.8:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"noop@internal": {
