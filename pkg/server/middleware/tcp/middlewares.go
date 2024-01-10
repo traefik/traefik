@@ -3,11 +3,13 @@ package tcpmiddleware
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
@@ -91,6 +93,15 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	if config.InFlightConn != nil {
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return inflightconn.New(ctx, next, *config.InFlightConn, middlewareName)
+		}
+	}
+
+	// IPWhiteList
+	if config.IPWhiteList != nil {
+		log.Warn().Msg("IPWhiteList is deprecated, please use IPAllowList instead.")
+
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
 		}
 	}
 

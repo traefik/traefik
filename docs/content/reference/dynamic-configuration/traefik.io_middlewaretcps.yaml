@@ -55,6 +55,17 @@ spec:
                       type: string
                     type: array
                 type: object
+              ipWhiteList:
+                description: 'IPWhiteList defines the IPWhiteList middleware configuration.
+                  Deprecated: please use IPAllowList instead.'
+                properties:
+                  sourceRange:
+                    description: SourceRange defines the allowed IPs (or ranges of
+                      allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
             type: object
         required:
         - metadata
