@@ -252,6 +252,8 @@ issues:
       text: 'SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18'
     - path: pkg/types/tls_test.go
       text: 'SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18'
+    - path: pkg/provider/kubernetes/crd/kubernetes.go
+      text: 'SA1019: middleware.Spec.IPWhiteList is deprecated: please use IPAllowList instead.'
     - path: pkg/provider/kubernetes/(crd|gateway)/client.go
       linters:
         - interfacebloat
