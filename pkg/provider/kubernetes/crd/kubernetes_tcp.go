@@ -232,21 +232,22 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 		return nil, err
 	}
 
-	if svc.NativeLB {
-		address, err := getNativeServiceAddress(*service, *svcPort)
-		if err != nil {
-			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
-		}
-
-		return []dynamic.TCPServer{{Address: address}}, nil
-	}
-
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.TCPServer{
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
+		// External services will not have cluster IPs, so this should be handled after externalName checks.
+		if svc.NativeLB || p.UseNativeLoadBalancer {
+			address, err := getNativeServiceAddress(*service, *svcPort)
+			if err != nil {
+				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			}
+
+			return []dynamic.TCPServer{{Address: address}}, nil
+		}
+
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
 		if endpointsErr != nil {
 			return nil, endpointsErr

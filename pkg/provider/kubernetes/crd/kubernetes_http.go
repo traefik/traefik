@@ -55,6 +55,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowCrossNamespace:       p.AllowCrossNamespace,
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
+			useNativeLoadBalancer:     p.UseNativeLoadBalancer,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
@@ -201,6 +202,7 @@ type configBuilder struct {
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
 	allowEmptyServices        bool
+	useNativeLoadBalancer     bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -376,20 +378,6 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return nil, err
 	}
 
-	if svc.NativeLB {
-		address, err := getNativeServiceAddress(*service, *svcPort)
-		if err != nil {
-			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
-		}
-
-		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
-		if err != nil {
-			return nil, err
-		}
-
-		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
-	}
-
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
@@ -406,6 +394,21 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return append(servers, dynamic.Server{
 			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 		}), nil
+	}
+
+	// External services will not have cluster IPs, so this should be handled after externalName checks.
+	if svc.NativeLB || c.useNativeLoadBalancer {
+		address, err := getNativeServiceAddress(*service, *svcPort)
+		if err != nil {
+			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+		}
+
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
+		}
+
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
 	}
 
 	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
