@@ -588,6 +588,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses [
 			result = multierror.Append(result, errors.New(condition.Message))
 		}
 	}
+	gatewayStatus.Listeners = listenerStatuses
 
 	if result != nil {
 		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
@@ -602,8 +603,6 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses [
 
 		return gatewayStatus, result
 	}
-
-	gatewayStatus.Listeners = listenerStatuses
 
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
 		// update "Accepted" status with "Accepted" reason
