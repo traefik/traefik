@@ -358,9 +358,8 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
-		listenerStatuses[i].SupportedKinds = supportedKinds
-
 		routeKinds, conditions := getAllowedRouteKinds(gateway, listener, supportedKinds)
+		listenerStatuses[i].SupportedKinds = routeKinds
 		if len(conditions) > 0 {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 			continue
@@ -670,7 +669,7 @@ func getAllowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, sup
 	}
 
 	var (
-		routeKinds []gatev1.RouteGroupKind
+		routeKinds = []gatev1.RouteGroupKind{}
 		conditions []metav1.Condition
 	)
 
