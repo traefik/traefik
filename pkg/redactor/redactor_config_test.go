@@ -130,7 +130,7 @@ func init() {
 			"foo": {
 				ServerName:         "foo",
 				InsecureSkipVerify: true,
-				RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+				RootCAs:            []types.FileOrContent{"rootca.pem"},
 				Certificates: []traefiktls.Certificate{
 					{
 						CertFile: "cert.pem",
@@ -390,7 +390,7 @@ func init() {
 				TLS: &dynamic.TLSClientConfig{
 					ServerName:         "foo",
 					InsecureSkipVerify: true,
-					RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+					RootCAs:            []types.FileOrContent{"rootca.pem"},
 					Certificates: []traefiktls.Certificate{
 						{
 							CertFile: "cert.pem",
@@ -441,7 +441,7 @@ func init() {
 				CipherSuites:     []string{"foo"},
 				CurvePreferences: []string{"foo"},
 				ClientAuth: traefiktls.ClientAuth{
-					CAFiles:        []traefiktls.FileOrContent{"ca.pem"},
+					CAFiles:        []types.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
 				SniStrict: true,
@@ -560,7 +560,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.ServersTransport = &static.ServersTransport{
 		InsecureSkipVerify:  true,
-		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+		RootCAs:             []types.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
 			DialTimeout:           ptypes.Duration(111 * time.Second),
@@ -574,7 +574,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DialKeepAlive: ptypes.Duration(111 * time.Second),
 		TLS: &static.TLSClientConfig{
 			InsecureSkipVerify: true,
-			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+			RootCAs:            []types.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		},
 	}
 
