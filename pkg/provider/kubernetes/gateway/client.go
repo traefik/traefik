@@ -480,7 +480,7 @@ func conditionsEquals(conditionsA, conditionsB []metav1.Condition) bool {
 	for _, conditionA := range conditionsA {
 		for _, conditionB := range conditionsB {
 			if conditionA.Type == conditionB.Type {
-				if conditionA.Reason != conditionB.Reason || conditionA.Status != conditionB.Status || conditionA.Message != conditionB.Message {
+				if conditionA.Reason != conditionB.Reason || conditionA.Status != conditionB.Status || conditionA.Message != conditionB.Message || conditionA.ObservedGeneration != conditionB.ObservedGeneration {
 					return false
 				}
 				conditionMatches++
