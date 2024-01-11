@@ -7,8 +7,23 @@ VERSION := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
 
 GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
 
+REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
+BIN_NAME := traefik
+CODENAME := cheddar
+
+DATE := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
+
+# Default build target
+GOOS := $(shell go env GOOS)
+GOARCH := $(shell go env GOARCH)
+
+LINT_EXECUTABLES = misspell shellcheck
+
+DOCKERFILE := Dockerfile
+DOCKER_BUILD_PLATFORMS ?= linux/amd64,linux/arm64
+
 .PHONY: default
-default: binary
+default: generate binary
 
 ## Create the "dist" directory
 dist:
@@ -35,41 +50,55 @@ webui/static/index.html:
 .PHONY: generate-webui
 generate-webui: webui/static/index.html
 
+## Generate code
+.PHONY: generate
+generate:
+	go generate
+
 ## Build the binary
 .PHONY: binary
-binary: generate-webui
-	./script/make.sh generate binary
+binary: generate-webui dist
+	@echo SHA: $(VERSION) $(CODENAME) $(DATE)
+	CGO_ENABLED=0 GOGC=off GOOS=${GOOS} GOARCH=${GOARCH} go build ${FLAGS[*]} -ldflags "-s -w \
+    -X github.com/traefik/traefik/v2/pkg/version.Version=$(VERSION) \
+    -X github.com/traefik/traefik/v2/pkg/version.Codename=$(CODENAME) \
+    -X github.com/traefik/traefik/v2/pkg/version.BuildDate=$(DATE)" \
+    -installsuffix nocgo -o "./dist/${GOOS}/${GOARCH}/$(BIN_NAME)" ./cmd/traefik
 
-## Build the linux binary locally
-.PHONY: binary-debug
-binary-debug: generate-webui
-	GOOS=linux ./script/make.sh binary
+binary-linux-arm64: export GOOS := linux
+binary-linux-arm64: export GOARCH := arm64
+binary-linux-arm64:
+	@$(MAKE) binary
+
+binary-linux-amd64: export GOOS := linux
+binary-linux-amd64: export GOARCH := amd64
+binary-linux-amd64:
+	@$(MAKE) binary
+
+binary-windows-amd64: export GOOS := windows
+binary-windows-amd64: export GOARCH := amd64
+binary-windows-amd64: export BIN_NAME := traefik.exe
+binary-windows-amd64:
+	@$(MAKE) binary
 
 ## Build the binary for the standard platforms (linux, darwin, windows)
 .PHONY: crossbinary-default
-crossbinary-default: generate-webui
-	./script/make.sh generate crossbinary-default
-
-## Build the binary for the standard platforms (linux, darwin, windows) in parallel
-.PHONY: crossbinary-default-parallel
-crossbinary-default-parallel:
-	$(MAKE) generate-webui
-	$(MAKE) crossbinary-default
+crossbinary-default: generate generate-webui
+	$(CURDIR)/script/crossbinary-default.sh
 
 ## Run the unit and integration tests
 .PHONY: test
-test:
-	./script/make.sh generate test-unit binary test-integration
+test: test-unit test-integration
 
 ## Run the unit tests
 .PHONY: test-unit
 test-unit:
-	./script/make.sh generate test-unit
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -cover "-coverprofile=cover.out" -v $(TESTFLAGS) ./pkg/... ./cmd/...
 
 ## Run the integration tests
 .PHONY: test-integration
-test-integration:
-	./script/make.sh generate binary test-integration
+test-integration: binary
+	GOOS=$(GOOS) GOARCH=$(GOARCH)  go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 ## Pull all images for integration tests
 .PHONY: pull-images
@@ -80,38 +109,55 @@ pull-images:
 		| uniq \
 		| xargs -P 6 -n 1 docker pull
 
-EXECUTABLES = misspell shellcheck
+## Lint run golangci-lint
+.PHONY: lint
+lint:
+	golangci-lint run
 
 ## Validate code and docs
 .PHONY: validate-files
-validate-files:
-	$(foreach exec,$(EXECUTABLES),\
+validate-files: lint
+	$(foreach exec,$(LINT_EXECUTABLES),\
             $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
-	./script/make.sh generate validate-lint validate-misspell
-	bash $(CURDIR)/script/validate-shell-script.sh
+	$(CURDIR)/script/validate-misspell.sh
+	$(CURDIR)/script/validate-shell-script.sh
 
 ## Validate code, docs, and vendor
 .PHONY: validate
-validate:
+validate: lint
 	$(foreach exec,$(EXECUTABLES),\
             $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
-	./script/make.sh generate validate-lint validate-misspell validate-vendor
-	bash $(CURDIR)/script/validate-shell-script.sh
+	$(CURDIR)/script/validate-vendor.sh
+	$(CURDIR)/script/validate-misspell.sh
+	$(CURDIR)/script/validate-shell-script.sh
+
+# Target for building images for multiple architectures.
+.PHONY: multi-arch-image-%
+multi-arch-image-%: binary-linux-amd64 binary-linux-arm64
+	docker buildx build $(DOCKER_BUILDX_ARGS) -t traefik/traefik:$* --platform=$(DOCKER_BUILD_PLATFORMS) -f $(DOCKERFILE) .
+
 
 ## Clean up static directory and build a Docker Traefik image
 .PHONY: build-image
-build-image: clean-webui binary
-	docker build -t $(TRAEFIK_IMAGE) .
+build-image: export DOCKER_BUILDX_ARGS := --load
+build-image: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
+build-image: clean-webui
+	@$(MAKE) multi-arch-image-latest
 
 ## Build a Docker Traefik image without re-building the webui
 .PHONY: build-image-dirty
-build-image-dirty: binary
-	docker build -t $(TRAEFIK_IMAGE) .
+build-image-dirty: export DOCKER_BUILDX_ARGS := --load
+build-image-dirty: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
+build-image-dirty:
+	@$(MAKE) multi-arch-image-latest
 
 ## Locally build traefik for linux, then shove it an alpine image, with basic tools.
 .PHONY: build-image-debug
-build-image-debug: binary-debug
-	docker build -t $(TRAEFIK_IMAGE) -f debug.Dockerfile .
+build-image-debug: export DOCKER_BUILDX_ARGS := --load
+build-image-debug: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
+build-image-debug: export DOCKERFILE := debug.Dockerfile
+build-image-debug:
+	@$(MAKE) multi-arch-image-latest
 
 ## Build documentation site
 .PHONY: docs
