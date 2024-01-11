@@ -484,7 +484,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 						ObservedGeneration: gateway.Generation,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
-						Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", certificateRef.Group, certificateRef.Kind),
+						Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)),
 					})
 
 					continue
@@ -700,7 +700,7 @@ func getAllowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, sup
 				ObservedGeneration: gateway.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %v/%s", listener.Protocol, routeKind.Group, routeKind.Kind),
+				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %s/%s", listener.Protocol, groupToString(routeKind.Group), routeKind.Kind),
 			})
 			continue
 		}
@@ -1947,4 +1947,17 @@ func referenceGrantMatchesTo(referenceGrant *gatev1beta1.ReferenceGrant, group, 
 		return true
 	}
 	return false
+}
+
+func groupToString(p *gatev1.Group) string {
+	if p == nil {
+		return "<nil>"
+	}
+	return string(*p)
+}
+func kindToString(p *gatev1.Kind) string {
+	if p == nil {
+		return "<nil>"
+	}
+	return string(*p)
 }
