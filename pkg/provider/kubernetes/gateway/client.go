@@ -35,13 +35,7 @@ func (reh *resourceEventHandler) OnAdd(obj interface{}, isInInitialList bool) {
 }
 
 func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
-	switch oldObj.(type) {
-	case *gatev1.GatewayClass:
-		// Skip update for gateway classes. We only manage addition or deletion for this cluster-wide resource.
-		return
-	default:
-		eventHandlerFunc(reh.ev, newObj)
-	}
+	eventHandlerFunc(reh.ev, newObj)
 }
 
 func (reh *resourceEventHandler) OnDelete(obj interface{}) {
@@ -404,7 +398,7 @@ func (c *clientWrapper) UpdateGatewayClassStatus(gatewayClass *gatev1.GatewayCla
 	var newConditions []metav1.Condition
 	for _, cond := range gc.Status.Conditions {
 		// No update for identical condition.
-		if cond.Type == condition.Type && cond.Status == condition.Status {
+		if cond.Type == condition.Type && cond.Status == condition.Status && cond.ObservedGeneration == condition.ObservedGeneration {
 			return nil
 		}
 

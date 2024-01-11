@@ -233,6 +233,7 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 			err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
 				Type:               string(gatev1.GatewayClassConditionStatusAccepted),
 				Status:             metav1.ConditionTrue,
+				ObservedGeneration: gatewayClass.Generation,
 				Reason:             "Handled",
 				Message:            "Handled by Traefik controller",
 				LastTransitionTime: metav1.Now(),
