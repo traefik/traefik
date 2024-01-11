@@ -3,9 +3,9 @@ package tcpmiddleware
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
