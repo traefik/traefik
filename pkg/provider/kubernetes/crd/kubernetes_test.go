@@ -571,8 +571,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -673,9 +673,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -741,9 +741,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -809,8 +809,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -1064,8 +1064,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Stores: map[string]tls.Store{
 						"default": {
 							DefaultCertificate: &tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -1405,7 +1405,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "test",
 								InsecureSkipVerify: true,
-								RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+								RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
 								Certificates: tls.Certificates{
 									{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 									{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
@@ -2917,8 +2917,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -2979,9 +2979,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3100,9 +3100,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3178,9 +3178,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3251,8 +3251,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3881,8 +3881,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Stores: map[string]tls.Store{
 						"default": {
 							DefaultCertificate: &tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -3938,8 +3938,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 							Stores: []string{"default"},
 						},
@@ -4215,7 +4215,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"foo-test": {
 							ServerName:         "test",
 							InsecureSkipVerify: true,
-							RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+							RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
 							Certificates: tls.Certificates{
 								{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
