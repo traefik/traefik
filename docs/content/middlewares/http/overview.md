@@ -27,7 +27,7 @@ whoami:
 ```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
@@ -37,7 +37,7 @@ spec:
       - /stripit
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute
