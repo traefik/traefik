@@ -134,7 +134,7 @@ build-image: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image: clean-webui
 	@$(MAKE) multi-arch-image-latest
 
-## Build a Docker Traefik image without re-building the webui if does already exist
+## Build a Docker Traefik image without re-building the webui when it's already built
 .PHONY: build-image-dirty
 build-image-dirty: export DOCKER_BUILDX_ARGS := --load
 build-image-dirty: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
