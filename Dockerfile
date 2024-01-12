@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.2
-FROM scratch
+FROM alpine:3.19
 
-COPY script/ca-certificates.crt /etc/ssl/certs/
+RUN apk --no-cache --no-progress add ca-certificates tzdata \
+    && rm -rf /var/cache/apk/*
 
 ARG TARGETPLATFORM
 COPY ./dist/$TARGETPLATFORM/traefik /

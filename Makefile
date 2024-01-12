@@ -19,7 +19,6 @@ GOARCH := $(shell go env GOARCH)
 
 LINT_EXECUTABLES = misspell shellcheck
 
-DOCKERFILE := Dockerfile
 DOCKER_BUILD_PLATFORMS ?= linux/amd64,linux/arm64
 
 .PHONY: default
@@ -100,15 +99,6 @@ test-unit:
 test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH)  go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
-## Pull all images for integration tests
-.PHONY: pull-images
-pull-images:
-	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml \
-		| awk '{print $$2}' \
-		| sort \
-		| uniq \
-		| xargs -P 6 -n 1 docker pull
-
 ## Lint run golangci-lint
 .PHONY: lint
 lint:
@@ -134,7 +124,7 @@ validate: lint
 # Target for building images for multiple architectures.
 .PHONY: multi-arch-image-%
 multi-arch-image-%: binary-linux-amd64 binary-linux-arm64
-	docker buildx build $(DOCKER_BUILDX_ARGS) -t traefik/traefik:$* --platform=$(DOCKER_BUILD_PLATFORMS) -f $(DOCKERFILE) .
+	docker buildx build $(DOCKER_BUILDX_ARGS) -t traefik/traefik:$* --platform=$(DOCKER_BUILD_PLATFORMS) -f Dockerfile .
 
 
 ## Clean up static directory and build a Docker Traefik image
@@ -144,19 +134,11 @@ build-image: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image: clean-webui
 	@$(MAKE) multi-arch-image-latest
 
-## Build a Docker Traefik image without re-building the webui
+## Build a Docker Traefik image without re-building the webui if does already exist
 .PHONY: build-image-dirty
 build-image-dirty: export DOCKER_BUILDX_ARGS := --load
 build-image-dirty: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image-dirty:
-	@$(MAKE) multi-arch-image-latest
-
-## Locally build traefik for linux, then shove it an alpine image, with basic tools.
-.PHONY: build-image-debug
-build-image-debug: export DOCKER_BUILDX_ARGS := --load
-build-image-debug: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
-build-image-debug: export DOCKERFILE := debug.Dockerfile
-build-image-debug:
 	@$(MAKE) multi-arch-image-latest
 
 ## Build documentation site
@@ -187,30 +169,9 @@ generate-genconf:
 ## Create packages for the release
 .PHONY: release-packages
 release-packages: generate-webui
-	rm -rf dist
-	@- $(foreach os, linux darwin windows freebsd openbsd, \
-        goreleaser release --skip-publish -p 2 --timeout="90m" --config $(shell go run ./internal/release $(os)); \
-        go clean -cache; \
-    )
-
-	cat dist/**/*_checksums.txt >> dist/traefik_${VERSION}_checksums.txt
-	rm dist/**/*_checksums.txt
-	tar cfz dist/traefik-${VERSION}.src.tar.gz \
-		--exclude-vcs \
-		--exclude .idea \
-		--exclude .travis \
-		--exclude .semaphoreci \
-		--exclude .github \
-		--exclude dist .
-	chown -R $(shell id -u):$(shell id -g) dist/
+	$(CURDIR)/script/release-packages.sh
 
 ## Format the Code
 .PHONY: fmt
 fmt:
 	gofmt -s -l -w $(SRCS)
-
-.PHONY: run-dev
-run-dev:
-	go generate
-	GO111MODULE=on go build ./cmd/traefik
-	./traefik
