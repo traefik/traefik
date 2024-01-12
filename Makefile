@@ -99,6 +99,15 @@ test-unit:
 test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH)  go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
+## Pull all Docker images to avoid timeout during integration tests
+.PHONY: pull-images
+pull-images:
+	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml \
+		| awk '{print $$2}' \
+		| sort \
+		| uniq \
+		| xargs -P 6 -n 1 docker pull
+
 ## Lint run golangci-lint
 .PHONY: lint
 lint:
