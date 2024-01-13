@@ -46,9 +46,9 @@ func New(ctx context.Context, next tcp.Handler, config dynamic.TCPIPWhiteList, n
 	}, nil
 }
 
-func (wl *ipWhiteLister) ServeTCP(conn tcp.WriteCloser) {
-	ctx := middlewares.GetLoggerCtx(context.Background(), wl.name, typeName)
-	logger := log.FromContext(ctx)
+func (wl *ipWhiteLister) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
+	ctx2 := middlewares.GetLoggerCtx(context.Background(), wl.name, typeName)
+	logger := log.FromContext(ctx2)
 
 	addr := conn.RemoteAddr().String()
 
@@ -61,5 +61,5 @@ func (wl *ipWhiteLister) ServeTCP(conn tcp.WriteCloser) {
 
 	logger.Debugf("Connection from %s accepted", addr)
 
-	wl.next.ServeTCP(conn)
+	wl.next.ServeTCP(ctx, conn)
 }

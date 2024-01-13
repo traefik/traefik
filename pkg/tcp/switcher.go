@@ -1,6 +1,8 @@
 package tcp
 
 import (
+	"context"
+
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
@@ -10,11 +12,11 @@ type HandlerSwitcher struct {
 }
 
 // ServeTCP forwards the TCP connection to the current active handler.
-func (s *HandlerSwitcher) ServeTCP(conn WriteCloser) {
+func (s *HandlerSwitcher) ServeTCP(ctx context.Context, conn WriteCloser) {
 	handler := s.router.Get()
 	h, ok := handler.(Handler)
 	if ok {
-		h.ServeTCP(conn)
+		h.ServeTCP(ctx, conn)
 	} else {
 		conn.Close()
 	}
