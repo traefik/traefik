@@ -82,10 +82,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-// Ensure that Provider implements the Reloadable interface
+// Ensure that Provider implements the Reloadable interface.
 var _ reloadable.Reloadable = (*Provider)(nil)
 
-// ReloadConfig rebuilds the configuration for the file provider and sends it to the given channel
+// ReloadConfig rebuilds the configuration for the file provider and sends it to the given channel.
 func (p *Provider) ReloadConfig(configurationChan chan<- dynamic.Message) error {
 	configuration, err := p.BuildConfiguration()
 	if err != nil {
