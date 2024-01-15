@@ -48,19 +48,26 @@ type forwardAuth struct {
 	client                   http.Client
 	trustForwardHeader       bool
 	authRequestHeaders       []string
+	addAuthCookiesToResponse map[string]struct{}
 }
 
 // NewForward creates a forward auth middleware.
 func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAuth, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeNameForward).Debug().Msg("Creating middleware")
 
+	addAuthCookiesToResponse := make(map[string]struct{})
+	for _, cookieName := range config.AddAuthCookiesToResponse {
+		addAuthCookiesToResponse[cookieName] = struct{}{}
+	}
+
 	fa := &forwardAuth{
-		address:             config.Address,
-		authResponseHeaders: config.AuthResponseHeaders,
-		next:                next,
-		name:                name,
-		trustForwardHeader:  config.TrustForwardHeader,
-		authRequestHeaders:  config.AuthRequestHeaders,
+		address:                  config.Address,
+		authResponseHeaders:      config.AuthResponseHeaders,
+		next:                     next,
+		name:                     name,
+		trustForwardHeader:       config.TrustForwardHeader,
+		authRequestHeaders:       config.AuthRequestHeaders,
+		addAuthCookiesToResponse: addAuthCookiesToResponse,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -211,7 +218,35 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	tracing.LogResponseCode(forwardSpan, forwardResponse.StatusCode, trace.SpanKindClient)
 
 	req.RequestURI = req.URL.RequestURI()
-	fa.next.ServeHTTP(rw, req)
+
+	authCookies := forwardResponse.Cookies()
+	if len(authCookies) == 0 {
+		fa.next.ServeHTTP(rw, req)
+		return
+	}
+
+	fa.next.ServeHTTP(middlewares.NewResponseModifier(rw, req, fa.buildModifier(authCookies)), req)
+}
+
+func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		cookies := res.Cookies()
+		res.Header.Del("Set-Cookie")
+
+		for _, cookie := range cookies {
+			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; !found {
+				res.Header.Add("Set-Cookie", cookie.String())
+			}
+		}
+
+		for _, cookie := range authCookies {
+			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; found {
+				res.Header.Add("Set-Cookie", cookie.String())
+			}
+		}
+
+		return nil
+	}
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {

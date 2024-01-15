@@ -30,6 +30,8 @@
 | `traefik/http/middlewares/Middleware08/errors/service` | `foobar` |
 | `traefik/http/middlewares/Middleware08/errors/status/0` | `foobar` |
 | `traefik/http/middlewares/Middleware08/errors/status/1` | `foobar` |
+| `traefik/http/middlewares/Middleware09/forwardAuth/addAuthCookiesToResponse/0` | `foobar` |
+| `traefik/http/middlewares/Middleware09/forwardAuth/addAuthCookiesToResponse/1` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/address` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/authRequestHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/authRequestHeaders/1` | `foobar` |
