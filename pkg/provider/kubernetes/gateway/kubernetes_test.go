@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -4553,6 +4554,195 @@ func TestLoadMixedRoutes(t *testing.T) {
 	}
 }
 
+func TestLoadRoutesWithReferenceGrants(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		ingressClass string
+		paths        []string
+		expected     *dynamic.Configuration
+		entryPoints  map[string]Entrypoint
+	}{
+		{
+			desc: "Empty",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant for Secret is missing",
+			paths: []string{"services.yml", "referencegrant/for_secret_missing.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant spec.from does not match",
+			paths: []string{"services.yml", "referencegrant/for_secret_not_matching_from.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant spec.to does not match",
+			paths: []string{"services.yml", "referencegrant/for_secret_not_matching_to.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "For Secret",
+			paths: []string{"services.yml", "referencegrant/for_secret.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-tcp-app-1-my-gateway-tls-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tls"},
+							Service:     "default-tcp-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr-0",
+							Rule:        "HostSNI(`*`)",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-tcp-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr-0": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{{
+									Name:   "default-whoamitcp-9000",
+									Weight: func(i int) *int { return &i }(1),
+								}},
+							},
+						},
+						"default-whoamitcp-9000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.expected == nil {
+				return
+			}
+
+			p := Provider{EntryPoints: test.entryPoints}
+			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
 func Test_hostRule(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -5569,3 +5759,247 @@ func kindPtr(kind gatev1.Kind) *gatev1.Kind {
 func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
 
 func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
+
+func Test_referenceGrantMatchesFrom(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		referenceGrant gatev1beta1.ReferenceGrant
+		group          string
+		kind           string
+		namespace      string
+		expectedResult bool
+	}{
+		{
+			desc: "matches",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					From: []gatev1beta1.ReferenceGrantFrom{
+						{
+							Group:     "correct-group",
+							Kind:      "correct-kind",
+							Namespace: "correct-namespace",
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			namespace:      "correct-namespace",
+			expectedResult: true,
+		},
+		{
+			desc: "empty group matches core",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					From: []gatev1beta1.ReferenceGrantFrom{
+						{
+							Group:     "",
+							Kind:      "correct-kind",
+							Namespace: "correct-namespace",
+						},
+					},
+				},
+			},
+			group:          "core",
+			kind:           "correct-kind",
+			namespace:      "correct-namespace",
+			expectedResult: true,
+		},
+		{
+			desc: "wrong group",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					From: []gatev1beta1.ReferenceGrantFrom{
+						{
+							Group:     "wrong-group",
+							Kind:      "correct-kind",
+							Namespace: "correct-namespace",
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			namespace:      "correct-namespace",
+			expectedResult: false,
+		},
+		{
+			desc: "wrong kind",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					From: []gatev1beta1.ReferenceGrantFrom{
+						{
+							Group:     "correct-group",
+							Kind:      "wrong-kind",
+							Namespace: "correct-namespace",
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			namespace:      "correct-namespace",
+			expectedResult: false,
+		},
+		{
+			desc: "wrong namespace",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					From: []gatev1beta1.ReferenceGrantFrom{
+						{
+							Group:     "correct-group",
+							Kind:      "correct-kind",
+							Namespace: "wrong-namespace",
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			namespace:      "correct-namespace",
+			expectedResult: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expectedResult, referenceGrantMatchesFrom(&test.referenceGrant, test.group, test.kind, test.namespace))
+		})
+	}
+}
+
+func Test_referenceGrantMatchesTo(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		referenceGrant gatev1beta1.ReferenceGrant
+		group          string
+		kind           string
+		name           string
+		expectedResult bool
+	}{
+		{
+			desc: "matches",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					To: []gatev1beta1.ReferenceGrantTo{
+						{
+							Group: "correct-group",
+							Kind:  "correct-kind",
+							Name:  objectNamePtr("correct-name"),
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			name:           "correct-name",
+			expectedResult: true,
+		},
+		{
+			desc: "matches without name",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					To: []gatev1beta1.ReferenceGrantTo{
+						{
+							Group: "correct-group",
+							Kind:  "correct-kind",
+							Name:  nil,
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			name:           "some-name",
+			expectedResult: true,
+		},
+		{
+			desc: "empty group matches core",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					To: []gatev1beta1.ReferenceGrantTo{
+						{
+							Group: "",
+							Kind:  "correct-kind",
+							Name:  objectNamePtr("correct-name"),
+						},
+					},
+				},
+			},
+			group:          "core",
+			kind:           "correct-kind",
+			name:           "correct-name",
+			expectedResult: true,
+		},
+		{
+			desc: "wrong group",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					To: []gatev1beta1.ReferenceGrantTo{
+						{
+							Group: "wrong-group",
+							Kind:  "correct-kind",
+							Name:  objectNamePtr("correct-name"),
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			name:           "correct-namespace",
+			expectedResult: false,
+		},
+		{
+			desc: "wrong kind",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					To: []gatev1beta1.ReferenceGrantTo{
+						{
+							Group: "correct-group",
+							Kind:  "wrong-kind",
+							Name:  objectNamePtr("correct-name"),
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			name:           "correct-name",
+			expectedResult: false,
+		},
+		{
+			desc: "wrong name",
+			referenceGrant: gatev1beta1.ReferenceGrant{
+				Spec: gatev1beta1.ReferenceGrantSpec{
+					To: []gatev1beta1.ReferenceGrantTo{
+						{
+							Group: "correct-group",
+							Kind:  "correct-kind",
+							Name:  objectNamePtr("wrong-name"),
+						},
+					},
+				},
+			},
+			group:          "correct-group",
+			kind:           "correct-kind",
+			name:           "correct-name",
+			expectedResult: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expectedResult, referenceGrantMatchesTo(&test.referenceGrant, test.group, test.kind, test.name))
+		})
+	}
+}
+
+func objectNamePtr(objectName gatev1.ObjectName) *gatev1.ObjectName {
+	return &objectName
+}
