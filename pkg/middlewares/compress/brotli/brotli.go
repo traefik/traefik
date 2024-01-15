@@ -23,6 +23,8 @@ const (
 type Config struct {
 	// ExcludedContentTypes is the list of content types for which we should not compress.
 	ExcludedContentTypes []string
+	// IncludedContentTypes is the list of content types for which compression should be exclusively enabled.
+	IncludedContentTypes []string
 	// MinSize is the minimum size (in bytes) required to enable compression.
 	MinSize int
 }
@@ -34,6 +36,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 	}
 
 	var contentTypes []parsedContentType
+	var includedContentTypes []parsedContentType
 	for _, v := range cfg.ExcludedContentTypes {
 		mediaType, params, err := mime.ParseMediaType(v)
 		if err != nil {
@@ -41,6 +44,15 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 		}
 
 		contentTypes = append(contentTypes, parsedContentType{mediaType, params})
+	}
+
+	for _, v := range cfg.IncludedContentTypes {
+		mediaType, params, err := mime.ParseMediaType(v)
+		if err != nil {
+			return nil, fmt.Errorf("parsing media type: %w", err)
+		}
+
+		includedContentTypes = append(includedContentTypes, parsedContentType{mediaType, params})
 	}
 
 	return func(h http.Handler) http.HandlerFunc {
@@ -53,6 +65,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 				minSize:              cfg.MinSize,
 				statusCode:           http.StatusOK,
 				excludedContentTypes: contentTypes,
+				includedContentTypes: includedContentTypes,
 			}
 			defer brw.close()
 
@@ -69,6 +82,7 @@ type responseWriter struct {
 
 	minSize              int
 	excludedContentTypes []parsedContentType
+	includedContentTypes []parsedContentType
 
 	buf                 []byte
 	hijacked            bool
@@ -121,17 +135,31 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		return r.rw.Write(p)
 	}
 
-	// Disable compression according to user wishes in excludedContentTypes.
+	// Disable compression according to user wishes in excludedContentTypes or includedContentTypes.
 	if ct := r.rw.Header().Get(contentType); ct != "" {
 		mediaType, params, err := mime.ParseMediaType(ct)
 		if err != nil {
 			return 0, fmt.Errorf("parsing media type: %w", err)
 		}
 
-		for _, excludedContentType := range r.excludedContentTypes {
-			if excludedContentType.equals(mediaType, params) {
+		if len(r.includedContentTypes) > 0 {
+			found := false
+			for _, includedContentType := range r.includedContentTypes {
+				if includedContentType.equals(mediaType, map[string]string{}) {
+					found = true
+					break
+				}
+			}
+			if !found {
 				r.compressionDisabled = true
 				return r.rw.Write(p)
+			}
+		} else {
+			for _, excludedContentType := range r.excludedContentTypes {
+				if excludedContentType.equals(mediaType, params) {
+					r.compressionDisabled = true
+					return r.rw.Write(p)
+				}
 			}
 		}
 	}

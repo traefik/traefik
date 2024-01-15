@@ -132,6 +132,11 @@ func (in *Compress) DeepCopyInto(out *Compress) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.IncludedContentTypes != nil {
+		in, out := &in.IncludedContentTypes, &out.IncludedContentTypes
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
