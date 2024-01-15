@@ -2,6 +2,9 @@
   checkNewVersion = true
   sendAnonymousUsage = true
 
+[core]
+  defaultRuleSyntax = "foobar"
+
 [serversTransport]
   insecureSkipVerify = true
   rootCAs = ["foobar", "foobar"]
