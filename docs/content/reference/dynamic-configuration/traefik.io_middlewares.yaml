@@ -175,6 +175,12 @@ spec:
                     items:
                       type: string
                     type: array
+                  includedContentTypes:
+                    description: IncludedContentTypes defines the list of content
+                      types to explicitly include for compression.
+                    items:
+                      type: string
+                    type: array
                   minResponseBodyBytes:
                     description: 'MinResponseBodyBytes defines the minimum amount
                       of bytes a response body must have to be compressed. Default:
