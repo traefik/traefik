@@ -316,17 +316,6 @@ spec:
 - "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse": "Session-Cookie,State-Cookie"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
-```
-
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
