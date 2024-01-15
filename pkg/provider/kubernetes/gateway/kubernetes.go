@@ -351,7 +351,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			Name:           listener.Name,
 			SupportedKinds: []gatev1.RouteGroupKind{},
 			Conditions:     []metav1.Condition{},
-			//AttachedRoutes: 0 TODO Set to number of Routes associated with a Listener regardless of Gateway or Route status
+			// AttachedRoutes: 0 TODO Set to number of Routes associated with a Listener regardless of Gateway or Route status
 		}
 
 		supportedKinds, conditions := supportedRouteKinds(listener.Protocol)
@@ -1985,6 +1985,7 @@ func groupToString(p *gatev1.Group) string {
 	}
 	return string(*p)
 }
+
 func kindToString(p *gatev1.Kind) string {
 	if p == nil {
 		return "<nil>"
