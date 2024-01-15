@@ -105,6 +105,9 @@ Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 `--certificatesresolvers.<name>.tailscale`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
 
+`--core.defaultrulesyntax`:  
+Defines the rule parser default syntax (v2 or v3) (Default: ```v2```)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 

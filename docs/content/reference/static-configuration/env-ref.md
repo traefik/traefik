@@ -105,6 +105,9 @@ Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_TAILSCALE`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
 
+`TRAEFIK_CORE_DEFAULTRULESYNTAX`:  
+Defines the rule parser default syntax (v2 or v3) (Default: ```v2```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
 
