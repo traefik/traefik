@@ -1,4 +1,4 @@
-package collector
+package hydratation
 
 import (
 	"fmt"
@@ -17,7 +17,8 @@ const (
 	defaultMapKeyPrefix = "name"
 )
 
-func hydrate(element interface{}) error {
+// Hydrate hydrates a configuration.
+func Hydrate(element interface{}) error {
 	field := reflect.ValueOf(element)
 	return fill(field)
 }
@@ -41,9 +42,7 @@ func fill(field reflect.Value) error {
 			return err
 		}
 	case reflect.Interface:
-		if err := fill(field.Elem()); err != nil {
-			return err
-		}
+		setTyped(field, defaultString)
 	case reflect.String:
 		setTyped(field, defaultString)
 	case reflect.Int:
@@ -118,7 +117,7 @@ func makeKeyName(typ reflect.Type) string {
 	case reflect.String,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Bool, reflect.Float32, reflect.Float64:
+		reflect.Bool, reflect.Float32, reflect.Float64, reflect.Interface:
 		return defaultMapKeyPrefix
 	default:
 		return typ.Name()
