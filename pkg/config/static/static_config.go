@@ -85,7 +85,7 @@ type Core struct {
 
 // SetDefaults sets the default values.
 func (c *Core) SetDefaults() {
-	c.DefaultRuleSyntax = "v2"
+	c.DefaultRuleSyntax = "v3"
 }
 
 // SpiffeClientConfig defines the SPIFFE client configuration.
