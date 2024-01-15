@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/file"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -18,7 +19,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"gopkg.in/fsnotify.v1"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const providerName = "file"
@@ -67,7 +68,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	configuration, err := p.BuildConfiguration()
 	if err != nil {
 		if p.Watch {
-			log.Debug().
+			log.Error().
 				Str(logs.ProviderName, providerName).
 				Err(err).
 				Msg("Error while building configuration (for the first time)")
@@ -180,7 +181,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 		// TLS Options
 		if configuration.TLS.Options != nil {
 			for name, options := range configuration.TLS.Options {
-				var caCerts []tls.FileOrContent
+				var caCerts []types.FileOrContent
 
 				for _, caFile := range options.ClientAuth.CAFiles {
 					content, err := caFile.Read()
@@ -189,7 +190,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 						continue
 					}
 
-					caCerts = append(caCerts, tls.FileOrContent(content))
+					caCerts = append(caCerts, types.FileOrContent(content))
 				}
 				options.ClientAuth.CAFiles = caCerts
 
@@ -209,14 +210,14 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
-				store.DefaultCertificate.CertFile = tls.FileOrContent(content)
+				store.DefaultCertificate.CertFile = types.FileOrContent(content)
 
 				content, err = store.DefaultCertificate.KeyFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
-				store.DefaultCertificate.KeyFile = tls.FileOrContent(content)
+				store.DefaultCertificate.KeyFile = types.FileOrContent(content)
 
 				configuration.TLS.Stores[name] = store
 			}
@@ -233,21 +234,21 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
-				cert.CertFile = tls.FileOrContent(content)
+				cert.CertFile = types.FileOrContent(content)
 
 				content, err = cert.KeyFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
-				cert.KeyFile = tls.FileOrContent(content)
+				cert.KeyFile = types.FileOrContent(content)
 
 				certificates = append(certificates, cert)
 			}
 
 			configuration.HTTP.ServersTransports[name].Certificates = certificates
 
-			var rootCAs []tls.FileOrContent
+			var rootCAs []types.FileOrContent
 			for _, rootCA := range st.RootCAs {
 				content, err := rootCA.Read()
 				if err != nil {
@@ -255,7 +256,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 					continue
 				}
 
-				rootCAs = append(rootCAs, tls.FileOrContent(content))
+				rootCAs = append(rootCAs, types.FileOrContent(content))
 			}
 
 			st.RootCAs = rootCAs
@@ -275,21 +276,21 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
-				cert.CertFile = tls.FileOrContent(content)
+				cert.CertFile = types.FileOrContent(content)
 
 				content, err = cert.KeyFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
-				cert.KeyFile = tls.FileOrContent(content)
+				cert.KeyFile = types.FileOrContent(content)
 
 				certificates = append(certificates, cert)
 			}
 
 			configuration.TCP.ServersTransports[name].TLS.Certificates = certificates
 
-			var rootCAs []tls.FileOrContent
+			var rootCAs []types.FileOrContent
 			for _, rootCA := range st.TLS.RootCAs {
 				content, err := rootCA.Read()
 				if err != nil {
@@ -297,7 +298,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 					continue
 				}
 
-				rootCAs = append(rootCAs, tls.FileOrContent(content))
+				rootCAs = append(rootCAs, types.FileOrContent(content))
 			}
 
 			st.TLS.RootCAs = rootCAs
@@ -315,14 +316,14 @@ func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguratio
 			log.Ctx(ctx).Error().Err(err).Send()
 			continue
 		}
-		cert.Certificate.CertFile = tls.FileOrContent(string(content))
+		cert.Certificate.CertFile = types.FileOrContent(string(content))
 
 		content, err = cert.Certificate.KeyFile.Read()
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Send()
 			continue
 		}
-		cert.Certificate.KeyFile = tls.FileOrContent(string(content))
+		cert.Certificate.KeyFile = types.FileOrContent(string(content))
 
 		certs = append(certs, cert)
 	}

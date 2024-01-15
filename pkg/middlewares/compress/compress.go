@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/klauspost/compress/gzhttp"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress/brotli"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "Compress"
@@ -87,7 +87,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Notably for text/event-stream requests the response should not be compressed.
 	// See https://github.com/traefik/traefik/issues/2576
-	if contains(c.excludes, mediaType) {
+	if slices.Contains(c.excludes, mediaType) {
 		c.next.ServeHTTP(rw, req)
 		return
 	}
@@ -113,8 +113,8 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	c.next.ServeHTTP(rw, req)
 }
 
-func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return c.name, tracing.SpanKindNoneEnum
+func (c *compress) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {
@@ -153,16 +153,6 @@ func encodingAccepts(acceptEncoding []string, typ string) bool {
 			if parsed[0] == typ || parsed[0] == "*" {
 				return true
 			}
-		}
-	}
-
-	return false
-}
-
-func contains(values []string, val string) bool {
-	for _, v := range values {
-		if v == val {
-			return true
 		}
 	}
 

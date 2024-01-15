@@ -248,7 +248,7 @@ EntryPoints in this list are used (by default) on HTTP and TCP routers that do n
     If at least one EntryPoint has the `AsDefault` option set to `true`,
     then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
 
-    Some built-in EntryPoints are always excluded from the list, namely: `traefik`, `traefikhub-api`, and `traefikhub-tunl`.
+    Some built-in EntryPoints are always excluded from the list, namely: `traefik`.
 
 !!! warning "Only TCP and HTTP"
 
@@ -623,17 +623,77 @@ Controls the behavior of Traefik during the shutdown phase.
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     ```
 
+#### `keepAliveMaxRequests`
+
+_Optional, Default=0_
+
+The maximum number of requests Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      name:
+        address: ":8888"
+        transport:
+          keepAliveMaxRequests: 42
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.name]
+        address = ":8888"
+        [entryPoints.name.transport]
+          keepAliveMaxRequests = 42
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.name.address=:8888
+    --entryPoints.name.transport.keepAliveRequests=42
+    ```
+
+#### `keepAliveMaxTime`
+
+_Optional, Default=0s_
+
+The maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      name:
+        address: ":8888"
+        transport:
+          keepAliveMaxTime: 42s
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.name]
+        address = ":8888"
+        [entryPoints.name.transport]
+          keepAliveMaxTime = 42s
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.name.address=:8888
+    --entryPoints.name.transport.keepAliveTime=42s
+    ```
+
 ### ProxyProtocol
 
-Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
+Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
 
-If Proxy Protocol header parsing is enabled for the entry point, this entry point can accept connections with or without Proxy Protocol headers.
+If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers.
 
-If the Proxy Protocol header is passed, then the version is determined automatically.
+If the PROXY protocol header is passed, then the version is determined automatically.
 
 ??? info "`proxyProtocol.trustedIPs`"
 
-    Enabling Proxy Protocol with Trusted IPs.
+    Enabling PROXY protocol with Trusted IPs.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -696,7 +756,7 @@ If the Proxy Protocol header is passed, then the version is determined automatic
 
 !!! warning "Queuing Traefik behind Another Load Balancer"
 
-    When queuing Traefik behind another load-balancer, make sure to configure Proxy Protocol on both sides.
+    When queuing Traefik behind another load-balancer, make sure to configure PROXY protocol on both sides.
     Not doing so could introduce a security risk in your system (enabling request forgery).
 
 ## HTTP Options

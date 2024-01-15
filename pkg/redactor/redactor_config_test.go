@@ -30,12 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
-	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
-	"github.com/traefik/traefik/v3/pkg/tracing/instana"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
-	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -135,7 +130,7 @@ func init() {
 			"foo": {
 				ServerName:         "foo",
 				InsecureSkipVerify: true,
-				RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+				RootCAs:            []types.FileOrContent{"rootca.pem"},
 				Certificates: []traefiktls.Certificate{
 					{
 						CertFile: "cert.pem",
@@ -395,7 +390,7 @@ func init() {
 				TLS: &dynamic.TLSClientConfig{
 					ServerName:         "foo",
 					InsecureSkipVerify: true,
-					RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+					RootCAs:            []types.FileOrContent{"rootca.pem"},
 					Certificates: []traefiktls.Certificate{
 						{
 							CertFile: "cert.pem",
@@ -446,7 +441,7 @@ func init() {
 				CipherSuites:     []string{"foo"},
 				CurvePreferences: []string{"foo"},
 				ClientAuth: traefiktls.ClientAuth{
-					CAFiles:        []traefiktls.FileOrContent{"ca.pem"},
+					CAFiles:        []types.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
 				SniStrict: true,
@@ -517,7 +512,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.EntryPoints = static.EntryPoints{
-		"foobar": {
+		"foobar": &static.EntryPoint{
 			Address: "foo Address",
 			Transport: &static.EntryPointsTransport{
 				LifeCycle: &static.LifeCycle{
@@ -565,7 +560,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.ServersTransport = &static.ServersTransport{
 		InsecureSkipVerify:  true,
-		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+		RootCAs:             []types.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
 			DialTimeout:           ptypes.Duration(111 * time.Second),
@@ -579,7 +574,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DialKeepAlive: ptypes.Duration(111 * time.Second),
 		TLS: &static.TLSClientConfig{
 			InsecureSkipVerify: true,
-			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+			RootCAs:            []types.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		},
 	}
 
@@ -850,58 +845,19 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Tracing = &static.Tracing{
-		ServiceName:   "myServiceName",
-		SpanNameLimit: 42,
-		Jaeger: &jaeger.Config{
-			SamplingServerURL:      "foobar",
-			SamplingType:           "foobar",
-			SamplingParam:          42,
-			LocalAgentHostPort:     "foobar",
-			Gen128Bit:              true,
-			Propagation:            "foobar",
-			TraceContextHeaderName: "foobar",
-			Collector: &jaeger.Collector{
+		ServiceName: "myServiceName",
+		Headers: map[string]string{
+			"foobar": "foobar",
+		},
+		GlobalAttributes: map[string]string{
+			"foobar": "foobar",
+		},
+		SampleRate: 42,
+		OTLP: &opentelemetry.Config{
+			HTTP: &opentelemetry.HTTP{
 				Endpoint: "foobar",
-				User:     "foobar",
-				Password: "foobar",
+				TLS:      nil,
 			},
-			DisableAttemptReconnecting: true,
-		},
-		Zipkin: &zipkin.Config{
-			HTTPEndpoint: "foobar",
-			SameSpan:     true,
-			ID128Bit:     true,
-			SampleRate:   42,
-		},
-		Datadog: &datadog.Config{
-			LocalAgentHostPort:         "foobar",
-			LocalAgentSocket:           "foobar",
-			GlobalTags:                 map[string]string{"foobar": "foobar"},
-			Debug:                      true,
-			PrioritySampling:           true,
-			TraceIDHeaderName:          "foobar",
-			ParentIDHeaderName:         "foobar",
-			SamplingPriorityHeaderName: "foobar",
-			BagagePrefixHeaderName:     "foobar",
-		},
-		Instana: &instana.Config{
-			LocalAgentHost: "foobar",
-			LocalAgentPort: 4242,
-			LogLevel:       "foobar",
-		},
-		Haystack: &haystack.Config{
-			LocalAgentHost:          "foobar",
-			LocalAgentPort:          42,
-			GlobalTag:               "foobar",
-			TraceIDHeaderName:       "foobar",
-			ParentIDHeaderName:      "foobar",
-			SpanIDHeaderName:        "foobar",
-			BaggagePrefixHeaderName: "foobar",
-		},
-		Elastic: &elastic.Config{
-			ServerURL:          "foobar",
-			SecretToken:        "foobar",
-			ServiceEnvironment: "foobar",
 		},
 	}
 

@@ -1,11 +1,11 @@
 ---
 title: "Traefik Getting Started Quickly"
-description: "Looking to get started with Traefik Proxy quickly? Read the technical documentation to see a basic use case that leverages Docker."
+description: "Get started with Traefik Proxy and Docker."
 ---
 
 # Quick Start
 
-A Basic Use Case Using Docker
+A Use Case Using Docker
 {: .subtitle }
 
 ![quickstart-diagram](../assets/img/quickstart-diagram.png)
@@ -19,9 +19,9 @@ version: '3'
 
 services:
   reverse-proxy:
-    # The official v3 Traefik Docker image
+    # The official v2 Traefik docker image
     image: traefik:v3.0
-    # Enables the web UI and tells Traefik to listen to Docker
+    # Enables the web UI and tells Traefik to listen to docker
     command: --api.insecure=true --providers.docker
     ports:
       # The HTTP port
@@ -41,11 +41,11 @@ Start your `reverse-proxy` with the following command:
 docker-compose up -d reverse-proxy
 ```
 
-You can open a browser and go to `http://localhost:8080/api/rawdata` to see Traefik's API rawdata (we'll go back there once we have launched a service in step 2).
+You can open a browser and go to `http://localhost:8080/api/rawdata` to see Traefik's API rawdata (you'll go back there once you have launched a service in step 2).
 
 ## Traefik Detects New Services and Creates the Route for You
 
-Now that we have a Traefik instance up and running, we will deploy new services.
+Now that you have a Traefik instance up and running, you will deploy new services.
 
 Edit your `docker-compose.yml` file and add the following at the end of your file.
 
@@ -63,7 +63,7 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
 ```
 
-The above defines [`whoami`](https://github.com/traefik/whoami "Link to whoami app on GitHub"), a web service that outputs information about the machine it is deployed on (its IP address, host, etc.).
+The above defines `whoami`: a web service that outputs information about the machine it is deployed on (its IP address, host, and others).
 
 Start the `whoami` service with the following command:
 
@@ -73,7 +73,7 @@ docker-compose up -d whoami
 
 Browse `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new container and updated its own configuration.
 
-When Traefik detects new services, it creates the corresponding routes, so you can call them ... _let's see!_  (Here, we're using curl)
+When Traefik detects new services, it creates the corresponding routes, so you can call them ... _let's see!_  (Here, you're using curl)
 
 ```shell
 curl -H Host:whoami.docker.localhost http://127.0.0.1
@@ -103,7 +103,7 @@ Finally, see that Traefik load-balances between the two instances of your servic
 curl -H Host:whoami.docker.localhost http://127.0.0.1
 ```
 
-The output will show alternatively one of the followings:
+The output will show alternatively one of the following:
 
 ```yaml
 Hostname: a656c8ddca6c

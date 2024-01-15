@@ -1,103 +1,138 @@
 package integration
 
 import (
-	"net/http"
-	"os"
+	"bufio"
+	"net"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/pires/go-proxyproto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type ProxyProtocolSuite struct {
 	BaseSuite
-	gatewayIP string
-	haproxyIP string
-	whoamiIP  string
+	whoamiIP string
 }
 
-func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "proxy-protocol")
-	s.composeUp(c)
-
-	s.gatewayIP = s.getContainerIP(c, "traefik")
-	s.haproxyIP = s.getComposeServiceIP(c, "haproxy")
-	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+func TestProxyProtocolSuite(t *testing.T) {
+	suite.Run(t, new(ProxyProtocolSuite))
 }
 
-func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
-	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
+func (s *ProxyProtocolSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("proxy-protocol")
+	s.composeUp()
+
+	s.whoamiIP = s.getComposeServiceIP("whoami")
+}
+
+func (s *ProxyProtocolSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *ProxyProtocolSuite) TestProxyProtocolTrusted() {
+	file := s.adaptFile("fixtures/proxy-protocol/proxy-protocol.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{HaproxyIP: s.haproxyIP, WhoamiIP: s.whoamiIP})
-	defer os.Remove(file)
+	}{WhoamiIP: s.whoamiIP})
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://"+s.haproxyIP+"/whoami", 1*time.Second,
-		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+s.gatewayIP))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second)
+	require.NoError(s.T(), err)
+
+	content, err := proxyProtoRequest("127.0.0.1:8000", 1)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 1.2.3.4")
+
+	content, err = proxyProtoRequest("127.0.0.1:8000", 2)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 1.2.3.4")
 }
 
-func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
-	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
+func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted() {
+	file := s.adaptFile("fixtures/proxy-protocol/proxy-protocol.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{HaproxyIP: s.haproxyIP, WhoamiIP: s.whoamiIP})
-	defer os.Remove(file)
+	}{WhoamiIP: s.whoamiIP})
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://"+s.haproxyIP+":81/whoami", 1*time.Second,
-		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+s.gatewayIP))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:9000/whoami", 10*time.Second)
+	require.NoError(s.T(), err)
+
+	content, err := proxyProtoRequest("127.0.0.1:9000", 1)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 127.0.0.1")
+
+	content, err = proxyProtoRequest("127.0.0.1:9000", 2)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 127.0.0.1")
 }
 
-func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
-	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
-		HaproxyIP string
-		WhoamiIP  string
-	}{HaproxyIP: s.haproxyIP, WhoamiIP: s.whoamiIP})
-	defer os.Remove(file)
+func proxyProtoRequest(address string, version byte) (string, error) {
+	// Open a TCP connection to the server
+	conn, err := net.Dial("tcp", address)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	// Create a Proxy Protocol header with v1
+	proxyHeader := &proxyproto.Header{
+		Version:           version,
+		Command:           proxyproto.PROXY,
+		TransportProtocol: proxyproto.TCPv4,
+		DestinationAddr: &net.TCPAddr{
+			IP:   net.ParseIP("127.0.0.1"),
+			Port: 8000,
+		},
+		SourceAddr: &net.TCPAddr{
+			IP:   net.ParseIP("1.2.3.4"),
+			Port: 62541,
+		},
+	}
 
-	err = try.GetRequest("http://"+s.haproxyIP+"/whoami", 1*time.Second,
-		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+s.haproxyIP))
-	c.Assert(err, checker.IsNil)
-}
+	// After the connection was created write the proxy headers first
+	_, err = proxyHeader.WriteTo(conn)
+	if err != nil {
+		return "", err
+	}
 
-func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
-	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
-		HaproxyIP string
-		WhoamiIP  string
-	}{HaproxyIP: s.haproxyIP, WhoamiIP: s.whoamiIP})
-	defer os.Remove(file)
+	// Create an HTTP request
+	request := "GET /whoami HTTP/1.1\r\n" +
+		"Host: 127.0.0.1\r\n" +
+		"Connection: close\r\n" +
+		"\r\n"
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	// Write the HTTP request to the TCP connection
+	writer := bufio.NewWriter(conn)
+	_, err = writer.WriteString(request)
+	if err != nil {
+		return "", err
+	}
 
-	err = try.GetRequest("http://"+s.haproxyIP+":81/whoami", 1*time.Second,
-		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+s.haproxyIP))
-	c.Assert(err, checker.IsNil)
+	// Flush the buffer to ensure the request is sent
+	err = writer.Flush()
+	if err != nil {
+		return "", err
+	}
+
+	// Read the response from the server
+	var content string
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		content += scanner.Text() + "\n"
+	}
+
+	if scanner.Err() != nil {
+		return "", err
+	}
+
+	return content, nil
 }

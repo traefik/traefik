@@ -87,8 +87,6 @@ linters-settings:
         pkg: "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
       # Traefik Kubernetes rewrites:
-      - alias: containousv1alpha1
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
       - alias: traefikv1alpha1
         pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
       - alias: traefikclientset
@@ -146,11 +144,23 @@ linters-settings:
   gomoddirectives:
     replace-allow-list:
       - github.com/abbot/go-http-auth
-      - github.com/go-check/check
       - github.com/gorilla/mux
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
+      - github.com/cucumber/godog
+  testifylint:
+    enable:
+      - bool-compare
+      - compares
+      - empty
+      - error-is-as
+      - error-nil
+      - expected-actual
+      - float-compare
+      - len
+      - suite-extra-assert-call
+      - suite-thelper
 
 linters:
   enable-all: true
@@ -242,6 +252,12 @@ issues:
       text: 'SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18'
     - path: pkg/types/tls_test.go
       text: 'SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18'
+    - path: pkg/provider/kubernetes/crd/kubernetes.go
+      text: 'SA1019: middleware.Spec.IPWhiteList is deprecated: please use IPAllowList instead.'
+    - path: pkg/server/middleware/tcp/middlewares.go
+      text: 'SA1019: config.IPWhiteList is deprecated: please use IPAllowList instead.'
+    - path: pkg/server/middleware/middlewares.go
+      text: 'SA1019: config.IPWhiteList is deprecated: please use IPAllowList instead.'
     - path: pkg/provider/kubernetes/(crd|gateway)/client.go
       linters:
         - interfacebloat

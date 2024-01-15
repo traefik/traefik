@@ -6,38 +6,23 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.20'
-  IN_DOCKER: ""
+  GO_VERSION: '1.21'
 
 jobs:
 
   test-unit:
     runs-on: ubuntu-20.04
 
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
-
     steps:
-      - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      - name: Cache Go modules
-        uses: actions/cache@v3
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-test-unit-go-
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Avoid generating webui
         run: touch webui/static/index.html

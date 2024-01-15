@@ -12,6 +12,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Int(v int) *int    { return &v }
@@ -52,8 +53,9 @@ func TestDefaultRule(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`foo.bar`)",
+							Service:     "Test",
+							Rule:        "Host(`foo.bar`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -106,8 +108,9 @@ func TestDefaultRule(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    `Host("Test.foo.bar")`,
+							Service:     "Test",
+							Rule:        `Host("Test.foo.bar")`,
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -252,8 +255,9 @@ func TestDefaultRule(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test`)",
+							Service:     "Test",
+							Rule:        "Host(`Test`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -341,8 +345,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"dev-Test": {
-							Service: "dev-Test",
-							Rule:    "Host(`dev-Test.traefik.wtf`)",
+							Service:     "dev-Test",
+							Rule:        "Host(`dev-Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -398,8 +403,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"dev-Test": {
-							Service: "dev-Test",
-							Rule:    "Host(`dev-Test.traefik.wtf`)",
+							Service:     "dev-Test",
+							Rule:        "Host(`dev-Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -423,7 +429,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"tls-ns-dc1-dev-Test": {
 							ServerName:         "ns-dc1-dev/Test",
 							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
+							RootCAs: []types.FileOrContent{
 								"root",
 							},
 							Certificates: []tls.Certificate{
@@ -485,8 +491,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"dev-Test": {
-							Service: "dev-Test",
-							Rule:    "Host(`dev-Test.traefik.wtf`)",
+							Service:     "dev-Test",
+							Rule:        "Host(`dev-Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -513,7 +520,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"tls-ns-dc1-dev-Test": {
 							ServerName:         "ns-dc1-dev/Test",
 							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
+							RootCAs: []types.FileOrContent{
 								"root",
 							},
 							Certificates: []tls.Certificate{
@@ -564,12 +571,14 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 						"Test2": {
-							Service: "Test2",
-							Rule:    "Host(`Test2.traefik.wtf`)",
+							Service:     "Test2",
+							Rule:        "Host(`Test2.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -641,8 +650,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -704,8 +714,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -764,8 +775,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -819,8 +831,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1101,8 +1114,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -1159,8 +1173,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -1207,8 +1222,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1262,8 +1278,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1329,8 +1346,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1399,8 +1417,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1476,8 +1495,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1737,8 +1757,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1790,8 +1811,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2065,8 +2087,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2120,6 +2143,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"Test": {
 							Service:     "Test",
 							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 							Middlewares: []string{"Middleware1"},
 						},
 					},
@@ -2245,6 +2269,7 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:80",
+										TLS:     true,
 									},
 								},
 								ServersTransport: "tls-ns-dc1-Test",
@@ -2256,7 +2281,7 @@ func Test_buildConfiguration(t *testing.T) {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "ns-dc1-Test",
 								InsecureSkipVerify: true,
-								RootCAs: []tls.FileOrContent{
+								RootCAs: []types.FileOrContent{
 									"root",
 								},
 								Certificates: []tls.Certificate{
@@ -2538,8 +2563,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2625,8 +2651,9 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2828,12 +2855,14 @@ func Test_buildConfiguration(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 						"Test-97077516270503695": {
-							Service: "Test-97077516270503695",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Service:     "Test-97077516270503695",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							DefaultRule: true,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2871,7 +2900,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"tls-ns-dc1-Test": {
 							ServerName:         "ns-dc1-Test",
 							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
+							RootCAs: []types.FileOrContent{
 								"root",
 							},
 							Certificates: []tls.Certificate{

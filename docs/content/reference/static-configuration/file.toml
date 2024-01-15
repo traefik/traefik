@@ -35,6 +35,8 @@
     address = "foobar"
     asDefault = true
     [entryPoints.EntryPoint0.transport]
+      keepAliveMaxRequests = 42
+      keepAliveMaxTime = "42s"
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = "42s"
         graceTimeOut = "42s"
@@ -242,6 +244,14 @@
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
+    [providers.redis.sentinel]
+      masterName = "foobar"
+      username = "foobar"
+      password = "foobar"
+      latencyStrategy = true
+      randomStrategy = true
+      replicaStrategy = true
+      useDisconnectedReplicas = true
   [providers.http]
     endpoint = "foobar"
     pollInterval = "42s"
@@ -357,68 +367,28 @@
 
 [tracing]
   serviceName = "foobar"
-  spanNameLimit = 42
-  [tracing.jaeger]
-    samplingServerURL = "foobar"
-    samplingType = "foobar"
-    samplingParam = 42.0
-    localAgentHostPort = "foobar"
-    gen128Bit = true
-    propagation = "foobar"
-    traceContextHeaderName = "foobar"
-    disableAttemptReconnecting = true
-    [tracing.jaeger.collector]
-      endpoint = "foobar"
-      user = "foobar"
-      password = "foobar"
-  [tracing.zipkin]
-    httpEndpoint = "foobar"
-    sameSpan = true
-    id128Bit = true
-    sampleRate = 42.0
-  [tracing.datadog]
-    localAgentHostPort = "foobar"
-    localAgentSocket = "foobar"
-    [tracing.datadog.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
-    debug = true
-    prioritySampling = true
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    samplingPriorityHeaderName = "foobar"
-    bagagePrefixHeaderName = "foobar"
-  [tracing.instana]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    logLevel = "foobar"
-    enableAutoProfile = true
-  [tracing.haystack]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    globalTag = "foobar"
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    spanIDHeaderName = "foobar"
-    baggagePrefixHeaderName = "foobar"
-  [tracing.elastic]
-    serverURL = "foobar"
-    secretToken = "foobar"
-    serviceEnvironment = "foobar"
-  [tracing.openTelemetry]
-    address = "foobar"
+  sampleRate = 42
+  [tracing.headers]
+    header1 = "foobar"
+    header2 = "foobar"
+  [tracing.globalAttributes]
+    attr1 = "foobar"
+    attr2 = "foobar"
+  [tracing.otlp.grpc]
+    endpoint = "foobar"
     insecure = true
-    path = "foobar"
-    [tracing.openTelemetry.headers]
-      name0 = "foobar"
-      name1 = "foobar"
-    [tracing.openTelemetry.tls]
+    [tracing.otlp.grpc.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
-    [tracing.openTelemetry.grpc]
+  [tracing.otlp.http]
+    endpoint = "foobar"
+    [tracing.otlp.http.tls]
+    ca = "foobar"
+    cert = "foobar"
+    key = "foobar"
+    insecureSkipVerify = true
 
 [hostResolver]
   cnameFlattening = true
@@ -449,7 +419,6 @@
 
 [experimental]
   kubernetesGateway = true
-  http3 = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

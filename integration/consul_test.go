@@ -4,21 +4,23 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	"github.com/kvtools/consul"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
-	checker "github.com/vdemeester/shakers"
 )
 
 // Consul test suites.
@@ -28,11 +30,16 @@ type ConsulSuite struct {
 	consulURL string
 }
 
-func (s *ConsulSuite) setupStore(c *check.C) {
-	s.createComposeProject(c, "consul")
-	s.composeUp(c)
+func TestConsulSuite(t *testing.T) {
+	suite.Run(t, new(ConsulSuite))
+}
 
-	consulAddr := net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
+func (s *ConsulSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+	s.createComposeProject("consul")
+	s.composeUp()
+
+	consulAddr := net.JoinHostPort(s.getComposeServiceIP("consul"), "8500")
 	s.consulURL = fmt.Sprintf("http://%s", consulAddr)
 
 	kv, err := valkeyrie.NewStore(
@@ -43,21 +50,27 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		c.Fatal("Cannot create store consul")
-	}
+	require.NoError(s.T(), err, "Cannot create store consul")
 	s.kvClient = kv
 
 	// wait for consul
 	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
+func (s *ConsulSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
 
-	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
-	defer os.Remove(file)
+func (s *ConsulSuite) TearDownTest() {
+	err := s.kvClient.DeleteTree(context.Background(), "traefik")
+	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
+		require.ErrorIs(s.T(), err, store.ErrKeyNotFound)
+	}
+}
+
+func (s *ConsulSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -106,39 +119,35 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 
 	for k, v := range data {
 		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@consul":`, `"compressor@consul":`, `"srvcA@consul":`, `"srvcB@consul":`),
 	)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	got, err := json.MarshalIndent(obtained, "", "  ")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-consul.json")
 
 	if *updateExpected {
 		err = os.WriteFile(expectedJSON, got, 0o666)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	expected, err := os.ReadFile(expectedJSON)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if !bytes.Equal(expected, got) {
 		diff := difflib.UnifiedDiff{
@@ -150,7 +159,65 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		c.Assert(err, checker.IsNil)
-		c.Error(text)
+		require.NoError(s.T(), err, text)
 	}
+}
+
+func (s *ConsulSuite) assertWhoami(host string, expectedStatusCode int) {
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	require.NoError(s.T(), err)
+	req.Host = host
+
+	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
+	require.NoError(s.T(), err)
+	resp.Body.Close()
+}
+
+func (s *ConsulSuite) TestDeleteRootKey() {
+	// This test case reproduce the issue: https://github.com/traefik/traefik/issues/8092
+
+	file := s.adaptFile("fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
+
+	ctx := context.Background()
+	svcaddr := net.JoinHostPort(s.getComposeServiceIP("whoami"), "80")
+
+	data := map[string]string{
+		"traefik/http/routers/Router0/entryPoints/0": "web",
+		"traefik/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
+		"traefik/http/routers/Router0/service":       "simplesvc0",
+
+		"traefik/http/routers/Router1/entryPoints/0": "web",
+		"traefik/http/routers/Router1/rule":          "Host(`kv2.localhost`)",
+		"traefik/http/routers/Router1/service":       "simplesvc1",
+
+		"traefik/http/services/simplesvc0/loadBalancer/servers/0/url": "http://" + svcaddr,
+		"traefik/http/services/simplesvc1/loadBalancer/servers/0/url": "http://" + svcaddr,
+	}
+
+	for k, v := range data {
+		err := s.kvClient.Put(ctx, k, []byte(v), nil)
+		require.NoError(s.T(), err)
+	}
+
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+		try.BodyContains(`"Router0@consul":`, `"Router1@consul":`, `"simplesvc0@consul":`, `"simplesvc1@consul":`),
+	)
+	require.NoError(s.T(), err)
+	s.assertWhoami("kv1.localhost", http.StatusOK)
+	s.assertWhoami("kv2.localhost", http.StatusOK)
+
+	// delete router1
+	err = s.kvClient.DeleteTree(ctx, "traefik/http/routers/Router1")
+	require.NoError(s.T(), err)
+	s.assertWhoami("kv1.localhost", http.StatusOK)
+	s.assertWhoami("kv2.localhost", http.StatusNotFound)
+
+	// delete simple services and router0
+	err = s.kvClient.DeleteTree(ctx, "traefik")
+	require.NoError(s.T(), err)
+	s.assertWhoami("kv1.localhost", http.StatusNotFound)
+	s.assertWhoami("kv2.localhost", http.StatusNotFound)
 }
