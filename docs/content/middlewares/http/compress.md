@@ -86,6 +86,8 @@ Content types are compared in a case-insensitive, whitespace-ignored manner.
 
     Note that `application/grpc` is never compressed.
 
+    **Note:** This option is mutually exclusive with `includedContentTypes`. Please choose either `includedContentTypes` or `excludedContentTypes`, but not both.
+
 ```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-compress.compress.excludedcontenttypes=text/event-stream"
@@ -130,6 +132,8 @@ _Optional, Default=""_
 Only the responses with content types defined in `includedContentTypes` are compressed. If a response's MIME type matches one of the types in this list, it will be compressed, while all other responses will not be compressed.
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
+
+  **Note:** This option is mutually exclusive with `excludedContentTypes`. Please choose either `excludedContentTypes` or `includedContentTypes`, but not both.
 
 ```yaml tab="Docker & Swarm"
 labels:
