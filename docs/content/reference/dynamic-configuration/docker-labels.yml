@@ -1,3 +1,5 @@
+## CODE GENERATED AUTOMATICALLY
+## THIS FILE MUST NOT BE EDITED BY HAND
 - "traefik.http.middlewares.middleware01.addprefix.prefix=foobar"
 - "traefik.http.middlewares.middleware02.basicauth.headerfield=foobar"
 - "traefik.http.middlewares.middleware02.basicauth.realm=foobar"
