@@ -25,6 +25,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var commentGenerated = `## CODE GENERATED AUTOMATICALLY
+## THIS FILE MUST NOT BE EDITED BY HAND
+`
+
 func main() {
 	logger := log.WithoutContext()
 
@@ -108,9 +112,21 @@ func labelsWrite(outputDir string, element *dynamic.Configuration) error {
 	if err != nil {
 		return err
 	}
+	defer dockerLabels.Close()
+
+	// Write the comment at the beginning of the file
+	if _, err := dockerLabels.WriteString(commentGenerated); err != nil {
+		return err
+	}
 
 	marathonLabels, err := os.Create(filepath.Join(outputDir, "marathon-labels.json"))
 	if err != nil {
+		return err
+	}
+	defer marathonLabels.Close()
+
+	// Write the comment at the beginning of the file
+	if _, err := marathonLabels.WriteString(strings.ReplaceAll(commentGenerated, "##", "//")); err != nil {
 		return err
 	}
 
@@ -164,6 +180,12 @@ func yamlWrite(outputFile string, element any) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
+
+	// Write the comment at the beginning of the file
+	if _, err := file.WriteString(commentGenerated); err != nil {
+		return err
+	}
 
 	buf := new(bytes.Buffer)
 	encoder := yaml.NewEncoder(buf)
@@ -180,6 +202,12 @@ func yamlWrite(outputFile string, element any) error {
 func tomlWrite(outputFile string, element any) error {
 	file, err := os.OpenFile(outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the comment at the beginning of the file
+	if _, err := file.WriteString(commentGenerated); err != nil {
 		return err
 	}
 
