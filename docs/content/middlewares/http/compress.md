@@ -62,9 +62,6 @@ http:
     * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes).
     * The response body is larger than the [configured minimum amount of bytes](#minresponsebodybytes) (default is `1024`).
 
-    When both `includedContentTypes` and `excludedContentTypes` are present, `includedContentTypes` takes precedence. Only the `includedContentTypes` list will be evaluated for determining whether compression should occur, and the `excludedContentTypes` list will be ignored.
-
-
 ## Configuration Options
 
 ### `excludedContentTypes`
@@ -86,7 +83,9 @@ Content types are compared in a case-insensitive, whitespace-ignored manner.
 
     Note that `application/grpc` is never compressed.
 
-    **Note:** This option is mutually exclusive with `includedContentTypes`. Please choose either `includedContentTypes` or `excludedContentTypes`, but not both.
+!!! info "Note"
+  
+    This option is mutually exclusive with `includedContentTypes`. Please choose either `includedContentTypes` or `excludedContentTypes`, but not both.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -133,7 +132,9 @@ Only the responses with content types defined in `includedContentTypes` are comp
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
-  **Note:** This option is mutually exclusive with `excludedContentTypes`. Please choose either `excludedContentTypes` or `includedContentTypes`, but not both.
+!!! info "Note"
+  
+    This option is mutually exclusive with `excludedContentTypes`. Please choose either `excludedContentTypes` or `includedContentTypes`, but not both.
 
 ```yaml tab="Docker & Swarm"
 labels:
