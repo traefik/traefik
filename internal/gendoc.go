@@ -67,6 +67,8 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	delete(staticConf.EntryPoints, "EntryPoint1")
+
 	err = tomlWrite("./docs/content/reference/static-configuration/file.toml", staticConf)
 	if err != nil {
 		logger.Fatal(err)
