@@ -97,7 +97,7 @@ test-unit:
 ## Run the integration tests
 .PHONY: test-integration
 test-integration: binary
-	GOOS=$(GOOS) GOARCH=$(GOARCH)  go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 ## Pull all Docker images to avoid timeout during integration tests
 .PHONY: pull-images
