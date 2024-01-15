@@ -65,57 +65,6 @@ entryPoints:
       advertisedPort: 42
     udp:
       timeout: 42s
-  EntryPoint1:
-    address: foobar
-    transport:
-      lifeCycle:
-        requestAcceptGraceTimeout: 42s
-        graceTimeOut: 42s
-      respondingTimeouts:
-        readTimeout: 42s
-        writeTimeout: 42s
-        idleTimeout: 42s
-      keepAliveMaxTime: 42s
-      keepAliveMaxRequests: 42
-    proxyProtocol:
-      insecure: true
-      trustedIPs:
-        - foobar
-        - foobar
-    forwardedHeaders:
-      insecure: true
-      trustedIPs:
-        - foobar
-        - foobar
-    http:
-      redirections:
-        entryPoint:
-          to: foobar
-          scheme: foobar
-          permanent: true
-          priority: 42
-      middlewares:
-        - foobar
-        - foobar
-      tls:
-        options: foobar
-        certResolver: foobar
-        domains:
-          - main: foobar
-            sans:
-              - foobar
-              - foobar
-          - main: foobar
-            sans:
-              - foobar
-              - foobar
-      encodeQuerySemicolons: true
-    http2:
-      maxConcurrentStreams: 42
-    http3:
-      advertisedPort: 42
-    udp:
-      timeout: 42s
 providers:
   providersThrottleDuration: 42s
   docker:
