@@ -3,9 +3,9 @@ package consulcatalog
 import (
 	"fmt"
 
-	"github.com/hashicorp/consul/agent/connect"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // connectCert holds our certificates as a client of the Consul Connect protocol.
@@ -14,18 +14,18 @@ type connectCert struct {
 	leaf keyPair
 }
 
-func (c *connectCert) getRoot() []traefiktls.FileOrContent {
-	var result []traefiktls.FileOrContent
+func (c *connectCert) getRoot() []types.FileOrContent {
+	var result []types.FileOrContent
 	for _, r := range c.root {
-		result = append(result, traefiktls.FileOrContent(r))
+		result = append(result, types.FileOrContent(r))
 	}
 	return result
 }
 
 func (c *connectCert) getLeaf() traefiktls.Certificate {
 	return traefiktls.Certificate{
-		CertFile: traefiktls.FileOrContent(c.leaf.cert),
-		KeyFile:  traefiktls.FileOrContent(c.leaf.key),
+		CertFile: types.FileOrContent(c.leaf.cert),
+		KeyFile:  types.FileOrContent(c.leaf.key),
 	}
 }
 
@@ -52,11 +52,11 @@ func (c *connectCert) equals(other *connectCert) bool {
 }
 
 func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
-	spiffeIDService := connect.SpiffeIDService{
-		Namespace:  item.Namespace,
-		Datacenter: item.Datacenter,
-		Service:    item.Name,
-	}
+	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
+		item.Namespace,
+		item.Datacenter,
+		item.Name,
+	)
 
 	return &dynamic.ServersTransport{
 		// This ensures that the config changes whenever the verifier function changes
@@ -67,16 +67,16 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 		Certificates: traefiktls.Certificates{
 			c.getLeaf(),
 		},
-		PeerCertURI: spiffeIDService.URI().String(),
+		PeerCertURI: spiffeID,
 	}
 }
 
 func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTransport {
-	spiffeIDService := connect.SpiffeIDService{
-		Namespace:  item.Namespace,
-		Datacenter: item.Datacenter,
-		Service:    item.Name,
-	}
+	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
+		item.Namespace,
+		item.Datacenter,
+		item.Name,
+	)
 
 	return &dynamic.TCPServersTransport{
 		TLS: &dynamic.TLSClientConfig{
@@ -88,7 +88,7 @@ func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTran
 			Certificates: traefiktls.Certificates{
 				c.getLeaf(),
 			},
-			PeerCertURI: spiffeIDService.URI().String(),
+			PeerCertURI: spiffeID,
 		},
 	}
 }

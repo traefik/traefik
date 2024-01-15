@@ -266,9 +266,8 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 			}
 		}
 
-		// muxerHTTPS only contains single HostSNI rules (and no other kind of rules),
-		// so there's no need for specifying a priority for them.
-		if err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", 0, tcpHandler); err != nil {
+		rule := "HostSNI(`" + sniHost + "`)"
+		if err := r.muxerHTTPS.AddRoute(rule, tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
 			log.Error().Err(err).Msg("Error while adding route for host")
 		}
 	}

@@ -6,7 +6,7 @@ FileName = "traefik_changelog.md"
 
 # example RC1 of v3.0.0-beta1
 CurrentRef = "master"
-PreviousRef = "v2.9.0-rc1"
+PreviousRef = "v2.11.0-rc1"
 BaseBranch = "master"
 FutureCurrentRefName = "v3.0.0-beta1"
 

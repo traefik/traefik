@@ -4,7 +4,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2023 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2024 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -214,6 +214,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		in, out := &in.TLS, &out.TLS
 		*out = new(ClientTLS)
 		**out = **in
+	}
+	if in.AddAuthCookiesToResponse != nil {
+		in, out := &in.AddAuthCookiesToResponse, &out.AddAuthCookiesToResponse
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 	return
 }
@@ -689,6 +694,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(Chain)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.IPWhiteList != nil {
+		in, out := &in.IPWhiteList, &out.IPWhiteList
+		*out = new(dynamic.IPWhiteList)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.IPAllowList != nil {
 		in, out := &in.IPAllowList, &out.IPAllowList
 		*out = new(dynamic.IPAllowList)
@@ -861,6 +871,11 @@ func (in *MiddlewareTCPSpec) DeepCopyInto(out *MiddlewareTCPSpec) {
 		in, out := &in.InFlightConn, &out.InFlightConn
 		*out = new(dynamic.TCPInFlightConn)
 		**out = **in
+	}
+	if in.IPWhiteList != nil {
+		in, out := &in.IPWhiteList, &out.IPWhiteList
+		*out = new(dynamic.TCPIPWhiteList)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.IPAllowList != nil {
 		in, out := &in.IPAllowList, &out.IPAllowList

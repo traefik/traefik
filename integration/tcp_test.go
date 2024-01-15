@@ -5,63 +5,69 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type TCPSuite struct{ BaseSuite }
 
-func (s *TCPSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "tcp")
-	s.composeUp(c)
+func TestTCPSuite(t *testing.T) {
+	suite.Run(t, new(TCPSuite))
 }
 
-func (s *TCPSuite) TestMixed(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/mixed.toml", struct {
+func (s *TCPSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("tcp")
+	s.composeUp()
+}
+
+func (s *TCPSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *TCPSuite) TestMixed() {
+	file := s.adaptFile("fixtures/tcp/mixed.toml", struct {
 		Whoami       string
 		WhoamiA      string
 		WhoamiB      string
 		WhoamiNoCert string
 	}{
-		Whoami:       "http://" + s.getComposeServiceIP(c, "whoami") + ":80",
-		WhoamiA:      s.getComposeServiceIP(c, "whoami-a") + ":8080",
-		WhoamiB:      s.getComposeServiceIP(c, "whoami-b") + ":8080",
-		WhoamiNoCert: s.getComposeServiceIP(c, "whoami-no-cert") + ":8080",
+		Whoami:       "http://" + s.getComposeServiceIP("whoami") + ":80",
+		WhoamiA:      s.getComposeServiceIP("whoami-a") + ":8080",
+		WhoamiB:      s.getComposeServiceIP("whoami-b") + ":8080",
+		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
+	require.NoError(s.T(), err)
 
 	// Traefik passes through, termination handled by whoami-a
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-a")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-a")
 
 	// Traefik passes through, termination handled by whoami-b
 	out, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-b")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-b")
 
 	// Termination handled by traefik
 	out, err = guessWho("127.0.0.1:8093", "whoami-c.test", true)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-cert")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-no-cert")
 
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -69,174 +75,143 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 		},
 	}
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8093/whoami/", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.RequestWithTransport(req, 10*time.Second, tr1, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:8093/not-found/", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.RequestWithTransport(req, 10*time.Second, tr1, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8093/test", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = try.GetRequest("http://127.0.0.1:8093/not-found", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TCPSuite) TestTLSOptions(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/multi-tls-options.toml", struct {
+func (s *TCPSuite) TestTLSOptions() {
+	file := s.adaptFile("fixtures/tcp/multi-tls-options.toml", struct {
 		WhoamiNoCert string
 	}{
-		WhoamiNoCert: s.getComposeServiceIP(c, "whoami-no-cert") + ":8080",
+		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
+	require.NoError(s.T(), err)
 
 	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-c.test'
 	out, err := guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-c.test", true, tls.VersionTLS12)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-cert")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-no-cert")
 
 	// Check that we can use a client tls version <= 1.3 with hostSNI 'whoami-d.test'
 	out, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS13)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-cert")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-no-cert")
 
 	// Check that we cannot use a client tls version <= 1.2 with hostSNI 'whoami-d.test'
 	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS12)
-	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+	assert.ErrorContains(s.T(), err, "protocol version not supported")
 
 	// Check that we can't reach a route with an invalid mTLS configuration.
 	conn, err := tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
 		ServerName:         "whoami-i.test",
 		InsecureSkipVerify: true,
 	})
-	c.Assert(conn, checker.IsNil)
-	c.Assert(err, checker.NotNil)
+	assert.Nil(s.T(), conn)
+	assert.Error(s.T(), err)
 }
 
-func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/non-tls-fallback.toml", struct {
+func (s *TCPSuite) TestNonTLSFallback() {
+	file := s.adaptFile("fixtures/tcp/non-tls-fallback.toml", struct {
 		WhoamiA      string
 		WhoamiB      string
 		WhoamiNoCert string
 		WhoamiNoTLS  string
 	}{
-		WhoamiA:      s.getComposeServiceIP(c, "whoami-a") + ":8080",
-		WhoamiB:      s.getComposeServiceIP(c, "whoami-b") + ":8080",
-		WhoamiNoCert: s.getComposeServiceIP(c, "whoami-no-cert") + ":8080",
-		WhoamiNoTLS:  s.getComposeServiceIP(c, "whoami-no-tls") + ":8080",
+		WhoamiA:      s.getComposeServiceIP("whoami-a") + ":8080",
+		WhoamiB:      s.getComposeServiceIP("whoami-b") + ":8080",
+		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
+		WhoamiNoTLS:  s.getComposeServiceIP("whoami-no-tls") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
 
 	// Traefik passes through, termination handled by whoami-a
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-a")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-a")
 
 	// Traefik passes through, termination handled by whoami-b
 	out, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-b")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-b")
 
 	// Termination handled by traefik
 	out, err = guessWho("127.0.0.1:8093", "whoami-c.test", true)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-cert")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-no-cert")
 
 	out, err = guessWho("127.0.0.1:8093", "", false)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-tls")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-no-tls")
 }
 
-func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/non-tls.toml", struct {
+func (s *TCPSuite) TestNonTlsTcp() {
+	file := s.adaptFile("fixtures/tcp/non-tls.toml", struct {
 		WhoamiNoTLS string
 	}{
-		WhoamiNoTLS: s.getComposeServiceIP(c, "whoami-no-tls") + ":8080",
+		WhoamiNoTLS: s.getComposeServiceIP("whoami-no-tls") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
 
 	// Traefik will forward every requests on the given port to whoami-no-tls
 	out, err := guessWho("127.0.0.1:8093", "", false)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-tls")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-no-tls")
 }
 
-func (s *TCPSuite) TestCatchAllNoTLS(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls.toml", struct {
+func (s *TCPSuite) TestCatchAllNoTLS() {
+	file := s.adaptFile("fixtures/tcp/catch-all-no-tls.toml", struct {
 		WhoamiBannerAddress string
 	}{
-		WhoamiBannerAddress: s.getComposeServiceIP(c, "whoami-banner") + ":8080",
+		WhoamiBannerAddress: s.getComposeServiceIP("whoami-banner") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
 
 	// Traefik will forward every requests on the given port to whoami-no-tls
 	out, err := welcome("127.0.0.1:8093")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "Welcome")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "Welcome")
 }
 
-func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls-with-https.toml", struct {
+func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS() {
+	file := s.adaptFile("fixtures/tcp/catch-all-no-tls-with-https.toml", struct {
 		WhoamiNoTLSAddress string
 		WhoamiURL          string
 	}{
-		WhoamiNoTLSAddress: s.getComposeServiceIP(c, "whoami-no-tls") + ":8080",
-		WhoamiURL:          "http://" + s.getComposeServiceIP(c, "whoami") + ":80",
+		WhoamiNoTLSAddress: s.getComposeServiceIP("whoami-no-tls") + ":8080",
+		WhoamiURL:          "http://" + s.getComposeServiceIP("whoami") + ":80",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
 
 	req := httptest.NewRequest(http.MethodGet, "https://127.0.0.1:8093/test", nil)
 	req.RequestURI = ""
@@ -246,64 +221,76 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
 			InsecureSkipVerify: true,
 		},
 	}, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *TCPSuite) TestMiddlewareAllowList(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/ipallowlist.toml", struct {
+func (s *TCPSuite) TestMiddlewareAllowList() {
+	file := s.adaptFile("fixtures/tcp/ip-allowlist.toml", struct {
 		WhoamiA string
 		WhoamiB string
 	}{
-		WhoamiA: s.getComposeServiceIP(c, "whoami-a") + ":8080",
-		WhoamiB: s.getComposeServiceIP(c, "whoami-b") + ":8080",
+		WhoamiA: s.getComposeServiceIP("whoami-a") + ":8080",
+		WhoamiB: s.getComposeServiceIP("whoami-b") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
+	require.NoError(s.T(), err)
 
 	// Traefik not passes through, ipAllowList closes connection
 	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
-	c.Assert(err, checker.ErrorMatches, "EOF")
+	assert.ErrorIs(s.T(), err, io.EOF)
 
 	// Traefik passes through, termination handled by whoami-b
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-b")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-b")
 }
 
-func (s *TCPSuite) TestWRR(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct {
+func (s *TCPSuite) TestMiddlewareWhiteList() {
+	file := s.adaptFile("fixtures/tcp/ip-whitelist.toml", struct {
+		WhoamiA string
+		WhoamiB string
+	}{
+		WhoamiA: s.getComposeServiceIP("whoami-a") + ":8080",
+		WhoamiB: s.getComposeServiceIP("whoami-b") + ":8080",
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
+	require.NoError(s.T(), err)
+
+	// Traefik not passes through, ipWhiteList closes connection
+	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
+	assert.ErrorIs(s.T(), err, io.EOF)
+
+	// Traefik passes through, termination handled by whoami-b
+	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-b")
+}
+
+func (s *TCPSuite) TestWRR() {
+	file := s.adaptFile("fixtures/tcp/wrr.toml", struct {
 		WhoamiB  string
 		WhoamiAB string
 	}{
-		WhoamiB:  s.getComposeServiceIP(c, "whoami-b") + ":8080",
-		WhoamiAB: s.getComposeServiceIP(c, "whoami-ab") + ":8080",
+		WhoamiB:  s.getComposeServiceIP("whoami-b") + ":8080",
+		WhoamiAB: s.getComposeServiceIP("whoami-ab") + ":8080",
 	})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	s.traefikCmd(withConfigFile(file))
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
+	require.NoError(s.T(), err)
 
 	call := map[string]int{}
 	for i := 0; i < 4; i++ {
 		// Traefik passes through, termination handled by whoami-b or whoami-bb
 		out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 		switch {
 		case strings.Contains(out, "whoami-b"):
 			call["whoami-b"]++
@@ -315,7 +302,7 @@ func (s *TCPSuite) TestWRR(c *check.C) {
 		time.Sleep(time.Second)
 	}
 
-	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-b": 3, "whoami-ab": 1})
+	assert.EqualValues(s.T(), call, map[string]int{"whoami-b": 3, "whoami-ab": 1})
 }
 
 func welcome(addr string) (string, error) {

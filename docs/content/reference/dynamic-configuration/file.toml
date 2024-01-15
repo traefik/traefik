@@ -156,6 +156,7 @@
         authResponseHeaders = ["foobar", "foobar"]
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
+        addAuthCookiesToResponse  = ["foobar", "foobar"]
         [http.middlewares.Middleware09.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
@@ -197,29 +198,36 @@
           name0 = "foobar"
           name1 = "foobar"
     [http.middlewares.Middleware11]
-      [http.middlewares.Middleware11.ipAllowList]
+      [http.middlewares.Middleware11.ipWhiteList]
         sourceRange = ["foobar", "foobar"]
-        [http.middlewares.Middleware11.ipAllowList.ipStrategy]
+        [http.middlewares.Middleware11.ipWhiteList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware12]
-      [http.middlewares.Middleware12.inFlightReq]
+      [http.middlewares.Middleware12.ipAllowList]
+        sourceRange = ["foobar", "foobar"]
+        rejectStatusCode = 404
+        [http.middlewares.Middleware12.ipAllowList.ipStrategy]
+          depth = 42
+          excludedIPs = ["foobar", "foobar"]
+    [http.middlewares.Middleware13]
+      [http.middlewares.Middleware13.inFlightReq]
         amount = 42
-        [http.middlewares.Middleware12.inFlightReq.sourceCriterion]
+        [http.middlewares.Middleware13.inFlightReq.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true
-          [http.middlewares.Middleware12.inFlightReq.sourceCriterion.ipStrategy]
+          [http.middlewares.Middleware13.inFlightReq.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
-    [http.middlewares.Middleware13]
-      [http.middlewares.Middleware13.passTLSClientCert]
+    [http.middlewares.Middleware14]
+      [http.middlewares.Middleware14.passTLSClientCert]
         pem = true
-        [http.middlewares.Middleware13.passTLSClientCert.info]
+        [http.middlewares.Middleware14.passTLSClientCert.info]
           notAfter = true
           notBefore = true
           sans = true
           serialNumber = true
-          [http.middlewares.Middleware13.passTLSClientCert.info.subject]
+          [http.middlewares.Middleware14.passTLSClientCert.info.subject]
             country = true
             province = true
             locality = true
@@ -228,7 +236,7 @@
             commonName = true
             serialNumber = true
             domainComponent = true
-          [http.middlewares.Middleware13.passTLSClientCert.info.issuer]
+          [http.middlewares.Middleware14.passTLSClientCert.info.issuer]
             country = true
             province = true
             locality = true
@@ -236,50 +244,50 @@
             commonName = true
             serialNumber = true
             domainComponent = true
-    [http.middlewares.Middleware14]
-      [http.middlewares.Middleware14.plugin]
-        [http.middlewares.Middleware14.plugin.PluginConf]
-          foo = "bar"
     [http.middlewares.Middleware15]
-      [http.middlewares.Middleware15.rateLimit]
+      [http.middlewares.Middleware15.plugin]
+        [http.middlewares.Middleware15.plugin.PluginConf]
+          foo = "bar"
+    [http.middlewares.Middleware16]
+      [http.middlewares.Middleware16.rateLimit]
         average = 42
         period = "42s"
         burst = 42
-        [http.middlewares.Middleware15.rateLimit.sourceCriterion]
+        [http.middlewares.Middleware16.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true
-          [http.middlewares.Middleware15.rateLimit.sourceCriterion.ipStrategy]
+          [http.middlewares.Middleware16.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
-    [http.middlewares.Middleware16]
-      [http.middlewares.Middleware16.redirectRegex]
+    [http.middlewares.Middleware17]
+      [http.middlewares.Middleware17.redirectRegex]
         regex = "foobar"
         replacement = "foobar"
         permanent = true
-    [http.middlewares.Middleware17]
-      [http.middlewares.Middleware17.redirectScheme]
+    [http.middlewares.Middleware18]
+      [http.middlewares.Middleware18.redirectScheme]
         scheme = "foobar"
         port = "foobar"
         permanent = true
-    [http.middlewares.Middleware18]
-      [http.middlewares.Middleware18.replacePath]
-        path = "foobar"
     [http.middlewares.Middleware19]
-      [http.middlewares.Middleware19.replacePathRegex]
+      [http.middlewares.Middleware19.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware20]
+      [http.middlewares.Middleware20.replacePathRegex]
         regex = "foobar"
         replacement = "foobar"
-    [http.middlewares.Middleware20]
-      [http.middlewares.Middleware20.retry]
+    [http.middlewares.Middleware21]
+      [http.middlewares.Middleware21.retry]
         attempts = 42
         initialInterval = "42s"
-    [http.middlewares.Middleware21]
-      [http.middlewares.Middleware21.stripPrefix]
-        prefixes = ["foobar", "foobar"]
     [http.middlewares.Middleware22]
-      [http.middlewares.Middleware22.stripPrefixRegex]
-        regex = ["foobar", "foobar"]
+      [http.middlewares.Middleware22.stripPrefix]
+        prefixes = ["foobar", "foobar"]
     [http.middlewares.Middleware23]
-      [http.middlewares.Middleware23.grpcWeb]
+      [http.middlewares.Middleware23.stripPrefixRegex]
+        regex = ["foobar", "foobar"]
+    [http.middlewares.Middleware24]
+      [http.middlewares.Middleware24.grpcWeb]
         allowOrigins = ["foobar", "foobar"]
   [http.serversTransports]
     [http.serversTransports.ServersTransport0]

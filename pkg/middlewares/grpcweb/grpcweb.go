@@ -9,7 +9,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
-const typeName = "grpc-web"
+const typeName = "GRPCWeb"
 
 // New builds a new gRPC web request converter.
 func New(ctx context.Context, next http.Handler, config dynamic.GrpcWeb, name string) http.Handler {

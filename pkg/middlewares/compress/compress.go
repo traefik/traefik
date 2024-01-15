@@ -9,11 +9,10 @@ import (
 	"strings"
 
 	"github.com/klauspost/compress/gzhttp"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress/brotli"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "Compress"
@@ -126,8 +125,8 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	c.next.ServeHTTP(rw, req)
 }
 
-func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return c.name, tracing.SpanKindNoneEnum
+func (c *compress) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {

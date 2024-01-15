@@ -3,12 +3,12 @@ package integration
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 // ErrorPagesSuite test suites.
@@ -18,83 +18,78 @@ type ErrorPagesSuite struct {
 	BackendIP   string
 }
 
-func (s *ErrorPagesSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "error_pages")
-	s.composeUp(c)
-
-	s.ErrorPageIP = s.getComposeServiceIP(c, "nginx2")
-	s.BackendIP = s.getComposeServiceIP(c, "nginx1")
+func TestErrorPagesSuite(t *testing.T) {
+	suite.Run(t, new(ErrorPagesSuite))
 }
 
-func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
-	file := s.adaptFile(c, "fixtures/error_pages/simple.toml", struct {
+func (s *ErrorPagesSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("error_pages")
+	s.composeUp()
+
+	s.ErrorPageIP = s.getComposeServiceIP("nginx2")
+	s.BackendIP = s.getComposeServiceIP("nginx1")
+}
+
+func (s *ErrorPagesSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *ErrorPagesSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/error_pages/simple.toml", struct {
 		Server1 string
 		Server2 string
 	}{"http://" + s.BackendIP + ":80", s.ErrorPageIP})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	frontendReq.Host = "test.local"
 
 	err = try.Request(frontendReq, 2*time.Second, try.BodyContains("nginx"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *ErrorPagesSuite) TestErrorPage(c *check.C) {
+func (s *ErrorPagesSuite) TestErrorPage() {
 	// error.toml contains a mis-configuration of the backend host
-	file := s.adaptFile(c, "fixtures/error_pages/error.toml", struct {
+	file := s.adaptFile("fixtures/error_pages/error.toml", struct {
 		Server1 string
 		Server2 string
 	}{s.BackendIP, s.ErrorPageIP})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	frontendReq.Host = "test.local"
 
 	err = try.Request(frontendReq, 2*time.Second, try.BodyContains("An error occurred."))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *ErrorPagesSuite) TestErrorPageFlush(c *check.C) {
+func (s *ErrorPagesSuite) TestErrorPageFlush() {
 	srv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Transfer-Encoding", "chunked")
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, _ = rw.Write([]byte("KO"))
 	}))
 
-	file := s.adaptFile(c, "fixtures/error_pages/simple.toml", struct {
+	file := s.adaptFile("fixtures/error_pages/simple.toml", struct {
 		Server1 string
 		Server2 string
 	}{srv.URL, s.ErrorPageIP})
-	defer os.Remove(file)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	frontendReq.Host = "test.local"
 
 	err = try.Request(frontendReq, 2*time.Second,
 		try.BodyContains("An error occurred."),
 		try.HasHeaderValue("Content-Type", "text/html", true),
 	)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }

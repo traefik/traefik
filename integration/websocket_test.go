@@ -8,19 +8,25 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	gorillawebsocket "github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 	"golang.org/x/net/websocket"
 )
 
 // WebsocketSuite tests suite.
 type WebsocketSuite struct{ BaseSuite }
 
-func (s *WebsocketSuite) TestBase(c *check.C) {
+func TestWebsocketSuite(t *testing.T) {
+	suite.Run(t, new(WebsocketSuite))
+}
+
+func (s *WebsocketSuite) TestBase() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,36 +47,30 @@ func (s *WebsocketSuite) TestBase(c *check.C) {
 		}
 	}))
 
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	_, msg, err := conn.ReadMessage()
-	c.Assert(err, checker.IsNil)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
+func (s *WebsocketSuite) TestWrongOrigin() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -91,35 +91,28 @@ func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
 		}
 	}))
 
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:800")
-	c.Assert(err, check.IsNil)
+	assert.NoError(s.T(), err)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	_, err = websocket.NewClient(config, conn)
-	c.Assert(err, checker.NotNil)
-	c.Assert(err, checker.ErrorMatches, "bad status")
+	assert.ErrorContains(s.T(), err, "bad status")
 }
 
-func (s *WebsocketSuite) TestOrigin(c *check.C) {
+func (s *WebsocketSuite) TestOrigin() {
 	// use default options
 	upgrader := gorillawebsocket.Upgrader{}
 
@@ -141,44 +134,38 @@ func (s *WebsocketSuite) TestOrigin(c *check.C) {
 		}
 	}))
 
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
-	c.Assert(err, check.IsNil)
+	assert.NoError(s.T(), err)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
-	c.Assert(err, check.IsNil)
+	assert.NoError(s.T(), err)
 	client, err := websocket.NewClient(config, conn)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	n, err := client.Write([]byte("OK"))
-	c.Assert(err, checker.IsNil)
-	c.Assert(n, checker.Equals, 2)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), 2, n)
 
 	msg := make([]byte, 2)
 	n, err = client.Read(msg)
-	c.Assert(err, checker.IsNil)
-	c.Assert(n, checker.Equals, 2)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), 2, n)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
+func (s *WebsocketSuite) TestWrongOriginIgnoredByServer() {
 	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true
 	}}
@@ -201,44 +188,38 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 		}
 	}))
 
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:80")
-	c.Assert(err, check.IsNil)
+	assert.NoError(s.T(), err)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	client, err := websocket.NewClient(config, conn)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	n, err := client.Write([]byte("OK"))
-	c.Assert(err, checker.IsNil)
-	c.Assert(n, checker.Equals, 2)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), 2, n)
 
 	msg := make([]byte, 2)
 	n, err = client.Read(msg)
-	c.Assert(err, checker.IsNil)
-	c.Assert(n, checker.Equals, 2)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), 2, n)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
+func (s *WebsocketSuite) TestSSLTermination() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -258,44 +239,38 @@ func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 			}
 		}
 	}))
-	file := s.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config_https.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	// Add client self-signed cert
 	roots := x509.NewCertPool()
 	certContent, err := os.ReadFile("./resources/tls/local.cert")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	roots.AppendCertsFromPEM(certContent)
 	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
 		RootCAs: roots,
 	}
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("wss://127.0.0.1:8000/ws", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	_, msg, err := conn.ReadMessage()
-	c.Assert(err, checker.IsNil)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
+func (s *WebsocketSuite) TestBasicAuth() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -306,8 +281,8 @@ func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
 		defer conn.Close()
 
 		user, password, _ := r.BasicAuth()
-		c.Assert(user, check.Equals, "traefiker")
-		c.Assert(password, check.Equals, "secret")
+		assert.Equal(s.T(), "traefiker", user)
+		assert.Equal(s.T(), "secret", password)
 
 		for {
 			mt, message, err := conn.ReadMessage()
@@ -320,78 +295,66 @@ func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
 			}
 		}
 	}))
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
 	auth := "traefiker:secret"
 	config.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth)))
 
-	c.Assert(err, check.IsNil)
+	assert.NoError(s.T(), err)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	client, err := websocket.NewClient(config, conn)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	n, err := client.Write([]byte("OK"))
-	c.Assert(err, checker.IsNil)
-	c.Assert(n, checker.Equals, 2)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), 2, n)
 
 	msg := make([]byte, 2)
 	n, err = client.Read(msg)
-	c.Assert(err, checker.IsNil)
-	c.Assert(n, checker.Equals, 2)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), 2, n)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
+func (s *WebsocketSuite) TestSpecificResponseFromBackend() {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}))
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
-	c.Assert(err, checker.NotNil)
-	c.Assert(resp.StatusCode, check.Equals, http.StatusUnauthorized)
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), http.StatusUnauthorized, resp.StatusCode)
 }
 
-func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
+func (s *WebsocketSuite) TestURLWithURLEncodedChar() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.Assert(r.URL.EscapedPath(), check.Equals, "/ws/http%3A%2F%2Ftest")
+		assert.Equal(s.T(), "/ws/http%3A%2F%2Ftest", r.URL.EscapedPath())
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
@@ -409,36 +372,30 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 		}
 	}))
 
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws/http%3A%2F%2Ftest", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	_, msg, err := conn.ReadMessage()
-	c.Assert(err, checker.IsNil)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
+func (s *WebsocketSuite) TestSSLhttp2() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -463,48 +420,42 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	ts.TLS.NextProtos = append(ts.TLS.NextProtos, `h2`, `http/1.1`)
 	ts.StartTLS()
 
-	file := s.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config_https.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: ts.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	// Add client self-signed cert
 	roots := x509.NewCertPool()
 	certContent, err := os.ReadFile("./resources/tls/local.cert")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	roots.AppendCertsFromPEM(certContent)
 	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
 		RootCAs: roots,
 	}
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("wss://127.0.0.1:8000/echo", nil)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	_, msg, err := conn.ReadMessage()
-	c.Assert(err, checker.IsNil)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "OK", string(msg))
 }
 
-func (s *WebsocketSuite) TestHeaderAreForwarded(c *check.C) {
+func (s *WebsocketSuite) TestHeaderAreForwarded() {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.Assert(r.Header.Get("X-Token"), check.Equals, "my-token")
+		assert.Equal(s.T(), "my-token", r.Header.Get("X-Token"))
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
@@ -522,33 +473,27 @@ func (s *WebsocketSuite) TestHeaderAreForwarded(c *check.C) {
 		}
 	}))
 
-	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile("fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, check.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
 
 	headers := http.Header{}
 	headers.Add("X-Token", "my-token")
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", headers)
 
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	_, msg, err := conn.ReadMessage()
-	c.Assert(err, checker.IsNil)
-	c.Assert(string(msg), checker.Equals, "OK")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "OK", string(msg))
 }

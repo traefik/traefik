@@ -285,6 +285,55 @@ http:
     authRequestHeaders = "Accept,X-CustomHeader"
 ```
 
+### `addAuthCookiesToResponse`
+
+The `addAuthCookiesToResponse` option is the list of cookies to copy from the authentication server to the response, 
+replacing any existing conflicting cookie from the forwarded response.
+
+!!! info
+
+    Please note that all backend cookies matching the configured list will not be added to the response.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    addAuthCookiesToResponse:
+      - Session-Cookie
+      - State-Cookie
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    addAuthCookiesToResponse = ["Session-Cookie", "State-Cookie"]
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        addAuthCookiesToResponse:
+          - "Session-Cookie"
+          - "State-Cookie"
+```
+
 ### `tls`
 
 _Optional_

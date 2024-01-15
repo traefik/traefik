@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
-	digestTypeName = "digestAuth"
+	typeNameDigest = "digestAuth"
 )
 
 type digestAuth struct {
@@ -30,7 +30,7 @@ type digestAuth struct {
 
 // NewDigest creates a digest auth middleware.
 func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.DigestAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, digestTypeName).Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeNameDigest).Debug().Msg("Creating middleware")
 
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, digestUserParser)
 	if err != nil {
@@ -54,12 +54,12 @@ func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.Digest
 	return da, nil
 }
 
-func (d *digestAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return d.name, tracing.SpanKindNoneEnum
+func (d *digestAuth) GetTracingInformation() (string, string, trace.SpanKind) {
+	return d.name, typeNameDigest, trace.SpanKindInternal
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), d.name, digestTypeName)
+	logger := middlewares.GetLogger(req.Context(), d.name, typeNameDigest)
 
 	username, authinfo := d.auth.CheckAuth(req)
 	if username == "" {
@@ -78,13 +78,13 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if authinfo != nil && *authinfo == "stale" {
 			logger.Debug().Msg("Digest authentication failed, possibly because out of order requests")
-			tracing.SetErrorWithEvent(req, "Digest authentication failed, possibly because out of order requests")
+			tracing.SetStatusErrorf(req.Context(), "Digest authentication failed, possibly because out of order requests")
 			d.auth.RequireAuthStale(rw, req)
 			return
 		}
 
 		logger.Debug().Msg("Digest authentication failed")
-		tracing.SetErrorWithEvent(req, "Digest authentication failed")
+		tracing.SetStatusErrorf(req.Context(), "Digest authentication failed")
 		d.auth.RequireAuth(rw, req)
 		return
 	}
