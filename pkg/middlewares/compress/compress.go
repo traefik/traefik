@@ -40,6 +40,10 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	excludes := []string{"application/grpc"}
 	includes := []string{}
 
+	if len(conf.ExcludedContentTypes) > 0 && len(conf.IncludedContentTypes) > 0 {
+		return nil, fmt.Errorf("excludeContentTypes and includeContentTypes are mutually exclusive; please specify only one content type filtering option")
+	}
+
 	for _, v := range conf.ExcludedContentTypes {
 		mediaType, _, err := mime.ParseMediaType(v)
 		if err != nil {
