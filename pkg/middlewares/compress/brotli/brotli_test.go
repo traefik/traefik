@@ -288,6 +288,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 		desc                 string
 		contentType          string
 		excludedContentTypes []string
+		includedContentTypes []string
 		expCompression       bool
 	}{
 		{
@@ -344,6 +345,20 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			excludedContentTypes: []string{"application/json;            charset=utf-8"},
 			expCompression:       false,
 		},
+		{
+			desc:                 "Compress included content types",
+			contentType:          "text/plain",
+			excludedContentTypes: []string{},
+			includedContentTypes: []string{"text/html", "application/json;charset=utf-8", "text/plain"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "Do not compress when included content types are missing",
+			contentType:          "text/html",
+			excludedContentTypes: []string{},
+			includedContentTypes: []string{"text/plain", "application/json;charset=utf-8"},
+			expCompression:       false,
+		},
 	}
 
 	for _, test := range testCases {
@@ -354,6 +369,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
+				IncludedContentTypes: test.includedContentTypes,
 			}
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -394,6 +410,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 		desc                 string
 		contentType          string
 		excludedContentTypes []string
+		includedContentTypes []string
 		expCompression       bool
 	}{
 		{
