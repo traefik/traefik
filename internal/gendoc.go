@@ -331,6 +331,7 @@ func genKVDynConfDoc(outputFile string) {
 	}
 
 	store := storeWriter{data: map[string]string{}}
+
 	c := client{store: store}
 	err = c.load("traefik", conf)
 	if err != nil {
@@ -343,6 +344,12 @@ func genKVDynConfDoc(outputFile string) {
 	}
 
 	sort.Strings(keys)
+
+	_, _ = fmt.Fprintf(file, `<!--
+CODE GENERATED AUTOMATICALLY
+THIS FILE MUST NOT BE EDITED BY HAND
+-->
+`)
 
 	for _, k := range keys {
 		_, _ = fmt.Fprintf(file, "| `%s` | `%s` |\n", k, store.data[k])

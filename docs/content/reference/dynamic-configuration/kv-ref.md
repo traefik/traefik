@@ -1,3 +1,7 @@
+<!--
+CODE GENERATED AUTOMATICALLY
+THIS FILE MUST NOT BE EDITED BY HAND
+-->
 | `traefik/http/middlewares/Middleware01/addPrefix/prefix` | `foobar` |
 | `traefik/http/middlewares/Middleware02/basicAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware02/basicAuth/realm` | `foobar` |
