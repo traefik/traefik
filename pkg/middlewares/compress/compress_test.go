@@ -10,7 +10,6 @@ import (
 	"net/textproto"
 	"testing"
 
-	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +34,7 @@ func TestNegotiation(t *testing.T) {
 	}{
 		{
 			desc:        "no accept header",
-			expEncoding: "br",
+			expEncoding: "",
 		},
 		{
 			desc:            "unsupported accept header",
@@ -151,7 +150,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	assert.EqualValues(t, rw.Body.Bytes(), fakeCompressedBody)
 }
 
-func TestShouldCompressWhenNoAcceptEncodingHeader(t *testing.T) {
+func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 
 	fakeBody := generateBytes(gzhttp.DefaultMinSize)
@@ -167,12 +166,9 @@ func TestShouldCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	rw := httptest.NewRecorder()
 	handler.ServeHTTP(rw, req)
 
-	assert.Equal(t, brotliValue, rw.Header().Get(contentEncodingHeader))
-	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
-
-	got, err := io.ReadAll(brotli.NewReader(rw.Body))
-	require.NoError(t, err)
-	assert.Equal(t, got, fakeBody)
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Empty(t, rw.Header().Get(varyHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {

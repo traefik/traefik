@@ -92,11 +92,11 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Client allows us to do whatever we want, so we br compress.
-	// See https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3
+	// Client doesn't specify a preferred encoding, for compatibility don't encode the request
+	// See https://github.com/traefik/traefik/issues/9734
 	acceptEncoding, ok := req.Header["Accept-Encoding"]
 	if !ok {
-		c.brotliHandler.ServeHTTP(rw, req)
+		c.next.ServeHTTP(rw, req)
 		return
 	}
 
