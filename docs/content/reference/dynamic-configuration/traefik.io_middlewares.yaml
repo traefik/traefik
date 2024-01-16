@@ -177,7 +177,8 @@ spec:
                     type: array
                   includedContentTypes:
                     description: IncludedContentTypes defines the list of content
-                      types to explicitly include for compression.
+                      types to compare the Content-Type header of the responses before
+                      compressing.
                     items:
                       type: string
                     type: array
