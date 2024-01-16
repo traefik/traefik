@@ -58,8 +58,7 @@ http:
     If the `Accept-Encoding` request header is absent, the response won't be encoded.
     If it is present, but its value is the empty string, then compression is disabled.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
-    * The response`Content-Type` header is one among the [includedContentTypes options](#includedcontenttypes).
-    * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes).
+    * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes), or is one among the [includedContentTypes options](#includedcontenttypes).
     * The response body is larger than the [configured minimum amount of bytes](#minresponsebodybytes) (default is `1024`).
 
 ## Configuration Options
@@ -74,6 +73,10 @@ The responses with content types defined in `excludedContentTypes` are not compr
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
+!!! info 
+
+    The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.
+
 !!! info "In the case of gzip"
 
     If the `Content-Type` header is not defined, or empty, the compress middleware will automatically [detect](https://mimesniff.spec.whatwg.org/) a content type.
@@ -82,10 +85,6 @@ Content types are compared in a case-insensitive, whitespace-ignored manner.
 !!! info "gRPC"
 
     Note that `application/grpc` is never compressed.
-
-!!! info "Note"
-  
-    This option is mutually exclusive with `includedContentTypes`. Please choose either `includedContentTypes` or `excludedContentTypes`, but not both.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -128,18 +127,18 @@ _Optional, Default=""_
 
 `includedContentTypes` specifies a list of content types to compare the `Content-Type` header of the responses before compressing.
 
-Only the responses with content types defined in `includedContentTypes` are compressed. If a response's MIME type matches one of the types in this list, it will be compressed, while all other responses will not be compressed.
+The responses with content types defined in `includedContentTypes` are compressed. 
+If a response's MIME type matches one of the types in this list, it will be compressed, while all other responses will not be compressed.
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
-!!! info "Note"
-  
-    This option is mutually exclusive with `excludedContentTypes`. Please choose either `excludedContentTypes` or `includedContentTypes`, but not both.
+!!! info
+
+    The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.
 
 ```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-compress.compress.includedcontenttypes=application/json,text/html,text/plain"
-
 ```
 
 ```yaml tab="Kubernetes"
@@ -173,9 +172,8 @@ http:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-compress.compress]
-    excludedContentTypes = ["text/event-stream"]
+    includedContentTypes = ["application/json","text/html","text/plain"]
 ```
-
 
 ### `minResponseBodyBytes`
 

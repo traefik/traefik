@@ -141,6 +141,9 @@ http:
         excludedContentTypes:
           - foobar
           - foobar
+        includedContentTypes:
+          - foobar
+          - foobar
         minResponseBodyBytes: 42
     Middleware07:
       contentType: {}
