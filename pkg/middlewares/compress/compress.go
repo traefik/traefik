@@ -92,7 +92,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Client doesn't specify preferred encoding, for compatibility dont encode the request
+	// Client doesn't specify a preferred encoding, for compatibility don't encode the request
 	// See https://github.com/traefik/traefik/issues/9734
 	acceptEncoding, ok := req.Header["Accept-Encoding"]
 	if !ok {
