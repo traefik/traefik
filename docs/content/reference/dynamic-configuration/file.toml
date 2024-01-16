@@ -134,6 +134,7 @@
     [http.middlewares.Middleware06]
       [http.middlewares.Middleware06.compress]
         excludedContentTypes = ["foobar", "foobar"]
+        includedContentTypes = ["foobar", "foobar"]
         minResponseBodyBytes = 42
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]

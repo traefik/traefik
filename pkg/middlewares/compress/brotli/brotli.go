@@ -22,8 +22,10 @@ const (
 // Config is the Brotli handler configuration.
 type Config struct {
 	// ExcludedContentTypes is the list of content types for which we should not compress.
+	// Mutually exclusive with the IncludedContentTypes option.
 	ExcludedContentTypes []string
 	// IncludedContentTypes is the list of content types for which compression should be exclusively enabled.
+	// Mutually exclusive with the ExcludedContentTypes option.
 	IncludedContentTypes []string
 	// MinSize is the minimum size (in bytes) required to enable compression.
 	MinSize int
@@ -35,21 +37,25 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 		return nil, fmt.Errorf("minimum size must be greater than or equal to zero")
 	}
 
-	var contentTypes []parsedContentType
-	var includedContentTypes []parsedContentType
+	if len(cfg.ExcludedContentTypes) > 0 && len(cfg.IncludedContentTypes) > 0 {
+		return nil, fmt.Errorf("excludedContentTypes and includedContentTypes options are mutually exclusive")
+	}
+
+	var excludedContentTypes []parsedContentType
 	for _, v := range cfg.ExcludedContentTypes {
 		mediaType, params, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, fmt.Errorf("parsing media type: %w", err)
+			return nil, fmt.Errorf("parsing excluded media type: %w", err)
 		}
 
-		contentTypes = append(contentTypes, parsedContentType{mediaType, params})
+		excludedContentTypes = append(excludedContentTypes, parsedContentType{mediaType, params})
 	}
 
+	var includedContentTypes []parsedContentType
 	for _, v := range cfg.IncludedContentTypes {
 		mediaType, params, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, fmt.Errorf("parsing media type: %w", err)
+			return nil, fmt.Errorf("parsing included media type: %w", err)
 		}
 
 		includedContentTypes = append(includedContentTypes, parsedContentType{mediaType, params})
@@ -64,7 +70,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 				bw:                   brotli.NewWriter(rw),
 				minSize:              cfg.MinSize,
 				statusCode:           http.StatusOK,
-				excludedContentTypes: contentTypes,
+				excludedContentTypes: excludedContentTypes,
 				includedContentTypes: includedContentTypes,
 			}
 			defer brw.close()
@@ -139,13 +145,13 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	if ct := r.rw.Header().Get(contentType); ct != "" {
 		mediaType, params, err := mime.ParseMediaType(ct)
 		if err != nil {
-			return 0, fmt.Errorf("parsing media type: %w", err)
+			return 0, fmt.Errorf("parsing content-type media type: %w", err)
 		}
 
 		if len(r.includedContentTypes) > 0 {
-			found := false
+			var found bool
 			for _, includedContentType := range r.includedContentTypes {
-				if includedContentType.equals(mediaType, map[string]string{}) {
+				if includedContentType.equals(mediaType, params) {
 					found = true
 					break
 				}
@@ -154,12 +160,12 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 				r.compressionDisabled = true
 				return r.rw.Write(p)
 			}
-		} else {
-			for _, excludedContentType := range r.excludedContentTypes {
-				if excludedContentType.equals(mediaType, params) {
-					r.compressionDisabled = true
-					return r.rw.Write(p)
-				}
+		}
+
+		for _, excludedContentType := range r.excludedContentTypes {
+			if excludedContentType.equals(mediaType, params) {
+				r.compressionDisabled = true
+				return r.rw.Write(p)
 			}
 		}
 	}

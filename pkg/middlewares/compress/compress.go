@@ -37,27 +37,27 @@ type compress struct {
 func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
-	excludes := []string{"application/grpc"}
-	includes := []string{}
-
 	if len(conf.ExcludedContentTypes) > 0 && len(conf.IncludedContentTypes) > 0 {
-		return nil, fmt.Errorf("excludeContentTypes and includeContentTypes are mutually exclusive; please specify only one content type filtering option")
+		return nil, fmt.Errorf("excludedContentTypes and includedContentTypes options are mutually exclusive")
 	}
 
+	excludes := []string{"application/grpc"}
 	for _, v := range conf.ExcludedContentTypes {
 		mediaType, _, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing exluded media type: %w", err)
 		}
 
 		excludes = append(excludes, mediaType)
 	}
 
+	var includes []string
 	for _, v := range conf.IncludedContentTypes {
 		mediaType, _, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing included media type: %w", err)
 		}
+
 		includes = append(includes, mediaType)
 	}
 
@@ -157,10 +157,11 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 }
 
 func (c *compress) newBrotliHandler() (http.Handler, error) {
-	cfg := brotli.Config{
-		ExcludedContentTypes: c.excludes,
-		IncludedContentTypes: c.includes,
-		MinSize:              c.minSize,
+	cfg := brotli.Config{MinSize: c.minSize}
+	if len(c.includes) > 0 {
+		cfg.IncludedContentTypes = c.includes
+	} else {
+		cfg.ExcludedContentTypes = c.excludes
 	}
 
 	wrapper, err := brotli.NewWrapper(cfg)
