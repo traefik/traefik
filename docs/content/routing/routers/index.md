@@ -1195,7 +1195,6 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
     In this configuration, the priority is configured so that `Router-1` will handle requests from `192.168.0.12`.
 
-
 ### RuleSyntax
 
 In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
