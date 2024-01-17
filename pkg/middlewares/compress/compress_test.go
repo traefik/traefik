@@ -271,7 +271,28 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 			respContentType: "text/event-stream",
 		},
 		{
-			desc:           "application/grpc",
+			desc: "Include Response Content-Type",
+			conf: dynamic.Compress{
+				IncludedContentTypes: []string{"text/plain"},
+			},
+			respContentType: "text/html",
+		},
+		{
+			desc: "Ignoring application/grpc with exclude option",
+			conf: dynamic.Compress{
+				ExcludedContentTypes: []string{"application/json"},
+			},
+			reqContentType: "application/grpc",
+		},
+		{
+			desc: "Ignoring application/grpc with include option",
+			conf: dynamic.Compress{
+				IncludedContentTypes: []string{"application/json"},
+			},
+			reqContentType: "application/grpc",
+		},
+		{
+			desc:           "Ignoring application/grpc with no option",
 			conf:           dynamic.Compress{},
 			reqContentType: "application/grpc",
 		},
@@ -308,6 +329,52 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 			assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 			assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+		})
+	}
+}
+
+func TestShouldCompressWhenSpecificContentType(t *testing.T) {
+	baseBody := generateBytes(gzhttp.DefaultMinSize)
+
+	testCases := []struct {
+		desc            string
+		conf            dynamic.Compress
+		respContentType string
+	}{
+		{
+			desc: "Include Response Content-Type",
+			conf: dynamic.Compress{
+				IncludedContentTypes: []string{"text/html"},
+			},
+			respContentType: "text/html",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Add(acceptEncodingHeader, gzipValue)
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				rw.Header().Set(contentTypeHeader, test.respContentType)
+
+				if _, err := rw.Write(baseBody); err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
+
+			handler, err := New(context.Background(), next, test.conf, "test")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
+			assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+			assert.NotEqualValues(t, rw.Body.Bytes(), baseBody)
 		})
 	}
 }

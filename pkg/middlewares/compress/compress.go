@@ -26,6 +26,7 @@ type compress struct {
 	next     http.Handler
 	name     string
 	excludes []string
+	includes []string
 	minSize  int
 
 	brotliHandler http.Handler
@@ -36,14 +37,28 @@ type compress struct {
 func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
+	if len(conf.ExcludedContentTypes) > 0 && len(conf.IncludedContentTypes) > 0 {
+		return nil, fmt.Errorf("excludedContentTypes and includedContentTypes options are mutually exclusive")
+	}
+
 	excludes := []string{"application/grpc"}
 	for _, v := range conf.ExcludedContentTypes {
 		mediaType, _, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing excluded media type: %w", err)
 		}
 
 		excludes = append(excludes, mediaType)
+	}
+
+	var includes []string
+	for _, v := range conf.IncludedContentTypes {
+		mediaType, _, err := mime.ParseMediaType(v)
+		if err != nil {
+			return nil, fmt.Errorf("parsing included media type: %w", err)
+		}
+
+		includes = append(includes, mediaType)
 	}
 
 	minSize := DefaultMinSize
@@ -55,6 +70,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		next:     next,
 		name:     name,
 		excludes: excludes,
+		includes: includes,
 		minSize:  minSize,
 	}
 
@@ -118,10 +134,21 @@ func (c *compress) GetTracingInformation() (string, string, trace.SpanKind) {
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {
-	wrapper, err := gzhttp.NewWrapper(
-		gzhttp.ExceptContentTypes(c.excludes),
-		gzhttp.MinSize(c.minSize),
-	)
+	var wrapper func(http.Handler) http.HandlerFunc
+	var err error
+
+	if len(c.includes) > 0 {
+		wrapper, err = gzhttp.NewWrapper(
+			gzhttp.ContentTypes(c.includes),
+			gzhttp.MinSize(c.minSize),
+		)
+	} else {
+		wrapper, err = gzhttp.NewWrapper(
+			gzhttp.ExceptContentTypes(c.excludes),
+			gzhttp.MinSize(c.minSize),
+		)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("new gzip wrapper: %w", err)
 	}
@@ -130,9 +157,11 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 }
 
 func (c *compress) newBrotliHandler() (http.Handler, error) {
-	cfg := brotli.Config{
-		ExcludedContentTypes: c.excludes,
-		MinSize:              c.minSize,
+	cfg := brotli.Config{MinSize: c.minSize}
+	if len(c.includes) > 0 {
+		cfg.IncludedContentTypes = c.includes
+	} else {
+		cfg.ExcludedContentTypes = c.excludes
 	}
 
 	wrapper, err := brotli.NewWrapper(cfg)
