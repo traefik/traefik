@@ -112,6 +112,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			r := &dynamic.Router{
 				Middlewares: mds,
 				Priority:    route.Priority,
+				RuleSyntax:  route.Syntax,
 				EntryPoints: ingressRoute.Spec.EntryPoints,
 				Rule:        route.Match,
 				Service:     serviceName,
