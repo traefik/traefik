@@ -31,6 +31,10 @@
       }
     }
   },
-  "tcp": {},
+  "tcp": {
+    "models": {
+      "websecure": {}
+    }
+  },
   "tls": {}
 }

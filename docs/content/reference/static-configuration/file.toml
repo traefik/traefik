@@ -453,5 +453,8 @@
     [experimental.localPlugins.LocalDescriptor1]
       moduleName = "foobar"
 
+[core]
+  defaultRuleSyntax = "foobar"
+
 [spiffe]
   workloadAPIAddr = "foobar"

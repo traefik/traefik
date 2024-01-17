@@ -7,6 +7,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      ruleSyntax = "foobar"
       priority = 42
       [http.routers.Router0.tls]
         options = "foobar"
@@ -24,6 +25,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      ruleSyntax = "foobar"
       priority = 42
       [http.routers.Router1.tls]
         options = "foobar"
@@ -351,6 +353,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      ruleSyntax = "foobar"
       priority = 42
       [tcp.routers.TCPRouter0.tls]
         passthrough = true
@@ -369,6 +372,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      ruleSyntax = "foobar"
       priority = 42
       [tcp.routers.TCPRouter1.tls]
         passthrough = true
@@ -416,6 +420,9 @@
     [tcp.middlewares.TCPMiddleware03]
       [tcp.middlewares.TCPMiddleware03.inFlightConn]
         amount = 42
+  [tcp.models]
+    [tcp.models.TCPModel0]
+    [tcp.models.TCPModel1]
   [tcp.serversTransports]
     [tcp.serversTransports.TCPServersTransport0]
       dialKeepAlive = "42s"

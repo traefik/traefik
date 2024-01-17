@@ -11,6 +11,7 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         options: foobar
@@ -33,6 +34,7 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         options: foobar
@@ -407,6 +409,7 @@ tcp:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         passthrough: true
@@ -430,6 +433,7 @@ tcp:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         passthrough: true
@@ -476,6 +480,9 @@ tcp:
     TCPMiddleware03:
       inFlightConn:
         amount: 42
+  models:
+    TCPModel0: {}
+    TCPModel1: {}
   serversTransports:
     TCPServersTransport0:
       dialKeepAlive: 42s

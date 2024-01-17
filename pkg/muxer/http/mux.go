@@ -12,8 +12,9 @@ import (
 
 // Muxer handles routing with rules.
 type Muxer struct {
-	routes routes
-	parser predicate.Parser
+	routes   routes
+	parser   predicate.Parser
+	parserV2 predicate.Parser
 }
 
 // NewMuxer returns a new muxer instance.
@@ -28,8 +29,19 @@ func NewMuxer() (*Muxer, error) {
 		return nil, fmt.Errorf("error while creating parser: %w", err)
 	}
 
+	var matchersV2 []string
+	for matcher := range httpFuncsV2 {
+		matchersV2 = append(matchersV2, matcher)
+	}
+
+	parserV2, err := rules.NewParser(matchersV2)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating v2 parser: %w", err)
+	}
+
 	return &Muxer{
-		parser: parser,
+		parser:   parser,
+		parserV2: parserV2,
 	}, nil
 }
 
@@ -53,10 +65,26 @@ func GetRulePriority(rule string) int {
 }
 
 // AddRoute add a new route to the router.
-func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) error {
-	parse, err := m.parser.Parse(rule)
-	if err != nil {
-		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.Handler) error {
+	var parse interface{}
+	var err error
+	var matcherFuncs map[string]func(*matchersTree, ...string) error
+
+	switch syntax {
+	case "v2":
+		parse, err = m.parserV2.Parse(rule)
+		if err != nil {
+			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		}
+
+		matcherFuncs = httpFuncsV2
+	default:
+		parse, err = m.parser.Parse(rule)
+		if err != nil {
+			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		}
+
+		matcherFuncs = httpFuncs
 	}
 
 	buildTree, ok := parse.(rules.TreeBuilder)
@@ -65,7 +93,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) error 
 	}
 
 	var matchers matchersTree
-	err = matchers.addRule(buildTree())
+	err = matchers.addRule(buildTree(), matcherFuncs)
 	if err != nil {
 		return fmt.Errorf("error while adding rule %s: %w", rule, err)
 	}
@@ -85,6 +113,9 @@ func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) error 
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
 	for matcher := range httpFuncs {
+		matchers = append(matchers, matcher)
+	}
+	for matcher := range httpFuncsV2 {
 		matchers = append(matchers, matcher)
 	}
 
@@ -166,25 +197,27 @@ func (m *matchersTree) match(req *http.Request) bool {
 	}
 }
 
-func (m *matchersTree) addRule(rule *rules.Tree) error {
+type matcherFuncs map[string]func(*matchersTree, ...string) error
+
+func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherFuncs) error {
 	switch rule.Matcher {
 	case "and", "or":
 		m.operator = rule.Matcher
 		m.left = &matchersTree{}
-		err := m.left.addRule(rule.RuleLeft)
+		err := m.left.addRule(rule.RuleLeft, funcs)
 		if err != nil {
 			return fmt.Errorf("error while adding rule %s: %w", rule.Matcher, err)
 		}
 
 		m.right = &matchersTree{}
-		return m.right.addRule(rule.RuleRight)
+		return m.right.addRule(rule.RuleRight, funcs)
 	default:
 		err := rules.CheckRule(rule)
 		if err != nil {
 			return fmt.Errorf("error while checking rule %s: %w", rule.Matcher, err)
 		}
 
-		err = httpFuncs[rule.Matcher](m, rule.Value...)
+		err = funcs[rule.Matcher](m, rule.Value...)
 		if err != nil {
 			return fmt.Errorf("error while adding rule %s: %w", rule.Matcher, err)
 		}
