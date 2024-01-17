@@ -16,7 +16,7 @@ type TCPConfiguration struct {
 	Routers           map[string]*TCPRouter           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
 	Services          map[string]*TCPService          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	Middlewares       map[string]*TCPMiddleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	Models            map[string]*TCPModel            `json:"models,omitempty" toml:"models,omitempty" yaml:"models,omitempty" export:"true"`
+	Models            map[string]*TCPModel            `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	ServersTransports map[string]*TCPServersTransport `json:"serversTransports,omitempty" toml:"serversTransports,omitempty" yaml:"serversTransports,omitempty" label:"-" export:"true"`
 }
 
@@ -24,7 +24,7 @@ type TCPConfiguration struct {
 
 // TCPModel is a set of default router's values.
 type TCPModel struct {
-	DefaultRuleSyntax string `json:"defaultRuleSyntax,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
