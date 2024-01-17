@@ -389,8 +389,17 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-# The traefik.io/v1alpha1 APIVersion is expecting v2 syntax and is not configurable.
-# The traefik.io/v1 APIVersion is expecting v3 syntax and is not configurable.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  routes:
+    - match: PathPrefix(`/foo`, `/bar`)
+      syntax: v2
+      kind: Rule
 ```
 
 ```yaml tab="Consul Catalog"

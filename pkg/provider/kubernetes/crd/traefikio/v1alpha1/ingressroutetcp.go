@@ -29,6 +29,9 @@ type RouteTCP struct {
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#priority_1
 	Priority int `json:"priority,omitempty"`
+	// Syntax defines the router's rule syntax.
+	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax_1
+	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
 	// Middlewares defines the list of references to MiddlewareTCP resources.

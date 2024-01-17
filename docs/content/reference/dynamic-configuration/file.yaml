@@ -482,9 +482,6 @@ tcp:
     TCPMiddleware03:
       inFlightConn:
         amount: 42
-  models:
-    TCPModel0: {}
-    TCPModel1: {}
   serversTransports:
     TCPServersTransport0:
       dialKeepAlive: 42s
