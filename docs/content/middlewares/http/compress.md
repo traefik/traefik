@@ -128,7 +128,6 @@ _Optional, Default=""_
 `includedContentTypes` specifies a list of content types to compare the `Content-Type` header of the responses before compressing.
 
 The responses with content types defined in `includedContentTypes` are compressed. 
-If a response's MIME type matches one of the types in this list, it will be compressed, while all other responses will not be compressed.
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
