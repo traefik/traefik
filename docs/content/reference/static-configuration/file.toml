@@ -31,6 +31,7 @@
   [entryPoints.EntryPoint0]
     address = "foobar"
     asDefault = true
+    reusePort = true
     [entryPoints.EntryPoint0.transport]
       keepAliveMaxTime = "42s"
       keepAliveMaxRequests = 42
