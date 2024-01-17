@@ -193,8 +193,7 @@ http:
 ### `authResponseHeadersRegex`
 
 The `authResponseHeadersRegex` option is the regex to match headers to copy from the authentication server response and
-set on forwarded request, after stripping all headers that match the regex.
-It allows partial matching of the regular expression against the header key.
+set on forwarded request. It allows partial matching of the regular expression against the header key.
 The start of string (`^`) and end of string (`$`) anchors should be used to ensure a full match against the header key.
 
 ```yaml tab="Docker & Swarm"

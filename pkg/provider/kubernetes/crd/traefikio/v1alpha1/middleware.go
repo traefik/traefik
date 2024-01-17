@@ -149,7 +149,7 @@ type ForwardAuth struct {
 	TrustForwardHeader bool `json:"trustForwardHeader,omitempty"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
-	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
+	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.

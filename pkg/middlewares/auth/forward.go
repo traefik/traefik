@@ -202,12 +202,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if fa.authResponseHeadersRegex != nil {
-		for headerKey := range req.Header {
-			if fa.authResponseHeadersRegex.MatchString(headerKey) {
-				req.Header.Del(headerKey)
-			}
-		}
-
 		for headerKey, headerValues := range forwardResponse.Header {
 			if fa.authResponseHeadersRegex.MatchString(headerKey) {
 				req.Header[headerKey] = append([]string(nil), headerValues...)
