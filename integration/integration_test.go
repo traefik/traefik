@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -55,8 +56,6 @@ type composeService struct {
 type composeDeploy struct {
 	Replicas int `yaml:"replicas"`
 }
-
-var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
 	suite.Suite
@@ -308,7 +307,13 @@ func (s *BaseSuite) composeDown() {
 }
 
 func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
-	cmd := exec.Command(traefikBinary, args...)
+	binName := "traefik"
+	if runtime.GOOS == "windows" {
+		binName += ".exe"
+	}
+
+	traefikBinPath := filepath.Join("..", "dist", runtime.GOOS, runtime.GOARCH, binName)
+	cmd := exec.Command(traefikBinPath, args...)
 
 	s.T().Cleanup(func() {
 		s.killCmd(cmd)

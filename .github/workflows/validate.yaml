@@ -54,7 +54,7 @@ jobs:
 
       - name: go generate
         run: |
-          go generate
+          make generate
           git diff --exit-code
 
       - name: go mod tidy
