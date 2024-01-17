@@ -35,6 +35,7 @@ tcpServersTransport:
 entryPoints:
   EntryPoint0:
     address: foobar
+    reusePort: true
     asDefault: true
     transport:
       lifeCycle:
