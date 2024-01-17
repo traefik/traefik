@@ -68,7 +68,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		assert.Empty(t, r.Header.Get("X-Auth-Secret"))
 		assert.Equal(t, []string{"group1", "group2"}, r.Header["X-Auth-Group"])
 		assert.Equal(t, "auth-value", r.Header.Get("Foo-Bar"))
-		assert.Empty(t, r.Header.Get("Foo-Baz"))
+		assert.Equal(t, "client-value", r.Header.Get("Foo-Baz"))
 		fmt.Fprintln(w, "traefik")
 	})
 
