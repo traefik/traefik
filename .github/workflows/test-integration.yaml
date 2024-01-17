@@ -71,4 +71,5 @@ jobs:
 
       - name: Run Integration tests
         run: |
-          go test ./integration -test.timeout=20m -failfast -v -run "${{ steps.test_split.outputs.run}}"
+          TESTS=$(echo "${{ steps.test_split.outputs.run}}" | sed 's/\$/\$\$/g')
+          TESTFLAGS="-run \"${TESTS}\"" make test-integration
