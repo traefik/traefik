@@ -116,6 +116,18 @@ spec:
                               between Traefik and your servers. Can only be used on
                               a Kubernetes Service.
                             type: string
+                          terminationDelay:
+                            description: 'TerminationDelay defines the deadline that
+                              the proxy sets, after one of its connected peers indicates
+                              it has closed the writing capability of its connection,
+                              to close the reading capability as well, hence fully
+                              terminating the connection. It is a duration in milliseconds,
+                              defaulting to 100. A negative value means an infinite
+                              deadline (i.e. the reading capability is never closed).
+                              Deprecated: TerminationDelay is not supported APIVersion
+                              traefik.io/v1, please use ServersTransport to configure
+                              the TerminationDelay instead.'
+                            type: integer
                           tls:
                             description: TLS determines whether to use TLS when dialing
                               with the backend.

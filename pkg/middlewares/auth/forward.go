@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
 	"go.opentelemetry.io/otel/trace"
@@ -53,7 +54,8 @@ type forwardAuth struct {
 
 // NewForward creates a forward auth middleware.
 func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeNameForward).Debug().Msg("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeNameForward)
+	logger.Debug().Msg("Creating middleware")
 
 	addAuthCookiesToResponse := make(map[string]struct{})
 	for _, cookieName := range config.AddAuthCookiesToResponse {
@@ -79,7 +81,18 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	}
 
 	if config.TLS != nil {
-		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
+		if config.TLS.CAOptional != nil {
+			logger.Warn().Msg("CAOptional option is deprecated, TLS client authentication is a server side option, please remove any usage of this option.")
+		}
+
+		clientTLS := &types.ClientTLS{
+			CA:                 config.TLS.CA,
+			Cert:               config.TLS.Cert,
+			Key:                config.TLS.Key,
+			InsecureSkipVerify: config.TLS.InsecureSkipVerify,
+		}
+
+		tlsConfig, err := clientTLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}

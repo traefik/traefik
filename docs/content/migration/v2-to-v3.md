@@ -326,18 +326,6 @@ All Pilot related configuration should be removed from the static configuration.
 
 ## Dynamic configuration
 
-### IPWhiteList
-
-In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
-
-### Deprecated Options Removal
-
-- The `tracing.datadog.globaltag` option has been removed.
-- The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
-- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
-- The `forceSlash` option of the StripPrefix middleware has been removed.
-- The `preferServerCipherSuites` option has been removed.
-
 ### Matchers
 
 In v3, the `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
@@ -355,11 +343,6 @@ and should be explicitly combined using logical operators to mimic previous beha
 
 `HostHeader` has been removed, use `Host` instead.
 
-### TCP LoadBalancer `terminationDelay` option
-
-The TCP LoadBalancer `terminationDelay` option has been removed.
-This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
-
 ### Kubernetes CRDs API Group `traefik.containo.us`
 
 In v3, the Kubernetes CRDs API Group `traefik.containo.us` has been removed. 
@@ -376,18 +359,6 @@ Please use the API Group `networking.k8s.io/v1` instead.
 In v3, the Traefik CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
 
 Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` instead.
-
-## Operations
-
-### Traefik RBAC Update
-
-In v3, the support of `TCPServersTransport` has been introduced.
-When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
-
-### Content-Type Auto-Detection
-
-In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
-One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
 
 ### Observability
 
@@ -415,3 +386,15 @@ Here are two possible transition strategies:
     For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
     using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
     This allows continued compatibility with the existing infrastructure.
+
+## Operations
+
+### Traefik RBAC Update
+
+In v3, the support of `TCPServersTransport` has been introduced.
+When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
+
+### Content-Type Auto-Detection
+
+In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
+One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
