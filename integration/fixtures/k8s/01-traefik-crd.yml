@@ -161,12 +161,10 @@ spec:
                                       JavaScript.
                                     type: boolean
                                   maxAge:
-                                    description: 'MaxAge defines the cookie maxAge
-                                      time in seconds. MaxAge=0 means no ''Max-Age''
-                                      attribute specified. MaxAge<0 means delete cookie
-                                      now, equivalently ''Max-Age: 0'' MaxAge>0 means
-                                      Max-Age attribute present and given in seconds
-                                      More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                                    description: MaxAge indicates the number of seconds
+                                      until the cookie expires. When set to a negative
+                                      number, the cookie expires immediately. When
+                                      set to zero, the cookie never expires.
                                     type: integer
                                   name:
                                     description: Name defines the Cookie name.
@@ -886,11 +884,10 @@ spec:
                                   be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
                               maxAge:
-                                description: 'MaxAge defines the cookie maxAge time
-                                  in seconds. MaxAge=0 means no ''Max-Age'' attribute
-                                  specified. MaxAge<0 means delete cookie now, equivalently
-                                  ''Max-Age: 0'' MaxAge>0 means Max-Age attribute
-                                  present and given in seconds More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                                description: MaxAge indicates the number of seconds
+                                  until the cookie expires. When set to a negative
+                                  number, the cookie expires immediately. When set
+                                  to zero, the cookie never expires.
                                 type: integer
                               name:
                                 description: Name defines the Cookie name.
@@ -2174,11 +2171,10 @@ spec:
                                     can be accessed by client-side APIs, such as JavaScript.
                                   type: boolean
                                 maxAge:
-                                  description: 'MaxAge defines the cookie maxAge time
-                                    in seconds. MaxAge=0 means no ''Max-Age'' attribute
-                                    specified. MaxAge<0 means delete cookie now, equivalently
-                                    ''Max-Age: 0'' MaxAge>0 means Max-Age attribute
-                                    present and given in seconds More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                                  description: MaxAge indicates the number of seconds
+                                    until the cookie expires. When set to a negative
+                                    number, the cookie expires immediately. When set
+                                    to zero, the cookie never expires.
                                   type: integer
                                 name:
                                   description: Name defines the Cookie name.
@@ -2272,11 +2268,10 @@ spec:
                               accessed by client-side APIs, such as JavaScript.
                             type: boolean
                           maxAge:
-                            description: 'MaxAge defines the cookie maxAge time in
-                              seconds. MaxAge=0 means no ''Max-Age'' attribute specified.
-                              MaxAge<0 means delete cookie now, equivalently ''Max-Age:
-                              0'' MaxAge>0 means Max-Age attribute present and given
-                              in seconds More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                            description: MaxAge indicates the number of seconds until
+                              the cookie expires. When set to a negative number, the
+                              cookie expires immediately. When set to zero, the cookie
+                              never expires.
                             type: integer
                           name:
                             description: Name defines the Cookie name.
@@ -2386,11 +2381,10 @@ spec:
                                     can be accessed by client-side APIs, such as JavaScript.
                                   type: boolean
                                 maxAge:
-                                  description: 'MaxAge defines the cookie maxAge time
-                                    in seconds. MaxAge=0 means no ''Max-Age'' attribute
-                                    specified. MaxAge<0 means delete cookie now, equivalently
-                                    ''Max-Age: 0'' MaxAge>0 means Max-Age attribute
-                                    present and given in seconds More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                                  description: MaxAge indicates the number of seconds
+                                    until the cookie expires. When set to a negative
+                                    number, the cookie expires immediately. When set
+                                    to zero, the cookie never expires.
                                   type: integer
                                 name:
                                   description: Name defines the Cookie name.
@@ -2432,11 +2426,10 @@ spec:
                               accessed by client-side APIs, such as JavaScript.
                             type: boolean
                           maxAge:
-                            description: 'MaxAge defines the cookie maxAge time in
-                              seconds. MaxAge=0 means no ''Max-Age'' attribute specified.
-                              MaxAge<0 means delete cookie now, equivalently ''Max-Age:
-                              0'' MaxAge>0 means Max-Age attribute present and given
-                              in seconds More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#max-agenumber'
+                            description: MaxAge indicates the number of seconds until
+                              the cookie expires. When set to a negative number, the
+                              cookie expires immediately. When set to zero, the cookie
+                              never expires.
                             type: integer
                           name:
                             description: Name defines the Cookie name.

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -125,7 +124,6 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		LoadBalanced   bool
 		SecureCookie   bool
 		HTTPOnlyCookie bool
-		MaxAge         int
 	}
 
 	testCases := []struct {
@@ -218,7 +216,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			desc:        "Sticky Cookie's options set correctly",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
-				Sticky: &dynamic.Sticky{Cookie: &dynamic.Cookie{HTTPOnly: true, Secure: true, MaxAge: 42}},
+				Sticky: &dynamic.Sticky{Cookie: &dynamic.Cookie{HTTPOnly: true, Secure: true}},
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -231,7 +229,6 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 					XFrom:          "first",
 					SecureCookie:   true,
 					HTTPOnlyCookie: true,
-					MaxAge:         42,
 				},
 			},
 		},
@@ -355,9 +352,6 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 					req.Header.Set("Cookie", cookieHeader)
 					assert.Equal(t, expected.SecureCookie, strings.Contains(cookieHeader, "Secure"))
 					assert.Equal(t, expected.HTTPOnlyCookie, strings.Contains(cookieHeader, "HttpOnly"))
-					if expected.MaxAge > 0 {
-						assert.True(t, strings.Contains(cookieHeader, fmt.Sprintf("Max-Age=%d", expected.MaxAge)))
-					}
 					assert.NotContains(t, cookieHeader, "://")
 				}
 			}
