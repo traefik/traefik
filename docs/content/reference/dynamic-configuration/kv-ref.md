@@ -269,8 +269,6 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/middlewares/TCPMiddleware02/ipWhiteList/sourceRange/0` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware02/ipWhiteList/sourceRange/1` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware03/inFlightConn/amount` | `42` |
-| `traefik/tcp/models/TCPModel0` | `` |
-| `traefik/tcp/models/TCPModel1` | `` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/0` | `foobar` |
