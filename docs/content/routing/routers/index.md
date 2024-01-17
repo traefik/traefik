@@ -528,10 +528,10 @@ This allows to have heterogeneous router configurations and ease migration.
     http:
       routers:
         Router-v3:
-          rule: "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+          rule: HostRegexp(`[a-z]+\\.traefik\\.com`)
           ruleSyntax: v3
         Router-v2:
-          rule: "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+          rule: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
           ruleSyntax: v2
     ```
 
@@ -544,6 +544,26 @@ This allows to have heterogeneous router configurations and ease migration.
       [http.routers.Router-v2]
         rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
         ruleSyntax = v2
+    ```
+
+    ```yaml tab="Kubernetes traefik.io/v1alpha1"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: default
+    
+    spec:
+      routes:
+        # route v3
+        - match: HostRegexp(`[a-z]+\\.traefik\\.com`)
+          syntax: v3
+          kind: Rule
+
+        # route v2
+        - match: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
+          syntax: v2
+          kind: Rule
     ```
 
     In this configuration, the ruleSyntax is configured to allow `Router-v2` to use v2 syntax,
@@ -1208,10 +1228,10 @@ This allows to have heterogeneous router configurations and ease migration.
     tcp:
       routers:
         Router-v3:
-          rule: "ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)"
+          rule: ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)
           ruleSyntax: v3
         Router-v2:
-          rule: "ClientIP(`192.168.0.11`, `192.168.0.12`)"
+          rule: ClientIP(`192.168.0.11`, `192.168.0.12`)
           ruleSyntax: v2
     ```
 
@@ -1224,6 +1244,26 @@ This allows to have heterogeneous router configurations and ease migration.
       [tcp.routers.Router-v2]
         rule = "ClientIP(`192.168.0.11`, `192.168.0.12`)"
         ruleSyntax = v2
+    ```
+
+    ```yaml tab="Kubernetes traefik.io/v1alpha1"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: default
+    
+    spec:
+      routes:
+        # route v3
+        - match: ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)
+          syntax: v3
+          kind: Rule
+
+        # route v2
+        - match: ClientIP(`192.168.0.11`, `192.168.0.12`)
+          syntax: v2
+          kind: Rule
     ```
 
     In this configuration, the ruleSyntax is configured to allow `Router-v2` to use v2 syntax,
