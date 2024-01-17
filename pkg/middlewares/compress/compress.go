@@ -45,7 +45,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	for _, v := range conf.ExcludedContentTypes {
 		mediaType, _, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, fmt.Errorf("parsing exluded media type: %w", err)
+			return nil, fmt.Errorf("parsing excluded media type: %w", err)
 		}
 
 		excludes = append(excludes, mediaType)
