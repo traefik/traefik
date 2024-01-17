@@ -58,10 +58,12 @@ Once you've set up your go environment and cloned the source repository, you can
 
 ```bash
 $ make binary
-./script/make.sh generate binary
----> Making bundle: generate (in .)
-
----> Making bundle: binary (in .)
+SHA: 8fddfe118288bb5280eb5e77fa952f52def360b4 cheddar 2024-01-11_03:14:57PM
+CGO_ENABLED=0 GOGC=off GOOS=darwin GOARCH=arm64 go build  -ldflags "-s -w \
+    -X github.com/traefik/traefik/v2/pkg/version.Version=8fddfe118288bb5280eb5e77fa952f52def360b4 \
+    -X github.com/traefik/traefik/v2/pkg/version.Codename=cheddar \
+    -X github.com/traefik/traefik/v2/pkg/version.BuildDate=2024-01-11_03:14:57PM" \
+    -installsuffix nocgo -o "./dist/darwin/arm64/traefik" ./cmd/traefik
 
 $ ls dist/
 traefik*
@@ -77,10 +79,7 @@ Run all tests (unit and integration) using the `test` target.
 
 ```bash
 $ make test-unit
-./script/make.sh generate test-unit
----> Making bundle: generate (in .)
-
----> Making bundle: test-unit (in .)
+GOOS=darwin GOARCH=arm64 go test -cover "-coverprofile=cover.out" -v ./pkg/... ./cmd/...
 + go test -cover -coverprofile=cover.out .
 ok      github.com/traefik/traefik   0.005s  coverage: 4.1% of statements
 
