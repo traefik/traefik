@@ -121,30 +121,13 @@ func labelsWrite(outputDir string, element *dynamic.Configuration) error {
 		return err
 	}
 
-	marathonLabels, err := os.Create(filepath.Join(outputDir, "marathon-labels.json"))
-	if err != nil {
-		return err
-	}
-	defer marathonLabels.Close()
-
-	// Write the comment at the beginning of the file
-	if _, err := marathonLabels.WriteString(strings.ReplaceAll(commentGenerated, "##", "//")); err != nil {
-		return err
-	}
-
-	for i, k := range keys {
+	for _, k := range keys {
 		v := labels[k]
 		if v != "" {
 			if v == "42000000000" {
 				v = "42s"
 			}
 			fmt.Fprintln(dockerLabels, `- "`+strings.ToLower(k)+`=`+v+`"`)
-
-			if i == len(keys)-1 {
-				fmt.Fprintln(marathonLabels, `"`+strings.ToLower(k)+`": "`+v+`"`)
-			} else {
-				fmt.Fprintln(marathonLabels, `"`+strings.ToLower(k)+`": "`+v+`",`)
-			}
 		}
 	}
 
