@@ -189,6 +189,10 @@ spec:
                         - name
                         type: object
                       type: array
+                    syntax:
+                      description: 'Syntax defines the router''s rule syntax. More
+                        info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax'
+                      type: string
                   required:
                   - kind
                   - match
@@ -396,6 +400,10 @@ spec:
                         - port
                         type: object
                       type: array
+                    syntax:
+                      description: 'Syntax defines the router''s rule syntax. More
+                        info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax_1'
+                      type: string
                   required:
                   - match
                   type: object

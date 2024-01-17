@@ -420,9 +420,6 @@
     [tcp.middlewares.TCPMiddleware03]
       [tcp.middlewares.TCPMiddleware03.inFlightConn]
         amount = 42
-  [tcp.models]
-    [tcp.models.TCPModel0]
-    [tcp.models.TCPModel1]
   [tcp.serversTransports]
     [tcp.serversTransports.TCPServersTransport0]
       dialKeepAlive = "42s"
