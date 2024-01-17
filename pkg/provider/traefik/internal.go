@@ -65,6 +65,7 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
 			Services:          make(map[string]*dynamic.TCPService),
+			Models:            make(map[string]*dynamic.TCPModel),
 			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
@@ -191,8 +192,13 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 }
 
 func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
+	defaultRuleSyntax := ""
+	if i.staticCfg.Core != nil && i.staticCfg.Core.DefaultRuleSyntax != "" {
+		defaultRuleSyntax = i.staticCfg.Core.DefaultRuleSyntax
+	}
+
 	for name, ep := range i.staticCfg.EntryPoints {
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" {
 			continue
 		}
 
@@ -208,7 +214,19 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			}
 		}
 
+		m.DefaultRuleSyntax = defaultRuleSyntax
+
 		cfg.HTTP.Models[name] = m
+
+		if cfg.TCP == nil {
+			continue
+		}
+
+		mTCP := &dynamic.TCPModel{
+			DefaultRuleSyntax: defaultRuleSyntax,
+		}
+
+		cfg.TCP.Models[name] = mTCP
 	}
 }
 
