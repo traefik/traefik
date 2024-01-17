@@ -1,41 +1,195 @@
 package cli
 
 import (
-	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"reflect"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/paerser/cli"
+	"github.com/traefik/paerser/flag"
+	"github.com/traefik/paerser/parser"
 )
 
-type rawConfiguration map[string]interface{}
+type DeprecatedLoader struct {
+}
 
-// deprecationNotice prints warns and hints if deprecated/removed static option are in use,
-// and returns whether at least one of these options is incompatible with the current version.
-func (r *rawConfiguration) deprecationNotice(logger zerolog.Logger) bool {
-	if r == nil {
-		return false
+func (d DeprecatedLoader) Load(args []string, cmd *cli.Command) (bool, error) {
+	for i, arg := range args {
+		if !strings.Contains(arg, "=") {
+			args[i] = arg + "=true"
+		}
 	}
 
-	marshal, err := json.Marshal(r)
+	labels, err := flag.Parse(args, nil)
 	if err != nil {
-		log.Error().Err(err).Send()
+		return false, err
 	}
-	config := &configuration{}
 
-	err = json.Unmarshal(marshal, config)
+	if len(labels) > 0 {
+		node, err := parser.DecodeToNode(labels, "traefik")
+		if err != nil {
+			return false, fmt.Errorf("DecodeToNode: %w", err)
+		}
+
+		rawConfig := &configuration{}
+
+		err = filterUnknownNodes(rawConfig, node)
+		if err != nil {
+			return false, fmt.Errorf("filter: %w", err)
+		}
+
+		if len(node.Children) > 0 {
+			err = parser.AddMetadata(rawConfig, node, parser.MetadataOpts{ContinueOnError: false})
+			if err != nil {
+				return false, fmt.Errorf("AddMetadata: %w", err)
+			}
+
+			err = parser.Fill(rawConfig, node, parser.FillerOpts{})
+			if err != nil {
+				return false, err
+			}
+			logger := log.With().Str("loader", "FLAG").Logger()
+			if rawConfig.deprecationNotice(logger) {
+				return true, errors.New("deprecated field found")
+			}
+		}
+	}
+
+	// FILE
+	ref, err := flag.Parse(args, cmd.Configuration)
 	if err != nil {
-		log.Error().Err(err).Send()
+		_ = cmd.PrintHelp(os.Stdout)
+		return false, err
 	}
 
-	return config.deprecationNotice(logger)
+	configFileFlag := "traefik.configfile"
+	if _, ok := ref["traefik.configFile"]; ok {
+		configFileFlag = "traefik.configFile"
+	}
+
+	rawConfig := &configuration{}
+	_, err = loadConfigFiles(ref[configFileFlag], rawConfig)
+
+	if err == nil {
+		logger := log.With().Str("loader", "FILE").Logger()
+		if rawConfig.deprecationNotice(logger) {
+			return true, errors.New("deprecated field found")
+		}
+	}
+
+	rawConfig = &configuration{}
+	l := EnvLoader{}
+	_, err = l.Load(os.Args, &cli.Command{
+		Configuration: rawConfig,
+	})
+
+	if err == nil {
+		logger := log.With().Str("loader", "ENV").Logger()
+		if rawConfig.deprecationNotice(logger) {
+			return true, errors.New("deprecated field found")
+		}
+	}
+
+	return false, nil
+}
+
+func filterUnknownNodes(element interface{}, node *parser.Node) error {
+	if len(node.Children) == 0 {
+		return fmt.Errorf("invalid node %s: no child", node.Name)
+	}
+
+	if element == nil {
+		return errors.New("nil structure")
+	}
+
+	rootType := reflect.TypeOf(element)
+	browseChildren(rootType, node)
+	return nil
+
+}
+
+func browseChildren(fType reflect.Type, node *parser.Node) bool {
+	var children []*parser.Node
+	for _, child := range node.Children {
+		if isValid(fType, child) {
+			children = append(children, child)
+		}
+	}
+	node.Children = children
+	return len(node.Children) > 0
+}
+
+func isValid(rootType reflect.Type, node *parser.Node) bool {
+	rType := rootType
+	if rootType.Kind() == reflect.Pointer {
+		rType = rootType.Elem()
+	}
+
+	if rType.Kind() == reflect.Map && rType.Elem().Kind() == reflect.Interface {
+		return true
+	}
+
+	if rType.Kind() == reflect.Interface {
+		return true
+	}
+
+	field, b := findTypedField(rType, node)
+
+	if !b {
+		return b
+	}
+
+	if len(node.Children) > 0 {
+		return browseChildren(field.Type, node)
+	}
+
+	return true
+}
+
+func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField, bool) {
+	if rType.Kind() != reflect.Struct {
+		return reflect.StructField{}, false
+	}
+
+	for i := 0; i < rType.NumField(); i++ {
+		cField := rType.Field(i)
+
+		fieldName := cField.Tag.Get(parser.TagLabelSliceAsStruct)
+		if len(fieldName) == 0 {
+			fieldName = cField.Name
+		}
+
+		if cField.PkgPath == "" {
+			if cField.Anonymous {
+				if cField.Type.Kind() == reflect.Struct {
+					structField, b := findTypedField(cField.Type, node)
+					if !b {
+						continue
+					}
+					return structField, true
+				}
+			}
+
+			if strings.EqualFold(fieldName, node.Name) {
+				node.FieldName = cField.Name
+				return cField, true
+			}
+		}
+	}
+
+	return reflect.StructField{}, false
 }
 
 // configuration holds the static configuration removed/deprecated options.
 type configuration struct {
-	Experimental *experimental `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
-	Pilot        *interface{}  `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty"`
-	Providers    *providers    `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty"`
-	Tracing      *tracing      `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty"`
+	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
+	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty"`
+	Providers    *providers     `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty"`
+	Tracing      *tracing       `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty"`
 }
 
 func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
@@ -53,22 +207,22 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 	// not incompatible as HTTP3 option is only deprecated and not removed.
 	c.Experimental.deprecationNotice(logger)
 
-	return incompatible ||
-		c.Providers.deprecationNotice(logger) ||
-		c.Tracing.deprecationNotice(logger)
+	incompatibleProviders := c.Providers.deprecationNotice(logger)
+	incompatibleTracing := c.Tracing.deprecationNotice(logger)
+	return incompatible || incompatibleProviders || incompatibleTracing
 }
 
 type providers struct {
-	Docker        *docker        `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty"`
-	Swarm         *swarm         `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty"`
-	Consul        *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty"`
-	ConsulCatalog *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
-	Nomad         *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty"`
-	Marathon      *interface{}   `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty"`
-	Rancher       *interface{}   `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty"`
-	ETCD          *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty"`
-	Redis         *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty"`
-	HTTP          *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
+	Docker        *docker         `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty"`
+	Swarm         *swarm          `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty"`
+	Consul        *consul         `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty"`
+	ConsulCatalog *consulCatalog  `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
+	Nomad         *nomad          `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty"`
+	Marathon      *map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty"`
+	Rancher       *map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty"`
+	ETCD          *etcd           `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty"`
+	Redis         *redis          `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty"`
+	HTTP          *http           `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
 }
 
 func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
@@ -90,15 +244,23 @@ func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#rancher-v1-provider")
 	}
 
+	dockerIncompatible := p.Docker.deprecationNotice(logger)
+	consulIncompatible := p.Consul.deprecationNotice(logger)
+	consulCatalogIncompatible := p.ConsulCatalog.deprecationNotice(logger)
+	nomadIncompatible := p.Nomad.deprecationNotice(logger)
+	swarmIncompatible := p.Swarm.deprecationNotice(logger)
+	etcdIncompatible := p.ETCD.deprecationNotice(logger)
+	redisIncompatible := p.Redis.deprecationNotice(logger)
+	httpIncompatible := p.HTTP.deprecationNotice(logger)
 	return incompatible ||
-		p.Docker.deprecationNotice(logger) ||
-		p.Consul.deprecationNotice(logger) ||
-		p.ConsulCatalog.deprecationNotice(logger) ||
-		p.Nomad.deprecationNotice(logger) ||
-		p.Swarm.deprecationNotice(logger) ||
-		p.ETCD.deprecationNotice(logger) ||
-		p.Redis.deprecationNotice(logger) ||
-		p.HTTP.deprecationNotice(logger)
+		dockerIncompatible ||
+		consulIncompatible ||
+		consulCatalogIncompatible ||
+		nomadIncompatible ||
+		swarmIncompatible ||
+		etcdIncompatible ||
+		redisIncompatible ||
+		httpIncompatible
 }
 
 type tls struct {
@@ -323,13 +485,13 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) {
 }
 
 type tracing struct {
-	SpanNameLimit *int         `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
-	Jaeger        *interface{} `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty"`
-	Zipkin        *interface{} `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty"`
-	Datadog       *interface{} `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty"`
-	Instana       *interface{} `json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty"`
-	Haystack      *interface{} `json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty"`
-	Elastic       *interface{} `json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty"`
+	SpanNameLimit *int           `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
+	Jaeger        map[string]any `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty"`
+	Zipkin        map[string]any `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty"`
+	Datadog       map[string]any `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty"`
+	Instana       map[string]any `json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty"`
+	Haystack      map[string]any `json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty"`
+	Elastic       map[string]any `json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty"`
 }
 
 func (t *tracing) deprecationNotice(logger zerolog.Logger) bool {

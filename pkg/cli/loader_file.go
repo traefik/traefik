@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"os"
 	"strings"
 
@@ -24,11 +23,6 @@ func (f *FileLoader) GetFilename() string {
 
 // Load loads the command's configuration from a file either specified with the -traefik.configfile flag, or from default locations.
 func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
-	if f.deprecationNotice(args, cmd) {
-		// An incompatible configuration is in use and need to be removed/adapted.
-		return false, errors.New("incompatible static configuration detected")
-	}
-
 	ref, err := flag.Parse(args, cmd.Configuration)
 	if err != nil {
 		_ = cmd.PrintHelp(os.Stdout)
@@ -87,38 +81,4 @@ func loadConfigFiles(configFile string, element interface{}) (string, error) {
 		return "", err
 	}
 	return filePath, nil
-}
-
-func (f *FileLoader) deprecationNotice(args []string, cmd *cli.Command) bool {
-	rawConfig := &rawConfiguration{}
-
-	ref, err := flag.Parse(args, rawConfig)
-	if err != nil {
-		_ = cmd.PrintHelp(os.Stdout)
-		log.Error().Err(err).Msg("Cannot parse flag")
-	}
-
-	configFileFlag := "traefik.configfile"
-	if _, ok := ref["traefik.configFile"]; ok {
-		configFileFlag = "traefik.configFile"
-	}
-
-	if f.ConfigFileFlag != "" {
-		configFileFlag = "traefik." + f.ConfigFileFlag
-		if _, ok := ref[strings.ToLower(configFileFlag)]; ok {
-			configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
-		}
-	}
-
-	configFile, err := loadConfigFiles(ref[configFileFlag], rawConfig)
-	if err != nil {
-		log.Error().Err(err).Msg("Cannot load config files")
-	}
-
-	if configFile == "" {
-		return false
-	}
-
-	logger := log.With().Str("loader", "FILE").Logger()
-	return rawConfig.deprecationNotice(logger)
 }
