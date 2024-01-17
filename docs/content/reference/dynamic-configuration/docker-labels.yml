@@ -170,6 +170,7 @@
 - "traefik.http.services.service02.loadbalancer.sticky=true"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie=true"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.httponly=true"
+- "traefik.http.services.service02.loadbalancer.sticky.cookie.maxage=42"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.name=foobar"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.samesite=foobar"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.secure=true"
