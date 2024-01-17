@@ -486,5 +486,7 @@ experimental:
     LocalDescriptor1:
       moduleName: foobar
   kubernetesGateway: true
+core:
+  defaultRuleSyntax: foobar
 spiffe:
   workloadAPIAddr: foobar
