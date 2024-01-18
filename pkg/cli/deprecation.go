@@ -14,8 +14,7 @@ import (
 	"github.com/traefik/paerser/parser"
 )
 
-type DeprecationLoader struct {
-}
+type DeprecationLoader struct{}
 
 func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	for i, arg := range args {
@@ -109,7 +108,6 @@ func filterUnknownNodes(element interface{}, node *parser.Node) error {
 	rootType := reflect.TypeOf(element)
 	browseChildren(rootType, node)
 	return nil
-
 }
 
 func browseChildren(fType reflect.Type, node *parser.Node) bool {
