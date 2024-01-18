@@ -160,6 +160,12 @@ spec:
                                       can be accessed by client-side APIs, such as
                                       JavaScript.
                                     type: boolean
+                                  maxAge:
+                                    description: MaxAge indicates the number of seconds
+                                      until the cookie expires. When set to a negative
+                                      number, the cookie expires immediately. When
+                                      set to zero, the cookie never expires.
+                                    type: integer
                                   name:
                                     description: Name defines the Cookie name.
                                     type: string
@@ -877,6 +883,12 @@ spec:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
+                              maxAge:
+                                description: MaxAge indicates the number of seconds
+                                  until the cookie expires. When set to a negative
+                                  number, the cookie expires immediately. When set
+                                  to zero, the cookie never expires.
+                                type: integer
                               name:
                                 description: Name defines the Cookie name.
                                 type: string
@@ -2158,6 +2170,12 @@ spec:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
                                   type: boolean
+                                maxAge:
+                                  description: MaxAge indicates the number of seconds
+                                    until the cookie expires. When set to a negative
+                                    number, the cookie expires immediately. When set
+                                    to zero, the cookie never expires.
+                                  type: integer
                                 name:
                                   description: Name defines the Cookie name.
                                   type: string
@@ -2249,6 +2267,12 @@ spec:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
                             type: boolean
+                          maxAge:
+                            description: MaxAge indicates the number of seconds until
+                              the cookie expires. When set to a negative number, the
+                              cookie expires immediately. When set to zero, the cookie
+                              never expires.
+                            type: integer
                           name:
                             description: Name defines the Cookie name.
                             type: string
@@ -2356,6 +2380,12 @@ spec:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
                                   type: boolean
+                                maxAge:
+                                  description: MaxAge indicates the number of seconds
+                                    until the cookie expires. When set to a negative
+                                    number, the cookie expires immediately. When set
+                                    to zero, the cookie never expires.
+                                  type: integer
                                 name:
                                   description: Name defines the Cookie name.
                                   type: string
@@ -2395,6 +2425,12 @@ spec:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
                             type: boolean
+                          maxAge:
+                            description: MaxAge indicates the number of seconds until
+                              the cookie expires. When set to a negative number, the
+                              cookie expires immediately. When set to zero, the cookie
+                              never expires.
+                            type: integer
                           name:
                             description: Name defines the Cookie name.
                             type: string

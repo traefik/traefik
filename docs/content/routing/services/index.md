@@ -187,6 +187,13 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
     The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
+!!! info "MaxAge"
+
+    By default, the affinity cookie will never expire as the `MaxAge` option is set to zero.
+
+    This option indicates the number of seconds until the cookie expires.  
+    When set to a negative number, the cookie expires immediately.
+    
 !!! info "Secure & HTTPOnly & SameSite flags"
 
     By default, the affinity cookie is created without those flags.

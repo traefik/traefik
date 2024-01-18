@@ -60,6 +60,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            maxAge: 42
         servers:
           - url: foobar
           - url: foobar
@@ -104,6 +105,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            maxAge: 42
         healthCheck: {}
   middlewares:
     Middleware01:
