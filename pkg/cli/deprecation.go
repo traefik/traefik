@@ -163,7 +163,7 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 // configuration holds the static configuration removed/deprecated options.
 type configuration struct {
 	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
-	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" file:"allowEmpty" label:"allowEmpty"`
+	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Providers    *providers     `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty"`
 	Tracing      *tracing       `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty"`
 }
@@ -192,8 +192,8 @@ type providers struct {
 	Consul        *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty"`
 	ConsulCatalog *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
 	Nomad         *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty"`
-	Marathon      map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" file:"allowEmpty" label:"allowEmpty"`
-	Rancher       map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" file:"allowEmpty" label:"allowEmpty"`
+	Marathon      map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Rancher       map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	ETCD          *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty"`
 	Redis         *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty"`
 	HTTP          *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
@@ -462,12 +462,12 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 
 type tracing struct {
 	SpanNameLimit *int           `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty"`
-	Jaeger        map[string]any `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" file:"allowEmpty" label:"allowEmpty"`
-	Zipkin        map[string]any `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" file:"allowEmpty" label:"allowEmpty"`
-	Datadog       map[string]any `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" file:"allowEmpty" label:"allowEmpty"`
-	Instana       map[string]any `json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" file:"allowEmpty" label:"allowEmpty"`
-	Haystack      map[string]any `json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" file:"allowEmpty" label:"allowEmpty"`
-	Elastic       map[string]any `json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" file:"allowEmpty" label:"allowEmpty"`
+	Jaeger        map[string]any `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Zipkin        map[string]any `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Datadog       map[string]any `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Instana       map[string]any `json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Haystack      map[string]any `json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Elastic       map[string]any `json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (t *tracing) deprecationNotice(logger zerolog.Logger) bool {
