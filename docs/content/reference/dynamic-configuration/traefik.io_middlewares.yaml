@@ -161,10 +161,6 @@ spec:
                       breaker will try to recover (as soon as it is in recovering
                       state).
                     x-kubernetes-int-or-string: true
-                  responseCode:
-                    description: ResponseCode is the status code that the circuit
-                      breaker will return while it is in the open state.
-                    type: integer
                 type: object
               compress:
                 description: 'Compress holds the compress middleware configuration.
