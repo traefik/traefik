@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"gopkg.in/yaml.v3"
+	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -111,10 +113,19 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_gateway_conformance.toml"))
 
 	// Wait for traefik to start
-	err = try.GetRequest("http://127.0.0.1:8080/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
-	time.Sleep(10 * time.Second)
+	err = try.Do(10*time.Second, func() error {
+		gwc := &gatev1.GatewayClass{}
+		err := kClient.Get(context.Background(), ktypes.NamespacedName{Name: "my-gateway-class"}, gwc)
+		if err != nil {
+			return fmt.Errorf("error fetching GatewayClass: %w", err)
+		}
+
+		return nil
+	})
+	require.NoError(s.T(), err)
 
 	opts := ksuite.Options{
 		Client:               kClient,
