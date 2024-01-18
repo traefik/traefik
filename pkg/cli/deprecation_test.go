@@ -296,20 +296,26 @@ func TestDeprecationNotice(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		args     []string
-		env      map[string]string
-		expected bool
+		desc           string
+		args           []string
+		env            map[string]string
+		wantDeprecated bool
 	}{
+		{
+			desc:           "Empty",
+			args:           []string{},
+			wantDeprecated: false,
+		},
 		{
 			desc: "[FLAG] providers.marathon is deprecated",
 			args: []string{
 				"--access-log",
 				"--log.level=DEBUG",
 				"--entrypoints.test.http.tls",
+				"--providers.nomad.endpoint.tls.insecureskipverify=true",
 				"--providers.marathon",
 			},
-			expected: true,
+			wantDeprecated: true,
 		},
 		{
 			desc: "[FLAG] multiple deprecated",
@@ -320,7 +326,7 @@ func TestLoad(t *testing.T) {
 				"--providers.marathon",
 				"--pilot.token=XXX",
 			},
-			expected: true,
+			wantDeprecated: true,
 		},
 		{
 			desc: "[FLAG] no deprecated",
@@ -329,17 +335,17 @@ func TestLoad(t *testing.T) {
 				"--log.level=DEBUG",
 				"--entrypoints.test.http.tls",
 			},
-			expected: false,
+			wantDeprecated: false,
 		},
 		{
 			desc: "[ENV] providers.marathon is deprecated",
 			env: map[string]string{
-				"TRAEFIK_ACCESS_LOG":               "true",
+				"TRAEFIK_ACCESS_LOG":               "",
 				"TRAEFIK_LOG_LEVEL":                "DEBUG",
 				"TRAEFIK_ENTRYPOINT_TEST_HTTP_TLS": "true",
 				"TRAEFIK_PROVIDERS_MARATHON":       "true",
 			},
-			expected: true,
+			wantDeprecated: true,
 		},
 		{
 			desc: "[ENV] multiple deprecated",
@@ -350,7 +356,7 @@ func TestLoad(t *testing.T) {
 				"TRAEFIK_PROVIDERS_MARATHON":       "true",
 				"TRAEFIK_PILOT_TOKEN":              "xxx",
 			},
-			expected: true,
+			wantDeprecated: true,
 		},
 		{
 			desc: "[ENV] no deprecated",
@@ -360,28 +366,28 @@ func TestLoad(t *testing.T) {
 				"TRAEFIK_ENTRYPOINT_TEST_HTTP_TLS": "true",
 			},
 
-			expected: false,
+			wantDeprecated: false,
 		},
 		{
 			desc: "[FILE] providers.marathon is deprecated",
 			args: []string{
 				"--configfile=traefik_deprecated.toml",
 			},
-			expected: true,
+			wantDeprecated: true,
 		},
 		{
 			desc: "[FILE] multiple deprecated",
 			args: []string{
 				"--configfile=traefik_multiple_deprecated.toml",
 			},
-			expected: true,
+			wantDeprecated: true,
 		},
 		{
 			desc: "[FILE] no deprecated",
 			args: []string{
 				"--configfile=traefik_no_deprecated.toml",
 			},
-			expected: false,
+			wantDeprecated: false,
 		},
 	}
 
@@ -396,8 +402,8 @@ func TestLoad(t *testing.T) {
 				t.Setenv(name, val)
 			}
 			deprecated, err := l.Load(test.args, c)
-			assert.Equal(t, test.expected, deprecated)
-			if !test.expected {
+			assert.Equal(t, test.wantDeprecated, deprecated)
+			if !test.wantDeprecated {
 				require.NoError(t, err)
 			}
 		})

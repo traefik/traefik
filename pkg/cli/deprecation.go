@@ -28,33 +28,35 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		return false, err
 	}
 
-	if len(labels) > 0 {
-		node, err := parser.DecodeToNode(labels, "traefik")
-		if err != nil {
-			return false, fmt.Errorf("DecodeToNode: %w", err)
-		}
+	node, err := parser.DecodeToNode(labels, "traefik")
+	if err != nil {
+		return false, fmt.Errorf("DecodeToNode: %w", err)
+	}
 
-		rawConfig := &configuration{}
-
-		err = filterUnknownNodes(rawConfig, node)
-		if err != nil {
-			return false, fmt.Errorf("filter: %w", err)
-		}
+	if node != nil && len(node.Children) > 0 {
+		config := &configuration{}
+		filterUnknownNodes(reflect.TypeOf(config), node)
 
 		if len(node.Children) > 0 {
-			err = parser.AddMetadata(rawConfig, node, parser.MetadataOpts{TagName: "label"})
+			// Telling parser to look for the label struct tag to allow empty values.
+			err = parser.AddMetadata(config, node, parser.MetadataOpts{TagName: "label"})
 			if err != nil {
 				return false, fmt.Errorf("AddMetadata: %w", err)
 			}
 
-			err = parser.Fill(rawConfig, node, parser.FillerOpts{})
+			err = parser.Fill(config, node, parser.FillerOpts{})
 			if err != nil {
 				return false, err
 			}
+
 			logger := log.With().Str("loader", "FLAG").Logger()
-			if rawConfig.deprecationNotice(logger) {
+			if config.deprecationNotice(logger) {
 				return true, errors.New("deprecated field found")
 			}
+
+			// No further deprecation parsing and logging,
+			// as args configuration contains at least one deprecated option.
+			return false, nil
 		}
 	}
 
@@ -70,25 +72,25 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		configFileFlag = "traefik.configFile"
 	}
 
-	rawConfig := &configuration{}
-	_, err = loadConfigFiles(ref[configFileFlag], rawConfig)
+	config := &configuration{}
+	_, err = loadConfigFiles(ref[configFileFlag], config)
 
 	if err == nil {
 		logger := log.With().Str("loader", "FILE").Logger()
-		if rawConfig.deprecationNotice(logger) {
+		if config.deprecationNotice(logger) {
 			return true, errors.New("deprecated field found")
 		}
 	}
 
-	rawConfig = &configuration{}
+	config = &configuration{}
 	l := EnvLoader{}
 	_, err = l.Load(os.Args, &cli.Command{
-		Configuration: rawConfig,
+		Configuration: config,
 	})
 
 	if err == nil {
 		logger := log.With().Str("loader", "ENV").Logger()
-		if rawConfig.deprecationNotice(logger) {
+		if config.deprecationNotice(logger) {
 			return true, errors.New("deprecated field found")
 		}
 	}
@@ -96,27 +98,14 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	return false, nil
 }
 
-func filterUnknownNodes(element interface{}, node *parser.Node) error {
-	if len(node.Children) == 0 {
-		return fmt.Errorf("invalid node %s: no child", node.Name)
-	}
-
-	if element == nil {
-		return errors.New("nil structure")
-	}
-
-	rootType := reflect.TypeOf(element)
-	browseChildren(rootType, node)
-	return nil
-}
-
-func browseChildren(fType reflect.Type, node *parser.Node) bool {
+func filterUnknownNodes(fType reflect.Type, node *parser.Node) bool {
 	var children []*parser.Node
 	for _, child := range node.Children {
 		if isValid(fType, child) {
 			children = append(children, child)
 		}
 	}
+
 	node.Children = children
 	return len(node.Children) > 0
 }
@@ -127,28 +116,31 @@ func isValid(rootType reflect.Type, node *parser.Node) bool {
 		rType = rootType.Elem()
 	}
 
+	// unstructured type is valid.
 	if rType.Kind() == reflect.Map && rType.Elem().Kind() == reflect.Interface {
 		return true
 	}
 
+	// unstructured type is valid.
 	if rType.Kind() == reflect.Interface {
 		return true
 	}
 
+	// find matching field in struct type.
 	field, b := findTypedField(rType, node)
-
 	if !b {
 		return b
 	}
 
 	if len(node.Children) > 0 {
-		return browseChildren(field.Type, node)
+		return filterUnknownNodes(field.Type, node)
 	}
 
 	return true
 }
 
 func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField, bool) {
+	// avoid panicking.
 	if rType.Kind() != reflect.Struct {
 		return reflect.StructField{}, false
 	}
@@ -156,23 +148,9 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 	for i := 0; i < rType.NumField(); i++ {
 		cField := rType.Field(i)
 
-		fieldName := cField.Tag.Get(parser.TagLabelSliceAsStruct)
-		if len(fieldName) == 0 {
-			fieldName = cField.Name
-		}
-
+		// ignore unexported fields.
 		if cField.PkgPath == "" {
-			if cField.Anonymous {
-				if cField.Type.Kind() == reflect.Struct {
-					structField, b := findTypedField(cField.Type, node)
-					if !b {
-						continue
-					}
-					return structField, true
-				}
-			}
-
-			if strings.EqualFold(fieldName, node.Name) {
+			if strings.EqualFold(cField.Name, node.Name) {
 				node.FieldName = cField.Name
 				return cField, true
 			}
