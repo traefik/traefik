@@ -396,7 +396,6 @@ func TestLoad(t *testing.T) {
 				t.Setenv(name, val)
 			}
 			deprecated, err := l.Load(test.args, c)
-
 			assert.Equal(t, test.expected, deprecated)
 			if !test.expected {
 				require.NoError(t, err)
