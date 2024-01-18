@@ -14,10 +14,10 @@ import (
 	"github.com/traefik/paerser/parser"
 )
 
-type DeprecatedLoader struct {
+type DeprecationLoader struct {
 }
 
-func (d DeprecatedLoader) Load(args []string, cmd *cli.Command) (bool, error) {
+func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	for i, arg := range args {
 		if !strings.Contains(arg, "=") {
 			args[i] = arg + "=true"
@@ -43,7 +43,7 @@ func (d DeprecatedLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		}
 
 		if len(node.Children) > 0 {
-			err = parser.AddMetadata(rawConfig, node, parser.MetadataOpts{ContinueOnError: false})
+			err = parser.AddMetadata(rawConfig, node, parser.MetadataOpts{})
 			if err != nil {
 				return false, fmt.Errorf("AddMetadata: %w", err)
 			}
@@ -204,25 +204,23 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#pilot")
 	}
 
-	// not incompatible as HTTP3 option is only deprecated and not removed.
-	c.Experimental.deprecationNotice(logger)
-
+	incompatibleExperimental := c.Experimental.deprecationNotice(logger)
 	incompatibleProviders := c.Providers.deprecationNotice(logger)
 	incompatibleTracing := c.Tracing.deprecationNotice(logger)
-	return incompatible || incompatibleProviders || incompatibleTracing
+	return incompatible || incompatibleExperimental || incompatibleProviders || incompatibleTracing
 }
 
 type providers struct {
-	Docker        *docker         `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty"`
-	Swarm         *swarm          `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty"`
-	Consul        *consul         `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty"`
-	ConsulCatalog *consulCatalog  `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
-	Nomad         *nomad          `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty"`
-	Marathon      *map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty"`
-	Rancher       *map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty"`
-	ETCD          *etcd           `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty"`
-	Redis         *redis          `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty"`
-	HTTP          *http           `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
+	Docker        *docker        `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty"`
+	Swarm         *swarm         `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty"`
+	Consul        *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty"`
+	ConsulCatalog *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
+	Nomad         *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty"`
+	Marathon      map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty"`
+	Rancher       map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty"`
+	ETCD          *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty"`
+	Redis         *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty"`
+	HTTP          *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
 }
 
 func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
@@ -387,7 +385,7 @@ func (c *consul) deprecationNotice(logger zerolog.Logger) bool {
 
 type consulCatalog struct {
 	Namespace *string         `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 }
 
 type endpointConfig struct {
@@ -419,7 +417,7 @@ func (c *consulCatalog) deprecationNotice(logger zerolog.Logger) bool {
 
 type nomad struct {
 	Namespace *string         `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 }
 
 func (n *nomad) deprecationNotice(logger zerolog.Logger) bool {
@@ -470,22 +468,24 @@ type experimental struct {
 	HTTP3 *bool `json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty"`
 }
 
-func (e *experimental) deprecationNotice(logger zerolog.Logger) {
+func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 	if e == nil {
-		return
+		return false
 	}
 
-	// As long as HTTP3 is still a field of the experimental static configuration,
-	// there will be no parsing error, so we just want to warn here.
 	if e.HTTP3 != nil {
-		logger.Warn().Msg("HTTP3 is not an experimental feature in v3 and the associated enablement option will be remove in a future major release." +
-			"This option has now no effect, but we recommend to stop using it to avoid hassle considering future major release upgrade." +
+		logger.Error().Msg("HTTP3 is not an experimental feature in v3 and the associated enablement has been removed." +
+			"Please remove its usage from the static configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#http3-experimental-configuration")
+
+		return true
 	}
+
+	return false
 }
 
 type tracing struct {
-	SpanNameLimit *int           `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
+	SpanNameLimit *int           `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty"`
 	Jaeger        map[string]any `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty"`
 	Zipkin        map[string]any `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty"`
 	Datadog       map[string]any `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty"`
