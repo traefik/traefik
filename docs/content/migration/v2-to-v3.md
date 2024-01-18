@@ -407,7 +407,6 @@ spec:
 ```
 
 ```yaml tab="File (YAML)"
-# Declaring the user list
 http:
   routers:
     test:
@@ -415,7 +414,6 @@ http:
 ```
 
 ```toml tab="File (TOML)"
-# Declaring the user list
 [http.routers]
   [http.routers.test]
     ruleSyntax = "v2"
