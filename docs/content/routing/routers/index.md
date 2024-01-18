@@ -1248,7 +1248,7 @@ This allows to have heterogeneous router configurations and ease migration.
 
     ```yaml tab="Kubernetes traefik.io/v1alpha1"
     apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
+    kind: IngressRouteTCP
     metadata:
       name: test.route
       namespace: default
