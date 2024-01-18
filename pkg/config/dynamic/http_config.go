@@ -39,7 +39,7 @@ type HTTPConfiguration struct {
 type Model struct {
 	Middlewares       []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	TLS               *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	DefaultRuleSyntax string           `json:"defaultRuleSyntax,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	DefaultRuleSyntax string           `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
