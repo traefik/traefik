@@ -2,7 +2,6 @@ package cli
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -17,6 +16,15 @@ import (
 type DeprecationLoader struct{}
 
 func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
+	if logDeprecation(cmd.Configuration, args) {
+		return true, errors.New("incompatible deprecated static option found")
+	}
+
+	return false, nil
+}
+
+// logDeprecation prints deprecation hints and returns whether incompatible deprecated options need to be removed.
+func logDeprecation(traefikConfiguration interface{}, args []string) bool {
 	for i, arg := range args {
 		if !strings.Contains(arg, "=") {
 			args[i] = arg + "=true"
@@ -25,12 +33,14 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 
 	labels, err := flag.Parse(args, nil)
 	if err != nil {
-		return false, err
+		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		return false
 	}
 
 	node, err := parser.DecodeToNode(labels, "traefik")
 	if err != nil {
-		return false, fmt.Errorf("DecodeToNode: %w", err)
+		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		return false
 	}
 
 	if node != nil && len(node.Children) > 0 {
@@ -41,30 +51,31 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 			// Telling parser to look for the label struct tag to allow empty values.
 			err = parser.AddMetadata(config, node, parser.MetadataOpts{TagName: "label"})
 			if err != nil {
-				return false, fmt.Errorf("AddMetadata: %w", err)
+				log.Error().Err(err).Msg("deprecated static options analysis failed")
+				return false
 			}
 
 			err = parser.Fill(config, node, parser.FillerOpts{})
 			if err != nil {
-				return false, err
+				log.Error().Err(err).Msg("deprecated static options analysis failed")
+				return false
 			}
 
-			logger := log.With().Str("loader", "FLAG").Logger()
-			if config.deprecationNotice(logger) {
-				return true, errors.New("deprecated field found")
+			if config.deprecationNotice(log.With().Str("loader", "FLAG").Logger()) {
+				return true
 			}
 
 			// No further deprecation parsing and logging,
 			// as args configuration contains at least one deprecated option.
-			return false, nil
+			return false
 		}
 	}
 
 	// FILE
-	ref, err := flag.Parse(args, cmd.Configuration)
+	ref, err := flag.Parse(args, traefikConfiguration)
 	if err != nil {
-		_ = cmd.PrintHelp(os.Stdout)
-		return false, err
+		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		return false
 	}
 
 	configFileFlag := "traefik.configfile"
@@ -76,9 +87,8 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	_, err = loadConfigFiles(ref[configFileFlag], config)
 
 	if err == nil {
-		logger := log.With().Str("loader", "FILE").Logger()
-		if config.deprecationNotice(logger) {
-			return true, errors.New("deprecated field found")
+		if config.deprecationNotice(log.With().Str("loader", "FILE").Logger()) {
+			return true
 		}
 	}
 
@@ -89,13 +99,12 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	})
 
 	if err == nil {
-		logger := log.With().Str("loader", "ENV").Logger()
-		if config.deprecationNotice(logger) {
-			return true, errors.New("deprecated field found")
+		if config.deprecationNotice(log.With().Str("loader", "FILE").Logger()) {
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 func filterUnknownNodes(fType reflect.Type, node *parser.Node) bool {
