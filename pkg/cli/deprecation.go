@@ -162,10 +162,10 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 
 // configuration holds the static configuration removed/deprecated options.
 type configuration struct {
-	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
-	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Providers    *providers     `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty"`
-	Tracing      *tracing       `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty"`
+	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" label:"allowEmpty" file:"allowEmpty" label:"allowEmpty" file:"allowEmpty"`
+	Providers    *providers     `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Tracing      *tracing       `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
@@ -187,16 +187,16 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type providers struct {
-	Docker        *docker        `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty"`
-	Swarm         *swarm         `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty"`
-	Consul        *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty"`
-	ConsulCatalog *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
-	Nomad         *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty"`
+	Docker        *docker        `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Swarm         *swarm         `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Consul        *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	ConsulCatalog *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Nomad         *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Marathon      map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Rancher       map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	ETCD          *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty"`
-	Redis         *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty"`
-	HTTP          *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
+	ETCD          *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Redis         *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	HTTP          *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
@@ -243,7 +243,7 @@ type tls struct {
 
 type docker struct {
 	SwarmMode *bool `json:"swarmMode,omitempty" toml:"swarmMode,omitempty" yaml:"swarmMode,omitempty"`
-	TLS       *tls  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS       *tls  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (d *docker) deprecationNotice(logger zerolog.Logger) bool {
@@ -270,7 +270,7 @@ func (d *docker) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type swarm struct {
-	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (s *swarm) deprecationNotice(logger zerolog.Logger) bool {
@@ -290,7 +290,7 @@ func (s *swarm) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type etcd struct {
-	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (e *etcd) deprecationNotice(logger zerolog.Logger) bool {
@@ -311,7 +311,7 @@ func (e *etcd) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type redis struct {
-	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (r *redis) deprecationNotice(logger zerolog.Logger) bool {
@@ -333,7 +333,7 @@ func (r *redis) deprecationNotice(logger zerolog.Logger) bool {
 
 type consul struct {
 	Namespace *string `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	TLS       *tls    `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS       *tls    `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (c *consul) deprecationNotice(logger zerolog.Logger) bool {
@@ -361,7 +361,7 @@ func (c *consul) deprecationNotice(logger zerolog.Logger) bool {
 
 type consulCatalog struct {
 	Namespace *string         `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 type endpointConfig struct {
@@ -393,7 +393,7 @@ func (c *consulCatalog) deprecationNotice(logger zerolog.Logger) bool {
 
 type nomad struct {
 	Namespace *string         `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Endpoint  *endpointConfig `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (n *nomad) deprecationNotice(logger zerolog.Logger) bool {
@@ -420,7 +420,7 @@ func (n *nomad) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type http struct {
-	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS *tls `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (h *http) deprecationNotice(logger zerolog.Logger) bool {
