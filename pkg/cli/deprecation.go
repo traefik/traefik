@@ -163,7 +163,7 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 // configuration holds the static configuration removed/deprecated options.
 type configuration struct {
 	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" label:"allowEmpty" file:"allowEmpty" label:"allowEmpty" file:"allowEmpty"`
+	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Providers    *providers     `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Tracing      *tracing       `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
