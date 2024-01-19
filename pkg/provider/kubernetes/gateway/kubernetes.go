@@ -760,6 +760,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 
 			router := dynamic.Router{
 				Rule:        rule,
+				RuleSyntax:  "v3",
 				EntryPoints: []string{ep},
 			}
 
@@ -898,6 +899,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Li
 		router := dynamic.TCPRouter{
 			Rule:        "HostSNI(`*`)",
 			EntryPoints: []string{ep},
+			RuleSyntax:  "v3",
 		}
 
 		if listener.Protocol == gatev1.TLSProtocolType && listener.TLS != nil {
@@ -1062,6 +1064,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Li
 
 		router := dynamic.TCPRouter{
 			Rule:        rule,
+			RuleSyntax:  "v3",
 			EntryPoints: []string{ep},
 			TLS: &dynamic.RouterTCPTLSConfig{
 				Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
@@ -1385,7 +1388,7 @@ func extractHeaderRules(headers []gatev1.HTTPHeaderMatch) ([]string, error) {
 
 		switch *header.Type {
 		case gatev1.HeaderMatchExact:
-			headerRules = append(headerRules, fmt.Sprintf("Headers(`%s`,`%s`)", header.Name, header.Value))
+			headerRules = append(headerRules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
 		default:
 			return nil, fmt.Errorf("unsupported header match type %s", *header.Type)
 		}
