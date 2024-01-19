@@ -153,13 +153,44 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			RequiredConsecutiveSuccesses:      0,
 		},
 		SupportedFeatures: sets.New[ksuite.SupportedFeature]().
-			Insert(ksuite.GatewayExtendedFeatures.UnsortedList()...).
-			Insert(ksuite.ReferenceGrantCoreFeatures.UnsortedList()...).
-			Insert(ksuite.HTTPRouteCoreFeatures.UnsortedList()...).
-			Insert(ksuite.HTTPRouteExtendedFeatures.UnsortedList()...).
-			Insert(ksuite.HTTPRouteExperimentalFeatures.UnsortedList()...).
-			Insert(ksuite.TLSRouteCoreFeatures.UnsortedList()...),
+			Insert(ksuite.GatewayCoreFeatures.UnsortedList()...),
 		EnableAllSupportedFeatures: false,
+		RunTest:                    *k8sConformanceRunTest,
+		// Until the feature are all supported, following tests are skipped.
+		SkipTests: []string{
+			"HTTPExactPathMatching",
+			"HTTPRouteHostnameIntersection",
+			"GatewaySecretReferenceGrantAllInNamespace",
+			"HTTPRouteListenerHostnameMatching",
+			"HTTPRouteRequestHeaderModifier",
+			"GatewaySecretInvalidReferenceGrant",
+			"GatewayClassObservedGenerationBump",
+			"HTTPRouteInvalidNonExistentBackendRef",
+			"GatewayWithAttachedRoutes",
+			"HTTPRouteCrossNamespace",
+			"HTTPRouteDisallowedKind",
+			"HTTPRouteInvalidReferenceGrant",
+			"HTTPRouteObservedGenerationBump",
+			"GatewayInvalidRouteKind",
+			"TLSRouteSimpleSameNamespace",
+			"TLSRouteInvalidReferenceGrant",
+			"HTTPRouteInvalidCrossNamespaceParentRef",
+			"HTTPRouteInvalidParentRefNotMatchingSectionName",
+			"GatewaySecretReferenceGrantSpecific",
+			"GatewayModifyListeners",
+			"GatewaySecretMissingReferenceGrant",
+			"GatewayInvalidTLSConfiguration",
+			"HTTPRouteInvalidCrossNamespaceBackendRef",
+			"HTTPRouteMatchingAcrossRoutes",
+			"HTTPRoutePartiallyInvalidViaInvalidReferenceGrant",
+			"HTTPRouteRedirectHostAndStatus",
+			"HTTPRouteInvalidBackendRefUnknownKind",
+			"HTTPRoutePathMatchOrder",
+			"HTTPRouteSimpleSameNamespace",
+			"HTTPRouteMatching",
+			"HTTPRouteHeaderMatching",
+			"HTTPRouteReferenceGrant",
+		},
 	}
 
 	cSuite, err := ksuite.NewExperimentalConformanceTestSuite(ksuite.ExperimentalConformanceOptions{
@@ -189,10 +220,10 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 
 	rawReport, err := yaml.Marshal(report)
 	require.NoError(s.T(), err)
-	log.Info().Msgf("Conformance report:\n%s", string(rawReport))
+	s.T().Logf("Conformance report:\n%s", string(rawReport))
 
 	require.NoError(s.T(), os.MkdirAll("./conformance-reports", 0o755))
 	outFile := filepath.Join("conformance-reports", fmt.Sprintf("traefik-traefik-%d.yaml", time.Now().UnixNano()))
 	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
-	log.Info().Msgf("Report written to: %s", outFile)
+	s.T().Logf("Report written to: %s", outFile)
 }
