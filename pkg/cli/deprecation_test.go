@@ -372,21 +372,21 @@ func TestLoad(t *testing.T) {
 		{
 			desc: "[FILE] providers.marathon is deprecated",
 			args: []string{
-				"--configfile=traefik_deprecated.toml",
+				"--configfile=./fixtures/traefik_deprecated.toml",
 			},
 			wantDeprecated: true,
 		},
 		{
 			desc: "[FILE] multiple deprecated",
 			args: []string{
-				"--configfile=traefik_multiple_deprecated.toml",
+				"--configfile=./fixtures/traefik_multiple_deprecated.toml",
 			},
 			wantDeprecated: true,
 		},
 		{
 			desc: "[FILE] no deprecated",
 			args: []string{
-				"--configfile=traefik_no_deprecated.toml",
+				"--configfile=./fixtures/traefik_no_deprecated.toml",
 			},
 			wantDeprecated: false,
 		},
