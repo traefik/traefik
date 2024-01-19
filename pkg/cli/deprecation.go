@@ -110,7 +110,7 @@ func logDeprecation(traefikConfiguration interface{}, args []string) bool {
 func filterUnknownNodes(fType reflect.Type, node *parser.Node) bool {
 	var children []*parser.Node
 	for _, child := range node.Children {
-		if isValid(fType, child) {
+		if hasKnownNodes(fType, child) {
 			children = append(children, child)
 		}
 	}
@@ -119,18 +119,18 @@ func filterUnknownNodes(fType reflect.Type, node *parser.Node) bool {
 	return len(node.Children) > 0
 }
 
-func isValid(rootType reflect.Type, node *parser.Node) bool {
+func hasKnownNodes(rootType reflect.Type, node *parser.Node) bool {
 	rType := rootType
 	if rootType.Kind() == reflect.Pointer {
 		rType = rootType.Elem()
 	}
 
-	// unstructured type is valid.
+	// unstructured type fitting anything, considering the current node as known.
 	if rType.Kind() == reflect.Map && rType.Elem().Kind() == reflect.Interface {
 		return true
 	}
 
-	// unstructured type is valid.
+	// unstructured type fitting anything, considering the current node as known.
 	if rType.Kind() == reflect.Interface {
 		return true
 	}
