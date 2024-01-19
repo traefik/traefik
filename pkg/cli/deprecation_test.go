@@ -334,6 +334,7 @@ func TestLoad(t *testing.T) {
 				"--access-log",
 				"--log.level=DEBUG",
 				"--entrypoints.test.http.tls",
+				"--providers.docker",
 			},
 			wantDeprecated: false,
 		},
