@@ -99,7 +99,7 @@ func logDeprecation(traefikConfiguration interface{}, args []string) bool {
 	})
 
 	if err == nil {
-		if config.deprecationNotice(log.With().Str("loader", "FILE").Logger()) {
+		if config.deprecationNotice(log.With().Str("loader", "ENV").Logger()) {
 			return true
 		}
 	}
