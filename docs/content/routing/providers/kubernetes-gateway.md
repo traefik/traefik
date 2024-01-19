@@ -39,19 +39,19 @@ The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
 
 You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:
 
-| Kind                               | Purpose                                                                   | Concept Behind                                                                  |
-|------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass) |
-| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway)           |
-| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/httproute)           |
-| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tcp/)                   |
-| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)                   |
+| Kind                               | Purpose                                                                   | Concept Behind                                                         |
+|------------------------------------|---------------------------------------------------------------------------|------------------------------------------------------------------------|
+| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/api-types/gatewayclass) |
+| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/api-types/gateway)           |
+| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/api-types/httproute)           |
+| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/guides/tcp/)                   |
+| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/guides/tls/)                   |
 
 ### Kind: `GatewayClass`
 
 `GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of
 Gateways that can be instantiated. More details on the
-GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass/).
+GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/).
 
 The `GatewayClass` should be declared by the infrastructure provider, otherwise please register the `GatewayClass`
 [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before
@@ -60,7 +60,7 @@ creating `GatewayClass` objects.
 !!! info "Declaring GatewayClass"
 
     ```yaml
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: GatewayClass
     metadata:
       name: my-gateway-class
@@ -92,7 +92,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
 !!! info "Declaring Gateway"
 
     ```yaml tab="HTTP Listener"
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
       name: my-http-gateway
@@ -114,7 +114,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
     ```
 
     ```yaml tab="HTTPS Listener"
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
       name: my-https-gateway
@@ -140,7 +140,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
     ```
 
     ```yaml tab="TCP Listener"
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
       name: my-tcp-gateway
@@ -162,7 +162,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
     ```
 
     ```yaml tab="TLS Listener"
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
       name: my-tls-gateway
@@ -213,7 +213,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
 !!! info "Declaring HTTPRoute"
 
     ```yaml
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
       name: http-app
@@ -274,7 +274,7 @@ Kubernetes cluster before creating `TCPRoute` objects.
 !!! info "Declaring TCPRoute"
 
     ```yaml
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: TCPRoute
     metadata:
       name: tcp-app
@@ -318,7 +318,7 @@ Kubernetes cluster before creating `TLSRoute` objects.
 !!! info "Declaring TLSRoute"
 
     ```yaml
-    apiVersion: gateway.networking.k8s.io/v1alpha2
+    apiVersion: gateway.networking.k8s.io/v1
     kind: TLSRoute
     metadata:
       name: tls-app
@@ -355,4 +355,4 @@ Kubernetes cluster before creating `TLSRoute` objects.
 | [11] | `group`       | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.         |
 | [12] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                             |
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

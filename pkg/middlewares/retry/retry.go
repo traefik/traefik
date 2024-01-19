@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -60,10 +62,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}, nil
 }
 
-func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
-}
-
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if r.attempts == 1 {
 		r.next.ServeHTTP(rw, req)
@@ -79,12 +77,35 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 
+	initialCtx := req.Context()
+	tracer := tracing.TracerFromContext(initialCtx)
+
+	var currentSpan trace.Span
 	operation := func() error {
+		if tracer != nil {
+			if currentSpan != nil {
+				currentSpan.End()
+			}
+			// Because multiple tracing spans may need to be created,
+			// the Retry middleware does not implement trace.Traceable,
+			// and creates directly a new span for each retry operation.
+			var tracingCtx context.Context
+			tracingCtx, currentSpan = tracer.Start(initialCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
+
+			currentSpan.SetAttributes(attribute.String("traefik.middleware.name", r.name))
+			// Only add the attribute "http.resend_count" defined by semantic conventions starting from second attempt.
+			if attempts > 1 {
+				currentSpan.SetAttributes(semconv.HTTPResendCount(attempts - 1))
+			}
+
+			req = req.WithContext(tracingCtx)
+		}
+
 		shouldRetry := attempts < r.attempts
 		retryResponseWriter := newResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
-		trace := &httptrace.ClientTrace{
+		clientTrace := &httptrace.ClientTrace{
 			WroteHeaders: func() {
 				retryResponseWriter.DisableRetries()
 			},
@@ -92,9 +113,9 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				retryResponseWriter.DisableRetries()
 			},
 		}
-		newCtx := httptrace.WithClientTrace(req.Context(), trace)
+		newCtx := httptrace.WithClientTrace(req.Context(), clientTrace)
 
-		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
+		r.next.ServeHTTP(retryResponseWriter, req.Clone(newCtx))
 
 		if !retryResponseWriter.ShouldRetry() {
 			return nil
@@ -118,6 +139,10 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
 		logger.Debug().Err(err).Msg("Final retry attempt failed")
+	}
+
+	if currentSpan != nil {
+		currentSpan.End()
 	}
 }
 

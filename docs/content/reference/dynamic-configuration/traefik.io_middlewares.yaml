@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: middlewares.traefik.io
 spec:
   group: traefik.io
@@ -177,6 +175,13 @@ spec:
                     items:
                       type: string
                     type: array
+                  includedContentTypes:
+                    description: IncludedContentTypes defines the list of content
+                      types to compare the Content-Type header of the responses before
+                      compressing.
+                    items:
+                      type: string
+                    type: array
                   minResponseBodyBytes:
                     description: 'MinResponseBodyBytes defines the minimum amount
                       of bytes a response body must have to be compressed. Default:
@@ -297,6 +302,12 @@ spec:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
+                              maxAge:
+                                description: MaxAge indicates the number of seconds
+                                  until the cookie expires. When set to a negative
+                                  number, the cookie expires immediately. When set
+                                  to zero, the cookie never expires.
+                                type: integer
                               name:
                                 description: Name defines the Cookie name.
                                 type: string
@@ -339,6 +350,12 @@ spec:
                   This middleware delegates the request authentication to a Service.
                   More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/'
                 properties:
+                  addAuthCookiesToResponse:
+                    description: AddAuthCookiesToResponse defines the list of cookies
+                      to copy from the authentication server response to the response.
+                    items:
+                      type: string
+                    type: array
                   address:
                     description: Address defines the authentication server address.
                     type: string
@@ -591,6 +608,36 @@ spec:
                 description: 'IPAllowList holds the IP allowlist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
                   More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/'
+                properties:
+                  ipStrategy:
+                    description: 'IPStrategy holds the IP strategy configuration used
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy'
+                    properties:
+                      depth:
+                        description: Depth tells Traefik to use the X-Forwarded-For
+                          header and take the IP located at the depth position (starting
+                          from the right).
+                        type: integer
+                      excludedIPs:
+                        description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
+                          header and select the first IP not in the list.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  rejectStatusCode:
+                    description: RejectStatusCode defines the HTTP status code used
+                      for refused requests. If not set, the default is 403 (Forbidden).
+                    type: integer
+                  sourceRange:
+                    description: SourceRange defines the set of allowed IPs (or ranges
+                      of allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
+              ipWhiteList:
+                description: 'Deprecated: please use IPAllowList instead.'
                 properties:
                   ipStrategy:
                     description: 'IPStrategy holds the IP strategy configuration used
@@ -894,9 +941,3 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

@@ -8,16 +8,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	"github.com/kvtools/etcdv3"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
-	checker "github.com/vdemeester/shakers"
 )
 
 // etcd test suites.
@@ -27,12 +28,18 @@ type EtcdSuite struct {
 	etcdAddr string
 }
 
-func (s *EtcdSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "etcd")
-	s.composeUp(c)
+func TestEtcdSuite(t *testing.T) {
+	suite.Run(t, new(EtcdSuite))
+}
+
+func (s *EtcdSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("etcd")
+	s.composeUp()
 
 	var err error
-	s.etcdAddr = net.JoinHostPort(s.getComposeServiceIP(c, "etcd"), "2379")
+	s.etcdAddr = net.JoinHostPort(s.getComposeServiceIP("etcd"), "2379")
 	s.kvClient, err = valkeyrie.NewStore(
 		context.Background(),
 		etcdv3.StoreName,
@@ -41,18 +48,19 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		c.Fatal("Cannot create store etcd")
-	}
+	require.NoError(s.T(), err)
 
 	// wait for etcd
 	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
-	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdAddress string }{s.etcdAddr})
-	defer os.Remove(file)
+func (s *EtcdSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *EtcdSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/etcd/simple.toml", struct{ EtcdAddress string }{s.etcdAddr})
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -101,39 +109,35 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 
 	for k, v := range data {
 		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@etcd":`, `"compressor@etcd":`, `"srvcA@etcd":`, `"srvcB@etcd":`),
 	)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	got, err := json.MarshalIndent(obtained, "", "  ")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-etcd.json")
 
 	if *updateExpected {
 		err = os.WriteFile(expectedJSON, got, 0o666)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	expected, err := os.ReadFile(expectedJSON)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if !bytes.Equal(expected, got) {
 		diff := difflib.UnifiedDiff{
@@ -145,7 +149,6 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		c.Assert(err, checker.IsNil)
-		c.Error(text)
+		require.NoError(s.T(), err, text)
 	}
 }

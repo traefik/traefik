@@ -12,12 +12,14 @@ import (
 
 // Middleware holds the Middleware configuration.
 type Middleware struct {
-	AddPrefix         *AddPrefix         `json:"addPrefix,omitempty" toml:"addPrefix,omitempty" yaml:"addPrefix,omitempty" export:"true"`
-	StripPrefix       *StripPrefix       `json:"stripPrefix,omitempty" toml:"stripPrefix,omitempty" yaml:"stripPrefix,omitempty" export:"true"`
-	StripPrefixRegex  *StripPrefixRegex  `json:"stripPrefixRegex,omitempty" toml:"stripPrefixRegex,omitempty" yaml:"stripPrefixRegex,omitempty" export:"true"`
-	ReplacePath       *ReplacePath       `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty" export:"true"`
-	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
-	Chain             *Chain             `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
+	AddPrefix        *AddPrefix        `json:"addPrefix,omitempty" toml:"addPrefix,omitempty" yaml:"addPrefix,omitempty" export:"true"`
+	StripPrefix      *StripPrefix      `json:"stripPrefix,omitempty" toml:"stripPrefix,omitempty" yaml:"stripPrefix,omitempty" export:"true"`
+	StripPrefixRegex *StripPrefixRegex `json:"stripPrefixRegex,omitempty" toml:"stripPrefixRegex,omitempty" yaml:"stripPrefixRegex,omitempty" export:"true"`
+	ReplacePath      *ReplacePath      `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty" export:"true"`
+	ReplacePathRegex *ReplacePathRegex `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
+	Chain            *Chain            `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
+	// Deprecated: please use IPAllowList instead.
+	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 	IPAllowList       *IPAllowList       `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
@@ -157,6 +159,8 @@ type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
 	// `application/grpc` is always excluded.
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
+	// IncludedContentTypes defines the list of content types to compare the Content-Type header of the responses before compressing.
+	IncludedContentTypes []string `json:"includedContentTypes,omitempty" toml:"includedContentTypes,omitempty" yaml:"includedContentTypes,omitempty" export:"true"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
@@ -221,6 +225,8 @@ type ForwardAuth struct {
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
+	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -376,6 +382,18 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 
 // +k8s:deepcopy-gen=true
 
+// IPWhiteList holds the IP whitelist middleware configuration.
+// This middleware accepts / refuses requests based on the client IP.
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipwhitelist/
+// Deprecated: please use IPAllowList instead.
+type IPWhiteList struct {
+	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // IPAllowList holds the IP allowlist middleware configuration.
 // This middleware accepts / refuses requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/
@@ -383,6 +401,9 @@ type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	// RejectStatusCode defines the HTTP status code used for refused requests.
+	// If not set, the default is 403 (Forbidden).
+	RejectStatusCode int `json:"rejectStatusCode,omitempty" toml:"rejectStatusCode,omitempty" yaml:"rejectStatusCode,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

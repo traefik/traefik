@@ -220,6 +220,53 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 
 func TestSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{
+			Name:     "test",
+			Secure:   true,
+			HTTPOnly: true,
+			SameSite: "none",
+			MaxAge:   42,
+		},
+	}, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(1))
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(2))
+
+	recorder := &responseRecorder{
+		ResponseRecorder: httptest.NewRecorder(),
+		save:             map[string]int{},
+		cookies:          make(map[string]*http.Cookie),
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	for i := 0; i < 3; i++ {
+		for _, cookie := range recorder.Result().Cookies() {
+			assert.NotContains(t, "test=first", cookie.Value)
+			assert.NotContains(t, "test=second", cookie.Value)
+			req.AddCookie(cookie)
+		}
+		recorder.ResponseRecorder = httptest.NewRecorder()
+
+		balancer.ServeHTTP(recorder, req)
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 3, recorder.save["second"])
+	assert.True(t, recorder.cookies["test"].HttpOnly)
+	assert.True(t, recorder.cookies["test"].Secure)
+	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
+	assert.Equal(t, 42, recorder.cookies["test"].MaxAge)
+}
+
+func TestSticky_FallBack(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{Name: "test"},
 	}, false)
 
@@ -236,10 +283,8 @@ func TestSticky(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.AddCookie(&http.Cookie{Name: "test", Value: "second"})
 	for i := 0; i < 3; i++ {
-		for _, cookie := range recorder.Result().Cookies() {
-			req.AddCookie(cookie)
-		}
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
 		balancer.ServeHTTP(recorder, req)
@@ -282,11 +327,15 @@ type responseRecorder struct {
 	save     map[string]int
 	sequence []string
 	status   []int
+	cookies  map[string]*http.Cookie
 }
 
 func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.save[r.Header().Get("server")]++
 	r.sequence = append(r.sequence, r.Header().Get("server"))
 	r.status = append(r.status, statusCode)
+	for _, cookie := range r.Result().Cookies() {
+		r.cookies[cookie.Name] = cookie
+	}
 	r.ResponseRecorder.WriteHeader(statusCode)
 }

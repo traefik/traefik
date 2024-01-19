@@ -1,0 +1,83 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[api]
+  insecure = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[tracing]
+  servicename = "tracing"
+  sampleRate = 1.0
+{{if .IsHTTP}}
+  [tracing.otlp.http]
+    endpoint = "http://{{.IP}}:4318"
+{{else}}
+  [tracing.otlp.grpc]
+    endpoint = "{{.IP}}:4317"
+    insecure = true
+{{end}}
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router0]
+    Service = "service0"
+    Middlewares = []
+    Rule = "Path(`/basic`)"
+  [http.routers.router1]
+    Service = "service1"
+    Middlewares = ["retry", "ratelimit-1"]
+    Rule = "Path(`/ratelimit`)"
+  [http.routers.router2]
+    Service = "service2"
+    Middlewares = ["retry"]
+    Rule = "Path(`/retry`)"
+  [http.routers.router3]
+    Service = "service3"
+    Middlewares = ["retry", "basic-auth"]
+    Rule = "Path(`/auth`)"
+
+[http.middlewares]
+  [http.middlewares.retry.retry]
+    attempts = 3
+  [http.middlewares.basic-auth.basicAuth]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  [http.middlewares.ratelimit-1.rateLimit]
+    average = 1
+    burst = 2
+
+[http.services]
+  [http.services.service0]
+    [http.services.service0.loadBalancer]
+      passHostHeader = true
+      [[http.services.service0.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"
+
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      passHostHeader = true
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"
+
+  [http.services.service2]
+    [http.services.service2.loadBalancer]
+      passHostHeader = true
+      [[http.services.service2.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"
+
+  [http.services.service3]
+    [http.services.service3.loadBalancer]
+      passHostHeader = true
+      [[http.services.service3.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"

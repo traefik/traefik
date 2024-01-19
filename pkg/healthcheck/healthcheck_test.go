@@ -18,6 +18,59 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
+const delta float64 = 1e-10
+
+func TestNewServiceHealthChecker_durations(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      *dynamic.ServerHealthCheck
+		expInterval time.Duration
+		expTimeout  time.Duration
+	}{
+		{
+			desc:        "default values",
+			config:      &dynamic.ServerHealthCheck{},
+			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
+			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+		},
+		{
+			desc: "out of range values",
+			config: &dynamic.ServerHealthCheck{
+				Interval: ptypes.Duration(-time.Second),
+				Timeout:  ptypes.Duration(-time.Second),
+			},
+			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
+			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+		},
+		{
+			desc: "custom durations",
+			config: &dynamic.ServerHealthCheck{
+				Interval: ptypes.Duration(time.Second * 10),
+				Timeout:  ptypes.Duration(time.Second * 5),
+			},
+			expInterval: time.Second * 10,
+			expTimeout:  time.Second * 5,
+		},
+		{
+			desc: "interval shorter than timeout",
+			config: &dynamic.ServerHealthCheck{
+				Interval: ptypes.Duration(time.Second),
+				Timeout:  ptypes.Duration(time.Second * 5),
+			},
+			expInterval: time.Second,
+			expTimeout:  time.Second * 5,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, http.DefaultTransport, nil)
+			assert.Equal(t, test.expInterval, healthChecker.interval)
+			assert.Equal(t, test.expTimeout, healthChecker.timeout)
+		})
+	}
+}
+
 func TestServiceHealthChecker_newRequest(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -397,8 +450,8 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
-			assert.Equal(t, test.expGaugeValue, gauge.GaugeValue, "ServerUp Gauge")
-			assert.Equal(t, serviceInfo.GetAllStatus(), map[string]string{targetURL.String(): test.targetStatus})
+			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
+			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
 }

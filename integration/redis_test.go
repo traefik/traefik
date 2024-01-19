@@ -8,52 +8,63 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	"github.com/kvtools/redis"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
-	checker "github.com/vdemeester/shakers"
 )
 
 // Redis test suites.
 type RedisSuite struct {
 	BaseSuite
-	kvClient  store.Store
-	redisAddr string
+	kvClient       store.Store
+	redisEndpoints []string
 }
 
-func (s *RedisSuite) setupStore(c *check.C) {
-	s.createComposeProject(c, "redis")
-	s.composeUp(c)
+func TestRedisSuite(t *testing.T) {
+	suite.Run(t, new(RedisSuite))
+}
 
-	s.redisAddr = net.JoinHostPort(s.getComposeServiceIP(c, "redis"), "6379")
+func (s *RedisSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("redis")
+	s.composeUp()
+
+	s.redisEndpoints = []string{}
+	s.redisEndpoints = append(s.redisEndpoints, net.JoinHostPort(s.getComposeServiceIP("redis"), "6379"))
 
 	kv, err := valkeyrie.NewStore(
 		context.Background(),
 		redis.StoreName,
-		[]string{s.redisAddr},
+		s.redisEndpoints,
 		&redis.Config{},
 	)
-	if err != nil {
-		c.Fatal("Cannot create store redis")
-	}
+	require.NoError(s.T(), err, "Cannot create store redis")
+
 	s.kvClient = kv
 
 	// wait for redis
 	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
+func (s *RedisSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
 
-	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{s.redisAddr})
-	defer os.Remove(file)
+func (s *RedisSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/redis/simple.toml", struct{ RedisAddress string }{
+		RedisAddress: strings.Join(s.redisEndpoints, ","),
+	})
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -102,39 +113,35 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 
 	for k, v := range data {
 		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains(`"striper@redis":`, `"compressor@redis":`, `"srvcA@redis":`, `"srvcB@redis":`),
 	)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	got, err := json.MarshalIndent(obtained, "", "  ")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")
 
 	if *updateExpected {
 		err = os.WriteFile(expectedJSON, got, 0o666)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	expected, err := os.ReadFile(expectedJSON)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if !bytes.Equal(expected, got) {
 		diff := difflib.UnifiedDiff{
@@ -146,7 +153,6 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		c.Assert(err, checker.IsNil)
-		c.Error(text)
+		require.NoError(s.T(), err, text)
 	}
 }

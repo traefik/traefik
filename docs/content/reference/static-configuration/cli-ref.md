@@ -177,6 +177,12 @@ Trust all. (Default: ```false```)
 `--entrypoints.<name>.proxyprotocol.trustedips`:  
 Trust only selected IPs.
 
+`--entrypoints.<name>.transport.keepalivemaxrequests`:  
+Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
+
+`--entrypoints.<name>.transport.keepalivemaxtime`:  
+Maximum duration before closing a keep-alive connection. (Default: ```0```)
+
 `--entrypoints.<name>.transport.lifecycle.gracetimeout`:  
 Duration to give active requests a chance to finish before Traefik stops. (Default: ```10```)
 
@@ -194,9 +200,6 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
-
-`--experimental.http3`:  
-Enable HTTP3. (Default: ```false```)
 
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
@@ -217,7 +220,7 @@ plugin's version.
 Periodically check if a new version has been released. (Default: ```true```)
 
 `--global.sendanonymoususage`:  
-Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
+Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default. (Default: ```false```)
 
 `--hostresolver`:  
 Enable CNAME Flattening. (Default: ```false```)
@@ -688,7 +691,7 @@ Kubernetes namespaces.
 Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetescrd.token`:  
-Kubernetes bearer token (not needed for in-cluster client).
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
 
 `--providers.kubernetesgateway`:  
 Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
@@ -709,7 +712,7 @@ Kubernetes namespaces.
 Kubernetes refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesgateway.token`:  
-Kubernetes bearer token (not needed for in-cluster client).
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
 
 `--providers.kubernetesingress`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
@@ -751,7 +754,7 @@ Kubernetes namespaces.
 Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesingress.token`:  
-Kubernetes bearer token (not needed for in-cluster client).
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
 
 `--providers.nomad`:  
 Enable Nomad backend with default settings. (Default: ```false```)
@@ -821,6 +824,27 @@ Password for authentication.
 
 `--providers.redis.rootkey`:  
 Root key used for KV store. (Default: ```traefik```)
+
+`--providers.redis.sentinel.latencystrategy`:  
+Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.mastername`:  
+Name of the master.
+
+`--providers.redis.sentinel.password`:  
+Password for Sentinel authentication.
+
+`--providers.redis.sentinel.randomstrategy`:  
+Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.replicastrategy`:  
+Defines whether to route all commands to replica nodes (mutually exclusive with LatencyStrategy and RandomStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.usedisconnectedreplicas`:  
+Use replicas disconnected with master when cannot get connected replicas. (Default: ```false```)
+
+`--providers.redis.sentinel.username`:  
+Username for Sentinel authentication.
 
 `--providers.redis.tls.ca`:  
 TLS CA
@@ -963,170 +987,50 @@ Defines the allowed SPIFFE trust domain.
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
-`--tracing.datadog`:  
-Settings for Datadog. (Default: ```false```)
+`--tracing.globalattributes.<name>`:  
+Defines additional attributes (key:value) on all spans.
 
-`--tracing.datadog.bagageprefixheadername`:  
-Sets the header name prefix used to store baggage items in a map.
-
-`--tracing.datadog.debug`:  
-Enables Datadog debug. (Default: ```false```)
-
-`--tracing.datadog.globaltags.<name>`:  
-Sets a list of key:value tags on all spans.
-
-`--tracing.datadog.localagenthostport`:  
-Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
-
-`--tracing.datadog.localagentsocket`:  
-Sets the socket for the Datadog Agent.
-
-`--tracing.datadog.parentidheadername`:  
-Sets the header name used to store the parent ID.
-
-`--tracing.datadog.prioritysampling`:  
-Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
-
-`--tracing.datadog.samplingpriorityheadername`:  
-Sets the header name used to store the sampling priority.
-
-`--tracing.datadog.traceidheadername`:  
-Sets the header name used to store the trace ID.
-
-`--tracing.elastic`:  
-Settings for Elastic. (Default: ```false```)
-
-`--tracing.elastic.secrettoken`:  
-Sets the token used to connect to Elastic APM Server.
-
-`--tracing.elastic.serverurl`:  
-Sets the URL of the Elastic APM server.
-
-`--tracing.elastic.serviceenvironment`:  
-Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
-
-`--tracing.haystack`:  
-Settings for Haystack. (Default: ```false```)
-
-`--tracing.haystack.baggageprefixheadername`:  
-Sets the header name prefix used to store baggage items in a map.
-
-`--tracing.haystack.globaltag`:  
-Sets a key:value tag on all spans.
-
-`--tracing.haystack.localagenthost`:  
-Sets the Haystack Agent host. (Default: ```127.0.0.1```)
-
-`--tracing.haystack.localagentport`:  
-Sets the Haystack Agent port. (Default: ```35000```)
-
-`--tracing.haystack.parentidheadername`:  
-Sets the header name used to store the parent ID.
-
-`--tracing.haystack.spanidheadername`:  
-Sets the header name used to store the span ID.
-
-`--tracing.haystack.traceidheadername`:  
-Sets the header name used to store the trace ID.
-
-`--tracing.instana`:  
-Settings for Instana. (Default: ```false```)
-
-`--tracing.instana.enableautoprofile`:  
-Enables automatic profiling for the Traefik process. (Default: ```false```)
-
-`--tracing.instana.localagenthost`:  
-Sets the Instana Agent host.
-
-`--tracing.instana.localagentport`:  
-Sets the Instana Agent port. (Default: ```42699```)
-
-`--tracing.instana.loglevel`:  
-Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
-
-`--tracing.jaeger`:  
-Settings for Jaeger. (Default: ```false```)
-
-`--tracing.jaeger.collector.endpoint`:  
-Instructs reporter to send spans to jaeger-collector at this URL.
-
-`--tracing.jaeger.collector.password`:  
-Password for basic http authentication when sending spans to jaeger-collector.
-
-`--tracing.jaeger.collector.user`:  
-User for basic http authentication when sending spans to jaeger-collector.
-
-`--tracing.jaeger.disableattemptreconnecting`:  
-Disables the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
-
-`--tracing.jaeger.gen128bit`:  
-Generates 128 bits span IDs. (Default: ```false```)
-
-`--tracing.jaeger.localagenthostport`:  
-Sets the Jaeger Agent host:port. (Default: ```127.0.0.1:6831```)
-
-`--tracing.jaeger.propagation`:  
-Sets the propagation format (jaeger/b3). (Default: ```jaeger```)
-
-`--tracing.jaeger.samplingparam`:  
-Sets the sampling parameter. (Default: ```1.000000```)
-
-`--tracing.jaeger.samplingserverurl`:  
-Sets the sampling server URL. (Default: ```http://localhost:5778/sampling```)
-
-`--tracing.jaeger.samplingtype`:  
-Sets the sampling type. (Default: ```const```)
-
-`--tracing.jaeger.tracecontextheadername`:  
-Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
-
-`--tracing.opentelemetry`:  
-Settings for OpenTelemetry. (Default: ```false```)
-
-`--tracing.opentelemetry.address`:  
-Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
-
-`--tracing.opentelemetry.grpc`:  
-gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
-
-`--tracing.opentelemetry.headers.<name>`:  
+`--tracing.headers.<name>`:  
 Defines additional headers to be sent with the payloads.
 
-`--tracing.opentelemetry.insecure`:  
+`--tracing.otlp`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--tracing.otlp.grpc.endpoint`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`--tracing.otlp.grpc.insecure`:  
 Disables client transport security for the exporter. (Default: ```false```)
 
-`--tracing.opentelemetry.path`:  
-Sets the URL path of the collector endpoint.
-
-`--tracing.opentelemetry.tls.ca`:  
+`--tracing.otlp.grpc.tls.ca`:  
 TLS CA
 
-`--tracing.opentelemetry.tls.cert`:  
+`--tracing.otlp.grpc.tls.cert`:  
 TLS cert
 
-`--tracing.opentelemetry.tls.insecureskipverify`:  
+`--tracing.otlp.grpc.tls.insecureskipverify`:  
 TLS insecure skip verify (Default: ```false```)
 
-`--tracing.opentelemetry.tls.key`:  
+`--tracing.otlp.grpc.tls.key`:  
 TLS key
+
+`--tracing.otlp.http.endpoint`:  
+Sets the HTTP endpoint (scheme://host:port/v1/traces) of the collector. (Default: ```localhost:4318```)
+
+`--tracing.otlp.http.tls.ca`:  
+TLS CA
+
+`--tracing.otlp.http.tls.cert`:  
+TLS cert
+
+`--tracing.otlp.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--tracing.otlp.http.tls.key`:  
+TLS key
+
+`--tracing.samplerate`:  
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
-
-`--tracing.spannamelimit`:  
-Set the maximum character limit for Span names (default 0 = no limit). (Default: ```0```)
-
-`--tracing.zipkin`:  
-Settings for Zipkin. (Default: ```false```)
-
-`--tracing.zipkin.httpendpoint`:  
-Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
-
-`--tracing.zipkin.id128bit`:  
-Uses 128 bits root span IDs. (Default: ```true```)
-
-`--tracing.zipkin.samespan`:  
-Uses SameSpan RPC style traces. (Default: ```false```)
-
-`--tracing.zipkin.samplerate`:  
-Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

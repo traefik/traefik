@@ -18,4 +18,6 @@ Reported vulnerabilities can be found on
 ## Report a Vulnerability
 
 We want to keep Traefik safe for everyone.
-If you've discovered a security vulnerability in Traefik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).
+If you've discovered a security vulnerability in Traefik,
+we appreciate your help in disclosing it to us in a responsible manner,
+by creating a [security advisory](https://github.com/traefik/traefik/security/advisories).

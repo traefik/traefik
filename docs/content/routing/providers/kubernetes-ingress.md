@@ -351,6 +351,14 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
     ```
 
+??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
+    ```
+
 ## Path Types on Kubernetes 1.18+
 
 If the Kubernetes cluster version is 1.18+,
@@ -864,4 +872,4 @@ This will allow users to create a "default router" that will match all unmatched
 
     To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

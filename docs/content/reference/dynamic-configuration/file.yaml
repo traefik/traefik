@@ -1,3 +1,5 @@
+## CODE GENERATED AUTOMATICALLY
+## THIS FILE MUST NOT BE EDITED BY HAND
 http:
   routers:
     Router0:
@@ -46,6 +48,11 @@ http:
               - foobar
   services:
     Service01:
+      failover:
+        service: foobar
+        fallback: foobar
+        healthCheck: {}
+    Service02:
       loadBalancer:
         sticky:
           cookie:
@@ -53,6 +60,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            maxAge: 42
         servers:
           - url: foobar
           - url: foobar
@@ -74,19 +82,18 @@ http:
         responseForwarding:
           flushInterval: 42s
         serversTransport: foobar
-    Service02:
+    Service03:
       mirroring:
         service: foobar
         maxBodySize: 42
-        healthCheck: {}
         mirrors:
           - name: foobar
             percent: 42
           - name: foobar
             percent: 42
-    Service03:
-      weighted:
         healthCheck: {}
+    Service04:
+      weighted:
         services:
           - name: foobar
             weight: 42
@@ -98,16 +105,13 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
-    Service04:
-      failover:
-        service: foobar
-        fallback: foobar
+            maxAge: 42
         healthCheck: {}
   middlewares:
-    Middleware00:
+    Middleware01:
       addPrefix:
         prefix: foobar
-    Middleware01:
+    Middleware02:
       basicAuth:
         users:
           - foobar
@@ -116,33 +120,36 @@ http:
         realm: foobar
         removeHeader: true
         headerField: foobar
-    Middleware02:
+    Middleware03:
       buffering:
         maxRequestBodyBytes: 42
         memRequestBodyBytes: 42
         maxResponseBodyBytes: 42
         memResponseBodyBytes: 42
         retryExpression: foobar
-    Middleware03:
+    Middleware04:
       chain:
         middlewares:
           - foobar
           - foobar
-    Middleware04:
+    Middleware05:
       circuitBreaker:
         expression: foobar
         checkPeriod: 42s
         fallbackDuration: 42s
         recoveryDuration: 42s
-    Middleware05:
+    Middleware06:
       compress:
         excludedContentTypes:
           - foobar
           - foobar
+        includedContentTypes:
+          - foobar
+          - foobar
         minResponseBodyBytes: 42
-    Middleware06:
-      contentType: {}
     Middleware07:
+      contentType: {}
+    Middleware08:
       digestAuth:
         users:
           - foobar
@@ -151,14 +158,14 @@ http:
         removeHeader: true
         realm: foobar
         headerField: foobar
-    Middleware08:
+    Middleware09:
       errors:
         status:
           - foobar
           - foobar
         service: foobar
         query: foobar
-    Middleware09:
+    Middleware10:
       forwardAuth:
         address: foobar
         tls:
@@ -174,7 +181,15 @@ http:
         authRequestHeaders:
           - foobar
           - foobar
-    Middleware10:
+        addAuthCookiesToResponse:
+          - foobar
+          - foobar
+    Middleware11:
+      grpcWeb:
+        allowOrigins:
+          - foobar
+          - foobar
+    Middleware12:
       headers:
         customRequestHeaders:
           name0: foobar
@@ -223,7 +238,7 @@ http:
         referrerPolicy: foobar
         permissionsPolicy: foobar
         isDevelopment: true
-    Middleware11:
+    Middleware13:
       ipAllowList:
         sourceRange:
           - foobar
@@ -233,7 +248,18 @@ http:
           excludedIPs:
             - foobar
             - foobar
-    Middleware12:
+        rejectStatusCode: 42
+    Middleware14:
+      ipWhiteList:
+        sourceRange:
+          - foobar
+          - foobar
+        ipStrategy:
+          depth: 42
+          excludedIPs:
+            - foobar
+            - foobar
+    Middleware15:
       inFlightReq:
         amount: 42
         sourceCriterion:
@@ -244,13 +270,14 @@ http:
               - foobar
           requestHeaderName: foobar
           requestHost: true
-    Middleware13:
+    Middleware16:
       passTLSClientCert:
         pem: true
         info:
           notAfter: true
           notBefore: true
           sans: true
+          serialNumber: true
           subject:
             country: true
             province: true
@@ -268,12 +295,15 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-          serialNumber: true
-    Middleware14:
+    Middleware17:
       plugin:
-        PluginConf:
-          foo: bar
-    Middleware15:
+        PluginConf0:
+          name0: foobar
+          name1: foobar
+        PluginConf1:
+          name0: foobar
+          name1: foobar
+    Middleware18:
       rateLimit:
         average: 42
         period: 42s
@@ -286,40 +316,35 @@ http:
               - foobar
           requestHeaderName: foobar
           requestHost: true
-    Middleware16:
+    Middleware19:
       redirectRegex:
         regex: foobar
         replacement: foobar
         permanent: true
-    Middleware17:
+    Middleware20:
       redirectScheme:
         scheme: foobar
         port: foobar
         permanent: true
-    Middleware18:
+    Middleware21:
       replacePath:
         path: foobar
-    Middleware19:
+    Middleware22:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware20:
+    Middleware23:
       retry:
         attempts: 42
         initialInterval: 42s
-    Middleware21:
+    Middleware24:
       stripPrefix:
         prefixes:
           - foobar
           - foobar
-    Middleware22:
+    Middleware25:
       stripPrefixRegex:
         regex:
-          - foobar
-          - foobar
-    Middleware23:
-      grpcWeb:
-        allowOrigins:
           - foobar
           - foobar
   serversTransports:
@@ -348,7 +373,6 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
-
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -374,7 +398,6 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
-
 tcp:
   routers:
     TCPRouter0:
@@ -426,7 +449,6 @@ tcp:
   services:
     TCPService01:
       loadBalancer:
-        serversTransport: foobar
         proxyProtocol:
           version: 42
         servers:
@@ -434,6 +456,7 @@ tcp:
             tls: true
           - address: foobar
             tls: true
+        serversTransport: foobar
     TCPService02:
       weighted:
         services:
@@ -442,18 +465,23 @@ tcp:
           - name: foobar
             weight: 42
   middlewares:
-    TCPMiddleware00:
+    TCPMiddleware01:
       ipAllowList:
         sourceRange:
           - foobar
           - foobar
-    TCPMiddleware01:
+    TCPMiddleware02:
+      ipWhiteList:
+        sourceRange:
+          - foobar
+          - foobar
+    TCPMiddleware03:
       inFlightConn:
         amount: 42
   serversTransports:
     TCPServersTransport0:
-      dialTimeout: 42s
       dialKeepAlive: 42s
+      dialTimeout: 42s
       terminationDelay: 42s
       tls:
         serverName: foobar
@@ -467,14 +495,14 @@ tcp:
           - certFile: foobar
             keyFile: foobar
         peerCertURI: foobar
-      spiffe:
-        ids:
-          - foobar
-          - foobar
-        trustDomain: foobar
+        spiffe:
+          ids:
+            - foobar
+            - foobar
+          trustDomain: foobar
     TCPServersTransport1:
-      dialTimeout: 42s
       dialKeepAlive: 42s
+      dialTimeout: 42s
       terminationDelay: 42s
       tls:
         serverName: foobar
@@ -488,11 +516,11 @@ tcp:
           - certFile: foobar
             keyFile: foobar
         peerCertURI: foobar
-      spiffe:
-        ids:
-          - foobar
-          - foobar
-        trustDomain: foobar
+        spiffe:
+          ids:
+            - foobar
+            - foobar
+          trustDomain: foobar
 udp:
   routers:
     UDPRouter0:

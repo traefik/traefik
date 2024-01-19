@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -20,10 +20,11 @@ const (
 
 // ipAllowLister is a middleware that provides Checks of the Requesting IP against a set of Allowlists.
 type ipAllowLister struct {
-	next        http.Handler
-	allowLister *ip.Checker
-	strategy    ip.Strategy
-	name        string
+	next             http.Handler
+	allowLister      *ip.Checker
+	strategy         ip.Strategy
+	name             string
+	rejectStatusCode int
 }
 
 // New builds a new IPAllowLister given a list of CIDR-Strings to allow.
@@ -33,6 +34,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 
 	if len(config.SourceRange) == 0 {
 		return nil, errors.New("sourceRange is empty, IPAllowLister not created")
+	}
+
+	rejectStatusCode := config.RejectStatusCode
+	// If RejectStatusCode is not given, default to Forbidden (403).
+	if rejectStatusCode == 0 {
+		rejectStatusCode = http.StatusForbidden
+	} else if http.StatusText(rejectStatusCode) == "" {
+		return nil, fmt.Errorf("invalid HTTP status code %d", rejectStatusCode)
 	}
 
 	checker, err := ip.NewChecker(config.SourceRange)
@@ -48,15 +57,16 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 	logger.Debug().Msgf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)
 
 	return &ipAllowLister{
-		strategy:    strategy,
-		allowLister: checker,
-		next:        next,
-		name:        name,
+		strategy:         strategy,
+		allowLister:      checker,
+		next:             next,
+		name:             name,
+		rejectStatusCode: rejectStatusCode,
 	}, nil
 }
 
-func (al *ipAllowLister) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return al.name, tracing.SpanKindNoneEnum
+func (al *ipAllowLister) GetTracingInformation() (string, string, trace.SpanKind) {
+	return al.name, typeName, trace.SpanKindInternal
 }
 
 func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -68,8 +78,8 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug().Msg(msg)
-		tracing.SetErrorWithEvent(req, msg)
-		reject(ctx, rw)
+		tracing.SetStatusErrorf(req.Context(), msg)
+		reject(ctx, al.rejectStatusCode, rw)
 		return
 	}
 	logger.Debug().Msgf("Accepting IP %s", clientIP)
@@ -77,9 +87,7 @@ func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	al.next.ServeHTTP(rw, req)
 }
 
-func reject(ctx context.Context, rw http.ResponseWriter) {
-	statusCode := http.StatusForbidden
-
+func reject(ctx context.Context, statusCode int, rw http.ResponseWriter) {
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write([]byte(http.StatusText(statusCode)))
 	if err != nil {

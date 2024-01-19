@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/denyrouterrecursion"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
@@ -79,7 +80,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		}
 
 		handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
 		}).Then(handler)
 		if err != nil {
 			logger.Error().Err(err).Send()
@@ -197,17 +198,20 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	tHandler := func(next http.Handler) (http.Handler, error) {
-		return tracing.NewForwarder(ctx, routerName, router.Service, next), nil
-	}
-
 	chain := alice.New()
 
+	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
+
 	if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service)))
+		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service))
+		chain = chain.Append(tracing.WrapMiddleware(ctx, metricsHandler))
 	}
 
-	return chain.Extend(*mHandler).Append(tHandler).Then(sHandler)
+	if router.DefaultRule {
+		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
+	}
+
+	return chain.Extend(*mHandler).Then(sHandler)
 }
 
 // BuildDefaultHTTPRouter creates a default HTTP router.

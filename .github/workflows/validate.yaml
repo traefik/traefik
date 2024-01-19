@@ -6,40 +6,25 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.20'
-  GOLANGCI_LINT_VERSION: v1.53.1
-  MISSSPELL_VERSION: v0.4.0
-  IN_DOCKER: ""
+  GO_VERSION: '1.21'
+  GOLANGCI_LINT_VERSION: v1.55.2
+  MISSSPELL_VERSION: v0.4.1
 
 jobs:
 
   validate:
     runs-on: ubuntu-20.04
 
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
-
     steps:
-      - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      - name: Cache Go modules
-        uses: actions/cache@v3
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-validate-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-validate-go-
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Install golangci-lint ${{ env.GOLANGCI_LINT_VERSION }}
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
@@ -56,34 +41,20 @@ jobs:
   validate-generate:
     runs-on: ubuntu-20.04
 
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
-
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          path: go/src/github.com/traefik/traefik
-          fetch-depth: 0
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-validate-generate-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-validate-generate-go-
-
       - name: go generate
         run: |
-          go generate
+          make generate
           git diff --exit-code
 
       - name: go mod tidy
