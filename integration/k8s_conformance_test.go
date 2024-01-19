@@ -70,9 +70,7 @@ func (s *K8sConformanceSuite) TearDownSuite() {
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",
 		"./fixtures/k8s/config.skip/k3s.log",
-		"./fixtures/k8s/coredns.yaml",
 		"./fixtures/k8s/rolebindings.yaml",
-		"./fixtures/k8s/traefik.yaml",
 		"./fixtures/k8s/ccm.yaml",
 	}
 
@@ -191,10 +189,10 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 
 	rawReport, err := yaml.Marshal(report)
 	require.NoError(s.T(), err)
-	s.T().Logf("Conformance report:\n%s", string(rawReport))
+	log.Info().Msgf("Conformance report:\n%s", string(rawReport))
 
 	require.NoError(s.T(), os.MkdirAll("./conformance-reports", 0o755))
 	outFile := filepath.Join("conformance-reports", fmt.Sprintf("traefik-traefik-%d.yaml", time.Now().UnixNano()))
 	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
-	s.T().Logf("Report written to: %s", outFile)
+	log.Info().Msgf("Report written to: %s", outFile)
 }
