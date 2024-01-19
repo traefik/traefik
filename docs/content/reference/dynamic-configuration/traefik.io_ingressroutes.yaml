@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: ingressroutes.traefik.io
 spec:
   group: traefik.io
@@ -162,6 +160,12 @@ spec:
                                       can be accessed by client-side APIs, such as
                                       JavaScript.
                                     type: boolean
+                                  maxAge:
+                                    description: MaxAge indicates the number of seconds
+                                      until the cookie expires. When set to a negative
+                                      number, the cookie expires immediately. When
+                                      set to zero, the cookie never expires.
+                                    type: integer
                                   name:
                                     description: Name defines the Cookie name.
                                     type: string
@@ -267,9 +271,3 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

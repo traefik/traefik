@@ -18,7 +18,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -259,9 +258,7 @@ func TestHandler_Overview(t *testing.T) {
 				Metrics: &types.Metrics{
 					Prometheus: &types.Prometheus{},
 				},
-				Tracing: &static.Tracing{
-					Jaeger: &jaeger.Config{},
-				},
+				Tracing: &static.Tracing{},
 			},
 			confDyn: runtime.Configuration{},
 			expected: expected{
@@ -288,7 +285,7 @@ func TestHandler_Overview(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 

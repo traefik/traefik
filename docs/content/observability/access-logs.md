@@ -54,7 +54,7 @@ If the given format is unsupported, the default (CLF) is used instead.
 !!! info "Common Log Format"
 
     ```html
-    <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
+    <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <HTTP_status> <content-length> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
     ```
 
 ### `bufferingSize`
@@ -218,7 +218,7 @@ accessLog:
     | `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
     | `OriginDuration`        | The time taken (in nanoseconds) by the origin server ('upstream') to return its response.                                                                           |
     | `OriginContentSize`     | The content length specified by the origin server, or 0 if unspecified.                                                                                             |
-    | `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.     |
+    | `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent (0). |
     | `OriginStatusLine`      | `OriginStatus` + Status code explanation                                                                                                                            |
     | `DownstreamStatus`      | The HTTP status code returned to the client.                                                                                                                        |
     | `DownstreamStatusLine`  | `DownstreamStatus` + Status code explanation                                                                                                                        |

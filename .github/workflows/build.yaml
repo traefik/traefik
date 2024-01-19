@@ -6,9 +6,8 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.20'
+  GO_VERSION: '1.21'
   CGO_ENABLED: 0
-  IN_DOCKER: ""
 
 jobs:
 
@@ -17,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -39,38 +38,22 @@ jobs:
         os: [ ubuntu-20.04, macos-latest, windows-latest ]
     needs:
       - build-webui
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
     steps:
-      - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      - name: Cache Go modules
-        uses: actions/cache@v3
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            '%LocalAppData%\go-build'
-          key: ${{ runner.os }}-build-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-build-go-
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Artifact webui
         uses: actions/download-artifact@v2
         with:
           name: webui.tar.gz
-          path: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
       - name: Untar webui
         run: tar xvf webui.tar.gz

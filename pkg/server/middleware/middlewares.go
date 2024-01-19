@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/auth"
@@ -22,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcert"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter"
 	"github.com/traefik/traefik/v3/pkg/middlewares/redirect"
@@ -236,6 +238,18 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// IPWhiteList
+	if config.IPWhiteList != nil {
+		log.Warn().Msg("IPWhiteList is deprecated, please use IPAllowList instead.")
+
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+		}
+	}
+
 	// IPAllowList
 	if config.IPAllowList != nil {
 		if middleware != nil {
@@ -372,7 +386,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	return tracing.Wrap(ctx, middleware), nil
+	return tracing.WrapMiddleware(ctx, middleware), nil
 }
 
 func inSlice(element string, stack []string) bool {

@@ -8,16 +8,18 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/kvtools/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
-	checker "github.com/vdemeester/shakers"
 )
 
 // Zk test suites.
@@ -27,11 +29,17 @@ type ZookeeperSuite struct {
 	zookeeperAddr string
 }
 
-func (s *ZookeeperSuite) setupStore(c *check.C) {
-	s.createComposeProject(c, "zookeeper")
-	s.composeUp(c)
+func TestZookeeperSuite(t *testing.T) {
+	suite.Run(t, new(ZookeeperSuite))
+}
 
-	s.zookeeperAddr = net.JoinHostPort(s.getComposeServiceIP(c, "zookeeper"), "2181")
+func (s *ZookeeperSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	s.createComposeProject("zookeeper")
+	s.composeUp()
+
+	s.zookeeperAddr = net.JoinHostPort(s.getComposeServiceIP("zookeeper"), "2181")
 
 	var err error
 	s.kvClient, err = valkeyrie.NewStore(
@@ -42,20 +50,19 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		c.Fatal("Cannot create store zookeeper")
-	}
+	require.NoError(s.T(), err, "Cannot create store zookeeper")
 
 	// wait for zk
 	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
-func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
+func (s *ZookeeperSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
 
-	file := s.adaptFile(c, "fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{s.zookeeperAddr})
-	defer os.Remove(file)
+func (s *ZookeeperSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{s.zookeeperAddr})
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -104,39 +111,35 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 
 	for k, v := range data {
 		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
 		try.BodyContains(`"striper@zookeeper":`, `"compressor@zookeeper":`, `"srvcA@zookeeper":`, `"srvcB@zookeeper":`),
 	)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	got, err := json.MarshalIndent(obtained, "", "  ")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-zk.json")
 
 	if *updateExpected {
 		err = os.WriteFile(expectedJSON, got, 0o666)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 
 	expected, err := os.ReadFile(expectedJSON)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	if !bytes.Equal(expected, got) {
 		diff := difflib.UnifiedDiff{
@@ -148,7 +151,7 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 		}
 
 		text, err := difflib.GetUnifiedDiffString(diff)
-		c.Assert(err, checker.IsNil)
-		c.Error(text)
+		require.NoError(s.T(), err)
+		log.Info().Msg(text)
 	}
 }

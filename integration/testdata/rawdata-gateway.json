@@ -127,7 +127,7 @@
 						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -138,7 +138,7 @@
 			"status": "enabled",
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.4:80": "UP"
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"noop@internal": {

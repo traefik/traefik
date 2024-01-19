@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/mailgun/ttlmap"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 )
 
 const (
-	typeName   = "RateLimiterType"
+	typeName   = "RateLimiter"
 	maxSources = 65536
 )
 
@@ -122,8 +122,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return rl.name, tracing.SpanKindNoneEnum
+func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
+	return rl.name, typeName, trace.SpanKindInternal
 }
 
 func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -153,12 +153,14 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := rl.buckets.Set(source, bucket, rl.ttl); err != nil {
 		logger.Error().Err(err).Msg("Could not insert/update bucket")
+		tracing.SetStatusErrorf(req.Context(), "Could not insert/update bucket")
 		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
 
 	res := bucket.Reserve()
 	if !res.OK() {
+		tracing.SetStatusErrorf(req.Context(), "No bursty traffic allowed")
 		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
 		return
 	}

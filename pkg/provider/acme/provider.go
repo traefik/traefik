@@ -31,6 +31,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
+const resolverSuffix = ".acme"
+
 // ocspMustStaple enables OCSP stapling as from https://github.com/go-acme/lego/issues/270.
 var ocspMustStaple = false
 
@@ -86,7 +88,7 @@ type DNSChallenge struct {
 
 // HTTPChallenge contains HTTP challenge configuration.
 type HTTPChallenge struct {
-	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"  export:"true"`
+	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 }
 
 // TLSChallenge contains TLS challenge configuration.
@@ -132,7 +134,7 @@ func (p *Provider) ListenConfiguration(config dynamic.Configuration) {
 
 // Init for compatibility reason the BaseProvider implements an empty Init.
 func (p *Provider) Init() error {
-	logger := log.With().Str(logs.ProviderName, p.ResolverName+".acme").Logger()
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Logger()
 
 	if len(p.Configuration.Storage) == 0 {
 		return errors.New("unable to initialize ACME provider with no storage location for the certificates")
@@ -194,7 +196,7 @@ func (p *Provider) ThrottleDuration() time.Duration {
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, p.ResolverName+".acme").Str("acmeCA", p.Configuration.CAServer).
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Str("acmeCA", p.Configuration.CAServer).
 		Logger()
 	ctx := logger.WithContext(context.Background())
 
@@ -236,7 +238,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	p.clientMutex.Lock()
 	defer p.clientMutex.Unlock()
 
-	logger := log.With().Str(logs.ProviderName, p.ResolverName+".acme").Logger()
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Logger()
 
 	ctx := logger.WithContext(context.Background())
 
@@ -407,7 +409,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 }
 
 func (p *Provider) watchNewDomains(ctx context.Context) {
-	rootLogger := log.Ctx(ctx).With().Str(logs.ProviderName, p.ResolverName+".acme").Logger()
+	rootLogger := log.Ctx(ctx).With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Str("ACME CA", p.Configuration.CAServer).Logger()
 	ctx = rootLogger.WithContext(ctx)
 
 	p.pool.GoCtx(func(ctxPool context.Context) {
@@ -781,8 +783,8 @@ func (p *Provider) buildMessage() dynamic.Message {
 	for _, cert := range p.certificates {
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
-				CertFile: traefiktls.FileOrContent(cert.Certificate.Certificate),
-				KeyFile:  traefiktls.FileOrContent(cert.Key),
+				CertFile: types.FileOrContent(cert.Certificate.Certificate),
+				KeyFile:  types.FileOrContent(cert.Key),
 			},
 			Stores: []string{cert.Store},
 		}

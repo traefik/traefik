@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2023 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2024 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import (
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -44,9 +43,9 @@ type FakeTraefikServices struct {
 	ns   string
 }
 
-var traefikservicesResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "traefikservices"}
+var traefikservicesResource = v1alpha1.SchemeGroupVersion.WithResource("traefikservices")
 
-var traefikservicesKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "TraefikService"}
+var traefikservicesKind = v1alpha1.SchemeGroupVersion.WithKind("TraefikService")
 
 // Get takes name of the traefikService, and returns the corresponding traefikService object, and an error if there is any.
 func (c *FakeTraefikServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
@@ -113,7 +112,7 @@ func (c *FakeTraefikServices) Update(ctx context.Context, traefikService *v1alph
 // Delete takes name of the traefikService and deletes it. Returns an error if one occurs.
 func (c *FakeTraefikServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(traefikservicesResource, c.ns, name), &v1alpha1.TraefikService{})
+		Invokes(testing.NewDeleteActionWithOptions(traefikservicesResource, c.ns, name, opts), &v1alpha1.TraefikService{})
 
 	return err
 }

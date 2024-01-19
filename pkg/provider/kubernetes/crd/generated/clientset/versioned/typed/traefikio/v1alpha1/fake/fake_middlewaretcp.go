@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2023 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2024 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import (
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -44,9 +43,9 @@ type FakeMiddlewareTCPs struct {
 	ns   string
 }
 
-var middlewaretcpsResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "middlewaretcps"}
+var middlewaretcpsResource = v1alpha1.SchemeGroupVersion.WithResource("middlewaretcps")
 
-var middlewaretcpsKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "MiddlewareTCP"}
+var middlewaretcpsKind = v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCP")
 
 // Get takes name of the middlewareTCP, and returns the corresponding middlewareTCP object, and an error if there is any.
 func (c *FakeMiddlewareTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MiddlewareTCP, err error) {
@@ -113,7 +112,7 @@ func (c *FakeMiddlewareTCPs) Update(ctx context.Context, middlewareTCP *v1alpha1
 // Delete takes name of the middlewareTCP and deletes it. Returns an error if one occurs.
 func (c *FakeMiddlewareTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(middlewaretcpsResource, c.ns, name), &v1alpha1.MiddlewareTCP{})
+		Invokes(testing.NewDeleteActionWithOptions(middlewaretcpsResource, c.ns, name, opts), &v1alpha1.MiddlewareTCP{})
 
 	return err
 }
