@@ -61,7 +61,7 @@ func (s *AccessLogSuite) TestAccessLog() {
 	ensureWorkingDirectoryIsClean()
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	defer func() {
 		traefikLog, err := os.ReadFile(traefikTestLogFile)
@@ -130,7 +130,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -194,7 +194,7 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -304,7 +304,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -410,7 +410,7 @@ func (s *AccessLogSuite) TestAccessLogRateLimit() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -454,7 +454,7 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.waitForTraefik("server1")
 
@@ -494,7 +494,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendAllowlist() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -534,7 +534,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -575,7 +575,7 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -603,6 +603,56 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 	s.checkNoOtherTraefikProblems()
 }
 
+func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
+	ensureWorkingDirectoryIsClean()
+
+	file := s.adaptFile("fixtures/access_log/access_log_ping.toml", struct{}{})
+
+	// Start Traefik.
+	s.traefikCmd(withConfigFile(file))
+
+	defer func() {
+		traefikLog, err := os.ReadFile(traefikTestLogFile)
+		require.NoError(s.T(), err)
+		log.Info().Msg(string(traefikLog))
+	}()
+
+	// waitForTraefik makes at least one call to the rawdata api endpoint,
+	// but the logs for this endpoint are ignored in checkAccessLogOutput.
+	s.waitForTraefik("customPing")
+
+	s.checkStatsForLogFile()
+
+	// Verify Traefik started OK.
+	s.checkTraefikStarted()
+
+	// Make some requests on the internal ping router.
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/ping", nil)
+	require.NoError(s.T(), err)
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	require.NoError(s.T(), err)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	require.NoError(s.T(), err)
+
+	// Make some requests on the custom ping router.
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/ping", nil)
+	require.NoError(s.T(), err)
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	require.NoError(s.T(), err)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	require.NoError(s.T(), err)
+
+	// Verify access.log output as expected.
+	count := s.checkAccessLogOutput()
+
+	require.Equal(s.T(), 0, count)
+
+	// Verify no other Traefik problems.
+	s.checkNoOtherTraefikProblems()
+}
+
 func (s *AccessLogSuite) checkNoOtherTraefikProblems() {
 	traefikLog, err := os.ReadFile(traefikTestLogFile)
 	require.NoError(s.T(), err)
@@ -612,6 +662,8 @@ func (s *AccessLogSuite) checkNoOtherTraefikProblems() {
 }
 
 func (s *AccessLogSuite) checkAccessLogOutput() int {
+	s.T().Helper()
+
 	lines := s.extractLines()
 	count := 0
 	for i, line := range lines {
@@ -624,6 +676,8 @@ func (s *AccessLogSuite) checkAccessLogOutput() int {
 }
 
 func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue) int {
+	s.T().Helper()
+
 	lines := s.extractLines()
 	count := 0
 	for i, line := range lines {
@@ -641,6 +695,8 @@ func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue
 }
 
 func (s *AccessLogSuite) extractLines() []string {
+	s.T().Helper()
+
 	accessLog, err := os.ReadFile(traefikTestAccessLogFile)
 	require.NoError(s.T(), err)
 
@@ -656,6 +712,8 @@ func (s *AccessLogSuite) extractLines() []string {
 }
 
 func (s *AccessLogSuite) checkStatsForLogFile() {
+	s.T().Helper()
+
 	err := try.Do(1*time.Second, func() error {
 		if _, errStat := os.Stat(traefikTestLogFile); errStat != nil {
 			return fmt.Errorf("could not get stats for log file: %w", errStat)
@@ -671,6 +729,8 @@ func ensureWorkingDirectoryIsClean() {
 }
 
 func (s *AccessLogSuite) checkTraefikStarted() []byte {
+	s.T().Helper()
+
 	traefikLog, err := os.ReadFile(traefikTestLogFile)
 	require.NoError(s.T(), err)
 	if len(traefikLog) > 0 {
@@ -680,6 +740,8 @@ func (s *AccessLogSuite) checkTraefikStarted() []byte {
 }
 
 func (s *BaseSuite) CheckAccessLogFormat(line string, i int) {
+	s.T().Helper()
+
 	results, err := accesslog.ParseAccessLog(line)
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), results, 14)
@@ -692,6 +754,8 @@ func (s *BaseSuite) CheckAccessLogFormat(line string, i int) {
 }
 
 func (s *AccessLogSuite) checkAccessLogExactValues(line string, i int, v accessLogValue) {
+	s.T().Helper()
+
 	results, err := accesslog.ParseAccessLog(line)
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), results, 14)

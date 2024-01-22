@@ -9,21 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/metrics"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestRouterManager_Get(t *testing.T) {
@@ -319,10 +313,9 @@ func TestRouterManager_Get(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -337,126 +330,6 @@ func TestRouterManager_Get(t *testing.T) {
 			for key, value := range test.expected.RequestHeaders {
 				assert.Equal(t, value, req.Header.Get(key))
 			}
-		})
-	}
-}
-
-func TestAccessLog(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-
-	t.Cleanup(func() { server.Close() })
-
-	testCases := []struct {
-		desc              string
-		routersConfig     map[string]*dynamic.Router
-		serviceConfig     map[string]*dynamic.Service
-		middlewaresConfig map[string]*dynamic.Middleware
-		entryPoints       []string
-		expected          string
-	}{
-		{
-			desc: "apply routerName in accesslog (first match)",
-			routersConfig: map[string]*dynamic.Router{
-				"foo": {
-					EntryPoints: []string{"web"},
-					Service:     "foo-service",
-					Rule:        "Host(`foo.bar`)",
-				},
-				"bar": {
-					EntryPoints: []string{"web"},
-					Service:     "foo-service",
-					Rule:        "Host(`bar.foo`)",
-				},
-			},
-			serviceConfig: map[string]*dynamic.Service{
-				"foo-service": {
-					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{
-							{
-								URL: server.URL,
-							},
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web"},
-			expected:    "foo",
-		},
-		{
-			desc: "apply routerName in accesslog (second match)",
-			routersConfig: map[string]*dynamic.Router{
-				"foo": {
-					EntryPoints: []string{"web"},
-					Service:     "foo-service",
-					Rule:        "Host(`bar.foo`)",
-				},
-				"bar": {
-					EntryPoints: []string{"web"},
-					Service:     "foo-service",
-					Rule:        "Host(`foo.bar`)",
-				},
-			},
-			serviceConfig: map[string]*dynamic.Service{
-				"foo-service": {
-					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{
-							{
-								URL: server.URL,
-							},
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web"},
-			expected:    "bar",
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			rtConf := runtime.NewConfig(dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Services:    test.serviceConfig,
-					Routers:     test.routersConfig,
-					Middlewares: test.middlewaresConfig,
-				},
-			})
-
-			roundTripperManager := service.NewRoundTripperManager(nil)
-			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
-			tlsManager := tls.NewManager()
-
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
-
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
-
-			w := httptest.NewRecorder()
-			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
-
-			accesslogger, err := accesslog.NewHandler(&types.AccessLog{
-				Format: "json",
-			})
-			require.NoError(t, err)
-
-			reqHost := requestdecorator.New(nil)
-
-			chain := alice.New()
-			chain = chain.Append(capture.Wrap)
-			chain = chain.Append(accesslog.WrapHandler(accesslogger))
-			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
-
-				data := accesslog.GetLogData(req)
-				require.NotNil(t, data)
-
-				assert.Equal(t, test.expected, data.Core[accesslog.RouterName])
-			}))
-			require.NoError(t, err)
-
-			handler.ServeHTTP(w, req)
 		})
 	}
 }
@@ -788,11 +661,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, true)
@@ -866,10 +738,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -935,10 +806,9 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
