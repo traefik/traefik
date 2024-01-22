@@ -238,7 +238,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/url` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/servers/0/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
