@@ -25,6 +25,11 @@ func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 
 // logDeprecation prints deprecation hints and returns whether incompatible deprecated options need to be removed.
 func logDeprecation(traefikConfiguration interface{}, args []string) bool {
+	// This part doesn't handle properly a flag defined like this:
+	// --accesslog true
+	// where `true` could be considered as a new argument.
+	// This is not really an issue with the deprecation loader since it will filter the unknown nodes later in this
+	// function.
 	for i, arg := range args {
 		if !strings.Contains(arg, "=") {
 			args[i] = arg + "=true"
