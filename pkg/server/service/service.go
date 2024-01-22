@@ -319,7 +319,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
 
-		lb.Add(proxyName, proxy, nil)
+		lb.Add(proxyName, proxy, server.Weight)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)

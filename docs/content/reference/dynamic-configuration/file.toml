@@ -56,9 +56,11 @@
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
+          weight = 42
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
+          weight = 42
         [http.services.Service02.loadBalancer.healthCheck]
           scheme = "foobar"
           mode = "foobar"

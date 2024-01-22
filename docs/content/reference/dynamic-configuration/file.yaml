@@ -63,7 +63,9 @@ http:
             maxAge: 42
         servers:
           - url: foobar
+            weight: 42
           - url: foobar
+            weight: 42
         healthCheck:
           scheme: foobar
           mode: foobar
