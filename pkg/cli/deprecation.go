@@ -185,7 +185,7 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 	var incompatible bool
 	if c.Pilot != nil {
 		incompatible = true
-		logger.Error().Msg("Pilot configuration has been removed in v3, please remove all Marathon-related static configuration for Traefik to start." +
+		logger.Error().Msg("Pilot configuration has been removed in v3, please remove all Pilot-related static configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#pilot")
 	}
 
@@ -499,21 +499,21 @@ func (t *tracing) deprecationNotice(logger zerolog.Logger) bool {
 
 	if t.Zipkin != nil {
 		incompatible = true
-		logger.Error().Msg("Zipkin Tracing backend has been removed in v3, please remove all Jaeger-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Zipkin Tracing backend has been removed in v3, please remove all Zipkin-related Tracing static configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Datadog != nil {
 		incompatible = true
-		logger.Error().Msg("Datadog Tracing backend has been removed in v3, please remove all Jaeger-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Datadog Tracing backend has been removed in v3, please remove all Datadog-related Tracing static configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Instana != nil {
 		incompatible = true
-		logger.Error().Msg("Instana Tracing backend has been removed in v3, please remove all Jaeger-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Instana Tracing backend has been removed in v3, please remove all Instana-related Tracing static configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#tracing")
 	}
