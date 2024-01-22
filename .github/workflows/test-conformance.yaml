@@ -34,5 +34,9 @@ jobs:
       - name: Build binary
         run: make binary
 
+      - name: Setcap
+        run: |
+          sudo setcap 'cap_net_bind_service=+ep' dist/linux/amd64/traefik
+
       - name: K8s Gateway API conformance test
-        run: sudo make test-gateway-api-conformance
+        run: make test-gateway-api-conformance-ci

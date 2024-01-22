@@ -104,6 +104,12 @@ test-integration: binary
 test-gateway-api-conformance: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance=true $(TESTFLAGS)
 
+## TODO: Need to be fixed to work in all situations.
+## Run the conformance tests
+.PHONY: test-gateway-api-conformance-ci
+test-gateway-api-conformance-ci:
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance=true $(TESTFLAGS)
+
 ## Pull all Docker images to avoid timeout during integration tests
 .PHONY: pull-images
 pull-images:
