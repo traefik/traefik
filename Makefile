@@ -55,7 +55,7 @@ generate-webui: webui/static/index.html
 
 ## Generate code
 .PHONY: generate
-#? generate: Generate code
+#? generate: Generate code (Dynamic and Static configuration documentation reference files)
 generate:
 	go generate
 
