@@ -33,6 +33,9 @@ type Route struct {
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#priority
 	Priority int `json:"priority,omitempty"`
+	// Syntax defines the router's rule syntax.
+	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax
+	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of Service.
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
 	Services []Service `json:"services,omitempty"`
