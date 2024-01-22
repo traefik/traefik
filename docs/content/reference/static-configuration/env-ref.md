@@ -6,6 +6,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 `TRAEFIK_ACCESSLOG`:  
 Access log settings. (Default: ```false```)
 
+`TRAEFIK_ACCESSLOG_ADDINTERNALS`:  
+Enables access log for internal services (ping, dashboard, etc...). (Default: ```false```)
+
 `TRAEFIK_ACCESSLOG_BUFFERINGSIZE`:  
 Number of access log lines to process in a buffered way. (Default: ```0```)
 
@@ -260,6 +263,9 @@ Maximum size in megabytes of the log file before it gets rotated. (Default: ```0
 
 `TRAEFIK_LOG_NOCOLOR`:  
 When using the 'common' format, disables the colorized output. (Default: ```false```)
+
+`TRAEFIK_METRICS_ADDINTERNALS`:  
+Enables metrics for internal services (ping, dashboard, etc...). (Default: ```false```)
 
 `TRAEFIK_METRICS_DATADOG`:  
 Datadog metrics exporter type. (Default: ```false```)
@@ -986,6 +992,9 @@ Defines the allowed SPIFFE trust domain.
 
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
+
+`TRAEFIK_TRACING_ADDINTERNALS`:  
+Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
 
 `TRAEFIK_TRACING_GLOBALATTRIBUTES_<NAME>`:  
 Defines additional attributes (key:value) on all spans.
