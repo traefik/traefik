@@ -473,6 +473,7 @@ func Test_mergeConfiguration_defaultTCPEntryPoint(t *testing.T) {
 		Services: map[string]*dynamic.TCPService{
 			"service-1@provider-1": {},
 		},
+		Models:            map[string]*dynamic.TCPModel{},
 		ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 	}
 
