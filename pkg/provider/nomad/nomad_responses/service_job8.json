@@ -1,0 +1,19 @@
+[
+  {
+    "ID": "_nomad-task-fffd3d81-66ac-ed6d-d9a1-fc41b2a26d07-group-group1-job8-http",
+    "ServiceName": "job8",
+    "Namespace": "default",
+    "NodeID": "e262ecb6-a7ac-7c3e-4de0-06445559e596",
+    "Datacenter": "dc1",
+    "JobID": "job8",
+    "AllocID": "fffd3d81-66ac-ed6d-d9a1-fc41b2a26d07",
+    "Tags": [
+      "traefik.enable=true",
+      "traefik.udp.routers.job8.service=job8"
+    ],
+    "Address": "192.168.1.21",
+    "Port": 24268,
+    "CreateIndex": 11279,
+    "ModifyIndex": 11300
+  }
+]

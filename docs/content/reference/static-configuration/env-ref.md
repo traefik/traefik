@@ -759,6 +759,9 @@ Kubernetes bearer token (not needed for in-cluster client). It accepts either a 
 `TRAEFIK_PROVIDERS_NOMAD`:  
 Enable Nomad backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_NOMAD_ALLOWEMPTYSERVICES`:  
+Allow the creation of services without endpoints. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_NOMAD_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
 

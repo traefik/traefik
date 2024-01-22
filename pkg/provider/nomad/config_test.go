@@ -672,6 +672,39 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
+			desc: "empty service",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.enable=true",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
 			desc: "one service with rule label",
 			items: []item{
 				{
@@ -2592,6 +2625,289 @@ func Test_buildConfig(t *testing.T) {
 							},
 						},
 					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.Constraints = test.constraints
+			err := p.Init()
+			require.NoError(t, err)
+
+			ctx := context.TODO()
+			c := p.buildConfig(ctx, test.items)
+			require.Equal(t, test.expected, c)
+		})
+	}
+}
+
+func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		items       []item
+		constraints string
+		expected    *dynamic.Configuration
+	}{
+		{
+			desc: "empty service http",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.enable=true",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers:        nil,
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc: "empty service tcp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"test": {
+							Rule:    "HostSNI(`foobar`)",
+							Service: "Test",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc: "empty service udp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.udp.routers.test.entrypoints = udp",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"test": {
+							EntryPoints: []string{"udp"},
+							Service:     "Test",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.AllowEmptyServices = true
+			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.Constraints = test.constraints
+			err := p.Init()
+			require.NoError(t, err)
+
+			ctx := context.TODO()
+			c := p.buildConfig(ctx, test.items)
+			require.Equal(t, test.expected, c)
+		})
+	}
+}
+
+func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		items       []item
+		constraints string
+		expected    *dynamic.Configuration
+	}{
+		{
+			desc: "empty service http",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.enable=true",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc: "empty service tcp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc: "empty service udp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.udp.routers.test.entrypoints = udp",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
