@@ -46,7 +46,9 @@ spec:
                     type: integer
                 type: object
               ipAllowList:
-                description: IPAllowList defines the IPAllowList middleware configuration.
+                description: 'IPAllowList defines the IPAllowList middleware configuration.
+                  This middleware accepts/refuses connections based on the client
+                  IP. More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/'
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -57,7 +59,8 @@ spec:
                 type: object
               ipWhiteList:
                 description: 'IPWhiteList defines the IPWhiteList middleware configuration.
-                  Deprecated: please use IPAllowList instead.'
+                  This middleware accepts/refuses connections based on the client
+                  IP. Deprecated: please use IPAllowList instead. More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipwhitelist/'
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
