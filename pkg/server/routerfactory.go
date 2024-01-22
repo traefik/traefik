@@ -6,7 +6,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/router"
@@ -25,13 +24,12 @@ type RouterFactory struct {
 	entryPointsTCP []string
 	entryPointsUDP []string
 
-	managerFactory  *service.ManagerFactory
-	metricsRegistry metrics.Registry
+	managerFactory *service.ManagerFactory
 
 	pluginBuilder middleware.PluginsBuilder
 
-	chainBuilder *middleware.ChainBuilder
-	tlsManager   *tls.Manager
+	observabilityMgr *middleware.ObservabilityMgr
+	tlsManager       *tls.Manager
 
 	dialerManager *tcp.DialerManager
 
@@ -40,7 +38,7 @@ type RouterFactory struct {
 
 // NewRouterFactory creates a new RouterFactory.
 func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager,
-	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry, dialerManager *tcp.DialerManager,
+	observabilityMgr *middleware.ObservabilityMgr, pluginBuilder middleware.PluginsBuilder, dialerManager *tcp.DialerManager,
 ) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
@@ -58,14 +56,13 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:  entryPointsTCP,
-		entryPointsUDP:  entryPointsUDP,
-		managerFactory:  managerFactory,
-		metricsRegistry: metricsRegistry,
-		tlsManager:      tlsManager,
-		chainBuilder:    chainBuilder,
-		pluginBuilder:   pluginBuilder,
-		dialerManager:   dialerManager,
+		entryPointsTCP:   entryPointsTCP,
+		entryPointsUDP:   entryPointsUDP,
+		managerFactory:   managerFactory,
+		observabilityMgr: observabilityMgr,
+		tlsManager:       tlsManager,
+		pluginBuilder:    pluginBuilder,
+		dialerManager:    dialerManager,
 	}
 }
 
@@ -83,7 +80,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, f.pluginBuilder)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.chainBuilder, f.metricsRegistry, f.tlsManager)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager)
 
 	handlersNonTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, true)

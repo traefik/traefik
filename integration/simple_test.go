@@ -287,6 +287,10 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint() {
 
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyContains("_service_"))
 	require.NoError(s.T(), err)
+
+	// No metrics for internals.
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyNotContains("router=\"api@internal\"", "service=\"api@internal\""))
+	require.NoError(s.T(), err)
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService() {
