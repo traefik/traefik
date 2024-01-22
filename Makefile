@@ -22,19 +22,22 @@ LINT_EXECUTABLES = misspell shellcheck
 DOCKER_BUILD_PLATFORMS ?= linux/amd64,linux/arm64
 
 .PHONY: default
+#? default: Run `make generate` and `make binary`
 default: generate binary
 
-## Create the "dist" directory
+#? dist: Create the "dist" directory
 dist:
 	mkdir -p dist
 
 ## Build WebUI Docker image
 .PHONY: build-webui-image
+#? build-webui-image: Build WebUI Docker image
 build-webui-image:
 	docker build -t traefik-webui -f webui/Dockerfile webui
 
 ## Clean WebUI static generated assets
 .PHONY: clean-webui
+#? clean-webui: Clean WebUI static generated assets
 clean-webui:
 	rm -r webui/static
 	mkdir -p webui/static
@@ -47,15 +50,18 @@ webui/static/index.html:
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
 
 .PHONY: generate-webui
+#? generate-webui: Generate WebUI
 generate-webui: webui/static/index.html
 
 ## Generate code
 .PHONY: generate
+#? generate: Generate code
 generate:
 	go generate
 
 ## Build the binary
 .PHONY: binary
+#? binary: Build the binary
 binary: generate-webui dist
 	@echo SHA: $(VERSION) $(CODENAME) $(DATE)
 	CGO_ENABLED=0 GOGC=off GOOS=${GOOS} GOARCH=${GOARCH} go build ${FLAGS[*]} -ldflags "-s -w \
@@ -82,25 +88,30 @@ binary-windows-amd64:
 
 ## Build the binary for the standard platforms (linux, darwin, windows)
 .PHONY: crossbinary-default
+#? crossbinary-default: Build the binary for the standard platforms (linux, darwin, windows)
 crossbinary-default: generate generate-webui
 	$(CURDIR)/script/crossbinary-default.sh
 
 ## Run the unit and integration tests
 .PHONY: test
+#? test: Run the unit and integration tests
 test: test-unit test-integration
 
 ## Run the unit tests
 .PHONY: test-unit
+#? test-unit: Run the unit tests
 test-unit:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -cover "-coverprofile=cover.out" -v $(TESTFLAGS) ./pkg/... ./cmd/...
 
 ## Run the integration tests
 .PHONY: test-integration
+#? test-integration: Run the integration tests
 test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 ## Pull all Docker images to avoid timeout during integration tests
 .PHONY: pull-images
+#? pull-images: Pull all Docker images to avoid timeout during integration tests
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml \
 		| awk '{print $$2}' \
@@ -110,11 +121,13 @@ pull-images:
 
 ## Lint run golangci-lint
 .PHONY: lint
+#? lint: Run golangci-lint
 lint:
 	golangci-lint run
 
 ## Validate code and docs
 .PHONY: validate-files
+#? validate-files: Validate code and docs
 validate-files: lint
 	$(foreach exec,$(LINT_EXECUTABLES),\
             $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
@@ -123,6 +136,7 @@ validate-files: lint
 
 ## Validate code, docs, and vendor
 .PHONY: validate
+#? validate: Validate code, docs, and vendor
 validate: lint
 	$(foreach exec,$(EXECUTABLES),\
             $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
@@ -138,6 +152,7 @@ multi-arch-image-%: binary-linux-amd64 binary-linux-arm64
 
 ## Clean up static directory and build a Docker Traefik image
 .PHONY: build-image
+#? build-image: Clean up static directory and build a Docker Traefik image
 build-image: export DOCKER_BUILDX_ARGS := --load
 build-image: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image: clean-webui
@@ -145,6 +160,7 @@ build-image: clean-webui
 
 ## Build a Docker Traefik image without re-building the webui when it's already built
 .PHONY: build-image-dirty
+#? build-image-dirty: Build a Docker Traefik image without re-building the webui when it's already built
 build-image-dirty: export DOCKER_BUILDX_ARGS := --load
 build-image-dirty: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image-dirty:
@@ -152,35 +168,49 @@ build-image-dirty:
 
 ## Build documentation site
 .PHONY: docs
+#? docs: Build documentation site
 docs:
 	make -C ./docs docs
 
 ## Serve the documentation site locally
 .PHONY: docs-serve
+#? docs-serve: Serve the documentation site locally
 docs-serve:
 	make -C ./docs docs-serve
 
 ## Pull image for doc building
 .PHONY: docs-pull-images
+#? docs-pull-images: Pull image for doc building
 docs-pull-images:
 	make -C ./docs docs-pull-images
 
 ## Generate CRD clientset and CRD manifests
 .PHONY: generate-crd
+#? generate-crd: Generate CRD clientset and CRD manifests
 generate-crd:
 	@$(CURDIR)/script/code-gen-docker.sh
 
 ## Generate code from dynamic configuration https://github.com/traefik/genconf
 .PHONY: generate-genconf
+#? generate-genconf: Generate code from dynamic configuration github.com/traefik/genconf
 generate-genconf:
 	go run ./cmd/internal/gen/
 
 ## Create packages for the release
 .PHONY: release-packages
+#? release-packages: Format the Code
 release-packages: generate-webui
 	$(CURDIR)/script/release-packages.sh
 
 ## Format the Code
 .PHONY: fmt
+#? fmt: Format the Code
 fmt:
 	gofmt -s -l -w $(SRCS)
+
+#? help: Get more info on make commands
+help: Makefile
+	@echo " Choose a command run in traefik:"
+	@sed -n 's/^#?//p' $< | column -t -s ':' |  sort | sed -e 's/^/ /'
+
+.PHONY: help
