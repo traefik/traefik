@@ -34,7 +34,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-var updateExpected = flag.Bool("update_expected", true, "Update expected files in fixtures")
+var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
 var fullDynConf *dynamic.Configuration
 
