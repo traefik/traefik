@@ -42,6 +42,4 @@ func (t *serviceTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	t.next.ServeHTTP(rw, req)
-
-	println("toto")
 }
