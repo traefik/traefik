@@ -287,8 +287,6 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 }
 
 func TestOpenTelemetry(t *testing.T) {
-	t.Parallel()
-
 	c := make(chan *string)
 	defer close(c)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
