@@ -63,9 +63,14 @@ func (c *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		chain = chain.Append(tracingMiddle.WrapEntryPointHandler(ctx, c.tracer, entryPointName))
 	}
 
-	if c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() {
+	if c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() && c.ShouldAddMetrics(resourceName) {
 		metricsHandler := metricsMiddle.WrapEntryPointHandler(ctx, c.metricsRegistry, entryPointName)
-		chain = chain.Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler))
+
+		if c.tracer != nil && c.ShouldAddTracing(resourceName) {
+			chain = chain.Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler))
+		} else {
+			chain = chain.Append(metricsHandler)
+		}
 	}
 
 	return chain
