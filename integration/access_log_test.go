@@ -575,7 +575,7 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 	}
 
 	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
@@ -662,6 +662,8 @@ func (s *AccessLogSuite) checkNoOtherTraefikProblems() {
 }
 
 func (s *AccessLogSuite) checkAccessLogOutput() int {
+	s.T().Helper()
+
 	lines := s.extractLines()
 	count := 0
 	for i, line := range lines {
@@ -674,6 +676,8 @@ func (s *AccessLogSuite) checkAccessLogOutput() int {
 }
 
 func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue) int {
+	s.T().Helper()
+
 	lines := s.extractLines()
 	count := 0
 	for i, line := range lines {
@@ -691,6 +695,8 @@ func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue
 }
 
 func (s *AccessLogSuite) extractLines() []string {
+	s.T().Helper()
+
 	accessLog, err := os.ReadFile(traefikTestAccessLogFile)
 	require.NoError(s.T(), err)
 
@@ -706,6 +712,8 @@ func (s *AccessLogSuite) extractLines() []string {
 }
 
 func (s *AccessLogSuite) checkStatsForLogFile() {
+	s.T().Helper()
+
 	err := try.Do(1*time.Second, func() error {
 		if _, errStat := os.Stat(traefikTestLogFile); errStat != nil {
 			return fmt.Errorf("could not get stats for log file: %w", errStat)
@@ -721,6 +729,8 @@ func ensureWorkingDirectoryIsClean() {
 }
 
 func (s *AccessLogSuite) checkTraefikStarted() []byte {
+	s.T().Helper()
+
 	traefikLog, err := os.ReadFile(traefikTestLogFile)
 	require.NoError(s.T(), err)
 	if len(traefikLog) > 0 {
@@ -730,6 +740,8 @@ func (s *AccessLogSuite) checkTraefikStarted() []byte {
 }
 
 func (s *BaseSuite) CheckAccessLogFormat(line string, i int) {
+	s.T().Helper()
+
 	results, err := accesslog.ParseAccessLog(line)
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), results, 14)
@@ -742,6 +754,8 @@ func (s *BaseSuite) CheckAccessLogFormat(line string, i int) {
 }
 
 func (s *AccessLogSuite) checkAccessLogExactValues(line string, i int, v accessLogValue) {
+	s.T().Helper()
+
 	results, err := accesslog.ParseAccessLog(line)
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), results, 14)
