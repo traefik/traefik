@@ -14,6 +14,28 @@ Traefik supports these metrics backends:
 
 Traefik Proxy hosts an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346) and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
+## Common Options
+
+### `addInternals`
+
+_Optional, Default="false"_
+
+Enables metrics for internal resources.
+
+```yaml tab="File (YAML)"
+metrics:
+  addInternals: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  addInternals = true
+```
+
+```bash tab="CLI"
+--metrics.addinternals
+```
+
 ## Global Metrics
 
 | Metric                     | Type  | [Labels](#labels)        | Description                                                        |
