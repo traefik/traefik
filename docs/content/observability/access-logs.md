@@ -26,6 +26,26 @@ accessLog: {}
 --accesslog=true
 ```
 
+### `addInternals`
+
+_Optional, Default="false"_
+
+Enables accessLogs for internal resources.
+
+```yaml tab="File (YAML)"
+accesslog:
+  addInternals: true
+```
+
+```toml tab="File (TOML)"
+[accesslog]
+  addInternals = true
+```
+
+```bash tab="CLI"
+--accesslog.addinternals
+```
+
 ### `filePath`
 
 By default access logs are written to the standard output.
