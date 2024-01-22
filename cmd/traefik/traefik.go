@@ -193,10 +193,13 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
 
-	// Metrics
+	// Observability
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
+	accessLog := setupAccessLog(staticConfiguration.AccessLog)
+	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
+	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
 
@@ -263,14 +266,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, observabilityMgr, roundTripperManager, acmeHTTPHandler)
 
 	// Router factory
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
-	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
 
 	// Watcher
 
@@ -351,7 +351,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	})
 
-	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog, tracerCloser), nil
+	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, observabilityMgr), nil
 }
 
 func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvider http.Handler) http.Handler {
