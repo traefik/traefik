@@ -186,9 +186,8 @@ release-packages: generate-webui
 fmt:
 	gofmt -s -l -w $(SRCS)
 
+.PHONY: help
 #? help: Get more info on make commands
 help: Makefile
 	@echo " Choose a command run in traefik:"
 	@sed -n 's/^#?//p' $< | column -t -s ':' |  sort | sed -e 's/^/ /'
-
-.PHONY: help
