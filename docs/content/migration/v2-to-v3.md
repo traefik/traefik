@@ -526,21 +526,16 @@ All Pilot related configuration should be removed from the static configuration.
 
 ## Dynamic configuration
 
-### IPWhiteList
+### Router Rule Matchers
 
-In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
+In v3, a new rule matchers syntax has been introduced for HTTP and TCP routers.
+The default rule matchers syntax is now the v3 one, but for backward compatibility this can be configured.
+The v2 rule matchers syntax is deprecated and its support will be removed in the next major version.
+For this reason, we encourage migrating to the new syntax.
 
-### Deprecated Options Removal
+#### New V3 Syntax Notable Changes
 
-- The `tracing.datadog.globaltag` option has been removed.
-- The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
-- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
-- The `forceSlash` option of the StripPrefix middleware has been removed.
-- The `preferServerCipherSuites` option has been removed.
-
-### Matchers
-
-In v3, the `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
+The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
 
 `PathPrefix` no longer uses regular expressions to match path prefixes.
 
@@ -554,6 +549,87 @@ and should be explicitly combined using logical operators to mimic previous beha
 `Query` can take a single value to match is the query value that has no value (e.g. `/search?mobile`).
 
 `HostHeader` has been removed, use `Host` instead.
+
+#### Remediation
+
+##### Configure the Default Syntax In Static Configuration
+
+The default rule matchers syntax is the expected syntax for any router that is not self opt-out from this default value.
+It can be configured in the static configuration.
+
+??? example "An example configuration for the default rule matchers syntax"
+
+    ```yaml tab="File (YAML)"
+    # static configuration
+    core:
+      defaultRuleSyntax: v2
+    ```
+
+    ```toml tab="File (TOML)"
+    # static configuration
+    [core]
+        defaultRuleSyntax="v2"
+    ```
+
+    ```bash tab="CLI"
+    # static configuration
+    --core.defaultRuleSyntax=v2
+    ```
+
+##### Configure the Syntax Per Router
+
+The rule syntax can also be configured on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+??? example "An example router with syntax configuration"
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.routers.test.ruleSyntax=v2"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  routes:
+    - match: PathPrefix(`/foo`, `/bar`)
+      syntax: v2
+      kind: Rule
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.routers.test.ruleSyntax=v2"
+```
+
+```yaml tab="File (YAML)"
+http:
+  routers:
+    test:
+      ruleSyntax: v2
+```
+
+```toml tab="File (TOML)"
+[http.routers]
+  [http.routers.test]
+    ruleSyntax = "v2"
+```
+
+### IPWhiteList
+
+In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
+
+### Deprecated Options Removal
+
+- The `tracing.datadog.globaltag` option has been removed.
+- The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
+- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
+- The `forceSlash` option of the StripPrefix middleware has been removed.
+- The `preferServerCipherSuites` option has been removed.
 
 ### TCP LoadBalancer `terminationDelay` option
 
