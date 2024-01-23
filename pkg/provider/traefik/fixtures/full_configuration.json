@@ -54,6 +54,14 @@
         "priority": 2147483647
       }
     },
+    "services": {
+      "api": {},
+      "dashboard": {},
+      "noop": {},
+      "ping": {},
+      "prometheus": {},
+      "rest": {}
+    },
     "middlewares": {
       "dashboard_redirect": {
         "redirectRegex": {
@@ -70,14 +78,6 @@
           ]
         }
       }
-    },
-    "services": {
-      "api": {},
-      "dashboard": {},
-      "noop": {},
-      "ping": {},
-      "prometheus": {},
-      "rest": {}
     }
   },
   "tcp": {},
