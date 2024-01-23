@@ -184,6 +184,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			th.WithLoadBalancerServices(th.WithService("bar-config3")),
 		),
 	}
+
 	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
 
 	// To be able to "block" the writes, we change the chan to remove buffering.
