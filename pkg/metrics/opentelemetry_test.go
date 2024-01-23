@@ -288,7 +288,7 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 
 func TestOpenTelemetry(t *testing.T) {
 	c := make(chan *string)
-	defer close(c)
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gzr, err := gzip.NewReader(r.Body)
 		require.NoError(t, err)
@@ -308,7 +308,11 @@ func TestOpenTelemetry(t *testing.T) {
 
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer ts.Close()
+
+	t.Cleanup(func() {
+		close(c)
+		ts.Close()
+	})
 
 	sURL, err := url.Parse(ts.URL)
 	require.NoError(t, err)
@@ -438,6 +442,9 @@ func TestOpenTelemetry(t *testing.T) {
 	msgEntryPointReqDurationHistogram := <-c
 
 	assertMessage(t, *msgEntryPointReqDurationHistogram, expectedEntryPointReqDuration)
+
+	// Give some time before stopping the OpenTelemetry.
+	time.Sleep(60 * time.Millisecond)
 
 	// We need to unlock the HTTP Server for the last export call when stopping
 	// OpenTelemetry.
