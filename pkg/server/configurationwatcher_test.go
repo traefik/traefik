@@ -178,15 +178,35 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 		),
 	}
 
+	config3 := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
+			th.WithLoadBalancerServices(th.WithService("bar-config3")),
+		),
+	}
+
 	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
+
+	// To be able to "block" the writes, we change the chan to remove buffering.
+	watcher.allProvidersConfigs = make(chan dynamic.Message)
 
 	publishedConfigCount := 0
 	var lastConfig dynamic.Configuration
 	blockConfConsumer := make(chan struct{})
+	blockConfConsumerAssert := make(chan struct{})
 	watcher.AddListener(func(config dynamic.Configuration) {
 		publishedConfigCount++
-		lastConfig = config
-		<-blockConfConsumer
+
+		if publishedConfigCount <= 2 {
+			lastConfig = config
+		}
+		if publishedConfigCount == 1 {
+			<-blockConfConsumer
+		}
+
+		if publishedConfigCount == 2 {
+			close(blockConfConsumerAssert)
+		}
 	})
 
 	watcher.Start()
@@ -209,21 +229,25 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 		Configuration: config,
 	}
 
-	// give some time before closing the channel.
-	time.Sleep(20 * time.Millisecond)
-
 	close(blockConfConsumer)
 
-	// give some time so that the configuration can be processed.
-	time.Sleep(20 * time.Millisecond)
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config3,
+	}
 
-	// after 20 milliseconds we should have 1 config published.
-	assert.Equal(t, 1, publishedConfigCount, "times configs were published")
+	select {
+	case <-blockConfConsumerAssert:
+	case <-time.After(time.Second):
+		t.Fatal("Timeout")
+	}
+
+	assert.Equal(t, 2, publishedConfigCount, "times configs were published")
 
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithLoadBalancerServices(th.WithService("bar-config3@mock")),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
