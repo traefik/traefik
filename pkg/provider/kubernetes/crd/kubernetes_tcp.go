@@ -102,6 +102,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				Middlewares: mds,
 				Rule:        route.Match,
 				Priority:    route.Priority,
+				RuleSyntax:  route.Syntax,
 				Service:     serviceName,
 			}
 
