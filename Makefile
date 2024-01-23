@@ -198,7 +198,7 @@ generate-genconf:
 
 ## Create packages for the release
 .PHONY: release-packages
-#? release-packages: Format the Code
+#? release-packages: Create packages for the release
 release-packages: generate-webui
 	$(CURDIR)/script/release-packages.sh
 
