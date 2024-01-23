@@ -439,6 +439,9 @@ func TestOpenTelemetry(t *testing.T) {
 
 	assertMessage(t, *msgEntryPointReqDurationHistogram, expectedEntryPointReqDuration)
 
+	// Give some time before stopping the OpenTelemetry.
+	time.Sleep(60 * time.Millisecond)
+
 	// We need to unlock the HTTP Server for the last export call when stopping
 	// OpenTelemetry.
 	go func() {
