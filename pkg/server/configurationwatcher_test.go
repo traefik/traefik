@@ -171,56 +171,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 		),
 	}
 
-	config2 := &dynamic.Configuration{
-		HTTP: th.BuildConfiguration(
-			th.WithRouters(th.WithRouter("baz", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("toto")),
-		),
-	}
-
-	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
-
-	publishedConfigCount := 0
-	var lastConfig dynamic.Configuration
-	blockConfConsumer := make(chan struct{})
-	watcher.AddListener(func(config dynamic.Configuration) {
-		publishedConfigCount++
-		lastConfig = config
-		<-blockConfConsumer
-	})
-
-	watcher.Start()
-
-	t.Cleanup(watcher.Stop)
-	t.Cleanup(routinesPool.Stop)
-
-	watcher.allProvidersConfigs <- dynamic.Message{
-		ProviderName:  "mock",
-		Configuration: config,
-	}
-
-	watcher.allProvidersConfigs <- dynamic.Message{
-		ProviderName:  "mock",
-		Configuration: config2,
-	}
-
-	watcher.allProvidersConfigs <- dynamic.Message{
-		ProviderName:  "mock",
-		Configuration: config,
-	}
-
-	// give some time before closing the channel.
-	time.Sleep(20 * time.Millisecond)
-
-	close(blockConfConsumer)
-
-	// give some time so that the configuration can be processed.
-	time.Sleep(20 * time.Millisecond)
-
-	// after 20 milliseconds we should have 1 config published.
-	assert.Equal(t, 1, publishedConfigCount, "times configs were published")
-
-	expected := dynamic.Configuration{
+	expectedConfig := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
@@ -243,7 +194,107 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	expectedConfig3 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
+			th.WithLoadBalancerServices(th.WithService("bar-config3@mock")),
+			th.WithMiddlewares(),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:     map[string]*dynamic.TCPRouter{},
+			Middlewares: map[string]*dynamic.TCPMiddleware{},
+			Services:    map[string]*dynamic.TCPService{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Options: map[string]tls.Options{
+				"default": tls.DefaultTLSOptions,
+			},
+			Stores: map[string]tls.Store{},
+		},
+	}
+
+	config2 := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("baz", th.WithEntryPoints("ep"))),
+			th.WithLoadBalancerServices(th.WithService("toto")),
+		),
+	}
+
+	config3 := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
+			th.WithLoadBalancerServices(th.WithService("bar-config3")),
+		),
+	}
+	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
+
+	// To be able to "block" the writes, we change the chan to remove buffering.
+	watcher.allProvidersConfigs = make(chan dynamic.Message)
+
+	publishedConfigCount := 0
+
+	firstConfigHandled := make(chan struct{})
+	blockConfConsumer := make(chan struct{})
+	blockConfConsumerAssert := make(chan struct{})
+	watcher.AddListener(func(config dynamic.Configuration) {
+		publishedConfigCount++
+
+		if publishedConfigCount > 2 {
+			t.Fatal("More than 2 published configuration")
+		}
+
+		if publishedConfigCount == 1 {
+			assert.Equal(t, expectedConfig, config)
+			close(firstConfigHandled)
+
+			<-blockConfConsumer
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		if publishedConfigCount == 2 {
+			assert.Equal(t, expectedConfig3, config)
+			close(blockConfConsumerAssert)
+		}
+	})
+
+	watcher.Start()
+
+	t.Cleanup(watcher.Stop)
+	t.Cleanup(routinesPool.Stop)
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config,
+	}
+
+	<-firstConfigHandled
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config2,
+	}
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config,
+	}
+
+	close(blockConfConsumer)
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config3,
+	}
+
+	select {
+	case <-blockConfConsumerAssert:
+	case <-time.After(10 * time.Second):
+		t.Fatal("Timeout")
+	}
 }
 
 func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
