@@ -33,7 +33,7 @@ whose default value is `traefik` (port `8080`).
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
-| `/ping` | `GET`, `HEAD` | A simple endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
+| `/ping` | `GET`, `HEAD` | An endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 
 !!! note
     The `cli` comes with a [`healthcheck`](./cli.md#healthcheck) command which can be used for calling this endpoint.
@@ -92,10 +92,11 @@ ping:
 _Optional, Default=503_
 
 During the period in which Traefik is gracefully shutting down, the ping handler
-returns a 503 status code by default. If Traefik is behind e.g. a load-balancer
+returns a `503` status code by default.  
+If Traefik is behind, for example a load-balancer
 doing health checks (such as the Kubernetes LivenessProbe), another code might
-be expected as the signal for graceful termination. In which case, the
-terminatingStatusCode can be used to set the code returned by the ping
+be expected as the signal for graceful termination.  
+In that case, the terminatingStatusCode can be used to set the code returned by the ping
 handler during termination.
 
 ```yaml tab="File (YAML)"
