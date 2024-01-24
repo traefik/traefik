@@ -54,7 +54,7 @@ func (h Handler) getEntryPoint(rw http.ResponseWriter, request *http.Request) {
 
 	entryPointID, err := url.PathUnescape(scapedEntryPointID)
 	if err != nil {
-		writeError(rw, fmt.Sprintf("unable to decode entryPointID: %s", scapedEntryPointID), http.StatusBadRequest)
+		writeError(rw, fmt.Sprintf("unable to decode entryPointID %q: %s", scapedEntryPointID, err), http.StatusBadRequest)
 		return
 	}
 

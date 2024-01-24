@@ -104,7 +104,7 @@ func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 
 	routerID, err := url.PathUnescape(scapedRouterID)
 	if err != nil {
-		writeError(rw, fmt.Sprintf("unable to decode routerID: %s", scapedRouterID), http.StatusBadRequest)
+		writeError(rw, fmt.Sprintf("unable to decode routerID %q: %s", scapedRouterID, err), http.StatusBadRequest)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 
 	serviceID, err := url.PathUnescape(scapedServiceID)
 	if err != nil {
-		writeError(rw, fmt.Sprintf("unable to decode serviceID: %s", scapedServiceID), http.StatusBadRequest)
+		writeError(rw, fmt.Sprintf("unable to decode serviceID %q: %s", scapedServiceID, err), http.StatusBadRequest)
 		return
 	}
 
@@ -220,7 +220,7 @@ func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
 
 	middlewareID, err := url.PathUnescape(scapedMiddlewareID)
 	if err != nil {
-		writeError(rw, fmt.Sprintf("unable to decode middlewareID: %s", scapedMiddlewareID), http.StatusBadRequest)
+		writeError(rw, fmt.Sprintf("unable to decode middlewareID %q: %s", scapedMiddlewareID), http.StatusBadRequest)
 		return
 	}
 
