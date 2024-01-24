@@ -11,7 +11,7 @@ fi
 rm -rf dist
 
 for os in linux darwin windows freebsd openbsd; do
-    goreleaser release --snapshot --skip=publish -p 2 --timeout="90m" --config "$(go run ./internal/release "$os")"
+    goreleaser release --skip=publish -p 2 --timeout="90m" --config "$(go run ./internal/release "$os")"
     go clean -cache
 done
 
