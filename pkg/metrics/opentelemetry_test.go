@@ -4,10 +4,12 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -287,7 +289,7 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 }
 
 func TestOpenTelemetry(t *testing.T) {
-	c := make(chan string, 5)
+	c := make(chan *string, 5)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gzr, err := gzip.NewReader(r.Body)
@@ -304,13 +306,13 @@ func TestOpenTelemetry(t *testing.T) {
 		require.NoError(t, err)
 
 		bodyStr := string(marshalledReq)
-		c <- bodyStr
+		c <- &bodyStr
 
 		w.WriteHeader(http.StatusOK)
 	}))
 
 	t.Cleanup(func() {
-		close(c)
+		StopOpenTelemetry()
 		ts.Close()
 	})
 
@@ -335,9 +337,8 @@ func TestOpenTelemetry(t *testing.T) {
 		`({"key":"service.name","value":{"stringValue":"traefik"}})`,
 		`({"key":"service.version","value":{"stringValue":"` + version.Version + `"}})`,
 	}
-	msgMisc := <-c
 
-	assertMessage(t, msgMisc, expected)
+	tryAssertMessage(t, c, expected)
 
 	// TODO: the len of startUnixNano is no supposed to be 20, it should be 19
 	expectedConfig := []string{
@@ -349,18 +350,16 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.ConfigReloadsCounter().Add(1)
 	registry.LastConfigReloadSuccessGauge().Set(1)
 	registry.OpenConnectionsGauge().With("entrypoint", "test", "protocol", "TCP").Set(1)
-	msgServer := <-c
 
-	assertMessage(t, msgServer, expectedConfig)
+	tryAssertMessage(t, c, expectedConfig)
 
 	expectedTLSCerts := []string{
 		`({"name":"traefik_tls_certs_not_after","description":"Certificate expiration timestamp","unit":"ms","gauge":{"dataPoints":\[{"attributes":\[{"key":"key","value":{"stringValue":"value"}}\],"timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 	}
 
 	registry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
-	msgTLS := <-c
 
-	assertMessage(t, msgTLS, expectedTLSCerts)
+	tryAssertMessage(t, c, expectedTLSCerts)
 
 	expectedEntryPoints := []string{
 		`({"name":"traefik_entrypoint_requests_total","description":"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"200"}},{"key":"entrypoint","value":{"stringValue":"test1"}},{"key":"method","value":{"stringValue":"GET"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
@@ -375,9 +374,8 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.EntryPointReqDurationHistogram().With("entrypoint", "test3").Observe(10000)
 	registry.EntryPointReqsBytesCounter().With("entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	registry.EntryPointRespsBytesCounter().With("entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	msgEntrypoint := <-c
 
-	assertMessage(t, msgEntrypoint, expectedEntryPoints)
+	tryAssertMessage(t, c, expectedEntryPoints)
 
 	expectedRouters := []string{
 		`({"name":"traefik_router_requests_total","description":"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"router","value":{"stringValue":"RouterReqsCounter"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1},{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"router","value":{"stringValue":"RouterReqsCounter"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
@@ -393,9 +391,8 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	registry.RouterReqsBytesCounter().With("router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	registry.RouterRespsBytesCounter().With("router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	msgRouter := <-c
 
-	assertMessage(t, msgRouter, expectedRouters)
+	tryAssertMessage(t, c, expectedRouters)
 
 	expectedServices := []string{
 		`({"name":"traefik_service_requests_total","description":"How many HTTP requests processed on a service, partitioned by status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"service","value":{"stringValue":"ServiceReqsCounter"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1},{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"service","value":{"stringValue":"ServiceReqsCounter"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
@@ -413,9 +410,8 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1").Set(1)
 	registry.ServiceReqsBytesCounter().With("service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	registry.ServiceRespsBytesCounter().With("service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	msgService := <-c
 
-	assertMessage(t, msgService, expectedServices)
+	tryAssertMessage(t, c, expectedServices)
 
 	expectedServicesRetries := []string{
 		`({"attributes":\[{"key":"service","value":{"stringValue":"foobar"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1})`,
@@ -425,9 +421,8 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.ServiceRetriesCounter().With("service", "test").Add(1)
 	registry.ServiceRetriesCounter().With("service", "test").Add(1)
 	registry.ServiceRetriesCounter().With("service", "foobar").Add(1)
-	msgServiceRetries := <-c
 
-	assertMessage(t, msgServiceRetries, expectedServicesRetries)
+	tryAssertMessage(t, c, expectedServicesRetries)
 
 	// We cannot rely on the previous expected pattern,
 	// because this pattern was for matching only one dataPoint in the histogram,
@@ -439,12 +434,46 @@ func TestOpenTelemetry(t *testing.T) {
 
 	registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(10000)
 	registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(20000)
-	msgEntryPointReqDurationHistogram := <-c
 
-	assertMessage(t, msgEntryPointReqDurationHistogram, expectedEntryPointReqDuration)
+	tryAssertMessage(t, c, expectedEntryPointReqDuration)
+}
 
-	// We need to unlock the HTTP Server for the last export call.
-	<-c
+func assertMessage(t *testing.T, msg string, expected []string) {
+	t.Helper()
+	errs := verifyMessage(msg, expected)
+	for _, err := range errs {
+		t.Error(err)
+	}
+}
 
-	StopOpenTelemetry()
+func tryAssertMessage(t *testing.T, c chan *string, expected []string) {
+	t.Helper()
+
+	var errs []error
+	timeout := time.After(1 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			for _, err := range errs {
+				t.Error(err)
+			}
+		case msg := <-c:
+			errs = verifyMessage(*msg, expected)
+			if len(errs) == 0 {
+				return
+			}
+		}
+	}
+}
+
+func verifyMessage(msg string, expected []string) []error {
+	var errs []error
+	for _, pattern := range expected {
+		re := regexp.MustCompile(pattern)
+		match := re.FindStringSubmatch(msg)
+		if len(match) != 2 {
+			errs = append(errs, fmt.Errorf("Got %q %v, want %q", msg, match, pattern))
+		}
+	}
+	return errs
 }
