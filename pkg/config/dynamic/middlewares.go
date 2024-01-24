@@ -150,7 +150,7 @@ func (c *CircuitBreaker) SetDefaults() {
 	c.CheckPeriod = ptypes.Duration(100 * time.Millisecond)
 	c.FallbackDuration = ptypes.Duration(10 * time.Second)
 	c.RecoveryDuration = ptypes.Duration(10 * time.Second)
-	c.ResponseCode = 503
+	c.ResponseCode = http.StatusServiceUnavailable
 }
 
 // +k8s:deepcopy-gen=true
