@@ -132,7 +132,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 	}
 
 	if !p.includesHealthStatus(item.Status) {
-		logger.Debug().Msg("Filtering unhealthy or starting item")
+		logger.Debug().Msg(fmt.Sprintf("Status \"%s\" is not included in the configured strictChecks of \"%s\"", item.Status, strings.Join(p.StrictChecks, ",")))
 		return false
 	}
 
