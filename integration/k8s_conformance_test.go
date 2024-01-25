@@ -153,17 +153,16 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			RequiredConsecutiveSuccesses:      0,
 		},
 		SupportedFeatures: sets.New[ksuite.SupportedFeature]().
-			Insert(ksuite.GatewayCoreFeatures.UnsortedList()...),
+			Insert(ksuite.GatewayCoreFeatures.UnsortedList()...).
+			Insert(ksuite.ReferenceGrantCoreFeatures.UnsortedList()...),
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *k8sConformanceRunTest,
 		// Until the feature are all supported, following tests are skipped.
 		SkipTests: []string{
 			"HTTPExactPathMatching",
 			"HTTPRouteHostnameIntersection",
-			"GatewaySecretReferenceGrantAllInNamespace",
 			"HTTPRouteListenerHostnameMatching",
 			"HTTPRouteRequestHeaderModifier",
-			"GatewaySecretInvalidReferenceGrant",
 			"GatewayClassObservedGenerationBump",
 			"HTTPRouteInvalidNonExistentBackendRef",
 			"GatewayWithAttachedRoutes",
@@ -176,9 +175,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			"TLSRouteInvalidReferenceGrant",
 			"HTTPRouteInvalidCrossNamespaceParentRef",
 			"HTTPRouteInvalidParentRefNotMatchingSectionName",
-			"GatewaySecretReferenceGrantSpecific",
 			"GatewayModifyListeners",
-			"GatewaySecretMissingReferenceGrant",
 			"GatewayInvalidTLSConfiguration",
 			"HTTPRouteInvalidCrossNamespaceBackendRef",
 			"HTTPRouteMatchingAcrossRoutes",
