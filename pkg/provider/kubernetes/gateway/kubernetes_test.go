@@ -4754,6 +4754,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							EntryPoints: []string{"tls"},
 							Service:     "default-tcp-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr-0",
 							Rule:        "HostSNI(`*`)",
+							RuleSyntax:  "v3",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
