@@ -170,7 +170,6 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			"HTTPRouteDisallowedKind",
 			"HTTPRouteInvalidReferenceGrant",
 			"HTTPRouteObservedGenerationBump",
-			"GatewayInvalidRouteKind",
 			"TLSRouteSimpleSameNamespace",
 			"TLSRouteInvalidReferenceGrant",
 			"HTTPRouteInvalidCrossNamespaceParentRef",
