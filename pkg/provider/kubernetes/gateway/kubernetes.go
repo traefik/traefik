@@ -706,7 +706,7 @@ func getAllowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, sup
 	}
 
 	var (
-		routeKinds = []gatev1.RouteGroupKind{}
+		routeKinds []gatev1.RouteGroupKind
 		conditions []metav1.Condition
 	)
 
@@ -1932,7 +1932,7 @@ func makeListenerKey(l gatev1.Listener) string {
 }
 
 func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
-	matchingReferenceGrants := []*gatev1beta1.ReferenceGrant{}
+	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
 		if referenceGrantMatchesFrom(referenceGrant, group, kind, namespace) {
 			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
@@ -1956,7 +1956,7 @@ func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group
 }
 
 func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, name string) []*gatev1beta1.ReferenceGrant {
-	matchingReferenceGrants := []*gatev1beta1.ReferenceGrant{}
+	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
 		if referenceGrantMatchesTo(referenceGrant, group, kind, name) {
 			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
