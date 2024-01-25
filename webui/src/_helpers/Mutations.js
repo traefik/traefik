@@ -1,8 +1,8 @@
-import { set, get } from 'dot-prop'
+import { setProperty, getProperty } from 'dot-prop'
 
 export const withPagination = (type, opts = {}) => (state, data) => {
   const { isSameContext, statePath } = opts
-  const currentState = get(state, statePath)
+  const currentState = getProperty(state, statePath)
 
   let newState
 
@@ -39,6 +39,6 @@ export const withPagination = (type, opts = {}) => (state, data) => {
   }
 
   if (newState) {
-    set(state, statePath, newState)
+    setProperty(state, statePath, newState)
   }
 }

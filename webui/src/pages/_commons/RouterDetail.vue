@@ -235,7 +235,7 @@ export default {
           // Get entryPoints
           if (body.using) {
             for (const entryPoint in body.using) {
-              if (body.using.hasOwnProperty(entryPoint)) {
+              if (Object.getOwnPropertyDescriptor(body.using, entryPoint)) {
                 this.getEntrypointsByName(body.using[entryPoint])
                   .then(body => {
                     if (body) {
@@ -251,7 +251,7 @@ export default {
           // Get middlewares
           if (body.middlewares) {
             for (const middleware in body.middlewares) {
-              if (body.middlewares.hasOwnProperty(middleware)) {
+              if (Object.getOwnPropertyDescriptor(body.middlewares, middleware)) {
                 this.getMiddlewareByName(body.middlewares[middleware])
                   .then(body => {
                     if (body) {
