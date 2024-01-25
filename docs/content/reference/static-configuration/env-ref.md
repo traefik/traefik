@@ -279,6 +279,9 @@ Enable metrics on routers. (Default: ```false```)
 `TRAEFIK_METRICS_DATADOG_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
+`TRAEFIK_METRICS_DATADOG_LOCALAGENTSOCKET`:  
+DataDog's DogStatsD Agent over UDS.
+
 `TRAEFIK_METRICS_DATADOG_PREFIX`:  
 Prefix to use for metrics collection. (Default: ```traefik```)
 
