@@ -1,5 +1,8 @@
 <template>
-  <q-card flat bordered>
+  <q-card
+    flat
+    bordered
+  >
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col text-center">
@@ -11,7 +14,7 @@
     </q-card-section>
     <q-card-section>
       <div class="text-h6 text-center text-weight-bold">
-        {{getName}}
+        {{ getName }}
       </div>
     </q-card-section>
   </q-card>
@@ -32,13 +35,13 @@ export default {
         return 'statics/providers/plugin.svg'
       }
       if (name.startsWith('consul-')) {
-        return `statics/providers/consul.svg`
+        return 'statics/providers/consul.svg'
       }
       if (name.startsWith('consulcatalog-')) {
-        return `statics/providers/consulcatalog.svg`
+        return 'statics/providers/consulcatalog.svg'
       }
       if (name.startsWith('nomad-')) {
-        return `statics/providers/nomad.svg`
+        return 'statics/providers/nomad.svg'
       }
 
       return `statics/providers/${name}.svg`

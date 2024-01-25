@@ -4,14 +4,17 @@
       v-for="(chip, index) in list"
       :key="index"
       :dense="dense"
-      :class="classNames">
+      :class="classNames"
+    >
       {{ chip }}
     </q-chip>
   </div>
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: ['dense', 'classNames', 'list']
-}
+})
 </script>

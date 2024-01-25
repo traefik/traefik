@@ -1,8 +1,9 @@
 <script>
+import { defineComponent } from 'vue'
 import { Doughnut } from 'vue-chartjs'
 import isEqual from 'lodash.isequal'
 
-export default {
+export default defineComponent({
   extends: Doughnut,
   props: {
     chartdata: {
@@ -30,5 +31,5 @@ export default {
   mounted () {
     this.renderChart(this.chartdata, this.options)
   }
-}
+})
 </script>
