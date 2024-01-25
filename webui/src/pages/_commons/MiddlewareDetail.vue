@@ -129,7 +129,7 @@ export default {
           // Get routers
           if (body.usedBy) {
             for (const router in body.usedBy) {
-              if (body.usedBy.hasOwnProperty(router)) {
+              if (Object.getOwnPropertyDescriptor(body.usedBy, router)) {
                 this.getRouterByName(body.usedBy[router])
                   .then(body => {
                     if (body) {

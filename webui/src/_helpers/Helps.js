@@ -1,4 +1,4 @@
-import { get } from 'dot-prop'
+import { getProperty } from 'dot-prop'
 
 class Helps {
   // Getters
@@ -11,7 +11,7 @@ class Helps {
   // ------------------------------------------------------------------------
 
   static get (obj, prop, def = undefined) {
-    return get(obj, prop, def)
+    return getProperty(obj, prop, def)
   }
 
   static hasIn (obj, prop) {

@@ -2,7 +2,7 @@ module.exports = {
   root: true,
 
   parserOptions: {
-    parser: 'babel-eslint',
+    parser: '@babel/eslint-parser',
     sourceType: 'module'
   },
 
@@ -49,6 +49,7 @@ module.exports = {
     'import/no-unresolved': 'off',
     'import/no-extraneous-dependencies': 'off',
     'prefer-promise-reject-errors': 'off',
+    'vue/multi-word-component-names': 'off',
 
     // allow console.log during development only
     //'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
