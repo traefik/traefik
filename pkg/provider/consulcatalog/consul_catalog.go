@@ -100,7 +100,7 @@ func (c *Configuration) SetDefaults() {
 	c.ExposedByDefault = true
 	c.DefaultRule = defaultTemplateRule
 	c.ServiceName = "traefik"
-	c.StrictChecks = []string{api.HealthPassing}
+	c.StrictChecks = []string{api.HealthPassing, api.HealthWarning}
 }
 
 // Provider is the Consul Catalog provider implementation.
