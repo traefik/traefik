@@ -143,7 +143,7 @@ The `url` option point to a specific instance.
           url = "http://private-ip-server-1/"
     ```
 
-The `weight` option allow weighted load balancing on the servers.
+The `weight` option allows for weighted load balancing on the servers.
 
 ??? example "A Service with Two Servers with Weight -- Using the [File Provider](../../providers/file.md)"
 
