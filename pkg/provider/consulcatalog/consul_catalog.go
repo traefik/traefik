@@ -89,7 +89,7 @@ type Configuration struct {
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
 	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
-	StrictChecks      []string        `description:"A list of service health statuses to allow taking traffic. Defaults to [\"passing\"]." json:"strictChecks,omitempty" yaml:"strictChecks,omitempty" toml:"strictChecks,omitempty" export:"true"`
+	StrictChecks      []string        `description:"A list of service health statuses to allow taking traffic. Defaults to [\"passing\", \"warning\"]." json:"strictChecks,omitempty" yaml:"strictChecks,omitempty" toml:"strictChecks,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
