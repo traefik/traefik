@@ -1,13 +1,18 @@
 <template>
   <div class="table-wrapper">
-    <q-infinite-scroll @load="handleLoadMore" :offset="250" ref="scroller">
+    <q-infinite-scroll
+      ref="scroller"
+      :offset="250"
+      @load="handleLoadMore"
+    >
       <q-markup-table>
         <thead>
           <tr class="table-header">
             <th
               v-for="column in columns"
-              v-bind:class="`text-${column.align}`"
-              v-bind:key="column.name">
+              :key="column.name"
+              :class="`text-${column.align}`"
+            >
               {{ column.label }}
             </th>
           </tr>
@@ -15,16 +20,28 @@
         <tfoot v-if="!data || !data.length">
           <tr>
             <td colspan="100%">
-              <q-icon name="warning" style="font-size: 1.5rem"/> No data available
+              <q-icon
+                name="warning"
+                style="font-size: 1.5rem"
+              /> No data available
             </td>
           </tr>
         </tfoot>
         <tbody>
-          <tr v-for="row in data" :key="row.name" class="cursor-pointer" @click="onRowClick(row)">
+          <tr
+            v-for="row in data"
+            :key="row.name"
+            class="cursor-pointer"
+            @click="onRowClick(row)"
+          >
             <template v-for="column in columns">
-              <td :key="column.name" v-if="getColumn(column.name).component" v-bind:class="`text-${getColumn(column.name).align}`">
+              <td
+                v-if="getColumn(column.name).component"
+                :key="column.name"
+                :class="`text-${getColumn(column.name).align}`"
+              >
                 <component
-                  v-bind:is="getColumn(column.name).component"
+                  :is="getColumn(column.name).component"
                   v-bind="getColumn(column.name).fieldToProps(row)"
                 >
                   <template v-if="getColumn(column.name).content">
@@ -33,27 +50,41 @@
                 </component>
               </td>
               <td
-                :key="column.name"
                 v-if="!getColumn(column.name).component"
-                v-bind:class="`text-${getColumn(column.name).align}`"
+                :key="column.name"
+                :class="`text-${getColumn(column.name).align}`"
                 v-bind="getColumn(column.name).fieldToProps(row)"
               >
-                 <span>
-                  {{getColumn(column.name).content ? getColumn(column.name).content(row) : row[column.name]}}
+                <span>
+                  {{ getColumn(column.name).content ? getColumn(column.name).content(row) : row[column.name] }}
                 </span>
               </td>
             </template>
           </tr>
         </tbody>
       </q-markup-table>
-      <template v-slot:loading v-if="loading">
+      <template
+        v-if="loading"
+        #loading
+      >
         <div class="row justify-center q-my-md">
-          <q-spinner-dots color="app-grey" size="40px" />
+          <q-spinner-dots
+            color="app-grey"
+            size="40px"
+          />
         </div>
       </template>
     </q-infinite-scroll>
-    <q-page-scroller position="bottom" :scroll-offset="150" class="back-to-top" v-if="endReached">
-      <q-btn color="primary" small>
+    <q-page-scroller
+      v-if="endReached"
+      position="bottom"
+      :scroll-offset="150"
+      class="back-to-top"
+    >
+      <q-btn
+        color="primary"
+        small
+      >
         Back to top
       </q-btn>
     </q-page-scroller>
@@ -65,13 +96,13 @@ import { QMarkupTable, QInfiniteScroll, QSpinnerDots, QPageScroller } from 'quas
 
 export default {
   name: 'MainTable',
-  props: ['data', 'columns', 'loading', 'onLoadMore', 'endReached', 'onRowClick'],
   components: {
     QMarkupTable,
     QInfiniteScroll,
     QSpinnerDots,
     QPageScroller
   },
+  props: ['data', 'columns', 'loading', 'onLoadMore', 'endReached', 'onRowClick'],
   methods: {
     getColumn (columnName) {
       return this.columns.find(c => c.name === columnName) || {}

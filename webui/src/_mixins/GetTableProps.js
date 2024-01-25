@@ -1,4 +1,4 @@
-import { get } from 'dot-prop'
+import { getProperty } from 'dot-prop'
 import { QChip } from 'quasar'
 import Chips from '../components/_commons/Chips'
 import ProviderIcon from '../components/_commons/ProviderIcon'
@@ -141,7 +141,7 @@ const GetTablePropsMixin = {
             path: `/${type.replace('-', '/', 'gi')}/${encodeURIComponent(row.name)}`
           }),
         columns: allColumns.filter(c =>
-          get(propsByType, `${type}.columns`, []).includes(c.name)
+          getProperty(propsByType, `${type}.columns`, []).includes(c.name)
         )
       }
     }

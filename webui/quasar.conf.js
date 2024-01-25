@@ -1,8 +1,13 @@
 // Configuration for your app
 // https://quasar.dev/quasar-cli/quasar-conf-js
 
-module.exports = function (ctx) {
+const ESLintPlugin = require('eslint-webpack-plugin')
+const { configure } = require('quasar/wrappers')
+
+module.exports = configure(function (ctx) {
   return {
+   supportTS: false,
+
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     boot: [
@@ -136,17 +141,11 @@ module.exports = function (ctx) {
       // gzip: true,
       // analyze: true,
       // extractCSS: false,
-      extendWebpack (cfg) {
-        cfg.module.rules.push({
-          enforce: 'pre',
-          test: /\.(js|vue)$/,
-          loader: 'eslint-loader',
-          exclude: /node_modules/,
-          options: {
-            formatter: require('eslint').CLIEngine.getFormatter('stylish')
-          }
-        })
+      chainWebpack (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: ['js', 'vue'] }])
       }
+
     },
 
     devServer: {
@@ -166,7 +165,14 @@ module.exports = function (ctx) {
     animations: [],
 
     ssr: {
-      pwa: false
+      pwa: false,
+
+
+      chainWebpackWebserver (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: ['js'] }])
+      },
+
     },
 
     pwa: {
@@ -176,6 +182,12 @@ module.exports = function (ctx) {
         skipWaiting: true,
         clientsClaim: true
       },
+
+      chainWebpackCustomSW (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: ['js'] }])
+      },
+
       manifest: {
         // name: 'Traefik',
         // short_name: 'Traefik',
@@ -247,4 +259,4 @@ module.exports = function (ctx) {
       }
     }
   }
-}
+})
