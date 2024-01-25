@@ -706,7 +706,7 @@ func getAllowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, sup
 	}
 
 	var (
-		routeKinds []gatev1.RouteGroupKind
+		routeKinds = []gatev1.RouteGroupKind{}
 		conditions []metav1.Condition
 	)
 
