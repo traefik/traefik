@@ -211,6 +211,7 @@ providers:
     stale: true
     exposedByDefault: true
     refreshInterval: 42s
+    allowEmptyServices: true
     namespaces:
       - foobar
       - foobar
