@@ -1,6 +1,9 @@
 <template>
   <q-avatar text-color="dark">
-    <q-icon v-if="isTLS" name="eva-shield" />
+    <q-icon
+      v-if="isTLS"
+      name="eva-shield"
+    />
   </q-avatar>
 </template>
 

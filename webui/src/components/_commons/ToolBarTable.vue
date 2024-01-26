@@ -10,15 +10,25 @@
       rounded
       unelevated
       :options="[
-          {label: 'All Status', value: ''},
-          {label: 'Success', value: 'enabled'},
-          {label: 'Warnings', value: 'warning'},
-          {label: 'Errors', value: 'disabled'}
-        ]"
+        {label: 'All Status', value: ''},
+        {label: 'Success', value: 'enabled'},
+        {label: 'Warnings', value: 'warning'},
+        {label: 'Errors', value: 'disabled'}
+      ]"
     />
     <q-space />
-    <q-input v-model="getFilter" rounded dense outlined type="search" debounce="500" placeholder="Search" :bg-color="$q.dark.isActive ? undefined : 'white'" class="bar-search">
-      <template v-slot:append>
+    <q-input
+      v-model="getFilter"
+      rounded
+      dense
+      outlined
+      type="search"
+      debounce="500"
+      placeholder="Search"
+      :bg-color="$q.dark.isActive ? undefined : 'white'"
+      class="bar-search"
+    >
+      <template #append>
         <q-icon name="eva-search-outline" />
       </template>
     </q-input>
@@ -30,16 +40,13 @@ import Helps from '../../_helpers/Helps'
 
 export default {
   name: 'ToolBarTable',
-  props: ['status', 'filter'],
   components: {
 
   },
+  props: ['status', 'filter'],
   data () {
     return {
     }
-  },
-  mounted () {
-    this.routeToState(this.$route)
   },
   computed: {
     getStatus: {
@@ -66,6 +73,12 @@ export default {
       this.routeToState(to)
     }
   },
+  mounted () {
+    this.routeToState(this.$route)
+  },
+  created () {
+
+  },
   methods: {
     routeToState (route) {
       for (const query in route.query) {
@@ -81,9 +94,6 @@ export default {
         })
       })
     }
-  },
-  created () {
-
   }
 }
 </script>
