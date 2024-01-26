@@ -1,8 +1,8 @@
 package dynamic
 
 import (
-	"time"
 	"net/http"
+	"time"
 
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/ip"
