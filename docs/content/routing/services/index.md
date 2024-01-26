@@ -143,6 +143,36 @@ The `url` option point to a specific instance.
           url = "http://private-ip-server-1/"
     ```
 
+The `weight` option allows for weighted load balancing on the servers.
+
+??? example "A Service with Two Servers with Weight -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              - url: "http://private-ip-server-1/"
+                weight: 2
+              - url: "http://private-ip-server-2/"
+                weight: 1
+
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+          weight = 2
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+          weight = 1
+    ```
+
 #### Load-balancing
 
 For now, only round robin load balancing is supported:
