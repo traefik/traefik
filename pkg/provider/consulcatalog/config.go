@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/consul/api"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/label"
@@ -132,8 +131,8 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	if item.Status != api.HealthPassing && item.Status != api.HealthWarning {
-		logger.Debug().Msg("Filtering unhealthy or starting item")
+	if !p.includesHealthStatus(item.Status) {
+		logger.Debug().Msg(fmt.Sprintf("Status \"%s\" is not included in the configured strictChecks of \"%s\"", item.Status, strings.Join(p.StrictChecks, ",")))
 		return false
 	}
 
