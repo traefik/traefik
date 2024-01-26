@@ -1,7 +1,7 @@
 <template>
   <span
     :style="{ height, width: computedWidth }"
-    v-bind:class="['SkeletonBox']"
+    :class="['SkeletonBox']"
   />
 </template>
 

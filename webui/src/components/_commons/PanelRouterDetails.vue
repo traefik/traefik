@@ -1,22 +1,37 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-router-details']">
-    <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
+  <q-card
+    flat
+    bordered
+    :class="['panel-router-details']"
+  >
+    <q-scroll-area
+      :thumb-style="appThumbStyle"
+      style="height:100%;"
+    >
       <q-card-section>
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">STATUS</div>
+            <div class="text-subtitle2">
+              STATUS
+            </div>
             <div class="block-right-text">
-              <avatar-state :state="data.status | status "/>
-              <div v-bind:class="['block-right-text-label', `block-right-text-label-${data.status}`]">{{data.status | statusLabel}}</div>
+              <avatar-state :state="status(data.status)" />
+              <div :class="['block-right-text-label', `block-right-text-label-${data.status}`]">
+                {{ statusLabel(data.status) }}
+              </div>
             </div>
           </div>
           <div class="col">
-            <div class="text-subtitle2">PROVIDER</div>
+            <div class="text-subtitle2">
+              PROVIDER
+            </div>
             <div class="block-right-text">
               <q-avatar class="provider-logo">
                 <q-icon :name="`img:${getProviderLogoPath}`" />
               </q-avatar>
-              <div class="block-right-text-label">{{data.provider}}</div>
+              <div class="block-right-text-label">
+                {{ data.provider }}
+              </div>
             </div>
           </div>
         </div>
@@ -24,10 +39,13 @@
       <q-card-section v-if="data.rule">
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">RULE</div>
+            <div class="text-subtitle2">
+              RULE
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-wrap app-chip-rule">
+              class="app-chip app-chip-wrap app-chip-rule"
+            >
               {{ data.rule }}
             </q-chip>
           </div>
@@ -36,10 +54,13 @@
       <q-card-section v-if="data.name">
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">NAME</div>
+            <div class="text-subtitle2">
+              NAME
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-wrap app-chip-name">
+              class="app-chip app-chip-wrap app-chip-name"
+            >
               {{ data.name }}
             </q-chip>
           </div>
@@ -48,11 +69,15 @@
       <q-card-section v-if="data.using">
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">ENTRYPOINTS</div>
+            <div class="text-subtitle2">
+              ENTRYPOINTS
+            </div>
             <q-chip
-              v-for="(entryPoint, index) in data.using" :key="index"
+              v-for="(entryPoint, index) in data.using"
+              :key="index"
               dense
-              class="app-chip app-chip-entry-points">
+              class="app-chip app-chip-entry-points"
+            >
               {{ entryPoint }}
             </q-chip>
           </div>
@@ -61,12 +86,15 @@
       <q-card-section v-if="data.service">
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">SERVICE</div>
+            <div class="text-subtitle2">
+              SERVICE
+            </div>
             <q-chip
               dense
               clickable
-              @click.native="$router.push({ path: `/${protocol}/services/${getServiceId()}`})"
-              class="app-chip app-chip-wrap app-chip-service app-chip-overflow">
+              class="app-chip app-chip-wrap app-chip-service app-chip-overflow"
+              @click="$router.push({ path: `/${protocol}/services/${getServiceId()}`})"
+            >
               {{ data.service }}
               <q-tooltip>{{ data.service }}</q-tooltip>
             </q-chip>
@@ -76,10 +104,14 @@
       <q-card-section v-if="data.error">
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">ERRORS</div>
+            <div class="text-subtitle2">
+              ERRORS
+            </div>
             <q-chip
-              v-for="(errorMsg, index) in data.error" :key="index"
-              class="app-chip app-chip-error">
+              v-for="(errorMsg, index) in data.error"
+              :key="index"
+              class="app-chip app-chip-error"
+            >
               {{ errorMsg }}
             </q-chip>
           </div>
@@ -94,40 +126,10 @@ import AvatarState from './AvatarState'
 
 export default {
   name: 'PanelRouterDetails',
-  props: ['data', 'protocol'],
   components: {
     AvatarState
   },
-  methods: {
-    getServiceId () {
-      const words = this.data.service.split('@')
-      if (words.length === 2) {
-        return this.data.service
-      }
-
-      return `${this.data.service}@${this.data.provider}`
-    }
-  },
-  filters: {
-    status (value) {
-      if (value === 'enabled') {
-        return 'positive'
-      }
-      if (value === 'disabled') {
-        return 'negative'
-      }
-      return value
-    },
-    statusLabel (value) {
-      if (value === 'enabled') {
-        return 'success'
-      }
-      if (value === 'disabled') {
-        return 'error'
-      }
-      return value
-    }
-  },
+  props: ['data', 'protocol'],
   computed: {
     getProviderLogoPath () {
       const name = this.data.provider.toLowerCase()
@@ -146,6 +148,34 @@ export default {
       }
 
       return `statics/providers/${name}.svg`
+    }
+  },
+  methods: {
+    getServiceId () {
+      const words = this.data.service.split('@')
+      if (words.length === 2) {
+        return this.data.service
+      }
+
+      return `${this.data.service}@${this.data.provider}`
+    },
+    status (value) {
+      if (value === 'enabled') {
+        return 'positive'
+      }
+      if (value === 'disabled') {
+        return 'negative'
+      }
+      return value
+    },
+    statusLabel (value) {
+      if (value === 'enabled') {
+        return 'success'
+      }
+      if (value === 'disabled') {
+        return 'error'
+      }
+      return value
     }
   }
 }

@@ -1,61 +1,96 @@
 <template>
   <page-default>
-
-    <section v-if="!loading" class="app-section">
+    <section
+      v-if="!loading"
+      class="app-section"
+    >
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-sm">
-        <div v-if="middlewareByName.item" class="row no-wrap items-center app-title">
-          <div class="app-title-label" style="font-size: 26px">{{ middlewareByName.item.name }}</div>
+        <div
+          v-if="middlewareByName.item"
+          class="row no-wrap items-center app-title"
+        >
+          <div
+            class="app-title-label"
+            style="font-size: 26px"
+          >
+            {{ middlewareByName.item.name }}
+          </div>
         </div>
       </div>
     </section>
 
     <section class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-sm q-pb-lg">
-        <div v-if="!loading" class="row items-start q-col-gutter-md">
-
-          <div v-if="middlewareByName.item" class="col-12 col-md-4 q-mb-lg path-block">
+        <div
+          v-if="!loading"
+          class="row items-start q-col-gutter-md"
+        >
+          <div
+            v-if="middlewareByName.item"
+            class="col-12 col-md-4 q-mb-lg path-block"
+          >
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-middlewares dense :data="[middlewareByName.item]" />
+                    <panel-middlewares
+                      dense
+                      :data="[middlewareByName.item]"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
-        <div v-else class="row items-start q-mt-xl">
+        <div
+          v-else
+          class="row items-start q-mt-xl"
+        >
           <div class="col-12">
-            <p v-for="n in 4" :key="n" class="flex">
-              <SkeletonBox :min-width="15" :max-width="15" style="margin-right: 2%"/> <SkeletonBox :min-width="50" :max-width="83"/>
+            <p
+              v-for="n in 4"
+              :key="n"
+              class="flex"
+            >
+              <SkeletonBox
+                :min-width="15"
+                :max-width="15"
+                style="margin-right: 2%"
+              /> <SkeletonBox
+                :min-width="50"
+                :max-width="83"
+              />
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <section v-if="!loading && allRouters.length" class="app-section">
+    <section
+      v-if="!loading && allRouters.length"
+      class="app-section"
+    >
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-lg q-pb-xl">
         <div class="row no-wrap items-center q-mb-lg app-title">
-          <div class="app-title-label">Used by Routers</div>
+          <div class="app-title-label">
+            Used by Routers
+          </div>
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
             <main-table
-              :data="allRouters"
               v-bind="getTableProps({ type: `${protocol}-routers` })"
+              v-model:pagination="routersPagination"
+              :data="allRouters"
               :request="()=>{}"
               :loading="routersLoading"
-              :pagination.sync="routersPagination"
               :filter="routersFilter"
             />
           </div>
         </div>
       </div>
     </section>
-
   </page-default>
 </template>
 
@@ -69,14 +104,14 @@ import MainTable from '../../components/_commons/MainTable'
 
 export default {
   name: 'PageMiddlewareDetail',
-  props: ['name', 'type'],
-  mixins: [GetTablePropsMixin],
   components: {
     PageDefault,
     SkeletonBox,
     PanelMiddlewares,
     MainTable
   },
+  mixins: [GetTablePropsMixin],
+  props: ['name', 'type'],
   data () {
     return {
       loading: true,
@@ -159,7 +194,7 @@ export default {
   mounted () {
 
   },
-  beforeDestroy () {
+  beforeUnmount () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getMiddlewareByNameClear')
     this.$store.commit('tcp/getMiddlewareByNameClear')

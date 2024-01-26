@@ -13,7 +13,7 @@ export const withPagination = (type, opts = {}) => (state, data) => {
         loading: true
       }
       break
-    case 'success':
+    case 'success': {
       const { body, page } = data
       newState = {
         ...currentState,
@@ -28,6 +28,7 @@ export const withPagination = (type, opts = {}) => (state, data) => {
         loading: false
       }
       break
+    }
     case 'failure':
       newState = {
         ...currentState,

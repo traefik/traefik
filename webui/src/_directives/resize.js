@@ -1,7 +1,7 @@
-import Vue from 'vue'
 import iFrameResize from 'iframe-resizer/js/iframeResizer'
+import { APP } from './_helpers/APP'
 
-Vue.directive('resize', {
+APP.vue.directive('resize', {
   bind: function (el, { value = {} }) {
     el.addEventListener('load', () => iFrameResize(value, el))
   }
