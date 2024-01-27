@@ -158,6 +158,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router0/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router0/priority` | `42` |
 | `traefik/http/routers/Router0/rule` | `foobar` |
+| `traefik/http/routers/Router0/ruleSyntax` | `foobar` |
 | `traefik/http/routers/Router0/service` | `foobar` |
 | `traefik/http/routers/Router0/tls/certResolver` | `foobar` |
 | `traefik/http/routers/Router0/tls/domains/0/main` | `foobar` |
@@ -173,6 +174,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router1/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router1/priority` | `42` |
 | `traefik/http/routers/Router1/rule` | `foobar` |
+| `traefik/http/routers/Router1/ruleSyntax` | `foobar` |
 | `traefik/http/routers/Router1/service` | `foobar` |
 | `traefik/http/routers/Router1/tls/certResolver` | `foobar` |
 | `traefik/http/routers/Router1/tls/domains/0/main` | `foobar` |
@@ -238,7 +240,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/url` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/servers/0/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
@@ -273,6 +277,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/routers/TCPRouter0/middlewares/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter0/rule` | `foobar` |
+| `traefik/tcp/routers/TCPRouter0/ruleSyntax` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/certResolver` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/domains/0/main` | `foobar` |
@@ -289,6 +294,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/routers/TCPRouter1/middlewares/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter1/rule` | `foobar` |
+| `traefik/tcp/routers/TCPRouter1/ruleSyntax` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/certResolver` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/domains/0/main` | `foobar` |

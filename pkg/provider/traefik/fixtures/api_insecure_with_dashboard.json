@@ -22,6 +22,11 @@
         "priority": 2147483645
       }
     },
+    "services": {
+      "api": {},
+      "dashboard": {},
+      "noop": {}
+    },
     "middlewares": {
       "dashboard_redirect": {
         "redirectRegex": {
@@ -38,11 +43,6 @@
           ]
         }
       }
-    },
-    "services": {
-      "api": {},
-      "dashboard": {},
-      "noop": {}
     }
   },
   "tcp": {},

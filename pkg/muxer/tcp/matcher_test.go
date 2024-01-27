@@ -38,7 +38,7 @@ func Test_HostSNICatchAll(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{
@@ -144,7 +144,7 @@ func Test_HostSNI(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -227,7 +227,7 @@ func Test_HostSNIRegexp(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -299,7 +299,7 @@ func Test_ClientIP(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -363,7 +363,7 @@ func Test_ALPN(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return

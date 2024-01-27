@@ -11,6 +11,7 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         options: foobar
@@ -33,6 +34,7 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         options: foobar
@@ -63,7 +65,9 @@ http:
             maxAge: 42
         servers:
           - url: foobar
+            weight: 42
           - url: foobar
+            weight: 42
         healthCheck:
           scheme: foobar
           mode: foobar
@@ -409,6 +413,7 @@ tcp:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         passthrough: true
@@ -432,6 +437,7 @@ tcp:
         - foobar
       service: foobar
       rule: foobar
+      ruleSyntax: foobar
       priority: 42
       tls:
         passthrough: true
