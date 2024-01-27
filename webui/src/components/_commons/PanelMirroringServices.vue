@@ -1,29 +1,52 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-services', {'panel-services-dense':isDense}]">
-    <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
+  <q-card
+    flat
+    bordered
+    :class="['panel-services', {'panel-services-dense':isDense}]"
+  >
+    <q-scroll-area
+      :thumb-style="appThumbStyle"
+      style="height:100%;"
+    >
       <q-card-section>
         <div class="row items-start no-wrap">
           <div class="col-6">
-            <div class="text-subtitle2 text-table">Name</div>
+            <div class="text-subtitle2 text-table">
+              Name
+            </div>
           </div>
           <div class="col-3">
-            <div class="text-subtitle2 text-table" style="text-align: right">Percent</div>
+            <div
+              class="text-subtitle2 text-table"
+              style="text-align: right"
+            >
+              Percent
+            </div>
           </div>
           <div class="col-3">
-            <div class="text-subtitle2 text-table" style="text-align: right">Provider</div>
+            <div
+              class="text-subtitle2 text-table"
+              style="text-align: right"
+            >
+              Provider
+            </div>
           </div>
         </div>
       </q-card-section>
       <q-separator />
-      <div v-for="(service, index) in data.mirroring.mirrors" :key="index">
+      <div
+        v-for="(service, index) in data.mirroring.mirrors"
+        :key="index"
+      >
         <q-card-section>
           <div class="row items-center no-wrap">
             <div class="col-6">
               <q-chip
                 dense
-                class="app-chip app-chip-rule app-chip-overflow">
+                class="app-chip app-chip-rule app-chip-overflow"
+              >
                 {{ service.name }}
-                <q-tooltip>{{service.name}}</q-tooltip>
+                <q-tooltip>{{ service.name }}</q-tooltip>
               </q-chip>
             </div>
             <div class="col-3 text-right">
@@ -43,11 +66,12 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
   name: 'PanelMirroringServices',
-  props: ['data', 'dense'],
   components: {},
+  props: ['data', 'dense'],
   computed: {
     isDense () {
       return this.dense !== undefined
@@ -70,19 +94,19 @@ export default {
         return 'statics/providers/plugin.svg'
       }
       if (name.startsWith('consul-')) {
-        return `statics/providers/consul.svg`
+        return 'statics/providers/consul.svg'
       }
       if (name.startsWith('consulcatalog-')) {
-        return `statics/providers/consulcatalog.svg`
+        return 'statics/providers/consulcatalog.svg'
       }
       if (name.startsWith('nomad-')) {
-        return `statics/providers/nomad.svg`
+        return 'statics/providers/nomad.svg'
       }
 
       return `statics/providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
