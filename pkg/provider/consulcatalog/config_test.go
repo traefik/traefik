@@ -3216,7 +3216,8 @@ func TestFilterHealthStatuses(t *testing.T) {
 	}{
 		{
 			// No value passed in here, we assume the default of ["passing", "warning"]
-			desc: "test default strict checks",
+			desc:         "test default strict checks",
+			strictChecks: defaultStrictChecks(),
 			items: []itemData{
 				{
 					ID:      "id",
@@ -3296,7 +3297,8 @@ func TestFilterHealthStatuses(t *testing.T) {
 		},
 		{
 			// The item's health status is not included in the default checks, do not expect any containers
-			desc: "test status not included",
+			desc:         "test status not included",
+			strictChecks: defaultStrictChecks(),
 			items: []itemData{
 				{
 					ID:      "id",
@@ -3335,7 +3337,7 @@ func TestFilterHealthStatuses(t *testing.T) {
 				{
 					ID:      "id",
 					Node:    "Node1",
-					Name:    "Test",
+					Name:    "Test1",
 					Address: "127.0.0.1",
 					Port:    "80",
 					Labels:  nil,
@@ -3391,9 +3393,9 @@ func TestFilterHealthStatuses(t *testing.T) {
 			},
 		},
 		{
-			// Allow both "passing" and "warning" items to be included
-			desc:         "test include passing and warning",
-			strictChecks: []string{api.HealthWarning, api.HealthPassing},
+			// Reject "critical" health status
+			desc:         "test critical status not included",
+			strictChecks: defaultStrictChecks(),
 			items: []itemData{
 				{
 					ID:      "id",

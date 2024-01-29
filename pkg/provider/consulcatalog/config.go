@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/consul/api"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/label"
@@ -322,4 +323,9 @@ func getName(i itemData) string {
 	hasher := fnv.New64()
 	hasher.Write([]byte(strings.Join(tags, "")))
 	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
+}
+
+// defaultStrictChecks returns the default healthchecks to allow an upstream to be registered a route for loadbalancers
+func defaultStrictChecks() []string {
+	return []string{api.HealthPassing, api.HealthWarning}
 }

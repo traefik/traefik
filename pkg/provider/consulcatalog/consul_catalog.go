@@ -100,7 +100,7 @@ func (c *Configuration) SetDefaults() {
 	c.ExposedByDefault = true
 	c.DefaultRule = defaultTemplateRule
 	c.ServiceName = "traefik"
-	c.StrictChecks = []string{api.HealthPassing, api.HealthWarning}
+	c.StrictChecks = defaultStrictChecks()
 }
 
 // Provider is the Consul Catalog provider implementation.
@@ -137,11 +137,6 @@ func (p *Provider) Init() error {
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
 		return fmt.Errorf("error while parsing default rule: %w", err)
-	}
-
-	// Set the default health check to keep container to "passing"
-	if len(p.StrictChecks) == 0 {
-		p.StrictChecks = []string{api.HealthPassing, api.HealthWarning}
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
