@@ -291,7 +291,6 @@
     },
     "datadog": {
       "address": "xxxx",
-      "localAgentSocket": "xxxx",
       "pushInterval": "42ns",
       "addEntryPointsLabels": true,
       "addServicesLabels": true

@@ -27,6 +27,8 @@ _Required, Default="127.0.0.1:8125"_
 
 Address instructs exporter to send metrics to datadog-agent at this address.
 
+This address can be a Unix Domain Socket (UDS) address with the following form: `unix:///path/to/datadog.socket`.  
+
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
@@ -41,28 +43,6 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.datadog.address=127.0.0.1:8125
-```
-
-#### `localAgentSocket`
-
-_Optional, Default=""_
-
-Local Agent Socket instructs the send metrics to datadog-agent at this UNIX socket.
-
-```yaml tab="File (YAML)"
-tracing:
-  datadog:
-    localAgentSocket: /var/run/datadog/dsd.socket
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.datadog]
-    localAgentSocket = "/var/run/datadog/dsd.socket"
-```
-
-```bash tab="CLI"
---metrics.datadog.localAgentSocket=/var/run/datadog/dsd.socket
 ```
 
 #### `addEntryPointsLabels`
