@@ -184,7 +184,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return contenttype.New(ctx, next, middlewareName)
+			return contenttype.New(ctx, next, *config.ContentType, middlewareName)
 		}
 	}
 
@@ -240,7 +240,8 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 	// IPWhiteList
 	if config.IPWhiteList != nil {
-		log.Warn().Msg("IPWhiteList is deprecated, please use IPAllowList instead.")
+		qualifiedName := provider.GetQualifiedName(ctx, middlewareName)
+		log.Warn().Msgf("Middleware %q of type IPWhiteList is deprecated, please use IPAllowList instead.", qualifiedName)
 
 		if middleware != nil {
 			return nil, badConf
