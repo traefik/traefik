@@ -792,7 +792,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Datadog: &types.Datadog{
 			Address:              "localhost:8181",
-			LocalAgentSocket:     "foobar",
 			PushInterval:         42,
 			AddEntryPointsLabels: true,
 			AddServicesLabels:    true,

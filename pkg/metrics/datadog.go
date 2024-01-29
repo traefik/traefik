@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/metrics/dogstatsd"
@@ -15,6 +16,8 @@ var (
 	datadogClient         *dogstatsd.Dogstatsd
 	datadogLoopCancelFunc context.CancelFunc
 )
+
+const unixAddressPrefix = "unix://"
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
@@ -103,9 +106,9 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 
 	var address string
 	switch {
-	case config.LocalAgentSocket != "":
+	case strings.HasPrefix(config.Address, unixAddressPrefix):
 		network = "unix"
-		address = config.LocalAgentSocket
+		address = config.Address[len(unixAddressPrefix):]
 	case config.Address != "":
 		address = config.Address
 	default:

@@ -87,7 +87,6 @@
     middlewares = ["foobar", "foobar"]
   [metrics.datadog]
     address = "foobar"
-    localAgentSocket = "foobar"
     pushInterval = "10s"
   [metrics.statsD]
     address = "foobar"
