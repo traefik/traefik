@@ -191,6 +191,9 @@ providers:
     connectByDefault: true
     serviceName: foobar
     watch: true
+    strictChecks:
+      - foobar
+      - foobar
     namespaces:
       - foobar
       - foobar
