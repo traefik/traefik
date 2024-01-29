@@ -362,6 +362,8 @@ func (c *clientWrapper) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRo
 
 func (c *clientWrapper) GetReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
 	if !c.isWatchedNamespace(namespace) {
+		log.Warn().Msgf("Failed to get ReferenceGrants: %q is not within watched namespaces", namespace)
+
 		return nil, fmt.Errorf("failed to get ReferenceGrants: namespace %s is not within watched namespaces", namespace)
 	}
 
