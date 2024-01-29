@@ -505,7 +505,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 							ObservedGeneration: gateway.Generation,
 							LastTransitionTime: metav1.Now(),
 							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
-							Message:            fmt.Sprintf("Cannot find ReferenceGrant for cross-namespace secret reference by CertificateRef: %v", err),
+							Message:            fmt.Sprintf("Cannot find any ReferenceGrant: %v", err),
 						})
 						continue
 					}
