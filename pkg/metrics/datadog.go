@@ -102,18 +102,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 }
 
 func initDatadogClient(ctx context.Context, config *types.Datadog) {
-	network := "udp"
-
-	var address string
-	switch {
-	case strings.HasPrefix(config.Address, unixAddressPrefix):
-		network = "unix"
-		address = config.Address[len(unixAddressPrefix):]
-	case config.Address != "":
-		address = config.Address
-	default:
-		address = "localhost:8125"
-	}
+	network, address := parseDatadogAddress(config.Address)
 
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
@@ -123,6 +112,23 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 
 		datadogClient.SendLoop(ctx, ticker.C, network, address)
 	})
+}
+
+func parseDatadogAddress(address string) (string, string) {
+	network := "udp"
+
+	var addr string
+	switch {
+	case strings.HasPrefix(address, unixAddressPrefix):
+		network = "unix"
+		addr = address[len(unixAddressPrefix):]
+	case address != "":
+		addr = address
+	default:
+		addr = "localhost:8125"
+	}
+
+	return network, addr
 }
 
 // StopDatadog stops the Datadog metrics pusher.
