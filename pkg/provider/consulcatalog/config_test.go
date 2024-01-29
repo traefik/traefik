@@ -3211,12 +3211,11 @@ func TestFilterHealthStatuses(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		items        []itemData
-		defaultRule  string
-		expected     *dynamic.Configuration
 		strictChecks []string
+		expected     *dynamic.Configuration
 	}{
 		{
-			// No value passed in here, we assume the default of ["passing"]
+			// No value passed in here, we assume the default of ["passing", "warning"]
 			desc: "test default strict checks",
 			items: []itemData{
 				{
@@ -3238,7 +3237,6 @@ func TestFilterHealthStatuses(t *testing.T) {
 					Status:  api.HealthWarning,
 				},
 			},
-			defaultRule: "Host(`foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -3310,7 +3308,6 @@ func TestFilterHealthStatuses(t *testing.T) {
 					Status:  api.HealthCritical,
 				},
 			},
-			defaultRule: "Host(`foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -3354,7 +3351,6 @@ func TestFilterHealthStatuses(t *testing.T) {
 					Status:  api.HealthWarning,
 				},
 			},
-			defaultRule: "Host(`foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -3427,7 +3423,6 @@ func TestFilterHealthStatuses(t *testing.T) {
 					Status:  api.HealthCritical,
 				},
 			},
-			defaultRule: "Host(`foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -3527,7 +3522,6 @@ func TestFilterHealthStatuses(t *testing.T) {
 					Status:  "some unsupported status",
 				},
 			},
-			defaultRule: "Host(`foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -3631,7 +3625,7 @@ func TestFilterHealthStatuses(t *testing.T) {
 			p := Provider{
 				Configuration: Configuration{
 					ExposedByDefault: true,
-					DefaultRule:      test.defaultRule,
+					DefaultRule:      "Host(`foo.bar`)",
 					StrictChecks:     test.strictChecks,
 				},
 			}
