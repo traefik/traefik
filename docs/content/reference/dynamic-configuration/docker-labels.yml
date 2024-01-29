@@ -16,6 +16,7 @@
 - "traefik.http.middlewares.middleware05.circuitbreaker.expression=foobar"
 - "traefik.http.middlewares.middleware05.circuitbreaker.fallbackduration=42s"
 - "traefik.http.middlewares.middleware05.circuitbreaker.recoveryduration=42s"
+- "traefik.http.middlewares.middleware05.circuitbreaker.responsecode=42"
 - "traefik.http.middlewares.middleware06.compress=true"
 - "traefik.http.middlewares.middleware06.compress.excludedcontenttypes=foobar, foobar"
 - "traefik.http.middlewares.middleware06.compress.includedcontenttypes=foobar, foobar"
