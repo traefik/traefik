@@ -138,6 +138,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// If we detect a contentEncoding, we know we are never going to compress.
 	if r.rw.Header().Get(contentEncoding) != "" {
 		r.compressionDisabled = true
+		r.rw.WriteHeader(r.statusCode)
 		return r.rw.Write(p)
 	}
 
