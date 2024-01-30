@@ -414,6 +414,67 @@ func (s *TracingSuite) TestOpentelemetryAuth() {
 	s.checkTraceContent(contains)
 }
 
+func (s *TracingSuite) TestNoInternals() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+		WhoamiIP:   s.whoamiIP,
+		WhoamiPort: s.whoamiPort,
+		IP:         s.otelCollectorIP,
+		IsHTTP:     true,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/ping", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+	err = try.GetRequest("http://127.0.0.1:8080/ping", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+
+	baseURL, err := url.Parse("http://" + s.tempoIP + ":3200/api/search")
+	require.NoError(s.T(), err)
+
+	req := &http.Request{
+		Method: http.MethodGet,
+		URL:    baseURL,
+	}
+	// Wait for traces to be available.
+	time.Sleep(10 * time.Second)
+	resp, err := try.Response(req, 5*time.Second)
+	require.NoError(s.T(), err)
+
+	out := &TraceResponse{}
+	content, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+	err = json.Unmarshal(content, &out)
+	require.NoError(s.T(), err)
+
+	s.NotEmptyf(len(out.Traces), "expected at least one trace")
+
+	for _, t := range out.Traces {
+		baseURL, err := url.Parse("http://" + s.tempoIP + ":3200/api/traces/" + t.TraceID)
+		require.NoError(s.T(), err)
+
+		req := &http.Request{
+			Method: http.MethodGet,
+			URL:    baseURL,
+		}
+
+		resp, err := try.Response(req, 5*time.Second)
+		require.NoError(s.T(), err)
+
+		content, err := io.ReadAll(resp.Body)
+		require.NoError(s.T(), err)
+
+		require.NotContains(s.T(), content, "@internal")
+	}
+}
+
 func (s *TracingSuite) checkTraceContent(expectedJSON []map[string]string) {
 	s.T().Helper()
 

@@ -42,6 +42,11 @@ func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
 
 // TracerFromContext extracts the trace.Tracer from the given context.
 func TracerFromContext(ctx context.Context) trace.Tracer {
+	// Prevent picking trace.noopSpan tracer.
+	if !trace.SpanContextFromContext(ctx).IsValid() {
+		return nil
+	}
+
 	span := trace.SpanFromContext(ctx)
 	if span != nil && span.TracerProvider() != nil {
 		return span.TracerProvider().Tracer("github.com/traefik/traefik")
