@@ -693,3 +693,13 @@ Here are two possible transition strategies:
     This allows continued compatibility with the existing infrastructure.
 
 Please check the [OpenTelemetry Tracing provider documention](../observability/tracing/opentelemetry.md) for more information.
+
+#### Internal Resources Observability (AccessLogs, Metrics and Tracing)
+
+In v3, observability for internal routers or services (e.g.: `ping@internal`) is disabled by default.
+To enable it one should use the new `addInternals` option for AccessLogs, Metrics or Tracing.
+Please take a look at the observability documentation for more information:
+
+- [AccessLogs](../observability/access-logs.md#addinternals)
+- [Metrics](../observability/metrics/overview.md#addinternals)
+- [AccessLogs](../observability/tracing/overview.md#addinternals)
