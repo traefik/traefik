@@ -325,7 +325,7 @@ func getName(i itemData) string {
 	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
 }
 
-// defaultStrictChecks returns the default healthchecks to allow an upstream to be registered a route for loadbalancers
+// defaultStrictChecks returns the default healthchecks to allow an upstream to be registered a route for loadbalancers.
 func defaultStrictChecks() []string {
 	return []string{api.HealthPassing, api.HealthWarning}
 }
