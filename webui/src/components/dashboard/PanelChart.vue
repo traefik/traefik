@@ -28,8 +28,8 @@
     <q-card-section>
       <div class="row items-center q-col-gutter-md">
         <div class="col-12 col-sm-6">
-          <ChartDoughnut
-            :chartdata="getChartdata()"
+          <Doughnut
+            :data="getChartdata()"
             :options="options"
           />
         </div>
@@ -104,13 +104,17 @@
 
 <script>
 import Helps from '../../_helpers/Helps'
-import ChartDoughnut from '../_commons/ChartDoughnut'
+// import ChartDoughnut from '../_commons/ChartDoughnut'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { Doughnut } from 'vue-chartjs'
 import AvatarState from '../_commons/AvatarState'
+
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 export default {
   name: 'PanelChart',
   components: {
-    ChartDoughnut,
+    Doughnut,
     AvatarState
   },
   props: ['name', 'data', 'type'],

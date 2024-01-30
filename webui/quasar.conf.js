@@ -11,7 +11,6 @@ module.exports = configure(function (ctx) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     boot: [
-      '_globals',
       'api',
       '_hacks',
       '_init'
