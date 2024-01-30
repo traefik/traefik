@@ -5,7 +5,9 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: ['name'],
   computed: {
     getLogoPath () {
@@ -15,19 +17,19 @@ export default {
         return 'statics/providers/plugin.svg'
       }
       if (name.startsWith('consul-')) {
-        return `statics/providers/consul.svg`
+        return 'statics/providers/consul.svg'
       }
       if (name.startsWith('consulcatalog-')) {
-        return `statics/providers/consulcatalog.svg`
+        return 'statics/providers/consulcatalog.svg'
       }
       if (name.startsWith('nomad-')) {
-        return `statics/providers/nomad.svg`
+        return 'statics/providers/nomad.svg'
       }
 
       return `statics/providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

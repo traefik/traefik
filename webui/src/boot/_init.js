@@ -1,26 +1,26 @@
-import { APP } from '../_helpers/APP'
+import { boot } from 'quasar/wrappers'
 import errors from '../_helpers/Errors'
 
-export default async ({ Vue }) => {
+export default boot(({ app }) => {
   // Router
   // ----------------------------------------------
-  APP.router.beforeEach(async (to, from, next) => {
-    // Set APP
-    APP.routeTo = to
-    APP.routeFrom = from
-    next()
-  })
+  // app.$router.beforeEach(async (to, from, next) => {
+  //   // Set APP
+  //   APP.routeTo = to
+  //   APP.routeFrom = from
+  //   next()
+  // })
 
   // Api (axios)
   // ----------------------------------------------
-  APP.api.interceptors.request.use((config) => {
+  app.config.globalProperties.$api.interceptors.request.use((config) => {
     console.log('interceptors -> config', config)
     // config.headers['Accept'] = '*/*'
     return config
   })
 
-  APP.api.interceptors.response.use((response) => {
+  app.config.globalProperties.$api.interceptors.response.use((response) => {
     console.log('interceptors -> response', response)
     return response
   }, errors.handleResponse)
-}
+})

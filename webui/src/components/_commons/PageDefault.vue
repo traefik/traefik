@@ -1,13 +1,15 @@
 <template>
   <q-page>
-    <slot/>
+    <slot />
   </q-page>
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'PageDefault'
-}
+})
 </script>
 
 <style scoped lang="scss">

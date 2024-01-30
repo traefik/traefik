@@ -1,12 +1,14 @@
+import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
-import { APP } from '../_helpers/APP'
-
 // Set config defaults when creating the instance
-const API = axios.create({
-  baseURL: APP.config.apiUrl
+const api = axios.create({
+  baseURL: '/api'//  FIXME: I must use "APP.config.apiUrl" here
 })
 
-export default async ({ app, Vue }) => {
-  Vue.prototype.$api = app.api = APP.api = API
-}
+export default boot(({ app }) => {
+  app.config.globalProperties.$axios = axios
+  app.config.globalProperties.$api = api
+})
+
+export { api }
