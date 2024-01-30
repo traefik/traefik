@@ -12,6 +12,7 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
@@ -19,6 +20,11 @@ var _ Client = (*clientMock)(nil)
 func init() {
 	// required by k8s.MustParseYaml
 	err := gatev1alpha2.AddToScheme(kscheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+
+	err = gatev1beta1.AddToScheme(kscheme.Scheme)
 	if err != nil {
 		panic(err)
 	}
@@ -39,11 +45,12 @@ type clientMock struct {
 	apiSecretError    error
 	apiEndpointsError error
 
-	gatewayClasses []*gatev1.GatewayClass
-	gateways       []*gatev1.Gateway
-	httpRoutes     []*gatev1.HTTPRoute
-	tcpRoutes      []*gatev1alpha2.TCPRoute
-	tlsRoutes      []*gatev1alpha2.TLSRoute
+	gatewayClasses  []*gatev1.GatewayClass
+	gateways        []*gatev1.Gateway
+	httpRoutes      []*gatev1.HTTPRoute
+	tcpRoutes       []*gatev1alpha2.TCPRoute
+	tlsRoutes       []*gatev1alpha2.TLSRoute
+	referenceGrants []*gatev1beta1.ReferenceGrant
 
 	watchChan chan interface{}
 }
@@ -78,6 +85,8 @@ func newClientMock(paths ...string) clientMock {
 				c.tcpRoutes = append(c.tcpRoutes, o)
 			case *gatev1alpha2.TLSRoute:
 				c.tlsRoutes = append(c.tlsRoutes, o)
+			case *gatev1beta1.ReferenceGrant:
+				c.referenceGrants = append(c.referenceGrants, o)
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 			}
@@ -188,6 +197,16 @@ func (c clientMock) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRoute,
 		}
 	}
 	return tlsRoutes, nil
+}
+
+func (c clientMock) GetReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
+	var referenceGrants []*gatev1beta1.ReferenceGrant
+	for _, referenceGrant := range c.referenceGrants {
+		if inNamespace(referenceGrant.ObjectMeta, namespace) {
+			referenceGrants = append(referenceGrants, referenceGrant)
+		}
+	}
+	return referenceGrants, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
