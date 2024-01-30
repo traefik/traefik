@@ -6,6 +6,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 `--accesslog`:  
 Access log settings. (Default: ```false```)
 
+`--accesslog.addinternals`:  
+Enables access log for internal services (ping, dashboard, etc...). (Default: ```false```)
+
 `--accesslog.bufferingsize`:  
 Number of access log lines to process in a buffered way. (Default: ```0```)
 
@@ -180,6 +183,9 @@ Trust all. (Default: ```false```)
 `--entrypoints.<name>.proxyprotocol.trustedips`:  
 Trust only selected IPs.
 
+`--entrypoints.<name>.reuseport`:  
+Enables EntryPoints from the same or different processes listening on the same TCP/UDP port. (Default: ```false```)
+
 `--entrypoints.<name>.transport.keepalivemaxrequests`:  
 Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
 
@@ -263,6 +269,9 @@ Maximum size in megabytes of the log file before it gets rotated. (Default: ```0
 
 `--log.nocolor`:  
 When using the 'common' format, disables the colorized output. (Default: ```false```)
+
+`--metrics.addinternals`:  
+Enables metrics for internal services (ping, dashboard, etc...). (Default: ```false```)
 
 `--metrics.datadog`:  
 Datadog metrics exporter type. (Default: ```false```)
@@ -992,6 +1001,9 @@ Defines the allowed SPIFFE trust domain.
 
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
+
+`--tracing.addinternals`:  
+Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
 
 `--tracing.globalattributes.<name>`:  
 Defines additional attributes (key:value) on all spans.

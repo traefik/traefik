@@ -30,12 +30,14 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	logger.Debug().Msg("Creating middleware")
 	logger.Debug().Msgf("Setting up with expression: %s", expression)
 
+	responseCode := confCircuitBreaker.ResponseCode
+
 	cbOpts := []cbreaker.Option{
 		cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			tracing.SetStatusErrorf(req.Context(), "blocked by circuit-breaker (%q)", expression)
-			rw.WriteHeader(http.StatusServiceUnavailable)
+			rw.WriteHeader(responseCode)
 
-			if _, err := rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
+			if _, err := rw.Write([]byte(http.StatusText(responseCode))); err != nil {
 				log.Ctx(req.Context()).Error().Err(err).Send()
 			}
 		})),
