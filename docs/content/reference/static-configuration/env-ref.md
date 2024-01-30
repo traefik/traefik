@@ -180,6 +180,9 @@ Trust all. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL_TRUSTEDIPS`:  
 Trust only selected IPs.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_REUSEPORT`:  
+Enables EntryPoints from the same or different processes listening on the same TCP/UDP port. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_KEEPALIVEMAXREQUESTS`:  
 Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
 
