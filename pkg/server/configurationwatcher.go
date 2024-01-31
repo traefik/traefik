@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"reflect"
 
 	"github.com/rs/zerolog"
@@ -11,7 +10,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -69,24 +67,6 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 		c.configurationListeners = make([]func(dynamic.Configuration), 0)
 	}
 	c.configurationListeners = append(c.configurationListeners, listener)
-}
-
-// ReloadAllConfig reloads the dynamic file configuration.
-func (c *ConfigurationWatcher) ReloadAllProviders() error {
-	// Type assert to ProviderAggregator if necessary
-	if aggregator, ok := c.providerAggregator.(aggregator.ProviderAggregator); ok {
-		err := aggregator.ReloadProviders(c.allProvidersConfigs)
-		if err != nil {
-			log.Error().Err(err).Msg("Error occurred during reloading all providers")
-			return err
-		}
-		log.Info().Msg("All provider configurations reloaded successfully")
-	} else {
-		errMsg := "ProviderAggregator type assertion failed in ReloadAllProviders"
-		log.Error().Msg(errMsg)
-		return errors.New(errMsg)
-	}
-	return nil
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {

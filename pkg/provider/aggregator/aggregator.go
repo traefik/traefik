@@ -9,7 +9,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/file"
-	"github.com/traefik/traefik/v3/pkg/provider/reloadable"
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -208,29 +207,4 @@ func (p ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Mess
 		log.Error().Err(err).Msgf("Cannot start the provider %T", prd)
 		return
 	}
-}
-
-func (p *ProviderAggregator) ReloadProviders(configurationChan chan<- dynamic.Message) error {
-	for _, provider := range p.providers {
-		if reloadable, ok := provider.(reloadable.Reloadable); ok {
-			err := reloadable.ReloadConfig(configurationChan)
-			if err != nil {
-				return err
-			}
-		} else {
-			log.Debug().Msgf("provider %+v doesn't implement Reloadable interface", provider)
-		}
-	}
-
-	// Special handling for file provider if needed
-	if p.fileProvider != nil {
-		if reloadable, ok := p.fileProvider.(reloadable.Reloadable); ok {
-			err := reloadable.ReloadConfig(configurationChan)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

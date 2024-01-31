@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -17,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/reloadable"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -49,6 +50,8 @@ func (p *Provider) Init() error {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+
 	if p.Watch {
 		var watchItem string
 
@@ -61,62 +64,43 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			return errors.New("error using file configuration provider, neither filename or directory defined")
 		}
 
-		if err := p.addWatcher(pool, watchItem, configurationChan, p.watcherCallback); err != nil {
+		if err := p.addWatcher(pool, watchItem, configurationChan, p.applyConfiguration); err != nil {
 			return err
 		}
 	}
 
-	configuration, err := p.BuildConfiguration()
+	pool.GoCtx(func(ctx context.Context) {
+		signals := make(chan os.Signal)
+		signal.Notify(signals, syscall.SIGHUP)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			// signals only receives SIGHUP events.
+			case <-signals:
+				err := p.applyConfiguration(configurationChan)
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while building configuration")
+				}
+			}
+		}
+	})
+
+	err := p.applyConfiguration(configurationChan)
 	if err != nil {
 		if p.Watch {
-			log.Error().
-				Str(logs.ProviderName, providerName).
-				Err(err).
-				Msg("Error while building configuration (for the first time)")
-
+			logger.Err(err).Msg("Error while building configuration (for the first time)")
 			return nil
 		}
+
 		return err
 	}
 
-	sendConfigToChannel(configurationChan, configuration)
 	return nil
 }
 
-// Ensure that Provider implements the Reloadable interface.
-var _ reloadable.Reloadable = (*Provider)(nil)
-
-// ReloadConfig rebuilds the configuration for the file provider and sends it to the given channel.
-func (p *Provider) ReloadConfig(configurationChan chan<- dynamic.Message) error {
-	configuration, err := p.BuildConfiguration()
-	if err != nil {
-		log.Error().Str("provider", "file").Err(err).Msg("Error occurred during configuration reload")
-		return err
-	}
-
-	// Send the new configuration to the channel
-	sendConfigToChannel(configurationChan, configuration)
-	log.Info().Str("provider", "file").Msg("Configuration reloaded successfully")
-	return nil
-}
-
-// BuildConfiguration loads configuration either from file or a directory
-// specified by 'Filename'/'Directory' and returns a 'Configuration' object.
-func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
-	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
-
-	if len(p.Directory) > 0 {
-		return p.loadFileConfigFromDirectory(ctx, p.Directory, nil)
-	}
-
-	if len(p.Filename) > 0 {
-		return p.loadFileConfig(ctx, p.Filename, true)
-	}
-
-	return nil, errors.New("error using file configuration provider, neither filename or directory defined")
-}
-
-func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
+func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message) error) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("error creating file watcher: %w", err)
@@ -129,6 +113,7 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 
 	// Process events
 	pool.GoCtx(func(ctx context.Context) {
+		logger := log.With().Str(logs.ProviderName, providerName).Logger()
 		defer watcher.Close()
 		for {
 			select {
@@ -139,39 +124,50 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 					_, evtFileName := filepath.Split(evt.Name)
 					_, confFileName := filepath.Split(p.Filename)
 					if evtFileName == confFileName {
-						callback(configurationChan, evt)
+						err := callback(configurationChan)
+						if err != nil {
+							logger.Error().Err(err).Msg("Error occurred during watcher callback")
+						}
 					}
 				} else {
-					callback(configurationChan, evt)
+					err := callback(configurationChan)
+					if err != nil {
+						logger.Error().Err(err).Msg("Error occurred during watcher callback")
+					}
 				}
 			case err := <-watcher.Errors:
-				log.Error().Str(logs.ProviderName, providerName).Err(err).Msg("Watcher event error")
+				logger.Error().Err(err).Msg("Watcher event error")
 			}
 		}
 	})
 	return nil
 }
 
-func (p *Provider) watcherCallback(configurationChan chan<- dynamic.Message, event fsnotify.Event) {
-	watchItem := p.Filename
-	if len(p.Directory) > 0 {
-		watchItem = p.Directory
-	}
-
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
-
-	if _, err := os.Stat(watchItem); err != nil {
-		logger.Error().Err(err).Msgf("Unable to watch %s", watchItem)
-		return
-	}
-
-	configuration, err := p.BuildConfiguration()
+// applyConfiguration builds the configuration and sends it to the given configurationChan.
+func (p *Provider) applyConfiguration(configurationChan chan<- dynamic.Message) error {
+	configuration, err := p.buildConfiguration()
 	if err != nil {
-		logger.Error().Err(err).Msg("Error occurred during watcher callback")
-		return
+		return err
 	}
 
 	sendConfigToChannel(configurationChan, configuration)
+	return nil
+}
+
+// buildConfiguration loads configuration either from file or a directory
+// specified by 'Filename'/'Directory' and returns a 'Configuration' object.
+func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
+	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
+
+	if len(p.Directory) > 0 {
+		return p.loadFileConfigFromDirectory(ctx, p.Directory, nil)
+	}
+
+	if len(p.Filename) > 0 {
+		return p.loadFileConfig(ctx, p.Filename, true)
+	}
+
+	return nil, errors.New("error using file configuration provider, neither filename or directory defined")
 }
 
 func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration *dynamic.Configuration) {
