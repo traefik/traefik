@@ -616,7 +616,7 @@ The maximum number of requests Traefik can handle before sending a `Connection: 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveRequests=42
+    --entryPoints.name.transport.keepAliveMaxRequests=42
     ```
 
 #### `keepAliveMaxTime`
@@ -646,7 +646,7 @@ The maximum duration Traefik can handle requests before sending a `Connection: C
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveTime=42s
+    --entryPoints.name.transport.keepAliveMaxTime=42s
     ```
 
 ### ProxyProtocol
