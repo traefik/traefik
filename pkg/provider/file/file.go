@@ -61,7 +61,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		case len(p.Filename) > 0:
 			watchItem = filepath.Dir(p.Filename)
 		default:
-			return errors.New("error using file configuration provider, neither filename or directory defined")
+			return errors.New("error using file configuration provider, neither filename nor directory is defined")
 		}
 
 		if err := p.addWatcher(pool, watchItem, configurationChan, p.applyConfiguration); err != nil {
@@ -165,7 +165,7 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 		return p.loadFileConfig(ctx, p.Filename, true)
 	}
 
-	return nil, errors.New("error using file configuration provider, neither filename or directory defined")
+	return nil, errors.New("error using file configuration provider, neither filename nor directory is defined")
 }
 
 func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration *dynamic.Configuration) {
