@@ -164,7 +164,7 @@ export default {
 
   .q-tabs {
     color: rgba( $app-text-white, .4 );
-    /deep/ .q-tabs__content {
+    :deep(.q-tabs__content) {
       .q-tab__content{
         min-width: 100%;
         .q-tab__label {
