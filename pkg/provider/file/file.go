@@ -79,16 +79,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				return
 			// signals only receives SIGHUP events.
 			case <-signals:
-				err := p.applyConfiguration(configurationChan)
-				if err != nil {
+				if err := p.applyConfiguration(configurationChan); err != nil {
 					logger.Error().Err(err).Msg("Error while building configuration")
 				}
 			}
 		}
 	})
 
-	err := p.applyConfiguration(configurationChan)
-	if err != nil {
+	if err := p.applyConfiguration(configurationChan); err != nil {
 		if p.Watch {
 			logger.Err(err).Msg("Error while building configuration (for the first time)")
 			return nil
