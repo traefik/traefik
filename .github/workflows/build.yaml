@@ -26,7 +26,7 @@ jobs:
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: webui.tar.gz
           path: webui.tar.gz
