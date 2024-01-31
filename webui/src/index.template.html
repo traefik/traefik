@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= htmlWebpackPlugin.options.productName %></title>
+    <title><%= productName %></title>
 
     <meta charset="utf-8">
-    <meta name="description" content="<%= htmlWebpackPlugin.options.productDescription %>">
+    <meta name="description" content="<%= productDescription %>">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
-    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width<% if (htmlWebpackPlugin.options.ctx.mode.cordova || htmlWebpackPlugin.options.ctx.mode.capacitor) { %>, viewport-fit=cover<% } %>">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width<% if (ctx.mode.cordova || ctx.mode.capacitor) { %>, viewport-fit=cover<% } %>">
 
-    <link rel="icon" type="image/png" href="statics/app-logo-128x128.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="statics/icons/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="statics/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="statics/icons/favicon-96x96.png">
-    <link rel="icon" type="image/ico" href="statics/icons/favicon.ico">
-    <link rel="apple-touch-icon" href="statics/icons/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="statics/icons/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="statics/icons/apple-icon-167x167.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="statics/icons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" href="app-logo-128x128.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="icons/favicon-96x96.png">
+    <link rel="icon" type="image/ico" href="icons/favicon.ico">
+    <link rel="apple-touch-icon" href="icons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-icon-167x167.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-icon-180x180.png">
   </head>
   <body>
     <!-- DO NOT touch the following DIV -->
