@@ -488,7 +488,7 @@ func buildListener(ctx context.Context, entryPointName string, entryPoint *stati
 		}
 
 		listenConfig := newListenConfig(entryPoint)
-	listener, err = listenConfig.Listen(ctx,"tcp", entryPoint.GetAddress())
+		listener, err = listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("error opening listener: %w", err)
 		}
