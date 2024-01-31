@@ -291,6 +291,7 @@ func TestDefaultRule(t *testing.T) {
 				Configuration: Configuration{
 					ExposedByDefault: true,
 					DefaultRule:      test.defaultRule,
+					StrictChecks:     defaultStrictChecks(),
 				},
 			}
 
@@ -3131,6 +3132,7 @@ func Test_buildConfiguration(t *testing.T) {
 					DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
 					ConnectAware:     test.ConnectAware,
 					Constraints:      test.constraints,
+					StrictChecks:     defaultStrictChecks(),
 				},
 			}
 
