@@ -47,6 +47,7 @@ const (
 var (
 	clientConnectionStates   = map[string]*connState{}
 	clientConnectionStatesMu = sync.RWMutex{}
+	listeners                map[string]net.Listener
 )
 
 type connState struct {
@@ -95,6 +96,10 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			return clientConnectionStates
 		}))
 	}
+
+	// populate pre-defined listeners by socket activation
+	populateSocketActivationListeners()
+
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -112,7 +117,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			OpenConnectionsGauge().
 			With("entrypoint", entryPointName, "protocol", "TCP")
 
-		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, openConnectionsGauge)
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, entryPointName, config, hostResolverConfig, openConnectionsGauge)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -168,10 +173,10 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
+func NewTCPEntryPoint(ctx context.Context, entryPointName string, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker(openConnectionsGauge)
 
-	listener, err := buildListener(ctx, configuration)
+	listener, err := buildListener(ctx, entryPointName, configuration)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
@@ -459,11 +464,23 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
-func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listenConfig := newListenConfig(entryPoint)
-	listener, err := listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
-	if err != nil {
-		return nil, fmt.Errorf("error opening listener: %w", err)
+func buildListener(ctx context.Context, entryPointName string, entryPoint *static.EntryPoint) (net.Listener, error) {
+	var listener net.Listener
+	var err error
+
+	// if we have predefined listener from socket activation
+	if ln, ok := listeners[entryPointName]; ok {
+		listener = ln
+	} else {
+		if len(listeners) > 0 {
+			log.Warn().Interface("listeners", listeners).Str("entryPointName", entryPointName).Msgf("Unable to find socket activation for entryPoint")
+		}
+
+		listenConfig := newListenConfig(entryPoint)
+		listener, err = listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("error opening listener: %w", err)
+		}
 	}
 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
