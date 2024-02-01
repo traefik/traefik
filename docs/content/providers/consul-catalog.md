@@ -714,6 +714,32 @@ providers:
 # ...
 ```
 
+### `strictChecks`
+
+_Optional, Default="passing,warning"_
+
+Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/services/usage/checks#define-initial-health-check-status) are allowed to take on traffic.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    strictChecks: 
+      - "passing"
+      - "warning"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  strictChecks = ["passing", "warning"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.strictChecks=passing,warning
+# ...
+```
+
 ### `watch`
 
 _Optional, Default=false_
