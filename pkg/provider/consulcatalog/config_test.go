@@ -287,12 +287,13 @@ func TestDefaultRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			var config Configuration
+
+			config.SetDefaults()
+			config.DefaultRule = test.defaultRule
+
 			p := Provider{
-				Configuration: Configuration{
-					ExposedByDefault: true,
-					DefaultRule:      test.defaultRule,
-					StrictChecks:     defaultStrictChecks(),
-				},
+				Configuration: config,
 			}
 
 			err := p.Init()
@@ -3126,14 +3127,15 @@ func Test_buildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			var config Configuration
+
+			config.SetDefaults()
+			config.DefaultRule = "Host(`{{ normalize .Name }}.traefik.wtf`)"
+			config.ConnectAware = test.ConnectAware
+			config.Constraints = test.constraints
+
 			p := Provider{
-				Configuration: Configuration{
-					ExposedByDefault: true,
-					DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
-					ConnectAware:     test.ConnectAware,
-					Constraints:      test.constraints,
-					StrictChecks:     defaultStrictChecks(),
-				},
+				Configuration: config,
 			}
 
 			err := p.Init()
@@ -3626,12 +3628,17 @@ func TestFilterHealthStatuses(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			var config Configuration
+
+			config.SetDefaults()
+			config.DefaultRule = "Host(`foo.bar`)"
+
+			if test.strictChecks != nil {
+				config.StrictChecks = test.strictChecks
+			}
+
 			p := Provider{
-				Configuration: Configuration{
-					ExposedByDefault: true,
-					DefaultRule:      "Host(`foo.bar`)",
-					StrictChecks:     test.strictChecks,
-				},
+				Configuration: config,
 			}
 
 			err := p.Init()
