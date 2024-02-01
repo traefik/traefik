@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/coreos/go-systemd/activation"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
@@ -99,17 +98,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 	}
 
 	// populate pre-defined listeners by socket activation
-	listenersWithName, _ := activation.ListenersWithNames()
-	if len(listenersWithName) > 0 {
-		listeners = make(map[string]net.Listener)
-		for name, lns := range listenersWithName {
-			if len(lns) == 1 {
-				listeners[name] = lns[0]
-				continue
-			}
-			log.Error().Str("listenersName", name).Msg("socket activation listeners must have one and only one listener per name")
-		}
-	}
+	populateSocketActivationListeners()
 
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
