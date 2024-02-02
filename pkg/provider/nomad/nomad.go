@@ -224,10 +224,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- dynamic.Message) error {
-	items, err := p.getNomadServiceData(ctx)
-	if err != nil {
-		return err
+	var items []item
+	var err error
+	if p.AllowEmptyServices {
+		items, err = p.getNomadServiceDataWithEmptyServices(ctx)
+		if err != nil {
+			return err
+		}
+	} else {
+		items, err = p.getNomadServiceData(ctx)
+		if err != nil {
+			return err
+		}
 	}
+
 	configurationC <- dynamic.Message{
 		ProviderName:  p.name,
 		Configuration: p.buildConfig(ctx, items),
@@ -237,7 +247,64 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 }
 
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
-	jobsOpts := &api.QueryOptions{}
+	// first, get list of service stubs
+	opts := &api.QueryOptions{AllowStale: p.Stale}
+	opts = opts.WithContext(ctx)
+
+	stubs, _, err := p.client.Services().List(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []item
+
+	for _, stub := range stubs {
+		for _, service := range stub.Services {
+			logger := log.Ctx(ctx).With().Str("serviceName", service.ServiceName).Logger()
+
+			extraConf := p.getExtraConf(service.Tags)
+			if !extraConf.Enable {
+				logger.Debug().Msg("Filter Nomad service that is not enabled")
+				continue
+			}
+
+			matches, err := constraints.MatchTags(service.Tags, p.Constraints)
+			if err != nil {
+				logger.Error().Err(err).Msg("Error matching constraint expressions")
+				continue
+			}
+
+			if !matches {
+				logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
+				continue
+			}
+
+			instances, err := p.fetchService(ctx, service.ServiceName)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, i := range instances {
+				items = append(items, item{
+					ID:         i.ID,
+					Name:       i.ServiceName,
+					Namespace:  i.Namespace,
+					Node:       i.NodeID,
+					Datacenter: i.Datacenter,
+					Address:    i.Address,
+					Port:       i.Port,
+					Tags:       i.Tags,
+					ExtraConf:  p.getExtraConf(i.Tags),
+				})
+			}
+		}
+	}
+
+	return items, nil
+}
+
+func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]item, error) {
+	jobsOpts := &api.QueryOptions{AllowStale: p.Stale}
 	jobsOpts = jobsOpts.WithContext(ctx)
 
 	jobStubs, _, err := p.client.Jobs().List(jobsOpts)
