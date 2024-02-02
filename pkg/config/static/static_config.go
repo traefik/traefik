@@ -194,7 +194,6 @@ func (a *LifeCycle) SetDefaults() {
 // Tracing holds the tracing configuration.
 type Tracing struct {
 	ServiceName      string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	Headers          map[string]string `description:"Defines additional headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	GlobalAttributes map[string]string `description:"Defines additional attributes (key:value) on all spans." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
 	SampleRate       float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 	AddInternals     bool              `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
@@ -342,16 +341,14 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	if c.Tracing != nil && c.Tracing.OTLP != nil {
-		if c.Tracing.OTLP.HTTP == nil && c.Tracing.OTLP.GRPC == nil {
-			return errors.New("tracing OTLP: at least one of HTTP and gRPC options should be defined")
-		}
-
-		if c.Tracing.OTLP.HTTP != nil && c.Tracing.OTLP.GRPC != nil {
-			return errors.New("tracing OTLP: HTTP and gRPC options are mutually exclusive")
-		}
-
 		if c.Tracing.OTLP.GRPC != nil && c.Tracing.OTLP.GRPC.TLS != nil && c.Tracing.OTLP.GRPC.Insecure {
 			return errors.New("tracing OTLP GRPC: TLS and Insecure options are mutually exclusive")
+		}
+	}
+
+	if c.Metrics != nil && c.Metrics.OTLP != nil {
+		if c.Metrics.OTLP.GRPC != nil && c.Metrics.OTLP.GRPC.TLS != nil && c.Metrics.OTLP.GRPC.Insecure {
+			return errors.New("metrics OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}
 	}
 
