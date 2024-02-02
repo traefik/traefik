@@ -381,7 +381,7 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	case *proxyproto.Conn:
 		underlying, ok := typedConn.TCPConn()
 		if !ok {
-			return nil, fmt.Errorf("underlying connection is not a tcp connection")
+			return nil, errors.New("underlying connection is not a tcp connection")
 		}
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
@@ -632,7 +632,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 			NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
 		})
-
 		if err != nil {
 			return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
 		}

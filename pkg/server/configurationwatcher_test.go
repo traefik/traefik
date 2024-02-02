@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strconv"
 	"sync"
 	"testing"
@@ -30,7 +30,7 @@ func (p *mockProvider) Provide(configurationChan chan<- dynamic.Message, _ *safe
 	}
 
 	if len(p.messages) == 0 {
-		return fmt.Errorf("no messages available")
+		return errors.New("no messages available")
 	}
 
 	configurationChan <- p.messages[0]
