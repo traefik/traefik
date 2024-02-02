@@ -89,7 +89,7 @@ export default {
   @import "../../css/sass/variables";
 
   .table-wrapper {
-    /deep/ .q-table__container{
+    :deep(.q-table__container) {
       border-radius: 8px;
       .q-table {
         .table-header {

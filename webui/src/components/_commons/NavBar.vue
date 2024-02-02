@@ -111,7 +111,7 @@ export default {
             this.hasHubButtonComponent = customElements.get('hub-button-app') !== undefined
           }
           // Sources: https://github.com/traefik/traefiklabs-hub-button-app
-          hubButtonScriptLocal.src = 'statics/traefiklabs-hub-button-app/main-v1.js'
+          hubButtonScriptLocal.src = 'traefiklabs-hub-button-app/main-v1.js'
           document.head.appendChild(hubButtonScriptLocal)
         }
         hubButtonScript.onload = () => {
@@ -164,7 +164,7 @@ export default {
 
   .q-tabs {
     color: rgba( $app-text-white, .4 );
-    /deep/ .q-tabs__content {
+    :deep(.q-tabs__content) {
       .q-tab__content{
         min-width: 100%;
         .q-tab__label {
