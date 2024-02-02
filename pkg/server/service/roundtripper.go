@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -149,10 +151,67 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 
 	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
 	if cfg.DisableHTTP2 {
-		return transport, nil
+		return &KerberosRT{
+			OrigRT: transport,
+			new: func() http.RoundTripper {
+				return transport.Clone()
+			},
+		}, nil
 	}
 
-	return newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
+	rt, err := newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
+	if err != nil {
+		return nil, err
+	}
+	return &KerberosRT{
+		OrigRT: rt,
+		new: func() http.RoundTripper {
+			return rt.Clone()
+		},
+	}, nil
+
+}
+
+type KerberosRT struct {
+	new    func() http.RoundTripper
+	OrigRT http.RoundTripper
+}
+
+type stickyRT struct {
+	RT http.RoundTripper
+}
+
+type transportKeyType string
+
+var transportKey transportKeyType = "transport"
+
+func AddTransportOnContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, transportKey, &stickyRT{})
+}
+
+func (k *KerberosRT) RoundTrip(request *http.Request) (*http.Response, error) {
+	value := request.Context().Value(transportKey).(*stickyRT)
+
+	if value.RT != nil {
+		resp, err := value.RT.RoundTrip(request)
+		return resp, err
+	}
+
+	resp, err := k.OrigRT.RoundTrip(request)
+
+	if err == nil && containsNTLMorNegotiate(resp.Header.Values("WWW-Authenticate")) {
+		value.RT = k.new()
+	}
+	return resp, err
+}
+
+func containsNTLMorNegotiate(h []string) bool {
+	for _, s := range h {
+		if strings.HasPrefix(s, "NTLM") || strings.HasPrefix(s, "Negotiate") {
+			return true
+		}
+	}
+	return false
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
