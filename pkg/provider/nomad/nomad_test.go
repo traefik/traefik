@@ -146,7 +146,7 @@ func TestProvider_SetDefaults_Endpoint(t *testing.T) {
 	}
 }
 
-func Test_getNomadServiceData_GroupService_Scaling1(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling1(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -171,12 +171,12 @@ func Test_getNomadServiceData_GroupService_Scaling1(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
 
-func Test_getNomadServiceData_GroupService_Scaling0(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling0(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -201,12 +201,12 @@ func Test_getNomadServiceData_GroupService_Scaling0(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
 
-func Test_getNomadServiceData_GroupService_ScalingDisabled(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -231,12 +231,12 @@ func Test_getNomadServiceData_GroupService_ScalingDisabled(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
 
-func Test_getNomadServiceData_GroupService_ScalingDisabled_Stopped(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled_Stopped(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -261,14 +261,14 @@ func Test_getNomadServiceData_GroupService_ScalingDisabled_Stopped(t *testing.T)
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 
 	// Should not be listed as job is stopped
 	require.Empty(t, items)
 }
 
-func Test_getNomadServiceData_GroupTaskService_Scaling1(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling1(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -295,12 +295,12 @@ func Test_getNomadServiceData_GroupTaskService_Scaling1(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }
 
-func Test_getNomadServiceData_GroupTaskService_Scaling0(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling0(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -327,12 +327,12 @@ func Test_getNomadServiceData_GroupTaskService_Scaling0(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }
 
-func Test_getNomadServiceData_TCP(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_TCP(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -357,12 +357,12 @@ func Test_getNomadServiceData_TCP(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
 
-func Test_getNomadServiceData_UDP(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_UDP(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -387,12 +387,12 @@ func Test_getNomadServiceData_UDP(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
 
-func Test_getNomadServiceData_ScalingEnabled_Stopped(t *testing.T) {
+func Test_getNomadServiceDataWithEmptyServices_ScalingEnabled_Stopped(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
@@ -417,7 +417,7 @@ func Test_getNomadServiceData_ScalingEnabled_Stopped(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
 	require.NoError(t, err)
 
 	// Should not be listed as job is stopped
@@ -425,7 +425,7 @@ func Test_getNomadServiceData_ScalingEnabled_Stopped(t *testing.T) {
 }
 
 func setup() error {
-	responsesDir := "./nomad_responses"
+	responsesDir := "./fixtures"
 	files, err := os.ReadDir(responsesDir)
 	if err != nil {
 		return err
@@ -440,4 +440,33 @@ func setup() error {
 		}
 	}
 	return nil
+}
+
+func Test_getNomadServiceData(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/services"):
+			_, _ = w.Write(responses["services"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/redis"):
+			_, _ = w.Write(responses["service_redis"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/hello-nomad"):
+			_, _ = w.Write(responses["service_hello"])
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceData(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 2)
 }
