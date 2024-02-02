@@ -29,7 +29,7 @@
             </q-btn>
           </q-tabs>
           <div class="right-menu">
-            <q-tabs>
+            <q-tabs class="allow-overflow">
               <div v-if="!coreVersion.disableDashboardAd && hasHubButtonComponent" style="margin-right: 5px;">
                 <hub-button-app theme="dark" v-if="$q.dark.isActive"></hub-button-app>
                 <hub-button-app v-if="!$q.dark.isActive"></hub-button-app>
@@ -195,6 +195,12 @@ export default {
   .btn-submenu {
     font-weight: 700;
     align-items: flex-start;
+  }
+
+  .allow-overflow {
+    :deep(.q-tabs__content) {
+      overflow: visible !important;
+    }
   }
 
 </style>
