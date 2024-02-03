@@ -27,6 +27,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 			expected: expected{
 				name: "EntryPoint",
 				attributes: []attribute.KeyValue{
+					attribute.String("http.real_ip", "123.456.789.123"),
 					attribute.String("span.kind", "server"),
 					attribute.String("entry_point", "test"),
 					attribute.String("http.request.method", "GET"),
@@ -55,6 +56,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
+			req.Header.Set("X-Real-Ip", "123.456.789.123")
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(http.StatusNotFound)

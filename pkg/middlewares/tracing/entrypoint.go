@@ -44,6 +44,13 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
+	if req.Header.Get("X-Real-Ip") != "" {
+		span.SetAttributes(attribute.String("http.real_ip", req.Header.Get("X-Real-Ip")))
+	}
+	if req.Header.Get("X-Forwarded-For") != "" {
+		span.SetAttributes(attribute.String("http.real_ip", req.Header.Get("X-Forwarded-For")))
+	}
+
 	req = req.WithContext(tracingCtx)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
