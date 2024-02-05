@@ -23,7 +23,7 @@ metrics:
 
 !!! info "Default protocol"
 
-    The OpenTelemetry exporter will export metrics to the collector using HTTP by default (https://localhost:4318/v1/metrics), see the [gRPC Section](#grpc-configuration) to use gRPC.
+    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318/v1/metrics, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 #### `addEntryPointsLabels`
 
