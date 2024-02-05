@@ -23,7 +23,7 @@ tracing:
 
 !!! info "Default protocol"
 
-    The OpenTelemetry trace exporter will export traces to the collector using HTTP by default (https://localhost:4318/v1/traces), see the [gRPC Section](#grpc-configuration) to use gRPC.
+    The OpenTelemetry trace exporter will export traces to the collector using HTTP by default to https://localhost:4318/v1/traces, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 !!! info "Trace sampling"
 

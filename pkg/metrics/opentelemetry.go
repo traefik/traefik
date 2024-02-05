@@ -190,7 +190,7 @@ func newHTTPExporter(ctx context.Context, config *types.OtelHTTP) (sdkmetric.Exp
 	}
 
 	if config.TLS != nil {
-		tlsConfig, err := config.TLS.CreateTLSConfig(context.Background())
+		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}
