@@ -350,10 +350,7 @@
     "sampleRate": 42,
     "otlp": {
       "http": {
-        "endpoint": "xxxx",
-        "headers": {
-          "foobar": "foobar"
-        }
+        "endpoint": "xxxx"
       }
     }
   },
