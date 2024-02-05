@@ -27,44 +27,26 @@ import (
 
 // Config provides configuration settings for the open-telemetry tracer.
 type Config struct {
-	GRPC *GRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true"`
-	HTTP *HTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
-}
-
-// GRPC provides configuration settings for the gRPC open-telemetry tracer.
-type GRPC struct {
-	Endpoint string `description:"Sets the gRPC endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-
-	Insecure bool             `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	GRPC *types.OtelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true"`
+	HTTP *types.OtelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (c *GRPC) SetDefaults() {
-	c.Endpoint = "localhost:4317"
-}
-
-// HTTP provides configuration settings for the HTTP open-telemetry tracer.
-type HTTP struct {
-	Endpoint string           `description:"Sets the HTTP endpoint (scheme://host:port/v1/traces) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	TLS      *types.ClientTLS `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-}
-
-// SetDefaults sets the default values.
-func (c *HTTP) SetDefaults() {
-	c.Endpoint = "localhost:4318"
+func (c *Config) SetDefaults() {
+	c.HTTP = &types.OtelHTTP{}
+	c.HTTP.SetDefaults()
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error) {
+func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
 	)
 	if c.GRPC != nil {
-		exporter, err = c.setupGRPCExporter(headers)
+		exporter, err = c.setupGRPCExporter()
 	} else {
-		exporter, err = c.setupHTTPExporter(headers)
+		exporter, err = c.setupHTTPExporter()
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
@@ -107,7 +89,7 @@ func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes 
 	return tracerProvider.Tracer("github.com/traefik/traefik"), &tpCloser{provider: tracerProvider}, err
 }
 
-func (c *Config) setupHTTPExporter(headers map[string]string) (*otlptrace.Exporter, error) {
+func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	endpoint, err := url.Parse(c.HTTP.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", c.HTTP.Endpoint, err)
@@ -115,7 +97,7 @@ func (c *Config) setupHTTPExporter(headers map[string]string) (*otlptrace.Export
 
 	opts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(endpoint.Host),
-		otlptracehttp.WithHeaders(headers),
+		otlptracehttp.WithHeaders(c.HTTP.Headers),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	}
 
@@ -139,15 +121,15 @@ func (c *Config) setupHTTPExporter(headers map[string]string) (*otlptrace.Export
 	return otlptrace.New(context.Background(), otlptracehttp.NewClient(opts...))
 }
 
-func (c *Config) setupGRPCExporter(headers map[string]string) (*otlptrace.Exporter, error) {
+func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
 	host, port, err := net.SplitHostPort(c.GRPC.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid collector address %q: %w", c.GRPC.Endpoint, err)
+		return nil, fmt.Errorf("invalid collector endpoint %q: %w", c.GRPC.Endpoint, err)
 	}
 
 	opts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
-		otlptracegrpc.WithHeaders(headers),
+		otlptracegrpc.WithHeaders(c.GRPC.Headers),
 		otlptracegrpc.WithCompressor(gzip.Name),
 	}
 

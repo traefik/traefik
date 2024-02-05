@@ -92,30 +92,6 @@ tracing:
 --tracing.sampleRate=0.2
 ```
 
-#### `headers`
-
-_Optional, Default={}_
-
-Defines additional headers to be sent with the span's payload.
-
-```yaml tab="File (YAML)"
-tracing:
-  headers:
-    foo: bar
-    baz: buz
-```
-
-```toml tab="File (TOML)"
-[tracing]
-    [tracing.headers]
-        foo = "bar"
-        baz = "buz"
-```
-
-```bash tab="CLI"
---tracing.headers.foo=bar --tracing.headers.baz=buz
-```
-
 #### `globalAttributes`
 
 _Optional, Default=empty_
