@@ -267,7 +267,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.10 # The official v2 Traefik docker image
+         image: traefik:v2.11 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:

@@ -4,8 +4,3 @@ services:
     image: consul:1.6
   whoami:
     image: traefik/whoami
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true
