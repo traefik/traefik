@@ -344,16 +344,16 @@
   },
   "tracing": {
     "serviceName": "myServiceName",
-    "headers": {
-      "foobar": "foobar"
-    },
     "globalAttributes": {
       "foobar": "foobar"
     },
     "sampleRate": 42,
     "otlp": {
       "http": {
-        "endpoint": "xxxx"
+        "endpoint": "xxxx",
+        "headers": {
+          "foobar": "foobar"
+        }
       }
     }
   },
