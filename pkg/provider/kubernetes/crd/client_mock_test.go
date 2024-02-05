@@ -173,16 +173,14 @@ func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, boo
 	return &corev1.Endpoints{}, false, nil
 }
 
-func (c clientMock) GetNodes(namespace string) ([]*corev1.Node, bool, error) {
+func (c clientMock) GetNodes() ([]*corev1.Node, bool, error) {
 	if c.apiNodesError != nil {
 		return nil, false, c.apiNodesError
 	}
 
 	var nodes []*corev1.Node
 	for _, node := range c.nodes {
-		if node.Namespace == namespace {
-			nodes = append(nodes, node)
-		}
+		nodes = append(nodes, node)
 		return nodes, true, nil
 	}
 	return nil, false, c.apiServiceError

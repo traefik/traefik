@@ -109,6 +109,15 @@ spec:
                               The Kubernetes Service itself does load-balance to the
                               pods. By default, NativeLB is false.
                             type: boolean
+                          nodePortLB:
+                            description: NodePortLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the nodes internal
+                              IPs using the nodePort when the service type is NodePort.
+                              It allows services to be reachable when traefik runs
+                              externally from the kubernetes cluster but within the
+                              same network of the nodes. By default, NodePortLB is
+                              false.
+                            type: boolean
                           passHostHeader:
                             description: PassHostHeader defines whether the client
                               Host header is forwarded to the upstream Kubernetes
@@ -828,6 +837,14 @@ spec:
                           the only child is the Kubernetes Service clusterIP. The
                           Kubernetes Service itself does load-balance to the pods.
                           By default, NativeLB is false.
+                        type: boolean
+                      nodePortLB:
+                        description: NodePortLB controls, when creating the load-balancer,
+                          whether the LB's children are directly the nodes internal
+                          IPs using the nodePort when the service type is NodePort.
+                          It allows services to be reachable when traefik runs externally
+                          from the kubernetes cluster but within the same network
+                          of the nodes. By default, NodePortLB is false.
                         type: boolean
                       passHostHeader:
                         description: PassHostHeader defines whether the client Host
@@ -1950,6 +1967,14 @@ spec:
                             The Kubernetes Service itself does load-balance to the
                             pods. By default, NativeLB is false.
                           type: boolean
+                        nodePortLB:
+                          description: NodePortLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the nodes internal
+                            IPs using the nodePort when the service type is NodePort.
+                            It allows services to be reachable when traefik runs externally
+                            from the kubernetes cluster but within the same network
+                            of the nodes. By default, NodePortLB is false.
+                          type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
                             header is forwarded to the upstream Kubernetes Service.
@@ -2047,6 +2072,14 @@ spec:
                       only child is the Kubernetes Service clusterIP. The Kubernetes
                       Service itself does load-balance to the pods. By default, NativeLB
                       is false.
+                    type: boolean
+                  nodePortLB:
+                    description: NodePortLB controls, when creating the load-balancer,
+                      whether the LB's children are directly the nodes internal IPs
+                      using the nodePort when the service type is NodePort. It allows
+                      services to be reachable when traefik runs externally from the
+                      kubernetes cluster but within the same network of the nodes.
+                      By default, NodePortLB is false.
                     type: boolean
                   passHostHeader:
                     description: PassHostHeader defines whether the client Host header
@@ -2151,6 +2184,14 @@ spec:
                             if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the
                             pods. By default, NativeLB is false.
+                          type: boolean
+                        nodePortLB:
+                          description: NodePortLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the nodes internal
+                            IPs using the nodePort when the service type is NodePort.
+                            It allows services to be reachable when traefik runs externally
+                            from the kubernetes cluster but within the same network
+                            of the nodes. By default, NodePortLB is false.
                           type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
@@ -2372,6 +2413,15 @@ spec:
                               or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the
                               pods. By default, NativeLB is false.
+                            type: boolean
+                          nodePortLB:
+                            description: NodePortLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the nodes internal
+                              IPs using the nodePort when the service type is NodePort.
+                              It allows services to be reachable when traefik runs
+                              externally from the kubernetes cluster but within the
+                              same network of the nodes. By default, NodePortLB is
+                              false.
                             type: boolean
                           passHostHeader:
                             description: PassHostHeader defines whether the client
@@ -3092,6 +3142,14 @@ spec:
                           the only child is the Kubernetes Service clusterIP. The
                           Kubernetes Service itself does load-balance to the pods.
                           By default, NativeLB is false.
+                        type: boolean
+                      nodePortLB:
+                        description: NodePortLB controls, when creating the load-balancer,
+                          whether the LB's children are directly the nodes internal
+                          IPs using the nodePort when the service type is NodePort.
+                          It allows services to be reachable when traefik runs externally
+                          from the kubernetes cluster but within the same network
+                          of the nodes. By default, NodePortLB is false.
                         type: boolean
                       passHostHeader:
                         description: PassHostHeader defines whether the client Host
@@ -4214,6 +4272,14 @@ spec:
                             The Kubernetes Service itself does load-balance to the
                             pods. By default, NativeLB is false.
                           type: boolean
+                        nodePortLB:
+                          description: NodePortLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the nodes internal
+                            IPs using the nodePort when the service type is NodePort.
+                            It allows services to be reachable when traefik runs externally
+                            from the kubernetes cluster but within the same network
+                            of the nodes. By default, NodePortLB is false.
+                          type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
                             header is forwarded to the upstream Kubernetes Service.
@@ -4311,6 +4377,14 @@ spec:
                       only child is the Kubernetes Service clusterIP. The Kubernetes
                       Service itself does load-balance to the pods. By default, NativeLB
                       is false.
+                    type: boolean
+                  nodePortLB:
+                    description: NodePortLB controls, when creating the load-balancer,
+                      whether the LB's children are directly the nodes internal IPs
+                      using the nodePort when the service type is NodePort. It allows
+                      services to be reachable when traefik runs externally from the
+                      kubernetes cluster but within the same network of the nodes.
+                      By default, NodePortLB is false.
                     type: boolean
                   passHostHeader:
                     description: PassHostHeader defines whether the client Host header
@@ -4415,6 +4489,14 @@ spec:
                             if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the
                             pods. By default, NativeLB is false.
+                          type: boolean
+                        nodePortLB:
+                          description: NodePortLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the nodes internal
+                            IPs using the nodePort when the service type is NodePort.
+                            It allows services to be reachable when traefik runs externally
+                            from the kubernetes cluster but within the same network
+                            of the nodes. By default, NodePortLB is false.
                           type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
