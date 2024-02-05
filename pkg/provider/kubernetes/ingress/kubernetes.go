@@ -525,6 +525,21 @@ func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores
 	return configs
 }
 
+// getServicePort always returns a valid port, an error otherwise.
+func getNodePort(svc *corev1.Service) (*corev1.ServicePort, error) {
+	if svc == nil {
+		return nil, errors.New("service is not defined")
+	}
+
+	for _, p := range svc.Spec.Ports {
+		if p.NodePort != 0 {
+			return &p, nil
+		}
+	}
+
+	return nil, errors.New("no NodePort found")
+}
+
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
 	if backend.Resource != nil {
 		// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
@@ -596,6 +611,47 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			svc.LoadBalancer.Servers = []dynamic.Server{
 				{URL: fmt.Sprintf("%s://%s", protocol, address)},
 			}
+
+			return svc, nil
+		}
+
+		if service.Spec.Type == corev1.ServiceTypeNodePort && svcConfig.Service.NodePortLB {
+			nodes, nodesExists, nodesErr := client.GetNodes()
+			if nodesErr != nil {
+				return nil, nodesErr
+			}
+
+			if !nodesExists || len(nodes) == 0 {
+				return nil, fmt.Errorf("nodes not found in namespace %s", namespace)
+			}
+
+			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+
+			port, err := getNodePort(service)
+			if err != nil {
+				return nil, err
+			}
+
+			var servers []dynamic.Server
+
+			for _, node := range nodes {
+				for _, addr := range node.Status.Addresses {
+					if addr.Type == corev1.NodeInternalIP {
+
+						hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(port.NodePort)))
+
+						servers = append(servers, dynamic.Server{
+							URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+						})
+					}
+				}
+			}
+
+			if len(servers) == 0 {
+				return nil, fmt.Errorf("no servers were generated for service %s in namespace", backend.Service.Name)
+			}
+
+			svc.LoadBalancer.Servers = servers
 
 			return svc, nil
 		}
