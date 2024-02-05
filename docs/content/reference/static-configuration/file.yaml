@@ -347,26 +347,35 @@ metrics:
     additionalLabels:
       name0: foobar
       name1: foobar
-  openTelemetry:
-    grpc: {}
-    address: foobar
+  otlp:
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
     explicitBoundaries:
       - 42
       - 42
-    headers:
-      name0: foobar
-      name1: foobar
-    insecure: true
-    path: foobar
     pushInterval: 42s
-    tls:
-      ca: foobar
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -403,9 +412,6 @@ accessLog:
   addInternals: true
 tracing:
   serviceName: foobar
-  headers:
-    name0: foobar
-    name1: foobar
   globalAttributes:
     name0: foobar
     name1: foobar
@@ -420,6 +426,9 @@ tracing:
         cert: foobar
         key: foobar
         insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
     http:
       endpoint: foobar
       tls:
@@ -427,6 +436,9 @@ tracing:
         cert: foobar
         key: foobar
         insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
