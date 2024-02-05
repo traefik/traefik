@@ -537,7 +537,7 @@ func getNodePort(svc *corev1.Service) (*corev1.ServicePort, error) {
 		}
 	}
 
-	return nil, errors.New("No NodePort found")
+	return nil, errors.New("no NodePort found")
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
