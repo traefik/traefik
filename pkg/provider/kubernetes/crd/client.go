@@ -44,6 +44,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	GetNodes() ([]*corev1.Node, bool, error)
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -51,6 +52,7 @@ type clientWrapper struct {
 	csCrd  traefikclientset.Interface
 	csKube kclientset.Interface
 
+	factoryAll      kinformers.SharedInformerFactory
 	factoriesCrd    map[string]traefikinformers.SharedInformerFactory
 	factoriesKube   map[string]kinformers.SharedInformerFactory
 	factoriesSecret map[string]kinformers.SharedInformerFactory
@@ -226,11 +228,18 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesSecret[ns] = factorySecret
 	}
 
+	c.factoryAll = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+	_, err := c.factoryAll.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ns := range namespaces {
 		c.factoriesCrd[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
 	}
+	c.factoryAll.Start(stopCh)
 
 	for _, ns := range namespaces {
 		for t, ok := range c.factoriesCrd[ns].WaitForCacheSync(stopCh) {
@@ -249,6 +258,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
+		}
+	}
+
+	for t, ok := range c.factoryAll.WaitForCacheSync(stopCh) {
+		if !ok {
+			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace all", t.String())
 		}
 	}
 
@@ -431,6 +446,12 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
+}
+
+func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
+	nodes, err := c.factoryAll.Core().V1().Nodes().Lister().List(labels.Everything())
+	exist, err := translateNotFoundError(err)
+	return nodes, exist, err
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.

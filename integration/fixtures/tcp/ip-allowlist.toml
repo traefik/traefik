@@ -23,7 +23,7 @@
       entryPoints = ["tcp"]
       rule = "HostSNI(`whoami-a.test`)"
       service = "whoami-a"
-      middlewares = ["blocking-ipwhitelist"]
+      middlewares = ["blocking-allowlist"]
       [tcp.routers.to-whoami-a.tls]
         passthrough = true
 
@@ -31,7 +31,7 @@
       entryPoints = ["tcp"]
       rule = "HostSNI(`whoami-b.test`)"
       service = "whoami-b"
-      middlewares = ["allowing-ipwhitelist"]
+      middlewares = ["allowing-allowlist"]
       [tcp.routers.to-whoami-b.tls]
         passthrough = true
 
@@ -45,7 +45,7 @@
         address = "{{ .WhoamiB }}"
 
   [tcp.middlewares]
-    [tcp.middlewares.allowing-ipwhitelist.ipWhiteList]
+    [tcp.middlewares.allowing-allowlist.ipAllowList]
       sourceRange = ["127.0.0.1/32"]
-    [tcp.middlewares.blocking-ipwhitelist.ipWhiteList]
+    [tcp.middlewares.blocking-allowlist.ipAllowList]
       sourceRange = ["127.127.127.127/32"]

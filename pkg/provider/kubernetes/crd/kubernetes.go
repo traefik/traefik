@@ -123,7 +123,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger := log.FromContext(ctxLog)
 
 	logger.Warn("CRDs API Group \"traefik.containo.us\" is deprecated, and its support will end starting with Traefik v3. Please use the API Group \"traefik.io\" instead.")
-	logger.Warn("CRDs API Version \"traefik.io/v1alpha1\" will not be supported in Traefik v3 itself. However, an automatic migration path to the next version will be available.")
 
 	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
@@ -288,6 +287,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
 			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
 			IPWhiteList:       middleware.Spec.IPWhiteList,
+			IPAllowList:       middleware.Spec.IPAllowList,
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
 			RateLimit:         rateLimit,
@@ -313,6 +313,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
 			IPWhiteList:  middlewareTCP.Spec.IPWhiteList,
+			IPAllowList:  middlewareTCP.Spec.IPAllowList,
 		}
 	}
 
