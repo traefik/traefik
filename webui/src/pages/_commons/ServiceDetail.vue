@@ -1,129 +1,199 @@
 <template>
   <page-default>
-
-    <section v-if="!loading" class="app-section">
+    <section
+      v-if="!loading"
+      class="app-section"
+    >
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-lg">
-        <div v-if="serviceByName.item" class="row no-wrap items-center app-title">
-          <div class="app-title-label" style="font-size: 26px">{{ serviceByName.item.name }}</div>
+        <div
+          v-if="serviceByName.item"
+          class="row no-wrap items-center app-title"
+        >
+          <div
+            class="app-title-label"
+            style="font-size: 26px"
+          >
+            {{ serviceByName.item.name }}
+          </div>
         </div>
       </div>
     </section>
 
     <section class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-lg q-pb-lg">
-        <div v-if="!loading" class="row items-start q-col-gutter-md">
-
-          <div v-if="serviceByName.item" class="col-12 col-md-4 q-mb-lg path-block">
+        <div
+          v-if="!loading"
+          class="row items-start q-col-gutter-md"
+        >
+          <div
+            v-if="serviceByName.item"
+            class="col-12 col-md-4 q-mb-lg path-block"
+          >
             <div class="row no-wrap items-center q-mb-lg app-title">
-              <q-icon name="eva-info"></q-icon>
-              <div class="app-title-label">Service Details</div>
+              <q-icon name="eva-info" />
+              <div class="app-title-label">
+                Service Details
+              </div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-service-details dense :data="serviceByName.item" />
+                    <panel-service-details
+                      dense
+                      :data="serviceByName.item"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-if="serviceByName.item.loadBalancer && serviceByName.item.loadBalancer.healthCheck" class="col-12 col-md-4 q-mb-lg path-block">
+          <div
+            v-if="serviceByName.item.loadBalancer && serviceByName.item.loadBalancer.healthCheck"
+            class="col-12 col-md-4 q-mb-lg path-block"
+          >
             <div class="row no-wrap items-center q-mb-lg app-title">
-              <q-icon name="eva-shield"></q-icon>
-              <div class="app-title-label">Health Check</div>
+              <q-icon name="eva-shield" />
+              <div class="app-title-label">
+                Health Check
+              </div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-health-check dense :data="serviceByName.item.loadBalancer.healthCheck"/>
+                    <panel-health-check
+                      dense
+                      :data="serviceByName.item.loadBalancer.healthCheck"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-if="serviceByName.item.loadBalancer" class="col-12 col-md-4 q-mb-lg path-block">
+          <div
+            v-if="serviceByName.item.loadBalancer"
+            class="col-12 col-md-4 q-mb-lg path-block"
+          >
             <div class="row no-wrap items-center q-mb-lg app-title">
-              <q-icon name="eva-globe-outline"></q-icon>
-              <div class="app-title-label">Servers</div>
+              <q-icon name="eva-globe-outline" />
+              <div class="app-title-label">
+                Servers
+              </div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-servers dense :data="serviceByName.item" :hasStatus="serviceByName.item.serverStatus"/>
+                    <panel-servers
+                      dense
+                      :data="serviceByName.item"
+                      :has-status="serviceByName.item.serverStatus"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-if="serviceByName.item.weighted && serviceByName.item.weighted.services" class="col-12 col-md-4 q-mb-lg path-block">
+          <div
+            v-if="serviceByName.item.weighted && serviceByName.item.weighted.services"
+            class="col-12 col-md-4 q-mb-lg path-block"
+          >
             <div class="row no-wrap items-center q-mb-lg app-title">
-              <q-icon name="eva-globe-outline"></q-icon>
-              <div class="app-title-label">Services</div>
+              <q-icon name="eva-globe-outline" />
+              <div class="app-title-label">
+                Services
+              </div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-weighted-services dense :data="serviceByName.item"/>
+                    <panel-weighted-services
+                      dense
+                      :data="serviceByName.item"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-if="serviceByName.item.mirroring && serviceByName.item.mirroring.mirrors" class="col-12 col-md-4 q-mb-lg path-block">
+          <div
+            v-if="serviceByName.item.mirroring && serviceByName.item.mirroring.mirrors"
+            class="col-12 col-md-4 q-mb-lg path-block"
+          >
             <div class="row no-wrap items-center q-mb-lg app-title">
-              <q-icon name="eva-globe-outline"></q-icon>
-              <div class="app-title-label">Mirror Services</div>
+              <q-icon name="eva-globe-outline" />
+              <div class="app-title-label">
+                Mirror Services
+              </div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-mirroring-services dense :data="serviceByName.item"/>
+                    <panel-mirroring-services
+                      dense
+                      :data="serviceByName.item"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
-        <div v-else class="row items-start q-mt-xl">
+        <div
+          v-else
+          class="row items-start q-mt-xl"
+        >
           <div class="col-12">
-            <p v-for="n in 4" :key="n" class="flex">
-              <SkeletonBox :min-width="15" :max-width="15" style="margin-right: 2%"/> <SkeletonBox :min-width="50" :max-width="83"/>
+            <p
+              v-for="n in 4"
+              :key="n"
+              class="flex"
+            >
+              <SkeletonBox
+                :min-width="15"
+                :max-width="15"
+                style="margin-right: 2%"
+              /> <SkeletonBox
+                :min-width="50"
+                :max-width="83"
+              />
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <section v-if="!loading && allRouters.length" class="app-section">
+    <section
+      v-if="!loading && allRouters.length"
+      class="app-section"
+    >
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-lg q-pb-xl">
         <div class="row no-wrap items-center q-mb-lg app-title">
-          <div class="app-title-label">Used by Routers</div>
+          <div class="app-title-label">
+            Used by Routers
+          </div>
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
             <main-table
-              :data="allRouters"
               v-bind="getTableProps({ type: `${protocol}-routers` })"
+              v-model:pagination="routersPagination"
+              :data="allRouters"
               :request="()=>{}"
               :loading="routersLoading"
-              :pagination.sync="routersPagination"
               :filter="routersFilter"
             />
           </div>
         </div>
       </div>
     </section>
-
   </page-default>
 </template>
 
@@ -141,8 +211,6 @@ import PanelMirroringServices from '../../components/_commons/PanelMirroringServ
 
 export default {
   name: 'PageServiceDetail',
-  props: ['name', 'type'],
-  mixins: [GetTablePropsMixin],
   components: {
     PanelMirroringServices,
     PanelWeightedServices,
@@ -153,6 +221,8 @@ export default {
     PanelServers,
     MainTable
   },
+  mixins: [GetTablePropsMixin],
+  props: ['name', 'type'],
   data () {
     return {
       loading: true,
@@ -207,7 +277,7 @@ export default {
           // Get routers
           if (body.usedBy) {
             for (const router in body.usedBy) {
-              if (body.usedBy.hasOwnProperty(router)) {
+              if (Object.getOwnPropertyDescriptor(body.usedBy, router)) {
                 this.getRouterByName(body.usedBy[router])
                   .then(body => {
                     if (body) {
@@ -237,7 +307,7 @@ export default {
   mounted () {
 
   },
-  beforeDestroy () {
+  beforeUnmount () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getServiceByNameClear')
     this.$store.commit('tcp/getServiceByNameClear')

@@ -1,58 +1,98 @@
 <template>
-  <q-card flat bordered>
+  <q-card
+    flat
+    bordered
+  >
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col">
-          <div class="text-h6 text-weight-bold">{{getName}}</div>
+          <div class="text-h6 text-weight-bold">
+            {{ getName }}
+          </div>
         </div>
         <div class="col-auto">
-          <q-btn :to="getUrl" color="accent" dense flat icon-right="eva-arrow-forward-outline" no-caps label="Explore" size="md" class="text-weight-bold"/>
+          <q-btn
+            :to="getUrl"
+            color="accent"
+            dense
+            flat
+            icon-right="eva-arrow-forward-outline"
+            no-caps
+            label="Explore"
+            size="md"
+            class="text-weight-bold"
+          />
         </div>
       </div>
     </q-card-section>
     <q-card-section>
       <div class="row items-center q-col-gutter-md">
         <div class="col-12 col-sm-6">
-          <ChartDoughnut
-            :chartdata="getChartdata()"
-            :options="options"/>
+          <Doughnut
+            :data="getChartdata()"
+            :options="options"
+          />
         </div>
         <div class="col-12 col-sm-6">
           <q-list>
             <q-item class="label-state">
               <q-item-section avatar>
-                <avatar-state state="positive"/>
+                <avatar-state state="positive" />
               </q-item-section>
               <q-item-section class="label-state-text">
                 <q-item-label>Success</q-item-label>
-                <q-item-label caption lines="1">{{getSuccess(true)}}%</q-item-label>
+                <q-item-label
+                  caption
+                  lines="1"
+                >
+                  {{ getSuccess(true) }}%
+                </q-item-label>
               </q-item-section>
-              <q-item-section side class="label-state-side">
-                {{getSuccess()}}
+              <q-item-section
+                side
+                class="label-state-side"
+              >
+                {{ getSuccess() }}
               </q-item-section>
             </q-item>
             <q-item class="label-state">
               <q-item-section avatar>
-                <avatar-state state="warning"/>
+                <avatar-state state="warning" />
               </q-item-section>
               <q-item-section class="label-state-text">
                 <q-item-label>Warnings</q-item-label>
-                <q-item-label caption lines="1">{{getWarnings(true)}}%</q-item-label>
+                <q-item-label
+                  caption
+                  lines="1"
+                >
+                  {{ getWarnings(true) }}%
+                </q-item-label>
               </q-item-section>
-              <q-item-section side class="label-state-side">
-                {{getWarnings()}}
+              <q-item-section
+                side
+                class="label-state-side"
+              >
+                {{ getWarnings() }}
               </q-item-section>
             </q-item>
             <q-item class="label-state">
               <q-item-section avatar>
-                <avatar-state state="negative"/>
+                <avatar-state state="negative" />
               </q-item-section>
               <q-item-section class="label-state-text">
                 <q-item-label>Errors</q-item-label>
-                <q-item-label caption lines="1">{{getErrors(true)}}%</q-item-label>
+                <q-item-label
+                  caption
+                  lines="1"
+                >
+                  {{ getErrors(true) }}%
+                </q-item-label>
               </q-item-section>
-              <q-item-section side class="label-state-side">
-                {{getErrors()}}
+              <q-item-section
+                side
+                class="label-state-side"
+              >
+                {{ getErrors() }}
               </q-item-section>
             </q-item>
           </q-list>
@@ -64,22 +104,27 @@
 
 <script>
 import Helps from '../../_helpers/Helps'
-import ChartDoughnut from '../_commons/ChartDoughnut'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { Doughnut } from 'vue-chartjs'
 import AvatarState from '../_commons/AvatarState'
+
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 export default {
   name: 'PanelChart',
-  props: ['name', 'data', 'type'],
   components: {
-    ChartDoughnut,
+    Doughnut,
     AvatarState
   },
+  props: ['name', 'data', 'type'],
   data () {
     return {
       loading: true,
       options: {
-        legend: {
-          display: false
+        plugins: {
+          legend: {
+            display: false
+          }
         },
         animation: {
           duration: 1000
