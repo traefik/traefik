@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"io"
 	"net/http"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
-	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -62,14 +62,14 @@ func (c *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 	}
 
 	if c.tracer != nil && c.ShouldAddTracing(resourceName) {
-		chain = chain.Append(tracingMiddle.WrapEntryPointHandler(ctx, c.tracer, c.semConvMetricRegistry, entryPointName))
+		chain = chain.Append(observability.WrapEntryPointHandler(ctx, c.tracer, c.semConvMetricRegistry, entryPointName))
 	}
 
 	if c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() && c.ShouldAddMetrics(resourceName) {
 		metricsHandler := metricsMiddle.WrapEntryPointHandler(ctx, c.metricsRegistry, entryPointName)
 
 		if c.tracer != nil && c.ShouldAddTracing(resourceName) {
-			chain = chain.Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler))
+			chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 		} else {
 			chain = chain.Append(metricsHandler)
 		}

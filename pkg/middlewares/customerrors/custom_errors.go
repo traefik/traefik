@@ -12,7 +12,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
 	"go.opentelemetry.io/otel/trace"
@@ -71,7 +71,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if c.backendHandler == nil {
 		logger.Error().Msg("Error pages: no backend handler.")
-		tracing.SetStatusErrorf(req.Context(), "Error pages: no backend handler.")
+		observability.SetStatusErrorf(req.Context(), "Error pages: no backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
 	}
@@ -96,7 +96,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	pageReq, err := newRequest("http://" + req.Host + query)
 	if err != nil {
 		logger.Error().Err(err).Send()
-		tracing.SetStatusErrorf(req.Context(), err.Error())
+		observability.SetStatusErrorf(req.Context(), err.Error())
 		http.Error(rw, http.StatusText(code), code)
 		return
 	}

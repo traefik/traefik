@@ -1,4 +1,4 @@
-package tracing
+package observability
 
 import (
 	"context"
@@ -57,17 +57,17 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
-	tracing.LogServerRequest(span, req)
+	LogServerRequest(span, req)
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
 
-	tracing.LogResponseCode(span, recorder.Status(), trace.SpanKindServer)
+	LogResponseCode(span, recorder.Status(), trace.SpanKindServer)
 
 	end := time.Now()
 	span.End(trace.WithTimestamp(end))
 
-	if e.semConvMetricRegistry != nil && e.semConvMetricRegistry.HttpServerRequestDuration() != nil {
+	if e.semConvMetricRegistry != nil && e.semConvMetricRegistry.HTTPServerRequestDuration() != nil {
 		var attrs []attribute.KeyValue
 
 		if recorder.Status() < 100 || recorder.Status() >= 600 {
@@ -79,25 +79,10 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))
 		attrs = append(attrs, semconv.HTTPResponseStatusCode(recorder.Status()))
 		attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
-		attrs = append(attrs, semconv.NetworkProtocolVersion(proto(req.Proto)))
+		attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 		attrs = append(attrs, semconv.ServerAddress(req.Host))
 		attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
-		e.semConvMetricRegistry.HttpServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
-	}
-}
-
-func proto(proto string) string {
-	switch proto {
-	case "HTTP/1.0":
-		return "1.0"
-	case "HTTP/1.1":
-		return "1.1"
-	case "HTTP/2":
-		return "2"
-	case "HTTP/3":
-		return "3"
-	default:
-		return proto
+		e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
 	}
 }

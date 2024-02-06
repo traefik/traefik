@@ -10,7 +10,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/cbreaker"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -34,7 +34,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 
 	cbOpts := []cbreaker.Option{
 		cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			tracing.SetStatusErrorf(req.Context(), "blocked by circuit-breaker (%q)", expression)
+			observability.SetStatusErrorf(req.Context(), "blocked by circuit-breaker (%q)", expression)
 			rw.WriteHeader(responseCode)
 
 			if _, err := rw.Write([]byte(http.StatusText(responseCode))); err != nil {

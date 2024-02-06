@@ -198,7 +198,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
 	var semConvMetricRegistry *metrics.SemConvMetricsRegistry
 	if staticConfiguration.Metrics != nil && staticConfiguration.Metrics.OTLP != nil {
-		semConvMetricRegistry = metrics.SemConvMetricRegistry(ctx, staticConfiguration.Metrics.OTLP)
+		semConvMetricRegistry, err = metrics.SemConvMetricRegistry(ctx, staticConfiguration.Metrics.OTLP)
+		if err != nil {
+			return nil, err
+		}
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
