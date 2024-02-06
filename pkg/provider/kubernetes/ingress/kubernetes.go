@@ -637,7 +637,6 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			for _, node := range nodes {
 				for _, addr := range node.Status.Addresses {
 					if addr.Type == corev1.NodeInternalIP {
-
 						hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(port.NodePort)))
 
 						servers = append(servers, dynamic.Server{
