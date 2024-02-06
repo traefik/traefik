@@ -177,7 +177,7 @@ type KerberosRoundTripper struct {
 }
 
 type stickyRoundTripper struct {
-	RT http.RoundTripper
+	RoundTripper http.RoundTripper
 }
 
 type transportKeyType string
@@ -194,15 +194,17 @@ func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 		return k.OriginalRoundTripper.RoundTrip(request)
 	}
 
-	if value.RT != nil {
-		resp, err := value.RT.RoundTrip(request)
-		return resp, err
+	if value.RoundTripper != nil {
+		return value.RoundTripper.RoundTrip(request)
 	}
 
 	resp, err := k.OriginalRoundTripper.RoundTrip(request)
 
+	// If we found that we are authenticating with Kerberos (Negotiate) or NTLM.
+	// We put a dedicated roundTripper in the ConnContext.
+	// This will  stick the next calls to the same connection with the backend.
 	if err == nil && containsNTLMorNegotiate(resp.Header.Values("WWW-Authenticate")) {
-		value.RT = k.new()
+		value.RoundTripper = k.new()
 	}
 	return resp, err
 }

@@ -616,6 +616,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	prevConnContext := serverHTTP.ConnContext
 	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
 		if prevConnContext != nil {
 			return prevConnContext(ctx, c)
