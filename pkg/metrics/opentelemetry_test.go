@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"regexp"
 	"strconv"
 	"testing"
@@ -316,14 +315,12 @@ func TestOpenTelemetry(t *testing.T) {
 		ts.Close()
 	})
 
-	sURL, err := url.Parse(ts.URL)
-	require.NoError(t, err)
-
-	var cfg types.OpenTelemetry
+	var cfg types.OTLP
 	(&cfg).SetDefaults()
 	cfg.AddRoutersLabels = true
-	cfg.Address = sURL.Host
-	cfg.Insecure = true
+	cfg.HTTP = &types.OtelHTTP{
+		Endpoint: ts.URL,
+	}
 	cfg.PushInterval = ptypes.Duration(10 * time.Millisecond)
 
 	registry := RegisterOpenTelemetry(context.Background(), &cfg)
