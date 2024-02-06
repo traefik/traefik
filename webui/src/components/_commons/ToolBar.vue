@@ -1,23 +1,57 @@
 <template>
   <q-toolbar class="row no-wrap items-center">
-    <q-tabs align="left" inline-label indicator-color="transparent" stretch>
-      <q-route-tab :to="`/${protocol}/routers`" no-caps :label="`${protocolLabel} Routers`">
-        <q-badge v-if="routerTotal !== 0" align="middle" :label="routerTotal" class="q-ml-sm"/>
+    <q-tabs
+      align="left"
+      inline-label
+      indicator-color="transparent"
+      stretch
+    >
+      <q-route-tab
+        :to="`/${protocol}/routers`"
+        no-caps
+        :label="`${protocolLabel} Routers`"
+      >
+        <q-badge
+          v-if="routerTotal !== 0"
+          align="middle"
+          :label="routerTotal"
+          class="q-ml-sm"
+        />
       </q-route-tab>
-      <q-route-tab :to="`/${protocol}/services`" no-caps :label="`${protocolLabel} Services`">
-        <q-badge v-if="servicesTotal !== 0" align="middle" :label="servicesTotal" class="q-ml-sm"/>
+      <q-route-tab
+        :to="`/${protocol}/services`"
+        no-caps
+        :label="`${protocolLabel} Services`"
+      >
+        <q-badge
+          v-if="servicesTotal !== 0"
+          align="middle"
+          :label="servicesTotal"
+          class="q-ml-sm"
+        />
       </q-route-tab>
-      <q-route-tab v-if="protocol !== 'udp'" :to="`/${protocol}/middlewares`" no-caps :label="`${protocolLabel} Middlewares`">
-        <q-badge v-if="middlewaresTotal !== 0" align="middle" :label="middlewaresTotal" class="q-ml-sm"/>
+      <q-route-tab
+        v-if="protocol !== 'udp'"
+        :to="`/${protocol}/middlewares`"
+        no-caps
+        :label="`${protocolLabel} Middlewares`"
+      >
+        <q-badge
+          v-if="middlewaresTotal !== 0"
+          align="middle"
+          :label="middlewaresTotal"
+          class="q-ml-sm"
+        />
       </q-route-tab>
     </q-tabs>
   </q-toolbar>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { defineComponent } from 'vue'
+import { useStore, mapActions, mapGetters } from 'vuex'
 
-export default {
+export default defineComponent({
   name: 'ToolBar',
   data () {
     return {
@@ -69,11 +103,13 @@ export default {
     this.refreshAll()
     this.intervalRefresh = setInterval(this.onGetAll, this.intervalRefreshTime)
   },
-  beforeDestroy () {
+  beforeUnmount () {
+    const $store = useStore()
+
     clearInterval(this.intervalRefresh)
-    this.$store.commit('core/getOverviewClear')
+    $store.commit('core/getOverviewClear')
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
