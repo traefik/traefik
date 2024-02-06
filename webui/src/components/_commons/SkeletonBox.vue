@@ -1,13 +1,13 @@
 <template>
   <span
     :style="{ height, width: computedWidth }"
-    v-bind:class="['SkeletonBox']"
+    :class="['SkeletonBox']"
   />
 </template>
 
 <script>
 export default {
-  name: `SkeletonBox`,
+  name: 'SkeletonBox',
   props: {
     maxWidth: {
       default: 100,
@@ -18,7 +18,7 @@ export default {
       type: Number
     },
     height: {
-      default: `2em`,
+      default: '2em',
       type: String
     },
     width: {
