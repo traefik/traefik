@@ -30,6 +30,66 @@ var (
 	openTelemetryGaugeCollector *gaugeCollector
 )
 
+type SemConvMetricsRegistry struct {
+	// server metrics
+	httpServerRequestDuration metric.Float64Histogram
+	// client metrics
+	httpClientRequestDuration metric.Float64Histogram
+}
+
+func SemConvMetricRegistry(ctx context.Context, config *types.OTLP) *SemConvMetricsRegistry {
+	if openTelemetryMeterProvider == nil {
+		var err error
+		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
+			log.Ctx(ctx).Err(err).Msg("Unable to create OpenTelemetry meter provider")
+
+			return nil
+		}
+	}
+
+	meter := otel.Meter("github.com/traefik/traefik",
+		metric.WithInstrumentationVersion(version.Version))
+
+	httpServerRequestDuration, err := meter.Float64Histogram("http.server.request.duration",
+		metric.WithDescription("Duration of HTTP server requests."),
+		metric.WithUnit("s"),
+		metric.WithExplicitBucketBoundaries(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10))
+	if err != nil {
+		// TODO log or return error
+		return nil
+	}
+
+	httpClientRequestDuration, err := meter.Float64Histogram("http.client.request.duration",
+		metric.WithDescription("Duration of HTTP client requests."),
+		metric.WithUnit("s"),
+		metric.WithExplicitBucketBoundaries(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10))
+	if err != nil {
+		// TODO log or return error
+		return nil
+	}
+
+	return &SemConvMetricsRegistry{
+		httpServerRequestDuration: httpServerRequestDuration,
+		httpClientRequestDuration: httpClientRequestDuration,
+	}
+}
+
+func (s *SemConvMetricsRegistry) HttpServerRequestDuration() metric.Float64Histogram {
+	if s == nil {
+		return nil
+	}
+
+	return s.httpServerRequestDuration
+}
+
+func (s *SemConvMetricsRegistry) HttpClientRequestDuration() metric.Float64Histogram {
+	if s == nil {
+		return nil
+	}
+
+	return s.httpClientRequestDuration
+}
+
 // RegisterOpenTelemetry registers all OpenTelemetry metrics.
 func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 	if openTelemetryMeterProvider == nil {

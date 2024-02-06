@@ -196,10 +196,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Observability
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+	var semConvMetricRegistry *metrics.SemConvMetricsRegistry
+	if staticConfiguration.Metrics != nil && staticConfiguration.Metrics.OTLP != nil {
+		semConvMetricRegistry = metrics.SemConvMetricRegistry(ctx, staticConfiguration.Metrics.OTLP)
+	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
-	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, accessLog, tracer, tracerCloser)
+	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
 
