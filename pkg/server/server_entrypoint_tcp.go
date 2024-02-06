@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/router"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"golang.org/x/net/http2"
@@ -611,6 +612,16 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 				clientConnectionStatesMu.Unlock()
 			}
 		}
+	}
+
+	prevConnContext := serverHTTP.ConnContext
+	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = service.AddTransportOnContext(ctx)
+		if prevConnContext != nil {
+			return prevConnContext(ctx, c)
+		}
+		return ctx
 	}
 
 	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
