@@ -202,7 +202,7 @@ func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 
 	// If we found that we are authenticating with Kerberos (Negotiate) or NTLM.
 	// We put a dedicated roundTripper in the ConnContext.
-	// This will  stick the next calls to the same connection with the backend.
+	// This will stick the next calls to the same connection with the backend.
 	if err == nil && containsNTLMorNegotiate(resp.Header.Values("WWW-Authenticate")) {
 		value.RoundTripper = k.new()
 	}
