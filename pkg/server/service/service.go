@@ -22,7 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
-	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -305,7 +305,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
 			// Wrapping the roundTripper with the Tracing roundTripper,
 			// to handle the reverseProxy client span creation.
-			roundTripper = newTracingRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
+			roundTripper = newObservabilityRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
 		}
 
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
@@ -323,7 +323,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
-				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
+				Append(observability.WrapMiddleware(ctx, metricsHandler)).
 				Then(proxy)
 			if err != nil {
 				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
@@ -331,7 +331,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		}
 
 		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
-			proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
+			proxy = observability.NewService(ctx, serviceName, proxy)
 		}
 
 		lb.Add(proxyName, proxy, server.Weight)

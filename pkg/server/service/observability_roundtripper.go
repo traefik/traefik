@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"net"
 	"net/http"
 	"strconv"
@@ -31,7 +32,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 		req = req.WithContext(tracingCtx)
 
-		tracing.LogClientRequest(span, req)
+		observability.LogClientRequest(span, req)
 		tracing.InjectContextIntoCarrier(req)
 	}
 
@@ -41,7 +42,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		statusCode = computeStatusCode(err)
 	}
 
-	tracing.LogResponseCode(span, statusCode, trace.SpanKindClient)
+	observability.LogResponseCode(span, statusCode, trace.SpanKindClient)
 
 	end := time.Now()
 
@@ -49,7 +50,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		span.End(trace.WithTimestamp(end))
 	}
 
-	if t.semConvMetricRegistry != nil && t.semConvMetricRegistry.HttpClientRequestDuration() != nil {
+	if t.semConvMetricRegistry != nil && t.semConvMetricRegistry.HTTPClientRequestDuration() != nil {
 		var attrs []attribute.KeyValue
 
 		if statusCode < 100 || statusCode >= 600 {
@@ -61,7 +62,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))
 		attrs = append(attrs, semconv.HTTPResponseStatusCode(statusCode))
 		attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
-		attrs = append(attrs, semconv.NetworkProtocolVersion(proto(req.Proto)))
+		attrs = append(attrs, semconv.NetworkProtocolVersion(observability.Proto(req.Proto)))
 		attrs = append(attrs, semconv.ServerAddress(req.URL.Host))
 
 		_, port, err := net.SplitHostPort(req.URL.Host)
@@ -79,30 +80,15 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 		attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
-		t.semConvMetricRegistry.HttpClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
+		t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
 	}
 
 	return response, nil
 }
 
-func newTracingRoundTripper(semConvMetricRegistry *metrics.SemConvMetricsRegistry, rt http.RoundTripper) http.RoundTripper {
+func newObservabilityRoundTripper(semConvMetricRegistry *metrics.SemConvMetricsRegistry, rt http.RoundTripper) http.RoundTripper {
 	return &wrapper{
 		semConvMetricRegistry: semConvMetricRegistry,
 		rt:                    rt,
-	}
-}
-
-func proto(proto string) string {
-	switch proto {
-	case "HTTP/1.0":
-		return "1.0"
-	case "HTTP/1.1":
-		return "1.1"
-	case "HTTP/2":
-		return "2"
-	case "HTTP/3":
-		return "3"
-	default:
-		return proto
 	}
 }
