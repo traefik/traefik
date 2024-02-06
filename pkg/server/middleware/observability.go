@@ -23,15 +23,17 @@ type ObservabilityMgr struct {
 	config                 static.Configuration
 	accessLoggerMiddleware *accesslog.Handler
 	metricsRegistry        metrics.Registry
+	semConvMetricRegistry  *metrics.SemConvMetricsRegistry
 	tracer                 trace.Tracer
 	tracerCloser           io.Closer
 }
 
 // NewObservabilityMgr creates a new ObservabilityMgr.
-func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer trace.Tracer, tracerCloser io.Closer) *ObservabilityMgr {
+func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Registry, semConvMetricRegistry *metrics.SemConvMetricsRegistry, accessLoggerMiddleware *accesslog.Handler, tracer trace.Tracer, tracerCloser io.Closer) *ObservabilityMgr {
 	return &ObservabilityMgr{
 		config:                 config,
 		metricsRegistry:        metricsRegistry,
+		semConvMetricRegistry:  semConvMetricRegistry,
 		accessLoggerMiddleware: accessLoggerMiddleware,
 		tracer:                 tracer,
 		tracerCloser:           tracerCloser,
@@ -60,7 +62,7 @@ func (c *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 	}
 
 	if c.tracer != nil && c.ShouldAddTracing(resourceName) {
-		chain = chain.Append(tracingMiddle.WrapEntryPointHandler(ctx, c.tracer, entryPointName))
+		chain = chain.Append(tracingMiddle.WrapEntryPointHandler(ctx, c.tracer, c.semConvMetricRegistry, entryPointName))
 	}
 
 	if c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() && c.ShouldAddMetrics(resourceName) {
@@ -110,6 +112,15 @@ func (c *ObservabilityMgr) MetricsRegistry() metrics.Registry {
 	}
 
 	return c.metricsRegistry
+}
+
+// SemConvMetricsRegistry is an accessor to the semantic conventions metrics registry.
+func (c *ObservabilityMgr) SemConvMetricsRegistry() *metrics.SemConvMetricsRegistry {
+	if c == nil {
+		return nil
+	}
+
+	return c.semConvMetricRegistry
 }
 
 // Close closes the accessLogger and tracer.

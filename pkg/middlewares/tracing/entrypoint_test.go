@@ -62,7 +62,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 
 			tracer := &mockTracer{}
 
-			handler := newEntryPoint(context.Background(), tracer, test.entryPoint, next)
+			handler := newEntryPoint(context.Background(), tracer, nil, test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
 			for _, span := range tracer.spans {

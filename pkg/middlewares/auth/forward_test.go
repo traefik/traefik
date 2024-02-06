@@ -515,7 +515,7 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 	next, err = NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	chain := alice.New(tracingMiddleware.WrapEntryPointHandler(context.Background(), tr, "tracingTest"))
+	chain := alice.New(tracingMiddleware.WrapEntryPointHandler(context.Background(), tr, nil, "tracingTest"))
 	next, err = chain.Then(next)
 	require.NoError(t, err)
 

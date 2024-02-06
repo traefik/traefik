@@ -300,18 +300,26 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
 			Msg("Creating server")
 
+		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
+
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			// Wrapping the roundTripper with the Tracing roundTripper,
+			// to handle the reverseProxy client span creation.
+			roundTripper = newTracingRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
+		}
+
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
 		// Prevents from enabling observability for internal resources.
 
-		if m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, serviceName)) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 		}
 
 		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, serviceName)) {
+			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
 			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
@@ -322,7 +330,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			}
 		}
 
-		if m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, serviceName)) {
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
 			proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
 		}
 

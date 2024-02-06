@@ -296,7 +296,7 @@ func TestTracing(t *testing.T) {
 				_ = closer.Close()
 			})
 
-			chain := alice.New(tracingMiddle.WrapEntryPointHandler(context.Background(), newTracing, "test"))
+			chain := alice.New(tracingMiddle.WrapEntryPointHandler(context.Background(), newTracing, nil, "test"))
 			epHandler, err := chain.Then(service)
 			require.NoError(t, err)
 
