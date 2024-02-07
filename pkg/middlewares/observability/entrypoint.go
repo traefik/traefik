@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/trace/noop"
 	"net/http"
 	"strings"
 	"time"
@@ -40,6 +41,9 @@ func WrapEntryPointHandler(ctx context.Context, tracer trace.Tracer, semConvMetr
 func newEntryPoint(ctx context.Context, tracer trace.Tracer, semConvMetricRegistry *metrics.SemConvMetricsRegistry, entryPointName string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
+	if tracer == nil {
+		tracer = noop.Tracer{}
+	}
 	return &entryPointTracing{
 		entryPoint:            entryPointName,
 		tracer:                tracer,
