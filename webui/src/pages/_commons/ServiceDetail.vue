@@ -198,6 +198,7 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PageDefault from '../../components/_commons/PageDefault'
@@ -209,7 +210,7 @@ import MainTable from '../../components/_commons/MainTable'
 import PanelWeightedServices from '../../components/_commons/PanelWeightedServices'
 import PanelMirroringServices from '../../components/_commons/PanelMirroringServices'
 
-export default {
+export default defineComponent({
   name: 'PageServiceDetail',
   components: {
     PanelMirroringServices,
@@ -222,7 +223,10 @@ export default {
     MainTable
   },
   mixins: [GetTablePropsMixin],
-  props: ['name', 'type'],
+  props: {
+    name: String,
+    type: String
+  },
   data () {
     return {
       loading: true,
@@ -256,6 +260,15 @@ export default {
     getRouterByName () {
       return this[`${this.protocol}_getRouterByName`]
     }
+  },
+  created () {
+    this.refreshAll()
+  },
+  beforeUnmount () {
+    clearInterval(this.timeOutGetAll)
+    this.$store.commit('http/getServiceByNameClear')
+    this.$store.commit('tcp/getServiceByNameClear')
+    this.$store.commit('udp/getServiceByNameClear')
   },
   methods: {
     ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName' }),
@@ -300,20 +313,8 @@ export default {
           console.log('Error -> service/byName', error)
         })
     }
-  },
-  created () {
-    this.refreshAll()
-  },
-  mounted () {
-
-  },
-  beforeUnmount () {
-    clearInterval(this.timeOutGetAll)
-    this.$store.commit('http/getServiceByNameClear')
-    this.$store.commit('tcp/getServiceByNameClear')
-    this.$store.commit('udp/getServiceByNameClear')
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

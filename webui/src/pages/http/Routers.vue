@@ -26,6 +26,7 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PaginationMixin from '../../_mixins/Pagination'
@@ -33,8 +34,13 @@ import PageDefault from '../../components/_commons/PageDefault'
 import ToolBarTable from '../../components/_commons/ToolBarTable'
 import MainTable from '../../components/_commons/MainTable'
 
-export default {
+export default defineComponent({
   name: 'PageHTTPRouters',
+  components: {
+    PageDefault,
+    ToolBarTable,
+    MainTable
+  },
   mixins: [
     GetTablePropsMixin,
     PaginationMixin({
@@ -43,11 +49,6 @@ export default {
       pollingIntervalTime: 5000
     })
   ],
-  components: {
-    PageDefault,
-    ToolBarTable,
-    MainTable
-  },
   data () {
     return {
       filter: '',
@@ -56,6 +57,17 @@ export default {
   },
   computed: {
     ...mapGetters('http', { allRouters: 'allRouters' })
+  },
+  watch: {
+    'status' () {
+      this.refreshAll()
+    },
+    'filter' () {
+      this.refreshAll()
+    }
+  },
+  beforeUnmount () {
+    this.$store.commit('http/getAllRoutersClear')
   },
   methods: {
     ...mapActions('http', { getAllRouters: 'getAllRouters' }),
@@ -76,19 +88,8 @@ export default {
     handleLoadMore ({ page = 1 } = {}) {
       return this.fetchMore({ page })
     }
-  },
-  watch: {
-    'status' () {
-      this.refreshAll()
-    },
-    'filter' () {
-      this.refreshAll()
-    }
-  },
-  beforeUnmount () {
-    this.$store.commit('http/getAllRoutersClear')
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
