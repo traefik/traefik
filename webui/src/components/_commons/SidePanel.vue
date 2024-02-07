@@ -15,16 +15,20 @@
     </transition>
   </div>
 </template>
-<script>
 
-export default {
-  props: ['isOpen'],
+<script>
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  props: {
+    isOpen: Boolean
+  },
   methods: {
     close () {
       this.$emit('onClose')
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

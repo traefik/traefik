@@ -46,16 +46,21 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import BooleanState from './BooleanState'
 
-export default {
+export default defineComponent({
   name: 'StickyServiceDetails',
   components: {
     BooleanState
   },
-  props: ['sticky', 'dense']
-}
+  props: {
+    sticky: Object,
+    dense: Boolean
+  }
+})
 </script>
+
 <style scoped lang="scss">
   @import "../../css/sass/variables";
 

@@ -5,8 +5,12 @@
 </template>
 
 <script>
-export default {
-  props: ['name'],
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  props: {
+    name: String
+  },
   computed: {
     getLogoPath () {
       const name = this.name.toLowerCase()
@@ -27,7 +31,7 @@ export default {
       return `providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

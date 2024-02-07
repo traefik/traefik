@@ -1495,7 +1495,10 @@ export default defineComponent({
     AvatarState,
     BooleanState
   },
-  props: ['data', 'dense'],
+  props: {
+    data: Array[Object],
+    dense: Boolean
+  },
   computed: {
     protocol () {
       return this.$route.meta.protocol
