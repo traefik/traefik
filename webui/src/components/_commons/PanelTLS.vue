@@ -129,7 +129,10 @@ export default defineComponent({
   components: {
     BooleanState
   },
-  props: ['data', 'protocol']
+  props: {
+    data: Object,
+    protocol: String
+  }
 })
 </script>
 

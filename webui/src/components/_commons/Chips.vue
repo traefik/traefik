@@ -13,6 +13,10 @@
 
 <script>
 export default {
-  props: ['dense', 'classNames', 'list']
+  props: {
+    dense: Boolean,
+    classNames: Array[String],
+    list: Array[Object]
+  }
 }
 </script>
