@@ -25,6 +25,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+const delta float64 = 1e-10
+
 var (
 	logFileNameSuffix       = "/traefik/logger/test.log"
 	testContent             = "Hello, World"
@@ -278,7 +280,7 @@ func assertFloat64(exp float64) func(t *testing.T, actual interface{}) {
 	return func(t *testing.T, actual interface{}) {
 		t.Helper()
 
-		assert.Equal(t, exp, actual)
+		assert.InDelta(t, exp, actual, delta)
 	}
 }
 
