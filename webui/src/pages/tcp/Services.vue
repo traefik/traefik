@@ -35,6 +35,11 @@ import MainTable from '../../components/_commons/MainTable'
 
 export default {
   name: 'PageTCPServices',
+  components: {
+    PageDefault,
+    ToolBarTable,
+    MainTable
+  },
   mixins: [
     GetTablePropsMixin,
     PaginationMixin({
@@ -43,11 +48,6 @@ export default {
       pollingIntervalTime: 5000
     })
   ],
-  components: {
-    PageDefault,
-    ToolBarTable,
-    MainTable
-  },
   data () {
     return {
       filter: '',
@@ -56,6 +56,17 @@ export default {
   },
   computed: {
     ...mapGetters('tcp', { allServices: 'allServices' })
+  },
+  watch: {
+    'status' () {
+      this.refreshAll()
+    },
+    'filter' () {
+      this.refreshAll()
+    }
+  },
+  beforeUnmount () {
+    this.$store.commit('tcp/getAllServicesClear')
   },
   methods: {
     ...mapActions('tcp', { getAllServices: 'getAllServices' }),
@@ -76,17 +87,6 @@ export default {
     handleLoadMore ({ page = 1 } = {}) {
       return this.fetchMore({ page })
     }
-  },
-  watch: {
-    'status' () {
-      this.refreshAll()
-    },
-    'filter' () {
-      this.refreshAll()
-    }
-  },
-  beforeUnmount () {
-    this.$store.commit('tcp/getAllServicesClear')
   }
 }
 </script>

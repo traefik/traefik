@@ -285,6 +285,7 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import PageDefault from '../../components/_commons/PageDefault'
 import SkeletonBox from '../../components/_commons/SkeletonBox'
@@ -293,7 +294,7 @@ import PanelChart from '../../components/dashboard/PanelChart'
 import PanelFeature from '../../components/dashboard/PanelFeature'
 import PanelProvider from '../../components/dashboard/PanelProvider'
 
-export default {
+export default defineComponent({
   name: 'PageDashboardIndex',
   components: {
     PageDefault,
@@ -332,6 +333,17 @@ export default {
       return this.overviewAll.items.providers
     }
   },
+  created () {
+    this.fetchAll()
+    this.intervalRefresh = setInterval(this.fetchOverview, this.intervalRefreshTime)
+  },
+  beforeUnmount () {
+    clearInterval(this.intervalRefresh)
+    clearTimeout(this.timeOutEntryGetAll)
+    clearTimeout(this.timeOutOverviewAll)
+    this.$store.commit('entrypoints/getAllClear')
+    this.$store.commit('core/getOverviewClear')
+  },
   methods: {
     ...mapActions('entrypoints', { entryGetAll: 'getAll' }),
     ...mapActions('core', { getOverview: 'getOverview' }),
@@ -365,19 +377,8 @@ export default {
       this.fetchEntries()
       this.fetchOverview()
     }
-  },
-  created () {
-    this.fetchAll()
-    this.intervalRefresh = setInterval(this.fetchOverview, this.intervalRefreshTime)
-  },
-  beforeUnmount () {
-    clearInterval(this.intervalRefresh)
-    clearTimeout(this.timeOutEntryGetAll)
-    clearTimeout(this.timeOutOverviewAll)
-    this.$store.commit('entrypoints/getAllClear')
-    this.$store.commit('core/getOverviewClear')
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

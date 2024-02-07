@@ -81,6 +81,16 @@ export default defineComponent({
       return (data && data.middlewares && data.middlewares.total) || 0
     }
   },
+  created () {
+    this.refreshAll()
+    this.intervalRefresh = setInterval(this.onGetAll, this.intervalRefreshTime)
+  },
+  beforeUnmount () {
+    const $store = useStore()
+
+    clearInterval(this.intervalRefresh)
+    $store.commit('core/getOverviewClear')
+  },
   methods: {
     ...mapActions('core', { getOverview: 'getOverview' }),
     refreshAll () {
@@ -98,16 +108,6 @@ export default defineComponent({
           console.log('Error -> toolbar/overview', error)
         })
     }
-  },
-  created () {
-    this.refreshAll()
-    this.intervalRefresh = setInterval(this.onGetAll, this.intervalRefreshTime)
-  },
-  beforeUnmount () {
-    const $store = useStore()
-
-    clearInterval(this.intervalRefresh)
-    $store.commit('core/getOverviewClear')
   }
 })
 </script>

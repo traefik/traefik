@@ -23,10 +23,18 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'PanelEntry',
-  props: ['address', 'name', 'type', 'focus', 'exSize']
-}
+  props: {
+    address: String,
+    name: String,
+    type: String,
+    focus: Boolean,
+    exSize: Number
+  }
+})
 </script>
 
 <style scoped lang="scss">
