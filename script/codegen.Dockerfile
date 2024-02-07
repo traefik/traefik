@@ -13,7 +13,7 @@ RUN go install k8s.io/code-generator/cmd/client-gen@$KUBE_VERSION
 RUN go install k8s.io/code-generator/cmd/lister-gen@$KUBE_VERSION
 RUN go install k8s.io/code-generator/cmd/informer-gen@$KUBE_VERSION
 RUN go install k8s.io/code-generator/cmd/deepcopy-gen@$KUBE_VERSION
-RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.13.0
+RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0
 
 RUN mkdir -p $GOPATH/src/k8s.io/code-generator
 RUN cp -R $GOPATH/pkg/mod/k8s.io/code-generator@$KUBE_VERSION/* $GOPATH/src/k8s.io/code-generator/
