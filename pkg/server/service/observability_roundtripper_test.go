@@ -1,4 +1,4 @@
-package observability
+package service
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/metrics"
@@ -18,77 +17,16 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest"
 )
 
-func TestEntryPointMiddleware_tracing(t *testing.T) {
-	type expected struct {
-		name       string
-		attributes []attribute.KeyValue
-	}
-
-	testCases := []struct {
-		desc       string
-		entryPoint string
-		expected   expected
-	}{
-		{
-			desc:       "basic test",
-			entryPoint: "test",
-			expected: expected{
-				name: "EntryPoint",
-				attributes: []attribute.KeyValue{
-					attribute.String("span.kind", "server"),
-					attribute.String("entry_point", "test"),
-					attribute.String("http.request.method", "GET"),
-					attribute.String("network.protocol.version", "1.1"),
-					attribute.Int64("http.request.body.size", int64(0)),
-					attribute.String("url.path", "/search"),
-					attribute.String("url.query", "q=Opentelemetry"),
-					attribute.String("url.scheme", "http"),
-					attribute.String("user_agent.original", "entrypoint-test"),
-					attribute.String("server.address", "www.test.com"),
-					attribute.String("network.peer.address", "10.0.0.1"),
-					attribute.String("network.peer.port", "1234"),
-					attribute.String("client.address", "10.0.0.1"),
-					attribute.Int64("client.port", int64(1234)),
-					attribute.String("client.socket.address", ""),
-					attribute.Int64("http.response.status_code", int64(404)),
-				},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
-			rw := httptest.NewRecorder()
-			req.RemoteAddr = "10.0.0.1:1234"
-			req.Header.Set("User-Agent", "entrypoint-test")
-			req.Header.Set("X-Forwarded-Proto", "http")
-
-			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
-				rw.WriteHeader(http.StatusNotFound)
-			})
-
-			tracer := &mockTracer{}
-
-			handler := newEntryPoint(context.Background(), tracer, nil, test.entryPoint, next)
-			handler.ServeHTTP(rw, req)
-
-			for _, span := range tracer.spans {
-				assert.Equal(t, test.expected.name, span.name)
-				assert.Equal(t, test.expected.attributes, span.attributes)
-			}
-		})
-	}
-}
-
-func TestEntryPointMiddleware_metrics(t *testing.T) {
+func TestObservabilityRoundTripper_metrics(t *testing.T) {
 	tests := []struct {
 		desc           string
+		serverURL      string
 		statusCode     int
 		wantAttributes attribute.Set
 	}{
 		{
 			desc:       "not found status",
+			serverURL:  "http://www.test.com",
 			statusCode: http.StatusNotFound,
 			wantAttributes: attribute.NewSet(
 				attribute.Key("error.type").String("404"),
@@ -97,11 +35,13 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("server.port").Int(80),
 				attribute.Key("url.scheme").String("http"),
 			),
 		},
 		{
 			desc:       "created status",
+			serverURL:  "https://www.test.com",
 			statusCode: http.StatusCreated,
 			wantAttributes: attribute.NewSet(
 				attribute.Key("http.request.method").String("GET"),
@@ -109,6 +49,7 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("server.port").Int(443),
 				attribute.Key("url.scheme").String("http"),
 			),
 		},
@@ -133,18 +74,14 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
-			rw := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, test.serverURL+"/search?q=Opentelemetry", nil)
 			req.RemoteAddr = "10.0.0.1:1234"
-			req.Header.Set("User-Agent", "entrypoint-test")
+			req.Header.Set("User-Agent", "rt-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
 
-			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
-				rw.WriteHeader(test.statusCode)
-			})
-
-			handler := newEntryPoint(context.Background(), nil, semConvMetricRegistry, "test", next)
-			handler.ServeHTTP(rw, req)
+			ort := newObservabilityRoundTripper(semConvMetricRegistry, mockRoundTripper{statusCode: test.statusCode})
+			_, err = ort.RoundTrip(req)
+			require.NoError(t, err)
 
 			got := metricdata.ResourceMetrics{}
 			err = rdr.Collect(context.Background(), &got)
@@ -153,8 +90,8 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 			require.Len(t, got.ScopeMetrics, 1)
 
 			expected := metricdata.Metrics{
-				Name:        "http.server.request.duration",
-				Description: "Duration of HTTP server requests.",
+				Name:        "http.client.request.duration",
+				Description: "Duration of HTTP client requests.",
 				Unit:        "s",
 				Data: metricdata.Histogram[float64]{
 					DataPoints: []metricdata.HistogramDataPoint[float64]{
@@ -175,4 +112,12 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 			metricdatatest.AssertEqual[metricdata.Metrics](t, expected, got.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp(), metricdatatest.IgnoreValue())
 		})
 	}
+}
+
+type mockRoundTripper struct {
+	statusCode int
+}
+
+func (m mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	return &http.Response{StatusCode: m.statusCode}, nil
 }

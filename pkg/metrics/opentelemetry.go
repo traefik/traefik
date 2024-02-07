@@ -30,6 +30,13 @@ var (
 	openTelemetryGaugeCollector *gaugeCollector
 )
 
+// SetMeterProvider sets the meter provider for the tests.
+func SetMeterProvider(meterProvider *sdkmetric.MeterProvider) {
+	openTelemetryMeterProvider = meterProvider
+	otel.SetMeterProvider(meterProvider)
+}
+
+// SemConvMetricsRegistry holds stables semantic conventions metric instruments.
 type SemConvMetricsRegistry struct {
 	// server metrics
 	httpServerRequestDuration metric.Float64Histogram
@@ -37,6 +44,7 @@ type SemConvMetricsRegistry struct {
 	httpClientRequestDuration metric.Float64Histogram
 }
 
+// SemConvMetricRegistry registers all stables semantic conventions metrics.
 func SemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
 	if openTelemetryMeterProvider == nil {
 		var err error

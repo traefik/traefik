@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"net"
 	"net/http"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -56,7 +56,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		if statusCode < 100 || statusCode >= 600 {
 			attrs = append(attrs, attribute.Key("error.type").String(fmt.Sprintf("Invalid HTTP status code ; %d", statusCode)))
 		} else if statusCode >= 400 {
-			attrs = append(attrs, attribute.Key("error.type").Int(statusCode))
+			attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(statusCode)))
 		}
 
 		attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))

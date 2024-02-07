@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"io"
 	"net/http"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"go.opentelemetry.io/otel/trace"
 )
 

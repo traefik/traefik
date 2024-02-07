@@ -3,8 +3,8 @@ package observability
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/trace/noop"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const (
@@ -77,7 +78,7 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		if recorder.Status() < 100 || recorder.Status() >= 600 {
 			attrs = append(attrs, attribute.Key("error.type").String(fmt.Sprintf("Invalid HTTP status code ; %d", recorder.Status())))
 		} else if recorder.Status() >= 400 {
-			attrs = append(attrs, attribute.Key("error.type").Int(recorder.Status()))
+			attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(recorder.Status())))
 		}
 
 		attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))
