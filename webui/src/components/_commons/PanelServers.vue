@@ -101,7 +101,11 @@ export default defineComponent({
   components: {
     AvatarState
   },
-  props: ['data', 'dense', 'hasStatus'],
+  props: {
+    data: Object,
+    dense: Boolean,
+    hasStatus: Boolean
+  },
   computed: {
     isDense () {
       return this.dense !== undefined

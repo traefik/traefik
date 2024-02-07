@@ -60,11 +60,15 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
   name: 'PanelWeightedServices',
   components: {},
-  props: ['data', 'dense'],
+  props: {
+    data: Object,
+    dense: Boolean
+  },
   computed: {
     isDense () {
       return this.dense !== undefined
@@ -99,7 +103,7 @@ export default {
       return `providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
