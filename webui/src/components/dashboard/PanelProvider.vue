@@ -21,9 +21,13 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'PanelProvider',
-  props: ['name'],
+  props: {
+    name: String
+  },
   computed: {
     getName () {
       return this.name
@@ -47,7 +51,7 @@ export default {
       return `providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

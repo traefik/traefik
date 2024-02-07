@@ -20,10 +20,17 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'BooleanState',
-  props: ['value']
-}
+  props: {
+    value: {
+      type: Boolean,
+      default: true
+    }
+  }
+})
 </script>
 
 <style scoped lang="scss">

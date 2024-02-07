@@ -130,7 +130,10 @@ export default defineComponent({
   components: {
     AvatarState
   },
-  props: ['data', 'protocol'],
+  props: {
+    data: Object,
+    protocol: String
+  },
   computed: {
     getProviderLogoPath () {
       const name = this.data.provider.toLowerCase()

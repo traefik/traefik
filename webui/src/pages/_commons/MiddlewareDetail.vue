@@ -95,6 +95,7 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PageDefault from '../../components/_commons/PageDefault'
@@ -102,7 +103,7 @@ import SkeletonBox from '../../components/_commons/SkeletonBox'
 import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
 import MainTable from '../../components/_commons/MainTable'
 
-export default {
+export default defineComponent({
   name: 'PageMiddlewareDetail',
   components: {
     PageDefault,
@@ -111,7 +112,10 @@ export default {
     MainTable
   },
   mixins: [GetTablePropsMixin],
-  props: ['name', 'type'],
+  props: {
+    name: String,
+    type: String
+  },
   data () {
     return {
       loading: true,
@@ -144,6 +148,14 @@ export default {
     getRouterByName () {
       return this[`${this.protocol}_getRouterByName`]
     }
+  },
+  created () {
+    this.refreshAll()
+  },
+  beforeUnmount () {
+    clearInterval(this.timeOutGetAll)
+    this.$store.commit('http/getMiddlewareByNameClear')
+    this.$store.commit('tcp/getMiddlewareByNameClear')
   },
   methods: {
     ...mapActions('http', { http_getMiddlewareByName: 'getMiddlewareByName', http_getRouterByName: 'getRouterByName' }),
@@ -187,19 +199,8 @@ export default {
           console.log('Error -> middleware/byName', error)
         })
     }
-  },
-  created () {
-    this.refreshAll()
-  },
-  mounted () {
-
-  },
-  beforeUnmount () {
-    clearInterval(this.timeOutGetAll)
-    this.$store.commit('http/getMiddlewareByNameClear')
-    this.$store.commit('tcp/getMiddlewareByNameClear')
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

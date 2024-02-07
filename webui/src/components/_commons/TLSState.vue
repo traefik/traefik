@@ -8,10 +8,14 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'TLSState',
-  props: ['isTLS']
-}
+  props: {
+    isTLS: Boolean
+  }
+})
 </script>
 
 <style scoped lang="scss">

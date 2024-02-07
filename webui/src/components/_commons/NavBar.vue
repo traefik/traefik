@@ -153,11 +153,17 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import config from '../../../package'
 import { mapActions, mapGetters } from 'vuex'
 
-export default {
+export default defineComponent({
   name: 'NavBar',
+  data () {
+    return {
+      hasHubButtonComponent: false
+    }
+  },
   computed: {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
@@ -182,14 +188,6 @@ export default {
     disableDashboardAd () {
       return this.coreVersion.disableDashboardAd
     }
-  },
-  data () {
-    return {
-      hasHubButtonComponent: false
-    }
-  },
-  methods: {
-    ...mapActions('core', { getVersion: 'getVersion' })
   },
   watch: {
     disableDashboardAd (newValue) {
@@ -217,8 +215,11 @@ export default {
   },
   created () {
     this.getVersion()
+  },
+  methods: {
+    ...mapActions('core', { getVersion: 'getVersion' })
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
