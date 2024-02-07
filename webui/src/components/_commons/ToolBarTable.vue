@@ -41,13 +41,9 @@ import Helps from '../../_helpers/Helps'
 
 export default defineComponent({
   name: 'ToolBarTable',
-  components: {
-
-  },
-  props: ['status', 'filter'],
-  data () {
-    return {
-    }
+  props: {
+    status: String,
+    filter: String
   },
   computed: {
     getStatus: {
@@ -76,9 +72,6 @@ export default defineComponent({
   },
   mounted () {
     this.routeToState(this.$route)
-  },
-  created () {
-
   },
   methods: {
     routeToState (route) {

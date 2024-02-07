@@ -103,7 +103,14 @@ export default defineComponent({
     QSpinnerDots,
     QPageScroller
   },
-  props: ['data', 'columns', 'loading', 'onLoadMore', 'endReached', 'onRowClick'],
+  props: {
+    data: Object,
+    columns: Array[Object],
+    loading: Boolean,
+    onLoadMore: Function,
+    endReached: Boolean,
+    onRowClick: Function
+  },
   methods: {
     getColumn (columnName) {
       return this.columns.find(c => c.name === columnName) || {}

@@ -69,8 +69,10 @@
 
 export default {
   name: 'PanelMirroringServices',
-  components: {},
-  props: ['data', 'dense'],
+  props: {
+    data: Object,
+    dense: Boolean
+  },
   computed: {
     isDense () {
       return this.dense !== undefined

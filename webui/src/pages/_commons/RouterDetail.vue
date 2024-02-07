@@ -261,6 +261,7 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import PageDefault from '../../components/_commons/PageDefault'
 import SkeletonBox from '../../components/_commons/SkeletonBox'
@@ -269,7 +270,7 @@ import PanelRouterDetails from '../../components/_commons/PanelRouterDetails'
 import PanelTLS from '../../components/_commons/PanelTLS'
 import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
 
-export default {
+export default defineComponent({
   name: 'PageRouterDetail',
   components: {
     PageDefault,
@@ -279,7 +280,10 @@ export default {
     PanelTLS,
     PanelMiddlewares
   },
-  props: ['name', 'type'],
+  props: {
+    name: String,
+    type: String
+  },
   data () {
     return {
       loading: true,
@@ -397,7 +401,7 @@ export default {
     this.$store.commit('tcp/getRouterByNameClear')
     this.$store.commit('udp/getRouterByNameClear')
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
