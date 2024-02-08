@@ -173,9 +173,11 @@ func Test_Routing(t *testing.T) {
 		map[string]traefiktls.Store{},
 		map[string]traefiktls.Options{
 			"default": {
+				MinVersion: "VersionTLS10",
 				MaxVersion: "VersionTLS10",
 			},
 			"tls10": {
+				MinVersion: "VersionTLS10",
 				MaxVersion: "VersionTLS10",
 			},
 			"tls12": {
@@ -947,10 +949,10 @@ func TestPostgres(t *testing.T) {
 	// This test requires to have a TLS route, but does not actually check the
 	// content of the handler. It would require to code a TLS handshake to
 	// check the SNI and content of the handlerFunc.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", 0, nil)
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
 	require.NoError(t, err)
 
-	err = router.AddRoute("HostSNI(`*`)", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
 		_, _ = conn.Write([]byte("OK"))
 		_ = conn.Close()
 	}))

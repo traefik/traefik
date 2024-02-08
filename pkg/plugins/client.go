@@ -228,7 +228,7 @@ func (c *Client) Check(ctx context.Context, pName, pVersion, hash string) error 
 		return nil
 	}
 
-	return fmt.Errorf("plugin integrity check failed")
+	return errors.New("plugin integrity check failed")
 }
 
 // Unzip unzip a plugin archive.

@@ -1,7 +1,7 @@
 package tcp
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -91,7 +91,7 @@ func gcd(a, b int) int {
 
 func (b *WRRLoadBalancer) next() (Handler, error) {
 	if len(b.servers) == 0 {
-		return nil, fmt.Errorf("no servers in the pool")
+		return nil, errors.New("no servers in the pool")
 	}
 
 	// The algo below may look messy, but is actually very simple
@@ -101,7 +101,7 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	// Maximum weight across all enabled servers
 	max := b.maxWeight()
 	if max == 0 {
-		return nil, fmt.Errorf("all servers have 0 weight")
+		return nil, errors.New("all servers have 0 weight")
 	}
 
 	// GCD across all enabled servers

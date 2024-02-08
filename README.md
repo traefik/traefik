@@ -72,6 +72,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - [Docker](https://doc.traefik.io/traefik/providers/docker/) / [Swarm mode](https://doc.traefik.io/traefik/providers/docker/)
 - [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
+- [ECS](https://doc.traefik.io/traefik/providers/ecs/)
 - [File](https://doc.traefik.io/traefik/providers/file/)
 
 ## Quickstart

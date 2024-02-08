@@ -53,7 +53,7 @@ func main() {
 	// traefik config inits
 	tConfig := cmd.NewTraefikConfiguration()
 
-	loaders := []cli.ResourceLoader{&tcli.FileLoader{}, &tcli.FlagLoader{}, &tcli.EnvLoader{}}
+	loaders := []cli.ResourceLoader{&tcli.DeprecationLoader{}, &tcli.FileLoader{}, &tcli.FlagLoader{}, &tcli.EnvLoader{}}
 
 	cmdTraefik := &cli.Command{
 		Name: "traefik",
@@ -193,10 +193,13 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
 
-	// Metrics
+	// Observability
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
+	accessLog := setupAccessLog(staticConfiguration.AccessLog)
+	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
+	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
 
@@ -263,14 +266,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, observabilityMgr, roundTripperManager, acmeHTTPHandler)
 
 	// Router factory
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
-	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
 
 	// Watcher
 
@@ -351,7 +351,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	})
 
-	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog, tracerCloser), nil
+	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, observabilityMgr), nil
 }
 
 func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvider http.Handler) http.Handler {
@@ -520,15 +520,14 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 		}
 	}
 
-	if metricsConfig.OpenTelemetry != nil {
+	if metricsConfig.OTLP != nil {
 		logger := log.With().Str(logs.MetricsProviderName, "openTelemetry").Logger()
 
-		openTelemetryRegistry := metrics.RegisterOpenTelemetry(logger.WithContext(context.Background()), metricsConfig.OpenTelemetry)
+		openTelemetryRegistry := metrics.RegisterOpenTelemetry(logger.WithContext(context.Background()), metricsConfig.OTLP)
 		if openTelemetryRegistry != nil {
 			registries = append(registries, openTelemetryRegistry)
 			logger.Debug().
-				Str("address", metricsConfig.OpenTelemetry.Address).
-				Str("pushInterval", metricsConfig.OpenTelemetry.PushInterval.String()).
+				Str("pushInterval", metricsConfig.OTLP.PushInterval.String()).
 				Msg("Configured OpenTelemetry metrics")
 		}
 	}

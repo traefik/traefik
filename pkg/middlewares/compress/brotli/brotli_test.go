@@ -27,7 +27,7 @@ func Test_Vary(t *testing.T) {
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Equal(t, http.StatusOK, rw.Code)
+	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
 }
 
@@ -41,7 +41,7 @@ func Test_SmallBodyNoCompression(t *testing.T) {
 	h.ServeHTTP(rw, req)
 
 	// With less than 1024 bytes the response should not be compressed.
-	assert.Equal(t, http.StatusOK, rw.Code)
+	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Empty(t, rw.Header().Get(contentEncoding))
 	assert.Equal(t, smallTestBody, rw.Body.Bytes())
 }
@@ -55,6 +55,7 @@ func Test_AlreadyCompressed(t *testing.T) {
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
+	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Equal(t, bigTestBody, rw.Body.Bytes())
 }
 
@@ -749,6 +750,7 @@ func newTestHandler(t *testing.T, body []byte) http.Handler {
 				rw.Header().Set("Content-Encoding", "br")
 			}
 
+			rw.WriteHeader(http.StatusAccepted)
 			_, err := rw.Write(body)
 			require.NoError(t, err)
 		}),

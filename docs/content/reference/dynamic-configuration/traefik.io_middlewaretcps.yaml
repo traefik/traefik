@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: middlewaretcps.traefik.io
 spec:
   group: traefik.io
@@ -17,18 +17,24 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-          More info: https://doc.traefik.io/traefik/v3.0/middlewares/overview/'
+        description: |-
+          MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
+          More info: https://doc.traefik.io/traefik/v3.0/middlewares/overview/
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -39,14 +45,17 @@ spec:
                 description: InFlightConn defines the InFlightConn middleware configuration.
                 properties:
                   amount:
-                    description: Amount defines the maximum amount of allowed simultaneous
-                      connections. The middleware closes the connection if there are
-                      already amount connections opened.
+                    description: |-
+                      Amount defines the maximum amount of allowed simultaneous connections.
+                      The middleware closes the connection if there are already amount connections opened.
                     format: int64
                     type: integer
                 type: object
               ipAllowList:
-                description: IPAllowList defines the IPAllowList middleware configuration.
+                description: |-
+                  IPAllowList defines the IPAllowList middleware configuration.
+                  This middleware accepts/refuses connections based on the client IP.
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -56,8 +65,11 @@ spec:
                     type: array
                 type: object
               ipWhiteList:
-                description: 'IPWhiteList defines the IPWhiteList middleware configuration.
-                  Deprecated: please use IPAllowList instead.'
+                description: |-
+                  IPWhiteList defines the IPWhiteList middleware configuration.
+                  This middleware accepts/refuses connections based on the client IP.
+                  Deprecated: please use IPAllowList instead.
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipwhitelist/
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of

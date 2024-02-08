@@ -2,6 +2,7 @@ package brotli
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -34,11 +35,11 @@ type Config struct {
 // NewWrapper returns a new Brotli compressing wrapper.
 func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 	if cfg.MinSize < 0 {
-		return nil, fmt.Errorf("minimum size must be greater than or equal to zero")
+		return nil, errors.New("minimum size must be greater than or equal to zero")
 	}
 
 	if len(cfg.ExcludedContentTypes) > 0 && len(cfg.IncludedContentTypes) > 0 {
-		return nil, fmt.Errorf("excludedContentTypes and includedContentTypes options are mutually exclusive")
+		return nil, errors.New("excludedContentTypes and includedContentTypes options are mutually exclusive")
 	}
 
 	var excludedContentTypes []parsedContentType
@@ -138,6 +139,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// If we detect a contentEncoding, we know we are never going to compress.
 	if r.rw.Header().Get(contentEncoding) != "" {
 		r.compressionDisabled = true
+		r.rw.WriteHeader(r.statusCode)
 		return r.rw.Write(p)
 	}
 
