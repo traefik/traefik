@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: serverstransporttcps.traefik.io
 spec:
   group: traefik.io
@@ -17,20 +17,26 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'ServersTransportTCP is the CRD implementation of a TCPServersTransport.
-          If no tcpServersTransport is specified, a default one named default@internal
-          will be used. The default@internal tcpServersTransport can be configured
-          in the static configuration. More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_3'
+        description: |-
+          ServersTransportTCP is the CRD implementation of a TCPServersTransport.
+          If no tcpServersTransport is specified, a default one named default@internal will be used.
+          The default@internal tcpServersTransport can be configured in the static configuration.
+          More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_3
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -76,9 +82,9 @@ spec:
                     description: InsecureSkipVerify disables TLS certificate verification.
                     type: boolean
                   peerCertURI:
-                    description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
-                      to keep per-host. PeerCertURI defines the peer cert URI used
-                      to match against SAN URI during the peer certificate verification.
+                    description: |-
+                      MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
+                      PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
                     type: string
                   rootCAsSecrets:
                     description: RootCAsSecrets defines a list of CA secret used to

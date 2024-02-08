@@ -2,6 +2,7 @@ package compress
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mime"
 	"net/http"
@@ -38,7 +39,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	if len(conf.ExcludedContentTypes) > 0 && len(conf.IncludedContentTypes) > 0 {
-		return nil, fmt.Errorf("excludedContentTypes and includedContentTypes options are mutually exclusive")
+		return nil, errors.New("excludedContentTypes and includedContentTypes options are mutually exclusive")
 	}
 
 	excludes := []string{"application/grpc"}

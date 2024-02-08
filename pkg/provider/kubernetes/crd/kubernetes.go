@@ -717,7 +717,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		return nil, nil
 	}
 	if len(auth.Address) == 0 {
-		return nil, fmt.Errorf("forward authentication requires an address")
+		return nil, errors.New("forward authentication requires an address")
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
@@ -812,7 +812,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}
 
 	if basicAuth.Secret == "" {
-		return nil, fmt.Errorf("auth secret must be set")
+		return nil, errors.New("auth secret must be set")
 	}
 
 	secret, ok, err := client.GetSecret(namespace, basicAuth.Secret)
@@ -859,7 +859,7 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 	}
 
 	if digestAuth.Secret == "" {
-		return nil, fmt.Errorf("auth secret must be set")
+		return nil, errors.New("auth secret must be set")
 	}
 
 	secret, ok, err := client.GetSecret(namespace, digestAuth.Secret)
