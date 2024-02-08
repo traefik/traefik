@@ -20,12 +20,13 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware05/circuitBreaker/expression` | `foobar` |
 | `traefik/http/middlewares/Middleware05/circuitBreaker/fallbackDuration` | `42s` |
 | `traefik/http/middlewares/Middleware05/circuitBreaker/recoveryDuration` | `42s` |
+| `traefik/http/middlewares/Middleware05/circuitBreaker/responseCode` | `42` |
 | `traefik/http/middlewares/Middleware06/compress/excludedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/excludedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/includedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/includedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/minResponseBodyBytes` | `42` |
-| `traefik/http/middlewares/Middleware07/contentType` | `` |
+| `traefik/http/middlewares/Middleware07/contentType/autoDetect` | `true` |
 | `traefik/http/middlewares/Middleware08/digestAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware08/digestAuth/realm` | `foobar` |
 | `traefik/http/middlewares/Middleware08/digestAuth/removeHeader` | `true` |
@@ -45,6 +46,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeadersRegex` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/ca` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/cert` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/insecureSkipVerify` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/key` | `foobar` |
@@ -75,6 +77,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware12/headers/customRequestHeaders/name1` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/customResponseHeaders/name0` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/customResponseHeaders/name1` | `foobar` |
+| `traefik/http/middlewares/Middleware12/headers/featurePolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/forceSTSHeader` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/frameDeny` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/hostsProxyHeaders/0` | `foobar` |
@@ -83,8 +86,12 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware12/headers/permissionsPolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/publicKey` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/referrerPolicy` | `foobar` |
+| `traefik/http/middlewares/Middleware12/headers/sslForceHost` | `true` |
+| `traefik/http/middlewares/Middleware12/headers/sslHost` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/sslProxyHeaders/name0` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/sslProxyHeaders/name1` | `foobar` |
+| `traefik/http/middlewares/Middleware12/headers/sslRedirect` | `true` |
+| `traefik/http/middlewares/Middleware12/headers/sslTemporaryRedirect` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/stsIncludeSubdomains` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/stsPreload` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/stsSeconds` | `42` |
@@ -148,6 +155,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware22/replacePathRegex/replacement` | `foobar` |
 | `traefik/http/middlewares/Middleware23/retry/attempts` | `42` |
 | `traefik/http/middlewares/Middleware23/retry/initialInterval` | `42s` |
+| `traefik/http/middlewares/Middleware24/stripPrefix/forceSlash` | `true` |
 | `traefik/http/middlewares/Middleware24/stripPrefix/prefixes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware24/stripPrefix/prefixes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware25/stripPrefixRegex/regex/0` | `foobar` |
@@ -158,6 +166,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router0/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router0/priority` | `42` |
 | `traefik/http/routers/Router0/rule` | `foobar` |
+| `traefik/http/routers/Router0/ruleSyntax` | `foobar` |
 | `traefik/http/routers/Router0/service` | `foobar` |
 | `traefik/http/routers/Router0/tls/certResolver` | `foobar` |
 | `traefik/http/routers/Router0/tls/domains/0/main` | `foobar` |
@@ -173,6 +182,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router1/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router1/priority` | `42` |
 | `traefik/http/routers/Router1/rule` | `foobar` |
+| `traefik/http/routers/Router1/ruleSyntax` | `foobar` |
 | `traefik/http/routers/Router1/service` | `foobar` |
 | `traefik/http/routers/Router1/tls/certResolver` | `foobar` |
 | `traefik/http/routers/Router1/tls/domains/0/main` | `foobar` |
@@ -238,7 +248,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/url` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/servers/0/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
@@ -273,6 +285,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/routers/TCPRouter0/middlewares/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter0/rule` | `foobar` |
+| `traefik/tcp/routers/TCPRouter0/ruleSyntax` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/certResolver` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/domains/0/main` | `foobar` |
@@ -289,6 +302,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/routers/TCPRouter1/middlewares/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter1/rule` | `foobar` |
+| `traefik/tcp/routers/TCPRouter1/ruleSyntax` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/certResolver` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/domains/0/main` | `foobar` |
@@ -335,6 +349,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/tls` | `true` |
 | `traefik/tcp/services/TCPService01/loadBalancer/serversTransport` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/terminationDelay` | `42` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/name` | `foobar` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/weight` | `42` |
 | `traefik/tcp/services/TCPService02/weighted/services/1/name` | `foobar` |
@@ -358,6 +373,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tls/options/Options0/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options0/maxVersion` | `foobar` |
 | `traefik/tls/options/Options0/minVersion` | `foobar` |
+| `traefik/tls/options/Options0/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options0/sniStrict` | `true` |
 | `traefik/tls/options/Options1/alpnProtocols/0` | `foobar` |
 | `traefik/tls/options/Options1/alpnProtocols/1` | `foobar` |
@@ -370,6 +386,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tls/options/Options1/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options1/maxVersion` | `foobar` |
 | `traefik/tls/options/Options1/minVersion` | `foobar` |
+| `traefik/tls/options/Options1/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options1/sniStrict` | `true` |
 | `traefik/tls/stores/Store0/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store0/defaultCertificate/keyFile` | `foobar` |

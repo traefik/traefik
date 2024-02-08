@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -43,7 +44,7 @@ func (c *Configuration) GetUDPRoutersByEntryPoints(ctx context.Context, entryPoi
 		}
 
 		if entryPointsCount == 0 {
-			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
+			rt.AddError(errors.New("no valid entryPoint for this router"), true)
 			logger.Error().Msg("No valid entryPoint for this router")
 		}
 	}

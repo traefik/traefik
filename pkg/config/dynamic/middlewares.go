@@ -1,11 +1,11 @@
 package dynamic
 
 import (
+	"net/http"
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -54,9 +54,13 @@ type GrpcWeb struct {
 // +k8s:deepcopy-gen=true
 
 // ContentType holds the content-type middleware configuration.
-// This middleware sets the `Content-Type` header value to the media type detected from the response content,
-// when it is not set by the backend.
-type ContentType struct{}
+// This middleware exists to enable the correct behavior until at least the default one can be changed in a future version.
+type ContentType struct {
+	// AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
+	// be automatically set to a value derived from the contents of the response.
+	// Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
+	AutoDetect *bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty" export:"true"`
+}
 
 // +k8s:deepcopy-gen=true
 
@@ -141,6 +145,8 @@ type CircuitBreaker struct {
 	FallbackDuration ptypes.Duration `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
 	RecoveryDuration ptypes.Duration `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
+	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
+	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
@@ -148,6 +154,7 @@ func (c *CircuitBreaker) SetDefaults() {
 	c.CheckPeriod = ptypes.Duration(100 * time.Millisecond)
 	c.FallbackDuration = ptypes.Duration(10 * time.Second)
 	c.RecoveryDuration = ptypes.Duration(10 * time.Second)
+	c.ResponseCode = http.StatusServiceUnavailable
 }
 
 // +k8s:deepcopy-gen=true
@@ -214,7 +221,7 @@ type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
-	TLS *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
 	TrustForwardHeader bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
@@ -227,6 +234,20 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ClientTLS holds TLS specific configurations as client
+// CA, Cert and Key can be either path or file contents.
+// TODO: remove this struct when CAOptional option will be removed.
+type ClientTLS struct {
+	CA                 string `description:"TLS CA" json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
+	Cert               string `description:"TLS cert" json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty"`
+	Key                string `description:"TLS key" json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
+	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
+	CAOptional *bool `description:"TLS CA.Optional" json:"caOptional,omitempty" toml:"caOptional,omitempty" yaml:"caOptional,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -299,6 +320,17 @@ type Headers struct {
 	// If you would like your development environment to mimic production with complete Host blocking, SSL redirects,
 	// and STS headers, leave this as false.
 	IsDevelopment bool `json:"isDevelopment,omitempty" toml:"isDevelopment,omitempty" yaml:"isDevelopment,omitempty" export:"true"`
+
+	// Deprecated: FeaturePolicy option is deprecated, please use PermissionsPolicy instead.
+	FeaturePolicy *string `json:"featurePolicy,omitempty" toml:"featurePolicy,omitempty" yaml:"featurePolicy,omitempty" export:"true"`
+	// Deprecated: SSLRedirect option is deprecated, please use EntryPoint redirection or RedirectScheme instead.
+	SSLRedirect *bool `json:"sslRedirect,omitempty" toml:"sslRedirect,omitempty" yaml:"sslRedirect,omitempty" export:"true"`
+	// Deprecated: SSLTemporaryRedirect option is deprecated, please use EntryPoint redirection or RedirectScheme instead.
+	SSLTemporaryRedirect *bool `json:"sslTemporaryRedirect,omitempty" toml:"sslTemporaryRedirect,omitempty" yaml:"sslTemporaryRedirect,omitempty" export:"true"`
+	// Deprecated: SSLHost option is deprecated, please use RedirectRegex instead.
+	SSLHost *string `json:"sslHost,omitempty" toml:"sslHost,omitempty" yaml:"sslHost,omitempty"`
+	// Deprecated: SSLForceHost option is deprecated, please use RedirectRegex instead.
+	SSLForceHost *bool `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
 }
 
 // HasCustomHeadersDefined checks to see if any of the custom header elements have been set.
@@ -323,6 +355,10 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 func (h *Headers) HasSecureHeadersDefined() bool {
 	return h != nil && (len(h.AllowedHosts) != 0 ||
 		len(h.HostsProxyHeaders) != 0 ||
+		(h.SSLRedirect != nil && *h.SSLRedirect) ||
+		(h.SSLTemporaryRedirect != nil && *h.SSLTemporaryRedirect) ||
+		(h.SSLForceHost != nil && *h.SSLForceHost) ||
+		(h.SSLHost != nil && *h.SSLHost != "") ||
 		len(h.SSLProxyHeaders) != 0 ||
 		h.STSSeconds != 0 ||
 		h.STSIncludeSubdomains ||
@@ -336,6 +372,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.ContentSecurityPolicy != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
+		(h.FeaturePolicy != nil && *h.FeaturePolicy != "") ||
 		h.PermissionsPolicy != "" ||
 		h.IsDevelopment)
 }
@@ -553,6 +590,11 @@ type Retry struct {
 type StripPrefix struct {
 	// Prefixes defines the prefixes to strip from the request URL.
 	Prefixes []string `json:"prefixes,omitempty" toml:"prefixes,omitempty" yaml:"prefixes,omitempty" export:"true"`
+
+	// Deprecated: ForceSlash option is deprecated, please remove any usage of this option.
+	// ForceSlash ensures that the resulting stripped path is not the empty string, by replacing it with / when necessary.
+	// Default: true.
+	ForceSlash *bool `json:"forceSlash,omitempty" toml:"forceSlash,omitempty" yaml:"forceSlash,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

@@ -6,13 +6,13 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.22'
   CGO_ENABLED: 0
 
 jobs:
 
   build-webui:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check out code
@@ -26,7 +26,7 @@ jobs:
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: webui.tar.gz
           path: webui.tar.gz
@@ -35,7 +35,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-20.04, macos-latest, windows-latest ]
+        os: [ ubuntu-22.04, macos-latest, windows-latest ]
     needs:
       - build-webui
 
@@ -51,7 +51,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Artifact webui
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: webui.tar.gz
 

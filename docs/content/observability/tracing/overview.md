@@ -14,9 +14,7 @@ Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"
 
 Please check our dedicated [OTel docs](./opentelemetry.md) to learn more.
 
-
 ## Configuration
-
 
 To enable the tracing:
 
@@ -33,6 +31,26 @@ tracing: {}
 ```
 
 ### Common Options
+
+#### `addInternals`
+
+_Optional, Default="false"_
+
+Enables tracing for internal resources.
+
+```yaml tab="File (YAML)"
+tracing:
+  addInternals: true
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  addInternals = true
+```
+
+```bash tab="CLI"
+--tracing.addinternals
+```
 
 #### `serviceName`
 
@@ -72,30 +90,6 @@ tracing:
 
 ```bash tab="CLI"
 --tracing.sampleRate=0.2
-```
-
-#### `headers`
-
-_Optional, Default={}_
-
-Defines additional headers to be sent with the span's payload.
-
-```yaml tab="File (YAML)"
-tracing:
-  headers:
-    foo: bar
-    baz: buz
-```
-
-```toml tab="File (TOML)"
-[tracing]
-    [tracing.headers]
-        foo = "bar"
-        baz = "buz"
-```
-
-```bash tab="CLI"
---tracing.headers.foo=bar --tracing.headers.baz=buz
 ```
 
 #### `globalAttributes`

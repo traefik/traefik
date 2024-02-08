@@ -7,18 +7,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestDatadog(t *testing.T) {
+	t.Cleanup(StopDatadog)
+
 	udp.SetAddr(":18125")
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
 	datadogRegistry := RegisterDatadog(context.Background(), &types.Datadog{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
-	defer StopDatadog()
 
 	if !datadogRegistry.IsEpEnabled() || !datadogRegistry.IsRouterEnabled() || !datadogRegistry.IsSvcEnabled() {
 		t.Errorf("DatadogRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
@@ -27,9 +29,7 @@ func TestDatadog(t *testing.T) {
 }
 
 func TestDatadogWithPrefix(t *testing.T) {
-	t.Cleanup(func() {
-		StopDatadog()
-	})
+	t.Cleanup(StopDatadog)
 
 	udp.SetAddr(":18125")
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
@@ -38,6 +38,44 @@ func TestDatadogWithPrefix(t *testing.T) {
 	datadogRegistry := RegisterDatadog(context.Background(), &types.Datadog{Prefix: "testPrefix", Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
 
 	testDatadogRegistry(t, "testPrefix", datadogRegistry)
+}
+
+func TestDatadog_parseDatadogAddress(t *testing.T) {
+	tests := []struct {
+		desc       string
+		address    string
+		expNetwork string
+		expAddress string
+	}{
+		{
+			desc:       "empty address",
+			expNetwork: "udp",
+			expAddress: "localhost:8125",
+		},
+		{
+			desc:       "udp address",
+			address:    "127.0.0.1:8080",
+			expNetwork: "udp",
+			expAddress: "127.0.0.1:8080",
+		},
+		{
+			desc:       "unix address",
+			address:    "unix:///path/to/datadog.socket",
+			expNetwork: "unix",
+			expAddress: "/path/to/datadog.socket",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			gotNetwork, gotAddress := parseDatadogAddress(test.address)
+			assert.Equal(t, test.expNetwork, gotNetwork)
+			assert.Equal(t, test.expAddress, gotAddress)
+		})
+	}
 }
 
 func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Registry) {

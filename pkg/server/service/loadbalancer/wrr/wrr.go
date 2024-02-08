@@ -4,9 +4,9 @@ import (
 	"container/heap"
 	"context"
 	"errors"
-	"fmt"
 	"hash/fnv"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -276,5 +276,5 @@ func hash(input string) string {
 	// We purposely ignore the error because the implementation always returns nil.
 	_, _ = hasher.Write([]byte(input))
 
-	return fmt.Sprintf("%x", hasher.Sum64())
+	return strconv.FormatUint(hasher.Sum64(), 16)
 }

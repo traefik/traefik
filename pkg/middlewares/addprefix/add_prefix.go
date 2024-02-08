@@ -2,7 +2,7 @@ package addprefix
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -33,7 +33,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.AddPrefix, name 
 			name:   name,
 		}
 	} else {
-		return nil, fmt.Errorf("prefix cannot be empty")
+		return nil, errors.New("prefix cannot be empty")
 	}
 
 	return result, nil

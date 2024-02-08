@@ -233,6 +233,79 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
+### ReusePort
+
+_Optional, Default=false_
+
+The `ReusePort` option enables EntryPoints from the same or different processes
+listening on the same TCP/UDP port by utilizing the `SO_REUSEPORT` socket option.
+It also allows the kernel to act like a load balancer to distribute incoming
+connections between entry points.
+
+For example, you can use it with the [transport.lifeCycle](#lifecycle) to do
+canary deployments against Traefik itself. Like upgrading Traefik version or
+reloading the static configuration without any service downtime.
+
+!!! warning "Supported platforms"
+
+    The `ReusePort` option currently works only on Linux, FreeBSD, OpenBSD and Darwin.
+    It will be ignored on other platforms.
+
+    There is a known bug in the Linux kernel that may cause unintended TCP connection failures when using the `ReusePort` option.
+    For more details, see https://lwn.net/Articles/853637/.
+
+??? example "Listen on the same port"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+        reusePort: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      reusePort = true
+    ```
+
+    ```bash tab="CLI"
+    --entrypoints.web.address=:80
+    --entrypoints.web.reusePort=true
+    ```
+
+    Now it is possible to run multiple Traefik processes with the same EntryPoint configuration.
+
+??? example "Listen on the same port but bind to a different host"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+        reusePort: true
+      privateWeb:
+        address: "192.168.1.2:80"
+        reusePort: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      reusePort = true
+    [entryPoints.privateWeb]
+      address = "192.168.1.2:80"
+      reusePort = true
+    ```
+
+    ```bash tab="CLI"
+    --entrypoints.web.address=:80
+    --entrypoints.web.reusePort=true
+    --entrypoints.privateWeb.address=192.168.1.2:80
+    --entrypoints.privateWeb.reusePort=true
+    ```
+
+    Requests to `192.168.1.2:80` will only be handled by routers that have `privateWeb` as the entry point.
+
 ### AsDefault
 
 _Optional, Default=false_
@@ -650,7 +723,7 @@ The maximum number of requests Traefik can handle before sending a `Connection: 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveRequests=42
+    --entryPoints.name.transport.keepAliveMaxRequests=42
     ```
 
 #### `keepAliveMaxTime`
@@ -680,7 +753,7 @@ The maximum duration Traefik can handle requests before sending a `Connection: C
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveTime=42s
+    --entryPoints.name.transport.keepAliveMaxTime=42s
     ```
 
 ### ProxyProtocol

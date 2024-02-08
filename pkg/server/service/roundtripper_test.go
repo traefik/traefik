@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -548,4 +549,81 @@ func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(trustDomain spiffeid.Trus
 
 func (s *fakeSpiffeSource) GetX509SVID() (*x509svid.SVID, error) {
 	return s.svid, nil
+}
+
+type roundTripperFn func(req *http.Request) (*http.Response, error)
+
+func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error) {
+	return r(request)
+}
+
+func TestKerberosRoundTripper(t *testing.T) {
+	testCases := []struct {
+		desc string
+
+		originalRoundTripperHeaders map[string][]string
+
+		expectedStatusCode     []int
+		expectedDedicatedCount int
+		expectedOriginalCount  int
+	}{
+		{
+			desc:                  "without special header",
+			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount: 3,
+		},
+		{
+			desc:                        "with Negotiate (Kerberos)",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"Negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLM"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			origCount := 0
+			dedicatedCount := 0
+			rt := KerberosRoundTripper{
+				new: func() http.RoundTripper {
+					return roundTripperFn(func(req *http.Request) (*http.Response, error) {
+						dedicatedCount++
+						return &http.Response{
+							StatusCode: http.StatusOK,
+						}, nil
+					})
+				},
+				OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
+					origCount++
+					return &http.Response{
+						StatusCode: http.StatusUnauthorized,
+						Header:     test.originalRoundTripperHeaders,
+					}, nil
+				}),
+			}
+
+			ctx := AddTransportOnContext(context.Background())
+			for _, expected := range test.expectedStatusCode {
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
+				require.NoError(t, err)
+				resp, err := rt.RoundTrip(req)
+				require.NoError(t, err)
+				require.Equal(t, expected, resp.StatusCode)
+			}
+
+			require.Equal(t, test.expectedOriginalCount, origCount)
+			require.Equal(t, test.expectedDedicatedCount, dedicatedCount)
+		})
+	}
 }
