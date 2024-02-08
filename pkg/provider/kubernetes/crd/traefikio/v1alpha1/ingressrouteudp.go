@@ -37,7 +37,7 @@ type ServiceUDP struct {
 	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
 	// The Kubernetes Service itself does load-balance to the pods.
 	// By default, NativeLB is false.
-	NativeLB bool `json:"nativeLB,omitempty"`
+	NativeLB *bool `json:"nativeLB,omitempty"`
 }
 
 // +genclient
