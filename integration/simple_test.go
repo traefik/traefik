@@ -287,6 +287,10 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint() {
 
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyContains("_service_"))
 	require.NoError(s.T(), err)
+
+	// No metrics for internals.
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyNotContains("router=\"api@internal\"", "service=\"api@internal\""))
+	require.NoError(s.T(), err)
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService() {
@@ -659,6 +663,66 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 	}
 }
 
+func (s *SimpleSuite) TestWithDefaultRuleSyntax() {
+	file := s.adaptFile("fixtures/with_default_rule_syntax.toml", struct{}{})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	require.NoError(s.T(), err)
+
+	// router1 has no error
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router1@file", 1*time.Second, try.BodyContains(`"status":"enabled"`))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/notfound", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/foo", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/bar", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	// router2 has an error because it uses the wrong rule syntax (v3 instead of v2)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("error while parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
+	require.NoError(s.T(), err)
+
+	// router3 has an error because it uses the wrong rule syntax (v2 instead of v3)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("error while adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
+	require.NoError(s.T(), err)
+}
+
+func (s *SimpleSuite) TestWithoutDefaultRuleSyntax() {
+	file := s.adaptFile("fixtures/without_default_rule_syntax.toml", struct{}{})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	require.NoError(s.T(), err)
+
+	// router1 has no error
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router1@file", 1*time.Second, try.BodyContains(`"status":"enabled"`))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/notfound", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/foo", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/bar", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	// router2 has an error because it uses the wrong rule syntax (v3 instead of v2)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("error while adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
+	require.NoError(s.T(), err)
+
+	// router2 has an error because it uses the wrong rule syntax (v2 instead of v3)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("error while parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
+	require.NoError(s.T(), err)
+}
+
 func (s *SimpleSuite) TestRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 
@@ -747,6 +811,49 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors() {
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
 	require.NoError(s.T(), err)
+}
+
+func (s *SimpleSuite) TestWRRServer() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	whoami1IP := s.getComposeServiceIP("whoami1")
+	whoami2IP := s.getComposeServiceIP("whoami2")
+
+	file := s.adaptFile("fixtures/wrr_server.toml", struct {
+		Server1 string
+		Server2 string
+	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	repartition := map[string]int{}
+	for i := 0; i < 4; i++ {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		require.NoError(s.T(), err)
+
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+		body, err := io.ReadAll(response.Body)
+		require.NoError(s.T(), err)
+
+		if strings.Contains(string(body), whoami1IP) {
+			repartition[whoami1IP]++
+		}
+		if strings.Contains(string(body), whoami2IP) {
+			repartition[whoami2IP]++
+		}
+	}
+
+	assert.Equal(s.T(), 3, repartition[whoami1IP])
+	assert.Equal(s.T(), 1, repartition[whoami2IP])
 }
 
 func (s *SimpleSuite) TestWRR() {

@@ -20,7 +20,7 @@ import (
 
 // Backend is an abstraction for tracking backend (OpenTelemetry, ...).
 type Backend interface {
-	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string, headers map[string]string) (trace.Tracer, io.Closer, error)
+	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error)
 }
 
 // NewTracing Creates a Tracing.
@@ -37,11 +37,16 @@ func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
 		backend = defaultBackend
 	}
 
-	return backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes, conf.Headers)
+	return backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
 }
 
 // TracerFromContext extracts the trace.Tracer from the given context.
 func TracerFromContext(ctx context.Context) trace.Tracer {
+	// Prevent picking trace.noopSpan tracer.
+	if !trace.SpanContextFromContext(ctx).IsValid() {
+		return nil
+	}
+
 	span := trace.SpanFromContext(ctx)
 	if span != nil && span.TracerProvider() != nil {
 		return span.TracerProvider().Tracer("github.com/traefik/traefik")

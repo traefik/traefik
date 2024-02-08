@@ -119,7 +119,7 @@ export default {
         flex-wrap: wrap;
         border-width: 0;
         margin-bottom: 8px;
-        /deep/ .q-chip__content{
+        :deep(.q-chip__content) {
           white-space: normal;
         }
       }

@@ -96,7 +96,7 @@ func (s *UDPSuite) TestWRR() {
 				call["unknown"]++
 			}
 		}
-		assert.EqualValues(s.T(), call, map[string]int{"whoami-a": 3, "whoami-b": 2, "whoami-c": 3})
+		assert.EqualValues(s.T(), map[string]int{"whoami-a": 3, "whoami-b": 2, "whoami-c": 3}, call)
 		close(stop)
 	}()
 

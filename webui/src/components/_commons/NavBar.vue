@@ -29,7 +29,7 @@
             </q-btn>
           </q-tabs>
           <div class="right-menu">
-            <q-tabs>
+            <q-tabs class="allow-overflow">
               <div v-if="!coreVersion.disableDashboardAd && hasHubButtonComponent" style="margin-right: 5px;">
                 <hub-button-app theme="dark" v-if="$q.dark.isActive"></hub-button-app>
                 <hub-button-app v-if="!$q.dark.isActive"></hub-button-app>
@@ -111,7 +111,7 @@ export default {
             this.hasHubButtonComponent = customElements.get('hub-button-app') !== undefined
           }
           // Sources: https://github.com/traefik/traefiklabs-hub-button-app
-          hubButtonScriptLocal.src = 'statics/traefiklabs-hub-button-app/main-v1.js'
+          hubButtonScriptLocal.src = 'traefiklabs-hub-button-app/main-v1.js'
           document.head.appendChild(hubButtonScriptLocal)
         }
         hubButtonScript.onload = () => {
@@ -164,7 +164,7 @@ export default {
 
   .q-tabs {
     color: rgba( $app-text-white, .4 );
-    /deep/ .q-tabs__content {
+    :deep(.q-tabs__content) {
       .q-tab__content{
         min-width: 100%;
         .q-tab__label {
@@ -195,6 +195,12 @@ export default {
   .btn-submenu {
     font-weight: 700;
     align-items: flex-start;
+  }
+
+  .allow-overflow {
+    :deep(.q-tabs__content) {
+      overflow: visible !important;
+    }
   }
 
 </style>

@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"github.com/vulcand/oxy/v2/forward"
 	"go.opentelemetry.io/otel"
@@ -500,7 +501,7 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 		ServiceName: "testApp",
 		SampleRate:  1,
 		OTLP: &opentelemetry.Config{
-			HTTP: &opentelemetry.HTTP{
+			HTTP: &types.OtelHTTP{
 				Endpoint: "http://127.0.0.1:8080",
 			},
 		},

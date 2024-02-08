@@ -35,7 +35,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var showLog = flag.Bool("tlog", false, "always show Traefik logs")
+var (
+	showLog               = flag.Bool("tlog", false, "always show Traefik logs")
+	k8sConformance        = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
+	k8sConformanceRunTest = flag.String("k8sConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
+)
+
+const tailscaleSecretFilePath = "tailscale.secret"
 
 type composeConfig struct {
 	Services map[string]composeService `yaml:"services"`
@@ -99,6 +105,11 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 }
 
 func (s *BaseSuite) SetupSuite() {
+	if isDockerDesktop(context.Background(), s.T()) {
+		_, err := os.Stat(tailscaleSecretFilePath)
+		require.NoError(s.T(), err, "Tailscale need to be configured when running integration tests with Docker Desktop: (https://doc.traefik.io/traefik/v2.11/contributing/building-testing/#testing)")
+	}
+
 	// configure default standard log.
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 	// TODO
@@ -124,7 +135,7 @@ func (s *BaseSuite) SetupSuite() {
 	s.hostIP = "172.31.42.1"
 	if isDockerDesktop(ctx, s.T()) {
 		s.hostIP = getDockerDesktopHostIP(ctx, s.T())
-		s.setupVPN("tailscale.secret")
+		s.setupVPN(tailscaleSecretFilePath)
 	}
 }
 

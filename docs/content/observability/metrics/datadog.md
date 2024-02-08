@@ -27,6 +27,8 @@ _Required, Default="127.0.0.1:8125"_
 
 Address instructs exporter to send metrics to datadog-agent at this address.
 
+This address can be a Unix Domain Socket (UDS) address with the following form: `unix:///path/to/datadog.socket`.  
+
 ```yaml tab="File (YAML)"
 metrics:
   datadog:

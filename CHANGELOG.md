@@ -1,3 +1,13 @@
+## [v2.11.0-rc2](https://github.com/traefik/traefik/tree/v2.11.0-rc2) (2024-01-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.0-rc1...v2.11.0-rc2)
+
+**Bug fixes:**
+- **[middleware,tcp]** Add missing TCP IPAllowList middleware constructor ([#10331](https://github.com/traefik/traefik/pull/10331) by [youkoulayley](https://github.com/youkoulayley))
+- **[nomad]** Update the Nomad API dependency to v1.7.2 ([#10327](https://github.com/traefik/traefik/pull/10327) by [jrasell](https://github.com/jrasell))
+
+**Documentation:**
+- Improve Concepts documentation page ([#10315](https://github.com/traefik/traefik/pull/10315) by [oliver-dvorski](https://github.com/oliver-dvorski))
+
 ## [v2.11.0-rc1](https://github.com/traefik/traefik/tree/v2.11.0-rc1) (2024-01-02)
 [All Commits](https://github.com/traefik/traefik/compare/0a7964300166d167f68d5502bc245b3b9c8842b4...v2.11.0-rc1)
 

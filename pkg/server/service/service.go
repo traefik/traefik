@@ -20,12 +20,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
@@ -42,7 +42,7 @@ type RoundTripperGetter interface {
 // Manager The service manager.
 type Manager struct {
 	routinePool         *safe.Pool
-	metricsRegistry     metrics.Registry
+	observabilityMgr    *middleware.ObservabilityMgr
 	bufferPool          httputil.BufferPool
 	roundTripperManager RoundTripperGetter
 
@@ -53,10 +53,10 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
-		metricsRegistry:     metricsRegistry,
+		observabilityMgr:    observabilityMgr,
 		bufferPool:          newBufferPool(),
 		roundTripperManager: roundTripperManager,
 		services:            make(map[string]http.Handler),
@@ -302,12 +302,17 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		// Prevents from enabling observability for internal resources.
 
-		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
-			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName)
+		if m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, serviceName)) {
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		}
+
+		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
+			m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, serviceName)) {
+			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
 				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
@@ -317,9 +322,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			}
 		}
 
-		proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
+		if m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, serviceName)) {
+			proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
+		}
 
-		lb.Add(proxyName, proxy, nil)
+		lb.Add(proxyName, proxy, server.Weight)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
@@ -330,7 +337,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	if service.HealthCheck != nil {
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
-			m.metricsRegistry,
+			m.observabilityMgr.MetricsRegistry(),
 			service.HealthCheck,
 			lb,
 			info,
