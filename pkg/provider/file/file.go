@@ -53,6 +53,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		switch {
 		case len(p.Directory) > 0:
 			watchItems = append(watchItems, p.Directory)
+			
 			fileList, err := os.ReadDir(p.Directory)
 			if err != nil {
 				return fmt.Errorf("unable to read directory %s: %w", p.Directory, err)
