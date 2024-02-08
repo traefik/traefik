@@ -720,6 +720,9 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_USENATIVELB`:  
+Use native Kubernetes Loadbalancing instead of traefik provided (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY`:  
 Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
 

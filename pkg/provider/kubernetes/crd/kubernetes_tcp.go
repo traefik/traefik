@@ -243,8 +243,11 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
-		// External services will not have cluster IPs, so this should be handled after externalName checks.
-		if svc.NativeLB || p.UseNativeLoadBalancer {
+		nativeLB := p.UseNativeLB
+		if svc.NativeLB != nil {
+			nativeLB = *svc.NativeLB
+		}
+		if nativeLB {
 			address, err := getNativeServiceAddress(*service, *svcPort)
 			if err != nil {
 				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)

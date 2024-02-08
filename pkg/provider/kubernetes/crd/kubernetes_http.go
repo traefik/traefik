@@ -55,7 +55,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowCrossNamespace:       p.AllowCrossNamespace,
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
-			useNativeLoadBalancer:     p.UseNativeLoadBalancer,
+			useNativeLB:               p.UseNativeLB,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
@@ -203,7 +203,7 @@ type configBuilder struct {
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
 	allowEmptyServices        bool
-	useNativeLoadBalancer     bool
+	useNativeLB               bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -397,8 +397,11 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}), nil
 	}
 
-	// External services will not have cluster IPs, so this should be handled after externalName checks.
-	if svc.NativeLB || c.useNativeLoadBalancer {
+	nativeLB := c.useNativeLB
+	if svc.NativeLB != nil {
+		nativeLB = *svc.NativeLB
+	}
+	if nativeLB {
 		address, err := getNativeServiceAddress(*service, *svcPort)
 		if err != nil {
 			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)

@@ -7183,11 +7183,11 @@ func (p *extensionBuilderRegistryMock) RegisterBackendFuncs(group, kind string, 
 
 func TestGlobalNativeLB(t *testing.T) {
 	testCases := []struct {
-		desc                  string
-		ingressClass          string
-		paths                 []string
-		useNativeLoadBalancer bool
-		expected              *dynamic.Configuration
+		desc         string
+		ingressClass string
+		paths        []string
+		useNativeLB  bool
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -7212,9 +7212,9 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
-			desc:                  "HTTP with global native Service LB",
-			paths:                 []string{"services.yml", "with_global_native_service_lb.yml"},
-			useNativeLoadBalancer: true,
+			desc:        "HTTP with global native Service LB",
+			paths:       []string{"services.yml", "with_global_native_service_lb.yml"},
+			useNativeLB: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7255,9 +7255,51 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
-			desc:                  "TCP with global native Service LB",
-			paths:                 []string{"tcp/services.yml", "tcp/with_global_native_service_lb.yml"},
-			useNativeLoadBalancer: true,
+			desc:  "HTTP with native Service LB in ingressroute",
+			paths: []string{"services.yml", "with_native_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6f97418635c7e18853da": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6f97418635c7e18853da",
+							Rule:        "Host(`foo.com`)",
+							Priority:    0,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6f97418635c7e18853da": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:        "TCP with global native Service LB",
+			paths:       []string{"tcp/services.yml", "tcp/with_global_native_service_lb.yml"},
+			useNativeLB: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7296,9 +7338,88 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
-			desc:                  "UDP with global native Service LB",
-			paths:                 []string{"udp/services.yml", "udp/with_global_native_service_lb.yml"},
-			useNativeLoadBalancer: true,
+			desc:  "TCP with native Service LB in ingressroute",
+			paths: []string{"tcp/services.yml", "tcp/with_native_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDP with native Service LB in ingressroute",
+			paths: []string{"udp/services.yml", "udp/with_native_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:        "UDP with global native Service LB",
+			paths:       []string{"udp/services.yml", "udp/with_global_native_service_lb.yml"},
+			useNativeLB: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
@@ -7390,7 +7511,7 @@ func TestGlobalNativeLB(t *testing.T) {
 				<-eventCh
 			}
 
-			p := Provider{UseNativeLoadBalancer: test.useNativeLoadBalancer}
+			p := Provider{UseNativeLB: test.useNativeLB}
 
 			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
