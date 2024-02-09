@@ -61,7 +61,7 @@ func (c *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		})
 	}
 
-	if c.tracer != nil && c.ShouldAddTracing(resourceName) {
+	if (c.tracer != nil && c.ShouldAddTracing(resourceName)) || (c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() && c.ShouldAddMetrics(resourceName)) {
 		chain = chain.Append(observability.WrapEntryPointHandler(ctx, c.tracer, c.semConvMetricRegistry, entryPointName))
 	}
 
