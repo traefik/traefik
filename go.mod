@@ -67,16 +67,16 @@ require (
 	github.com/vulcand/oxy/v2 v2.0.0-20230427132221-be5cf38f3c1c
 	github.com/vulcand/predicate v1.2.0
 	go.opentelemetry.io/collector/pdata v1.1.0
-	go.opentelemetry.io/otel v1.23.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.23.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.23.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.23.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.23.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.23.0
-	go.opentelemetry.io/otel/metric v1.23.0
-	go.opentelemetry.io/otel/sdk v1.23.0
-	go.opentelemetry.io/otel/sdk/metric v1.23.0
-	go.opentelemetry.io/otel/trace v1.23.0
+	go.opentelemetry.io/otel v1.23.1
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.23.1
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.23.1
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.23.1
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.23.1
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.23.1
+	go.opentelemetry.io/otel/metric v1.23.1
+	go.opentelemetry.io/otel/sdk v1.23.1
+	go.opentelemetry.io/otel/sdk/metric v1.23.1
+	go.opentelemetry.io/otel/trace v1.23.1
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/mod v0.14.0
 	golang.org/x/net v0.20.0
