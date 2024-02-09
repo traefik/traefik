@@ -45,6 +45,7 @@ func newEntryPoint(ctx context.Context, tracer trace.Tracer, semConvMetricRegist
 	if tracer == nil {
 		tracer = noop.Tracer{}
 	}
+
 	return &entryPointTracing{
 		entryPoint:            entryPointName,
 		tracer:                tracer,
