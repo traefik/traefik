@@ -4,10 +4,10 @@ module.exports = {
   parserOptions: {
     parser: '@babel/eslint-parser',
     ecmaVersion: 2021, // Allows for the parsing of modern ECMAScript features
-    sourceType: 'module'
   },
 
   env: {
+    node: true,
     browser: true,
     mocha: true,
     'vue/setup-compiler-macros': true
@@ -48,6 +48,8 @@ module.exports = {
     // allow paren-less arrow functions
     'arrow-parens': 'off',
     'one-var': 'off',
+    'no-void': 'off',
+    'multiline-ternary': 'off',
 
     'import/first': 'off',
     'import/named': 'error',

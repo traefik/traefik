@@ -201,14 +201,14 @@
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
-import PageDefault from '../../components/_commons/PageDefault'
-import SkeletonBox from '../../components/_commons/SkeletonBox'
-import PanelServiceDetails from '../../components/_commons/PanelServiceDetails'
-import PanelHealthCheck from '../../components/_commons/PanelHealthCheck'
-import PanelServers from '../../components/_commons/PanelServers'
-import MainTable from '../../components/_commons/MainTable'
-import PanelWeightedServices from '../../components/_commons/PanelWeightedServices'
-import PanelMirroringServices from '../../components/_commons/PanelMirroringServices'
+import PageDefault from '../../components/_commons/PageDefault.vue'
+import SkeletonBox from '../../components/_commons/SkeletonBox.vue'
+import PanelServiceDetails from '../../components/_commons/PanelServiceDetails.vue'
+import PanelHealthCheck from '../../components/_commons/PanelHealthCheck.vue'
+import PanelServers from '../../components/_commons/PanelServers.vue'
+import MainTable from '../../components/_commons/MainTable.vue'
+import PanelWeightedServices from '../../components/_commons/PanelWeightedServices.vue'
+import PanelMirroringServices from '../../components/_commons/PanelMirroringServices.vue'
 
 export default defineComponent({
   name: 'PageServiceDetail',
