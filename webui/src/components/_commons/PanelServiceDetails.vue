@@ -159,9 +159,9 @@
 
 <script>
 import { defineComponent } from 'vue'
-import AvatarState from './AvatarState'
-import BooleanState from './BooleanState'
-import StickyServiceDetails from './StickyServiceDetails'
+import AvatarState from './AvatarState.vue'
+import BooleanState from './BooleanState.vue'
+import StickyServiceDetails from './StickyServiceDetails.vue'
 
 export default defineComponent({
   name: 'PanelServiceDetails',

@@ -107,24 +107,22 @@ export default defineComponent({
     data: Object,
     columns: Array[Object],
     loading: Boolean,
-    onLoadMore: {
-      type: Function,
-      default: () => {}
-    },
+    onLoadMore: Function,
     endReached: Boolean,
-    onRowClick: {
-      type: Function,
-      default: () => {}
-    }
+    onRowClick: Function
   },
   methods: {
     getColumn (columnName) {
       return this.columns.find(c => c.name === columnName) || {}
     },
     handleLoadMore (index, done) {
-      this.onLoadMore({ page: index })
-        .then(() => done())
-        .catch(() => done(true))
+      if (!this?.onLoadMore) {
+        done()
+      } else {
+        this.onLoadMore({ page: index })
+          .then(() => done())
+          .catch(() => done(true))
+      }
     }
   }
 })
