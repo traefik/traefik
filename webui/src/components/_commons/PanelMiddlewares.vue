@@ -882,11 +882,15 @@
           <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start no-wrap">
               <div class="col">
-                <div class="text-subtitle2">Source Range</div>
+                <div class="text-subtitle2">
+                  Source Range
+                </div>
                 <q-chip
-                  v-for="(range, key) in exData(middleware).sourceRange" :key="key"
+                  v-for="(range, key) in exData(middleware).sourceRange"
+                  :key="key"
                   dense
-                  class="app-chip app-chip-green">
+                  class="app-chip app-chip-green"
+                >
                   {{ range }}
                 </q-chip>
               </div>
@@ -896,29 +900,44 @@
           <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start">
               <div class="col-12">
-                <div class="text-subtitle2">IP Strategy</div>
+                <div class="text-subtitle2">
+                  IP Strategy
+                </div>
               </div>
-              <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.depth" class="col-12">
+              <div
+                v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.depth"
+                class="col-12"
+              >
                 <q-chip
                   dense
-                  class="app-chip app-chip-accent">Depth :</q-chip>
+                  class="app-chip app-chip-accent"
+                >
+                  Depth :
+                </q-chip>
                 <q-chip
                   dense
-                  class="app-chip app-chip-green">
+                  class="app-chip app-chip-green"
+                >
                   {{ exData(middleware).ipStrategy.depth }}
                 </q-chip>
               </div>
-              <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.excludedIPs" class="col-12">
+              <div
+                v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.excludedIPs"
+                class="col-12"
+              >
                 <div class="flex">
                   <q-chip
                     dense
-                    class="app-chip app-chip-accent">
+                    class="app-chip app-chip-accent"
+                  >
                     Excluded IPs:
                   </q-chip>
                   <q-chip
-                    v-for="(excludedIPs, key) in exData(middleware).ipStrategy.excludedIPs" :key="key"
+                    v-for="(excludedIPs, key) in exData(middleware).ipStrategy.excludedIPs"
+                    :key="key"
                     dense
-                    class="app-chip app-chip-green">
+                    class="app-chip app-chip-green"
+                  >
                     {{ excludedIPs }}
                   </q-chip>
                 </div>
@@ -1534,8 +1553,8 @@
 
 <script>
 import { defineComponent } from 'vue'
-import BooleanState from './BooleanState'
-import AvatarState from './AvatarState'
+import BooleanState from './BooleanState.vue'
+import AvatarState from './AvatarState.vue'
 
 export default defineComponent({
   name: 'PanelMiddlewareDetails',

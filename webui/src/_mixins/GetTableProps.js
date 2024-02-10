@@ -1,9 +1,9 @@
 import { getProperty } from 'dot-prop'
 import { QChip } from 'quasar'
-import Chips from '../components/_commons/Chips'
-import ProviderIcon from '../components/_commons/ProviderIcon'
-import AvatarState from '../components/_commons/AvatarState'
-import TLSState from '../components/_commons/TLSState'
+import Chips from '../components/_commons/Chips.vue'
+import ProviderIcon from '../components/_commons/ProviderIcon.vue'
+import AvatarState from '../components/_commons/AvatarState.vue'
+import TLSState from '../components/_commons/TLSState.vue'
 
 const allColumns = [
   {

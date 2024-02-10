@@ -123,7 +123,7 @@
 
 <script>
 import { defineComponent } from 'vue'
-import AvatarState from './AvatarState'
+import AvatarState from './AvatarState.vue'
 
 export default defineComponent({
   name: 'PanelRouterDetails',

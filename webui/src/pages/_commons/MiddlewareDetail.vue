@@ -98,10 +98,10 @@
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
-import PageDefault from '../../components/_commons/PageDefault'
-import SkeletonBox from '../../components/_commons/SkeletonBox'
-import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
-import MainTable from '../../components/_commons/MainTable'
+import PageDefault from '../../components/_commons/PageDefault.vue'
+import SkeletonBox from '../../components/_commons/SkeletonBox.vue'
+import PanelMiddlewares from '../../components/_commons/PanelMiddlewares.vue'
+import MainTable from '../../components/_commons/MainTable.vue'
 
 export default defineComponent({
   name: 'PageMiddlewareDetail',
