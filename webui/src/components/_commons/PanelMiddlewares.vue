@@ -1486,8 +1486,8 @@
 
 <script>
 import { defineComponent } from 'vue'
-import BooleanState from './BooleanState'
-import AvatarState from './AvatarState'
+import BooleanState from './BooleanState.vue'
+import AvatarState from './AvatarState.vue'
 
 export default defineComponent({
   name: 'PanelMiddlewareDetails',
