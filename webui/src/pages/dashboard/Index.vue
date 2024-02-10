@@ -287,12 +287,12 @@
 <script>
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
-import PageDefault from '../../components/_commons/PageDefault'
-import SkeletonBox from '../../components/_commons/SkeletonBox'
-import PanelEntry from '../../components/dashboard/PanelEntry'
-import PanelChart from '../../components/dashboard/PanelChart'
-import PanelFeature from '../../components/dashboard/PanelFeature'
-import PanelProvider from '../../components/dashboard/PanelProvider'
+import PageDefault from '../../components/_commons/PageDefault.vue'
+import SkeletonBox from '../../components/_commons/SkeletonBox.vue'
+import PanelEntry from '../../components/dashboard/PanelEntry.vue'
+import PanelChart from '../../components/dashboard/PanelChart.vue'
+import PanelFeature from '../../components/dashboard/PanelFeature.vue'
+import PanelProvider from '../../components/dashboard/PanelProvider.vue'
 
 export default defineComponent({
   name: 'PageDashboardIndex',

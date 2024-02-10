@@ -1,12 +1,14 @@
 // Configuration for your app
 // https://quasar.dev/quasar-cli/quasar-conf-js
 
-const ESLintPlugin = require('eslint-webpack-plugin')
 const { configure } = require('quasar/wrappers')
 
 module.exports = configure(function (ctx) {
   return {
-   supportTS: false,
+   eslint: {
+      warnings: true,
+      errors: true
+    },
 
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
@@ -118,6 +120,10 @@ module.exports = configure(function (ctx) {
     supportIE: false,
 
     build: {
+      target: {
+        browser: ['edge88', 'firefox78', 'chrome87', 'safari13.1'],
+        node: 'node20'
+      },
       publicPath: process.env.APP_PUBLIC_PATH || '',
       env: process.env.APP_ENV === 'development'
         ? { // staging:
@@ -135,16 +141,7 @@ module.exports = configure(function (ctx) {
         }
       },
       scopeHoisting: true,
-      // vueRouterMode: 'history',
-      // vueCompiler: true,
-      // gzip: true,
-      // analyze: true,
-      // extractCSS: false,
-      chainWebpack (chain) {
-        chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: ['js', 'vue'] }])
-      }
-
+      vueRouterMode: 'hash' // available values: 'hash', 'history'
     },
 
     devServer: {
@@ -165,16 +162,11 @@ module.exports = configure(function (ctx) {
 
     ssr: {
       pwa: false,
-
-
-      chainWebpackWebserver (chain) {
-        chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: ['js'] }])
-      },
-
     },
 
     pwa: {
+
+      workboxMode: 'injectManifest', // or 'generateSW'
       // workboxPluginMode: 'InjectManifest',
       // workboxOptions: {}, // only for NON InjectManifest
       workboxOptions: {
