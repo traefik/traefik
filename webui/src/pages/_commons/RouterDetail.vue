@@ -263,12 +263,12 @@
 <script>
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
-import PageDefault from '../../components/_commons/PageDefault'
-import SkeletonBox from '../../components/_commons/SkeletonBox'
-import PanelEntry from '../../components/dashboard/PanelEntry'
-import PanelRouterDetails from '../../components/_commons/PanelRouterDetails'
-import PanelTLS from '../../components/_commons/PanelTLS'
-import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
+import PageDefault from '../../components/_commons/PageDefault.vue'
+import SkeletonBox from '../../components/_commons/SkeletonBox.vue'
+import PanelEntry from '../../components/dashboard/PanelEntry.vue'
+import PanelRouterDetails from '../../components/_commons/PanelRouterDetails.vue'
+import PanelTLS from '../../components/_commons/PanelTLS.vue'
+import PanelMiddlewares from '../../components/_commons/PanelMiddlewares.vue'
 
 export default defineComponent({
   name: 'PageRouterDetail',

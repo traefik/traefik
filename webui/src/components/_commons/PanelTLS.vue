@@ -122,7 +122,7 @@
 
 <script>
 import { defineComponent } from 'vue'
-import BooleanState from './BooleanState'
+import BooleanState from './BooleanState.vue'
 
 export default defineComponent({
   name: 'PanelTLS',
