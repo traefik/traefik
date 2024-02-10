@@ -30,9 +30,9 @@ import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PaginationMixin from '../../_mixins/Pagination'
-import PageDefault from '../../components/_commons/PageDefault'
-import ToolBarTable from '../../components/_commons/ToolBarTable'
-import MainTable from '../../components/_commons/MainTable'
+import PageDefault from '../../components/_commons/PageDefault.vue'
+import ToolBarTable from '../../components/_commons/ToolBarTable.vue'
+import MainTable from '../../components/_commons/MainTable.vue'
 
 export default defineComponent({
   name: 'PageTCPMiddlewares',

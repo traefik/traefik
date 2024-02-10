@@ -107,7 +107,7 @@ import { defineComponent } from 'vue'
 import Helps from '../../_helpers/Helps'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
-import AvatarState from '../_commons/AvatarState'
+import AvatarState from '../_commons/AvatarState.vue'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
