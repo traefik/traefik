@@ -321,6 +321,15 @@ export default defineComponent({
       return this[`${this.protocol}_getMiddlewareByName`]
     }
   },
+  created () {
+    this.refreshAll()
+  },
+  beforeUnmount () {
+    clearInterval(this.timeOutGetAll)
+    this.$store.commit('http/getRouterByNameClear')
+    this.$store.commit('tcp/getRouterByNameClear')
+    this.$store.commit('udp/getRouterByNameClear')
+  },
   methods: {
     ...mapActions('http', { http_getRouterByName: 'getRouterByName', http_getMiddlewareByName: 'getMiddlewareByName' }),
     ...mapActions('tcp', { tcp_getRouterByName: 'getRouterByName', tcp_getMiddlewareByName: 'getMiddlewareByName' }),
@@ -388,18 +397,6 @@ export default defineComponent({
 
       return `${encodeURIComponent(data.service)}@${data.provider}`
     }
-  },
-  created () {
-    this.refreshAll()
-  },
-  mounted () {
-
-  },
-  beforeUnmount () {
-    clearInterval(this.timeOutGetAll)
-    this.$store.commit('http/getRouterByNameClear')
-    this.$store.commit('tcp/getRouterByNameClear')
-    this.$store.commit('udp/getRouterByNameClear')
   }
 })
 </script>

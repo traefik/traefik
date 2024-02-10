@@ -103,6 +103,7 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import Helps from '../../_helpers/Helps'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
@@ -110,13 +111,17 @@ import AvatarState from '../_commons/AvatarState'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-export default {
+export default defineComponent({
   name: 'PanelChart',
   components: {
     Doughnut,
     AvatarState
   },
-  props: ['name', 'data', 'type'],
+  props: {
+    name: String,
+    data: Object,
+    type: String
+  },
   data () {
     return {
       loading: true,
@@ -214,7 +219,7 @@ export default {
       }
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
