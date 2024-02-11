@@ -44,6 +44,10 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
+	if amznTraceId  := req.Header.Get("X-Amzn-Trace-Id") : amznTraceId != "" {
+		span.SetAttributes(attribute.String("http.amzn_trace_id", amznTraceId))
+	}
+
 	req = req.WithContext(tracingCtx)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
