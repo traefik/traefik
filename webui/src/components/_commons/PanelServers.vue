@@ -1,31 +1,59 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-servers', {'panel-servers-dense':isDense}]">
-    <q-scroll-area v-if="data.loadBalancer.servers" :thumb-style="appThumbStyle" style="height:100%;">
+  <q-card
+    flat
+    bordered
+    :class="['panel-servers', {'panel-servers-dense':isDense}]"
+  >
+    <q-scroll-area
+      v-if="data.loadBalancer.servers"
+      :thumb-style="appThumbStyle"
+      style="height:100%;"
+    >
       <q-card-section>
         <div class="row items-start no-wrap">
-          <div class="col-3" v-if="showStatus">
-            <div class="text-subtitle2 text-table">Status</div>
+          <div
+            v-if="showStatus"
+            class="col-3"
+          >
+            <div class="text-subtitle2 text-table">
+              Status
+            </div>
           </div>
           <div class="col-9">
-            <div class="text-subtitle2 text-table">URL</div>
+            <div class="text-subtitle2 text-table">
+              URL
+            </div>
           </div>
         </div>
       </q-card-section>
       <q-separator />
-      <div v-for="(server, index) in data.loadBalancer.servers" :key="index">
+      <div
+        v-for="(server, index) in data.loadBalancer.servers"
+        :key="index"
+      >
         <q-card-section>
           <div class="row items-center no-wrap">
-            <div class="col-3" v-if="showStatus">
+            <div
+              v-if="showStatus"
+              class="col-3"
+            >
               <div class="block-right-text">
-                <avatar-state v-if="data.serverStatus" :state="data.serverStatus[server.url || server.address] | status "/>
-                <avatar-state v-if="!data.serverStatus" :state="'DOWN' | status"/>
+                <avatar-state
+                  v-if="data.serverStatus"
+                  :state="status(data.serverStatus[server.url || server.address])"
+                />
+                <avatar-state
+                  v-if="!data.serverStatus"
+                  :state="status('DOWN')"
+                />
               </div>
             </div>
             <div class="col-9">
               <q-chip
                 dense
-                class="app-chip app-chip-rule">
-                {{ server.url || server.address}}
+                class="app-chip app-chip-rule"
+              >
+                {{ server.url || server.address }}
               </q-chip>
             </div>
           </div>
@@ -33,29 +61,50 @@
         <q-separator />
       </div>
     </q-scroll-area>
-      <q-card-section v-else style="height: 100%">
-        <div class="row items-center" style="height: 100%">
-          <div class="col-12">
-            <div class="block-empty"></div>
-            <div class="q-pb-lg block-empty-logo">
-              <img v-if="$q.dark.isActive" alt="empty" src="~assets/middlewares-empty-dark.svg">
-              <img v-else alt="empty" src="~assets/middlewares-empty.svg">
-            </div>
-            <div class="block-empty-label">There is no<br>Server available</div>
+    <q-card-section
+      v-else
+      style="height: 100%"
+    >
+      <div
+        class="row items-center"
+        style="height: 100%"
+      >
+        <div class="col-12">
+          <div class="block-empty" />
+          <div class="q-pb-lg block-empty-logo">
+            <img
+              v-if="$q.dark.isActive"
+              alt="empty"
+              src="~assets/middlewares-empty-dark.svg"
+            >
+            <img
+              v-else
+              alt="empty"
+              src="~assets/middlewares-empty.svg"
+            >
+          </div>
+          <div class="block-empty-label">
+            There is no<br>Server available
           </div>
         </div>
-      </q-card-section>
+      </div>
+    </q-card-section>
   </q-card>
 </template>
 
 <script>
-import AvatarState from './AvatarState'
+import { defineComponent } from 'vue'
+import AvatarState from './AvatarState.vue'
 
-export default {
+export default defineComponent({
   name: 'PanelServers',
-  props: ['data', 'dense', 'hasStatus'],
   components: {
     AvatarState
+  },
+  props: {
+    data: Object,
+    dense: Boolean,
+    hasStatus: Boolean
   },
   computed: {
     isDense () {
@@ -65,7 +114,7 @@ export default {
       return this.hasStatus !== undefined
     }
   },
-  filters: {
+  methods: {
     status (value) {
       if (value === 'UP') {
         return 'positive'
@@ -73,7 +122,7 @@ export default {
       return 'negative'
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
