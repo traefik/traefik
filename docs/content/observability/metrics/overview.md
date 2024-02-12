@@ -285,7 +285,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 ## Semantic Conventions for HTTP Metrics
 
-Traefik Proxy follows [official OTLP convention](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md).
+Traefik Proxy follows [official OTLP semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
 
 ### HTTP Server
 
