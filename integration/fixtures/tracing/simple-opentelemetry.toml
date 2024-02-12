@@ -15,6 +15,17 @@
   [entryPoints.web]
     address = ":8000"
 
+# Adding metrics to confirm that there is no wrong interaction with tracing.
+[metrics]
+{{if .IsHTTP}}
+  [metrics.otlp.http]
+    endpoint = "http://{{.IP}}:4318"
+{{else}}
+  [metrics.otlp.grpc]
+    endpoint = "{{.IP}}:4317"
+    insecure = true
+{{end}}
+
 [tracing]
   servicename = "tracing"
   sampleRate = 1.0

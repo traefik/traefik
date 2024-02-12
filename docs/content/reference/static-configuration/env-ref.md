@@ -337,7 +337,7 @@ Enable metrics on routers. (Default: ```false```)
 Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_OTLP_EXPLICITBOUNDARIES`:  
-Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
+Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.075000, 0.100000, 0.250000, 0.500000, 0.750000, 1.000000, 2.500000, 5.000000, 7.500000, 10.000000```)
 
 `TRAEFIK_METRICS_OTLP_GRPC_ENDPOINT`:  
 Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
