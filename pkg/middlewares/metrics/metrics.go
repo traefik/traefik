@@ -14,9 +14,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 )
@@ -144,7 +144,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		}
 		logger := with.Logger()
 		logger.Error().Err(err).Msg("Could not get Capture")
-		tracing.SetStatusErrorf(req.Context(), "Could not get Capture")
+		observability.SetStatusErrorf(req.Context(), "Could not get Capture")
 		return
 	}
 
