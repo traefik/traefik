@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -77,7 +77,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if !ok {
 		logger.Debug().Msg("Authentication failed")
-		tracing.SetStatusErrorf(req.Context(), "Authentication failed")
+		observability.SetStatusErrorf(req.Context(), "Authentication failed")
 
 		b.auth.RequireAuth(rw, req)
 		return

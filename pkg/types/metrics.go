@@ -125,7 +125,7 @@ func (o *OTLP) SetDefaults() {
 
 	o.AddEntryPointsLabels = true
 	o.AddServicesLabels = true
-	o.ExplicitBoundaries = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}
+	o.ExplicitBoundaries = []float64{.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10}
 	o.PushInterval = types.Duration(10 * time.Second)
 }
 

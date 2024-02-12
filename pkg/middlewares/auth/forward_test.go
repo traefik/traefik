@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	tracingMiddleware "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
@@ -515,7 +515,7 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 	next, err = NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	chain := alice.New(tracingMiddleware.WrapEntryPointHandler(context.Background(), tr, "tracingTest"))
+	chain := alice.New(observability.WrapEntryPointHandler(context.Background(), tr, nil, "tracingTest"))
 	next, err = chain.Then(next)
 	require.NoError(t, err)
 
