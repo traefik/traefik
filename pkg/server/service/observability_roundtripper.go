@@ -29,6 +29,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var tracingCtx context.Context
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
 		tracingCtx, span = tracer.Start(req.Context(), "ReverseProxy", trace.WithSpanKind(trace.SpanKindClient))
+		defer span.End()
 
 		req = req.WithContext(tracingCtx)
 
@@ -36,8 +37,11 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		tracing.InjectContextIntoCarrier(req)
 	}
 
+	var statusCode int
 	response, err := t.rt.RoundTrip(req)
-	statusCode := response.StatusCode
+	if response != nil {
+		statusCode = response.StatusCode
+	}
 	if err != nil {
 		statusCode = computeStatusCode(err)
 	}
@@ -46,6 +50,8 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	end := time.Now()
 
+	// Ending the span as soon as the response is handled because we want to use the same end time for the trace and the metric.
+	// If any errors happen earlier, this span will be close by the defer instruction.
 	if span != nil {
 		span.End(trace.WithTimestamp(end))
 	}
@@ -83,7 +89,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
 	}
 
-	return response, nil
+	return response, err
 }
 
 func newObservabilityRoundTripper(semConvMetricRegistry *metrics.SemConvMetricsRegistry, rt http.RoundTripper) http.RoundTripper {
