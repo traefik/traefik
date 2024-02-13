@@ -1,49 +1,66 @@
 <template>
-    <div>
-      <q-card-section>
-        <div class="row items-start no-wrap">
-          <div class="text-subtitle1">Sticky: Cookie </div>
+  <div>
+    <q-card-section>
+      <div class="row items-start no-wrap">
+        <div class="text-subtitle1">
+          Sticky: Cookie
         </div>
-      </q-card-section>
-      <q-card-section>
-        <div class="row items-start no-wrap">
-          <div class="col" v-if="sticky.cookie && sticky.cookie.name">
-            <div class="text-subtitle2">NAME</div>
-            <q-chip
-              dense
-              class="app-chip app-chip-entry-points">
-              {{ sticky.cookie.name }}
-            </q-chip>
+      </div>
+    </q-card-section>
+    <q-card-section>
+      <div class="row items-start no-wrap">
+        <div
+          v-if="sticky.cookie && sticky.cookie.name"
+          class="col"
+        >
+          <div class="text-subtitle2">
+            NAME
           </div>
+          <q-chip
+            dense
+            class="app-chip app-chip-entry-points"
+          >
+            {{ sticky.cookie.name }}
+          </q-chip>
         </div>
-      </q-card-section>
-      <q-card-section>
-        <div class="row items-start no-wrap">
-          <div class="col">
-            <div class="text-subtitle2">SECURE</div>
-            <boolean-state :value="sticky.cookie.secure"/>
+      </div>
+    </q-card-section>
+    <q-card-section>
+      <div class="row items-start no-wrap">
+        <div class="col">
+          <div class="text-subtitle2">
+            SECURE
           </div>
+          <boolean-state :value="sticky.cookie.secure" />
+        </div>
 
-          <div class="col">
-            <div class="text-subtitle2">HTTP Only</div>
-            <boolean-state :value="sticky.cookie.httpOnly"/>
+        <div class="col">
+          <div class="text-subtitle2">
+            HTTP Only
           </div>
+          <boolean-state :value="sticky.cookie.httpOnly" />
         </div>
-      </q-card-section>
-    </div>
+      </div>
+    </q-card-section>
+  </div>
 </template>
 
 <script>
-import BooleanState from './BooleanState'
+import { defineComponent } from 'vue'
+import BooleanState from './BooleanState.vue'
 
-export default {
+export default defineComponent({
   name: 'StickyServiceDetails',
   components: {
     BooleanState
   },
-  props: ['sticky', 'dense']
-}
+  props: {
+    sticky: Object,
+    dense: Boolean
+  }
+})
 </script>
+
 <style scoped lang="scss">
   @import "../../css/sass/variables";
 
