@@ -16,15 +16,15 @@ It is based on a [token bucket](https://en.wikipedia.org/wiki/Token_bucket) impl
 
 ```yaml tab="Docker & Swarm"
 # Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 50 requests is allowed.
+# In addition, a burst of 200 requests is allowed.
 labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
 ```
 
 ```yaml tab="Kubernetes"
 # Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 50 requests is allowed.
+# In addition, a burst of 200 requests is allowed.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -32,34 +32,34 @@ metadata:
 spec:
   rateLimit:
     average: 100
-    burst: 50
+    burst: 200
 ```
 
 ```yaml tab="Consul Catalog"
 # Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 50 requests is allowed.
+# In addition, a burst of 200 requests is allowed.
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
 ```yaml tab="File (YAML)"
 # Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 50 requests is allowed.
+# In addition, a burst of 200 requests is allowed.
 http:
   middlewares:
     test-ratelimit:
       rateLimit:
         average: 100
-        burst: 50
+        burst: 200
 ```
 
 ```toml tab="File (TOML)"
 # Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 50 requests is allowed.
+# In addition, a burst of 200 requests is allowed.
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     average = 100
-    burst = 50
+    burst = 200
 ```
 
 ## Configuration Options
