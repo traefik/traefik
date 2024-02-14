@@ -846,17 +846,17 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.Tracing = &static.Tracing{
 		ServiceName: "myServiceName",
-		Headers: map[string]string{
-			"foobar": "foobar",
-		},
 		GlobalAttributes: map[string]string{
 			"foobar": "foobar",
 		},
 		SampleRate: 42,
 		OTLP: &opentelemetry.Config{
-			HTTP: &opentelemetry.HTTP{
+			HTTP: &types.OtelHTTP{
 				Endpoint: "foobar",
 				TLS:      nil,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
 			},
 		},
 	}

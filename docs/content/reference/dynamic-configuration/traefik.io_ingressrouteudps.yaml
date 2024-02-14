@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: ingressrouteudps.traefik.io
 spec:
   group: traefik.io
@@ -20,14 +20,19 @@ spec:
         description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -35,10 +40,11 @@ spec:
             description: IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
             properties:
               entryPoints:
-                description: 'EntryPoints defines the list of entry point names to
-                  bind to. Entry points have to be configured in the static configuration.
+                description: |-
+                  EntryPoints defines the list of entry point names to bind to.
+                  Entry points have to be configured in the static configuration.
                   More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
-                  Default: all.'
+                  Default: all.
                 items:
                   type: string
                 type: array
@@ -62,17 +68,18 @@ spec:
                               Kubernetes Service.
                             type: string
                           nativeLB:
-                            description: NativeLB controls, when creating the load-balancer,
-                              whether the LB's children are directly the pods IPs
-                              or if the only child is the Kubernetes Service clusterIP.
-                              The Kubernetes Service itself does load-balance to the
-                              pods. By default, NativeLB is false.
+                            description: |-
+                              NativeLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+                              The Kubernetes Service itself does load-balance to the pods.
+                              By default, NativeLB is false.
                             type: boolean
                           port:
                             anyOf:
                             - type: integer
                             - type: string
-                            description: Port defines the port of a Kubernetes Service.
+                            description: |-
+                              Port defines the port of a Kubernetes Service.
                               This can be a reference to a named port.
                             x-kubernetes-int-or-string: true
                           weight:

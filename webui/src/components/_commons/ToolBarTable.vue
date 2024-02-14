@@ -93,7 +93,7 @@ export default {
 
   .q-toolbar {
     padding: 0;
-    /deep/ .bar-toggle {
+    :deep(.bar-toggle) {
       .q-btn {
         font-weight: 600;
         margin-right: 12px;
@@ -105,7 +105,7 @@ export default {
         }
       }
     }
-    /deep/ .bar-search {
+    :deep(.bar-search) {
       .q-field__inner {
         .q-field__control {
           border-radius: 12px;

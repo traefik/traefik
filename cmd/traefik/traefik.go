@@ -520,15 +520,14 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 		}
 	}
 
-	if metricsConfig.OpenTelemetry != nil {
+	if metricsConfig.OTLP != nil {
 		logger := log.With().Str(logs.MetricsProviderName, "openTelemetry").Logger()
 
-		openTelemetryRegistry := metrics.RegisterOpenTelemetry(logger.WithContext(context.Background()), metricsConfig.OpenTelemetry)
+		openTelemetryRegistry := metrics.RegisterOpenTelemetry(logger.WithContext(context.Background()), metricsConfig.OTLP)
 		if openTelemetryRegistry != nil {
 			registries = append(registries, openTelemetryRegistry)
 			logger.Debug().
-				Str("address", metricsConfig.OpenTelemetry.Address).
-				Str("pushInterval", metricsConfig.OpenTelemetry.PushInterval.String()).
+				Str("pushInterval", metricsConfig.OTLP.PushInterval.String()).
 				Msg("Configured OpenTelemetry metrics")
 		}
 	}

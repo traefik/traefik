@@ -302,7 +302,7 @@ func (s *TCPSuite) TestWRR() {
 		time.Sleep(time.Second)
 	}
 
-	assert.EqualValues(s.T(), call, map[string]int{"whoami-b": 3, "whoami-ab": 1})
+	assert.EqualValues(s.T(), map[string]int{"whoami-b": 3, "whoami-ab": 1}, call)
 }
 
 func welcome(addr string) (string, error) {
@@ -404,7 +404,6 @@ func guessWhoTLSPassthrough(addr, serverName string) (string, error) {
 			return fmt.Errorf("tls: no valid certificate for serverName %s", serverName)
 		},
 	})
-
 	if err != nil {
 		return "", err
 	}

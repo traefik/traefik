@@ -126,7 +126,7 @@ func hostSNIV2(tree *matchersTree, hosts ...string) error {
 // hostSNIRegexpV2 checks if the SNI Host of the connection matches the matcher host regexp.
 func hostSNIRegexpV2(tree *matchersTree, templates ...string) error {
 	if len(templates) == 0 {
-		return fmt.Errorf("empty value for \"HostSNIRegexp\" matcher is not allowed")
+		return errors.New("empty value for \"HostSNIRegexp\" matcher is not allowed")
 	}
 
 	var regexps []*regexp.Regexp

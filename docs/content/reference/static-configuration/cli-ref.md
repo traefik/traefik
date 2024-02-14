@@ -324,50 +324,62 @@ InfluxDB v2 push interval. (Default: ```10```)
 `--metrics.influxdb2.token`:  
 InfluxDB v2 access token.
 
-`--metrics.opentelemetry`:  
+`--metrics.otlp`:  
 OpenTelemetry metrics exporter type. (Default: ```false```)
 
-`--metrics.opentelemetry.addentrypointslabels`:  
+`--metrics.otlp.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`--metrics.opentelemetry.address`:  
-Address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
-
-`--metrics.opentelemetry.addrouterslabels`:  
+`--metrics.otlp.addrouterslabels`:  
 Enable metrics on routers. (Default: ```false```)
 
-`--metrics.opentelemetry.addserviceslabels`:  
+`--metrics.otlp.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
-`--metrics.opentelemetry.explicitboundaries`:  
+`--metrics.otlp.explicitboundaries`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
-`--metrics.opentelemetry.grpc`:  
-gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+`--metrics.otlp.grpc.endpoint`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
 
-`--metrics.opentelemetry.headers.<name>`:  
+`--metrics.otlp.grpc.headers.<name>`:  
 Headers sent with payload.
 
-`--metrics.opentelemetry.insecure`:  
+`--metrics.otlp.grpc.insecure`:  
 Disables client transport security for the exporter. (Default: ```false```)
 
-`--metrics.opentelemetry.path`:  
-Set the URL path of the collector endpoint.
-
-`--metrics.opentelemetry.pushinterval`:  
-Period between calls to collect a checkpoint. (Default: ```10```)
-
-`--metrics.opentelemetry.tls.ca`:  
+`--metrics.otlp.grpc.tls.ca`:  
 TLS CA
 
-`--metrics.opentelemetry.tls.cert`:  
+`--metrics.otlp.grpc.tls.cert`:  
 TLS cert
 
-`--metrics.opentelemetry.tls.insecureskipverify`:  
+`--metrics.otlp.grpc.tls.insecureskipverify`:  
 TLS insecure skip verify (Default: ```false```)
 
-`--metrics.opentelemetry.tls.key`:  
+`--metrics.otlp.grpc.tls.key`:  
 TLS key
+
+`--metrics.otlp.http.endpoint`:  
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`--metrics.otlp.http.headers.<name>`:  
+Headers sent with payload.
+
+`--metrics.otlp.http.tls.ca`:  
+TLS CA
+
+`--metrics.otlp.http.tls.cert`:  
+TLS cert
+
+`--metrics.otlp.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--metrics.otlp.http.tls.key`:  
+TLS key
+
+`--metrics.otlp.pushinterval`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -1005,14 +1017,14 @@ Enables tracing for internal services (ping, dashboard, etc...). (Default: ```fa
 `--tracing.globalattributes.<name>`:  
 Defines additional attributes (key:value) on all spans.
 
-`--tracing.headers.<name>`:  
-Defines additional headers to be sent with the payloads.
-
 `--tracing.otlp`:  
 Settings for OpenTelemetry. (Default: ```false```)
 
 `--tracing.otlp.grpc.endpoint`:  
 Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`--tracing.otlp.grpc.headers.<name>`:  
+Headers sent with payload.
 
 `--tracing.otlp.grpc.insecure`:  
 Disables client transport security for the exporter. (Default: ```false```)
@@ -1030,7 +1042,10 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `--tracing.otlp.http.endpoint`:  
-Sets the HTTP endpoint (scheme://host:port/v1/traces) of the collector. (Default: ```localhost:4318```)
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`--tracing.otlp.http.headers.<name>`:  
+Headers sent with payload.
 
 `--tracing.otlp.http.tls.ca`:  
 TLS CA
