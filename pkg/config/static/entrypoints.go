@@ -2,14 +2,12 @@ package static
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
-
-// maxInt dynamic maximum value: MaxInt64 on 64 bits and MaxInt32 on 32 bits.
-const maxInt = int((^uint(0)) >> 1)
 
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
@@ -97,7 +95,7 @@ type RedirectEntryPoint struct {
 func (r *RedirectEntryPoint) SetDefaults() {
 	r.Scheme = "https"
 	r.Permanent = true
-	r.Priority = maxInt - 1
+	r.Priority = math.MaxInt - 1
 }
 
 // TLSConfig is the default TLS configuration for all the routers associated to the concerned entry point.
