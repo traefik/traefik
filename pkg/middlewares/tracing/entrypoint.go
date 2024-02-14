@@ -45,7 +45,7 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	defer span.End()
 
 	if req.Header.Get("X-Amzn-Trace-Id") != "" {
-		span.SetAttributes(attribute.String("http.request.header.x-amzn_trace_id", req.Header.Get("X-Amzn-Trace-Id")))
+		span.SetAttributes(attribute.String("http.request.header.x-amzn-trace-id", req.Header.Get("X-Amzn-Trace-Id")))
 	}
 
 	req = req.WithContext(tracingCtx)
