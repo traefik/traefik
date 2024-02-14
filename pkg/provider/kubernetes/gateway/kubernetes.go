@@ -58,6 +58,7 @@ type Provider struct {
 	LabelSelector    string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	EnableAlphaAPIs  bool                  `description:"Toggles whether or not Alpha APIs should be used" json:"enableAlphaAPIs,omitempty" toml:"enableAlphaAPIs,omitempty" yaml:"enableAlphaAPIs,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -134,7 +135,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, p.EnableAlphaAPIs, ctxPool.Done())
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
