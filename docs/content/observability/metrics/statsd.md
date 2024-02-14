@@ -69,7 +69,7 @@ metrics:
 
 _Optional, Default=false_
 
-Enable metrics on entry points.
+Enable metrics on routers.
 
 ```yaml tab="File (YAML)"
 metrics:
