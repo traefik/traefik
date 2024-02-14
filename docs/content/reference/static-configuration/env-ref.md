@@ -729,6 +729,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_EXPERIMENTALCHANNEL`:  
+Toggles Experimental Channel resources support (TCPRoute, TLSRoute...). (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_LABELSELECTOR`:  
 Kubernetes label selector to select specific GatewayClasses.
 

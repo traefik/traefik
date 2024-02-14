@@ -51,13 +51,15 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token            types.FileOrContent   `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath string                `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces       []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector    string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	Endpoint            string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token               types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath    string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces          []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector       string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+
+	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	// groupKindFilterFuncs is the list of allowed Group and Kinds for the Filter ExtensionRef objects.
 	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
@@ -155,6 +157,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
+	client.experimentalChannel = p.ExperimentalChannel
 
 	return client, nil
 }
@@ -396,7 +399,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			// AttachedRoutes: 0 TODO Set to number of Routes associated with a Listener regardless of Gateway or Route status
 		}
 
-		supportedKinds, conditions := supportedRouteKinds(listener.Protocol)
+		supportedKinds, conditions := supportedRouteKinds(listener.Protocol, p.ExperimentalChannel)
 		if len(conditions) > 0 {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 			continue
@@ -716,21 +719,41 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func supportedRouteKinds(protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
 
 	case gatev1.TLSProtocolType:
-		return []gatev1.RouteGroupKind{
-			{Kind: kindTCPRoute, Group: &group},
-			{Kind: kindTLSRoute, Group: &group},
-		}, nil
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{
+				{Kind: kindTCPRoute, Group: &group},
+				{Kind: kindTLSRoute, Group: &group},
+			}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
 	}
 
 	return nil, []metav1.Condition{{
