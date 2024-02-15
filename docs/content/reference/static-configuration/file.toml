@@ -183,6 +183,7 @@
     stale = true
     exposedByDefault = true
     refreshInterval = "42s"
+    allowEmptyServices = true
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"

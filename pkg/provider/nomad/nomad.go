@@ -85,13 +85,14 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 
 // Configuration represents the Nomad provider configuration.
 type Configuration struct {
-	DefaultRule      string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
-	Constraints      string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	Endpoint         *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
-	Prefix           string          `description:"Prefix for nomad service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-	Stale            bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
-	ExposedByDefault bool            `description:"Expose Nomad services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	RefreshInterval  ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+	DefaultRule        string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	Constraints        string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
+	Endpoint           *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Prefix             string          `description:"Prefix for nomad service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
+	Stale              bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
+	ExposedByDefault   bool            `description:"Expose Nomad services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	RefreshInterval    ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+	AllowEmptyServices bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
@@ -116,6 +117,7 @@ func (c *Configuration) SetDefaults() {
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.DefaultRule = defaultTemplateRule
+	c.AllowEmptyServices = false
 }
 
 type EndpointConfig struct {
@@ -222,10 +224,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- dynamic.Message) error {
-	items, err := p.getNomadServiceData(ctx)
-	if err != nil {
-		return err
+	var items []item
+	var err error
+	if p.AllowEmptyServices {
+		items, err = p.getNomadServiceDataWithEmptyServices(ctx)
+		if err != nil {
+			return err
+		}
+	} else {
+		items, err = p.getNomadServiceData(ctx)
+		if err != nil {
+			return err
+		}
 	}
+
 	configurationC <- dynamic.Message{
 		ProviderName:  p.name,
 		Configuration: p.buildConfig(ctx, items),
@@ -284,6 +296,98 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 					Tags:       i.Tags,
 					ExtraConf:  p.getExtraConf(i.Tags),
 				})
+			}
+		}
+	}
+
+	return items, nil
+}
+
+func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]item, error) {
+	jobsOpts := &api.QueryOptions{AllowStale: p.Stale}
+	jobsOpts = jobsOpts.WithContext(ctx)
+
+	jobStubs, _, err := p.client.Jobs().List(jobsOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []item
+
+	// Get Services even when they are scaled down to zero. Currently the nomad service interface does not support this. https://github.com/hashicorp/nomad/issues/19731
+	for _, jobStub := range jobStubs {
+		jobInfoOpts := &api.QueryOptions{}
+		jobInfoOpts = jobInfoOpts.WithContext(ctx)
+
+		job, _, err := p.client.Jobs().Info(jobStub.ID, jobInfoOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, taskGroup := range job.TaskGroups {
+			services := []*api.Service{}
+			// Get all services in job -> taskgroup
+			services = append(services, taskGroup.Services...)
+
+			// Get all services in job -> taskgroup -> tasks
+			for _, task := range taskGroup.Tasks {
+				services = append(services, task.Services...)
+			}
+
+			for _, service := range services {
+				logger := log.Ctx(ctx).With().Str("serviceName", service.TaskName).Logger()
+
+				extraConf := p.getExtraConf(service.Tags)
+				if !extraConf.Enable {
+					logger.Debug().Msg("Filter Nomad service that is not enabled")
+					continue
+				}
+
+				matches, err := constraints.MatchTags(service.Tags, p.Constraints)
+				if err != nil {
+					logger.Error().Err(err).Msg("Error matching constraint expressions")
+					continue
+				}
+
+				if !matches {
+					logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
+					continue
+				}
+
+				if nil != taskGroup.Scaling && *taskGroup.Scaling.Enabled && *taskGroup.Count == 0 {
+					// Add items without address
+					items = append(items, item{
+						// Create a unique id for non registered services
+						ID:         fmt.Sprintf("%s-%s-%s-%s-%s", *job.Namespace, *job.Name, *taskGroup.Name, service.TaskName, service.Name),
+						Name:       service.Name,
+						Namespace:  *job.Namespace,
+						Node:       "",
+						Datacenter: "",
+						Address:    "",
+						Port:       -1,
+						Tags:       service.Tags,
+						ExtraConf:  p.getExtraConf(service.Tags),
+					})
+				} else {
+					instances, err := p.fetchService(ctx, service.Name)
+					if err != nil {
+						return nil, err
+					}
+
+					for _, i := range instances {
+						items = append(items, item{
+							ID:         i.ID,
+							Name:       i.ServiceName,
+							Namespace:  i.Namespace,
+							Node:       i.NodeID,
+							Datacenter: i.Datacenter,
+							Address:    i.Address,
+							Port:       i.Port,
+							Tags:       i.Tags,
+							ExtraConf:  p.getExtraConf(i.Tags),
+						})
+					}
+				}
 			}
 		}
 	}
