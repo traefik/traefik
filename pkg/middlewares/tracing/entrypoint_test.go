@@ -28,7 +28,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 				name: "EntryPoint",
 				attributes: []attribute.KeyValue{
 					attribute.String("span.kind", "server"),
-					attribute.String("http.request.header.x-amzn-trace-id", "Root=1-63441c4a-abcdef012345678912345678"),
+					attribute.StringSlice("http.request.header.x-amzn-trace-id", []string{"Root=1-63441c4a-abcdef012345678912345678"}),,
 					attribute.String("entry_point", "test"),
 					attribute.String("http.request.method", "GET"),
 					attribute.String("network.protocol.version", "1.1"),
