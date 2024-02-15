@@ -28,6 +28,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 				name: "EntryPoint",
 				attributes: []attribute.KeyValue{
 					attribute.String("span.kind", "server"),
+					attribute.StringSlice("http.request.header.x-amzn-trace-id", []string{"Root=1-63441c4a-abcdef012345678912345678"}),,
 					attribute.String("entry_point", "test"),
 					attribute.String("http.request.method", "GET"),
 					attribute.String("network.protocol.version", "1.1"),
@@ -55,6 +56,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
+			req.Header.Set("X-Amzn-Trace-Id", "Root=1-63441c4a-abcdef012345678912345678")
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(http.StatusNotFound)
