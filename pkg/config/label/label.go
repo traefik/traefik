@@ -12,9 +12,10 @@ func DecodeConfiguration(labels map[string]string) (*dynamic.Configuration, erro
 		HTTP: &dynamic.HTTPConfiguration{},
 		TCP:  &dynamic.TCPConfiguration{},
 		UDP:  &dynamic.UDPConfiguration{},
+		TLS:  &dynamic.TLSConfiguration{},
 	}
 
-	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp", "traefik.udp")
+	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp", "traefik.udp", "traefik.tls")
 	if err != nil {
 		return nil, err
 	}
