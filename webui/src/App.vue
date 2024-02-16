@@ -13,6 +13,11 @@ export default {
   computed: {
     ...mapGetters('core', { coreVersion: 'version' })
   },
+  watch: {
+    '$q.dark.isActive' (val) {
+      localStorage.setItem('traefik-dark', val)
+    }
+  },
   beforeCreate () {
     // Set vue instance
     APP.vue = () => this.$root
@@ -21,11 +26,6 @@ export default {
     console.log('Quasar -> ', this.$q.version)
 
     this.$q.dark.set(localStorage.getItem('traefik-dark') === 'true')
-  },
-  watch: {
-    '$q.dark.isActive' (val) {
-      localStorage.setItem('traefik-dark', val)
-    }
   }
 }
 </script>

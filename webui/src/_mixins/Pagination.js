@@ -1,4 +1,4 @@
-import { get } from 'dot-prop'
+import { getProperty } from 'dot-prop'
 
 export default function PaginationMixin (opts = {}) {
   const { pollingIntervalTime, rowsPerPage = 10 } = opts
@@ -28,7 +28,7 @@ export default function PaginationMixin (opts = {}) {
         currentPage = page
         currentLimit = limit || rowsPerPage
 
-        const fetchMethod = get(this, opts.fetchMethod)
+        const fetchMethod = getProperty(this, opts.fetchMethod)
 
         return fetchMethod({
           ...params,
@@ -41,7 +41,7 @@ export default function PaginationMixin (opts = {}) {
         })
       },
       initFetch (params) {
-        const scrollerRef = get(this.$refs, opts.scrollerRef)
+        const scrollerRef = getProperty(this.$refs, opts.scrollerRef)
 
         if (scrollerRef) {
           scrollerRef.stop()
