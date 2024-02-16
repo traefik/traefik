@@ -416,7 +416,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		if !nodesExists || len(nodes) == 0 {
-			return nil, fmt.Errorf("nodes not found in namespace %s", namespace)
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", namespace, sanitizedName)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
