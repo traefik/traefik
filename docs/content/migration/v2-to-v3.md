@@ -533,6 +533,8 @@ The default rule matchers syntax is now the v3 one, but for backward compatibili
 The v2 rule matchers syntax is deprecated and its support will be removed in the next major version.
 For this reason, we encourage migrating to the new syntax.
 
+By default, the `defaultRuleSyntax` static option is automatically set to `v3`, meaning that the default rule is the new one.
+
 #### New V3 Syntax Notable Changes
 
 The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
