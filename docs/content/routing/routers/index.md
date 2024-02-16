@@ -523,9 +523,8 @@ In Traefik v3 a new rule syntax has been introduced ([migration guide](../../mig
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
 
-There is no default value for the `ruleSyntax` option per se, and when undefined,
-it is inherited from the `defaultRuleSyntax` option in the static configuration.
-By default, the `defaultRuleSyntax` static option is automatically set to `v3`, meaning that the default rule is the new one.
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
 
 ??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
 
@@ -1229,9 +1228,8 @@ In Traefik v3 a new rule syntax has been introduced ([migration guide](../../mig
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
 
-There is no default value for the `ruleSyntax` option per se, and when undefined,
-it is inherited from the `defaultRuleSyntax` option in the static configuration.
-By default, the `defaultRuleSyntax` static option is automatically set to `v3`, meaning that the default rule is the new one.
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
 
 ??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
 
