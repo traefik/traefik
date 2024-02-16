@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 func Int(v int) *int    { return &v }
@@ -76,6 +78,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -101,6 +106,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -142,6 +150,9 @@ func TestBuildConfiguration(t *testing.T) {
 						}},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -196,6 +207,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -249,6 +263,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -301,6 +318,9 @@ func TestBuildConfiguration(t *testing.T) {
 						}},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -363,6 +383,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -421,6 +444,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -467,6 +493,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -508,6 +537,9 @@ func TestBuildConfiguration(t *testing.T) {
 						}},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -554,6 +586,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -596,6 +631,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -640,6 +678,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -691,6 +732,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -734,6 +778,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -806,6 +853,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -871,6 +921,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -925,6 +978,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -975,6 +1031,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1030,6 +1089,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1073,6 +1135,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1118,6 +1183,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1168,6 +1236,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1193,6 +1264,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1221,32 +1295,8 @@ func TestBuildConfiguration(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-			},
-		},
-		{
-			desc: "one app with traefik.enable=false",
-			applications: withApplications(
-				application(
-					appID("/app"),
-					appPorts(80, 81),
-					withTasks(localhostTask()),
-					withLabel("traefik.enable", "false"),
-				)),
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1274,6 +1324,39 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one app with traefik.enable=false",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask()),
+					withLabel("traefik.enable", "false"),
+				)),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1303,6 +1386,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1330,6 +1416,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1376,6 +1465,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1421,6 +1513,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1464,6 +1559,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1510,6 +1608,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1552,6 +1653,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1589,6 +1693,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1636,6 +1743,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1678,6 +1788,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1725,6 +1838,9 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -1790,6 +1906,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
 		},
 		{
@@ -1850,6 +1969,66 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "simple application with default generated certificate labels",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withTasks(localhostTask(taskPorts(80))),
+					withLabel("traefik.tls.stores.default.defaultgeneratedcert.resolver", "foobar"),
+					withLabel("traefik.tls.stores.default.defaultgeneratedcert.domain.main", "foobar"),
+					withLabel("traefik.tls.stores.default.defaultgeneratedcert.domain.sans", "foobar, fiibar"),
+				)),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"app": {
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
+								{
+									URL: "http://localhost:80",
+								},
+							},
+							PassHostHeader: Bool(true),
+						}},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{
+						"default": {
+							DefaultGeneratedCert: &tls.GeneratedCert{
+								Resolver: "foobar",
+								Domain: &types.Domain{
+									Main: "foobar",
+									SANs: []string{"foobar", "fiibar"},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
