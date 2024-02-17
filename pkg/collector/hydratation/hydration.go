@@ -98,7 +98,7 @@ func setMap(field reflect.Value) error {
 		key := reflect.ValueOf(fmt.Sprintf("%s%d", baseKeyName, i))
 
 		// generate value
-		ptrType := reflect.PtrTo(field.Type().Elem())
+		ptrType := reflect.PointerTo(field.Type().Elem())
 		ptrValue := reflect.New(ptrType)
 		if err := fill(ptrValue); err != nil {
 			return err
