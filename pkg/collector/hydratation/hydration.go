@@ -56,7 +56,7 @@ func fill(field reflect.Value) error {
 	case reflect.Int64:
 		switch field.Type() {
 		case reflect.TypeOf(types.Duration(time.Second)):
-			setTyped(field, int64(defaultNumber*int(time.Second)))
+			setTyped(field, types.Duration(defaultNumber*time.Second))
 		default:
 			setTyped(field, int64(defaultNumber))
 		}
@@ -98,7 +98,7 @@ func setMap(field reflect.Value) error {
 		key := reflect.ValueOf(fmt.Sprintf("%s%d", baseKeyName, i))
 
 		// generate value
-		ptrType := reflect.PtrTo(field.Type().Elem())
+		ptrType := reflect.PointerTo(field.Type().Elem())
 		ptrValue := reflect.New(ptrType)
 		if err := fill(ptrValue); err != nil {
 			return err
