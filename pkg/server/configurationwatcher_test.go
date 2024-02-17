@@ -305,7 +305,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 		throttleDuration: 30 * time.Millisecond,
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		pvd.messages = append(pvd.messages, dynamic.Message{
 			ProviderName: "mock",
 			Configuration: &dynamic.Configuration{

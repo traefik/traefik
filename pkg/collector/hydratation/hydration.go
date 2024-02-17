@@ -93,7 +93,7 @@ func setTyped(field reflect.Value, i interface{}) {
 func setMap(field reflect.Value) error {
 	field.Set(reflect.MakeMap(field.Type()))
 
-	for i := 0; i < mapItemNumber; i++ {
+	for i := range mapItemNumber {
 		baseKeyName := makeKeyName(field.Type().Elem())
 		key := reflect.ValueOf(fmt.Sprintf("%s%d", baseKeyName, i))
 
@@ -125,7 +125,7 @@ func makeKeyName(typ reflect.Type) string {
 }
 
 func setStruct(field reflect.Value) error {
-	for i := 0; i < field.NumField(); i++ {
+	for i := range field.NumField() {
 		fld := field.Field(i)
 		stFld := field.Type().Field(i)
 
@@ -142,7 +142,7 @@ func setStruct(field reflect.Value) error {
 
 func setSlice(field reflect.Value) error {
 	field.Set(reflect.MakeSlice(field.Type(), sliceItemNumber, sliceItemNumber))
-	for j := 0; j < field.Len(); j++ {
+	for j := range field.Len() {
 		if err := fill(field.Index(j)); err != nil {
 			return err
 		}

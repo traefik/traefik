@@ -333,7 +333,7 @@ func TestDefaultRule(t *testing.T) {
 			err := p.Init()
 			require.NoError(t, err)
 
-			for i := 0; i < len(test.instances); i++ {
+			for i := range len(test.instances) {
 				var err error
 				test.instances[i].ExtraConf, err = p.getConfiguration(test.instances[i])
 				require.NoError(t, err)
@@ -2863,7 +2863,7 @@ func Test_buildConfiguration(t *testing.T) {
 			err := p.Init()
 			require.NoError(t, err)
 
-			for i := 0; i < len(test.containers); i++ {
+			for i := range len(test.containers) {
 				var err error
 				test.containers[i].ExtraConf, err = p.getConfiguration(test.containers[i])
 				require.NoError(t, err)

@@ -3,6 +3,7 @@ package tcpmiddleware
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
@@ -74,7 +75,7 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 		currentStack = []string{}
 	}
 
-	if inSlice(middlewareName, currentStack) {
+	if slices.Contains(currentStack, middlewareName) {
 		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
 	}
 
@@ -116,13 +117,4 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	return middleware, nil
-}
-
-func inSlice(element string, stack []string) bool {
-	for _, value := range stack {
-		if value == element {
-			return true
-		}
-	}
-	return false
 }

@@ -82,7 +82,7 @@ func (s *UDPSuite) TestWRR() {
 	stop := make(chan struct{})
 	go func() {
 		call := map[string]int{}
-		for i := 0; i < 8; i++ {
+		for range 8 {
 			out, err := guessWhoUDP("127.0.0.1:8093")
 			require.NoError(s.T(), err)
 			switch {
