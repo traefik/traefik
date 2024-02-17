@@ -56,7 +56,7 @@ func fill(field reflect.Value) error {
 	case reflect.Int64:
 		switch field.Type() {
 		case reflect.TypeOf(types.Duration(time.Second)):
-			setTyped(field, int64(defaultNumber*int(time.Second)))
+			setTyped(field, types.Duration(defaultNumber*time.Second))
 		default:
 			setTyped(field, int64(defaultNumber))
 		}
