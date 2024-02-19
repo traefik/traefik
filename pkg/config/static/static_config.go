@@ -193,10 +193,12 @@ func (a *LifeCycle) SetDefaults() {
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
-	ServiceName      string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	GlobalAttributes map[string]string `description:"Defines additional attributes (key:value) on all spans." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
-	SampleRate       float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
-	AddInternals     bool              `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+	ServiceName             string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	GlobalAttributes        map[string]string `description:"Defines additional attributes (key:value) on all spans." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
+	CapturedRequestHeaders  []string          `description:"Request headers to add as attributes for server and client spans." json:"capturedRequestHeaders,omitempty" toml:"capturedRequestHeaders,omitempty" yaml:"capturedRequestHeaders,omitempty" export:"true"`
+	CapturedResponseHeaders []string          `description:"Response headers to add as attributes for server and client spans." json:"capturedResponseHeaders,omitempty" toml:"capturedResponseHeaders,omitempty" yaml:"capturedResponseHeaders,omitempty" export:"true"`
+	SampleRate              float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	AddInternals            bool              `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
 
 	OTLP *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
