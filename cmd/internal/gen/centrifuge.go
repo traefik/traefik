@@ -160,7 +160,7 @@ func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, 
 	b := strings.Builder{}
 	b.WriteString(fmt.Sprintf("type %s struct {\n", name))
 
-	for i := 0; i < obj.NumFields(); i++ {
+	for i := range obj.NumFields() {
 		field := obj.Field(i)
 
 		if !field.Exported() {

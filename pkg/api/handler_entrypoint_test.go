@@ -256,7 +256,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 
 func generateEntryPoints(nb int) map[string]*static.EntryPoint {
 	eps := make(map[string]*static.EntryPoint, nb)
-	for i := 0; i < nb; i++ {
+	for i := range nb {
 		eps[fmt.Sprintf("ep%2d", i)] = &static.EntryPoint{
 			Address: ":" + strconv.Itoa(i),
 		}

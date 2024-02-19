@@ -1,6 +1,8 @@
 package server
 
 import (
+	"slices"
+
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -91,7 +93,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 
 		if configuration.TLS != nil {
 			for _, cert := range configuration.TLS.Certificates {
-				if containsACMETLS1(cert.Stores) && pvd != "tlsalpn.acme" {
+				if slices.Contains(cert.Stores, tlsalpn01.ACMETLS1Protocol) && pvd != "tlsalpn.acme" {
 					continue
 				}
 
@@ -178,14 +180,4 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	cfg.HTTP.Routers = rts
 
 	return cfg
-}
-
-func containsACMETLS1(stores []string) bool {
-	for _, store := range stores {
-		if store == tlsalpn01.ACMETLS1Protocol {
-			return true
-		}
-	}
-
-	return false
 }

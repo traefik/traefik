@@ -58,7 +58,7 @@ func (lb *healthCheckLoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 func (lb *healthCheckLoadBalancer) Servers() []*url.URL {
 	servers := make([]*url.URL, lb.amountServer)
-	for i := 0; i < lb.amountServer; i++ {
+	for range lb.amountServer {
 		servers = append(servers, testhelpers.MustParseURL("http://localhost"))
 	}
 	return servers
