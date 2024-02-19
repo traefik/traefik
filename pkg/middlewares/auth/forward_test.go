@@ -580,7 +580,6 @@ func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanS
 type mockSpan struct {
 	embedded.Span
 
-	tracer     *tracing.Tracer
 	name       string
 	attributes []attribute.KeyValue
 }
