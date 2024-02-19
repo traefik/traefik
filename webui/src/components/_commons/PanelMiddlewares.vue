@@ -689,6 +689,54 @@
             </div>
           </q-card-section>
 
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - sourceRange -->
+          <q-card-section v-if="middleware.ipAllowList">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">Source Range</div>
+                <q-chip
+                  v-for="(range, key) in exData(middleware).sourceRange" :key="key"
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ range }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - ipStrategy -->
+          <q-card-section v-if="middleware.ipAllowList">
+            <div class="row items-start">
+              <div class="col-12">
+                <div class="text-subtitle2">IP Strategy</div>
+              </div>
+              <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.depth" class="col-12">
+                <q-chip
+                  dense
+                  class="app-chip app-chip-accent">Depth :</q-chip>
+                <q-chip
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ exData(middleware).ipStrategy.depth }}
+                </q-chip>
+              </div>
+              <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.excludedIPs" class="col-12">
+                <div class="flex">
+                  <q-chip
+                    dense
+                    class="app-chip app-chip-accent">
+                    Excluded IPs:
+                  </q-chip>
+                  <q-chip
+                    v-for="(excludedIPs, key) in exData(middleware).ipStrategy.excludedIPs" :key="key"
+                    dense
+                    class="app-chip app-chip-green">
+                    {{ excludedIPs }}
+                  </q-chip>
+                </div>
+              </div>
+            </div>
+          </q-card-section>
+
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
           <q-card-section v-if="middleware.ipWhiteList">
             <div class="row items-start no-wrap">
