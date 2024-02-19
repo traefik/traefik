@@ -89,22 +89,27 @@ func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
 	}
 }
 
+// Span is trace.Span wrapping the Traefik TracerProvider.
 type Span struct {
 	trace.Span
 
 	tracerProvider *TracerProvider
 }
 
+// TracerProvider returns the span's TraceProvider.
 func (s Span) TracerProvider() trace.TracerProvider {
 	return s.tracerProvider
 }
 
+// TracerProvider is trace.TracerProvider wrapping the Traefik Tracer implementation.
 type TracerProvider struct {
 	trace.TracerProvider
 
 	tracer *Tracer
 }
 
+// Tracer returns the trace.Tracer for the given options.
+// It returns specifically the Traefik Tracer when requested.
 func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
 	if name == "github.com/traefik/traefik" {
 		return t.tracer
@@ -113,6 +118,7 @@ func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace
 	return t.TracerProvider.Tracer(name, options...)
 }
 
+// Tracer is trace.Tracer with additional properties.
 type Tracer struct {
 	trace.Tracer
 
@@ -120,6 +126,7 @@ type Tracer struct {
 	capturedResponseHeaders []string
 }
 
+// NewTracer builds and configures a new Tracer.
 func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders []string) *Tracer {
 	return &Tracer{
 		Tracer:                  tracer,
@@ -128,6 +135,11 @@ func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHead
 	}
 }
 
+// Start starts a new span.
+// spancheck linter complains about span.End not being called, but this is expected here,
+// hence its deactivation.
+//
+//nolint:spancheck
 func (t *Tracer) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	if t == nil {
 		return ctx, nil
