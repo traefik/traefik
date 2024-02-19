@@ -46,7 +46,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func main() {
@@ -563,7 +562,7 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) (trace.Tracer, io.Closer) {
+func setupTracing(conf *static.Tracing) (*tracing.Tracer, io.Closer) {
 	if conf == nil {
 		return nil, nil
 	}
