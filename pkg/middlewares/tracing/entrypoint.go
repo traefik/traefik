@@ -17,11 +17,9 @@ const (
 )
 
 type entryPointTracing struct {
-	tracer                  *tracing.Tracer
-	entryPoint              string
-	next                    http.Handler
-	capturedRequestHeaders  []string
-	capturedResponseHeaders []string
+	tracer     *tracing.Tracer
+	entryPoint string
+	next       http.Handler
 }
 
 // WrapEntryPointHandler Wraps tracing to alice.Constructor.

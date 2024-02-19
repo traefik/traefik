@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -79,7 +80,8 @@ func TestTracingRoundTripper(t *testing.T) {
 				}, nil
 			}))
 
-			tracingRoundTripper.RoundTrip(req)
+			_, err := tracingRoundTripper.RoundTrip(req)
+			require.NoError(t, err)
 
 			for i, span := range mockTracer.spans {
 				assert.Equal(t, test.expected[i].name, span.name)
@@ -111,7 +113,6 @@ func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanS
 type mockSpan struct {
 	embedded.Span
 
-	tracer     *tracing.Tracer
 	name       string
 	attributes []attribute.KeyValue
 }
