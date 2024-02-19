@@ -131,8 +131,11 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
+
 	var forwardSpan trace.Span
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+	var tracer *tracing.Tracer
+	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil {
 		var tracingCtx context.Context
 		tracingCtx, forwardSpan = tracer.Start(req.Context(), "AuthRequest", trace.WithSpanKind(trace.SpanKindClient))
 		defer forwardSpan.End()
@@ -140,10 +143,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		forwardReq = forwardReq.WithContext(tracingCtx)
 
 		tracing.InjectContextIntoCarrier(forwardReq)
-		tracing.LogClientRequest(forwardSpan, forwardReq)
+		tracer.CaptureClientRequest(forwardSpan, forwardReq)
 	}
-
-	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
@@ -197,7 +198,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Set("Location", redirectURL.String())
 		}
 
-		tracing.LogResponseCode(forwardSpan, forwardResponse.StatusCode, trace.SpanKindClient)
+		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, forwardResponse.StatusCode, trace.SpanKindClient)
 		rw.WriteHeader(forwardResponse.StatusCode)
 
 		if _, err = rw.Write(body); err != nil {
@@ -228,7 +229,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	tracing.LogResponseCode(forwardSpan, forwardResponse.StatusCode, trace.SpanKindClient)
+	tracer.CaptureResponse(forwardSpan, forwardResponse.Header, forwardResponse.StatusCode, trace.SpanKindClient)
 
 	req.RequestURI = req.URL.RequestURI()
 
