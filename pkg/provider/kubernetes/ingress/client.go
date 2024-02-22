@@ -46,7 +46,7 @@ type Client interface {
 
 type clientWrapper struct {
 	clientset                   kclientset.Interface
-	factoryAll           kinformers.SharedInformerFactory
+	factoryClusterScope         kinformers.SharedInformerFactory
 	factoriesKube               map[string]kinformers.SharedInformerFactory
 	factoriesSecret             map[string]kinformers.SharedInformerFactory
 	factoriesIngress            map[string]kinformers.SharedInformerFactory
@@ -198,8 +198,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesSecret[ns] = factorySecret
 	}
 
-	c.factoryAll = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
-	_, err = c.factoryAll.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+	c.factoryClusterScope = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
+	_, err = c.factoryClusterScope.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
 	}
-	c.factoryAll.Start(stopCh)
+	c.factoryClusterScope.Start(stopCh)
 
 	for _, ns := range namespaces {
 		for typ, ok := range c.factoriesIngress[ns].WaitForCacheSync(stopCh) {
@@ -231,7 +231,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	for t, ok := range c.factoryAll.WaitForCacheSync(stopCh) {
+	for t, ok := range c.factoryClusterScope.WaitForCacheSync(stopCh) {
 		if !ok {
 			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace all", t.String())
 		}
@@ -362,7 +362,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 }
 
 func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
-	nodes, err := c.factoryAll.Core().V1().Nodes().Lister().List(labels.Everything())
+	nodes, err := c.factoryClusterScope.Core().V1().Nodes().Lister().List(labels.Everything())
 	exist, err := translateNotFoundError(err)
 	return nodes, exist, err
 }

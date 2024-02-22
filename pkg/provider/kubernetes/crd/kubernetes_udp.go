@@ -132,7 +132,7 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 
 	var servers []dynamic.UDPServer
 
-	if svc.NodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
 			return nil, nodesErr
