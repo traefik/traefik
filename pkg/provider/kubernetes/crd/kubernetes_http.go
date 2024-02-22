@@ -409,7 +409,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}), nil
 	}
 
-	if svc.NodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		nodes, nodesExists, nodesErr := c.client.GetNodes()
 		if nodesErr != nil {
 			return nil, nodesErr
