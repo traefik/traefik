@@ -4,7 +4,8 @@
       v-for="(chip, index) in list"
       :key="index"
       :dense="dense"
-      :class="classNames">
+      :class="classNames"
+    >
       {{ chip }}
     </q-chip>
   </div>
@@ -12,6 +13,10 @@
 
 <script>
 export default {
-  props: ['dense', 'classNames', 'list']
+  props: {
+    dense: Boolean,
+    classNames: Array[String],
+    list: Array[Object]
+  }
 }
 </script>
