@@ -17,6 +17,7 @@ import (
 	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
 )
 
@@ -74,7 +75,7 @@ func TestTracing(t *testing.T) {
 		ServiceName: "traefik",
 		SampleRate:  1.0,
 		OTLP: &opentelemetry.Config{
-			HTTP: &opentelemetry.HTTP{
+			HTTP: &types.OtelHTTP{
 				Endpoint: collector.URL,
 			},
 		},

@@ -315,24 +315,33 @@
     [metrics.influxDB2.additionalLabels]
       name0 = "foobar"
       name1 = "foobar"
-  [metrics.openTelemetry]
-    address = "foobar"
+  [metrics.otlp]
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
     explicitBoundaries = [42.0, 42.0]
-    insecure = true
-    path = "foobar"
     pushInterval = "42s"
-    [metrics.openTelemetry.grpc]
-    [metrics.openTelemetry.headers]
-      name0 = "foobar"
-      name1 = "foobar"
-    [metrics.openTelemetry.tls]
-      ca = "foobar"
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
+    [metrics.otlp.grpc]
+      endpoint = "foobar"
+      insecure = true
+      [metrics.otlp.grpc.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [metrics.otlp.grpc.headers]
+        name0 = "foobar"
+        name1 = "foobar"
+    [metrics.otlp.http]
+      endpoint = "foobar"
+      [metrics.otlp.http.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [metrics.otlp.http.headers]
+        name0 = "foobar"
+        name1 = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -373,9 +382,6 @@
   serviceName = "foobar"
   sampleRate = 42.0
   addInternals = true
-  [tracing.headers]
-    name0 = "foobar"
-    name1 = "foobar"
   [tracing.globalAttributes]
     name0 = "foobar"
     name1 = "foobar"
@@ -388,6 +394,9 @@
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
+      [tracing.otlp.grpc.headers]
+        name0 = "foobar"
+        name1 = "foobar"
     [tracing.otlp.http]
       endpoint = "foobar"
       [tracing.otlp.http.tls]
@@ -395,6 +404,9 @@
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
+      [tracing.otlp.http.headers]
+        name0 = "foobar"
+        name1 = "foobar"
 
 [hostResolver]
   cnameFlattening = true

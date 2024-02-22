@@ -21,19 +21,20 @@ tracing:
 --tracing.otlp=true
 ```
 
-!!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default (http://localhost:4318/v1/traces), 
-see the [gRPC Section](#grpc-configuration) to use gRPC."
+!!! info "Default protocol"
+
+    The OpenTelemetry trace exporter will export traces to the collector using HTTP by default to https://localhost:4318/v1/traces, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 !!! info "Trace sampling"
 
-	By default, the OpenTelemetry trace reporter will sample 100% of traces.  
+	By default, the OpenTelemetry trace exporter will sample 100% of traces.  
 	See [OpenTelemetry's SDK configuration](https://opentelemetry.io/docs/reference/specification/sdk-environment-variables/#general-sdk-configuration) to customize the sampling strategy.
 
 ### HTTP configuration
 
 _Optional_
 
-This instructs the reporter to send spans to the OpenTelemetry Collector using HTTP.
+This instructs the exporter to send spans to the OpenTelemetry Collector using HTTP.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -73,11 +74,37 @@ tracing:
 --tracing.otlp.http.endpoint=http://localhost:4318/v1/traces
 ```
 
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with traces by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    http:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp.http.headers]
+    foo = "bar"
+    baz = "buz"
+```
+
+```bash tab="CLI"
+--tracing.otlp.http.headers.foo=bar --tracing.otlp.http.headers.baz=buz
+```
+
 #### `tls`
 
 _Optional_
 
-Defines the Client TLS configuration used by the reporter to send spans to the OpenTelemetry Collector.
+Defines the Client TLS configuration used by the exporter to send spans to the OpenTelemetry Collector.
 
 ##### `ca`
 
@@ -181,11 +208,11 @@ tracing:
 --tracing.otlp.http.tls.insecureSkipVerify=true
 ```
 
-#### gRPC configuration
+### gRPC configuration
 
 _Optional_
 
-This instructs the reporter to send spans to the OpenTelemetry Collector using gRPC.
+This instructs the exporter to send spans to the OpenTelemetry Collector using gRPC.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -228,7 +255,7 @@ tracing:
 
 _Optional, Default=false_
 
-Allows reporter to send spans to the OpenTelemetry Collector without using a secured protocol.
+Allows exporter to send spans to the OpenTelemetry Collector without using a secured protocol.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -247,11 +274,37 @@ tracing:
 --tracing.otlp.grpc.insecure=true
 ```
 
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with traces by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp.grpc.headers]
+    foo = "bar"
+    baz = "buz"
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.headers.foo=bar --tracing.otlp.grpc.headers.baz=buz
+```
+
 #### `tls`
 
 _Optional_
 
-Defines the Client TLS configuration used by the reporter to send spans to the OpenTelemetry Collector.
+Defines the Client TLS configuration used by the exporter to send spans to the OpenTelemetry Collector.
 
 ##### `ca`
 

@@ -344,9 +344,6 @@
   },
   "tracing": {
     "serviceName": "myServiceName",
-    "headers": {
-      "foobar": "foobar"
-    },
     "globalAttributes": {
       "foobar": "foobar"
     },

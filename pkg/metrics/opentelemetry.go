@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -30,7 +31,7 @@ var (
 )
 
 // RegisterOpenTelemetry registers all OpenTelemetry metrics.
-func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Registry {
+func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
@@ -123,15 +124,15 @@ func StopOpenTelemetry() {
 }
 
 // newOpenTelemetryMeterProvider creates a new controller.Controller.
-func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTelemetry) (*sdkmetric.MeterProvider, error) {
+func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sdkmetric.MeterProvider, error) {
 	var (
 		exporter sdkmetric.Exporter
 		err      error
 	)
 	if config.GRPC != nil {
-		exporter, err = newGRPCExporter(ctx, config)
+		exporter, err = newGRPCExporter(ctx, config.GRPC)
 	} else {
-		exporter, err = newHTTPExporter(ctx, config)
+		exporter, err = newHTTPExporter(ctx, config.HTTP)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("creating exporter: %w", err)
@@ -168,24 +169,24 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 	return meterProvider, nil
 }
 
-func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
-	host, port, err := net.SplitHostPort(config.Address)
+func newHTTPExporter(ctx context.Context, config *types.OtelHTTP) (sdkmetric.Exporter, error) {
+	endpoint, err := url.Parse(config.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid collector address %q: %w", config.Address, err)
+		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
 	}
 
 	opts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
+		otlpmetrichttp.WithEndpoint(endpoint.Host),
 		otlpmetrichttp.WithHeaders(config.Headers),
 		otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression),
 	}
 
-	if config.Insecure {
+	if endpoint.Scheme == "http" {
 		opts = append(opts, otlpmetrichttp.WithInsecure())
 	}
 
-	if config.Path != "" {
-		opts = append(opts, otlpmetrichttp.WithURLPath(config.Path))
+	if endpoint.Path != "" {
+		opts = append(opts, otlpmetrichttp.WithURLPath(endpoint.Path))
 	}
 
 	if config.TLS != nil {
@@ -200,10 +201,10 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 	return otlpmetrichttp.New(ctx, opts...)
 }
 
-func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
-	host, port, err := net.SplitHostPort(config.Address)
+func newGRPCExporter(ctx context.Context, config *types.OtelGRPC) (sdkmetric.Exporter, error) {
+	host, port, err := net.SplitHostPort(config.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid collector address %q: %w", config.Address, err)
+		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
 	}
 
 	opts := []otlpmetricgrpc.Option{

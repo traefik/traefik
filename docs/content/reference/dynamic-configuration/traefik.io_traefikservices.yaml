@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: traefikservices.traefik.io
 spec:
   group: traefik.io
@@ -17,19 +17,27 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'TraefikService is the CRD implementation of a Traefik Service.
-          TraefikService object allows to: - Apply weight to Services on load-balancing
-          - Mirror traffic on services More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-traefikservice'
+        description: |-
+          TraefikService is the CRD implementation of a Traefik Service.
+          TraefikService object allows to:
+          - Apply weight to Services on load-balancing
+          - Mirror traffic on services
+          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-traefikservice
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -46,10 +54,10 @@ spec:
                     - TraefikService
                     type: string
                   maxBodySize:
-                    description: MaxBodySize defines the maximum size allowed for
-                      the body of the request. If the body is larger, the request
-                      is not mirrored. Default value is -1, which means unlimited
-                      size.
+                    description: |-
+                      MaxBodySize defines the maximum size allowed for the body of the request.
+                      If the body is larger, the request is not mirrored.
+                      Default value is -1, which means unlimited size.
                     format: int64
                     type: integer
                   mirrors:
@@ -65,35 +73,37 @@ spec:
                           - TraefikService
                           type: string
                         name:
-                          description: Name defines the name of the referenced Kubernetes
-                            Service or TraefikService. The differentiation between
-                            the two is specified in the Kind field.
+                          description: |-
+                            Name defines the name of the referenced Kubernetes Service or TraefikService.
+                            The differentiation between the two is specified in the Kind field.
                           type: string
                         namespace:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
                           type: string
                         nativeLB:
-                          description: NativeLB controls, when creating the load-balancer,
-                            whether the LB's children are directly the pods IPs or
-                            if the only child is the Kubernetes Service clusterIP.
-                            The Kubernetes Service itself does load-balance to the
-                            pods. By default, NativeLB is false.
+                          description: |-
+                            NativeLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+                            The Kubernetes Service itself does load-balance to the pods.
+                            By default, NativeLB is false.
                           type: boolean
                         passHostHeader:
-                          description: PassHostHeader defines whether the client Host
-                            header is forwarded to the upstream Kubernetes Service.
+                          description: |-
+                            PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
                           type: boolean
                         percent:
-                          description: 'Percent defines the part of the traffic to
-                            mirror. Supported values: 0 to 100.'
+                          description: |-
+                            Percent defines the part of the traffic to mirror.
+                            Supported values: 0 to 100.
                           type: integer
                         port:
                           anyOf:
                           - type: integer
                           - type: string
-                          description: Port defines the port of a Kubernetes Service.
+                          description: |-
+                            Port defines the port of a Kubernetes Service.
                             This can be a reference to a named port.
                           x-kubernetes-int-or-string: true
                         responseForwarding:
@@ -102,30 +112,29 @@ spec:
                             client.
                           properties:
                             flushInterval:
-                              description: 'FlushInterval defines the interval, in
-                                milliseconds, in between flushes to the client while
-                                copying the response body. A negative value means
-                                to flush immediately after each write to the client.
-                                This configuration is ignored when ReverseProxy recognizes
-                                a response as a streaming response; for such responses,
-                                writes are flushed to the client immediately. Default:
-                                100ms'
+                              description: |-
+                                FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
+                                A negative value means to flush immediately after each write to the client.
+                                This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
+                                for such responses, writes are flushed to the client immediately.
+                                Default: 100ms
                               type: string
                           type: object
                         scheme:
-                          description: Scheme defines the scheme to use for the request
-                            to the upstream Kubernetes Service. It defaults to https
-                            when Kubernetes Service port is 443, http otherwise.
+                          description: |-
+                            Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
+                            It defaults to https when Kubernetes Service port is 443, http otherwise.
                           type: string
                         serversTransport:
-                          description: ServersTransport defines the name of ServersTransport
-                            resource to use. It allows to configure the transport
-                            between Traefik and your servers. Can only be used on
-                            a Kubernetes Service.
+                          description: |-
+                            ServersTransport defines the name of ServersTransport resource to use.
+                            It allows to configure the transport between Traefik and your servers.
+                            Can only be used on a Kubernetes Service.
                           type: string
                         sticky:
-                          description: 'Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions'
+                          description: |-
+                            Sticky defines the sticky sessions configuration.
+                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -135,17 +144,18 @@ spec:
                                     can be accessed by client-side APIs, such as JavaScript.
                                   type: boolean
                                 maxAge:
-                                  description: MaxAge indicates the number of seconds
-                                    until the cookie expires. When set to a negative
-                                    number, the cookie expires immediately. When set
-                                    to zero, the cookie never expires.
+                                  description: |-
+                                    MaxAge indicates the number of seconds until the cookie expires.
+                                    When set to a negative number, the cookie expires immediately.
+                                    When set to zero, the cookie never expires.
                                   type: integer
                                 name:
                                   description: Name defines the Cookie name.
                                   type: string
                                 sameSite:
-                                  description: 'SameSite defines the same site policy.
-                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                                  description: |-
+                                    SameSite defines the same site policy.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -155,13 +165,13 @@ spec:
                               type: object
                           type: object
                         strategy:
-                          description: Strategy defines the load balancing strategy
-                            between the servers. RoundRobin is the only supported
-                            value at the moment.
+                          description: |-
+                            Strategy defines the load balancing strategy between the servers.
+                            RoundRobin is the only supported value at the moment.
                           type: string
                         weight:
-                          description: Weight defines the weight and should only be
-                            specified when Name references a TraefikService object
+                          description: |-
+                            Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
                           type: integer
                       required:
@@ -169,60 +179,62 @@ spec:
                       type: object
                     type: array
                   name:
-                    description: Name defines the name of the referenced Kubernetes
-                      Service or TraefikService. The differentiation between the two
-                      is specified in the Kind field.
+                    description: |-
+                      Name defines the name of the referenced Kubernetes Service or TraefikService.
+                      The differentiation between the two is specified in the Kind field.
                     type: string
                   namespace:
                     description: Namespace defines the namespace of the referenced
                       Kubernetes Service or TraefikService.
                     type: string
                   nativeLB:
-                    description: NativeLB controls, when creating the load-balancer,
-                      whether the LB's children are directly the pods IPs or if the
-                      only child is the Kubernetes Service clusterIP. The Kubernetes
-                      Service itself does load-balance to the pods. By default, NativeLB
-                      is false.
+                    description: |-
+                      NativeLB controls, when creating the load-balancer,
+                      whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+                      The Kubernetes Service itself does load-balance to the pods.
+                      By default, NativeLB is false.
                     type: boolean
                   passHostHeader:
-                    description: PassHostHeader defines whether the client Host header
-                      is forwarded to the upstream Kubernetes Service. By default,
-                      passHostHeader is true.
+                    description: |-
+                      PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
+                      By default, passHostHeader is true.
                     type: boolean
                   port:
                     anyOf:
                     - type: integer
                     - type: string
-                    description: Port defines the port of a Kubernetes Service. This
-                      can be a reference to a named port.
+                    description: |-
+                      Port defines the port of a Kubernetes Service.
+                      This can be a reference to a named port.
                     x-kubernetes-int-or-string: true
                   responseForwarding:
                     description: ResponseForwarding defines how Traefik forwards the
                       response from the upstream Kubernetes Service to the client.
                     properties:
                       flushInterval:
-                        description: 'FlushInterval defines the interval, in milliseconds,
-                          in between flushes to the client while copying the response
-                          body. A negative value means to flush immediately after
-                          each write to the client. This configuration is ignored
-                          when ReverseProxy recognizes a response as a streaming response;
+                        description: |-
+                          FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
+                          A negative value means to flush immediately after each write to the client.
+                          This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                           for such responses, writes are flushed to the client immediately.
-                          Default: 100ms'
+                          Default: 100ms
                         type: string
                     type: object
                   scheme:
-                    description: Scheme defines the scheme to use for the request
-                      to the upstream Kubernetes Service. It defaults to https when
-                      Kubernetes Service port is 443, http otherwise.
+                    description: |-
+                      Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
+                      It defaults to https when Kubernetes Service port is 443, http otherwise.
                     type: string
                   serversTransport:
-                    description: ServersTransport defines the name of ServersTransport
-                      resource to use. It allows to configure the transport between
-                      Traefik and your servers. Can only be used on a Kubernetes Service.
+                    description: |-
+                      ServersTransport defines the name of ServersTransport resource to use.
+                      It allows to configure the transport between Traefik and your servers.
+                      Can only be used on a Kubernetes Service.
                     type: string
                   sticky:
-                    description: 'Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions'
+                    description: |-
+                      Sticky defines the sticky sessions configuration.
+                      More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -232,17 +244,18 @@ spec:
                               accessed by client-side APIs, such as JavaScript.
                             type: boolean
                           maxAge:
-                            description: MaxAge indicates the number of seconds until
-                              the cookie expires. When set to a negative number, the
-                              cookie expires immediately. When set to zero, the cookie
-                              never expires.
+                            description: |-
+                              MaxAge indicates the number of seconds until the cookie expires.
+                              When set to a negative number, the cookie expires immediately.
+                              When set to zero, the cookie never expires.
                             type: integer
                           name:
                             description: Name defines the Cookie name.
                             type: string
                           sameSite:
-                            description: 'SameSite defines the same site policy. More
-                              info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                            description: |-
+                              SameSite defines the same site policy.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -251,13 +264,14 @@ spec:
                         type: object
                     type: object
                   strategy:
-                    description: Strategy defines the load balancing strategy between
-                      the servers. RoundRobin is the only supported value at the moment.
+                    description: |-
+                      Strategy defines the load balancing strategy between the servers.
+                      RoundRobin is the only supported value at the moment.
                     type: string
                   weight:
-                    description: Weight defines the weight and should only be specified
-                      when Name references a TraefikService object (and to be precise,
-                      one that embeds a Weighted Round Robin).
+                    description: |-
+                      Weight defines the weight and should only be specified when Name references a TraefikService object
+                      (and to be precise, one that embeds a Weighted Round Robin).
                     type: integer
                 required:
                 - name
@@ -279,31 +293,32 @@ spec:
                           - TraefikService
                           type: string
                         name:
-                          description: Name defines the name of the referenced Kubernetes
-                            Service or TraefikService. The differentiation between
-                            the two is specified in the Kind field.
+                          description: |-
+                            Name defines the name of the referenced Kubernetes Service or TraefikService.
+                            The differentiation between the two is specified in the Kind field.
                           type: string
                         namespace:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
                           type: string
                         nativeLB:
-                          description: NativeLB controls, when creating the load-balancer,
-                            whether the LB's children are directly the pods IPs or
-                            if the only child is the Kubernetes Service clusterIP.
-                            The Kubernetes Service itself does load-balance to the
-                            pods. By default, NativeLB is false.
+                          description: |-
+                            NativeLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+                            The Kubernetes Service itself does load-balance to the pods.
+                            By default, NativeLB is false.
                           type: boolean
                         passHostHeader:
-                          description: PassHostHeader defines whether the client Host
-                            header is forwarded to the upstream Kubernetes Service.
+                          description: |-
+                            PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
                           type: boolean
                         port:
                           anyOf:
                           - type: integer
                           - type: string
-                          description: Port defines the port of a Kubernetes Service.
+                          description: |-
+                            Port defines the port of a Kubernetes Service.
                             This can be a reference to a named port.
                           x-kubernetes-int-or-string: true
                         responseForwarding:
@@ -312,30 +327,29 @@ spec:
                             client.
                           properties:
                             flushInterval:
-                              description: 'FlushInterval defines the interval, in
-                                milliseconds, in between flushes to the client while
-                                copying the response body. A negative value means
-                                to flush immediately after each write to the client.
-                                This configuration is ignored when ReverseProxy recognizes
-                                a response as a streaming response; for such responses,
-                                writes are flushed to the client immediately. Default:
-                                100ms'
+                              description: |-
+                                FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
+                                A negative value means to flush immediately after each write to the client.
+                                This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
+                                for such responses, writes are flushed to the client immediately.
+                                Default: 100ms
                               type: string
                           type: object
                         scheme:
-                          description: Scheme defines the scheme to use for the request
-                            to the upstream Kubernetes Service. It defaults to https
-                            when Kubernetes Service port is 443, http otherwise.
+                          description: |-
+                            Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
+                            It defaults to https when Kubernetes Service port is 443, http otherwise.
                           type: string
                         serversTransport:
-                          description: ServersTransport defines the name of ServersTransport
-                            resource to use. It allows to configure the transport
-                            between Traefik and your servers. Can only be used on
-                            a Kubernetes Service.
+                          description: |-
+                            ServersTransport defines the name of ServersTransport resource to use.
+                            It allows to configure the transport between Traefik and your servers.
+                            Can only be used on a Kubernetes Service.
                           type: string
                         sticky:
-                          description: 'Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions'
+                          description: |-
+                            Sticky defines the sticky sessions configuration.
+                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -345,17 +359,18 @@ spec:
                                     can be accessed by client-side APIs, such as JavaScript.
                                   type: boolean
                                 maxAge:
-                                  description: MaxAge indicates the number of seconds
-                                    until the cookie expires. When set to a negative
-                                    number, the cookie expires immediately. When set
-                                    to zero, the cookie never expires.
+                                  description: |-
+                                    MaxAge indicates the number of seconds until the cookie expires.
+                                    When set to a negative number, the cookie expires immediately.
+                                    When set to zero, the cookie never expires.
                                   type: integer
                                 name:
                                   description: Name defines the Cookie name.
                                   type: string
                                 sameSite:
-                                  description: 'SameSite defines the same site policy.
-                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                                  description: |-
+                                    SameSite defines the same site policy.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -365,13 +380,13 @@ spec:
                               type: object
                           type: object
                         strategy:
-                          description: Strategy defines the load balancing strategy
-                            between the servers. RoundRobin is the only supported
-                            value at the moment.
+                          description: |-
+                            Strategy defines the load balancing strategy between the servers.
+                            RoundRobin is the only supported value at the moment.
                           type: string
                         weight:
-                          description: Weight defines the weight and should only be
-                            specified when Name references a TraefikService object
+                          description: |-
+                            Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
                           type: integer
                       required:
@@ -379,8 +394,9 @@ spec:
                       type: object
                     type: array
                   sticky:
-                    description: 'Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
+                    description: |-
+                      Sticky defines whether sticky sessions are enabled.
+                      More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -390,17 +406,18 @@ spec:
                               accessed by client-side APIs, such as JavaScript.
                             type: boolean
                           maxAge:
-                            description: MaxAge indicates the number of seconds until
-                              the cookie expires. When set to a negative number, the
-                              cookie expires immediately. When set to zero, the cookie
-                              never expires.
+                            description: |-
+                              MaxAge indicates the number of seconds until the cookie expires.
+                              When set to a negative number, the cookie expires immediately.
+                              When set to zero, the cookie never expires.
                             type: integer
                           name:
                             description: Name defines the Cookie name.
                             type: string
                           sameSite:
-                            description: 'SameSite defines the same site policy. More
-                              info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                            description: |-
+                              SameSite defines the same site policy.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only

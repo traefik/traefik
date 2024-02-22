@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
 	"testing"
@@ -167,6 +168,21 @@ func TestHandler_EntryPoints(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				jsonFile:   "testdata/entrypoint-bar.json",
+			},
+		},
+		{
+			desc: "one entry point by id containing slash",
+			path: "/api/entrypoints/" + url.PathEscape("foo / bar"),
+			conf: static.Configuration{
+				Global: &static.Global{},
+				API:    &static.API{},
+				EntryPoints: map[string]*static.EntryPoint{
+					"foo / bar": {Address: ":81"},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/entrypoint-foo-slash-bar.json",
 			},
 		},
 		{

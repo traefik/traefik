@@ -324,50 +324,62 @@ InfluxDB v2 push interval. (Default: ```10```)
 `TRAEFIK_METRICS_INFLUXDB2_TOKEN`:  
 InfluxDB v2 access token.
 
-`TRAEFIK_METRICS_OPENTELEMETRY`:  
+`TRAEFIK_METRICS_OTLP`:  
 OpenTelemetry metrics exporter type. (Default: ```false```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_ADDENTRYPOINTSLABELS`:  
+`TRAEFIK_METRICS_OTLP_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
-Address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
+`TRAEFIK_METRICS_OTLP_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_ADDSERVICESLABELS`:  
+`TRAEFIK_METRICS_OTLP_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_EXPLICITBOUNDARIES`:  
+`TRAEFIK_METRICS_OTLP_EXPLICITBOUNDARIES`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_GRPC`:  
-gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+`TRAEFIK_METRICS_OTLP_GRPC_ENDPOINT`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_HEADERS_<NAME>`:  
+`TRAEFIK_METRICS_OTLP_GRPC_HEADERS_<NAME>`:  
 Headers sent with payload.
 
-`TRAEFIK_METRICS_OPENTELEMETRY_INSECURE`:  
+`TRAEFIK_METRICS_OTLP_GRPC_INSECURE`:  
 Disables client transport security for the exporter. (Default: ```false```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_PATH`:  
-Set the URL path of the collector endpoint.
-
-`TRAEFIK_METRICS_OPENTELEMETRY_PUSHINTERVAL`:  
-Period between calls to collect a checkpoint. (Default: ```10```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
+`TRAEFIK_METRICS_OTLP_GRPC_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CERT`:  
+`TRAEFIK_METRICS_OTLP_GRPC_TLS_CERT`:  
 TLS cert
 
-`TRAEFIK_METRICS_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+`TRAEFIK_METRICS_OTLP_GRPC_TLS_INSECURESKIPVERIFY`:  
 TLS insecure skip verify (Default: ```false```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_TLS_KEY`:  
+`TRAEFIK_METRICS_OTLP_GRPC_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_METRICS_OTLP_HTTP_ENDPOINT`:  
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`TRAEFIK_METRICS_OTLP_HTTP_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_METRICS_OTLP_HTTP_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_METRICS_OTLP_HTTP_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_METRICS_OTLP_HTTP_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_METRICS_OTLP_HTTP_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_METRICS_OTLP_PUSHINTERVAL`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
 
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -1008,14 +1020,14 @@ Enables tracing for internal services (ping, dashboard, etc...). (Default: ```fa
 `TRAEFIK_TRACING_GLOBALATTRIBUTES_<NAME>`:  
 Defines additional attributes (key:value) on all spans.
 
-`TRAEFIK_TRACING_HEADERS_<NAME>`:  
-Defines additional headers to be sent with the payloads.
-
 `TRAEFIK_TRACING_OTLP`:  
 Settings for OpenTelemetry. (Default: ```false```)
 
 `TRAEFIK_TRACING_OTLP_GRPC_ENDPOINT`:  
 Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`TRAEFIK_TRACING_OTLP_GRPC_HEADERS_<NAME>`:  
+Headers sent with payload.
 
 `TRAEFIK_TRACING_OTLP_GRPC_INSECURE`:  
 Disables client transport security for the exporter. (Default: ```false```)
@@ -1033,7 +1045,10 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_TRACING_OTLP_HTTP_ENDPOINT`:  
-Sets the HTTP endpoint (scheme://host:port/v1/traces) of the collector. (Default: ```localhost:4318```)
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`TRAEFIK_TRACING_OTLP_HTTP_HEADERS_<NAME>`:  
+Headers sent with payload.
 
 `TRAEFIK_TRACING_OTLP_HTTP_TLS_CA`:  
 TLS CA

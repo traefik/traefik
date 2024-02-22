@@ -123,8 +123,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
-	logger.Warn().Msg("CRDs API Version \"traefik.io/v1alpha1\" will not be supported in Traefik v3 itself. However, an automatic migration path to the next version will be available.")
-
 	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
@@ -719,7 +717,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		return nil, nil
 	}
 	if len(auth.Address) == 0 {
-		return nil, fmt.Errorf("forward authentication requires an address")
+		return nil, errors.New("forward authentication requires an address")
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
@@ -814,7 +812,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}
 
 	if basicAuth.Secret == "" {
-		return nil, fmt.Errorf("auth secret must be set")
+		return nil, errors.New("auth secret must be set")
 	}
 
 	secret, ok, err := client.GetSecret(namespace, basicAuth.Secret)
@@ -861,7 +859,7 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 	}
 
 	if digestAuth.Secret == "" {
-		return nil, fmt.Errorf("auth secret must be set")
+		return nil, errors.New("auth secret must be set")
 	}
 
 	secret, ok, err := client.GetSecret(namespace, digestAuth.Secret)

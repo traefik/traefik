@@ -5,45 +5,25 @@ description: "Traefik supports several metrics backends, including OpenTelemetry
 
 # OpenTelemetry
 
-To enable the OpenTelemetry:
+To enable the OpenTelemetry metrics:
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry: {}
+  otlp: {}
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
+  [metrics.otlp]
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry=true
+--metrics.otlp=true
 ```
 
-!!! info "The OpenTelemetry exporter will export metrics to the collector by using HTTP by default, see the [gRPC Section](#grpc-configuration) to use gRPC."
+!!! info "Default protocol"
 
-#### `address`
-
-_Required, Default="localhost:4318", Format="`<host>:<port>`"_
-
-Address of the OpenTelemetry Collector to send metrics to.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    address: localhost:4318
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    address = "localhost:4318"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.address=localhost:4318
-```
+    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318/v1/metrics, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 #### `addEntryPointsLabels`
 
@@ -53,18 +33,18 @@ Enable metrics on entry points.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
+  otlp:
     addEntryPointsLabels: true
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
+  [metrics.otlp]
     addEntryPointsLabels = true
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.addEntryPointsLabels=true
+--metrics.otlp.addEntryPointsLabels=true
 ```
 
 #### `addRoutersLabels`
@@ -75,18 +55,18 @@ Enable metrics on routers.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
+  otlp:
     addRoutersLabels: true
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
+  [metrics.otlp]
     addRoutersLabels = true
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.addRoutersLabels=true
+--metrics.otlp.addRoutersLabels=true
 ```
 
 #### `addServicesLabels`
@@ -97,18 +77,18 @@ Enable metrics on services.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
+  otlp:
     addServicesLabels: true
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
+  [metrics.otlp]
     addServicesLabels = true
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.addServicesLabels=true
+--metrics.otlp.addServicesLabels=true
 ```
 
 #### `explicitBoundaries`
@@ -119,7 +99,7 @@ Explicit boundaries for Histogram data points.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
+  otlp:
     explicitBoundaries:
       - 0.1
       - 0.3
@@ -129,59 +109,12 @@ metrics:
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
+  [metrics.otlp]
     explicitBoundaries = [0.1,0.3,1.2,5.0]
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.explicitBoundaries=0.1,0.3,1.2,5.0
-```
-
-#### `headers`
-
-_Optional, Default={}_
-
-Additional headers sent with metrics by the reporter to the OpenTelemetry Collector.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    headers:
-      foo: bar
-      baz: buz
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry.headers]
-    foo = "bar"
-    baz = "buz"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.headers.foo=bar --metrics.openTelemetry.headers.baz=buz
-```
-
-#### `insecure`
-
-_Optional, Default=false_
-
-Allows reporter to send metrics to the OpenTelemetry Collector without using a secured protocol.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    insecure: true
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    insecure = true
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.insecure=true
+--metrics.otlp.explicitBoundaries=0.1,0.3,1.2,5.0
 ```
 
 #### `pushInterval`
@@ -192,48 +125,95 @@ Interval at which metrics are sent to the OpenTelemetry Collector.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
+  otlp:
     pushInterval: 10s
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
+  [metrics.otlp]
     pushInterval = "10s"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.pushInterval=10s
+--metrics.otlp.pushInterval=10s
 ```
 
-#### `path`
+### HTTP configuration
 
-_Required, Default="/v1/metrics"_
+_Optional_
 
-Allows to override the default URL path used for sending metrics.
-This option has no effect when using gRPC transport.
+This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
-    path: /foo/v1/metrics
+  otlp:
+    http: {}
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry]
-    path = "/foo/v1/metrics"
+  [metrics.otlp.http]
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.path=/foo/v1/metrics
+--metrics.otlp.http=true
+```
+
+#### `endpoint`
+
+_Required, Default="http://localhost:4318/v1/metrics", Format="`<scheme>://<host>:<port><path>`"_
+
+URL of the OpenTelemetry Collector to send metrics to.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    http:
+      endpoint: http://localhost:4318/v1/metrics
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp.http]
+    endpoint = "http://localhost:4318/v1/metrics"
+```
+
+```bash tab="CLI"
+--metrics.otlp.http.endpoint=http://localhost:4318/v1/metrics
+```
+
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with metrics by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    http:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp.http.headers]
+    foo = "bar"
+    baz = "buz"
+```
+
+```bash tab="CLI"
+--metrics.otlp.http.headers.foo=bar --metrics.otlp.http.headers.baz=buz
 ```
 
 #### `tls`
 
 _Optional_
 
-Defines the TLS configuration used by the reporter to send metrics to the OpenTelemetry Collector.
+Defines the Client TLS configuration used by the exporter to send metrics to the OpenTelemetry Collector.
 
 ##### `ca`
 
@@ -244,18 +224,19 @@ it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
-    tls:
-      ca: path/to/ca.crt
+  otlp:
+    http:
+      tls:
+        ca: path/to/ca.crt
 ```
 
 ```toml tab="File (TOML)"
-[metrics.openTelemetry.tls]
+[metrics.otlp.http.tls]
   ca = "path/to/ca.crt"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.tls.ca=path/to/ca.crt
+--metrics.otlp.http.tls.ca=path/to/ca.crt
 ```
 
 ##### `cert`
@@ -267,21 +248,22 @@ When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
+  otlp:
+    http:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
-[metrics.openTelemetry.tls]
+[metrics.otlp.http.tls]
   cert = "path/to/foo.cert"
   key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.tls.cert=path/to/foo.cert
---metrics.openTelemetry.tls.key=path/to/foo.key
+--metrics.otlp.http.tls.cert=path/to/foo.cert
+--metrics.otlp.http.tls.key=path/to/foo.key
 ```
 
 ##### `key`
@@ -293,21 +275,22 @@ When using this option, setting the `cert` option is required.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
+  otlp:
+    http:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
-[metrics.openTelemetry.tls]
+[metrics.otlp.http.tls]
   cert = "path/to/foo.cert"
   key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.tls.cert=path/to/foo.cert
---metrics.openTelemetry.tls.key=path/to/foo.key
+--metrics.otlp.http.tls.cert=path/to/foo.cert
+--metrics.otlp.http.tls.key=path/to/foo.key
 ```
 
 ##### `insecureSkipVerify`
@@ -319,35 +302,218 @@ the TLS connection to the OpenTelemetry Collector accepts any certificate presen
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
-    tls:
-      insecureSkipVerify: true
+  otlp:
+    http:
+      tls:
+        insecureSkipVerify: true
 ```
 
 ```toml tab="File (TOML)"
-[metrics.openTelemetry.tls]
+[metrics.otlp.http.tls]
   insecureSkipVerify = true
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.tls.insecureSkipVerify=true
+--metrics.otlp.http.tls.insecureSkipVerify=true
 ```
 
-#### gRPC configuration
+### gRPC configuration
 
-This instructs the reporter to send metrics to the OpenTelemetry Collector using gRPC.
+_Optional_
+
+This instructs the exporter to send metrics to the OpenTelemetry Collector using gRPC.
 
 ```yaml tab="File (YAML)"
 metrics:
-  openTelemetry:
+  otlp:
     grpc: {}
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.openTelemetry.grpc]
+  [metrics.otlp.grpc]
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.grpc=true
+--metrics.otlp.grpc=true
+```
+
+#### `endpoint`
+
+_Required, Default="localhost:4317", Format="`<host>:<port>`"_
+
+Address of the OpenTelemetry Collector to send metrics to.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      endpoint: localhost:4317
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp.grpc]
+    endpoint = "localhost:4317"
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.endpoint=localhost:4317
+```
+
+#### `insecure`
+
+_Optional, Default=false_
+
+Allows exporter to send metrics to the OpenTelemetry Collector without using a secured protocol.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      insecure: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp.grpc]
+    insecure = true
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.insecure=true
+```
+
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with metrics by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp.grpc.headers]
+    foo = "bar"
+    baz = "buz"
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.headers.foo=bar --metrics.otlp.grpc.headers.baz=buz
+```
+
+#### `tls`
+
+_Optional_
+
+Defines the Client TLS configuration used by the exporter to send metrics to the OpenTelemetry Collector.
+
+##### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to the OpenTelemetry Collector,
+it defaults to the system bundle.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      tls:
+        ca: path/to/ca.crt
+```
+
+```toml tab="File (TOML)"
+[metrics.otlp.grpc.tls]
+  ca = "path/to/ca.crt"
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.tls.ca=path/to/ca.crt
+```
+
+##### `cert`
+
+_Optional_
+
+`cert` is the path to the public certificate used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `key` option is required.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[metrics.otlp.grpc.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.tls.cert=path/to/foo.cert
+--metrics.otlp.grpc.tls.key=path/to/foo.key
+```
+
+##### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[metrics.otlp.grpc.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.tls.cert=path/to/foo.cert
+--metrics.otlp.grpc.tls.key=path/to/foo.key
+```
+
+##### `insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is `true`,
+the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    grpc:
+      tls:
+        insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[metrics.otlp.grpc.tls]
+  insecureSkipVerify = true
+```
+
+```bash tab="CLI"
+--metrics.otlp.grpc.tls.insecureSkipVerify=true
 ```
