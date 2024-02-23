@@ -213,9 +213,22 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
 	} else if tService.Spec.Mirroring != nil {
 		return c.buildMirroring(ctx, tService, id, conf)
+	}	} else if tService.Spec.LoadBalancer != nil {
+		return c.buildLoadBalancer(ctx, tService.Spec, id, conf)
 	}
 
 	return errors.New("unspecified service type")
+}
+
+// buildLoadBalancer creates the configuration for the load-balancer of services named id, and defined in tService.
+// It adds it to the given conf map.
+func (c configBuilder) buildLoadBalancer(ctx context.Context, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
+
+	conf[id] = &dynamic.Service{
+		LoadBalancer: tService.LoadBalancer,
+	}
+
+	return nil
 }
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
