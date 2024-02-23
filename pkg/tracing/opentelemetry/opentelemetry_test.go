@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -233,9 +232,11 @@ func TestTracing(t *testing.T) {
 			wantServiceHeadersFn: func(t *testing.T, headers http.Header) {
 				t.Helper()
 
-				assert.Len(t, headers, 0)
+				assert.Empty(t, headers)
 			},
 			assertFn: func(t *testing.T, trace string) {
+				t.Helper()
+
 				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
 				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
 			},
@@ -263,8 +264,7 @@ func TestTracing(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			err := os.Setenv("OTEL_PROPAGATORS", test.propagators)
-			require.NoError(t, err)
+			t.Setenv("OTEL_PROPAGATORS", test.propagators)
 
 			service := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				tracer := tracing.TracerFromContext(r.Context())
