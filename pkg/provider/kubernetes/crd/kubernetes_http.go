@@ -209,12 +209,13 @@ type configBuilder struct {
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
 	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
 
-	if tService.Spec.Weighted != nil {
+	switch {
+	case tService.Spec.Weighted != nil:
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
-	} else if tService.Spec.Mirroring != nil {
+	case tService.Spec.Mirroring != nil:
 		return c.buildMirroring(ctx, tService, id, conf)
-	} else if tService.Spec.LoadBalancer != nil {
-		return c.buildLoadBalancer(ctx, tService.Spec, id, conf)
+	case tService.Spec.LoadBalancer != nil:
+		return c.buildLoadBalancer(tService.Spec, id, conf)
 	}
 
 	return errors.New("unspecified service type")
@@ -222,7 +223,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 
 // buildLoadBalancer creates the configuration for the load-balancer of services named id, and defined in tService.
 // It adds it to the given conf map.
-func (c configBuilder) buildLoadBalancer(ctx context.Context, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildLoadBalancer(tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
 
 	conf[id] = &dynamic.Service{
 		LoadBalancer: tService.LoadBalancer,
