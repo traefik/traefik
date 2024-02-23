@@ -213,7 +213,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
 	} else if tService.Spec.Mirroring != nil {
 		return c.buildMirroring(ctx, tService, id, conf)
-	}	} else if tService.Spec.LoadBalancer != nil {
+	} else if tService.Spec.LoadBalancer != nil {
 		return c.buildLoadBalancer(ctx, tService.Spec, id, conf)
 	}
 
