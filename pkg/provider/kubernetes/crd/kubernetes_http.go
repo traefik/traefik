@@ -224,7 +224,6 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 // buildLoadBalancer creates the configuration for the load-balancer of services named id, and defined in tService.
 // It adds it to the given conf map.
 func (c configBuilder) buildLoadBalancer(tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
-
 	conf[id] = &dynamic.Service{
 		LoadBalancer: tService.LoadBalancer,
 	}
