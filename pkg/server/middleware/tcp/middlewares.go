@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/connratelimit"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipwhitelist"
@@ -93,6 +94,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	if config.InFlightConn != nil {
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return inflightconn.New(ctx, next, *config.InFlightConn, middlewareName)
+		}
+	}
+
+	// ConnRateLimit
+	if config.ConnRateLimit != nil {
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return connratelimit.New(ctx, next, *config.ConnRateLimit, middlewareName)
 		}
 	}
 

@@ -426,13 +426,18 @@
           weight = 42
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware01]
-      [tcp.middlewares.TCPMiddleware01.ipAllowList]
-        sourceRange = ["foobar", "foobar"]
+      [tcp.middlewares.TCPMiddleware01.connRateLimit]
+        average = 42
+        period = "42s"
+        burst = 42
     [tcp.middlewares.TCPMiddleware02]
-      [tcp.middlewares.TCPMiddleware02.ipWhiteList]
+      [tcp.middlewares.TCPMiddleware02.ipAllowList]
         sourceRange = ["foobar", "foobar"]
     [tcp.middlewares.TCPMiddleware03]
-      [tcp.middlewares.TCPMiddleware03.inFlightConn]
+      [tcp.middlewares.TCPMiddleware03.ipWhiteList]
+        sourceRange = ["foobar", "foobar"]
+    [tcp.middlewares.TCPMiddleware04]
+      [tcp.middlewares.TCPMiddleware04.inFlightConn]
         amount = 42
   [tcp.serversTransports]
     [tcp.serversTransports.TCPServersTransport0]
