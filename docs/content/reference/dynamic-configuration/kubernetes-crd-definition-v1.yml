@@ -2493,19 +2493,89 @@ spec:
                 - name
                 type: object
               loadBalancer:
-                description: Weighted defines the Weighted Round Robin configuration.
+                description: LoadBalancer defines the Load Balancer configuration.
                 properties:
-                  sticky:
+                  healthCheck:
                     description: |-
-                      Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                      HealthCheck enables regular active checks of the responsiveness of the
+                      children servers of this load-balancer. To propagate status changes (e.g. all
+                      servers of this service are down) upwards, HealthCheck must also be enabled on
+                      the parent(s) of this service.
+                    properties:
+                      followRedirects:
+                        type: boolean
+                      headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      hostname:
+                        type: string
+                      interval:
+                        description: |-
+                          Duration is a custom type suitable for parsing duration values.
+                          It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                          the latter case, seconds are assumed.
+                        format: int64
+                        type: integer
+                      method:
+                        type: string
+                      mode:
+                        type: string
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                      scheme:
+                        type: string
+                      status:
+                        type: integer
+                      timeout:
+                        description: |-
+                          Duration is a custom type suitable for parsing duration values.
+                          It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                          the latter case, seconds are assumed.
+                        format: int64
+                        type: integer
+                    required:
+                    - followRedirects
+                    type: object
+                  passHostHeader:
+                    type: boolean
+                  responseForwarding:
+                    description: ResponseForwarding holds the response forwarding
+                      configuration.
+                    properties:
+                      flushInterval:
+                        description: |-
+                          FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
+                          A negative value means to flush immediately after each write to the client.
+                          This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
+                          for such responses, writes are flushed to the client immediately.
+                          Default: 100ms
+                        format: int64
+                        type: integer
+                    type: object
+                  servers:
+                    items:
+                      description: Server holds the server configuration.
+                      properties:
+                        url:
+                          type: string
+                        weight:
+                          type: integer
+                      type: object
+                    type: array
+                  serversTransport:
+                    type: string
+                  sticky:
+                    description: Sticky holds the sticky configuration.
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
-                            description: HTTPOnly defines whether the cookie
-                              can be accessed by client-side APIs, such as JavaScript.
+                            description: HTTPOnly defines whether the cookie can be
+                              accessed by client-side APIs, such as JavaScript.
                             type: boolean
                           maxAge:
                             description: |-
@@ -2522,95 +2592,13 @@ spec:
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                             type: string
                           secure:
-                            description: Secure defines whether the cookie can
-                              only be transmitted over an encrypted connection
-                              (i.e. HTTPS).
+                            description: Secure defines whether the cookie can only
+                              be transmitted over an encrypted connection (i.e. HTTPS).
                             type: boolean
                         type: object
                     type: object
-                  servers:
-                    description: cocou
-                    items:
-                      description: coucou
-                      properties:
-                        url:
-                          description: need a correct description
-                          type: string
-                        weight:
-                          description: need a correct description
-                          type: integer
-                        scheme:
-                          description: need a correct description
-                          type: string
-                        port:
-                          description: need a correct description
-                          type: string
-                      type: object
-                    type: array
-                  healthCheck:
-                    description: need a correct description
-                    properties:
-                      scheme:
-                        description: need a correct description
-                        type: string
-                      mode:
-                        description: need a correct description
-                        type: string
-                      path:
-                        description: need a correct description
-                        type: string
-                      method:
-                        description: need a correct description
-                        type: string
-                      status:
-                        description: need a correct description
-                        type: integer
-                      port:
-                        description: need a correct description
-                        type: integer
-                      interval:
-                        description: need a correct description
-                        type: string
-                      timeout:
-                        description: need a correct description
-                        type: string
-                      hostname:
-                        description: need a correct description
-                        type: string
-                      followRedirects:
-                        description: need a correct description
-                        type: boolean
-                      headers:
-                        description: need a correct description
-                        type: string
-                    required:
-                    - hostname
-                    type: object
-                  responseForwarding:
-                    description: ResponseForwarding defines how Traefik forwards
-                      the response from the upstream Kubernetes Service to the
-                      client.
-                    properties:
-                      flushInterval:
-                        description: |-
-                          FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
-                          A negative value means to flush immediately after each write to the client.
-                          This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
-                          for such responses, writes are flushed to the client immediately.
-                          Default: 100ms
-                        type: string
-                    type: object
-                  passHostHeader:
-                    description: |-
-                      PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
-                      By default, passHostHeader is true.
-                    type: boolean
-                  serversTransport:
-                    description: |-
-                      ServersTransport defines the name of ServersTransport resource to use.
-                      It allows to configure the transport between Traefik and your servers.
-                      Can only be used on a Kubernetes Service.
-                    type: string
+                required:
+                - passHostHeader
                 type: object
               weighted:
                 description: Weighted defines the Weighted Round Robin configuration.
