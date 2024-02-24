@@ -120,6 +120,13 @@ module.exports = configure(function (ctx) {
     supportIE: false,
 
     build: {
+     viteVuePluginOptions: {
+        template: {
+          compilerOptions: {
+            isCustomElement: (tag) => tag.startsWith('hub-')
+          }
+        }
+      },
       target: {
         browser: ['edge88', 'firefox78', 'chrome87', 'safari13.1'],
         node: 'node20'
