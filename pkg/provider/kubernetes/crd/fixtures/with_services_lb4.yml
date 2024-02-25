@@ -8,11 +8,16 @@ metadata:
 spec:
   loadBalancer:
     servers:
-      - url: https://my-external-server.local.pri:443
+      - url: https://my-external-server1.local.pri:443
+      - url: https://my-external-server2.local.pri:443
     healthCheck:
       hostname: my-external-server.local.pri
       path: /health
       interval: 15s
+    sticky:
+      cookie:
+        secure: true
+        httpOnly: true
 
 ---
 apiVersion: traefik.io/v1alpha1

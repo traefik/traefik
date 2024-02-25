@@ -2463,13 +2463,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "https://my-external-server.local.pri:443",
+										URL: "https://my-external-server1.local.pri:443",
+									},
+									{
+										URL: "https://my-external-server2.local.pri:443",
 									},
 								},
 								HealthCheck: &dynamic.ServerHealthCheck{
 									Hostname: "my-external-server.local.pri",
 									Path:     "/health",
 									Interval: 15000000000,
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Secure:   true,
+										HTTPOnly: true,
+									},
 								},
 							},
 						},
