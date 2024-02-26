@@ -744,7 +744,7 @@ spec:
 
 #### `peerCertURI`
 
-_Optional_
+_Optional, Default=""_
 
 `peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
 
