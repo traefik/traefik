@@ -82,6 +82,7 @@ export default {
   .q-toolbar {
     min-height: 48px;
     padding: 0;
+    overflow: auto;
   }
 
   .body--dark .q-toolbar {
