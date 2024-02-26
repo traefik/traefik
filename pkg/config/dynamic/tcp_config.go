@@ -16,7 +16,15 @@ type TCPConfiguration struct {
 	Routers           map[string]*TCPRouter           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
 	Services          map[string]*TCPService          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	Middlewares       map[string]*TCPMiddleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Models            map[string]*TCPModel            `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	ServersTransports map[string]*TCPServersTransport `json:"serversTransports,omitempty" toml:"serversTransports,omitempty" yaml:"serversTransports,omitempty" label:"-" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPModel is a set of default router's values.
+type TCPModel struct {
+	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -56,6 +64,7 @@ type TCPRouter struct {
 	Middlewares []string            `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string              `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	Rule        string              `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	RuleSyntax  string              `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
 	Priority    int                 `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
 	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
@@ -77,6 +86,14 @@ type TCPServersLoadBalancer struct {
 	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 	ServersTransport string         `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
+	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
+	// of its connected peers indicates it has closed the writing capability of its
+	// connection, to close the reading capability as well, hence fully terminating the
+	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
+	// means an infinite deadline (i.e. the reading capability is never closed).
+	// Deprecated: use ServersTransport to configure the TerminationDelay instead.
+	TerminationDelay *int `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
 }
 
 // Mergeable tells if the given service is mergeable.

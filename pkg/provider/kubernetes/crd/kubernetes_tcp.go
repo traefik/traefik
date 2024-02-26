@@ -102,6 +102,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				Middlewares: mds,
 				Rule:        route.Match,
 				Priority:    route.Priority,
+				RuleSyntax:  route.Syntax,
 				Service:     serviceName,
 			}
 
@@ -201,6 +202,10 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		if service.ProxyProtocol.Version != 0 {
 			tcpService.LoadBalancer.ProxyProtocol.Version = service.ProxyProtocol.Version
 		}
+	}
+
+	if service.ServersTransport == "" && service.TerminationDelay != nil {
+		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
 	}
 
 	if service.ServersTransport != "" {

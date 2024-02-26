@@ -150,18 +150,14 @@ linters-settings:
       - github.com/jaguilar/vt100
       - github.com/cucumber/godog
   testifylint:
-    enable:
-      - bool-compare
-      - compares
-      - empty
-      - error-is-as
-      - error-nil
-      - expected-actual
-      - float-compare
-      - len
-      - suite-extra-assert-call
-      - suite-thelper
-
+    disable:
+      - suite-dont-use-pkg
+      - require-error
+      - go-require
+  staticcheck:
+    checks:
+      - all
+      - -SA1019
 linters:
   enable-all: true
   disable:
@@ -216,11 +212,12 @@ linters:
 
 issues:
   exclude-use-default: false
-  max-per-linter: 0
+  max-issues-per-linter: 0
   max-same-issues: 0
   exclude:
     - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
     - "should have a package comment, unless it's in another file for this package"
+    - 'fmt.Sprintf can be replaced with string addition'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:
@@ -280,3 +277,9 @@ issues:
       text: 'unusedwrite: unused write to field'
       linters:
         - govet
+    - path: pkg/cli/deprecation.go
+      linters:
+        - goconst
+    - path: pkg/cli/loader_file.go
+      linters:
+        - goconst

@@ -90,7 +90,7 @@ export default {
   }
 
   .q-tabs {
-    /deep/ .q-tabs__content {
+    :deep(.q-tabs__content) {
       .q-tab__label {
         color: $app-text-grey;
         font-size: 16px;

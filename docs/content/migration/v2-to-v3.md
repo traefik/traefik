@@ -19,6 +19,8 @@ and how it now looks like in v3.
 
 ### Docker & Docker Swarm
 
+#### SwarmMode
+
 In v3, the provider Docker has been split into 2 providers:
 
 - Docker provider (without Swarm support)
@@ -43,7 +45,7 @@ In v3, the provider Docker has been split into 2 providers:
 
 This configuration is now unsupported and would prevent Traefik to start.
 
-#### Remediation
+##### Remediation
 
 In v3, the `swarmMode` should not be used with the Docker provider, and, to use Swarm, the Swarm provider should be used instead.
 
@@ -64,7 +66,35 @@ In v3, the `swarmMode` should not be used with the Docker provider, and, to use 
     --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-### HTTP3 Experimental Configuration
+#### TLS.CAOptional
+
+Docker provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        tls: 
+          caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `tls.caOptional` option should be removed from the Docker provider static configuration.
+
+### Experimental Configuration
+
+#### HTTP3
 
 In v3, HTTP/3 is no longer an experimental feature.
 It can be enabled on entry points without the associated `experimental.http3` option, which is now removed.
@@ -86,11 +116,13 @@ It is now unsupported and would prevent Traefik to start.
     --experimental.http3=true
     ```
 
-#### Remediation
+##### Remediation
 
 The `http3` option should be removed from the static configuration experimental section.
 
 ### Consul provider
+
+#### namespace
 
 The Consul provider `namespace` option was deprecated in v2 and is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
@@ -111,7 +143,7 @@ It is now unsupported and would prevent Traefik to start.
     --consul.namespace=foobar
     ```
 
-#### Remediation
+##### Remediation
 
 In v3, the `namespaces` option should be used instead of the `namespace` option.
 
@@ -132,7 +164,35 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
     --consul.namespaces=foobar
     ```
 
+#### TLS.CAOptional
+
+Consul provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      consul:
+        tls: 
+          caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.consul.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.consul.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `tls.caOptional` option should be removed from the Consul provider static configuration.
+
 ### ConsulCatalog provider
+
+#### namespace
 
 The ConsulCatalog provider `namespace` option was deprecated in v2 and is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
@@ -153,7 +213,7 @@ It is now unsupported and would prevent Traefik to start.
     --consulCatalog.namespace=foobar
     ```
 
-#### Remediation
+##### Remediation
 
 In v3, the `namespaces` option should be used instead of the `namespace` option.
 
@@ -174,7 +234,36 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
     --consulCatalog.namespaces=foobar
     ```
 
+#### Endpoint.TLS.CAOptional
+
+ConsulCatalog provider `endpoint.tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the Endpoint.TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      consulCatalog:
+        endpoint:
+          tls: 
+            caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.consulCatalog.endpoint.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.consulCatalog.endpoint.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `endpoint.tls.caOptional` option should be removed from the ConsulCatalog provider static configuration.
+
 ### Nomad provider
+
+#### namespace
 
 The Nomad provider `namespace` option was deprecated in v2 and is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
@@ -195,7 +284,7 @@ It is now unsupported and would prevent Traefik to start.
     --nomad.namespace=foobar
     ```
 
-#### Remediation
+##### Remediation
 
 In v3, the `namespaces` option should be used instead of the `namespace` option.
 
@@ -215,6 +304,33 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
     ```bash tab="CLI"
     --nomad.namespaces=foobar
     ```
+
+#### Endpoint.TLS.CAOptional
+
+Nomad provider `endpoint.tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the Endpoint.TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      nomad:
+        endpoint:
+          tls: 
+            caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.nomad.endpoint.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.nomad.endpoint.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `endpoint.tls.caOptional` option should be removed from the Nomad provider static configuration.
 
 ### Rancher v1 Provider
 
@@ -271,6 +387,90 @@ This configuration is now unsupported and would prevent Traefik to start.
 
 All Marathon provider related configuration should be removed from the static configuration.
 
+### HTTP Provider
+
+#### TLS.CAOptional
+
+HTTP provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      http:
+        tls: 
+          caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.http.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.http.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `tls.caOptional` option should be removed from the HTTP provider static configuration.
+
+### ETCD Provider
+
+#### TLS.CAOptional
+
+ETCD provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      etcd:
+        tls: 
+          caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.etcd.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.etcd.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `tls.caOptional` option should be removed from the ETCD provider static configuration.
+
+### Redis Provider
+
+#### TLS.CAOptional
+
+Redis provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
+
+??? example "An example usage of the TLS.CAOptional option"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      redis:
+        tls: 
+          caOptional: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.redis.tls]
+        caOptional=true
+    ```
+
+    ```bash tab="CLI"
+    --providers.redis.tls.caOptional=true
+    ```
+
+##### Remediation
+
+The `tls.caOptional` option should be removed from the Redis provider static configuration.
+
 ### InfluxDB v1
 
 InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
@@ -326,21 +526,16 @@ All Pilot related configuration should be removed from the static configuration.
 
 ## Dynamic configuration
 
-### IPWhiteList
+### Router Rule Matchers
 
-In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
+In v3, a new rule matchers syntax has been introduced for HTTP and TCP routers.
+The default rule matchers syntax is now the v3 one, but for backward compatibility this can be configured.
+The v2 rule matchers syntax is deprecated and its support will be removed in the next major version.
+For this reason, we encourage migrating to the new syntax.
 
-### Deprecated Options Removal
+#### New V3 Syntax Notable Changes
 
-- The `tracing.datadog.globaltag` option has been removed.
-- The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
-- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
-- The `forceSlash` option of the StripPrefix middleware has been removed.
-- The `preferServerCipherSuites` option has been removed.
-
-### Matchers
-
-In v3, the `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
+The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
 
 `PathPrefix` no longer uses regular expressions to match path prefixes.
 
@@ -354,6 +549,87 @@ and should be explicitly combined using logical operators to mimic previous beha
 `Query` can take a single value to match is the query value that has no value (e.g. `/search?mobile`).
 
 `HostHeader` has been removed, use `Host` instead.
+
+#### Remediation
+
+##### Configure the Default Syntax In Static Configuration
+
+The default rule matchers syntax is the expected syntax for any router that is not self opt-out from this default value.
+It can be configured in the static configuration.
+
+??? example "An example configuration for the default rule matchers syntax"
+
+    ```yaml tab="File (YAML)"
+    # static configuration
+    core:
+      defaultRuleSyntax: v2
+    ```
+
+    ```toml tab="File (TOML)"
+    # static configuration
+    [core]
+        defaultRuleSyntax="v2"
+    ```
+
+    ```bash tab="CLI"
+    # static configuration
+    --core.defaultRuleSyntax=v2
+    ```
+
+##### Configure the Syntax Per Router
+
+The rule syntax can also be configured on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+??? example "An example router with syntax configuration"
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.routers.test.ruleSyntax=v2"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  routes:
+    - match: PathPrefix(`/foo`, `/bar`)
+      syntax: v2
+      kind: Rule
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.routers.test.ruleSyntax=v2"
+```
+
+```yaml tab="File (YAML)"
+http:
+  routers:
+    test:
+      ruleSyntax: v2
+```
+
+```toml tab="File (TOML)"
+[http.routers]
+  [http.routers.test]
+    ruleSyntax = "v2"
+```
+
+### IPWhiteList
+
+In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
+
+### Deprecated Options Removal
+
+- The `tracing.datadog.globaltag` option has been removed.
+- The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
+- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
+- The `forceSlash` option of the StripPrefix middleware has been removed.
+- The `preferServerCipherSuites` option has been removed.
 
 ### TCP LoadBalancer `terminationDelay` option
 
@@ -415,3 +691,15 @@ Here are two possible transition strategies:
     For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
     using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
     This allows continued compatibility with the existing infrastructure.
+
+Please check the [OpenTelemetry Tracing provider documention](../observability/tracing/opentelemetry.md) for more information.
+
+#### Internal Resources Observability (AccessLogs, Metrics and Tracing)
+
+In v3, observability for internal routers or services (e.g.: `ping@internal`) is disabled by default.
+To enable it one should use the new `addInternals` option for AccessLogs, Metrics or Tracing.
+Please take a look at the observability documentation for more information:
+
+- [AccessLogs](../observability/access-logs.md#addinternals)
+- [Metrics](../observability/metrics/overview.md#addinternals)
+- [AccessLogs](../observability/tracing/overview.md#addinternals)

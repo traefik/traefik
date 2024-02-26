@@ -34,6 +34,7 @@
 			],
 			"service": "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"ruleSyntax": "v3",
 			"priority": 31,
 			"status": "enabled",
 			"using": [
@@ -46,6 +47,7 @@
 			],
 			"service": "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"ruleSyntax": "v3",
 			"priority": 31,
 			"tls": {},
 			"status": "enabled",
@@ -152,6 +154,7 @@
 			],
 			"service": "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr-0",
 			"rule": "HostSNI(`*`)",
+			"ruleSyntax": "v3",
 			"priority": -1,
 			"status": "enabled",
 			"using": [
@@ -164,6 +167,7 @@
 			],
 			"service": "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr-0",
 			"rule": "HostSNI(`*`)",
+			"ruleSyntax": "v3",
 			"priority": -1,
 			"tls": {
 				"passthrough": false
@@ -179,6 +183,7 @@
 			],
 			"service": "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26-wrr-0",
 			"rule": "HostSNI(`foo.bar`)",
+			"ruleSyntax": "v3",
 			"priority": 18,
 			"tls": {
 				"passthrough": true

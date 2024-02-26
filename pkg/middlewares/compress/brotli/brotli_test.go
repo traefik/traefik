@@ -27,7 +27,7 @@ func Test_Vary(t *testing.T) {
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Equal(t, http.StatusOK, rw.Code)
+	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
 }
 
@@ -41,7 +41,7 @@ func Test_SmallBodyNoCompression(t *testing.T) {
 	h.ServeHTTP(rw, req)
 
 	// With less than 1024 bytes the response should not be compressed.
-	assert.Equal(t, http.StatusOK, rw.Code)
+	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Empty(t, rw.Header().Get(contentEncoding))
 	assert.Equal(t, smallTestBody, rw.Body.Bytes())
 }
@@ -55,6 +55,7 @@ func Test_AlreadyCompressed(t *testing.T) {
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
+	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Equal(t, bigTestBody, rw.Body.Bytes())
 }
 
@@ -291,10 +292,9 @@ func Test_ExcludedContentTypes(t *testing.T) {
 		expCompression       bool
 	}{
 		{
-			desc:                 "Always compress when content types are empty",
-			contentType:          "",
-			excludedContentTypes: []string{},
-			expCompression:       true,
+			desc:           "Always compress when content types are empty",
+			contentType:    "",
+			expCompression: true,
 		},
 		{
 			desc:                 "MIME match",
@@ -389,6 +389,111 @@ func Test_ExcludedContentTypes(t *testing.T) {
 	}
 }
 
+func Test_IncludedContentTypes(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		contentType          string
+		includedContentTypes []string
+		expCompression       bool
+	}{
+		{
+			desc:           "Always compress when content types are empty",
+			contentType:    "",
+			expCompression: true,
+		},
+		{
+			desc:                 "MIME match",
+			contentType:          "application/json",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME no match",
+			contentType:          "text/xml",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       false,
+		},
+		{
+			desc:                 "MIME match with no other directive ignores non-MIME directives",
+			contentType:          "application/json; charset=utf-8",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME match with other directives requires all directives be equal, different charset",
+			contentType:          "application/json; charset=ascii",
+			includedContentTypes: []string{"application/json; charset=utf-8"},
+			expCompression:       false,
+		},
+		{
+			desc:                 "MIME match with other directives requires all directives be equal, same charset",
+			contentType:          "application/json; charset=utf-8",
+			includedContentTypes: []string{"application/json; charset=utf-8"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME match with other directives requires all directives be equal, missing charset",
+			contentType:          "application/json",
+			includedContentTypes: []string{"application/json; charset=ascii"},
+			expCompression:       false,
+		},
+		{
+			desc:                 "MIME match case insensitive",
+			contentType:          "Application/Json",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME match ignore whitespace",
+			contentType:          "application/json;charset=utf-8",
+			includedContentTypes: []string{"application/json;            charset=utf-8"},
+			expCompression:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := Config{
+				MinSize:              1024,
+				IncludedContentTypes: test.includedContentTypes,
+			}
+			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set(contentType, test.contentType)
+
+				rw.WriteHeader(http.StatusOK)
+
+				_, err := rw.Write(bigTestBody)
+				require.NoError(t, err)
+			}))
+
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
+			req.Header.Set(acceptEncoding, "br")
+
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusOK, rw.Code)
+
+			if test.expCompression {
+				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
+
+				got, err := io.ReadAll(brotli.NewReader(rw.Body))
+				assert.NoError(t, err)
+				assert.Equal(t, bigTestBody, got)
+			} else {
+				assert.NotEqual(t, "br", rw.Header().Get("Content-Encoding"))
+
+				got, err := io.ReadAll(rw.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, bigTestBody, got)
+			}
+		})
+	}
+}
+
 func Test_FlushExcludedContentTypes(t *testing.T) {
 	testCases := []struct {
 		desc                 string
@@ -397,10 +502,9 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 		expCompression       bool
 	}{
 		{
-			desc:                 "Always compress when content types are empty",
-			contentType:          "",
-			excludedContentTypes: []string{},
-			expCompression:       true,
+			desc:           "Always compress when content types are empty",
+			contentType:    "",
+			expCompression: true,
 		},
 		{
 			desc:                 "MIME match",
@@ -509,6 +613,125 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 	}
 }
 
+func Test_FlushIncludedContentTypes(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		contentType          string
+		includedContentTypes []string
+		expCompression       bool
+	}{
+		{
+			desc:           "Always compress when content types are empty",
+			contentType:    "",
+			expCompression: true,
+		},
+		{
+			desc:                 "MIME match",
+			contentType:          "application/json",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME no match",
+			contentType:          "text/xml",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       false,
+		},
+		{
+			desc:                 "MIME match with no other directive ignores non-MIME directives",
+			contentType:          "application/json; charset=utf-8",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME match with other directives requires all directives be equal, different charset",
+			contentType:          "application/json; charset=ascii",
+			includedContentTypes: []string{"application/json; charset=utf-8"},
+			expCompression:       false,
+		},
+		{
+			desc:                 "MIME match with other directives requires all directives be equal, same charset",
+			contentType:          "application/json; charset=utf-8",
+			includedContentTypes: []string{"application/json; charset=utf-8"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME match with other directives requires all directives be equal, missing charset",
+			contentType:          "application/json",
+			includedContentTypes: []string{"application/json; charset=ascii"},
+			expCompression:       false,
+		},
+		{
+			desc:                 "MIME match case insensitive",
+			contentType:          "Application/Json",
+			includedContentTypes: []string{"application/json"},
+			expCompression:       true,
+		},
+		{
+			desc:                 "MIME match ignore whitespace",
+			contentType:          "application/json;charset=utf-8",
+			includedContentTypes: []string{"application/json;            charset=utf-8"},
+			expCompression:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := Config{
+				MinSize:              1024,
+				IncludedContentTypes: test.includedContentTypes,
+			}
+			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set(contentType, test.contentType)
+				rw.WriteHeader(http.StatusOK)
+
+				tb := bigTestBody
+				for len(tb) > 0 {
+					// Write 100 bytes per run
+					// Detection should not be affected (we send 100 bytes)
+					toWrite := 100
+					if toWrite > len(tb) {
+						toWrite = len(tb)
+					}
+
+					_, err := rw.Write(tb[:toWrite])
+					require.NoError(t, err)
+
+					// Flush between each write
+					rw.(http.Flusher).Flush()
+					tb = tb[toWrite:]
+				}
+			}))
+
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
+			req.Header.Set(acceptEncoding, "br")
+
+			// This doesn't allow checking flushes, but we validate if content is correct.
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusOK, rw.Code)
+
+			if test.expCompression {
+				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
+
+				got, err := io.ReadAll(brotli.NewReader(rw.Body))
+				assert.NoError(t, err)
+				assert.Equal(t, bigTestBody, got)
+			} else {
+				assert.NotEqual(t, "br", rw.Header().Get(contentEncoding))
+
+				got, err := io.ReadAll(rw.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, bigTestBody, got)
+			}
+		})
+	}
+}
+
 func mustNewWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
 	t.Helper()
 
@@ -527,6 +750,7 @@ func newTestHandler(t *testing.T, body []byte) http.Handler {
 				rw.Header().Set("Content-Encoding", "br")
 			}
 
+			rw.WriteHeader(http.StatusAccepted)
 			_, err := rw.Write(body)
 			require.NoError(t, err)
 		}),

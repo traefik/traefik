@@ -16,22 +16,23 @@
     "build:nc": "yarn build"
   },
   "dependencies": {
-    "@quasar/extras": "^1.0.0",
-    "axios": "^0.19.0",
+    "@quasar/extras": "^1.11.2",
+    "axios": "^0.21.1",
     "bowser": "^2.5.2",
     "chart.js": "^2.8.0",
     "dot-prop": "^5.2.0",
+    "core-js": "^3.35.1",
     "iframe-resizer": "^4.2.11",
     "lodash.isequal": "4.5.0",
     "moment": "^2.24.0",
-    "quasar": "^1.4.4",
+    "quasar": "^1.22.10",
     "query-string": "^6.13.1",
     "vh-check": "^2.0.5",
     "vue-chartjs": "^3.4.2",
     "vuex-map-fields": "^1.3.4"
   },
   "devDependencies": {
-    "@quasar/app": "^1.2.4",
+    "@quasar/app": "^2.4.3",
     "@vue/eslint-config-standard": "^4.0.0",
     "@vue/test-utils": "^1.0.0-beta.29",
     "babel-eslint": "^10.0.1",
@@ -43,9 +44,7 @@
     "eslint-plugin-vue": "^5.0.0",
     "mocha": "^6.2.2",
     "mocha-webpack": "^2.0.0-beta.0",
-    "node-sass": "^4.12.0",
-    "prettier": "1.19.1",
-    "sass-loader": "^7.1.0"
+    "prettier": "1.19.1"
   },
   "engines": {
     "node": ">= 8.9.0",

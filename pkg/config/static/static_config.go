@@ -71,9 +71,21 @@ type Configuration struct {
 
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
 
-	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
+	Experimental *Experimental `description:"Experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
+
+	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
+}
+
+// Core configures Traefik core behavior.
+type Core struct {
+	DefaultRuleSyntax string `description:"Defines the rule parser default syntax (v2 or v3)" json:"defaultRuleSyntax,omitempty" toml:"defaultRuleSyntax,omitempty" yaml:"defaultRuleSyntax,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (c *Core) SetDefaults() {
+	c.DefaultRuleSyntax = "v3"
 }
 
 // SpiffeClientConfig defines the SPIFFE client configuration.
@@ -182,9 +194,9 @@ func (a *LifeCycle) SetDefaults() {
 // Tracing holds the tracing configuration.
 type Tracing struct {
 	ServiceName      string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	Headers          map[string]string `description:"Defines additional headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	GlobalAttributes map[string]string `description:"Defines additional attributes (key:value) on all spans." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
 	SampleRate       float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	AddInternals     bool              `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
 
 	OTLP *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
@@ -206,7 +218,7 @@ type Providers struct {
 	KubernetesIngress *ingress.Provider              `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesCRD     *crd.Provider                  `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesGateway *gateway.Provider              `description:"Enable Kubernetes gateway api provider with default settings." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	Rest              *rest.Provider                 ` description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Rest              *rest.Provider                 `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ConsulCatalog     *consulcatalog.ProviderBuilder `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Nomad             *nomad.ProviderBuilder         `description:"Enable Nomad backend with default settings." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Ecs               *ecs.Provider                  `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -317,17 +329,26 @@ func (c *Configuration) ValidateConfiguration() error {
 		acmeEmail = resolver.ACME.Email
 	}
 
+	if c.Core != nil {
+		switch c.Core.DefaultRuleSyntax {
+		case "v3": // NOOP
+		case "v2":
+			// TODO: point to migration guide.
+			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
+		default:
+			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
 	if c.Tracing != nil && c.Tracing.OTLP != nil {
-		if c.Tracing.OTLP.HTTP == nil && c.Tracing.OTLP.GRPC == nil {
-			return errors.New("tracing OTLP: at least one of HTTP and gRPC options should be defined")
-		}
-
-		if c.Tracing.OTLP.HTTP != nil && c.Tracing.OTLP.GRPC != nil {
-			return errors.New("tracing OTLP: HTTP and gRPC options are mutually exclusive")
-		}
-
 		if c.Tracing.OTLP.GRPC != nil && c.Tracing.OTLP.GRPC.TLS != nil && c.Tracing.OTLP.GRPC.Insecure {
 			return errors.New("tracing OTLP GRPC: TLS and Insecure options are mutually exclusive")
+		}
+	}
+
+	if c.Metrics != nil && c.Metrics.OTLP != nil {
+		if c.Metrics.OTLP.GRPC != nil && c.Metrics.OTLP.GRPC.TLS != nil && c.Metrics.OTLP.GRPC.Insecure {
+			return errors.New("metrics OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}
 	}
 

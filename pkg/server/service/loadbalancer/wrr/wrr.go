@@ -4,9 +4,9 @@ import (
 	"container/heap"
 	"context"
 	"errors"
-	"fmt"
 	"hash/fnv"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -25,6 +25,7 @@ type stickyCookie struct {
 	secure   bool
 	httpOnly bool
 	sameSite string
+	maxAge   int
 }
 
 func convertSameSite(sameSite string) http.SameSite {
@@ -77,6 +78,7 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 			secure:   sticky.Cookie.Secure,
 			httpOnly: sticky.Cookie.HTTPOnly,
 			sameSite: sticky.Cookie.SameSite,
+			maxAge:   sticky.Cookie.MaxAge,
 		}
 	}
 
@@ -238,6 +240,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			HttpOnly: b.stickyCookie.httpOnly,
 			Secure:   b.stickyCookie.secure,
 			SameSite: convertSameSite(b.stickyCookie.sameSite),
+			MaxAge:   b.stickyCookie.maxAge,
 		}
 		http.SetCookie(w, cookie)
 	}
@@ -273,5 +276,5 @@ func hash(input string) string {
 	// We purposely ignore the error because the implementation always returns nil.
 	_, _ = hasher.Write([]byte(input))
 
-	return fmt.Sprintf("%x", hasher.Sum64())
+	return strconv.FormatUint(hasher.Sum64(), 16)
 }
