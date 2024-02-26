@@ -27,6 +27,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		paths        []string
 		expected     *dynamic.Configuration
 		entryPoints  map[string]Entrypoint
+		enableAlpha  bool
 	}{
 		{
 			desc: "Empty",
@@ -473,6 +474,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			entryPoints: map[string]Entrypoint{"TCP": {
 				Address: ":8080",
 			}},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1726,6 +1728,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
+			if test.enableAlpha {
+				p.EnableAlphaAPIs = true
+			}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1739,7 +1744,6 @@ func TestLoadTCPRoutes(t *testing.T) {
 		paths        []string
 		expected     *dynamic.Configuration
 		entryPoints  map[string]Entrypoint
-		enableAlpha  bool
 	}{
 		{
 			desc: "Empty",
@@ -2486,7 +2490,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, EnableAlphaAPIs: test.enableAlpha}
+			p := Provider{EntryPoints: test.entryPoints, EnableAlphaAPIs: true}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
@@ -3615,7 +3619,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints}
+			p := Provider{EntryPoints: test.entryPoints, EnableAlphaAPIs: true}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
@@ -3629,6 +3633,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 		paths        []string
 		expected     *dynamic.Configuration
 		entryPoints  map[string]Entrypoint
+		enableAlpha  bool
 	}{
 		{
 			desc: "Empty",
@@ -3740,6 +3745,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3924,6 +3930,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4080,6 +4087,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4330,6 +4338,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4485,6 +4494,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tcp":       {Address: ":9000"},
 				"tls":       {Address: ":10000"},
 			},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4624,6 +4634,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
+			if test.enableAlpha {
+				p.EnableAlphaAPIs = true
+			}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
@@ -4637,6 +4650,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 		paths        []string
 		expected     *dynamic.Configuration
 		entryPoints  map[string]Entrypoint
+		enableAlpha  bool
 	}{
 		{
 			desc: "Empty",
@@ -4744,6 +4758,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			entryPoints: map[string]Entrypoint{
 				"tls": {Address: ":9000"},
 			},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4814,6 +4829,9 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
+			if test.enableAlpha {
+				p.EnableAlphaAPIs = true
+			}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
