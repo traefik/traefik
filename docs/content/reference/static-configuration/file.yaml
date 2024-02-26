@@ -163,6 +163,7 @@ providers:
       - foobar
     labelSelector: foobar
     throttleDuration: 42s
+    enableAlphaAPIs: true
   rest:
     insecure: true
   consulCatalog:

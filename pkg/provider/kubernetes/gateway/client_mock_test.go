@@ -249,6 +249,6 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c clientMock) WatchAll(namespaces []string, enableAlphaAPIs bool, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
 }
