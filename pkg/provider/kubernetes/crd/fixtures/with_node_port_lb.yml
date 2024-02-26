@@ -15,6 +15,7 @@ spec:
     - name: nodeport-svc
       port: 80
       nodePortLB: true
+
 ---
 kind: Node
 apiVersion: v1
