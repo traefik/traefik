@@ -33,6 +33,7 @@ spec:
   clusterIP: 10.0.0.1
   type: NodePort
   externalName: traefik.wtf
+
 ---
 kind: Node
 apiVersion: v1

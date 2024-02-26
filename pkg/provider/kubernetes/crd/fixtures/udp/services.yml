@@ -221,6 +221,7 @@ spec:
       port: 8000
   type: ClusterIP
   clusterIP: 10.10.0.1
+
 ---
 apiVersion: v1
 kind: Service
