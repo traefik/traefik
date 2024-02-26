@@ -269,7 +269,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	for t, ok := range c.factoryClusterScope.WaitForCacheSync(stopCh) {
 		if !ok {
-			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace all", t.String())
+			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
 		}
 	}
 
