@@ -17,6 +17,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/forward"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -540,6 +542,8 @@ func TestForwardAuthTracing(t *testing.T) {
 			req.Header.Set("X-Forwarded-Proto", "http")
 			req.Header.Set("X-Foo", "foo")
 			req.Header.Add("X-Foo", "bar")
+
+			otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
 			mockTracer := &mockTracer{}
 			tracer := tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"})
