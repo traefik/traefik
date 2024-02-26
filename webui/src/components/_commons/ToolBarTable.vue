@@ -103,6 +103,10 @@ export default {
         &.bg-app-toggle {
           color: $accent !important;
         }
+
+        .body--dark &.bg-app-toggle {
+          color: lighten($accent, 25%) !important;
+        }
       }
     }
     :deep(.bar-search) {
