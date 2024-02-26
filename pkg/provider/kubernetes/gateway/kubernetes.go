@@ -947,7 +947,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Li
 			ObservedGeneration: gateway.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteKindReferences", // TODO should never happen as the selector is validated by Kubernetes
-			Message:            fmt.Sprintf("A TCPRoute is referenced to this Gateway, but Alpha APIs are disabled"),
+			Message:            "A TCPRoute is referenced to this Gateway, but Alpha APIs are disabled",
 		}}
 	}
 
