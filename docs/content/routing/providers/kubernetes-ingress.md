@@ -290,7 +290,7 @@ which in turn will create the resulting routers, services, handlers, etc.
 ??? info "`traefik.ingress.kubernetes.io/service.nodeportlb`"
 
     Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
-    It allows services to be reachable when traefik runs externally from the kubernetes cluster but within the same network of the nodes.
+    It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
     By default, NodePortLB is false.
 
     ```yaml
