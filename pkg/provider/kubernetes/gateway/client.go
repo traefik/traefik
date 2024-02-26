@@ -205,7 +205,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, enableAlpha bool, stopCh <
 			if err != nil {
 				return nil, err
 			}
-
 		}
 		_, err = factoryGateway.Gateway().V1beta1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
 		if err != nil {

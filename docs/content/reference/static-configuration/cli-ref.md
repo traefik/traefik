@@ -723,6 +723,9 @@ Enable Kubernetes gateway api provider with default settings. (Default: ```false
 `--providers.kubernetesgateway.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`--providers.kubernetesgateway.enablealphaapis`:  
+Toggles whether or not Alpha APIs should be used (Default: ```false```)
+
 `--providers.kubernetesgateway.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
