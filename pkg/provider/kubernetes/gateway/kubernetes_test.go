@@ -27,6 +27,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		paths        []string
 		expected     *dynamic.Configuration
 		entryPoints  map[string]Entrypoint
+		enableAlpha  bool
 	}{
 		{
 			desc: "Empty",
@@ -473,6 +474,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			entryPoints: map[string]Entrypoint{"TCP": {
 				Address: ":8080",
 			}},
+			enableAlpha: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1726,6 +1728,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
+			if test.enableAlpha {
+				p.EnableAlphaAPIs = true
+			}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1739,7 +1744,6 @@ func TestLoadTCPRoutes(t *testing.T) {
 		paths        []string
 		expected     *dynamic.Configuration
 		entryPoints  map[string]Entrypoint
-		enableAlpha  bool
 	}{
 		{
 			desc: "Empty",
@@ -2486,7 +2490,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, EnableAlphaAPIs: test.enableAlpha}
+			p := Provider{EntryPoints: test.entryPoints, EnableAlphaAPIs: true}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
