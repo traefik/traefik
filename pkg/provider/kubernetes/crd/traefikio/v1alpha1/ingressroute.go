@@ -126,6 +126,11 @@ type LoadBalancerSpec struct {
 	// The Kubernetes Service itself does load-balance to the pods.
 	// By default, NativeLB is false.
 	NativeLB bool `json:"nativeLB,omitempty"`
+	// NodePortLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+	// By default, NodePortLB is false.
+	NodePortLB bool `json:"nodePortLB,omitempty"`
 }
 
 type ResponseForwarding struct {

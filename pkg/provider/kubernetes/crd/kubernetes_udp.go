@@ -131,6 +131,34 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 	}
 
 	var servers []dynamic.UDPServer
+
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		nodes, nodesExists, nodesErr := client.GetNodes()
+		if nodesErr != nil {
+			return nil, nodesErr
+		}
+
+		if !nodesExists || len(nodes) == 0 {
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+		}
+
+		for _, node := range nodes {
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == corev1.NodeInternalIP {
+					servers = append(servers, dynamic.UDPServer{
+						Address: net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort))),
+					})
+				}
+			}
+		}
+
+		if len(servers) == 0 {
+			return nil, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
+		}
+
+		return servers, nil
+	}
+
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
