@@ -58,6 +58,7 @@ type Provider struct {
 	LabelSelector    string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	EnableAlphaAPIs  bool                  `description:"Toggles whether or not Alpha APIs should be used" json:"enableAlphaAPIs,omitempty" toml:"enableAlphaAPIs,omitempty" yaml:"enableAlphaAPIs,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -134,7 +135,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, p.EnableAlphaAPIs, ctxPool.Done())
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
@@ -354,7 +355,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			// AttachedRoutes: 0 TODO Set to number of Routes associated with a Listener regardless of Gateway or Route status
 		}
 
-		supportedKinds, conditions := supportedRouteKinds(listener.Protocol)
+		supportedKinds, conditions := supportedRouteKinds(listener.Protocol, p.EnableAlphaAPIs)
 		if len(conditions) > 0 {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 			continue
@@ -563,7 +564,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			case kindHTTPRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTCPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf, p.EnableAlphaAPIs)...)
 			case kindTLSRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
 			}
@@ -674,21 +675,41 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func supportedRouteKinds(protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(protocol gatev1.ProtocolType, enableAlpha bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		if enableAlpha {
+			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires TCPRoute's which are disabled without using enableAlphaAPIs", protocol),
+		}}
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
 
 	case gatev1.TLSProtocolType:
-		return []gatev1.RouteGroupKind{
-			{Kind: kindTCPRoute, Group: &group},
-			{Kind: kindTLSRoute, Group: &group},
-		}, nil
+		if enableAlpha {
+			return []gatev1.RouteGroupKind{
+				{Kind: kindTCPRoute, Group: &group},
+				{Kind: kindTLSRoute, Group: &group},
+			}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires TLSRoute's which are disabled without using enableAlphaAPIs", protocol),
+		}}
 	}
 
 	return nil, []metav1.Condition{{
@@ -913,10 +934,21 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 	return conditions
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration, enableAlpha bool) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
 		return nil
+	}
+
+	if !enableAlpha {
+		return []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             "InvalidRouteKindReferences", // TODO should never happen as the selector is validated by Kubernetes
+			Message:            fmt.Sprintf("A TCPRoute is referenced to this Gateway, but Alpha APIs are disabled"),
+		}}
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
