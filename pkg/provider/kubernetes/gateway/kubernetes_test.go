@@ -1725,7 +1725,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints}
+			p := Provider{EntryPoints: test.entryPoints, EnableAlphaAPIs: true}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
