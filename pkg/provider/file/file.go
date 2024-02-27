@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -47,18 +48,31 @@ func (p *Provider) Init() error {
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.Watch {
-		var watchItem string
+		var watchItems []string
 
 		switch {
 		case len(p.Directory) > 0:
-			watchItem = p.Directory
+			watchItems = append(watchItems, p.Directory)
+
+			fileList, err := os.ReadDir(p.Directory)
+			if err != nil {
+				return fmt.Errorf("unable to read directory %s: %w", p.Directory, err)
+			}
+
+			for _, entry := range fileList {
+				if entry.IsDir() {
+					// ignore sub-dir
+					continue
+				}
+				watchItems = append(watchItems, path.Join(p.Directory, entry.Name()))
+			}
 		case len(p.Filename) > 0:
-			watchItem = filepath.Dir(p.Filename)
+			watchItems = append(watchItems, filepath.Dir(p.Filename), p.Filename)
 		default:
 			return errors.New("error using file configuration provider, neither filename or directory defined")
 		}
 
-		if err := p.addWatcher(pool, watchItem, configurationChan, p.watcherCallback); err != nil {
+		if err := p.addWatcher(pool, watchItems, configurationChan, p.watcherCallback); err != nil {
 			return err
 		}
 	}
@@ -92,15 +106,18 @@ func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
 	return nil, errors.New("error using file configuration provider, neither filename or directory defined")
 }
 
-func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
+func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("error creating file watcher: %w", err)
 	}
 
-	err = watcher.Add(directory)
-	if err != nil {
-		return fmt.Errorf("error adding file watcher: %w", err)
+	for _, item := range items {
+		log.WithoutContext().Debugf("add watcher on: %s", item)
+		err = watcher.Add(item)
+		if err != nil {
+			return fmt.Errorf("error adding file watcher: %w", err)
+		}
 	}
 
 	// Process events

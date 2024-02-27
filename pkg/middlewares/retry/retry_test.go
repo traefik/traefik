@@ -203,7 +203,7 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 	}
 
 	// Validate that we don't have headers from previous attempts
-	for i := 0; i < attempt; i++ {
+	for i := range attempt {
 		headerName := fmt.Sprintf("X-Foo-Test-%d", i)
 		headerValue = responseRecorder.Header().Get("headerName")
 		if headerValue != "" {

@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -412,13 +413,9 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
 	// configuration through the new kubernetes ingressClass
 	if ingress.Spec.IngressClassName != nil {
-		for _, ic := range ingressClasses {
-			if *ingress.Spec.IngressClassName == ic.ObjectMeta.Name {
-				return true
-			}
-		}
-
-		return false
+		return slices.ContainsFunc(ingressClasses, func(ic *netv1.IngressClass) bool {
+			return *ingress.Spec.IngressClassName == ic.ObjectMeta.Name
+		})
 	}
 
 	return p.IngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||

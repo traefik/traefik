@@ -226,7 +226,7 @@ func getProviders(conf static.Configuration) []string {
 	var providers []string
 
 	v := reflect.ValueOf(conf.Providers).Elem()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
@@ -256,7 +256,7 @@ func getMetrics(conf static.Configuration) string {
 	}
 
 	v := reflect.ValueOf(conf.Metrics).Elem()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
@@ -274,7 +274,7 @@ func getTracing(conf static.Configuration) string {
 	}
 
 	v := reflect.ValueOf(conf.Tracing).Elem()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {

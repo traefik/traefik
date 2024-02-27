@@ -1,4 +1,4 @@
-package collector
+package hydratation
 
 import (
 	"fmt"
@@ -17,7 +17,8 @@ const (
 	defaultMapKeyPrefix = "name"
 )
 
-func hydrate(element interface{}) error {
+// Hydrate hydrates a configuration.
+func Hydrate(element interface{}) error {
 	field := reflect.ValueOf(element)
 	return fill(field)
 }
@@ -41,9 +42,7 @@ func fill(field reflect.Value) error {
 			return err
 		}
 	case reflect.Interface:
-		if err := fill(field.Elem()); err != nil {
-			return err
-		}
+		setTyped(field, defaultString)
 	case reflect.String:
 		setTyped(field, defaultString)
 	case reflect.Int:
@@ -57,7 +56,7 @@ func fill(field reflect.Value) error {
 	case reflect.Int64:
 		switch field.Type() {
 		case reflect.TypeOf(types.Duration(time.Second)):
-			setTyped(field, int64(defaultNumber*int(time.Second)))
+			setTyped(field, types.Duration(defaultNumber*time.Second))
 		default:
 			setTyped(field, int64(defaultNumber))
 		}
@@ -94,12 +93,12 @@ func setTyped(field reflect.Value, i interface{}) {
 func setMap(field reflect.Value) error {
 	field.Set(reflect.MakeMap(field.Type()))
 
-	for i := 0; i < mapItemNumber; i++ {
+	for i := range mapItemNumber {
 		baseKeyName := makeKeyName(field.Type().Elem())
 		key := reflect.ValueOf(fmt.Sprintf("%s%d", baseKeyName, i))
 
 		// generate value
-		ptrType := reflect.PtrTo(field.Type().Elem())
+		ptrType := reflect.PointerTo(field.Type().Elem())
 		ptrValue := reflect.New(ptrType)
 		if err := fill(ptrValue); err != nil {
 			return err
@@ -118,7 +117,7 @@ func makeKeyName(typ reflect.Type) string {
 	case reflect.String,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Bool, reflect.Float32, reflect.Float64:
+		reflect.Bool, reflect.Float32, reflect.Float64, reflect.Interface:
 		return defaultMapKeyPrefix
 	default:
 		return typ.Name()
@@ -126,7 +125,7 @@ func makeKeyName(typ reflect.Type) string {
 }
 
 func setStruct(field reflect.Value) error {
-	for i := 0; i < field.NumField(); i++ {
+	for i := range field.NumField() {
 		fld := field.Field(i)
 		stFld := field.Type().Field(i)
 
@@ -143,7 +142,7 @@ func setStruct(field reflect.Value) error {
 
 func setSlice(field reflect.Value) error {
 	field.Set(reflect.MakeSlice(field.Type(), sliceItemNumber, sliceItemNumber))
-	for j := 0; j < field.Len(); j++ {
+	for j := range field.Len() {
 		if err := fill(field.Index(j)); err != nil {
 			return err
 		}
