@@ -599,6 +599,41 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 			return svc, nil
 		}
+
+		if svcConfig.Service.NodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
+			nodes, nodesExists, nodesErr := client.GetNodes()
+			if nodesErr != nil {
+				return nil, nodesErr
+			}
+
+			if !nodesExists || len(nodes) == 0 {
+				return nil, fmt.Errorf("nodes not found in namespace %s", namespace)
+			}
+
+			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+
+			var servers []dynamic.Server
+
+			for _, node := range nodes {
+				for _, addr := range node.Status.Addresses {
+					if addr.Type == corev1.NodeInternalIP {
+						hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(portSpec.NodePort)))
+
+						servers = append(servers, dynamic.Server{
+							URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+						})
+					}
+				}
+			}
+
+			if len(servers) == 0 {
+				return nil, fmt.Errorf("no servers were generated for service %s in namespace", backend.Service.Name)
+			}
+
+			svc.LoadBalancer.Servers = servers
+
+			return svc, nil
+		}
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
