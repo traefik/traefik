@@ -161,6 +161,7 @@
     connectByDefault = true
     serviceName = "foobar"
     watch = true
+    strictChecks = ["foobar", "foobar"]
     namespaces = ["foobar", "foobar"]
     [providers.consulCatalog.endpoint]
       address = "foobar"
