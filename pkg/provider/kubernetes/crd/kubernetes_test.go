@@ -2434,6 +2434,60 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "services standard lb",
+			paths: []string{"with_services_lb4.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"web"},
+							Service:     "default-lb1",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-lb1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://my-external-server1.local.pri:443",
+									},
+									{
+										URL: "https://my-external-server2.local.pri:443",
+									},
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Hostname: "my-external-server.local.pri",
+									Path:     "/health",
+									Interval: 15000000000,
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Secure:   true,
+										HTTPOnly: true,
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
 			desc:                "services lb, servers lb, and mirror service, all in a wrr with different namespaces",
 			allowCrossNamespace: true,
 			paths:               []string{"with_namespaces.yml"},
