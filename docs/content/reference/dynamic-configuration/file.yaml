@@ -422,8 +422,12 @@ http:
       certificates:
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -447,8 +451,12 @@ http:
       certificates:
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -560,8 +568,12 @@ tcp:
         certificates:
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
         peerCertURI: foobar
         spiffe:
           ids:
@@ -581,8 +593,12 @@ tcp:
         certificates:
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
         peerCertURI: foobar
         spiffe:
           ids:
@@ -618,11 +634,15 @@ tls:
   certificates:
     - certFile: foobar
       keyFile: foobar
+      ocsp:
+        disableStapling: true
       stores:
         - foobar
         - foobar
     - certFile: foobar
       keyFile: foobar
+      ocsp:
+        disableStapling: true
       stores:
         - foobar
         - foobar
@@ -672,6 +692,8 @@ tls:
       defaultCertificate:
         certFile: foobar
         keyFile: foobar
+        ocsp:
+          disableStapling: true
       defaultGeneratedCert:
         resolver: foobar
         domain:
@@ -683,6 +705,8 @@ tls:
       defaultCertificate:
         certFile: foobar
         keyFile: foobar
+        ocsp:
+          disableStapling: true
       defaultGeneratedCert:
         resolver: foobar
         domain:
