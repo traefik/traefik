@@ -11,6 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
@@ -37,6 +39,8 @@ func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
 		backend = defaultBackend
 	}
 
+	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
+
 	return backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
 }
 
@@ -57,13 +61,13 @@ func TracerFromContext(ctx context.Context) trace.Tracer {
 
 // ExtractCarrierIntoContext reads cross-cutting concerns from the carrier into a Context.
 func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context.Context {
-	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	propagator := otel.GetTextMapPropagator()
 	return propagator.Extract(ctx, propagation.HeaderCarrier(headers))
 }
 
 // InjectContextIntoCarrier sets cross-cutting concerns from the request context into the request headers.
 func InjectContextIntoCarrier(req *http.Request) {
-	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	propagator := otel.GetTextMapPropagator()
 	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 }
 

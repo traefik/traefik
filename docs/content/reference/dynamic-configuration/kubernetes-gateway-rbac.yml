@@ -27,6 +27,7 @@ rules:
       - gatewayclasses
       - gateways
       - httproutes
+      - referencegrants
       - tcproutes
       - tlsroutes
     verbs:
