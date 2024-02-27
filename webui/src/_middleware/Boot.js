@@ -4,6 +4,11 @@ import Helps from '../_helpers/Helps'
 const Boot = {
   install (Vue, options) {
     Vue.mixin({
+      filters: {
+        capFirstLetter (value) {
+          return Helps.capFirstLetter(value)
+        }
+      },
       data () {
         return {
         }
@@ -28,14 +33,9 @@ const Boot = {
           }
         }
       },
-      methods: {
-      },
-      filters: {
-        capFirstLetter (value) {
-          return Helps.capFirstLetter(value)
-        }
-      },
       created () {
+      },
+      methods: {
       }
     })
   }

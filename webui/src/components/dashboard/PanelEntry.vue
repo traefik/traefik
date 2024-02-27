@@ -1,26 +1,40 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-entry', {'panel-entry-detail':type === 'detail'}, {'panel-entry-focus':focus}, {'panel-entry-ex-size':exSize}]">
+  <q-card
+    flat
+    bordered
+    :class="['panel-entry', {'panel-entry-detail':type === 'detail'}, {'panel-entry-focus':focus}, {'panel-entry-ex-size':exSize}]"
+  >
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col">
-          <div class="text-subtitle2">{{name}}</div>
+          <div class="text-subtitle2">
+            {{ name }}
+          </div>
         </div>
       </div>
     </q-card-section>
     <q-card-section>
       <div class="text-h3 text-center text-weight-bold ellipsis">
-        <span>{{address}}</span>
-        <q-tooltip>{{address}}</q-tooltip>
+        <span>{{ address }}</span>
+        <q-tooltip>{{ address }}</q-tooltip>
       </div>
     </q-card-section>
   </q-card>
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'PanelEntry',
-  props: ['address', 'name', 'type', 'focus', 'exSize']
-}
+  props: {
+    address: String,
+    name: String,
+    type: String,
+    focus: Boolean,
+    exSize: Number
+  }
+})
 </script>
 
 <style scoped lang="scss">

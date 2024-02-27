@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -301,15 +302,9 @@ func alpn(tree *matchersTree, protos ...string) error {
 	}
 
 	tree.matcher = func(meta ConnData) bool {
-		for _, proto := range meta.alpnProtos {
-			for _, filter := range protos {
-				if proto == filter {
-					return true
-				}
-			}
-		}
-
-		return false
+		return slices.ContainsFunc(meta.alpnProtos, func(proto string) bool {
+			return slices.Contains(protos, proto)
+		})
 	}
 
 	return nil
@@ -374,7 +369,7 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 // hostSNIRegexp checks if the SNI Host of the connection matches the matcher host regexp.
 func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 	if len(templates) == 0 {
-		return fmt.Errorf("empty value for \"HostSNIRegexp\" matcher is not allowed")
+		return errors.New("empty value for \"HostSNIRegexp\" matcher is not allowed")
 	}
 
 	var regexps []*regexp.Regexp
@@ -469,7 +464,7 @@ func varGroupName(idx int) string {
 func braceIndices(s string) ([]int, error) {
 	var level, idx int
 	var idxs []int
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		switch s[i] {
 		case '{':
 			if level++; level == 1 {

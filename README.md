@@ -74,6 +74,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
 - [Marathon](https://doc.traefik.io/traefik/providers/marathon/)
 - [Rancher](https://doc.traefik.io/traefik/providers/rancher/) (Metadata)
+- [ECS](https://doc.traefik.io/traefik/providers/ecs/)
 - [File](https://doc.traefik.io/traefik/providers/file/)
 
 ## Quickstart

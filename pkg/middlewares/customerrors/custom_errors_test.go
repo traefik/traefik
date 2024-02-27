@@ -298,7 +298,7 @@ func TestNewResponseRecorder(t *testing.T) {
 			t.Parallel()
 
 			rec := newCodeModifier(test.rw, 0)
-			assert.IsType(t, rec, test.expected)
+			assert.IsType(t, test.expected, rec)
 		})
 	}
 }

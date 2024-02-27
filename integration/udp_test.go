@@ -82,7 +82,7 @@ func (s *UDPSuite) TestWRR() {
 	stop := make(chan struct{})
 	go func() {
 		call := map[string]int{}
-		for i := 0; i < 8; i++ {
+		for range 8 {
 			out, err := guessWhoUDP("127.0.0.1:8093")
 			require.NoError(s.T(), err)
 			switch {
@@ -96,7 +96,7 @@ func (s *UDPSuite) TestWRR() {
 				call["unknown"]++
 			}
 		}
-		assert.EqualValues(s.T(), call, map[string]int{"whoami-a": 3, "whoami-b": 2, "whoami-c": 3})
+		assert.EqualValues(s.T(), map[string]int{"whoami-a": 3, "whoami-b": 2, "whoami-c": 3}, call)
 		close(stop)
 	}()
 

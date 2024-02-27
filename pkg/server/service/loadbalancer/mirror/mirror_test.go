@@ -32,7 +32,7 @@ func TestMirroringOn100(t *testing.T) {
 	}), 50)
 	assert.NoError(t, err)
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -61,7 +61,7 @@ func TestMirroringOn10(t *testing.T) {
 	}), 50)
 	assert.NoError(t, err)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -156,7 +156,7 @@ func TestMirroringWithBody(t *testing.T) {
 
 	mirror := New(handler, pool, defaultMaxBodySize, nil)
 
-	for i := 0; i < numMirrors; i++ {
+	for range numMirrors {
 		err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			assert.NotNil(t, r.Body)
 			bb, err := io.ReadAll(r.Body)

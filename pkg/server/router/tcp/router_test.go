@@ -171,9 +171,11 @@ func Test_Routing(t *testing.T) {
 		map[string]traefiktls.Store{},
 		map[string]traefiktls.Options{
 			"default": {
+				MinVersion: "VersionTLS10",
 				MaxVersion: "VersionTLS10",
 			},
 			"tls10": {
+				MinVersion: "VersionTLS10",
 				MaxVersion: "VersionTLS10",
 			},
 			"tls12": {

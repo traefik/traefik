@@ -152,17 +152,10 @@ linters-settings:
       - github.com/jaguilar/vt100
       - github.com/cucumber/godog
   testifylint:
-    enable:
-      - bool-compare
-      - compares
-      - empty
-      - error-is-as
-      - error-nil
-      - expected-actual
-      - float-compare
-      - len
-      - suite-extra-assert-call
-      - suite-thelper
+    disable:
+      - suite-dont-use-pkg
+      - require-error
+      - go-require
 
 linters:
   enable-all: true
@@ -218,7 +211,7 @@ linters:
 
 issues:
   exclude-use-default: false
-  max-per-linter: 0
+  max-issues-per-linter: 0
   max-same-issues: 0
   exclude:
     - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
@@ -232,6 +225,7 @@ issues:
     - 'SA1019: c.Providers.ConsulCatalog.Namespace is deprecated'
     - 'SA1019: c.Providers.Consul.Namespace is deprecated'
     - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
+    - 'fmt.Sprintf can be replaced with string'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:

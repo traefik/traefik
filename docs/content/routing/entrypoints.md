@@ -616,7 +616,7 @@ The maximum number of requests Traefik can handle before sending a `Connection: 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveRequests=42
+    --entryPoints.name.transport.keepAliveMaxRequests=42
     ```
 
 #### `keepAliveMaxTime`
@@ -646,7 +646,7 @@ The maximum duration Traefik can handle requests before sending a `Connection: C
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveTime=42s
+    --entryPoints.name.transport.keepAliveMaxTime=42s
     ```
 
 ### ProxyProtocol
@@ -865,7 +865,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
 
 ??? info "`entryPoint.priority`"
 
-    _Optional, Default=MaxInt32-1 (2147483646)_
+    _Optional, Default=MaxInt-1_
 
     Priority of the generated router.
 

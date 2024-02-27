@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/router"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"golang.org/x/net/http2"
@@ -380,7 +381,7 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	case *proxyproto.Conn:
 		underlying, ok := typedConn.TCPConn()
 		if !ok {
-			return nil, fmt.Errorf("underlying connection is not a tcp connection")
+			return nil, errors.New("underlying connection is not a tcp connection")
 		}
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
@@ -613,6 +614,16 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		}
 	}
 
+	prevConnContext := serverHTTP.ConnContext
+	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = service.AddTransportOnContext(ctx)
+		if prevConnContext != nil {
+			return prevConnContext(ctx, c)
+		}
+		return ctx
+	}
+
 	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
 	// Also keeping behavior the same as
 	// https://cs.opensource.google/go/go/+/refs/tags/go1.17.7:src/net/http/server.go;l=3262
@@ -621,7 +632,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 			NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
 		})
-
 		if err != nil {
 			return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
 		}
