@@ -118,7 +118,8 @@ export default defineComponent({
   .q-toolbar {
     min-height: 48px;
     padding: 0;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .body--dark .q-toolbar {
