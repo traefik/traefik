@@ -409,6 +409,39 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}), nil
 	}
 
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		nodes, nodesExists, nodesErr := c.client.GetNodes()
+		if nodesErr != nil {
+			return nil, nodesErr
+		}
+		if !nodesExists || len(nodes) == 0 {
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", namespace, sanitizedName)
+		}
+
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, node := range nodes {
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == corev1.NodeInternalIP {
+					hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort)))
+
+					servers = append(servers, dynamic.Server{
+						URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+					})
+				}
+			}
+		}
+
+		if len(servers) == 0 {
+			return nil, fmt.Errorf("no servers were generated for service %s in namespace", sanitizedName)
+		}
+
+		return servers, nil
+	}
+
 	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
 	if endpointsErr != nil {
 		return nil, endpointsErr

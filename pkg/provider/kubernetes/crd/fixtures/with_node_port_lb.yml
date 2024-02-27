@@ -1,0 +1,27 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: Host(`foo.com`)
+    kind: Rule
+    services:
+    - name: nodeport-svc
+      port: 80
+      nodePortLB: true
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: traefik-node
+status:
+  addresses:
+    - type: InternalIP
+      address: 172.16.4.4
