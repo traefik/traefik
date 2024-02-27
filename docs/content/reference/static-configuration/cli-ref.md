@@ -537,6 +537,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`--providers.consulcatalog.strictchecks`:  
+A list of service health statuses to allow taking traffic. (Default: ```passing, warning```)
+
 `--providers.consulcatalog.watch`:  
 Watch Consul API events. (Default: ```false```)
 
