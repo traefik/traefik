@@ -82,6 +82,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.28.0
 	go.opentelemetry.io/otel/sdk/metric v1.28.0
 	go.opentelemetry.io/otel/trace v1.28.0
+	golang.org/x/crypto v0.24.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/mod v0.18.0
 	golang.org/x/net v0.26.0
@@ -335,7 +336,6 @@ require (
 	go.uber.org/ratelimit v0.3.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
