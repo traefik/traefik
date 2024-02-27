@@ -843,6 +843,9 @@ func Test_buildConfiguration(t *testing.T) {
 					Certificate: tls.Certificate{
 						CertFile: types.FileOrContent("foobar"),
 						KeyFile:  types.FileOrContent("foobar"),
+						OCSP: types.OCSPConfig{
+							DisableStapling: false,
+						},
 					},
 					Stores: []string{
 						"foobar",
@@ -853,6 +856,9 @@ func Test_buildConfiguration(t *testing.T) {
 					Certificate: tls.Certificate{
 						CertFile: types.FileOrContent("foobar"),
 						KeyFile:  types.FileOrContent("foobar"),
+						OCSP: types.OCSPConfig{
+							DisableStapling: false,
+						},
 					},
 					Stores: []string{
 						"foobar",
@@ -917,12 +923,18 @@ func Test_buildConfiguration(t *testing.T) {
 					DefaultCertificate: &tls.Certificate{
 						CertFile: types.FileOrContent("foobar"),
 						KeyFile:  types.FileOrContent("foobar"),
+						OCSP: types.OCSPConfig{
+							DisableStapling: false,
+						},
 					},
 				},
 				"Store1": {
 					DefaultCertificate: &tls.Certificate{
 						CertFile: types.FileOrContent("foobar"),
 						KeyFile:  types.FileOrContent("foobar"),
+						OCSP: types.OCSPConfig{
+							DisableStapling: false,
+						},
 					},
 				},
 			},

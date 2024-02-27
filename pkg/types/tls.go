@@ -13,6 +13,11 @@ import (
 
 // +k8s:deepcopy-gen=true
 
+// OCSPConfig configures how OCSP is handled.
+type OCSPConfig struct {
+	DisableStapling bool `json:"disableStapling,omitempty" toml:"disableStapling,omitempty" yaml:"disableStapling,omitempty"`
+}
+
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents.
 type ClientTLS struct {
