@@ -30,6 +30,23 @@ tracing:
 	By default, the OpenTelemetry trace exporter will sample 100% of traces.  
 	See [OpenTelemetry's SDK configuration](https://opentelemetry.io/docs/reference/specification/sdk-environment-variables/#general-sdk-configuration) to customize the sampling strategy.
 
+!!! info "Propagation"
+    
+    Traefik supports the `OTEL_PROPAGATORS` env variable to set up the propragators. The supported propagators are:
+
+    - tracecontext (default)
+    - baggage (default)
+    - b3
+    - b3multi
+    - jaeger
+    - xray
+    - ottrace
+
+    Example of configuration:
+
+        OTEL_PROPAGATORS=b3,jaeger
+
+
 ### HTTP configuration
 
 _Optional_

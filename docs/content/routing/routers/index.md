@@ -517,9 +517,14 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 ### RuleSyntax
 
+_Optional, Default=""_
+
 In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
+
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
 
 ??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
 
@@ -870,7 +875,7 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply _before_ the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
@@ -1217,9 +1222,14 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 ### RuleSyntax
 
+_Optional, Default=""_
+
 In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
+
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
 
 ??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
 
