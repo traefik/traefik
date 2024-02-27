@@ -1174,3 +1174,19 @@ entrypoints.foo.udp.timeout=10s
 ```
 
 {!traefik-for-business-applications.md!}
+
+## Socket Activation
+
+Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
+
+It uses the "by name" version to match socket to entryPoint name.
+
+```bash
+systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypoints.web --entrypoints.websecure
+```
+
+!!! warning "Only TCP"
+    Socket activation is not yet supported on UDP entryPoints.
+
+!!! warning "Docker support"
+    Socket activation is not supported with docker containers (but it works with podman)

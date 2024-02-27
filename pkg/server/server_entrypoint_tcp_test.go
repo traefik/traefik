@@ -72,7 +72,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(5 * time.Second)
 	epConfig.RespondingTimeouts.WriteTimeout = ptypes.Duration(5 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
 		// there seems to be shenanigans related to properly cleaning up file descriptors
 		Address:          "127.0.0.1:0",
@@ -159,7 +159,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -196,7 +196,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -236,7 +236,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxRequests = 3
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -282,7 +282,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxTime = ptypes.Duration(time.Millisecond)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
