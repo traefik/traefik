@@ -1,3 +1,81 @@
+## [v3.0.0-rc1](https://github.com/traefik/traefik/tree/v3.0.0-rc1) (2024-02-13)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta5...v3.0.0-rc1)
+
+**Enhancements:**
+- **[docker,service]** Adds weight on ServersLoadBalancer ([#10372](https://github.com/traefik/traefik/pull/10372) by [juliens](https://github.com/juliens))
+- **[file]** Reload provider file configuration on SIGHUP ([#9993](https://github.com/traefik/traefik/pull/9993) by [sokoide](https://github.com/sokoide))
+- **[k8s,k8s/gatewayapi]** Upgrade gateway api to v1.0.0 ([#10205](https://github.com/traefik/traefik/pull/10205) by [mmatur](https://github.com/mmatur))
+- **[k8s,k8s/gatewayapi]** Support for cross-namespace references / GatewayAPI ReferenceGrants ([#10346](https://github.com/traefik/traefik/pull/10346) by [pascal-hofmann](https://github.com/pascal-hofmann))
+- **[logs]** Introduce static config hints ([#10351](https://github.com/traefik/traefik/pull/10351) by [rtribotte](https://github.com/rtribotte))
+- **[metrics,tracing,accesslogs]** Remove observability for internal resources ([#9633](https://github.com/traefik/traefik/pull/9633) by [rtribotte](https://github.com/rtribotte))
+- **[metrics]** Add support for sending DogStatsD metrics over Unix Socket ([#10199](https://github.com/traefik/traefik/pull/10199) by [liamvdv](https://github.com/liamvdv))
+- **[middleware,authentication]** Add forwardAuth.addAuthCookiesToResponse ([#8924](https://github.com/traefik/traefik/pull/8924) by [tgunsch](https://github.com/tgunsch))
+- **[middleware]** Implements the includedContentTypes option for the compress middleware ([#10207](https://github.com/traefik/traefik/pull/10207) by [rjsocha](https://github.com/rjsocha))
+- **[middleware]** Feat re introduce IpWhitelist middleware as deprecated ([#10341](https://github.com/traefik/traefik/pull/10341) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Add ResponseCode to CircuitBreaker ([#10147](https://github.com/traefik/traefik/pull/10147) by [fahhem](https://github.com/fahhem))
+- **[middleware]** Add `rejectStatusCode` option to `IPAllowList` middleware ([#10130](https://github.com/traefik/traefik/pull/10130) by [jfly](https://github.com/jfly))
+- **[plugins]** Add http-wasm plugin support to Traefik ([#10189](https://github.com/traefik/traefik/pull/10189) by [zetaab](https://github.com/zetaab))
+- **[rules]** Bring back v2 rule matchers ([#10339](https://github.com/traefik/traefik/pull/10339) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Add SO_REUSEPORT support for EntryPoints ([#9834](https://github.com/traefik/traefik/pull/9834) by [aofei](https://github.com/aofei))
+- **[sticky-session]** Support setting sticky cookie max age  ([#10176](https://github.com/traefik/traefik/pull/10176) by [Patrick0308](https://github.com/Patrick0308))
+- **[tracing,otel]** Migrate to opentelemetry ([#10223](https://github.com/traefik/traefik/pull/10223) by [zetaab](https://github.com/zetaab))
+- Reintroduce dropped v2 dynamic config ([#10355](https://github.com/traefik/traefik/pull/10355) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[k8s/crd,k8s]** Delete warning in Kubernetes CRD provider about the supported version ([#10414](https://github.com/traefik/traefik/pull/10414) by [nmengin](https://github.com/nmengin))
+- **[metrics]** Fix OpenTelemetry unit tests ([#10380](https://github.com/traefik/traefik/pull/10380) by [mmatur](https://github.com/mmatur))
+- **[middleware,authentication,metrics,tracing]** Align OpenTelemetry tracing and metrics configurations ([#10404](https://github.com/traefik/traefik/pull/10404) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Fix brotli response status code when compression is disabled ([#10396](https://github.com/traefik/traefik/pull/10396) by [rtribotte](https://github.com/rtribotte))
+- **[tls,server]** Compute priority for https forwarder TLS routes ([#10288](https://github.com/traefik/traefik/pull/10288) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Update version comment in quick-start.md ([#10383](https://github.com/traefik/traefik/pull/10383) by [matthieuwerner](https://github.com/matthieuwerner))
+- Improve migration guide ([#10319](https://github.com/traefik/traefik/pull/10319) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- **[k8s/crd,k8s]** Support file path as input param for Kubernetes token value ([#10232](https://github.com/traefik/traefik/pull/10232) by [sssash18](https://github.com/sssash18))
+- **[middleware]** Disable br compression when no Accept-Encoding header is present ([#10178](https://github.com/traefik/traefik/pull/10178) by [robin-moser](https://github.com/robin-moser))
+- Merge current v2.11 into v3.0 ([#10382](https://github.com/traefik/traefik/pull/10382) by [mmatur](https://github.com/mmatur))
+- Merge back v2.11 into v3.0 ([#10377](https://github.com/traefik/traefik/pull/10377) by [mmatur](https://github.com/mmatur))
+- Merge back v2.11 into v3.0 ([#10353](https://github.com/traefik/traefik/pull/10353) by [youkoulayley](https://github.com/youkoulayley))
+- Merge current v2.11 into v3.0 ([#10328](https://github.com/traefik/traefik/pull/10328) by [mmatur](https://github.com/mmatur))
+- Merge v2.11 into v3.0 ([#10417](https://github.com/traefik/traefik/pull/10417) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.0](https://github.com/traefik/traefik/tree/v2.11.0) (2024-02-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.0-rc1...v2.11.0)
+
+**Enhancements:**
+- **[middleware]** Deprecate IPWhiteList middleware in favor of IPAllowList ([#10249](https://github.com/traefik/traefik/pull/10249) by [lbenguigui](https://github.com/lbenguigui))
+- **[redis]** Add Redis Sentinel support ([#10245](https://github.com/traefik/traefik/pull/10245) by [youkoulayley](https://github.com/youkoulayley))
+- **[server]** Add KeepAliveMaxTime and KeepAliveMaxRequests features to entrypoints ([#10247](https://github.com/traefik/traefik/pull/10247) by [juliens](https://github.com/juliens))
+- **[sticky-session]** Hash WRR sticky cookies ([#10243](https://github.com/traefik/traefik/pull/10243) by [youkoulayley](https://github.com/youkoulayley))
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.15.0 ([#10392](https://github.com/traefik/traefik/pull/10392) by [ldez](https://github.com/ldez))
+- **[authentication]** Fix NTLM and Kerberos ([#10405](https://github.com/traefik/traefik/pull/10405) by [juliens](https://github.com/juliens))
+- **[file]** Fix file watcher ([#10420](https://github.com/traefik/traefik/pull/10420) by [juliens](https://github.com/juliens))
+- **[file]** Update github.com/fsnotify/fsnotify to v1.7.0 ([#10313](https://github.com/traefik/traefik/pull/10313) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.40.1 ([#10296](https://github.com/traefik/traefik/pull/10296) by [ldez](https://github.com/ldez))
+- **[middleware,tcp]** Add missing TCP IPAllowList middleware constructor ([#10331](https://github.com/traefik/traefik/pull/10331) by [youkoulayley](https://github.com/youkoulayley))
+- **[nomad]** Update the Nomad API dependency to v1.7.2 ([#10327](https://github.com/traefik/traefik/pull/10327) by [jrasell](https://github.com/jrasell))
+- **[server]** Fix ReadHeaderTimeout for PROXY protocol ([#10320](https://github.com/traefik/traefik/pull/10320) by [juliens](https://github.com/juliens))
+- **[webui]** Fixes the Header Button ([#10395](https://github.com/traefik/traefik/pull/10395) by [mdeliatf](https://github.com/mdeliatf))
+- **[webui]** Fix URL encode resource&#39;s id before calling API endpoints ([#10292](https://github.com/traefik/traefik/pull/10292) by [andsarr](https://github.com/andsarr))
+
+**Documentation:**
+- **[acme]** Fix TLS challenge explanation ([#10293](https://github.com/traefik/traefik/pull/10293) by [cavokz](https://github.com/cavokz))
+- **[docker]** Update wording of compose example ([#10276](https://github.com/traefik/traefik/pull/10276) by [svx](https://github.com/svx))
+- **[docker,acme]** Fix typo ([#10294](https://github.com/traefik/traefik/pull/10294) by [youpsla](https://github.com/youpsla))
+- **[ecs]** Mention ECS as supported backend ([#10393](https://github.com/traefik/traefik/pull/10393) by [aleyrizvi](https://github.com/aleyrizvi))
+- **[k8s/crd]** Adjust deprecation notice for Kubernetes CRD provider ([#10317](https://github.com/traefik/traefik/pull/10317) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Update the documentation for RateLimit to provide a better example ([#10298](https://github.com/traefik/traefik/pull/10298) by [rmburton](https://github.com/rmburton))
+- **[server]** Fix the keepAlive options for the CLI examples ([#10398](https://github.com/traefik/traefik/pull/10398) by [immanuelfodor](https://github.com/immanuelfodor))
+- Prepare release v2.11.0-rc2 ([#10384](https://github.com/traefik/traefik/pull/10384) by [rtribotte](https://github.com/rtribotte))
+- Improve Concepts documentation page ([#10315](https://github.com/traefik/traefik/pull/10315) by [oliver-dvorski](https://github.com/oliver-dvorski))
+- Prepare release v2.11.0-rc1 ([#10326](https://github.com/traefik/traefik/pull/10326) by [mmatur](https://github.com/mmatur))
+- Fix description for anonymous usage statistics references ([#10287](https://github.com/traefik/traefik/pull/10287) by [ariyonaty](https://github.com/ariyonaty))
+- Documentation enhancements ([#10261](https://github.com/traefik/traefik/pull/10261) by [svx](https://github.com/svx))
+
 ## [v2.11.0-rc2](https://github.com/traefik/traefik/tree/v2.11.0-rc2) (2024-01-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.0-rc1...v2.11.0-rc2)
 
