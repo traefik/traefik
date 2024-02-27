@@ -16,11 +16,13 @@ type clientMock struct {
 	services       []*corev1.Service
 	secrets        []*corev1.Secret
 	endpoints      []*corev1.Endpoints
+	nodes          []*corev1.Node
 	ingressClasses []*netv1.IngressClass
 
 	apiServiceError       error
 	apiSecretError        error
 	apiEndpointsError     error
+	apiNodesError         error
 	apiIngressStatusError error
 
 	watchChan chan interface{}
@@ -43,6 +45,8 @@ func newClientMock(path string) clientMock {
 			c.secrets = append(c.secrets, o)
 		case *corev1.Endpoints:
 			c.endpoints = append(c.endpoints, o)
+		case *corev1.Node:
+			c.nodes = append(c.nodes, o)
 		case *netv1.Ingress:
 			c.ingresses = append(c.ingresses, o)
 		case *netv1.IngressClass:
@@ -84,6 +88,14 @@ func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, boo
 	}
 
 	return &corev1.Endpoints{}, false, nil
+}
+
+func (c clientMock) GetNodes() ([]*corev1.Node, bool, error) {
+	if c.apiNodesError != nil {
+		return nil, false, c.apiNodesError
+	}
+
+	return c.nodes, true, nil
 }
 
 func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
