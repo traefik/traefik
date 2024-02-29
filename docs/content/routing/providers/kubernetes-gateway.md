@@ -5,7 +5,8 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 
 # Traefik & Kubernetes
 
-The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
+The Kubernetes Gateway API, The Experimental Way.
+{: .subtitle }
 
 ## Configuration Examples
 

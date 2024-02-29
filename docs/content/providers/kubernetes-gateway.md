@@ -14,7 +14,7 @@ The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports the Gateway API [v0.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v0.4.0) specification.
+This provider is proposed as an experimental feature and partially supports Gateway API [v1.0.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.0.0) specification.
 
 !!! warning "Enabling The Experimental Kubernetes Gateway Provider"
 
