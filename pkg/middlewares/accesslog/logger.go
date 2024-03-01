@@ -324,7 +324,10 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = totalDuration
 
-	serviceName := core[ServiceName].(string)
+	var serviceName string
+	if tmpSvc, ok := core[ServiceName].(string); ok {
+		serviceName = tmpSvc
+	}
 
 	if h.keepAccessLog(status, retryAttempts, totalDuration, serviceName) {
 		size := logDataTable.DownstreamResponse.size
