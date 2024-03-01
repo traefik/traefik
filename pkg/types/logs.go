@@ -62,6 +62,7 @@ type AccessLogFilters struct {
 	StatusCodes   []string       `description:"Keep access logs with status codes in the specified range." json:"statusCodes,omitempty" toml:"statusCodes,omitempty" yaml:"statusCodes,omitempty" export:"true"`
 	RetryAttempts bool           `description:"Keep access logs when at least one retry happened." json:"retryAttempts,omitempty" toml:"retryAttempts,omitempty" yaml:"retryAttempts,omitempty" export:"true"`
 	MinDuration   types.Duration `description:"Keep access logs when request took longer than the specified duration." json:"minDuration,omitempty" toml:"minDuration,omitempty" yaml:"minDuration,omitempty" export:"true"`
+	ServiceNames  []string       `description:"Keep access logs with service names in the whitelist." json:"serviceNames,omitempty" toml:"serviceNames,omitempty" yaml:"serviceNames,omitempty" export:"true"`
 }
 
 // FieldHeaders holds configuration for access log headers.
