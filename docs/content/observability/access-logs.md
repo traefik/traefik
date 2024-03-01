@@ -113,6 +113,7 @@ The available filters are:
 - `statusCodes`, to limit the access logs to requests with a status codes in the specified range
 - `retryAttempts`, to keep the access logs when at least one retry has happened
 - `minDuration`, to keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration))
+- `serviceNames` to keep access logs with service names in the whitelist
 
 ```yaml tab="File (YAML)"
 # Configuring Multiple Filters
@@ -125,6 +126,10 @@ accessLog:
       - "300-302"
     retryAttempts: true
     minDuration: "10ms"
+    serviceNames:
+      - "service1@file"
+      - "service2@consulcatalog"
+      - "service3@consulcatalog"
 ```
 
 ```toml tab="File (TOML)"
