@@ -32,7 +32,8 @@ const delta float64 = 1e-10
 var (
 	logFileNameSuffix       = "/traefik/logger/test.log"
 	testContent             = "Hello, World"
-	testServiceName         = "http://127.0.0.1/testService"
+	testServiceURL          = "http://127.0.0.1/testService"
+	testServiceName         = "testService"
 	testRouterName          = "testRouter"
 	testStatus              = 123
 	testContentSize   int64 = 12
@@ -323,7 +324,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestRefererHeader:      assertString(testReferer),
 				RequestUserAgentHeader:    assertString(testUserAgent),
 				RouterName:                assertString(testRouterName),
-				ServiceURL:                assertString(testServiceName),
+				ServiceURL:                assertString(testServiceURL),
 				ClientUsername:            assertString(testUsername),
 				ClientHost:                assertString(testHostname),
 				ClientPort:                assertString(strconv.Itoa(testPort)),
@@ -363,7 +364,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestRefererHeader:      assertString(testReferer),
 				RequestUserAgentHeader:    assertString(testUserAgent),
 				RouterName:                assertString(testRouterName),
-				ServiceURL:                assertString(testServiceName),
+				ServiceURL:                assertString(testServiceURL),
 				ClientUsername:            assertString(testUsername),
 				ClientHost:                assertString(testHostname),
 				ClientPort:                assertString(strconv.Itoa(testPort)),
@@ -684,6 +685,28 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			},
 			expectedLog: `- - TestUser [-] "- - -" - - "REDACTED" "testUserAgent" - "-" "-" 0ms`,
 		},
+		{
+			desc: "ServiceNames filter matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					ServiceNames: []string{"testService"},
+				},
+			},
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+		},
+		{
+			desc: "ServiceNames filter not matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					ServiceNames: []string{"fooService"},
+				},
+			},
+			expectedLog: ``,
+		},
 	}
 
 	for _, test := range testCases {
@@ -822,7 +845,8 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	logData := GetLogData(r)
 	if logData != nil {
 		logData.Core[RouterName] = testRouterName
-		logData.Core[ServiceURL] = testServiceName
+		logData.Core[ServiceURL] = testServiceURL
+		logData.Core[ServiceName] = testServiceName
 		logData.Core[OriginStatus] = testStatus
 		logData.Core[OriginContentSize] = testContentSize
 		logData.Core[RetryAttempts] = testRetryAttempts
