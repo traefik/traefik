@@ -57,13 +57,14 @@ type handlerParams struct {
 
 // Handler will write each request and its response to the access log.
 type Handler struct {
-	config         *types.AccessLog
-	logger         *logrus.Logger
-	file           io.WriteCloser
-	mu             sync.Mutex
-	httpCodeRanges types.HTTPCodeRanges
-	logHandlerChan chan handlerParams
-	wg             sync.WaitGroup
+	config               *types.AccessLog
+	logger               *logrus.Logger
+	file                 io.WriteCloser
+	mu                   sync.Mutex
+	httpCodeRanges       types.HTTPCodeRanges
+	logHandlerChan       chan handlerParams
+	wg                   sync.WaitGroup
+	serviceNameWhitelist map[string]struct{}
 }
 
 // WrapHandler Wraps access log handler into an Alice Constructor.
@@ -129,6 +130,13 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 			log.Error().Err(err).Msg("Failed to create new HTTP code ranges")
 		} else {
 			logHandler.httpCodeRanges = httpCodeRanges
+		}
+
+		if len(config.Filters.ServiceNames) > 0 {
+			logHandler.serviceNameWhitelist = make(map[string]struct{}, len(config.Filters.ServiceNames))
+			for _, name := range config.Filters.ServiceNames {
+				logHandler.serviceNameWhitelist[name] = struct{}{}
+			}
 		}
 	}
 
@@ -316,7 +324,9 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = totalDuration
 
-	if h.keepAccessLog(status, retryAttempts, totalDuration) {
+	serviceName := core[ServiceName].(string)
+
+	if h.keepAccessLog(status, retryAttempts, totalDuration, serviceName) {
 		size := logDataTable.DownstreamResponse.size
 		core[DownstreamContentSize] = size
 		if original, ok := core[OriginContentSize]; ok {
@@ -360,10 +370,16 @@ func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefi
 	}
 }
 
-func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Duration) bool {
+func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Duration, serviceName string) bool {
 	if h.config.Filters == nil {
 		// no filters were specified
 		return true
+	}
+
+	if len(h.serviceNameWhitelist) > 0 {
+		if _, ok := h.serviceNameWhitelist[serviceName]; !ok {
+			return false
+		}
 	}
 
 	if len(h.httpCodeRanges) == 0 && !h.config.Filters.RetryAttempts && h.config.Filters.MinDuration == 0 {
