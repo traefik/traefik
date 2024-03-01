@@ -13,8 +13,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/denyrouterrecursion"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
-	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
@@ -221,11 +221,11 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return chain.Extend(*mHandler).Then(sHandler)
 	}
 
-	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
+	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
 
 	if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsRouterEnabled() {
 		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, provider.GetQualifiedName(ctx, router.Service))
-		chain = chain.Append(tracing.WrapMiddleware(ctx, metricsHandler))
+		chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 	}
 
 	if router.DefaultRule {

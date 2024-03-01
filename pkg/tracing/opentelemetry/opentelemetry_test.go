@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -296,7 +296,7 @@ func TestTracing(t *testing.T) {
 				_ = closer.Close()
 			})
 
-			chain := alice.New(tracingMiddle.WrapEntryPointHandler(context.Background(), newTracing, "test"))
+			chain := alice.New(observability.WrapEntryPointHandler(context.Background(), newTracing, nil, "test"))
 			epHandler, err := chain.Then(service)
 			require.NoError(t, err)
 
