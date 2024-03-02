@@ -702,29 +702,29 @@ _Optional, Default=0_
 
 The maximum number of requests Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
 
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      name:
-        address: ":8888"
-        transport:
-          keepAliveMaxRequests: 42
-    ```
+```yaml tab="File (YAML)"
+## Static configuration
+entryPoints:
+  name:
+    address: ":8888"
+    transport:
+      keepAliveMaxRequests: 42
+```
 
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.name]
-        address = ":8888"
-        [entryPoints.name.transport]
-          keepAliveMaxRequests = 42
-    ```
+```toml tab="File (TOML)"
+## Static configuration
+[entryPoints]
+  [entryPoints.name]
+    address = ":8888"
+    [entryPoints.name.transport]
+      keepAliveMaxRequests = 42
+```
 
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveMaxRequests=42
-    ```
+```bash tab="CLI"
+## Static configuration
+--entryPoints.name.address=:8888
+--entryPoints.name.transport.keepAliveMaxRequests=42
+```
 
 #### `keepAliveMaxTime`
 
@@ -732,29 +732,29 @@ _Optional, Default=0s_
 
 The maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
 
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      name:
-        address: ":8888"
-        transport:
-          keepAliveMaxTime: 42s
-    ```
+```yaml tab="File (YAML)"
+## Static configuration
+entryPoints:
+  name:
+    address: ":8888"
+    transport:
+      keepAliveMaxTime: 42s
+```
 
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.name]
-        address = ":8888"
-        [entryPoints.name.transport]
-          keepAliveMaxTime = 42s
-    ```
+```toml tab="File (TOML)"
+## Static configuration
+[entryPoints]
+  [entryPoints.name]
+    address = ":8888"
+    [entryPoints.name.transport]
+      keepAliveMaxTime = 42s
+```
 
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.name.address=:8888
-    --entryPoints.name.transport.keepAliveMaxTime=42s
-    ```
+```bash tab="CLI"
+## Static configuration
+--entryPoints.name.address=:8888
+--entryPoints.name.transport.keepAliveMaxTime=42s
+```
 
 ### ProxyProtocol
 
