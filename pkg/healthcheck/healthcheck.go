@@ -108,7 +108,7 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 				default:
 				}
 
-				up := true
+				up := false
 				serverUpMetricValue := float64(1)
 
 				if err := shc.executeHealthCheck(ctx, shc.config, target); err != nil {
