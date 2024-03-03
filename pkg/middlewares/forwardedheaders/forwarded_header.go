@@ -37,20 +37,27 @@ var xHeaders = []string{
 	xRealIP,
 }
 
+type contextKey struct {
+	name string
+}
+
+var ProxyAddrKey = &contextKey{"proxy-ip"}
+
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
 // and other relevant headers for a reverse-proxy.
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure   bool
-	trustedIps []string
-	ipChecker  *ip.Checker
-	next       http.Handler
-	hostname   string
+	insecure             bool
+	proxyProtocolEnabled bool
+	trustedIps           []string
+	ipChecker            *ip.Checker
+	next                 http.Handler
+	hostname             string
 }
 
 // NewXForwarded creates a new XForwarded.
-func NewXForwarded(insecure bool, trustedIps []string, next http.Handler) (*XForwarded, error) {
+func NewXForwarded(insecure bool, proxyProtocolEnabled bool, trustedIps []string, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
 	if len(trustedIps) > 0 {
 		var err error
@@ -66,11 +73,12 @@ func NewXForwarded(insecure bool, trustedIps []string, next http.Handler) (*XFor
 	}
 
 	return &XForwarded{
-		insecure:   insecure,
-		trustedIps: trustedIps,
-		ipChecker:  ipChecker,
-		next:       next,
-		hostname:   hostname,
+		insecure:             insecure,
+		proxyProtocolEnabled: proxyProtocolEnabled,
+		trustedIps:           trustedIps,
+		ipChecker:            ipChecker,
+		next:                 next,
+		hostname:             hostname,
 	}, nil
 }
 
@@ -181,7 +189,15 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+	remoteAddr := r.RemoteAddr
+
+	if x.proxyProtocolEnabled {
+		if proxyAddr, ok := r.Context().Value(ProxyAddrKey).(string); ok {
+			remoteAddr = proxyAddr
+		}
+	}
+
+	if !x.insecure && !x.isTrustedIP(remoteAddr) {
 		for _, h := range xHeaders {
 			unsafeHeader(r.Header).Del(h)
 		}
