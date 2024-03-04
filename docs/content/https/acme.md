@@ -297,7 +297,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 !!! warning "Multiple DNS Challenge provider"
     
     Multiple DNS challenge provider is not supported with Traefik, but you can use `CNAME` to handle that.
-    For example: If you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
+    For example, if you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
     This way, you can obtain certificates for `example.com` with the `foo` account.
 
 !!! important
