@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"sort"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -67,103 +66,45 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 			continue
 		}
 
-		certs = append(certs, cert)
+		certs = append(certs, *cert)
 	}
 
 	return certs
 }
 
-// AppendCertificate appends a Certificate to a certificates map keyed by store name.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, storeName string) error {
-	certContent, err := c.CertFile.Read()
-	if err != nil {
-		return fmt.Errorf("unable to read CertFile : %w", err)
-	}
-
-	keyContent, err := c.KeyFile.Read()
-	if err != nil {
-		return fmt.Errorf("unable to read KeyFile : %w", err)
-	}
-	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
-	if err != nil {
-		return fmt.Errorf("unable to generate TLS certificate : %w", err)
-	}
-
-	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
-
-	var SANs []string
-	if parsedCert.Subject.CommonName != "" {
-		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
-	}
-	if parsedCert.DNSNames != nil {
-		for _, dnsName := range parsedCert.DNSNames {
-			if dnsName != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(dnsName))
-			}
-		}
-	}
-	if parsedCert.IPAddresses != nil {
-		for _, ip := range parsedCert.IPAddresses {
-			if ip.String() != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(ip.String()))
-			}
-		}
-	}
-
-	// Guarantees the order to produce a unique cert key.
-	sort.Strings(SANs)
-	certKey := strings.Join(SANs, ",")
-
-	certExists := false
-	if certs[storeName] == nil {
-		certs[storeName] = make(map[string]*tls.Certificate)
-	} else {
-		for domains := range certs[storeName] {
-			if domains == certKey {
-				certExists = true
-				break
-			}
-		}
-	}
-	if certExists {
-		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
-	} else {
-		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
-		certs[storeName][certKey] = &tlsCert
-	}
-
-	return err
-}
-
 // GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
-func (c *Certificate) GetCertificate() (tls.Certificate, error) {
+func (c *Certificate) GetCertificate() (*tls.Certificate, error) {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read CertFile: %w", err)
+		return nil, fmt.Errorf("unable to read CertFile: %w", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile: %w", err)
+		return nil, fmt.Errorf("unable to read KeyFile: %w", err)
 	}
 
 	cert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
+		return nil, fmt.Errorf("unable to parse TLS certificate key pair: %w", err)
 	}
 
-	return cert, nil
+	if err := parseCertificate(&cert); err != nil {
+		return nil, fmt.Errorf("unable to parse TLS certificate: %w", err)
+	}
+
+	return &cert, nil
 }
 
 // GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
 // It assumes that the configured CertFile and KeyFile are of byte type.
-func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
+func (c *Certificate) GetCertificateFromBytes() (*tls.Certificate, error) {
 	cert, err := tls.X509KeyPair([]byte(c.CertFile), []byte(c.KeyFile))
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
+		return nil, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
 
-	return cert, nil
+	return &cert, nil
 }
 
 // GetTruncatedCertificateName truncates the certificate name.
@@ -295,4 +236,19 @@ func verifyChain(rootCAs *x509.CertPool, rawCerts [][]byte) (*x509.Certificate, 
 	}
 
 	return certs[0], nil
+}
+
+// parseCertificate parses the first certificate from the certificate chain and sets it as the leaf certificate.
+func parseCertificate(cert *tls.Certificate) error {
+	if cert == nil || cert.Leaf != nil {
+		return nil
+	}
+
+	parsedCert, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return err
+	}
+	cert.Leaf = parsedCert
+
+	return nil
 }
