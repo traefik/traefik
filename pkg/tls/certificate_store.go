@@ -11,34 +11,45 @@ import (
 
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
 )
 
 // CertificateStore store for dynamic certificates.
 type CertificateStore struct {
-	Name               string
+	name          string
+	certCache     *cache.Cache
+	generatedCert *tls.Certificate
+
 	lock               sync.RWMutex
 	dynamicCerts       map[string]*tls.Certificate
-	DefaultCertificate *tls.Certificate
-	CertCache          *cache.Cache
+	defaultCertificate *tls.Certificate
+	config             Store
 }
 
 // NewCertificateStore create a store for dynamic certificates.
-func NewCertificateStore(name string) *CertificateStore {
-	return &CertificateStore{
-		Name:         name,
-		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
-		dynamicCerts: make(map[string]*tls.Certificate),
+func NewCertificateStore(name string, config Store) (*CertificateStore, error) {
+	generatedCert, err := generate.DefaultCertificate()
+	if err != nil {
+		return nil, err
 	}
+
+	return &CertificateStore{
+		name:          name,
+		certCache:     cache.New(1*time.Hour, 10*time.Minute),
+		dynamicCerts:  make(map[string]*tls.Certificate),
+		generatedCert: generatedCert,
+		config:        config,
+	}, nil
 }
 
 func (c *CertificateStore) getDefaultCertificateDomains() []string {
 	var allCerts []string
 
-	if c.DefaultCertificate == nil {
+	if c.defaultCertificate == nil {
 		return allCerts
 	}
 
-	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate[0])
+	x509Cert, err := x509.ParseCertificate(c.defaultCertificate.Certificate[0])
 	if err != nil {
 		log.Error().Err(err).Msg("Could not parse default certificate")
 		return allCerts
@@ -64,10 +75,8 @@ func (c *CertificateStore) GetAllDomains() []string {
 	allDomains := c.getDefaultCertificateDomains()
 
 	// Get dynamic certificates
-	if c.dynamicCerts != nil {
-		for domain := range c.dynamicCerts {
-			allDomains = append(allDomains, domain)
-		}
+	for domain := range c.dynamicCerts {
+		allDomains = append(allDomains, domain)
 	}
 
 	return allDomains
@@ -88,18 +97,20 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		serverName = strings.TrimSpace(host)
 	}
 
-	if cert, ok := c.CertCache.Get(serverName); ok {
+	if cert, ok := c.certCache.Get(serverName); ok {
 		return cert.(*tls.Certificate)
 	}
 
 	matchedCerts := map[string]*tls.Certificate{}
-	for domains, cert := range c.CertificatesMap() {
+	c.lock.RLock()
+	for domains, cert := range c.dynamicCerts {
 		for _, certDomain := range strings.Split(domains, ",") {
 			if matchDomain(serverName, certDomain) {
 				matchedCerts[certDomain] = cert
 			}
 		}
 	}
+	defer c.lock.RUnlock()
 
 	if len(matchedCerts) > 0 {
 		// sort map by keys
@@ -110,7 +121,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		sort.Strings(keys)
 
 		// cache best match
-		c.CertCache.SetDefault(serverName, matchedCerts[keys[len(keys)-1]])
+		c.certCache.SetDefault(serverName, matchedCerts[keys[len(keys)-1]])
 		return matchedCerts[keys[len(keys)-1]]
 	}
 
@@ -126,32 +137,30 @@ func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 	sort.Strings(domains)
 	domainsKey := strings.Join(domains, ",")
 
-	if cert, ok := c.CertCache.Get(domainsKey); ok {
+	if cert, ok := c.certCache.Get(domainsKey); ok {
 		return cert.(*tls.Certificate)
 	}
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	if c.dynamicCerts != nil {
-		for certDomains, cert := range c.dynamicCerts {
-			if domainsKey == certDomains {
-				c.CertCache.SetDefault(domainsKey, cert)
-				return cert
-			}
+	for certDomains, cert := range c.dynamicCerts {
+		if domainsKey == certDomains {
+			c.certCache.SetDefault(domainsKey, cert)
+			return cert
+		}
 
-			var matchedDomains []string
-			for _, certDomain := range strings.Split(certDomains, ",") {
-				for _, checkDomain := range domains {
-					if certDomain == checkDomain {
-						matchedDomains = append(matchedDomains, certDomain)
-					}
+		var matchedDomains []string
+		for _, certDomain := range strings.Split(certDomains, ",") {
+			for _, checkDomain := range domains {
+				if certDomain == checkDomain {
+					matchedDomains = append(matchedDomains, certDomain)
 				}
 			}
+		}
 
-			if len(matchedDomains) == len(domains) {
-				c.CertCache.SetDefault(domainsKey, cert)
-				return cert
-			}
+		if len(matchedDomains) == len(domains) {
+			c.certCache.SetDefault(domainsKey, cert)
+			return cert
 		}
 	}
 
@@ -160,8 +169,8 @@ func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 
 // ResetCache clears the cache in the store.
 func (c *CertificateStore) ResetCache() {
-	if c.CertCache != nil {
-		c.CertCache.Flush()
+	if c.certCache != nil {
+		c.certCache.Flush()
 	}
 }
 
@@ -185,12 +194,12 @@ func (c *CertificateStore) setCertificates(certificates []*tls.Certificate) {
 	for certKey, cert := range certKeyMap {
 		if storeCert, exists := c.dynamicCerts[certKey]; exists {
 			if storeCert.Leaf.Equal(cert.Leaf) {
-				log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, c.Name)
+				log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, c.name)
 				continue
 			}
 			// TODO - An option to control the behavior on multiple certs for the same domain could be added at some point
 			// For ex.: using the latest one, or the one with the longest validity period.
-			log.Warn().Msgf("Replacing certificate for domain(s) %q, in TLS Store %s.", certKey, c.Name)
+			log.Warn().Msgf("Replacing certificate for domain(s) %q, in TLS Store %s.", certKey, c.name)
 		}
 
 		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
@@ -198,10 +207,21 @@ func (c *CertificateStore) setCertificates(certificates []*tls.Certificate) {
 	}
 }
 
-func (c *CertificateStore) CertificatesMap() map[string]*tls.Certificate {
+func (c *CertificateStore) Certificates() []*x509.Certificate {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	return c.dynamicCerts
+
+	certs := make([]*x509.Certificate, 0, len(c.dynamicCerts))
+	for _, cert := range c.dynamicCerts {
+		err := parseCertificate(cert)
+		if err != nil {
+			continue
+		}
+
+		certs = append(certs, cert.Leaf)
+	}
+
+	return certs
 }
 
 // certKeyMap returns a map of certificates with keys composed by certificate DNS names and IP addresses.

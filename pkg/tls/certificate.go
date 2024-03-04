@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
-	"sort"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -72,95 +70,6 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	}
 
 	return certs
-}
-
-// AppendCertificate appends a Certificate to a certificates map keyed by store name.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, storeName string) error {
-	certContent, err := c.CertFile.Read()
-	if err != nil {
-		return fmt.Errorf("unable to read CertFile : %w", err)
-	}
-
-	keyContent, err := c.KeyFile.Read()
-	if err != nil {
-		return fmt.Errorf("unable to read KeyFile : %w", err)
-	}
-	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
-	if err != nil {
-		return fmt.Errorf("unable to generate TLS certificate : %w", err)
-	}
-
-	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
-
-	var SANs []string
-	if parsedCert.Subject.CommonName != "" {
-		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
-	}
-	if parsedCert.DNSNames != nil {
-		for _, dnsName := range parsedCert.DNSNames {
-			if dnsName != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(dnsName))
-			}
-		}
-	}
-	if parsedCert.IPAddresses != nil {
-		for _, ip := range parsedCert.IPAddresses {
-			if ip.String() != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(ip.String()))
-			}
-		}
-	}
-
-	// Guarantees the order to produce a unique cert key.
-	sort.Strings(SANs)
-	certKey := strings.Join(SANs, ",")
-
-	certExists := false
-	if certs[storeName] == nil {
-		certs[storeName] = make(map[string]*tls.Certificate)
-	} else {
-		for domains := range certs[storeName] {
-			if domains == certKey {
-				certExists = true
-				break
-			}
-		}
-	}
-	if certExists {
-		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
-	} else {
-		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
-		certs[storeName][certKey] = &tlsCert
-	}
-
-	return err
-}
-
-// FileOrContent hold a file path or content.
-type FileOrContent string
-
-func (f FileOrContent) String() string {
-	return string(f)
-}
-
-// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
-func (f FileOrContent) IsPath() bool {
-	_, err := os.Stat(f.String())
-	return err == nil
-}
-
-func (f FileOrContent) Read() ([]byte, error) {
-	var content []byte
-	if f.IsPath() {
-		var err error
-		content, err = os.ReadFile(f.String())
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		content = []byte(f)
-	}
-	return content, nil
 }
 
 // GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
@@ -331,7 +240,7 @@ func verifyChain(rootCAs *x509.CertPool, rawCerts [][]byte) (*x509.Certificate, 
 
 // parseCertificate parses the first certificate from the certificate chain and sets it as the leaf certificate.
 func parseCertificate(cert *tls.Certificate) error {
-	if cert.Leaf != nil {
+	if cert == nil || cert.Leaf != nil {
 		return nil
 	}
 
