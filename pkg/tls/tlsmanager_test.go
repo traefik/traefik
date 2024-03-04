@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -88,7 +89,7 @@ func TestTLSInStore(t *testing.T) {
 	tlsManager := NewManager()
 	tlsManager.UpdateConfigs(context.Background(), nil, nil, dynamicConfigs)
 
-	certs := tlsManager.GetStore("default").CertificatesMap()
+	certs := tlsManager.GetStore("default").Certificates()
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
@@ -113,7 +114,7 @@ func TestTLSInvalidStore(t *testing.T) {
 			},
 		}, nil, dynamicConfigs)
 
-	certs := tlsManager.GetStore("default").CertificatesMap()
+	certs := tlsManager.GetStore("default").Certificates()
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
@@ -372,8 +373,8 @@ func BenchmarkManager_UpdateConfigs(b *testing.B) {
 
 		certConfigs = append(certConfigs, &CertAndStores{
 			Certificate: Certificate{
-				CertFile: FileOrContent(cert),
-				KeyFile:  FileOrContent(certKey),
+				CertFile: types.FileOrContent(cert),
+				KeyFile:  types.FileOrContent(certKey),
 			},
 		})
 	}
@@ -386,6 +387,37 @@ func BenchmarkManager_UpdateConfigs(b *testing.B) {
 
 		manager.UpdateConfigs(context.Background(), nil, nil, certConfigs[start.Int64():start.Int64()+10])
 	}
+}
+
+// This test only purpose is to guarantee no regression
+func TestStoreDeepEqual(t *testing.T) {
+	assert.True(t, reflect.DeepEqual(
+		Store{
+			DefaultCertificate: &Certificate{
+				CertFile: "foo",
+				KeyFile:  "bar",
+			},
+			DefaultGeneratedCert: &GeneratedCert{
+				Resolver: "foo",
+				Domain: &types.Domain{
+					Main: "bar",
+					SANs: []string{"foo", "bar"},
+				},
+			},
+		},
+		Store{
+			DefaultCertificate: &Certificate{
+				CertFile: "foo",
+				KeyFile:  "bar",
+			},
+			DefaultGeneratedCert: &GeneratedCert{
+				Resolver: "foo",
+				Domain: &types.Domain{
+					Main: "bar",
+					SANs: []string{"foo", "bar"},
+				},
+			},
+		}))
 }
 
 // generateCertificate generates a self-signed certificate for the given host and returns the PEM encoded certificate and key.

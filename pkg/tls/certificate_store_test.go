@@ -68,7 +68,7 @@ func TestGetBestCertificate(t *testing.T) {
 
 			store := &CertificateStore{
 				dynamicCerts: dynamicMap,
-				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
+				certCache:    cache.New(1*time.Hour, 10*time.Minute),
 			}
 
 			var expected *tls.Certificate
