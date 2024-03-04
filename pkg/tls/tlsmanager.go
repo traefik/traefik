@@ -98,6 +98,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		tlsCert, err := certStoreConfig.Certificate.GetCertificate()
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msgf("Unable to load certificate %s", certStoreConfig.Certificate.GetTruncatedCertificateName())
+			continue
 		}
 
 		for _, storeName := range certStoreConfig.Stores {
