@@ -119,7 +119,7 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 
 				// Tailscale tries to renew certificates 14 days before its expiration date.
 				// See https://github.com/tailscale/tailscale/blob/d9efbd97cbf369151e31453749f6692df7413709/ipn/localapi/cert.go#L116
-				if isValidCert(*tlsCert, domain, time.Now().AddDate(0, 0, 14)) {
+				if isValidCert(tlsCert, domain, time.Now().AddDate(0, 0, 14)) {
 					continue
 				}
 
@@ -335,7 +335,11 @@ func isTailscaleDomain(domain string) bool {
 
 // isValidCert returns whether the given tls.Certificate is valid for the given
 // domain at the given time.
-func isValidCert(cert tls.Certificate, domain string, now time.Time) bool {
+func isValidCert(cert *tls.Certificate, domain string, now time.Time) bool {
+	if cert == nil {
+		return false
+	}
+
 	var leaf *x509.Certificate
 
 	intermediates := x509.NewCertPool()
