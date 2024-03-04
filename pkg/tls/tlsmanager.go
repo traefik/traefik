@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -44,11 +44,9 @@ func getCipherSuites() []string {
 
 // Manager is the TLS option/store/configuration factory.
 type Manager struct {
-	lock         sync.RWMutex
-	storesConfig map[string]Store
-	stores       map[string]*CertificateStore
-	configs      map[string]Options
-	certs        []*CertAndStores
+	lock    sync.RWMutex
+	stores  map[string]*CertificateStore
+	configs map[string]Options
 }
 
 // NewManager creates a new Manager.
@@ -75,53 +73,87 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		}
 	}
 
-	m.storesConfig = stores
-	m.certs = certs
-
-	if m.storesConfig == nil {
-		m.storesConfig = make(map[string]Store)
+	if stores == nil {
+		stores = make(map[string]Store)
 	}
 
-	if _, ok := m.storesConfig[DefaultTLSStoreName]; !ok {
-		m.storesConfig[DefaultTLSStoreName] = Store{}
-	}
-
-	if _, ok := m.storesConfig[tlsalpn01.ACMETLS1Protocol]; !ok {
-		m.storesConfig[tlsalpn01.ACMETLS1Protocol] = Store{}
-	}
-
-	storesCertificates := make(map[string]map[string]*tls.Certificate)
-	for _, conf := range certs {
-		if len(conf.Stores) == 0 {
-			log.Ctx(ctx).Debug().MsgFunc(func() string {
-				return fmt.Sprintf("No store is defined to add the certificate %s, it will be added to the default store",
-					conf.Certificate.GetTruncatedCertificateName())
-			})
-			conf.Stores = []string{DefaultTLSStoreName}
+	// When a certificate configuration references a store that does not exist, we create it.
+	for _, certStoreConfig := range certs {
+		if len(certStoreConfig.Stores) == 0 {
+			log.Ctx(ctx).Debug().Msgf("No store is defined to add the certificate %s, it will be added to the default store", certStoreConfig.Certificate.GetTruncatedCertificateName())
+			certStoreConfig.Stores = []string{DefaultTLSStoreName}
 		}
 
-		for _, store := range conf.Stores {
-			logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, store).Logger()
-
-			if _, ok := m.storesConfig[store]; !ok {
-				m.storesConfig[store] = Store{}
+		for _, storeName := range certStoreConfig.Stores {
+			if _, ok := stores[storeName]; !ok {
+				stores[storeName] = Store{}
 			}
+		}
+	}
 
-			err := conf.Certificate.AppendCertificate(storesCertificates, store)
+	m.updateStores(ctx, stores)
+
+	toUpdate := make(map[string][]*tls.Certificate)
+	for _, certStoreConfig := range certs {
+		tlsCert, err := certStoreConfig.Certificate.GetCertificate()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msgf("Unable to load certificate %s", certStoreConfig.Certificate.GetTruncatedCertificateName())
+		}
+
+		for _, storeName := range certStoreConfig.Stores {
+			toUpdate[storeName] = append(toUpdate[storeName], tlsCert)
+		}
+	}
+
+	for storeName, certs := range toUpdate {
+		if store, exists := m.stores[storeName]; exists {
+			store.setCertificates(certs)
+		}
+	}
+}
+
+func (m *Manager) updateStores(ctx context.Context, storeConfigs map[string]Store) {
+	if m.stores == nil {
+		m.stores = make(map[string]*CertificateStore)
+	}
+
+	if storeConfigs == nil {
+		storeConfigs = make(map[string]Store)
+	}
+
+	if _, ok := storeConfigs[DefaultTLSStoreName]; !ok {
+		storeConfigs[DefaultTLSStoreName] = Store{}
+	}
+
+	if _, ok := storeConfigs[tlsalpn01.ACMETLS1Protocol]; !ok {
+		storeConfigs[tlsalpn01.ACMETLS1Protocol] = Store{}
+	}
+
+	var toDelete []string
+	for storeName := range m.stores {
+		if _, ok := storeConfigs[storeName]; !ok {
+			toDelete = append(toDelete, storeName)
+		}
+	}
+
+	for _, storeName := range toDelete {
+		delete(m.stores, storeName)
+	}
+
+	for storeName, storeConfig := range storeConfigs {
+		logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, storeName).Logger()
+		ctxStore := logger.WithContext(ctx)
+
+		store, exists := m.stores[storeName]
+		if !exists {
+			var err error
+			store, err = NewCertificateStore(storeName, storeConfig)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Unable to append certificate %s to store", conf.Certificate.GetTruncatedCertificateName())
+				logger.Error().Err(err).Msg("Error while creating certificate store")
+				continue
 			}
-		}
-	}
 
-	m.stores = make(map[string]*CertificateStore)
-
-	for storeName, storeConfig := range m.storesConfig {
-		st := NewCertificateStore()
-		m.stores[storeName] = st
-
-		if certs, ok := storesCertificates[storeName]; ok {
-			st.DynamicCerts.Set(certs)
+			m.stores[storeName] = store
 		}
 
 		// a default cert for the ACME store does not make any sense, so generating one is a waste.
@@ -129,15 +161,21 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			continue
 		}
 
-		logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, storeName).Logger()
-		ctxStore := logger.WithContext(ctx)
+		// default cert is already set and configuration has not changed.
+		if store.defaultCertificate != nil && reflect.DeepEqual(store.config, storeConfig) {
+			continue
+		}
 
-		certificate, err := getDefaultCertificate(ctxStore, storeConfig, st)
+		store.config = storeConfig
+
+		// Get the default certificate, either read it from configuration,
+		// or look into
+		defaultCertificate, err := getDefaultCertificate(ctxStore, storeConfig, store)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while creating certificate store")
 		}
 
-		st.DefaultCertificate = certificate
+		store.defaultCertificate = defaultCertificate
 	}
 }
 
@@ -224,8 +262,13 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			return nil, nil
 		}
 
-		log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
-		return store.DefaultCertificate, nil
+		if store.defaultCertificate != nil {
+			log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
+			return store.defaultCertificate, nil
+		}
+
+		log.Debug().Msgf("Serving default generated certificate for request: %q", domainToCheck)
+		return store.generatedCert, nil
 	}
 
 	return tlsConfig, err
@@ -242,31 +285,14 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 		return certificates
 	}
 
-	// We iterate over all the certificates.
-	if defaultStore.DynamicCerts != nil && defaultStore.DynamicCerts.Get() != nil {
-		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*tls.Certificate) {
-			x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-			if err != nil {
-				continue
-			}
+	certificates = defaultStore.Certificates()
 
-			certificates = append(certificates, x509Cert)
-		}
+	err := parseCertificate(defaultStore.defaultCertificate)
+	if err != nil {
+		return certificates
 	}
 
-	if defaultStore.DefaultCertificate != nil {
-		x509Cert, err := x509.ParseCertificate(defaultStore.DefaultCertificate.Certificate[0])
-		if err != nil {
-			return certificates
-		}
-
-		// Excluding the generated Traefik default certificate.
-		if x509Cert.Subject.CommonName == generate.DefaultDomain {
-			return certificates
-		}
-
-		certificates = append(certificates, x509Cert)
-	}
+	certificates = append(certificates, defaultStore.defaultCertificate.Leaf)
 
 	return certificates
 }
@@ -290,7 +316,7 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 
 func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*tls.Certificate, error) {
 	if tlsStore.DefaultCertificate != nil {
-		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
+		cert, err := tlsStore.DefaultCertificate.GetCertificate()
 		if err != nil {
 			return nil, err
 		}
@@ -298,27 +324,22 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 		return cert, nil
 	}
 
-	defaultCert, err := generate.DefaultCertificate()
-	if err != nil {
-		return nil, err
-	}
-
 	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil && tlsStore.DefaultGeneratedCert.Resolver != "" {
 		domains, err := sanitizeDomains(*tlsStore.DefaultGeneratedCert.Domain)
 		if err != nil {
-			return defaultCert, fmt.Errorf("falling back to the internal generated certificate because invalid domains: %w", err)
+			return nil, fmt.Errorf("falling back to the internal generated certificate because invalid domains: %w", err)
 		}
 
 		defaultACMECert := st.GetCertificate(domains)
 		if defaultACMECert == nil {
-			return defaultCert, fmt.Errorf("unable to find certificate for domains %q: falling back to the internal generated certificate", strings.Join(domains, ","))
+			return nil, fmt.Errorf("unable to find certificate for domains %q: falling back to the internal generated certificate", strings.Join(domains, ","))
 		}
 
 		return defaultACMECert, nil
 	}
 
 	log.Ctx(ctx).Debug().Msg("No default certificate, fallback to the internal generated certificate")
-	return defaultCert, nil
+	return nil, nil
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
@@ -408,24 +429,6 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	}
 
 	return conf, nil
-}
-
-func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate, error) {
-	certFile, err := defaultCertificate.CertFile.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cert file content: %w", err)
-	}
-
-	keyFile, err := defaultCertificate.KeyFile.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get key file content: %w", err)
-	}
-
-	cert, err := tls.X509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
-	}
-	return &cert, nil
 }
 
 func isACMETLS(clientHello *tls.ClientHelloInfo) bool {
