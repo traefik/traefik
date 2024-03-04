@@ -240,7 +240,11 @@ func verifyChain(rootCAs *x509.CertPool, rawCerts [][]byte) (*x509.Certificate, 
 
 // parseCertificate parses the first certificate from the certificate chain and sets it as the leaf certificate.
 func parseCertificate(cert *tls.Certificate) error {
-	if cert == nil || cert.Leaf != nil {
+	if cert == nil {
+		return errors.New("certificate is nil")
+	}
+
+	if cert.Leaf != nil {
 		return nil
 	}
 
