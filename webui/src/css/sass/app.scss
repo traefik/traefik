@@ -173,23 +173,30 @@ body {
 .body--dark .app-chip {
   &-accent, &-rule {
     background-color: rgba($accent, 0.25);
+    color: lighten($accent, 25%);
   }
   &-green, &-entry-points {
     background-color: rgba($app-text-green, 0.25);
+    color: lighten($app-text-green, 25%);
   }
   &-purple, &-name {
     background-color: rgba($app-text-purple, 0.25);
+    color: lighten($app-text-purple, 25%);
   }
   &-warning, &-service {
     background-color: rgba($warning, 0.25);
+    color: lighten($warning, 25%);
   }
   &-negative, &-error {
     background-color: rgba($negative, 0.25);
+    color: lighten($negative, 25%);
   }
   &-green-2, &-options {
     background-color: rgba($app-text-green-2, 0.25);
+    color: lighten($app-text-green-2, 25%);
   }
   &-marine, &-interval {
     background-color: rgba($app-text-grey, 0.25);
+    color: lighten($app-text-grey, 25%);
   }
 }
