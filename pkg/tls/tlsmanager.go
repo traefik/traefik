@@ -93,7 +93,11 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 	m.updateStores(ctx, stores)
 
-	toUpdate := make(map[string][]*tls.Certificate)
+	toUpdate := make(map[string][]*tls.Certificate, len(m.stores))
+	for storeName := range m.stores {
+		toUpdate[storeName] = nil
+	}
+
 	for _, certStoreConfig := range certs {
 		tlsCert, err := certStoreConfig.Certificate.GetCertificate()
 		if err != nil {
