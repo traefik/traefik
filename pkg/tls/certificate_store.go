@@ -126,7 +126,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 			}
 		}
 	}
-	defer c.lock.RUnlock()
+	c.lock.RUnlock()
 
 	if len(matchedCerts) > 0 {
 		// sort map by keys
@@ -137,8 +137,9 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		sort.Strings(keys)
 
 		// cache best match
-		c.certCache.SetDefault(serverName, matchedCerts[keys[len(keys)-1]])
-		return matchedCerts[keys[len(keys)-1]]
+		bestCert := matchedCerts[keys[len(keys)-1]]
+		c.certCache.SetDefault(serverName, bestCert)
+		return bestCert
 	}
 
 	return nil
@@ -193,9 +194,6 @@ func (c *CertificateStore) ResetCache() {
 func (c *CertificateStore) setCertificates(certificates []*tls.Certificate) {
 	certKeyMap := certKeyMap(certificates...)
 
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
 	var toDelete []string
 	for certKey := range c.dynamicCerts {
 		if _, exists := certKeyMap[certKey]; !exists {
@@ -224,7 +222,8 @@ func (c *CertificateStore) setCertificates(certificates []*tls.Certificate) {
 	}
 }
 
-func (c *CertificateStore) Certificates() []*x509.Certificate {
+// certificateLeaves returns all certificates, as well as the user-defined default certificate (if it exists).
+func (c *CertificateStore) certificateLeaves() []*x509.Certificate {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -236,6 +235,15 @@ func (c *CertificateStore) Certificates() []*x509.Certificate {
 		}
 
 		certs = append(certs, cert.Leaf)
+	}
+
+	if c.defaultCertificate != nil {
+		err := parseCertificate(c.defaultCertificate)
+		if err != nil {
+			return certs
+		}
+
+		certs = append(certs, c.defaultCertificate.Leaf)
 	}
 
 	return certs

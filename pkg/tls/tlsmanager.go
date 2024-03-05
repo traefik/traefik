@@ -288,16 +288,7 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 		return certificates
 	}
 
-	certificates = defaultStore.Certificates()
-
-	err := parseCertificate(defaultStore.defaultCertificate)
-	if err != nil {
-		return certificates
-	}
-
-	certificates = append(certificates, defaultStore.defaultCertificate.Leaf)
-
-	return certificates
+	return defaultStore.certificateLeaves()
 }
 
 // getStore returns the store found for storeName, or nil otherwise.
