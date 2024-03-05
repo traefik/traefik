@@ -62,7 +62,7 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	for _, certificate := range c {
 		cert, err := certificate.GetCertificate()
 		if err != nil {
-			log.Debug().Err(err).Msg("Error while getting certificate")
+			log.Error().Err(err).Msg("Error while getting certificate")
 			continue
 		}
 
