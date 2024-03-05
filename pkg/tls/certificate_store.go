@@ -180,7 +180,7 @@ func (c *CertificateStore) setCertificates(certificates []*tls.Certificate) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	toDelete := []string{}
+	var toDelete []string
 	for certKey := range c.dynamicCerts {
 		if _, exists := certKeyMap[certKey]; !exists {
 			toDelete = append(toDelete, certKey)
@@ -188,6 +188,7 @@ func (c *CertificateStore) setCertificates(certificates []*tls.Certificate) {
 	}
 
 	for _, certKey := range toDelete {
+		log.Debug().Msgf("Removing certificate for domain(s) %s", certKey)
 		delete(c.dynamicCerts, certKey)
 	}
 
