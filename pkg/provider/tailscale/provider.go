@@ -335,7 +335,11 @@ func isTailscaleDomain(domain string) bool {
 
 // isValidCert returns whether the given tls.Certificate is valid for the given
 // domain at the given time.
-func isValidCert(cert tls.Certificate, domain string, now time.Time) bool {
+func isValidCert(cert *tls.Certificate, domain string, now time.Time) bool {
+	if cert == nil {
+		return false
+	}
+
 	var leaf *x509.Certificate
 
 	intermediates := x509.NewCertPool()
