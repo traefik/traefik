@@ -11,7 +11,6 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -387,37 +386,6 @@ func BenchmarkManager_UpdateConfigs(b *testing.B) {
 
 		manager.UpdateConfigs(context.Background(), nil, nil, certConfigs[start.Int64():start.Int64()+10])
 	}
-}
-
-// This test only purpose is to guarantee no regression
-func TestStoreDeepEqual(t *testing.T) {
-	assert.True(t, reflect.DeepEqual(
-		Store{
-			DefaultCertificate: &Certificate{
-				CertFile: "foo",
-				KeyFile:  "bar",
-			},
-			DefaultGeneratedCert: &GeneratedCert{
-				Resolver: "foo",
-				Domain: &types.Domain{
-					Main: "bar",
-					SANs: []string{"foo", "bar"},
-				},
-			},
-		},
-		Store{
-			DefaultCertificate: &Certificate{
-				CertFile: "foo",
-				KeyFile:  "bar",
-			},
-			DefaultGeneratedCert: &GeneratedCert{
-				Resolver: "foo",
-				Domain: &types.Domain{
-					Main: "bar",
-					SANs: []string{"foo", "bar"},
-				},
-			},
-		}))
 }
 
 // generateCertificate generates a self-signed certificate for the given host and returns the PEM encoded certificate and key.

@@ -260,20 +260,16 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			return nil, nil
 		}
 
-		if store == nil {
-			log.Error().Msgf("TLS: No certificate store found with this name: %q, closing connection", storeName)
+		defaultCert := store.GetDefaultCertificate()
+		if defaultCert == nil {
+			log.Error().Msgf("TLS: No certificate found in store: %q, closing connection", storeName)
 
 			// Same comment as above, as in the isACMETLS case.
 			return nil, nil
 		}
 
-		if store.defaultCertificate != nil {
-			log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
-			return store.defaultCertificate, nil
-		}
-
-		log.Debug().Msgf("Serving default generated certificate for request: %q", domainToCheck)
-		return store.generatedCert, nil
+		log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
+		return defaultCert, nil
 	}
 
 	return tlsConfig, err

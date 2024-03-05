@@ -82,11 +82,27 @@ func (c *CertificateStore) GetAllDomains() []string {
 	return allDomains
 }
 
+// GetDefaultCertificate returns the best match certificate, and caches the response.
+func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
+	if c == nil {
+		return nil
+	}
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	if c.defaultCertificate != nil {
+		return c.defaultCertificate
+	}
+
+	return c.generatedCert
+}
+
 // GetBestCertificate returns the best match certificate, and caches the response.
 func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
 	if c == nil {
 		return nil
 	}
+
 	serverName := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
 	if len(serverName) == 0 {
 		// If no ServerName is provided, Check for local IP address matches
