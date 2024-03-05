@@ -161,6 +161,8 @@ func (m *Manager) updateStores(ctx context.Context, storeConfigs map[string]Stor
 			m.stores[storeName] = store
 		}
 
+		store.ResetCache()
+
 		// a default cert for the ACME store does not make any sense, so generating one is a waste.
 		if storeName == tlsalpn01.ACMETLS1Protocol {
 			continue
