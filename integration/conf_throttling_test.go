@@ -101,7 +101,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 	// The test tries to trigger a config reload with the REST API every 200ms,
 	// 10 times (so for 2s in total).
 	// Therefore the throttling (set at 400ms for this test) should only let
-	// (2s / 400 ms =) 5 config reloads happen in theory.
-	// In addition, we have to take into account the extra config reload from the internal provider (5 + 1).
-	assert.LessOrEqual(s.T(), reloads, 6)
+	// (1st reload + 2s / 400 ms =) 6 config reloads happen in theory.
+	// In addition, we have to take into account the extra config reload from the internal provider (6 + 1).
+	assert.LessOrEqual(s.T(), reloads, 7)
 }
