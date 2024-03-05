@@ -209,26 +209,13 @@ type configBuilder struct {
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
 	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
 
-	switch {
-	case tService.Spec.Weighted != nil:
+	if tService.Spec.Weighted != nil {
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
-	case tService.Spec.Mirroring != nil:
+	} else if tService.Spec.Mirroring != nil {
 		return c.buildMirroring(ctx, tService, id, conf)
-	case tService.Spec.LoadBalancer != nil:
-		return c.buildLoadBalancer(tService.Spec, id, conf)
 	}
 
 	return errors.New("unspecified service type")
-}
-
-// buildLoadBalancer creates the configuration for the load-balancer of services named id, and defined in tService.
-// It adds it to the given conf map.
-func (c configBuilder) buildLoadBalancer(tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
-	conf[id] = &dynamic.Service{
-		LoadBalancer: tService.LoadBalancer,
-	}
-
-	return nil
 }
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
@@ -313,9 +300,15 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		return nil, err
 	}
 
+
+	if !c.allowExternalNameServices && svc.HealthCheck != nil {
+		return nil, fmt.Errorf("HealthChecks not allowed: %s/%s", namespace, "sanitizedName")
+	}
+
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 	lb.Servers = servers
+	lb.HealthCheck = svc.HealthCheck
 
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader

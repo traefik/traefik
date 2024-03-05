@@ -44,15 +44,11 @@ spec:
           spec:
             description: TraefikServiceSpec defines the desired state of a TraefikService.
             properties:
-              loadBalancer:
-                description: LoadBalancer defines the Load Balancer configuration.
+              mirroring:
+                description: Mirroring defines the Mirroring service configuration.
                 properties:
                   healthCheck:
-                    description: |-
-                      HealthCheck enables regular active checks of the responsiveness of the
-                      children servers of this load-balancer. To propagate status changes (e.g. all
-                      servers of this service are down) upwards, HealthCheck must also be enabled on
-                      the parent(s) of this service.
+                    description: Healthcheck defines health checks for the service.
                     properties:
                       followRedirects:
                         type: boolean
@@ -91,70 +87,6 @@ spec:
                     required:
                     - followRedirects
                     type: object
-                  passHostHeader:
-                    type: boolean
-                  responseForwarding:
-                    description: ResponseForwarding holds the response forwarding
-                      configuration.
-                    properties:
-                      flushInterval:
-                        description: |-
-                          FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
-                          A negative value means to flush immediately after each write to the client.
-                          This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
-                          for such responses, writes are flushed to the client immediately.
-                          Default: 100ms
-                        format: int64
-                        type: integer
-                    type: object
-                  servers:
-                    items:
-                      description: Server holds the server configuration.
-                      properties:
-                        url:
-                          type: string
-                        weight:
-                          type: integer
-                      type: object
-                    type: array
-                  serversTransport:
-                    type: string
-                  sticky:
-                    description: Sticky holds the sticky configuration.
-                    properties:
-                      cookie:
-                        description: Cookie defines the sticky cookie configuration.
-                        properties:
-                          httpOnly:
-                            description: HTTPOnly defines whether the cookie can be
-                              accessed by client-side APIs, such as JavaScript.
-                            type: boolean
-                          maxAge:
-                            description: |-
-                              MaxAge indicates the number of seconds until the cookie expires.
-                              When set to a negative number, the cookie expires immediately.
-                              When set to zero, the cookie never expires.
-                            type: integer
-                          name:
-                            description: Name defines the Cookie name.
-                            type: string
-                          sameSite:
-                            description: |-
-                              SameSite defines the same site policy.
-                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-                            type: string
-                          secure:
-                            description: Secure defines whether the cookie can only
-                              be transmitted over an encrypted connection (i.e. HTTPS).
-                            type: boolean
-                        type: object
-                    type: object
-                required:
-                - passHostHeader
-                type: object
-              mirroring:
-                description: Mirroring defines the Mirroring service configuration.
-                properties:
                   kind:
                     description: Kind defines the kind of the Service.
                     enum:
@@ -174,6 +106,46 @@ spec:
                     items:
                       description: MirrorService holds the mirror configuration.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for the service.
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            mode:
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            status:
+                              type: integer
+                            timeout:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -408,6 +380,46 @@ spec:
                       description: Service defines an upstream HTTP service to proxy
                         traffic to.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for the service.
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            mode:
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            status:
+                              type: integer
+                            timeout:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:

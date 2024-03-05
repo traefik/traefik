@@ -40,8 +40,6 @@ type TraefikServiceList struct {
 
 // TraefikServiceSpec defines the desired state of a TraefikService.
 type TraefikServiceSpec struct {
-	// LoadBalancer defines the Load Balancer configuration.
-	LoadBalancer *dynamic.ServersLoadBalancer `json:"loadBalancer,omitempty"`
 	// Weighted defines the Weighted Round Robin configuration.
 	Weighted *WeightedRoundRobin `json:"weighted,omitempty"`
 	// Mirroring defines the Mirroring service configuration.

@@ -1,23 +1,26 @@
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: v1
+kind: Service
 metadata:
-  name: lb1
+  name: service-1
   namespace: default
-
 spec:
-  loadBalancer:
-    servers:
-      - url: https://my-external-server1.local.pri:443
-      - url: https://my-external-server2.local.pri:443
-    healthCheck:
-      hostname: my-external-server.local.pri
-      path: /health
-      interval: 15s
-    sticky:
-      cookie:
-        secure: true
-        httpOnly: true
+  type: ExternalName
+  externalName: my-external-server1.local.pri
+  ports:
+    - port: 443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-2
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: my-external-server2.local.pri
+  ports:
+    - port: 443
 
 ---
 apiVersion: traefik.io/v1alpha1
@@ -35,5 +38,10 @@ spec:
     kind: Rule
     priority: 12
     services:
-    - name: lb1
-      kind: TraefikService
+    - name: service-1
+      kind: Service
+    - name: service-2
+      kind: Service
+      healthCheck:
+        path: /health
+        interval: 15s

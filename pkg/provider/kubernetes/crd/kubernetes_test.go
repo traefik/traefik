@@ -2470,15 +2470,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 									},
 								},
 								HealthCheck: &dynamic.ServerHealthCheck{
-									Hostname: "my-external-server.local.pri",
 									Path:     "/health",
 									Interval: 15000000000,
-								},
-								Sticky: &dynamic.Sticky{
-									Cookie: &dynamic.Cookie{
-										Secure:   true,
-										HTTPOnly: true,
-									},
 								},
 							},
 						},
