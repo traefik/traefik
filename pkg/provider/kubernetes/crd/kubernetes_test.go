@@ -2434,14 +2434,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "services standard lb",
-			paths: []string{"with_services_lb4.yml"},
+			desc:  "with one external service and health check",
+			paths: []string{"services.yml", "with_one_external-service-and-health-check.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
 					Services: map[string]*dynamic.UDPService{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
 					Middlewares:       map[string]*dynamic.TCPMiddleware{},
@@ -2451,23 +2450,24 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-test-route-77c62dfe9517144aeeaa": {
-							EntryPoints: []string{"web"},
-							Service:     "default-lb1",
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-lb1": {
+						"default-test-route-77c62dfe9517144aeeaa": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "https://my-external-server1.local.pri:443",
+										URL: "https://external.domain:443",
 									},
-									{
-										URL: "https://my-external-server2.local.pri:443",
-									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								HealthCheck: &dynamic.ServerHealthCheck{
 									Path:     "/health",
@@ -2478,6 +2478,86 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "with two external services and health check",
+			paths: []string{"services.yml", "with_two_external-services-and-health-check.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-external-svc-443",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-external-svc-with-https-443",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-external-svc-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:     "/health1",
+									Interval: 15000000000,
+								},
+							},
+						},
+						"default-external-svc-with-https-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:     "/health2",
+									Interval: 20000000000,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{

@@ -300,10 +300,6 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		return nil, err
 	}
 
-	if !c.allowExternalNameServices && svc.HealthCheck != nil {
-		return nil, fmt.Errorf("HealthChecks not allowed: %s/%s", namespace, "sanitizedName")
-	}
-
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 	lb.Servers = servers
