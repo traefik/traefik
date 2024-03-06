@@ -9,12 +9,14 @@ import (
 	"crypto/x509/pkix"
 	"encoding/hex"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -359,6 +361,7 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 }
 
 func BenchmarkManager_UpdateConfigs(b *testing.B) {
+	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 	manager := NewManager()
 
 	var certConfigs []*CertAndStores
@@ -385,6 +388,42 @@ func BenchmarkManager_UpdateConfigs(b *testing.B) {
 		assert.NoError(b, err)
 
 		manager.UpdateConfigs(context.Background(), nil, nil, certConfigs[start.Int64():start.Int64()+10])
+	}
+}
+
+func BenchmarkTLSManager_GetBestCertificate(b *testing.B) {
+	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	for _, certs := range []int{10, 100, 1000} {
+		b.Run(fmt.Sprintf("%d-certs", certs), func(b *testing.B) {
+			b.StopTimer()
+			manager := NewManager()
+			var certConfigs []*CertAndStores
+			for i := 0; i < certs; i++ {
+				randBytes := make([]byte, 8)
+				_, err := rand.Read(randBytes)
+				assert.NoError(b, err)
+
+				cert, certKey, err := generateCertificate(hex.EncodeToString(randBytes))
+				assert.NoError(b, err)
+
+				certConfigs = append(certConfigs, &CertAndStores{
+					Certificate: Certificate{
+						CertFile: types.FileOrContent(cert),
+						KeyFile:  types.FileOrContent(certKey),
+					},
+				})
+			}
+
+			manager.UpdateConfigs(context.Background(), nil, nil, certConfigs)
+
+			store := manager.stores["default"]
+			b.StartTimer()
+			for i := 0; i < b.N; i++ {
+				_ = store.GetBestCertificate(&tls.ClientHelloInfo{
+					ServerName: "foobar",
+				})
+			}
+		})
 	}
 }
 
