@@ -200,7 +200,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	if staticConfiguration.Metrics != nil && staticConfiguration.Metrics.OTLP != nil {
 		semConvMetricRegistry, err = metrics.SemConvMetricRegistry(ctx, staticConfiguration.Metrics.OTLP)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create SemConv metric registry: %w", err)
 		}
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)

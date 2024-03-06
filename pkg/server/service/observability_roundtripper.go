@@ -38,12 +38,12 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	var statusCode int
-	response, err := t.rt.RoundTrip(req)
-	if response != nil {
-		statusCode = response.StatusCode
-	}
+	res, err := t.rt.RoundTrip(req)
 	if err != nil {
 		statusCode = computeStatusCode(err)
+	}
+	if res != nil {
+		statusCode = res.StatusCode
 	}
 
 	observability.LogResponseCode(span, statusCode, trace.SpanKindClient)
@@ -60,7 +60,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		var attrs []attribute.KeyValue
 
 		if statusCode < 100 || statusCode >= 600 {
-			attrs = append(attrs, attribute.Key("error.type").String(fmt.Sprintf("Invalid HTTP status code ; %d", statusCode)))
+			attrs = append(attrs, attribute.Key("error.type").String(fmt.Sprintf("Invalid HTTP status code %d", statusCode)))
 		} else if statusCode >= 400 {
 			attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(statusCode)))
 		}

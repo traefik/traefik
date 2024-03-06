@@ -291,7 +291,7 @@ Traefik Proxy follows [official OTLP semantic conventions v1.23.1](https://githu
 
 | Metric                        | Type      | [Labels](#labels)                                                                                                                        | Description                       |
 |-------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
-| http.server.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests. |
+| http.server.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
 
 #### Labels
 
@@ -301,7 +301,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 |-----------------------------|--------------------------------------------------------------|---------------|
 | `error.type`                | Describes a class of error the operation ended with          | "500"         |
 | `http.request.method`       | HTTP request method                                          | "GET"         |
-| `http.response.status_code` | HTTP response status code.                                   | "200"         |
+| `http.response.status_code` | HTTP response status code                                    | "200"         |
 | `network.protocol.name`     | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
 | `network.protocol.version`  | Version of the protocol specified in `network.protocol.name` | "1.1"         |
 | `server.address`            | Name of the local HTTP server that received the request      | "example.com" |
@@ -312,7 +312,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 | Metric                        | Type      | [Labels](#labels)                                                                                                                        | Description                       |
 |-------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
-| http.client.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP client requests. |
+| http.client.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP client requests  |
 
 #### Labels
 
@@ -322,7 +322,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 |-----------------------------|--------------------------------------------------------------|---------------|
 | `error.type`                | Describes a class of error the operation ended with          | "500"         |
 | `http.request.method`       | HTTP request method                                          | "GET"         |
-| `http.response.status_code` | HTTP response status code.                                   | "200"         |
+| `http.response.status_code` | HTTP response status code                                   | "200"         |
 | `network.protocol.name`     | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
 | `network.protocol.version`  | Version of the protocol specified in `network.protocol.name` | "1.1"         |
 | `server.address`            | Name of the local HTTP server that received the request      | "example.com" |
