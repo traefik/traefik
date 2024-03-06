@@ -89,7 +89,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
 	}
 
-	return response, err
+	return res, err
 }
 
 func newObservabilityRoundTripper(semConvMetricRegistry *metrics.SemConvMetricsRegistry, rt http.RoundTripper) http.RoundTripper {

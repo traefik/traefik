@@ -129,7 +129,7 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 			// force the meter provider with manual reader to collect metrics for the test.
 			metrics.SetMeterProvider(meterProvider)
 
-			semConvMetricRegistry, err := metrics.SemConvMetricRegistry(context.Background(), &cfg)
+			semConvMetricRegistry, err := metrics.NewSemConvMetricRegistry(context.Background(), &cfg)
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 

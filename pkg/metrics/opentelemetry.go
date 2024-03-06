@@ -44,8 +44,8 @@ type SemConvMetricsRegistry struct {
 	httpClientRequestDuration metric.Float64Histogram
 }
 
-// SemConvMetricRegistry registers all stables semantic conventions metrics.
-func SemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
+// NewSemConvMetricRegistry registers all stables semantic conventions metrics.
+func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
