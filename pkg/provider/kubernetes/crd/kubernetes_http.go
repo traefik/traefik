@@ -303,6 +303,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 	lb.Servers = servers
+	lb.HealthCheck = svc.HealthCheck
 
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
