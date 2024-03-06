@@ -12,7 +12,8 @@ Traefik supports these metrics backends:
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
 
-Traefik Proxy hosts an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346) and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
+Traefik Proxy hosts an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
+and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
 ## Common Options
 
@@ -29,7 +30,7 @@ metrics:
 
 ```toml tab="File (TOML)"
 [metrics]
-  addInternals = true
+addInternals = true
 ```
 
 ```bash tab="CLI"
@@ -85,10 +86,10 @@ traefik_tls_certs_not_after
 
 Here is a comprehensive list of labels that are provided by the global metrics:
 
-| Label         | Description                            | example              |
-|---------------|----------------------------------------|----------------------|
-| `entrypoint`  | Entrypoint that handled the connection | "example_entrypoint" |
-| `protocol`    | Connection protocol                    | "TCP"                |
+| Label        | Description                            | example              |
+|--------------|----------------------------------------|----------------------|
+| `entrypoint` | Entrypoint that handled the connection | "example_entrypoint" |
+| `protocol`   | Connection protocol                    | "TCP"                |
 
 ## HTTP Metrics
 
@@ -281,3 +282,49 @@ Here is a comprehensive list of labels that are provided by the metrics:
     If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
     or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
     then the value for the method label becomes `EXTENSION_METHOD`.
+
+## Semantic Conventions for HTTP Metrics
+
+Traefik Proxy follows [official OTLP semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
+
+### HTTP Server
+
+| Metric                        | Type      | [Labels](#labels)                                                                                                                        | Description                       |
+|-------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
+| http.server.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
+
+#### Labels
+
+Here is a comprehensive list of labels that are provided by the metrics:
+
+| Label                       | Description                                                  | example       |
+|-----------------------------|--------------------------------------------------------------|---------------|
+| `error.type`                | Describes a class of error the operation ended with          | "500"         |
+| `http.request.method`       | HTTP request method                                          | "GET"         |
+| `http.response.status_code` | HTTP response status code                                    | "200"         |
+| `network.protocol.name`     | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
+| `network.protocol.version`  | Version of the protocol specified in `network.protocol.name` | "1.1"         |
+| `server.address`            | Name of the local HTTP server that received the request      | "example.com" |
+| `server.port`               | Port of the local HTTP server that received the request      | "80"          |
+| `url.scheme`                | The URI scheme component identifying the used protocol       | "http"        |
+
+### HTTP Client
+
+| Metric                        | Type      | [Labels](#labels)                                                                                                                        | Description                       |
+|-------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
+| http.client.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP client requests  |
+
+#### Labels
+
+Here is a comprehensive list of labels that are provided by the metrics:
+
+| Label                       | Description                                                  | example       |
+|-----------------------------|--------------------------------------------------------------|---------------|
+| `error.type`                | Describes a class of error the operation ended with          | "500"         |
+| `http.request.method`       | HTTP request method                                          | "GET"         |
+| `http.response.status_code` | HTTP response status code                                   | "200"         |
+| `network.protocol.name`     | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
+| `network.protocol.version`  | Version of the protocol specified in `network.protocol.name` | "1.1"         |
+| `server.address`            | Name of the local HTTP server that received the request      | "example.com" |
+| `server.port`               | Port of the local HTTP server that received the request      | "80"          |
+| `url.scheme`                | The URI scheme component identifying the used protocol       | "http"        |
