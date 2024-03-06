@@ -300,7 +300,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps,
+			m, err := NewXForwarded(test.insecure, false, test.trustedIps,
 				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
 

@@ -558,9 +558,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
+	proxyProtocolEnabled := configuration.ProxyProtocol != nil
 	var handler http.Handler
 	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
+		proxyProtocolEnabled,
 		configuration.ForwardedHeaders.TrustedIPs,
 		next)
 	if err != nil {
@@ -616,6 +618,21 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	prevConnContext := serverHTTP.ConnContext
 	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		// This adds the remote address of the server making the connection if the PROXY Protocol is enabled
+		if proxyProtocolEnabled {
+			tcpConn, ok := c.(*tcprouter.Conn)
+			if ok {
+				trackedConection, ok := tcpConn.WriteCloser.(*trackedConnection)
+				if ok {
+					writeCloser, ok := trackedConection.WriteCloser.(*writeCloserWrapper)
+					if ok {
+						proxyIP := writeCloser.writeCloser.RemoteAddr().String()
+						ctx = context.WithValue(ctx, forwardedheaders.ProxyAddrKey, proxyIP)
+					}
+				}
+			}
+		}
+
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
 		if prevConnContext != nil {
