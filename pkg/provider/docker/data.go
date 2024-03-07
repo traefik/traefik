@@ -25,7 +25,7 @@ type networkSettings struct {
 	Networks    map[string]*networkData
 }
 
-// Network holds the network data to the provider.
+//  NetworkData holds the network data to the provider.
 type networkData struct {
 	Name     string
 	Addr     string
