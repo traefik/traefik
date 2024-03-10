@@ -667,7 +667,8 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
+For non-TLS connections, if HTTP and TCP routers listen on the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+For TLS connections, if HTTPS and TCP-TLS routers listen on the same EntryPoint, the HTTPS routers will apply *before* the TCP-TLS routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
