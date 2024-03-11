@@ -289,15 +289,15 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 
 		if c.Providers.KubernetesCRD != nil {
-			c.Providers.KubernetesGateway.GroupKindFilterFuncs = map[string]map[string]gateway.BuildFilterFunc{
+			c.Providers.KubernetesGateway.SetGroupKindFilterFuncs(map[string]map[string]gateway.BuildFilterFunc{
 				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware) {
 					return crd.GetResourceKey(name, namespace), nil
 				}},
-			}
-			c.Providers.KubernetesGateway.BackendGroupKinds = map[string][]string{
+			})
+			c.Providers.KubernetesGateway.SetBackendGroupKinds(map[string][]string{
 				traefikv1alpha1.SchemeGroupVersion.String(): {"TraefikService"},
-			}
-			c.Providers.KubernetesGateway.ExtensionRefNamespaces = c.Providers.KubernetesCRD.Namespaces
+			})
+			c.Providers.KubernetesGateway.SetExtensionRefNamespaces(c.Providers.KubernetesCRD.Namespaces)
 		}
 
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints

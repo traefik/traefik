@@ -62,16 +62,31 @@ type Provider struct {
 	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
-	// GroupKindFilterFuncs is the list of allowed Group and Kinds for the Filter ExtensionRef objects.
-	GroupKindFilterFuncs map[string]map[string]BuildFilterFunc `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
-	// ExtensionRefNamespaces is the list of allowed namespaces for the ExtensionRef objects.
-	ExtensionRefNamespaces []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
-	// BackendGroupKinds is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
-	BackendGroupKinds map[string][]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	// groupKindFilterFuncs is the list of allowed Group and Kinds for the Filter ExtensionRef objects.
+	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
+	// extensionRefNamespaces is the list of allowed namespaces for the ExtensionRef objects.
+	extensionRefNamespaces []string
+	// backendGroupKinds is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
+	backendGroupKinds map[string][]string
 
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
+}
+
+// SetGroupKindFilterFuncs sets the list of allowed Group and Kinds for the Filter ExtensionRef objects.
+func (p *Provider) SetGroupKindFilterFuncs(filters map[string]map[string]BuildFilterFunc) {
+	p.groupKindFilterFuncs = filters
+}
+
+// SetExtensionRefNamespaces sets the list of allowed namespaces for the ExtensionRef objects.
+func (p *Provider) SetExtensionRefNamespaces(namespaces []string) {
+	p.extensionRefNamespaces = namespaces
+}
+
+// SetBackendGroupKinds sets the list of allowed Group and Kinds for the Backend ExtensionRef objects.
+func (p *Provider) SetBackendGroupKinds(filters map[string][]string) {
+	p.backendGroupKinds = filters
 }
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
@@ -1586,11 +1601,11 @@ func (p *Provider) loadServices(client Client, namespace string, backendRefs []g
 		weight := int(ptr.Deref(backendRef.Weight, 1))
 
 		if isTraefikService(backendRef.BackendRef) {
-			if len(p.ExtensionRefNamespaces) > 0 && !slices.Contains(p.ExtensionRefNamespaces, namespace) {
+			if len(p.extensionRefNamespaces) > 0 && !slices.Contains(p.extensionRefNamespaces, namespace) {
 				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 			}
 
-			if v, ok := p.BackendGroupKinds[traefikv1alpha1.SchemeGroupVersion.String()]; !ok && !slices.Contains(v, kindTraefikService) {
+			if v, ok := p.backendGroupKinds[traefikv1alpha1.SchemeGroupVersion.String()]; !ok && !slices.Contains(v, kindTraefikService) {
 				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 			}
 
@@ -1841,12 +1856,12 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = middleware
 		case gatev1.HTTPRouteFilterExtensionRef:
-			if p.ExtensionRefNamespaces != nil && !slices.Contains(p.ExtensionRefNamespaces, namespace) {
+			if p.extensionRefNamespaces != nil && !slices.Contains(p.extensionRefNamespaces, namespace) {
 				return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 			}
 
 			var ok bool
-			for group, kinds := range p.GroupKindFilterFuncs {
+			for group, kinds := range p.groupKindFilterFuncs {
 				if string(filter.ExtensionRef.Group) != group {
 					continue
 				}
