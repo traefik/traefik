@@ -1834,7 +1834,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, BackendGroupKinds: test.backendGroupFilter, ExtensionRefNamespaces: test.namespaces}
+			p := Provider{EntryPoints: test.entryPoints, backendGroupKinds: test.backendGroupFilter, extensionRefNamespaces: test.namespaces}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2150,7 +2150,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, GroupKindFilterFuncs: test.groupKindFilterFuncs, ExtensionRefNamespaces: test.filterNamespaces}
+			p := Provider{EntryPoints: test.entryPoints, groupKindFilterFuncs: test.groupKindFilterFuncs, extensionRefNamespaces: test.filterNamespaces}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock([]string{"services.yml", "httproute/filter_extension_ref.yml"}...))
 			assert.Equal(t, test.expected, conf)
 		})
