@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcert"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter"
 	"github.com/traefik/traefik/v3/pkg/middlewares/redirect"
@@ -32,7 +33,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
-	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
@@ -390,7 +390,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
 	// Hence, regarding internal resources' observability deactivation,
 	// this would not enable tracing.
-	return tracing.WrapMiddleware(ctx, middleware), nil
+	return observability.WrapMiddleware(ctx, middleware), nil
 }
 
 func inSlice(element string, stack []string) bool {
