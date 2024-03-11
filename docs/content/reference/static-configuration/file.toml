@@ -146,6 +146,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     throttleDuration = "42s"
+    experimentalChannel = true
   [providers.rest]
     insecure = true
   [providers.consulCatalog]
