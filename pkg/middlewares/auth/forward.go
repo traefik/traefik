@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
@@ -126,7 +127,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
 		logger.Debug().Msg(logMessage)
-		tracing.SetStatusErrorf(req.Context(), logMessage)
+		observability.SetStatusErrorf(req.Context(), logMessage)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -150,7 +151,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardErr != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
 		logger.Debug().Msg(logMessage)
-		tracing.SetStatusErrorf(forwardReq.Context(), logMessage)
+		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -161,7 +162,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if readError != nil {
 		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
 		logger.Debug().Msg(logMessage)
-		tracing.SetStatusErrorf(forwardReq.Context(), logMessage)
+		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -188,7 +189,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if !errors.Is(err, http.ErrNoLocation) {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
 				logger.Debug().Msg(logMessage)
-				tracing.SetStatusErrorf(forwardReq.Context(), logMessage)
+				observability.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
