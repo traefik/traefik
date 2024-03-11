@@ -1017,6 +1017,12 @@ OpenTracing configuration. (Default: ```false```)
 `--tracing.addinternals`:  
 Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
 
+`--tracing.capturedrequestheaders`:  
+Request headers to add as attributes for server and client spans.
+
+`--tracing.capturedresponseheaders`:  
+Response headers to add as attributes for server and client spans.
+
 `--tracing.globalattributes.<name>`:  
 Defines additional attributes (key:value) on all spans.
 

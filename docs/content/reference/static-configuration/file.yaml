@@ -418,6 +418,12 @@ tracing:
   globalAttributes:
     name0: foobar
     name1: foobar
+  capturedRequestHeaders:
+    - foobar
+    - foobar
+  capturedResponseHeaders:
+    - foobar
+    - foobar
   sampleRate: 42
   addInternals: true
   otlp:
