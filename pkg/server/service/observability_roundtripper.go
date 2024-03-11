@@ -39,16 +39,18 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	var statusCode int
+	var headers http.Header
 	response, err := t.rt.RoundTrip(req)
 	if err != nil {
 		statusCode = computeStatusCode(err)
 	}
 	if response != nil {
 		statusCode = response.StatusCode
+		headers = response.Header
 	}
 
 	if tracer != nil {
-		tracer.CaptureResponse(span, response.Header, statusCode, trace.SpanKindClient)
+		tracer.CaptureResponse(span, headers, statusCode, trace.SpanKindClient)
 	}
 
 	end := time.Now()
