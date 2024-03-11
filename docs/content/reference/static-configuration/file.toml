@@ -161,6 +161,7 @@
     connectByDefault = true
     serviceName = "foobar"
     watch = true
+    strictChecks = ["foobar", "foobar"]
     namespaces = ["foobar", "foobar"]
     [providers.consulCatalog.endpoint]
       address = "foobar"
@@ -379,6 +380,8 @@
 
 [tracing]
   serviceName = "foobar"
+  capturedRequestHeaders = ["foobar", "foobar"]
+  capturedResponseHeaders = ["foobar", "foobar"]
   sampleRate = 42.0
   addInternals = true
   [tracing.globalAttributes]

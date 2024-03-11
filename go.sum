@@ -598,8 +598,8 @@ github.com/hashicorp/serf v0.8.2/go.mod h1:6hOLApaqBFA1NXqRQAsxw9QxuDEvNxSQRwA/J
 github.com/hashicorp/serf v0.10.1 h1:Z1H2J60yRKvfDYAOZLd2MU0ND4AH/WDz7xYHDWQsIPY=
 github.com/hashicorp/serf v0.10.1/go.mod h1:yL2t6BqATOLGc5HF7qbFkTfXoPIY0WZdWHfEvMqbG+4=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
-github.com/http-wasm/http-wasm-host-go v0.5.2 h1:5d/QgaaJtTF+qd0goBaxJJ7tcHP9n+gQUldJ7TsTexA=
-github.com/http-wasm/http-wasm-host-go v0.5.2/go.mod h1:zQB3w+df4hryDEqBorGyA1DwPJ86LfKIASNLFuj6CuI=
+github.com/http-wasm/http-wasm-host-go v0.6.0 h1:Vd4XvcFB3NMgWp2VLCQaiqYgLneN2lChbyN9NGoNDro=
+github.com/http-wasm/http-wasm-host-go v0.6.0/go.mod h1:zQB3w+df4hryDEqBorGyA1DwPJ86LfKIASNLFuj6CuI=
 github.com/huandu/xstrings v1.3.3/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/huandu/xstrings v1.4.0 h1:D17IlohoQq4UcpqD7fDk80P7l+lwAmlFaBHgOipl2FU=
 github.com/huandu/xstrings v1.4.0/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=

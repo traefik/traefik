@@ -15,7 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 // ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.
@@ -23,12 +23,12 @@ type ObservabilityMgr struct {
 	config                 static.Configuration
 	accessLoggerMiddleware *accesslog.Handler
 	metricsRegistry        metrics.Registry
-	tracer                 trace.Tracer
+	tracer                 *tracing.Tracer
 	tracerCloser           io.Closer
 }
 
 // NewObservabilityMgr creates a new ObservabilityMgr.
-func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer trace.Tracer, tracerCloser io.Closer) *ObservabilityMgr {
+func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracer, tracerCloser io.Closer) *ObservabilityMgr {
 	return &ObservabilityMgr{
 		config:                 config,
 		metricsRegistry:        metricsRegistry,

@@ -116,3 +116,47 @@ tracing:
 --tracing.globalAttributes.attr1=foo
 --tracing.globalAttributes.attr2=bar
 ```
+
+#### `capturedRequestHeaders`
+
+_Optional, Default=empty_
+
+Defines the list of request headers to add as attributes.
+It applies to client and server kind spans.
+
+```yaml tab="File (YAML)"
+tracing:
+  capturedRequestHeaders:
+    - X-CustomHeader
+```
+
+```toml tab="File (TOML)"
+[tracing]
+    capturedRequestHeaders = ["X-CustomHeader"]
+```
+
+```bash tab="CLI"
+--tracing.capturedRequestHeaders[0]=X-CustomHeader
+```
+
+#### `capturedResponseHeaders`
+
+_Optional, Default=empty_
+
+Defines the list of response headers to add as attributes.
+It applies to client and server kind spans.
+
+```yaml tab="File (YAML)"
+tracing:
+  capturedResponseHeaders:
+    - X-CustomHeader
+```
+
+```toml tab="File (TOML)"
+[tracing]
+    capturedResponseHeaders = ["X-CustomHeader"]
+```
+
+```bash tab="CLI"
+--tracing.capturedResponseHeaders[0]=X-CustomHeader
+```
