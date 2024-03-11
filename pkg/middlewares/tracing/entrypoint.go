@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/containous/alice"
@@ -16,20 +17,24 @@ const (
 )
 
 type entryPointTracing struct {
-	tracer     trace.Tracer
+	tracer     *tracing.Tracer
 	entryPoint string
 	next       http.Handler
 }
 
 // WrapEntryPointHandler Wraps tracing to alice.Constructor.
-func WrapEntryPointHandler(ctx context.Context, tracer trace.Tracer, entryPointName string) alice.Constructor {
+func WrapEntryPointHandler(ctx context.Context, tracer *tracing.Tracer, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
+		if tracer == nil {
+			return nil, errors.New("unexpected nil tracer")
+		}
+
 		return newEntryPoint(ctx, tracer, entryPointName, next), nil
 	}
 }
 
 // newEntryPoint creates a new tracing middleware for incoming requests.
-func newEntryPoint(ctx context.Context, tracer trace.Tracer, entryPointName string, next http.Handler) http.Handler {
+func newEntryPoint(ctx context.Context, tracer *tracing.Tracer, entryPointName string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
 	return &entryPointTracing{
@@ -48,10 +53,10 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
-	tracing.LogServerRequest(span, req)
+	e.tracer.CaptureServerRequest(span, req)
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
 
-	tracing.LogResponseCode(span, recorder.Status(), trace.SpanKindServer)
+	e.tracer.CaptureResponse(span, recorder.Header(), recorder.Status(), trace.SpanKindServer)
 }
