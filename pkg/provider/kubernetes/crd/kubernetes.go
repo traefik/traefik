@@ -493,6 +493,13 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
+// GetResourceKey returns the name of the resource in the dynamic configuration.
+func GetResourceKey(name, namespace string) string {
+	key := makeID(namespace, name)
+
+	return key + providerNamespaceSeparator + providerName
+}
+
 // getServicePort always returns a valid port, an error otherwise.
 func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
