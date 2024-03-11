@@ -212,6 +212,31 @@ providers:
 --providers.kubernetesgateway.namespaces=default,production
 ```
 
+### `experimentalChannel`
+
+_Optional, Default: false_
+
+Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).
+Currently, this option enables support for:
+- `TCPRoutes`
+- `TLSRoutes`
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    experimentalChannel: true
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+    experimentalChannel = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.experimentalchannel=true
+```
+
 ### `labelselector`
 
 _Optional, Default: ""_

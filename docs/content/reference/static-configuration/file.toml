@@ -146,7 +146,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     throttleDuration = "42s"
-    enableAlphaAPIs = true
+    experimentalChannel = true
   [providers.rest]
     insecure = true
   [providers.consulCatalog]

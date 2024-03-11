@@ -27,4 +27,4 @@
     address = ":8443"
 
 [providers.kubernetesGateway]
-    enableAlphaAPIs= true
+    experimentalChannel = true
