@@ -30,6 +30,74 @@ var (
 	openTelemetryGaugeCollector *gaugeCollector
 )
 
+// SetMeterProvider sets the meter provider for the tests.
+func SetMeterProvider(meterProvider *sdkmetric.MeterProvider) {
+	openTelemetryMeterProvider = meterProvider
+	otel.SetMeterProvider(meterProvider)
+}
+
+// SemConvMetricsRegistry holds stables semantic conventions metric instruments.
+type SemConvMetricsRegistry struct {
+	// server metrics
+	httpServerRequestDuration metric.Float64Histogram
+	// client metrics
+	httpClientRequestDuration metric.Float64Histogram
+}
+
+// NewSemConvMetricRegistry registers all stables semantic conventions metrics.
+func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
+	if openTelemetryMeterProvider == nil {
+		var err error
+		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
+			log.Ctx(ctx).Err(err).Msg("Unable to create OpenTelemetry meter provider")
+
+			return nil, nil
+		}
+	}
+
+	meter := otel.Meter("github.com/traefik/traefik",
+		metric.WithInstrumentationVersion(version.Version))
+
+	httpServerRequestDuration, err := meter.Float64Histogram("http.server.request.duration",
+		metric.WithDescription("Duration of HTTP server requests."),
+		metric.WithUnit("s"),
+		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
+	if err != nil {
+		return nil, fmt.Errorf("can't build httpServerRequestDuration histogram: %w", err)
+	}
+
+	httpClientRequestDuration, err := meter.Float64Histogram("http.client.request.duration",
+		metric.WithDescription("Duration of HTTP client requests."),
+		metric.WithUnit("s"),
+		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
+	if err != nil {
+		return nil, fmt.Errorf("can't build httpClientRequestDuration histogram: %w", err)
+	}
+
+	return &SemConvMetricsRegistry{
+		httpServerRequestDuration: httpServerRequestDuration,
+		httpClientRequestDuration: httpClientRequestDuration,
+	}, nil
+}
+
+// HTTPServerRequestDuration returns the HTTP server request duration histogram.
+func (s *SemConvMetricsRegistry) HTTPServerRequestDuration() metric.Float64Histogram {
+	if s == nil {
+		return nil
+	}
+
+	return s.httpServerRequestDuration
+}
+
+// HTTPClientRequestDuration returns the HTTP client request duration histogram.
+func (s *SemConvMetricsRegistry) HTTPClientRequestDuration() metric.Float64Histogram {
+	if s == nil {
+		return nil
+	}
+
+	return s.httpClientRequestDuration
+}
+
 // RegisterOpenTelemetry registers all OpenTelemetry metrics.
 func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 	if openTelemetryMeterProvider == nil {
