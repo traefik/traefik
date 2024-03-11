@@ -14,25 +14,27 @@ type wrapper struct {
 
 func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var span trace.Span
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+	var tracer *tracing.Tracer
+	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil {
 		var tracingCtx context.Context
 		tracingCtx, span = tracer.Start(req.Context(), "ReverseProxy", trace.WithSpanKind(trace.SpanKindClient))
 		defer span.End()
 
 		req = req.WithContext(tracingCtx)
 
-		tracing.LogClientRequest(span, req)
+		tracer.CaptureClientRequest(span, req)
 		tracing.InjectContextIntoCarrier(req)
 	}
 
 	response, err := t.rt.RoundTrip(req)
 	if err != nil {
 		statusCode := computeStatusCode(err)
-		tracing.LogResponseCode(span, statusCode, trace.SpanKindClient)
+		tracer.CaptureResponse(span, nil, statusCode, trace.SpanKindClient)
+
 		return response, err
 	}
 
-	tracing.LogResponseCode(span, response.StatusCode, trace.SpanKindClient)
+	tracer.CaptureResponse(span, response.Header, response.StatusCode, trace.SpanKindClient)
 
 	return response, nil
 }

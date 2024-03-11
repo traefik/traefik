@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -42,7 +43,9 @@ func TestEntryPointMiddleware(t *testing.T) {
 					attribute.String("client.address", "10.0.0.1"),
 					attribute.Int64("client.port", int64(1234)),
 					attribute.String("client.socket.address", ""),
+					attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
 					attribute.Int64("http.response.status_code", int64(404)),
+					attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
 				},
 			},
 		},
@@ -55,17 +58,20 @@ func TestEntryPointMiddleware(t *testing.T) {
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
+			req.Header.Set("X-Foo", "foo")
+			req.Header.Add("X-Foo", "bar")
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				rw.Header().Set("X-Bar", "foo")
+				rw.Header().Add("X-Bar", "bar")
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			tracer := &mockTracer{}
-
-			handler := newEntryPoint(context.Background(), tracer, test.entryPoint, next)
+			mockTracer := &mockTracer{}
+			handler := newEntryPoint(context.Background(), tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"}), test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
-			for _, span := range tracer.spans {
+			for _, span := range mockTracer.spans {
 				assert.Equal(t, test.expected.name, span.name)
 				assert.Equal(t, test.expected.attributes, span.attributes)
 			}
