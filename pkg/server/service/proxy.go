@@ -22,13 +22,9 @@ const StatusClientClosedRequest = 499
 const StatusClientClosedRequestText = "Client Closed Request"
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
-	// Wrapping the roundTripper with the Tracing roundTripper,
-	// to handle the reverseProxy client span creation.
-	tracingRoundTripper := newTracingRoundTripper(roundTripper)
-
 	return &httputil.ReverseProxy{
 		Director:      directorBuilder(target, passHostHeader),
-		Transport:     tracingRoundTripper,
+		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
 		ErrorHandler:  errorHandler,

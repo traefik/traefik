@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -78,13 +78,13 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if authinfo != nil && *authinfo == "stale" {
 			logger.Debug().Msg("Digest authentication failed, possibly because out of order requests")
-			tracing.SetStatusErrorf(req.Context(), "Digest authentication failed, possibly because out of order requests")
+			observability.SetStatusErrorf(req.Context(), "Digest authentication failed, possibly because out of order requests")
 			d.auth.RequireAuthStale(rw, req)
 			return
 		}
 
 		logger.Debug().Msg("Digest authentication failed")
-		tracing.SetStatusErrorf(req.Context(), "Digest authentication failed")
+		observability.SetStatusErrorf(req.Context(), "Digest authentication failed")
 		d.auth.RequireAuth(rw, req)
 		return
 	}
