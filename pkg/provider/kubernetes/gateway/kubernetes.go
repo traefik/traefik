@@ -565,7 +565,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			case kindHTTPRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTCPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf, p.ExperimentalChannel)...)
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTLSRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
 			}
@@ -676,12 +676,12 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func supportedRouteKinds(protocol gatev1.ProtocolType, enableAlpha bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		if enableAlpha {
+		if experimentalChannel {
 			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
 		}
 
@@ -690,14 +690,14 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, enableAlpha bool) ([]gate
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-			Message:            fmt.Sprintf("Protocol %q requires TCPRoute's which are disabled without using the `experimentalChannel` option", protocol),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
 		}}
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
 
 	case gatev1.TLSProtocolType:
-		if enableAlpha {
+		if experimentalChannel {
 			return []gatev1.RouteGroupKind{
 				{Kind: kindTCPRoute, Group: &group},
 				{Kind: kindTLSRoute, Group: &group},
@@ -709,7 +709,7 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, enableAlpha bool) ([]gate
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-			Message:            fmt.Sprintf("Protocol %q requires TLSRoute's which are disabled without using the `experimentalChannel` option", protocol),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
 		}}
 	}
 
@@ -935,21 +935,10 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 	return conditions
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration, enableAlpha bool) []metav1.Condition {
+func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
 		return nil
-	}
-
-	if !enableAlpha {
-		return []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: gateway.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             "InvalidRouteKindReferences", // TODO should never happen as the selector is validated by Kubernetes
-			Message:            "A TCPRoute is referenced to this Gateway, but Experimental Channel support is disabled",
-		}}
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
