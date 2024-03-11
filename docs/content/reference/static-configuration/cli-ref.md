@@ -537,6 +537,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`--providers.consulcatalog.strictchecks`:  
+A list of service health statuses to allow taking traffic. (Default: ```passing, warning```)
+
 `--providers.consulcatalog.watch`:  
 Watch Consul API events. (Default: ```false```)
 
@@ -1013,6 +1016,12 @@ OpenTracing configuration. (Default: ```false```)
 
 `--tracing.addinternals`:  
 Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
+
+`--tracing.capturedrequestheaders`:  
+Request headers to add as attributes for server and client spans.
+
+`--tracing.capturedresponseheaders`:  
+Response headers to add as attributes for server and client spans.
 
 `--tracing.globalattributes.<name>`:  
 Defines additional attributes (key:value) on all spans.
