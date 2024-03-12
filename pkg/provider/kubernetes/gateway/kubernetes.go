@@ -1856,7 +1856,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = middleware
 		case gatev1.HTTPRouteFilterExtensionRef:
-			if p.extensionRefNamespaces != nil && !slices.Contains(p.extensionRefNamespaces, namespace) {
+			if len(p.extensionRefNamespaces) > 0 && !slices.Contains(p.extensionRefNamespaces, namespace) {
 				return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 			}
 
