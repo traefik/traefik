@@ -1,29 +1,46 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-services', {'panel-services-dense':isDense}]">
-    <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
+  <q-card
+    flat
+    bordered
+    :class="['panel-services', {'panel-services-dense':isDense}]"
+  >
+    <q-scroll-area
+      :thumb-style="appThumbStyle"
+      style="height:100%;"
+    >
       <q-card-section>
         <div class="row items-start no-wrap">
           <div class="col-7">
-            <div class="text-subtitle2 text-table">Name</div>
+            <div class="text-subtitle2 text-table">
+              Name
+            </div>
           </div>
           <div class="col-3">
-            <div class="text-subtitle2 text-table">Weight</div>
+            <div class="text-subtitle2 text-table">
+              Weight
+            </div>
           </div>
           <div class="col-4">
-            <div class="text-subtitle2 text-table">Provider</div>
+            <div class="text-subtitle2 text-table">
+              Provider
+            </div>
           </div>
         </div>
       </q-card-section>
       <q-separator />
-      <div v-for="(service, index) in data.weighted.services" :key="index">
+      <div
+        v-for="(service, index) in data.weighted.services"
+        :key="index"
+      >
         <q-card-section>
           <div class="row items-center no-wrap">
             <div class="col-7">
               <q-chip
                 dense
-                class="app-chip app-chip-rule app-chip-overflow">
+                class="app-chip app-chip-rule app-chip-overflow"
+              >
                 {{ service.name }}
-                <q-tooltip>{{service.name}}</q-tooltip>
+                <q-tooltip>{{ service.name }}</q-tooltip>
               </q-chip>
             </div>
             <div class="col-3">
@@ -43,11 +60,15 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
   name: 'PanelWeightedServices',
-  props: ['data', 'dense'],
   components: {},
+  props: {
+    data: Object,
+    dense: Boolean
+  },
   computed: {
     isDense () {
       return this.dense !== undefined
@@ -70,19 +91,19 @@ export default {
         return 'providers/plugin.svg'
       }
       if (name.startsWith('consul-')) {
-        return `providers/consul.svg`
+        return 'providers/consul.svg'
       }
       if (name.startsWith('consulcatalog-')) {
-        return `providers/consulcatalog.svg`
+        return 'providers/consulcatalog.svg'
       }
       if (name.startsWith('nomad-')) {
-        return `providers/nomad.svg`
+        return 'providers/nomad.svg'
       }
 
       return `providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

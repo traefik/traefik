@@ -149,7 +149,7 @@ func getProviderName(id string) string {
 
 func extractType(element interface{}) string {
 	v := reflect.ValueOf(element).Elem()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 
 		if field.Kind() == reflect.Map && field.Type().Elem() == reflect.TypeOf(dynamic.PluginConf{}) {

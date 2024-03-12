@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -59,13 +60,9 @@ func (c *searchCriterion) searchIn(values ...string) bool {
 		return true
 	}
 
-	for _, v := range values {
-		if strings.Contains(strings.ToLower(v), strings.ToLower(c.Search)) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(values, func(v string) bool {
+		return strings.Contains(strings.ToLower(v), strings.ToLower(c.Search))
+	})
 }
 
 func (c *searchCriterion) filterService(name string) bool {

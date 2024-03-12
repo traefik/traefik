@@ -311,7 +311,7 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService() {
 	require.NoError(s.T(), err)
 
 	// adding a loop to test if metrics are not deleted
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
 		require.NoError(s.T(), err)
 
@@ -876,7 +876,7 @@ func (s *SimpleSuite) TestWRR() {
 	require.NoError(s.T(), err)
 
 	repartition := map[string]int{}
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 		require.NoError(s.T(), err)
 
@@ -922,7 +922,7 @@ func (s *SimpleSuite) TestWRRSticky() {
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	require.NoError(s.T(), err)
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		response, err := http.DefaultClient.Do(req)
 		require.NoError(s.T(), err)
 		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
@@ -978,7 +978,7 @@ func (s *SimpleSuite) TestMirror() {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	require.NoError(s.T(), err)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		response, err := http.DefaultClient.Do(req)
 		require.NoError(s.T(), err)
 		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
@@ -1049,7 +1049,7 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", bytes.NewBuffer(body20))
 	require.NoError(s.T(), err)
 	req.Header.Set("Size", "20")
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		response, err := http.DefaultClient.Do(req)
 		require.NoError(s.T(), err)
 		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
@@ -1070,7 +1070,7 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithMaxBody", bytes.NewBuffer(body5))
 	require.NoError(s.T(), err)
 	req.Header.Set("Size", "5")
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		response, err := http.DefaultClient.Do(req)
 		require.NoError(s.T(), err)
 		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
@@ -1091,7 +1091,7 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithMaxBody", bytes.NewBuffer(body20))
 	require.NoError(s.T(), err)
 	req.Header.Set("Size", "20")
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		response, err := http.DefaultClient.Do(req)
 		require.NoError(s.T(), err)
 		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
@@ -1137,7 +1137,7 @@ func (s *SimpleSuite) TestMirrorCanceled() {
 	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
 	require.NoError(s.T(), err)
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 		require.NoError(s.T(), err)
 

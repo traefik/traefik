@@ -1,21 +1,40 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-health-check', {'panel-health-check-dense':isDense}]">
-    <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
+  <q-card
+    flat
+    bordered
+    :class="['panel-health-check', {'panel-health-check-dense':isDense}]"
+  >
+    <q-scroll-area
+      :thumb-style="appThumbStyle"
+      style="height:100%;"
+    >
       <q-card-section v-if="data.scheme || data.interval">
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.scheme">
-            <div class="text-subtitle2">SCHEME</div>
+          <div
+            v-if="data.scheme"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              SCHEME
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-options">
+              class="app-chip app-chip-options"
+            >
               {{ data.scheme }}
             </q-chip>
           </div>
-          <div class="col" v-if="data.interval">
-            <div class="text-subtitle2">INTERVAL</div>
+          <div
+            v-if="data.interval"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              INTERVAL
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-interval">
+              class="app-chip app-chip-interval"
+            >
               {{ data.interval }}
             </q-chip>
           </div>
@@ -23,19 +42,31 @@
       </q-card-section>
       <q-card-section v-if="data.path || data.timeout">
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.path">
-            <div class="text-subtitle2">PATH</div>
+          <div
+            v-if="data.path"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              PATH
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-entry-points">
+              class="app-chip app-chip-entry-points"
+            >
               {{ data.path }}
             </q-chip>
           </div>
-          <div class="col" v-if="data.timeout">
-            <div class="text-subtitle2">TIMEOUT</div>
+          <div
+            v-if="data.timeout"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              TIMEOUT
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-interval">
+              class="app-chip app-chip-interval"
+            >
               {{ data.timeout }}
             </q-chip>
           </div>
@@ -43,19 +74,31 @@
       </q-card-section>
       <q-card-section v-if="data.port || data.hostname">
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.port">
-            <div class="text-subtitle2">PORT</div>
+          <div
+            v-if="data.port"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              PORT
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-name">
+              class="app-chip app-chip-name"
+            >
               {{ data.port }}
             </q-chip>
           </div>
-          <div class="col" v-if="data.hostname">
-            <div class="text-subtitle2">HOSTNAME</div>
+          <div
+            v-if="data.hostname"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              HOSTNAME
+            </div>
             <q-chip
               dense
-              class="app-chip app-chip-rule">
+              class="app-chip app-chip-rule"
+            >
               {{ data.hostname }}
             </q-chip>
           </div>
@@ -64,12 +107,19 @@
       <q-card-section v-if="data.headers">
         <div class="row items-start">
           <div class="col-12">
-            <div class="text-subtitle2">HEADERS</div>
+            <div class="text-subtitle2">
+              HEADERS
+            </div>
           </div>
-          <div v-for="(header, index) in data.headers" :key="index" class="col-12">
+          <div
+            v-for="(header, index) in data.headers"
+            :key="index"
+            class="col-12"
+          >
             <q-chip
               dense
-              class="app-chip app-chip-wrap app-chip-service">
+              class="app-chip app-chip-wrap app-chip-service"
+            >
               {{ index }}: {{ header }}
             </q-chip>
           </div>
@@ -82,15 +132,18 @@
 <script>
 export default {
   name: 'PanelHealthCheck',
-  props: ['data', 'dense'],
   components: {
+  },
+  filters: {
+  },
+  props: {
+    data: Object,
+    dense: Boolean
   },
   computed: {
     isDense () {
       return this.dense !== undefined
     }
-  },
-  filters: {
   }
 }
 </script>
