@@ -495,9 +495,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 // GetResourceKey returns the name of the resource in the dynamic configuration.
 func GetResourceKey(name, namespace string) string {
-	key := makeID(namespace, name)
-
-	return key + providerNamespaceSeparator + providerName
+	return makeID(namespace, name) + providerNamespaceSeparator + providerName
 }
 
 // getServicePort always returns a valid port, an error otherwise.
