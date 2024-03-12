@@ -49,6 +49,9 @@ const (
 	kindTLSRoute       = "TLSRoute"
 )
 
+// BuildFilterFunc returns the name of the filter and the related Middleware if needed.
+type BuildFilterFunc func(name, namespace string) (string, *dynamic.Middleware)
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -59,9 +62,31 @@ type Provider struct {
 	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
+	// groupKindFilterFuncs is the list of allowed Group and Kinds for the Filter ExtensionRef objects.
+	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
+	// extensionRefNamespaces is the list of allowed namespaces for the ExtensionRef objects.
+	extensionRefNamespaces []string
+	// backendGroupKinds is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
+	backendGroupKinds map[string][]string
+
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
+}
+
+// SetGroupKindFilterFuncs sets the list of allowed Group and Kinds for the Filter ExtensionRef objects.
+func (p *Provider) SetGroupKindFilterFuncs(filters map[string]map[string]BuildFilterFunc) {
+	p.groupKindFilterFuncs = filters
+}
+
+// SetExtensionRefNamespaces sets the list of allowed namespaces for the ExtensionRef objects.
+func (p *Provider) SetExtensionRefNamespaces(namespaces []string) {
+	p.extensionRefNamespaces = namespaces
+}
+
+// SetBackendGroupKinds sets the list of allowed Group and Kinds for the Backend ExtensionRef objects.
+func (p *Provider) SetBackendGroupKinds(filters map[string][]string) {
+	p.backendGroupKinds = filters
 }
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
@@ -847,7 +872,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 				continue
 			}
 
-			middlewares, err := loadMiddlewares(listener, routerKey, routeRule.Filters)
+			middlewares, err := p.loadMiddlewares(listener, route.Namespace, routerKey, routeRule.Filters)
 			if err != nil {
 				// update "ResolvedRefs" status true with "InvalidFilters" reason
 				conditions = append(conditions, metav1.Condition{
@@ -864,7 +889,11 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			}
 
 			for middlewareName, middleware := range middlewares {
-				conf.HTTP.Middlewares[middlewareName] = middleware
+				// If the middleware is not defined in the return of the loadMiddlewares function, it means we just need a reference to that middleware.
+				if middleware != nil {
+					conf.HTTP.Middlewares[middlewareName] = middleware
+				}
+
 				router.Middlewares = append(router.Middlewares, middlewareName)
 			}
 
@@ -876,7 +905,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef) {
 				router.Service = string(routeRule.BackendRefs[0].Name)
 			} else {
-				wrrService, subServices, err := loadServices(client, route.Namespace, routeRule.BackendRefs)
+				wrrService, subServices, err := p.loadServices(client, route.Namespace, routeRule.BackendRefs)
 				if err != nil {
 					// update "ResolvedRefs" status true with "DroppedRoutes" reason
 					conditions = append(conditions, metav1.Condition{
@@ -1550,7 +1579,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 }
 
 // loadServices is generating a WRR service, even when there is only one target.
-func loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
+func (p *Provider) loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
 	services := map[string]*dynamic.Service{}
 
 	wrrSvc := &dynamic.Service{
@@ -1572,6 +1601,14 @@ func loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBack
 		weight := int(ptr.Deref(backendRef.Weight, 1))
 
 		if isTraefikService(backendRef.BackendRef) {
+			if len(p.extensionRefNamespaces) > 0 && !slices.Contains(p.extensionRefNamespaces, namespace) {
+				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+			}
+
+			if v, ok := p.backendGroupKinds[traefikv1alpha1.SchemeGroupVersion.String()]; !ok && !slices.Contains(v, kindTraefikService) {
+				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+			}
+
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1791,7 +1828,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 	return wrrSvc, services, nil
 }
 
-func loadMiddlewares(listener gatev1.Listener, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
 	middlewares := make(map[string]*dynamic.Middleware)
 
 	// The spec allows for an empty string in which case we should use the
@@ -1815,6 +1852,35 @@ func loadMiddlewares(listener gatev1.Listener, prefix string, filters []gatev1.H
 			if err != nil {
 				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
 			}
+
+			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+			middlewares[middlewareName] = middleware
+		case gatev1.HTTPRouteFilterExtensionRef:
+			if len(p.extensionRefNamespaces) > 0 && !slices.Contains(p.extensionRefNamespaces, namespace) {
+				return nil, fmt.Errorf("unsupported filter %s", filter.Type)
+			}
+
+			var ok bool
+			for group, kinds := range p.groupKindFilterFuncs {
+				if string(filter.ExtensionRef.Group) != group {
+					continue
+				}
+
+				for kind, filterFunc := range kinds {
+					if kind != string(filter.ExtensionRef.Kind) {
+						continue
+					}
+
+					ok = true
+					name, middleware := filterFunc(string(filter.ExtensionRef.Name), namespace)
+					middlewares[name] = middleware
+					continue
+				}
+			}
+
+			if !ok {
+				return nil, fmt.Errorf("unsupported filter %s", filter.Type)
+			}
 		default:
 			// As per the spec:
 			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -1823,9 +1889,6 @@ func loadMiddlewares(listener gatev1.Listener, prefix string, filters []gatev1.H
 			// status.
 			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 		}
-
-		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
-		middlewares[middlewareName] = middleware
 	}
 
 	return middlewares, nil
