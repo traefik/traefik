@@ -135,7 +135,7 @@ func TestLoadBalancing(t *testing.T) {
 			}
 
 			conn := &fakeConn{writeCall: make(map[string]int)}
-			for i := 0; i < test.totalCall; i++ {
+			for range test.totalCall {
 				balancer.ServeTCP(conn)
 			}
 

@@ -149,7 +149,7 @@ func BenchmarkCapture(b *testing.B) {
 			b.ReportAllocs()
 			b.SetBytes(int64(test.size))
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				runBenchmark(b, test.size, req, handlers)
 			}
 		})
@@ -170,7 +170,7 @@ func runBenchmark(b *testing.B, size int, req *http.Request, handler http.Handle
 
 func generateBytes(length int) []byte {
 	var value []byte
-	for i := 0; i < length; i++ {
+	for i := range length {
 		value = append(value, 0x61+byte(i%26))
 	}
 	return value

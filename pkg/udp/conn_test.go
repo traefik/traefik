@@ -197,7 +197,7 @@ func testTimeout(t *testing.T, withRead bool) {
 		}
 	}()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		udpConn2, err := net.Dial("udp", ln.Addr().String())
 		require.NoError(t, err)
 

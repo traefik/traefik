@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -216,12 +217,10 @@ func grpcStatusCode(rw http.ResponseWriter) int {
 
 func containsHeader(req *http.Request, name, value string) bool {
 	items := strings.Split(req.Header.Get(name), ",")
-	for _, item := range items {
-		if value == strings.ToLower(strings.TrimSpace(item)) {
-			return true
-		}
-	}
-	return false
+
+	return slices.ContainsFunc(items, func(item string) bool {
+		return value == strings.ToLower(strings.TrimSpace(item))
+	})
 }
 
 // getMethod returns the request's method.

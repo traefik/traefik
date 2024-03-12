@@ -206,7 +206,7 @@ func clean(element any) {
 	valueSvcRoot := valSvcs.MapIndex(key).Elem()
 
 	var svcFieldNames []string
-	for i := 0; i < valueSvcRoot.NumField(); i++ {
+	for i := range valueSvcRoot.NumField() {
 		svcFieldNames = append(svcFieldNames, valueSvcRoot.Type().Field(i).Name)
 	}
 

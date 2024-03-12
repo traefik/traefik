@@ -73,7 +73,7 @@ func TestChunkIDs(t *testing.T) {
 			t.Parallel()
 
 			var IDs []*string
-			for v := 0; v < test.count; v++ {
+			for range test.count {
 				IDs = append(IDs, aws.String("a"))
 			}
 
