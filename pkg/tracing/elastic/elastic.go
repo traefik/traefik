@@ -7,22 +7,12 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/version"
-	"go.elastic.co/apm"
-	"go.elastic.co/apm/module/apmot"
-	"go.elastic.co/apm/transport"
+	"go.elastic.co/apm/module/apmot/v2"
+	"go.elastic.co/apm/v2"
+	"go.elastic.co/apm/v2/transport"
 )
 
-// Name sets the name of this tracer.
-const Name = "elastic"
-
-func init() {
-	// The APM lib uses the init() function to create a default tracer.
-	// So this default tracer must be disabled.
-	// https://github.com/elastic/apm-agent-go/blob/8dd383d0d21776faad8841fe110f35633d199a03/tracer.go#L61-L65
-	apm.DefaultTracer.Close()
-}
-
-// Config provides configuration settings for a elastic.co tracer.
+// Config provides configuration settings for an elastic.co tracer.
 type Config struct {
 	ServerURL          string `description:"Sets the URL of the Elastic APM server." json:"serverURL,omitempty" toml:"serverURL,omitempty" yaml:"serverURL,omitempty"`
 	SecretToken        string `description:"Sets the token used to connect to Elastic APM Server." json:"secretToken,omitempty" toml:"secretToken,omitempty" yaml:"secretToken,omitempty" loggable:"false"`
@@ -31,10 +21,8 @@ type Config struct {
 
 // Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-	// Create default transport.
-	tr, err := transport.NewHTTPTransport()
-	if err != nil {
-		return nil, nil, err
+	transportOptions := transport.HTTPTransportOptions{
+		SecretToken: c.SecretToken,
 	}
 
 	if c.ServerURL != "" {
@@ -42,11 +30,13 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 		if err != nil {
 			return nil, nil, err
 		}
-		tr.SetServerURL(serverURL)
+
+		transportOptions.ServerURLs = append(transportOptions.ServerURLs, serverURL)
 	}
 
-	if c.SecretToken != "" {
-		tr.SetSecretToken(c.SecretToken)
+	tr, err := transport.NewHTTPTransport(transportOptions)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	tracer, err := apm.NewTracerOptions(apm.TracerOptions{
