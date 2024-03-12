@@ -150,7 +150,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 		},
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		rtManager.Update(dynamicConf)
 
 		tr, err := rtManager.Get("test")

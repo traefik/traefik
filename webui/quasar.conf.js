@@ -1,12 +1,18 @@
 // Configuration for your app
 // https://quasar.dev/quasar-cli/quasar-conf-js
 
-module.exports = function (ctx) {
+const { configure } = require('quasar/wrappers')
+
+module.exports = configure(function (ctx) {
   return {
+   eslint: {
+      warnings: true,
+      errors: true
+    },
+
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     boot: [
-      '_globals',
       'api',
       '_hacks',
       '_init'
@@ -114,6 +120,17 @@ module.exports = function (ctx) {
     supportIE: false,
 
     build: {
+     viteVuePluginOptions: {
+        template: {
+          compilerOptions: {
+            isCustomElement: (tag) => tag.startsWith('hub-')
+          }
+        }
+      },
+      target: {
+        browser: ['edge88', 'firefox78', 'chrome87', 'safari13.1'],
+        node: 'node20'
+      },
       publicPath: process.env.APP_PUBLIC_PATH || '',
       env: process.env.APP_ENV === 'development'
         ? { // staging:
@@ -131,22 +148,7 @@ module.exports = function (ctx) {
         }
       },
       scopeHoisting: true,
-      // vueRouterMode: 'history',
-      // vueCompiler: true,
-      // gzip: true,
-      // analyze: true,
-      // extractCSS: false,
-      extendWebpack (cfg) {
-        cfg.module.rules.push({
-          enforce: 'pre',
-          test: /\.(js|vue)$/,
-          loader: 'eslint-loader',
-          exclude: /node_modules/,
-          options: {
-            formatter: require('eslint').CLIEngine.getFormatter('stylish')
-          }
-        })
-      }
+      vueRouterMode: 'hash' // available values: 'hash', 'history'
     },
 
     devServer: {
@@ -166,16 +168,24 @@ module.exports = function (ctx) {
     animations: [],
 
     ssr: {
-      pwa: false
+      pwa: false,
     },
 
     pwa: {
+
+      workboxMode: 'injectManifest', // or 'generateSW'
       // workboxPluginMode: 'InjectManifest',
       // workboxOptions: {}, // only for NON InjectManifest
       workboxOptions: {
         skipWaiting: true,
         clientsClaim: true
       },
+
+      chainWebpackCustomSW (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: ['js'] }])
+      },
+
       manifest: {
         // name: 'Traefik',
         // short_name: 'Traefik',
@@ -247,4 +257,4 @@ module.exports = function (ctx) {
       }
     }
   }
-}
+})

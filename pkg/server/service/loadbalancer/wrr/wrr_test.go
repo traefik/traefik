@@ -24,7 +24,7 @@ func TestBalancer(t *testing.T) {
 	}), Int(1))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -52,7 +52,7 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -97,7 +97,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -119,14 +119,14 @@ func TestBalancerDownThenUp(t *testing.T) {
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 3, recorder.save["first"])
 
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 1, recorder.save["first"])
@@ -168,7 +168,7 @@ func TestBalancerPropagate(t *testing.T) {
 	})
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 2, recorder.save["first"])
@@ -181,7 +181,7 @@ func TestBalancerPropagate(t *testing.T) {
 	// fourth gets downed, but balancer2 still up since third is still up.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 2, recorder.save["first"])
@@ -195,7 +195,7 @@ func TestBalancerPropagate(t *testing.T) {
 	// down as well for topBalancer.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "third", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 4, recorder.save["first"])
@@ -246,7 +246,7 @@ func TestSticky(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		for _, cookie := range recorder.Result().Cookies() {
 			assert.NotContains(t, "test=first", cookie.Value)
 			assert.NotContains(t, "test=second", cookie.Value)
@@ -284,7 +284,7 @@ func TestSticky_FallBack(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.AddCookie(&http.Cookie{Name: "test", Value: "second"})
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
 		balancer.ServeHTTP(recorder, req)
@@ -311,7 +311,7 @@ func TestBalancerBias(t *testing.T) {
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
-	for i := 0; i < 14; i++ {
+	for range 14 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 

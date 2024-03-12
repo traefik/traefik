@@ -67,7 +67,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 
 	confChanges := 10
 
-	for i := 0; i < confChanges; i++ {
+	for i := range confChanges {
 		config.HTTP.Routers[fmt.Sprintf("routerHTTP%d", i)] = router
 		data, err := json.Marshal(config)
 		require.NoError(s.T(), err)

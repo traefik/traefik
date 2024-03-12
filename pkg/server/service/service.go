@@ -89,7 +89,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 
 	value := reflect.ValueOf(*conf.Service)
 	var count int
-	for i := 0; i < value.NumField(); i++ {
+	for i := range value.NumField() {
 		if !value.Field(i).IsNil() {
 			count++
 		}
