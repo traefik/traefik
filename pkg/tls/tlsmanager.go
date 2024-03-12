@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -189,7 +190,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
-		if isACMETLS(clientHello) {
+		if slices.Contains(clientHello.SupportedProtos, tlsalpn01.ACMETLS1Protocol) {
 			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
 				log.Debug().Msgf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
@@ -426,14 +427,4 @@ func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate,
 		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
 	}
 	return &cert, nil
-}
-
-func isACMETLS(clientHello *tls.ClientHelloInfo) bool {
-	for _, proto := range clientHello.SupportedProtos {
-		if proto == tlsalpn01.ACMETLS1Protocol {
-			return true
-		}
-	}
-
-	return false
 }

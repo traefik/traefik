@@ -817,7 +817,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	reqHost := requestdecorator.New(nil)
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
 	}
 }
@@ -852,7 +852,7 @@ func BenchmarkService(b *testing.B) {
 
 	handler, _ := serviceManager.BuildHTTP(context.Background(), "foo-service")
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		handler.ServeHTTP(w, req)
 	}
 }

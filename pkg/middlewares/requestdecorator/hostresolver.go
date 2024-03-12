@@ -49,7 +49,7 @@ func (hr *Resolver) CNAMEFlatten(ctx context.Context, host string) string {
 
 	logger := log.Ctx(ctx)
 	cacheDuration := 0 * time.Second
-	for depth := 0; depth < hr.ResolvDepth; depth++ {
+	for depth := range hr.ResolvDepth {
 		resolv, err := cnameResolve(ctx, request, hr.ResolvConfig)
 		if err != nil {
 			logger.Error().Err(err).Send()

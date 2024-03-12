@@ -83,7 +83,7 @@ func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
 			}
 		}
 	case reflect.Struct:
-		for i := 0; i < field.NumField(); i++ {
+		for i := range field.NumField() {
 			fld := field.Field(i)
 			stField := field.Type().Field(i)
 			if !isExported(stField) {
@@ -138,7 +138,7 @@ func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
 			}
 		}
 	case reflect.Slice:
-		for j := 0; j < field.Len(); j++ {
+		for j := range field.Len() {
 			if err := doOnStruct(field.Index(j), tag, redactByDefault); err != nil {
 				return err
 			}
@@ -179,7 +179,7 @@ func reset(field reflect.Value, name string) error {
 			switch field.Type().Elem().Kind() {
 			case reflect.String:
 				slice := reflect.MakeSlice(field.Type(), field.Len(), field.Len())
-				for j := 0; j < field.Len(); j++ {
+				for j := range field.Len() {
 					slice.Index(j).SetString(maskShort)
 				}
 				field.Set(slice)

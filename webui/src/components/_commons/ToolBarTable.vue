@@ -10,15 +10,25 @@
       rounded
       unelevated
       :options="[
-          {label: 'All Status', value: ''},
-          {label: 'Success', value: 'enabled'},
-          {label: 'Warnings', value: 'warning'},
-          {label: 'Errors', value: 'disabled'}
-        ]"
+        {label: 'All Status', value: ''},
+        {label: 'Success', value: 'enabled'},
+        {label: 'Warnings', value: 'warning'},
+        {label: 'Errors', value: 'disabled'}
+      ]"
     />
     <q-space />
-    <q-input v-model="getFilter" rounded dense outlined type="search" debounce="500" placeholder="Search" :bg-color="$q.dark.isActive ? undefined : 'white'" class="bar-search">
-      <template v-slot:append>
+    <q-input
+      v-model="getFilter"
+      rounded
+      dense
+      outlined
+      type="search"
+      debounce="500"
+      placeholder="Search"
+      :bg-color="$q.dark.isActive ? undefined : 'white'"
+      class="bar-search"
+    >
+      <template #append>
         <q-icon name="eva-search-outline" />
       </template>
     </q-input>
@@ -26,20 +36,14 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import Helps from '../../_helpers/Helps'
 
-export default {
+export default defineComponent({
   name: 'ToolBarTable',
-  props: ['status', 'filter'],
-  components: {
-
-  },
-  data () {
-    return {
-    }
-  },
-  mounted () {
-    this.routeToState(this.$route)
+  props: {
+    status: String,
+    filter: String
   },
   computed: {
     getStatus: {
@@ -66,6 +70,9 @@ export default {
       this.routeToState(to)
     }
   },
+  mounted () {
+    this.routeToState(this.$route)
+  },
   methods: {
     routeToState (route) {
       for (const query in route.query) {
@@ -81,11 +88,8 @@ export default {
         })
       })
     }
-  },
-  created () {
-
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
@@ -102,6 +106,10 @@ export default {
         }
         &.bg-app-toggle {
           color: $accent !important;
+        }
+
+        .body--dark &.bg-app-toggle {
+          color: lighten($accent, 25%) !important;
         }
       }
     }
