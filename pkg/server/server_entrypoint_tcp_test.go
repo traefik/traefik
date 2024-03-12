@@ -112,7 +112,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	// but technically also as early as the Shutdown has closed the listener,
 	// i.e. during the shutdown and before the gracetime is over.
 	var testOk bool
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		loopConn, err := net.Dial("tcp", epAddr)
 		if err == nil {
 			loopConn.Close()
@@ -141,7 +141,7 @@ func startEntrypoint(entryPoint *TCPEntryPoint, router *tcprouter.Router) (net.C
 
 	entryPoint.SwitchRouter(router)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		conn, err := net.Dial("tcp", entryPoint.listener.Addr().String())
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)

@@ -312,7 +312,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 
 	// Verify load-balancing on root still works, and that we're getting an alternation between wsp2, and wsp4.
 	reachedServers := make(map[string]int)
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		resp, err := client.Do(rootReq)
 		require.NoError(s.T(), err)
 
@@ -352,7 +352,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 
 	// Verify load-balancing on foo still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
 	want := `IP: ` + s.whoami2IP
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		resp, err := client.Do(fooReq)
 		require.NoError(s.T(), err)
 
@@ -368,7 +368,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 
 	// Verify load-balancing on bar still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
 	want = `IP: ` + s.whoami2IP
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		resp, err := client.Do(barReq)
 		require.NoError(s.T(), err)
 
@@ -390,7 +390,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 	try.Sleep(time.Second)
 
 	// Verify that everything is down, and that we get 503s everywhere.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		resp, err := client.Do(rootReq)
 		require.NoError(s.T(), err)
 		assert.Equal(s.T(), http.StatusServiceUnavailable, resp.StatusCode)
@@ -417,7 +417,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 
 	// Verify everything is up on root router.
 	reachedServers = make(map[string]int)
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		resp, err := client.Do(rootReq)
 		require.NoError(s.T(), err)
 
@@ -452,7 +452,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 
 	// Verify everything is up on foo router.
 	reachedServers = make(map[string]int)
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		resp, err := client.Do(fooReq)
 		require.NoError(s.T(), err)
 
@@ -487,7 +487,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 
 	// Verify everything is up on bar router.
 	reachedServers = make(map[string]int)
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		resp, err := client.Do(barReq)
 		require.NoError(s.T(), err)
 

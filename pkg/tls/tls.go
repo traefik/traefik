@@ -40,7 +40,7 @@ func (o *Options) SetDefaults() {
 
 // Store holds the options for a given Store.
 type Store struct {
-	DefaultCertificate   *Certificate   `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" export:"true"`
+	DefaultCertificate   *Certificate   `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" label:"-" export:"true"`
 	DefaultGeneratedCert *GeneratedCert `json:"defaultGeneratedCert,omitempty" toml:"defaultGeneratedCert,omitempty" yaml:"defaultGeneratedCert,omitempty" export:"true"`
 }
 
