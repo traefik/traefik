@@ -46,7 +46,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces []string, experimentalChannel bool, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetGatewayClasses() ([]*gatev1.GatewayClass, error)
 	UpdateGatewayStatus(gateway *gatev1.Gateway, gatewayStatus gatev1.GatewayStatus) error
 	UpdateGatewayClassStatus(gatewayClass *gatev1.GatewayClass, condition metav1.Condition) error
@@ -74,7 +74,8 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
-	labelSelector string
+	labelSelector       string
+	experimentalChannel bool
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -154,7 +155,7 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, experimentalChannel bool, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
 	eventHandler := &resourceEventHandler{ev: eventCh}
 
@@ -200,7 +201,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, experimentalChannel bool, 
 			return nil, err
 		}
 
-		if experimentalChannel {
+		if c.experimentalChannel {
 			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
 			if err != nil {
 				return nil, err
