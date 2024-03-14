@@ -186,6 +186,9 @@ Duration to keep accepting requests before Traefik initiates the graceful shutdo
 `--entrypoints.<name>.transport.respondingtimeouts.idletimeout`:  
 IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set. (Default: ```180```)
 
+`--entrypoints.<name>.transport.respondingtimeouts.lingeringtimeout`:  
+LingeringTimeout is the maximum duration between each TCP read operation on the connection. (Default: ```2```)
+
 `--entrypoints.<name>.transport.respondingtimeouts.readtimeout`:  
 ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```0```)
 
