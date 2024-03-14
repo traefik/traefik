@@ -73,7 +73,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 		return
 	}
 
-	err := p.routerTransform.Apply(ctx, rt, route.Annotations)
+	err := p.routerTransform.Apply(ctx, rt, route)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
