@@ -39,6 +39,9 @@ type Middleware struct {
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
+
+	// Gateway API HTTPRoute filters middlewares.
+	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"requestHeaderModifier,omitempty" yaml:"requestHeaderModifier,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -673,3 +676,12 @@ type TLSClientCertificateSubjectDNInfo struct {
 
 // Users holds a list of users.
 type Users []string
+
+// +k8s:deepcopy-gen=true
+
+// RequestHeaderModifier holds the request header modifier configuration.
+type RequestHeaderModifier struct {
+	Set    map[string]string `json:"set,omitempty" toml:"set,omitempty" yaml:"set,omitempty"`
+	Add    map[string]string `json:"add,omitempty" toml:"add,omitempty" yaml:"add,omitempty"`
+	Remove []string          `json:"remove,omitempty" toml:"remove,omitempty" yaml:"remove,omitempty"`
+}
