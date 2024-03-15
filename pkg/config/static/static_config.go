@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -20,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/file"
 	"github.com/traefik/traefik/v3/pkg/provider/http"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
@@ -291,15 +289,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 
 		if c.Providers.KubernetesCRD != nil {
-			c.Providers.KubernetesGateway.SetGroupKindFilterFuncs(map[string]map[string]gateway.BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware) {
-					return crd.GetResourceKey(name, namespace), nil
-				}},
-			})
-			c.Providers.KubernetesGateway.SetBackendGroupKinds(map[string][]string{
-				traefikv1alpha1.SchemeGroupVersion.String(): {"TraefikService"},
-			})
-			c.Providers.KubernetesGateway.SetExtensionRefNamespaces(c.Providers.KubernetesCRD.Namespaces)
+			c.Providers.KubernetesCRD.FillExtensionBuilderRegistry(c.Providers.KubernetesGateway)
 		}
 
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
