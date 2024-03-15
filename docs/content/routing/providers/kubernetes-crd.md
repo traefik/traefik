@@ -403,7 +403,6 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         match: Host(`test.example.com`)
         middlewares:
         - name: middleware1
-          namespace: default
         priority: 10
         services:
         - kind: Service
