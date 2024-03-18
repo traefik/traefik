@@ -7085,23 +7085,23 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 
 func TestFillExtensionBuilderRegistry(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		provider Provider
-		wantErr  require.ErrorAssertionFunc
+		desc       string
+		namespaces []string
+		wantErr    require.ErrorAssertionFunc
 	}{
 		{
 			desc:    "no filter on namespaces",
 			wantErr: require.NoError,
 		},
 		{
-			desc:     "filter on default namespace",
-			provider: Provider{Namespaces: []string{"default"}},
-			wantErr:  require.NoError,
+			desc:       "filter on default namespace",
+			namespaces: []string{"default"},
+			wantErr:    require.NoError,
 		},
 		{
-			desc:     "filter on not-default namespace",
-			provider: Provider{Namespaces: []string{"not-default"}},
-			wantErr:  require.Error,
+			desc:       "filter on not-default namespace",
+			namespaces: []string{"not-default"},
+			wantErr:    require.Error,
 		},
 	}
 
@@ -7113,7 +7113,8 @@ func TestFillExtensionBuilderRegistry(t *testing.T) {
 
 			r := &extensionBuilderRegistryMock{}
 
-			test.provider.FillExtensionBuilderRegistry(r)
+			p := Provider{Namespaces: test.namespaces}
+			p.FillExtensionBuilderRegistry(r)
 
 			filterFunc, ok := r.groupKindFilterFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["Middleware"]
 			require.True(t, ok)
@@ -7138,7 +7139,6 @@ func TestFillExtensionBuilderRegistry(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
