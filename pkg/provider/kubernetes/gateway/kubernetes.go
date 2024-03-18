@@ -1734,12 +1734,7 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 		return string(backendRef.Name), nil, nil
 	}
 
-	kindFuncs, ok := p.groupKindBackendFuncs[string(*backendRef.Group)]
-	if !ok {
-		return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-	}
-
-	backendFunc, ok := kindFuncs[string(*backendRef.Kind)]
+	backendFunc, ok := p.groupKindBackendFuncs[string(*backendRef.Group)][string(*backendRef.Kind)]
 	if !ok {
 		return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 	}
@@ -1921,12 +1916,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 		return "", nil, errors.New("filter extension ref undefined")
 	}
 
-	kindFuncs, ok := p.groupKindFilterFuncs[string(extensionRef.Group)]
-	if !ok {
-		return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
-	}
-
-	filterFunc, ok := kindFuncs[string(extensionRef.Kind)]
+	filterFunc, ok := p.groupKindFilterFuncs[string(extensionRef.Group)][string(extensionRef.Kind)]
 	if !ok {
 		return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
 	}
