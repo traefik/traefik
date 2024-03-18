@@ -288,6 +288,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			entryPoints[epName] = gateway.Entrypoint{Address: entryPoint.GetAddress(), HasHTTPTLSConf: entryPoint.HTTP.TLS != nil}
 		}
 
+		if c.Providers.KubernetesCRD != nil {
+			c.Providers.KubernetesCRD.FillExtensionBuilderRegistry(c.Providers.KubernetesGateway)
+		}
+
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
