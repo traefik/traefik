@@ -1728,30 +1728,26 @@ func (p *Provider) loadServices(client Client, namespace string, backendRefs []g
 }
 
 func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
-	for group, kinds := range p.groupKindBackendFuncs {
-		if string(*backendRef.Group) != group {
-			continue
-		}
-
-		for kind, backendFunc := range kinds {
-			if kind != string(*backendRef.Kind) {
-				continue
-			}
-
-			// Support for cross-provider references (e.g: api@internal).
-			if strings.Contains(string(backendRef.Name), "@") {
-				return string(backendRef.Name), nil, nil
-			}
-
-			if backendFunc == nil {
-				return "", nil, fmt.Errorf("undefined backendFunc for HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-			}
-
-			return backendFunc(string(backendRef.Name), namespace)
-		}
+	// Support for cross-provider references (e.g: api@internal).
+	// This provides the same behavior as for IngressRoutes.
+	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+		return string(backendRef.Name), nil, nil
 	}
 
-	return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	kindFuncs, ok := p.groupKindBackendFuncs[string(*backendRef.Group)]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	}
+
+	backendFunc, ok := kindFuncs[string(*backendRef.Kind)]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	}
+	if backendFunc == nil {
+		return "", nil, fmt.Errorf("undefined backendFunc for HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	}
+
+	return backendFunc(string(backendRef.Name), namespace)
 }
 
 // loadTCPServices is generating a WRR service, even when there is only one target.
@@ -1925,25 +1921,20 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 		return "", nil, errors.New("filter extension ref undefined")
 	}
 
-	for group, kinds := range p.groupKindFilterFuncs {
-		if string(extensionRef.Group) != group {
-			continue
-		}
-
-		for kind, filterFunc := range kinds {
-			if kind != string(extensionRef.Kind) {
-				continue
-			}
-
-			if filterFunc == nil {
-				return "", nil, fmt.Errorf("undefined filterFunc for filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
-			}
-
-			return filterFunc(string(extensionRef.Name), namespace)
-		}
+	kindFuncs, ok := p.groupKindFilterFuncs[string(extensionRef.Group)]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
 	}
 
-	return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
+	filterFunc, ok := kindFuncs[string(extensionRef.Kind)]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
+	}
+	if filterFunc == nil {
+		return "", nil, fmt.Errorf("undefined filterFunc for filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
+	}
+
+	return filterFunc(string(extensionRef.Name), namespace)
 }
 
 func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {

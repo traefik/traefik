@@ -716,7 +716,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 
 func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
 	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
-		if len(p.Namespaces) > 0 && slices.Contains(p.Namespaces, namespace) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
 			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
 		}
 
@@ -724,7 +724,7 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 	})
 
 	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
-		if len(p.Namespaces) > 0 && slices.Contains(p.Namespaces, namespace) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
 			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
 		}
 
