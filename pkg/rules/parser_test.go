@@ -250,8 +250,6 @@ func TestRuleMatch(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

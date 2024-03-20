@@ -137,9 +137,8 @@ func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backe
 	hc.cancel = cancel
 
 	for _, backend := range backends {
-		currentBackend := backend
 		safe.Go(func() {
-			hc.execute(ctx, currentBackend)
+			hc.execute(ctx, backend)
 		})
 	}
 }

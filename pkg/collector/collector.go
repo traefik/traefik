@@ -65,7 +65,7 @@ func createBody(staticConfiguration *static.Configuration) (*bytes.Buffer, error
 	}
 
 	buf := new(bytes.Buffer)
-	err = json.NewEncoder(buf).Encode(data) //nolint:musttag // cannot be changed for historical reasons.
+	err = json.NewEncoder(buf).Encode(data)
 	if err != nil {
 		return nil, err
 	}

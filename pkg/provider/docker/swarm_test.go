@@ -79,7 +79,6 @@ func TestListTasks(t *testing.T) {
 	}
 
 	for caseID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
@@ -271,7 +270,6 @@ func TestListServices(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -392,7 +390,6 @@ func TestSwarmTaskParsing(t *testing.T) {
 	}
 
 	for caseID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 

@@ -161,7 +161,6 @@ func TestManager_Get(t *testing.T) {
 	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -301,7 +300,6 @@ func TestClientAuth(t *testing.T) {
 	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
