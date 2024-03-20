@@ -369,7 +369,6 @@ func TestDefaultRule(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3484,8 +3483,6 @@ func Test_buildConfiguration(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3668,7 +3665,6 @@ func TestDockerGetIPPort(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3745,7 +3741,6 @@ func TestDockerGetPort(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3847,7 +3842,6 @@ func TestDockerGetIPAddress(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3915,7 +3909,6 @@ func TestSwarmGetIPAddress(t *testing.T) {
 	}
 
 	for serviceID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 
@@ -3950,7 +3943,6 @@ func TestSwarmGetPort(t *testing.T) {
 	}
 
 	for serviceID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 

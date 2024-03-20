@@ -64,7 +64,6 @@ func TestRegisterPromState(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			actualNbRegistries := 0
 			for _, prom := range test.prometheusSlice {
@@ -419,7 +418,6 @@ func TestPrometheus(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			family := findMetricFamily(test.name, metricsFamilies)
 			if family == nil {

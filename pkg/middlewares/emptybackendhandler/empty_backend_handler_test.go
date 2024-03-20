@@ -28,7 +28,6 @@ func TestEmptyBackendHandler(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(fmt.Sprintf("amount servers %d", test.amountServer), func(t *testing.T) {
 			t.Parallel()
 

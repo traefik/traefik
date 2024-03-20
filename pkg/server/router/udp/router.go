@@ -42,8 +42,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 
 	entryPointHandlers := make(map[string]udp.Handler)
 	for _, entryPointName := range entryPoints {
-		entryPointName := entryPointName
-
 		routers := entryPointsRouters[entryPointName]
 
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
