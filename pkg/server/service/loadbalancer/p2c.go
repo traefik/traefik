@@ -6,7 +6,7 @@ import (
 )
 
 type rnd interface {
-	IntN(int) int
+	IntN(n int) int
 }
 
 // strategyPowerOfTwoChoices implements "the power-of-two-random-choices" algorithm for load balancing.
@@ -88,7 +88,8 @@ func newRand() *rand.Rand {
 	return rand.New(rand.NewPCG(seed1, seed2))
 }
 
-// we always overwrite slice that is passed in, so it doesn't matter if we mutate the parameter
+// we always overwrite slice that is passed in, so it doesn't matter if we
+// mutate the parameter.
 func deleteAndPop(handlers []*namedHandler, name string) (deleted *namedHandler, remaining []*namedHandler) {
 	for i, h := range handlers {
 		if h.name == name {

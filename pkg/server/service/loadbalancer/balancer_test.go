@@ -245,7 +245,6 @@ func TestSticky(t *testing.T) {
 
 	for _, balancer := range balancers {
 		t.Run(balancer.strategy.name(), func(t *testing.T) {
-
 			balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set("server", "first")
 				rw.WriteHeader(http.StatusOK)

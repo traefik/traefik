@@ -49,7 +49,7 @@ func convertSameSite(sameSite string) http.SameSite {
 }
 
 // strategy is an interface that can be used to implement different load balancing strategies
-// for the Balancer
+// for the Balancer.
 type strategy interface {
 	// nextServer returns the next server to serve a request, this is called under the handlersMu lock.
 	// Each pick from the schedule has the earliest deadline entry selected. The status param is a
@@ -104,13 +104,12 @@ func NewWRR(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 // balancing. The idea of this is two take two of the backends at random from
 // the available backends, and select the backend that has the fewest in-flight
 // requests. This is constant time when picking, and has more beneficial "herd"
-// behaviour than the "fewest connections" algorithm.
+// behavior than the "fewest connections" algorithm.
 func NewP2C(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 	return newBalancer(sticky, wantHealthCheck, newStrategyP2C())
 }
 
 func newBalancer(sticky *dynamic.Sticky, wantHealthCheck bool, strategy strategy) *Balancer {
-
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		handlerMap:       make(map[string]*namedHandler),

@@ -12,7 +12,6 @@ import (
 type strategyWRR struct {
 	handlers    []*namedHandler
 	curDeadline float64
-	deadline    float64
 }
 
 func newStrategyWRR() strategy {
@@ -20,7 +19,6 @@ func newStrategyWRR() strategy {
 }
 
 func (s *strategyWRR) nextServer(status map[string]struct{}) *namedHandler {
-
 	var handler *namedHandler
 	for {
 		// Pick handler with closest deadline.
