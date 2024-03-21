@@ -16,17 +16,17 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     # All resources definition must be declared
     --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
     ```
-
+    
     ```yaml tab="RBAC"
     --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
     ```
-
+    
     ```yaml tab="Traefik"
     apiVersion: v1
     kind: ServiceAccount
     metadata:
       name: traefik-ingress-controller
-
+    
     ---
     kind: Deployment
     apiVersion: apps/v1
@@ -34,7 +34,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: traefik
       labels:
         app: traefik
-
+    
     spec:
       replicas: 1
       selector:
@@ -66,7 +66,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
                   containerPort: 8000
                 - name: udpep
                   containerPort: 9000
-
+    
     ---
     apiVersion: v1
     kind: Service
@@ -89,7 +89,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           port: 8000
           name: tcpep
           targetPort: 8000
-
+     
     ---
     apiVersion: v1
     kind: Service
@@ -105,32 +105,32 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           name: udpep
           targetPort: 9000
     ```
-
+    
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: myingressroute
       namespace: default
-
+    
     spec:
       entryPoints:
         - web
-
+    
       routes:
       - match: Host(`foo`) && PathPrefix(`/bar`)
         kind: Rule
         services:
         - name: whoami
           port: 80
-
+    
     ---
     apiVersion: traefik.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: ingressroute.tcp
       namespace: default
-
+    
     spec:
       entryPoints:
         - tcpep
@@ -139,14 +139,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         services:
           - name: whoamitcp
             port: 8080
-
+    
     ---
     apiVersion: traefik.io/v1alpha1
     kind: IngressRouteUDP
     metadata:
       name: ingressroute.udp
       namespace: default
-
+    
     spec:
       entryPoints:
         - udpep
@@ -155,7 +155,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           - name: whoamiudp
             port: 8080
     ```
-
+    
     ```yaml tab="Whoami"
     kind: Deployment
     apiVersion: apps/v1
@@ -165,7 +165,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       labels:
         app: traefiklabs
         name: whoami
-
+    
     spec:
       replicas: 2
       selector:
@@ -183,14 +183,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
               image: traefik/whoami
               ports:
                 - containerPort: 80
-
+    
     ---
     apiVersion: v1
     kind: Service
     metadata:
       name: whoami
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -198,7 +198,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       selector:
         app: traefiklabs
         task: whoami
-
+    
     ---
     kind: Deployment
     apiVersion: apps/v1
@@ -208,7 +208,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       labels:
         app: traefiklabs
         name: whoamitcp
-
+    
     spec:
       replicas: 2
       selector:
@@ -226,14 +226,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
               image: traefik/whoamitcp
               ports:
                 - containerPort: 8080
-
+    
     ---
     apiVersion: v1
     kind: Service
     metadata:
       name: whoamitcp
       namespace: default
-
+    
     spec:
       ports:
         - protocol: TCP
@@ -241,7 +241,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       selector:
         app: traefiklabs
         task: whoamitcp
-
+    
     ---
     kind: Deployment
     apiVersion: apps/v1
@@ -251,7 +251,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       labels:
         app: traefiklabs
         name: whoamiudp
-
+    
     spec:
       replicas: 2
       selector:
@@ -269,14 +269,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
               image: traefik/whoamiudp:latest
               ports:
                 - containerPort: 8080
-
+    
     ---
     apiVersion: v1
     kind: Service
     metadata:
       name: whoamiudp
       namespace: default
-
+    
     spec:
       ports:
         - port: 8080
@@ -292,7 +292,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 * You can find an exhaustive list, generated from Traefik's source code, of the custom resources and their attributes in [the reference page](../../reference/dynamic-configuration/kubernetes-crd.md).
 * Validate that [the prerequisites](../../providers/kubernetes-crd.md#configuration-requirements) are fulfilled before using the Traefik custom resources.
 * Traefik CRDs are building blocks that you can assemble according to your needs.
-
+    
 You can find an excerpt of the available custom resources in the table below:
 
 | Kind                                       | Purpose                                                            | Concept Behind                                                 |
@@ -416,7 +416,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           scheme: https
           sticky:
             cookie:
-              httpOnly: true
+              httpOnly: true374
               name: cookie
               secure: true
           strategy: RoundRobin
@@ -453,17 +453,17 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     metadata:
       name: opt
       namespace: default
-
+    
     spec:
       minVersion: VersionTLS12
     ```
-
+    
     ```yaml tab="Secret"
     apiVersion: v1
     kind: Secret
     metadata:
       name: supersecret
-
+    
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
@@ -472,26 +472,26 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 !!! important "Configuring Backend Protocol"
 
     There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
-
+	
     - Setting the scheme explicitly (http/https/h2c)
     - Configuring the name of the kubernetes service port to start with https (https)
     - Setting the kubernetes service port to use port 443 (https)
 
     If you do not configure the above, Traefik will assume an http connection.
-
+    
 
 !!! important "Using Kubernetes ExternalName Service"
 
     Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
     Accordingly, Traefik supports defining a port in two ways:
-
+    
     - only on `IngressRoute` service
     - on both sides, you'll be warned if the ports don't match, and the `IngressRoute` service port is used
-
+    
     Thus, in case of two sides port definition, Traefik expects a match between ports.
-
+    
     ??? example "Examples"
-
+        
         ```yaml tab="IngressRoute"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -499,18 +499,18 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - match: Host(`example.net`)
             kind: Rule
             services:
             - name: external-svc
               port: 80
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -521,7 +521,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           externalName: external.domain
           type: ExternalName
         ```
-
+        
         ```yaml tab="ExternalName Service"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -529,17 +529,17 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - match: Host(`example.net`)
             kind: Rule
             services:
             - name: external-svc
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -552,7 +552,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           ports:
             - port: 80
         ```
-
+        
         ```yaml tab="Both sides"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -560,18 +560,18 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - match: Host(`example.net`)
             kind: Rule
             services:
             - name: external-svc
               port: 80
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -597,7 +597,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
     metadata:
       name: ingressroutebar
       namespace: default
-
+    
     spec:
       entryPoints:
         - web
@@ -610,14 +610,14 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: svc2
           namespace: default
     ```
-
+    
     ```yaml tab="K8s Service"
     apiVersion: v1
     kind: Service
     metadata:
       name: svc1
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -631,7 +631,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
     metadata:
       name: svc2
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -689,26 +689,26 @@ More information in the dedicated server [load balancing](../services/index.md#l
 Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `Middleware` objects or referencing middlewares in the [`IngressRoute`](#kind-ingressroute) objects.
 
 ??? "Declaring and Referencing a Middleware"
-
+    
     ```yaml tab="Middleware"
     apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: stripprefix
       namespace: foo
-
+    
     spec:
       stripPrefix:
         prefixes:
           - /stripit
     ```
-
+    
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
-
+    
     spec:
       entryPoints:
         - web
@@ -744,9 +744,9 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 !!! info "Disambiguate Traefik and Kubernetes Services"
 
     As the field `name` can reference different types of objects, use the field `kind` to avoid any ambiguity.
-
+    
     The field `kind` allows the following values:
-
+    
     * `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
     * `TraefikService`: to reference another [Traefik Service](../services/index.md)
 
@@ -767,7 +767,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
     metadata:
       name: ingressroutebar
       namespace: default
-
+    
     spec:
       entryPoints:
         - web
@@ -779,14 +779,14 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
           namespace: default
           kind: TraefikService
     ```
-
+    
     ```yaml tab="Weighted Round Robin"
     apiVersion: traefik.io/v1alpha1
     kind: TraefikService
     metadata:
       name: wrr1
       namespace: default
-
+    
     spec:
       weighted:
         services:
@@ -806,7 +806,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
     metadata:
       name: wrr2
       namespace: default
-
+    
     spec:
       weighted:
         services:
@@ -817,14 +817,14 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
             port: 80
             weight: 1
     ```
-
+    
     ```yaml tab="K8s Service"
     apiVersion: v1
     kind: Service
     metadata:
       name: svc1
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -838,7 +838,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
     metadata:
       name: svc2
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -852,7 +852,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
     metadata:
       name: svc3
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -874,7 +874,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     metadata:
       name: ingressroutebar
       namespace: default
-
+    
     spec:
       entryPoints:
         - web
@@ -886,7 +886,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
           namespace: default
           kind: TraefikService
     ```
-
+    
     ```yaml tab="Mirroring k8s Service"
     # Mirroring from a k8s Service
     apiVersion: traefik.io/v1alpha1
@@ -894,7 +894,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     metadata:
       name: mirror1
       namespace: default
-
+    
     spec:
       mirroring:
         name: svc1
@@ -907,7 +907,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
             kind: TraefikService
             percent: 20
     ```
-
+    
     ```yaml tab="Mirroring Traefik Service"
     # Mirroring from a Traefik Service
     apiVersion: traefik.io/v1alpha1
@@ -915,7 +915,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     metadata:
       name: mirror1
       namespace: default
-
+    
     spec:
       mirroring:
         name: wrr1
@@ -935,7 +935,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     metadata:
       name: svc1
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -949,7 +949,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     metadata:
       name: svc2
       namespace: default
-
+    
     spec:
       ports:
         - name: http
@@ -962,10 +962,10 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 !!! important "References and namespaces"
 
     If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the current resource.
-
+    
     Additionally, when the definition of the `TraefikService` is from another provider,
     the cross-provider syntax (`service@provider`) should be used to refer to the `TraefikService`, just as in the middleware case.
-
+    
     Specifying a namespace attribute in this case would not make any sense, and will be ignored (except if the provider is `kubernetescrd`).
 
 #### Stickiness and load-balancing
@@ -1129,7 +1129,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     kind: IngressRouteTCP
     metadata:
       name: ingressroutetcpfoo
-
+    
     spec:
       entryPoints:                  # [1]
         - footcp
@@ -1195,7 +1195,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     kind: IngressRouteTCP
     metadata:
       name: ingressroutetcpfoo
-
+    
     spec:
       entryPoints:
         - footcp
@@ -1225,24 +1225,24 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         secretName: supersecret
         passthrough: false
     ```
-
+    
     ```yaml tab="TLSOption"
     apiVersion: traefik.io/v1alpha1
     kind: TLSOption
     metadata:
       name: opt
       namespace: default
-
+    
     spec:
       minVersion: VersionTLS12
     ```
-
+      
     ```yaml tab="Secret"
     apiVersion: v1
     kind: Secret
     metadata:
       name: supersecret
-
+    
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
@@ -1252,14 +1252,14 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 
     Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
     Accordingly, Traefik supports defining a port in two ways:
-
+    
     - only on `IngressRouteTCP` service
     - on both sides, you'll be warned if the ports don't match, and the `IngressRouteTCP` service port is used
-
+    
     Thus, in case of two sides port definition, Traefik expects a match between ports.
-
+    
     ??? example "Examples"
-
+        
         ```yaml tab="Only on IngressRouteTCP"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -1267,17 +1267,17 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - match: HostSNI(`*`)
             services:
             - name: external-svc
               port: 80
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -1288,7 +1288,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           externalName: external.domain
           type: ExternalName
         ```
-
+        
         ```yaml tab="On both sides"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -1296,17 +1296,17 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - match: HostSNI(`*`)
             services:
             - name: external-svc
               port: 80
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -1378,13 +1378,13 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
           - 127.0.0.1/32
           - 192.168.1.7
     ```
-
+    
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
-
+    
     spec:
       entryPoints:
         - web
@@ -1423,7 +1423,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
     kind: IngressRouteUDP
     metadata:
       name: ingressrouteudpfoo
-
+    
     spec:
       entryPoints:                  # [1]
         - fooudp
@@ -1452,7 +1452,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
     kind: IngressRouteUDP
     metadata:
       name: ingressrouteudpfoo
-
+    
     spec:
       entryPoints:
         - fooudp
@@ -1470,14 +1470,14 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 
     Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
     Accordingly, Traefik supports defining a port in two ways:
-
+    
     - only on `IngressRouteUDP` service
     - on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
-
+    
     Thus, in case of two sides port definition, Traefik expects a match between ports.
-
+    
     ??? example "Examples"
-
+        
         ```yaml tab="IngressRouteUDP"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -1485,16 +1485,16 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - services:
             - name: external-svc
               port: 80
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -1505,7 +1505,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           externalName: external.domain
           type: ExternalName
         ```
-
+        
         ```yaml tab="ExternalName Service"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -1513,15 +1513,15 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - services:
             - name: external-svc
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -1534,7 +1534,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           ports:
             - port: 80
         ```
-
+        
         ```yaml tab="Both sides"
         ---
         apiVersion: traefik.io/v1alpha1
@@ -1542,16 +1542,16 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         metadata:
           name: test.route
           namespace: default
-
+        
         spec:
           entryPoints:
             - foo
-
+        
           routes:
           - services:
             - name: external-svc
               port: 80
-
+        
         ---
         apiVersion: v1
         kind: Service
@@ -1611,14 +1611,14 @@ Register the `TLSOption` [kind](../../reference/dynamic-configuration/kubernetes
 or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
 !!! info "TLSOption Attributes"
-
+   
     ```yaml tab="TLSOption"
     apiVersion: traefik.io/v1alpha1
     kind: TLSOption
     metadata:
       name: mytlsoption                             # [1]
       namespace: default
-
+    
     spec:
       minVersion: VersionTLS12                      # [2]
       maxVersion: VersionTLS13                      # [3]
@@ -1656,14 +1656,14 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     The CA secret must contain a base64 encoded certificate under either a `tls.ca` or a `ca.crt` key.
 
 ??? example "Declaring and referencing a TLSOption"
-
+   
     ```yaml tab="TLSOption"
     apiVersion: traefik.io/v1alpha1
     kind: TLSOption
     metadata:
       name: mytlsoption
       namespace: default
-
+    
     spec:
       minVersion: VersionTLS12
       sniStrict: true
@@ -1676,13 +1676,13 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
           - secret-ca2
         clientAuthType: VerifyClientCertIfGiven
     ```
-
+    
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
-
+    
     spec:
       entryPoints:
         - web
@@ -1693,7 +1693,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
         - name: whoami
           port: 80
       tls:
-        options:
+        options: 
           name: mytlsoption
           namespace: default
     ```
@@ -1704,23 +1704,23 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     metadata:
       name: secret-ca1
       namespace: default
-
+    
     data:
       # Must contain a certificate under either a `tls.ca` or a `ca.crt` key.
       tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-
+    
     ---
     apiVersion: v1
     kind: Secret
     metadata:
       name: secret-ca2
       namespace: default
-
+    
     data:
-      # Must contain a certificate under either a `tls.ca` or a `ca.crt` key.
+      # Must contain a certificate under either a `tls.ca` or a `ca.crt` key. 
       tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
     ```
-
+        
 !!! important "References and namespaces"
 
     If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the IngressRoute.
@@ -1751,10 +1751,10 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 
     spec:
       certificates:                            # [1]
-        - secretName: foo
+        - secretName: foo                      
         - secretName: bar
       defaultCertificate:                      # [2]
-        secretName: secret
+        secretName: secret                     
     ```
 
 | Ref | Attribute            | Purpose                                                                                                                                                   |
@@ -1763,7 +1763,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 | [2] | `defaultCertificate` | Name of a Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default key/certificate pair for the store.       |
 
 ??? example "Declaring and referencing a TLSStore"
-
+   
     ```yaml tab="TLSStore"
     apiVersion: traefik.io/v1alpha1
     kind: TLSStore
@@ -1774,13 +1774,13 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
       defaultCertificate:
         secretName:  supersecret
     ```
-
+    
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
-
+    
     spec:
       entryPoints:
         - websecure
@@ -1798,7 +1798,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     kind: Secret
     metadata:
       name: supersecret
-
+    
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
@@ -1809,18 +1809,18 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 `ServersTransport` is the CRD implementation of a [ServersTransport](../services/index.md#serverstransport).
 
 !!! important "Default serversTransport"
-    If no `serversTransport` is specified, the `default@internal` will be used.
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration).
+    If no `serversTransport` is specified, the `default@internal` will be used. 
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration). 
 
 !!! info "ServersTransport Attributes"
-
+   
     ```yaml tab="ServersTransport"
     apiVersion: traefik.io/v1alpha1
     kind: ServersTransport
     metadata:
       name: mytransport
       namespace: default
-
+    
     spec:
       serverName: foobar               # [1]
       insecureSkipVerify: true         # [2]
@@ -1858,26 +1858,26 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     The CA secret must contain a base64 encoded certificate under either a `tls.ca` or a `ca.crt` key.
 
 ??? example "Declaring and referencing a ServersTransport"
-
+   
     ```yaml tab="ServersTransport"
     apiVersion: traefik.io/v1alpha1
     kind: ServersTransport
     metadata:
       name: mytransport
       namespace: default
-
+    
     spec:
       serverName: example.org
       insecureSkipVerify: true
     ```
-
+    
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: testroute
       namespace: default
-
+    
     spec:
       entryPoints:
         - web
@@ -1894,7 +1894,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 
 By default, the referenced ServersTransport CRD must be defined in the same [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace.
 
-To reference a ServersTransport CRD from another namespace,
+To reference a ServersTransport CRD from another namespace, 
 the value must be of form `namespace-name@kubernetescrd`,
 and the [cross-namespace](../../../providers/kubernetes-crd/#allowcrossnamespace) option must be enabled.
 
