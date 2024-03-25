@@ -34,7 +34,7 @@ func Append(router *mux.Router, customAssets fs.FS) {
 			// allow iframes from our domains only
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
-			http.StripPrefix("/dashboard/", http.FileServer(http.FS(assets))).ServeHTTP(w, r)
+			http.StripPrefix("/dashboard/", http.FileServerFS(assets)).ServeHTTP(w, r)
 		})
 }
 
@@ -46,7 +46,7 @@ func (g Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// allow iframes from our domains only
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
-	http.FileServer(http.FS(assets)).ServeHTTP(w, r)
+	http.FileServerFS(assets).ServeHTTP(w, r)
 }
 
 func safePrefix(req *http.Request) string {
