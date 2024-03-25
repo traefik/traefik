@@ -1,0 +1,18 @@
+[
+  {
+    "Address": "127.0.0.1",
+    "AllocID": "07501480-8175-8071-7da6-133bd1ff890f",
+    "CreateIndex": 46,
+    "Datacenter": "dc1",
+    "ID": "_nomad-task-07501480-8175-8071-7da6-133bd1ff890f-group-redis-redis-redis",
+    "JobID": "echo",
+    "ModifyIndex": 46,
+    "Namespace": "default",
+    "NodeID": "6d7f412e-e7ff-2e66-d47b-867b0e9d8726",
+    "Port": 30826,
+    "ServiceName": "redis",
+    "Tags": [
+      "traefik.enable=true"
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "Namespace": "default",
+    "Services": [
+      {
+        "ServiceName": "redis",
+        "Tags": [
+          "traefik.enable=true"
+        ]
+      },
+      {
+        "ServiceName": "hello-nomad",
+        "Tags": [
+          "traefik.enable=true",
+          "traefik.http.routers.hellon.entrypoints=web",
+          "traefik.http.routers.hellon.service=hello-nomad"
+        ]
+      }
+    ]
+  }
+]

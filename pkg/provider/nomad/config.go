@@ -97,8 +97,11 @@ func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguratio
 	}
 
 	for _, service := range configuration.Services {
-		if err := p.addServerTCP(i, service.LoadBalancer); err != nil {
-			return err
+		// Leave load balancer empty when no address and allowEmptyServices = true
+		if !(i.Address == "" && p.AllowEmptyServices) {
+			if err := p.addServerTCP(i, service.LoadBalancer); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -115,8 +118,11 @@ func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguratio
 	}
 
 	for _, service := range configuration.Services {
-		if err := p.addServerUDP(i, service.LoadBalancer); err != nil {
-			return err
+		// Leave load balancer empty when no address and allowEmptyServices = true
+		if !(i.Address == "" && p.AllowEmptyServices) {
+			if err := p.addServerUDP(i, service.LoadBalancer); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -136,8 +142,11 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 	}
 
 	for _, service := range configuration.Services {
-		if err := p.addServer(i, service.LoadBalancer); err != nil {
-			return err
+		// Leave load balancer empty when no address and allowEmptyServices = true
+		if !(i.Address == "" && p.AllowEmptyServices) {
+			if err := p.addServer(i, service.LoadBalancer); err != nil {
+				return err
+			}
 		}
 	}
 

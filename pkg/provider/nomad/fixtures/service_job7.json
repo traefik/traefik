@@ -1,0 +1,20 @@
+[
+  {
+    "ID": "_nomad-task-3e1cc853-f6b1-2c46-6f20-332a6e91794b-group-group1-job7-http",
+    "ServiceName": "job7",
+    "Namespace": "default",
+    "NodeID": "e262ecb6-a7ac-7c3e-4de0-06445559e596",
+    "Datacenter": "dc1",
+    "JobID": "job7",
+    "AllocID": "3e1cc853-f6b1-2c46-6f20-332a6e91794b",
+    "Tags": [
+      "traefik.enable=true",
+      "traefik.tcp.routers.job7.rule=HostSNI(`job7`)",
+      "traefik.tcp.routers.job7.tls.passthrough=true"
+    ],
+    "Address": "192.168.1.21",
+    "Port": 22899,
+    "CreateIndex": 11224,
+    "ModifyIndex": 11271
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "Address": "127.0.0.1",
+    "AllocID": "71a63a80-a98a-93ee-4fd7-73b808577c20",
+    "CreateIndex": 18,
+    "Datacenter": "dc1",
+    "ID": "_nomad-task-71a63a80-a98a-93ee-4fd7-73b808577c20-group-hello-nomad-hello-nomad-http",
+    "JobID": "echo",
+    "ModifyIndex": 18,
+    "Namespace": "default",
+    "NodeID": "6d7f412e-e7ff-2e66-d47b-867b0e9d8726",
+    "Port": 20627,
+    "ServiceName": "hello-nomad",
+    "Tags": [
+      "traefik.enable=true",
+      "traefik.http.routers.hellon.entrypoints=web",
+      "traefik.http.routers.hellon.service=hello-nomad"
+    ]
+  }
+]
