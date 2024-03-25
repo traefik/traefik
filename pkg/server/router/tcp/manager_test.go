@@ -264,6 +264,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
+						TLS:         &dynamic.RouterTCPTLSConfig{},
 					},
 				},
 			},
