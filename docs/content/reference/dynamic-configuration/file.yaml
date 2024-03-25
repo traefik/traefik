@@ -482,16 +482,21 @@ tcp:
             weight: 42
   middlewares:
     TCPMiddleware01:
+      connRateLimit:
+        average: 42
+        period: 42s
+        burst: 42
+    TCPMiddleware02:
       ipAllowList:
         sourceRange:
           - foobar
           - foobar
-    TCPMiddleware02:
+    TCPMiddleware03:
       ipWhiteList:
         sourceRange:
           - foobar
           - foobar
-    TCPMiddleware03:
+    TCPMiddleware04:
       inFlightConn:
         amount: 42
   serversTransports:
