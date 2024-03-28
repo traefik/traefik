@@ -47,6 +47,9 @@ const (
 	// prior to shutting down.
 	DefaultGraceTimeout = 10 * time.Second
 
+	// DefaultReadTimeout defines the default maximum duration for reading the entire request, including the body.
+	DefaultReadTimeout = 5 * time.Second
+
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 
@@ -127,6 +130,7 @@ type RespondingTimeouts struct {
 
 // SetDefaults sets the default values.
 func (a *RespondingTimeouts) SetDefaults() {
+	a.ReadTimeout = ptypes.Duration(DefaultReadTimeout)
 	a.IdleTimeout = ptypes.Duration(DefaultIdleTimeout)
 }
 
