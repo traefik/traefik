@@ -701,7 +701,7 @@ func routerTCPTLSCatchAll(conf *runtime.Configuration) {
 
 // routerTCPTLSCatchAllPassthrough a TCP TLS CatchAll Passthrough - HostSNI(`*`) router with TLS 1.0 config.
 func routerTCPTLSCatchAllPassthrough(conf *runtime.Configuration) {
-	conf.TCPRouters["tcp-tls-catchall"] = &runtime.TCPRouterInfo{
+	conf.TCPRouters["tcp-tls-catchall-passthrough"] = &runtime.TCPRouterInfo{
 		TCPRouter: &dynamic.TCPRouter{
 			EntryPoints: []string{"web"},
 			Service:     "tcp",
