@@ -579,7 +579,7 @@ func (f *fakeSpiffePKI) genSVID(t *testing.T, id spiffeid.ID) *x509svid.SVID {
 	return svid
 }
 
-// fakeSpiffeSource allows retrieving staticly an SVID and its associated bundle.
+// fakeSpiffeSource allows retrieving statically an SVID and its associated bundle.
 type fakeSpiffeSource struct {
 	bundle *x509bundle.Bundle
 	svid   *x509svid.SVID
