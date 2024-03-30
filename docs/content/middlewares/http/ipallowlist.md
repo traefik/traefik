@@ -57,7 +57,9 @@ http:
 
 ### `sourceRange`
 
-The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation). It is a **required** option for this middleware.
+_Required_
+
+The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 
 ### `ipStrategy`
 
