@@ -8,7 +8,7 @@ description: "Learn how to use IPAllowList in HTTP middleware for limiting clien
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-IPAllowList accepts / refuses requests based on the client IP.
+IPAllowList limits allowed requests based on the client IP.
 
 ## Configuration Examples
 
@@ -56,6 +56,8 @@ http:
 ## Configuration Options
 
 ### `sourceRange`
+
+_Required_
 
 The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 
@@ -152,6 +154,7 @@ http:
 ```yaml tab="Docker & Swarm"
 # Exclude from `X-Forwarded-For`
 labels:
+    - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
     - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
@@ -163,6 +166,9 @@ metadata:
   name: test-ipallowlist
 spec:
   ipAllowList:
+    sourceRange:
+      - 127.0.0.1/32
+      - 192.168.1.0/24
     ipStrategy:
       excludedIPs:
         - 127.0.0.1/32
@@ -180,6 +186,9 @@ http:
   middlewares:
     test-ipallowlist:
       ipAllowList:
+        sourceRange:
+         - "127.0.0.1/32"
+         - "192.168.1.0/24"
         ipStrategy:
           excludedIPs:
             - "127.0.0.1/32"
@@ -190,6 +199,7 @@ http:
 # Exclude from `X-Forwarded-For`
 [http.middlewares]
   [http.middlewares.test-ipallowlist.ipAllowList]
+    sourceRange = ["127.0.0.1/32", "192.168.1.0/24"]
     [http.middlewares.test-ipallowlist.ipAllowList.ipStrategy]
       excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```
