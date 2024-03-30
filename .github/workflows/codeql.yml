@@ -32,7 +32,7 @@ jobs:
 
     - name: setup go
       uses: actions/setup-go@v5
-      if: ${{ matric.language == 'go' }}
+      if: ${{ matrix.language == 'go' }}
       with:
         go-version-file: 'go.mod'
 
