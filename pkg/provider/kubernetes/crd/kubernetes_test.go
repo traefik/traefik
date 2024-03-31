@@ -2559,7 +2559,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
-		},		{
+		},
+		{
 			desc:  "with one external service and one regular service and health check",
 			paths: []string{"services.yml", "with_one_external-svc-and-regular-svc-health-check.yml"},
 			expected: &dynamic.Configuration{
