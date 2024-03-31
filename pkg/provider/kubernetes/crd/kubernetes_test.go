@@ -2575,7 +2575,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{},
+					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-external-svc-443": {
