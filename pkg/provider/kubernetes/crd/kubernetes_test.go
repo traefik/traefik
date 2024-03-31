@@ -2574,26 +2574,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
-							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
-							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
-							Priority:    12,
-						},
-					},
+					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-external-svc-443",
-										Weight: func(i int) *int { return &i }(1),
-									},
-								},
-							},
-						},
 						"default-external-svc-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
