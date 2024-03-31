@@ -303,6 +303,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 	lb.Servers = servers
+	lb.HealthCheck = svc.HealthCheck
 
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
@@ -392,6 +393,12 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	}
 
 	var servers []dynamic.Server
+	if service.Spec.Type != corev1.ServiceTypeExternalName {
+		if svc.HealthCheck != nil {
+			return nil, fmt.Errorf("HealthCheck not allowed for externalName services: %s/%s", namespace, sanitizedName)
+		}
+	}
+
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
 			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, sanitizedName)
