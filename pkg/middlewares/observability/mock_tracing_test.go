@@ -1,4 +1,4 @@
-package tracing
+package observability
 
 import (
 	"context"
@@ -47,7 +47,9 @@ type mockSpan struct {
 
 var _ trace.Span = &mockSpan{}
 
-func (*mockSpan) SpanContext() trace.SpanContext     { return trace.SpanContext{} }
+func (*mockSpan) SpanContext() trace.SpanContext {
+	return trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}})
+}
 func (*mockSpan) IsRecording() bool                  { return false }
 func (s *mockSpan) SetStatus(_ codes.Code, _ string) {}
 func (s *mockSpan) SetAttributes(kv ...attribute.KeyValue) {
@@ -59,4 +61,6 @@ func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
 
 func (s *mockSpan) SetName(name string) { s.name = name }
 
-func (*mockSpan) TracerProvider() trace.TracerProvider { return mockTracerProvider{} }
+func (s *mockSpan) TracerProvider() trace.TracerProvider {
+	return nil
+}

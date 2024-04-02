@@ -22,7 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
-	tracingMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -89,7 +89,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 
 	value := reflect.ValueOf(*conf.Service)
 	var count int
-	for i := 0; i < value.NumField(); i++ {
+	for i := range value.NumField() {
 		if !value.Field(i).IsNil() {
 			count++
 		}
@@ -300,30 +300,38 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
 			Msg("Creating server")
 
+		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
+
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			// Wrapping the roundTripper with the Tracing roundTripper,
+			// to handle the reverseProxy client span creation.
+			roundTripper = newObservabilityRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
+		}
+
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
 		// Prevents from enabling observability for internal resources.
 
-		if m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, serviceName)) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 		}
 
 		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, serviceName)) {
+			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
 			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
-				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
+				Append(observability.WrapMiddleware(ctx, metricsHandler)).
 				Then(proxy)
 			if err != nil {
 				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
 			}
 		}
 
-		if m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, serviceName)) {
-			proxy = tracingMiddle.NewService(ctx, serviceName, proxy)
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
+			proxy = observability.NewService(ctx, serviceName, proxy)
 		}
 
 		lb.Add(proxyName, proxy, server.Weight)

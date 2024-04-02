@@ -92,6 +92,34 @@ Docker provider `tls.CAOptional` option has been removed in v3, as TLS client au
 
 The `tls.caOptional` option should be removed from the Docker provider static configuration.
 
+### Kubernetes Gateway API
+
+#### Experimental Channel Resources (TLSRoute and TCPRoute)
+
+In v3, the Kubernetes Gateway API provider does not enable support for the experimental channel API resources by default.
+
+##### Remediation
+
+The `experimentalChannel` option should be used to enable the support for the experimental channel API resources.
+
+??? example "An example usage of the Kubernetes Gateway API provider with experimental channel support enabled"
+
+    ```yaml tab="File (YAML)"
+    providers:
+      kubernetesGateway:
+        experimentalChannel: true
+    ```
+    
+    ```toml tab="File (TOML)"
+    [providers.kubernetesGateway]
+        experimentalChannel = true
+      # ...
+    ```
+    
+    ```bash tab="CLI"
+    --providers.kubernetesgateway.experimentalchannel=true
+    ```
+
 ### Experimental Configuration
 
 #### HTTP3
@@ -334,7 +362,7 @@ The `endpoint.tls.caOptional` option should be removed from the Nomad provider s
 
 ### Rancher v1 Provider
 
-In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintaned](https://rancher.com/docs/os/v1.x/en/support/),
+In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/),
 and Rancher v2 is supported as a standard Kubernetes provider.
 
 ??? example "An example of Traefik v2 Rancher v1 configuration"

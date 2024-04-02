@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/hashicorp/go-version"
@@ -415,12 +416,8 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
-	for _, watchedNamespace := range c.watchedNamespaces {
-		if watchedNamespace == ns {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(c.watchedNamespaces, ns)
 }
 
 // filterIngressClassByName return a slice containing ingressclasses with the correct name.

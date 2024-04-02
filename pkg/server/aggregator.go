@@ -1,6 +1,8 @@
 package server
 
 import (
+	"slices"
+
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -98,7 +100,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 
 		if configuration.TLS != nil {
 			for _, cert := range configuration.TLS.Certificates {
-				if containsACMETLS1(cert.Stores) && pvd != "tlsalpn.acme" {
+				if slices.Contains(cert.Stores, tlsalpn01.ACMETLS1Protocol) && pvd != "tlsalpn.acme" {
 					continue
 				}
 
@@ -127,14 +129,14 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	}
 
 	if len(defaultTLSStoreProviders) > 1 {
-		log.Error().Msgf("Default TLS Stores defined multiple times in %v", defaultTLSOptionProviders)
+		log.Error().Msgf("Default TLS Store defined in multiple providers: %v", defaultTLSStoreProviders)
 		delete(conf.TLS.Stores, tls.DefaultTLSStoreName)
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {
 		conf.TLS.Options[tls.DefaultTLSConfigName] = tls.DefaultTLSOptions
 	} else if len(defaultTLSOptionProviders) > 1 {
-		log.Error().Msgf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
+		log.Error().Msgf("Default TLS Options defined in multiple providers %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
 		delete(conf.TLS.Options, tls.DefaultTLSConfigName)
@@ -211,14 +213,4 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	cfg.TCP.Routers = tcpRouters
 
 	return cfg
-}
-
-func containsACMETLS1(stores []string) bool {
-	for _, store := range stores {
-		if store == tlsalpn01.ACMETLS1Protocol {
-			return true
-		}
-	}
-
-	return false
 }

@@ -287,7 +287,7 @@ func (s *TCPSuite) TestWRR() {
 	require.NoError(s.T(), err)
 
 	call := map[string]int{}
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		// Traefik passes through, termination handled by whoami-b or whoami-bb
 		out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 		require.NoError(s.T(), err)

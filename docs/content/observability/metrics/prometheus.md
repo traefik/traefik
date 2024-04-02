@@ -235,4 +235,4 @@ traefik_entrypoint_requests_total{code="200",entrypoint="web",method="GET",proto
     // For incoming requests, the Host header is promoted to the
     // Request.Host field and removed from the Header map.
 
-    As a workaround, to obtain the Host of a request as a label, one should use instead the `X-Forwarded-For` header.
+    As a workaround, to obtain the Host of a request as a label, one should use instead the `X-Forwarded-Host` header.

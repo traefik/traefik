@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
@@ -26,7 +27,7 @@ type Backend interface {
 }
 
 // NewTracing Creates a Tracing.
-func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
+func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 	var backend Backend
 
 	if conf.OTLP != nil {
@@ -41,11 +42,16 @@ func NewTracing(conf *static.Tracing) (trace.Tracer, io.Closer, error) {
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	return backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
+	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders), closer, nil
 }
 
 // TracerFromContext extracts the trace.Tracer from the given context.
-func TracerFromContext(ctx context.Context) trace.Tracer {
+func TracerFromContext(ctx context.Context) *Tracer {
 	// Prevent picking trace.noopSpan tracer.
 	if !trace.SpanContextFromContext(ctx).IsValid() {
 		return nil
@@ -53,7 +59,12 @@ func TracerFromContext(ctx context.Context) trace.Tracer {
 
 	span := trace.SpanFromContext(ctx)
 	if span != nil && span.TracerProvider() != nil {
-		return span.TracerProvider().Tracer("github.com/traefik/traefik")
+		tracer := span.TracerProvider().Tracer("github.com/traefik/traefik")
+		if tracer, ok := tracer.(*Tracer); ok {
+			return tracer
+		}
+
+		return nil
 	}
 
 	return nil
@@ -78,10 +89,73 @@ func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
 	}
 }
 
-// LogClientRequest used to add span attributes from the request as a Client.
-// TODO: the semconv does not implement Semantic Convention v1.23.0.
-func LogClientRequest(span trace.Span, r *http.Request) {
-	if r == nil || span == nil {
+// Span is trace.Span wrapping the Traefik TracerProvider.
+type Span struct {
+	trace.Span
+
+	tracerProvider *TracerProvider
+}
+
+// TracerProvider returns the span's TraceProvider.
+func (s Span) TracerProvider() trace.TracerProvider {
+	return s.tracerProvider
+}
+
+// TracerProvider is trace.TracerProvider wrapping the Traefik Tracer implementation.
+type TracerProvider struct {
+	trace.TracerProvider
+
+	tracer *Tracer
+}
+
+// Tracer returns the trace.Tracer for the given options.
+// It returns specifically the Traefik Tracer when requested.
+func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
+	if name == "github.com/traefik/traefik" {
+		return t.tracer
+	}
+
+	return t.TracerProvider.Tracer(name, options...)
+}
+
+// Tracer is trace.Tracer with additional properties.
+type Tracer struct {
+	trace.Tracer
+
+	capturedRequestHeaders  []string
+	capturedResponseHeaders []string
+}
+
+// NewTracer builds and configures a new Tracer.
+func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders []string) *Tracer {
+	return &Tracer{
+		Tracer:                  tracer,
+		capturedRequestHeaders:  capturedRequestHeaders,
+		capturedResponseHeaders: capturedResponseHeaders,
+	}
+}
+
+// Start starts a new span.
+// spancheck linter complains about span.End not being called, but this is expected here,
+// hence its deactivation.
+//
+//nolint:spancheck
+func (t *Tracer) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	if t == nil {
+		return ctx, nil
+	}
+
+	spanCtx, span := t.Tracer.Start(ctx, spanName, opts...)
+
+	wrappedSpan := &Span{Span: span, tracerProvider: &TracerProvider{tracer: t}}
+
+	return trace.ContextWithSpan(spanCtx, wrappedSpan), wrappedSpan
+}
+
+// CaptureClientRequest used to add span attributes from the request as a Client.
+// TODO: need to update the semconv package as it does not implement fully Semantic Convention v1.23.0.
+func (t *Tracer) CaptureClientRequest(span trace.Span, r *http.Request) {
+	if t == nil || span == nil || r == nil {
 		return
 	}
 
@@ -113,12 +187,23 @@ func LogClientRequest(span trace.Span, r *http.Request) {
 		span.SetAttributes(semconv.ServerAddress(host))
 		span.SetAttributes(semconv.ServerPort(intPort))
 	}
+
+	for _, header := range t.capturedRequestHeaders {
+		// User-agent is already part of the semantic convention as a recommended attribute.
+		if strings.EqualFold(header, "User-Agent") {
+			continue
+		}
+
+		if value := r.Header[header]; value != nil {
+			span.SetAttributes(attribute.StringSlice(fmt.Sprintf("http.request.header.%s", strings.ToLower(header)), value))
+		}
+	}
 }
 
-// LogServerRequest used to add span attributes from the request as a Server.
-// TODO: the semconv does not implement Semantic Convention v1.23.0.
-func LogServerRequest(span trace.Span, r *http.Request) {
-	if r == nil {
+// CaptureServerRequest used to add span attributes from the request as a Server.
+// TODO: need to update the semconv package as it does not implement fully Semantic Convention v1.23.0.
+func (t *Tracer) CaptureServerRequest(span trace.Span, r *http.Request) {
+	if t == nil || span == nil || r == nil {
 		return
 	}
 
@@ -147,6 +232,45 @@ func LogServerRequest(span trace.Span, r *http.Request) {
 	}
 
 	span.SetAttributes(semconv.ClientSocketAddress(r.Header.Get("X-Forwarded-For")))
+
+	for _, header := range t.capturedRequestHeaders {
+		// User-agent is already part of the semantic convention as a recommended attribute.
+		if strings.EqualFold(header, "User-Agent") {
+			continue
+		}
+
+		if value := r.Header[header]; value != nil {
+			span.SetAttributes(attribute.StringSlice(fmt.Sprintf("http.request.header.%s", strings.ToLower(header)), value))
+		}
+	}
+}
+
+// CaptureResponse captures the response attributes to the span.
+func (t *Tracer) CaptureResponse(span trace.Span, responseHeaders http.Header, code int, spanKind trace.SpanKind) {
+	if t == nil || span == nil {
+		return
+	}
+
+	var status codes.Code
+	var desc string
+	switch spanKind {
+	case trace.SpanKindServer:
+		status, desc = serverStatus(code)
+	case trace.SpanKindClient:
+		status, desc = clientStatus(code)
+	default:
+		status, desc = defaultStatus(code)
+	}
+	span.SetStatus(status, desc)
+	if code > 0 {
+		span.SetAttributes(semconv.HTTPResponseStatusCode(code))
+	}
+
+	for _, header := range t.capturedResponseHeaders {
+		if value := responseHeaders[header]; value != nil {
+			span.SetAttributes(attribute.StringSlice(fmt.Sprintf("http.response.header.%s", strings.ToLower(header)), value))
+		}
+	}
 }
 
 func proto(proto string) string {
@@ -164,30 +288,10 @@ func proto(proto string) string {
 	}
 }
 
-// LogResponseCode used to log response code in span.
-func LogResponseCode(span trace.Span, code int, spanKind trace.SpanKind) {
-	if span != nil {
-		var status codes.Code
-		var desc string
-		switch spanKind {
-		case trace.SpanKindServer:
-			status, desc = ServerStatus(code)
-		case trace.SpanKindClient:
-			status, desc = ClientStatus(code)
-		default:
-			status, desc = DefaultStatus(code)
-		}
-		span.SetStatus(status, desc)
-		if code > 0 {
-			span.SetAttributes(semconv.HTTPResponseStatusCode(code))
-		}
-	}
-}
-
-// ServerStatus returns a span status code and message for an HTTP status code
+// serverStatus returns a span status code and message for an HTTP status code
 // value returned by a server. Status codes in the 400-499 range are not
 // returned as errors.
-func ServerStatus(code int) (codes.Code, string) {
+func serverStatus(code int) (codes.Code, string) {
 	if code < 100 || code >= 600 {
 		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
 	}
@@ -197,10 +301,10 @@ func ServerStatus(code int) (codes.Code, string) {
 	return codes.Unset, ""
 }
 
-// ClientStatus returns a span status code and message for an HTTP status code
+// clientStatus returns a span status code and message for an HTTP status code
 // value returned by a server. Status codes in the 400-499 range are not
 // returned as errors.
-func ClientStatus(code int) (codes.Code, string) {
+func clientStatus(code int) (codes.Code, string) {
 	if code < 100 || code >= 600 {
 		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
 	}
@@ -210,9 +314,9 @@ func ClientStatus(code int) (codes.Code, string) {
 	return codes.Unset, ""
 }
 
-// DefaultStatus returns a span status code and message for an HTTP status code
+// defaultStatus returns a span status code and message for an HTTP status code
 // value generated internally.
-func DefaultStatus(code int) (codes.Code, string) {
+func defaultStatus(code int) (codes.Code, string) {
 	if code < 100 || code >= 600 {
 		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
 	}

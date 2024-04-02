@@ -1,3 +1,5 @@
+import Error404 from 'pages/_commons/Error404.vue'
+
 const LayoutDefault = () => import('layouts/Default.vue')
 
 const routes = [
@@ -249,8 +251,8 @@ const routes = [
 // Always leave this as last one
 if (process.env.MODE !== 'ssr') {
   routes.push({
-    path: '*',
-    component: () => import('pages/_commons/Error404.vue'),
+    path: '/:catchAll(.*)*',
+    component: Error404,
     meta: {
       title: '404'
     }

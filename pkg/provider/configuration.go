@@ -13,9 +13,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
-// Merge Merges multiple configurations.
+// Merge merges multiple configurations.
 func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration) *dynamic.Configuration {
 	logger := log.Ctx(ctx)
 
@@ -35,6 +36,9 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  make(map[string]*dynamic.UDPRouter),
 			Services: make(map[string]*dynamic.UDPService),
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Stores: make(map[string]tls.Store),
 		},
 	}
 
@@ -67,6 +71,9 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	transportsTCPToDelete := map[string]struct{}{}
 	transportsTCP := map[string][]string{}
+
+	storesToDelete := map[string]struct{}{}
+	stores := map[string][]string{}
 
 	var sortedKeys []string
 	for key := range configurations {
@@ -145,6 +152,13 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 				middlewaresTCPToDelete[middlewareName] = struct{}{}
 			}
 		}
+
+		for storeName, store := range conf.TLS.Stores {
+			stores[storeName] = append(stores[storeName], root)
+			if !AddStore(configuration.TLS, storeName, store) {
+				storesToDelete[storeName] = struct{}{}
+			}
+		}
 	}
 
 	for serviceName := range servicesToDelete {
@@ -215,6 +229,12 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			Interface("configuration", middlewaresTCP[middlewareName]).
 			Msg("TCP Middleware defined multiple times with different configurations")
 		delete(configuration.TCP.Middlewares, middlewareName)
+	}
+
+	for storeName := range storesToDelete {
+		logger.Error().Str("storeName", storeName).
+			Msgf("TLS store defined multiple times with different configurations in %v", stores[storeName])
+		delete(configuration.TLS.Stores, storeName)
 	}
 
 	return configuration
@@ -365,7 +385,17 @@ func AddMiddleware(configuration *dynamic.HTTPConfiguration, middlewareName stri
 	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
 }
 
-// MakeDefaultRuleTemplate Creates the default rule template.
+// AddStore adds a middleware to a configurations.
+func AddStore(configuration *dynamic.TLSConfiguration, storeName string, store tls.Store) bool {
+	if _, ok := configuration.Stores[storeName]; !ok {
+		configuration.Stores[storeName] = store
+		return true
+	}
+
+	return reflect.DeepEqual(configuration.Stores[storeName], store)
+}
+
+// MakeDefaultRuleTemplate creates the default rule template.
 func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*template.Template, error) {
 	defaultFuncMap := sprig.TxtFuncMap()
 	defaultFuncMap["normalize"] = Normalize
@@ -377,7 +407,7 @@ func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*tem
 	return template.New("defaultRule").Funcs(defaultFuncMap).Parse(defaultRule)
 }
 
-// BuildTCPRouterConfiguration Builds a router configuration.
+// BuildTCPRouterConfiguration builds a router configuration.
 func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCPConfiguration) {
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
@@ -403,7 +433,7 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 	}
 }
 
-// BuildUDPRouterConfiguration Builds a router configuration.
+// BuildUDPRouterConfiguration builds a router configuration.
 func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDPConfiguration) {
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
@@ -426,7 +456,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 	}
 }
 
-// BuildRouterConfiguration Builds a router configuration.
+// BuildRouterConfiguration builds a router configuration.
 func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
@@ -474,7 +504,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 	}
 }
 
-// Normalize Replace all special chars with `-`.
+// Normalize replaces all special chars with `-`.
 func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)

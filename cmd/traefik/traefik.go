@@ -46,7 +46,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func main() {
@@ -196,10 +195,17 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Observability
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+	var semConvMetricRegistry *metrics.SemConvMetricsRegistry
+	if staticConfiguration.Metrics != nil && staticConfiguration.Metrics.OTLP != nil {
+		semConvMetricRegistry, err = metrics.NewSemConvMetricRegistry(ctx, staticConfiguration.Metrics.OTLP)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create SemConv metric registry: %w", err)
+		}
+	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
-	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, accessLog, tracer, tracerCloser)
+	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
 
@@ -563,7 +569,7 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) (trace.Tracer, io.Closer) {
+func setupTracing(conf *static.Tracing) (*tracing.Tracer, io.Closer) {
 	if conf == nil {
 		return nil, nil
 	}

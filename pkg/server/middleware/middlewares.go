@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/containous/alice"
@@ -24,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcert"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter"
 	"github.com/traefik/traefik/v3/pkg/middlewares/redirect"
@@ -32,7 +34,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
-	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
@@ -99,7 +100,7 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 	if !ok {
 		currentStack = []string{}
 	}
-	if inSlice(middlewareName, currentStack) {
+	if slices.Contains(currentStack, middlewareName) {
 		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
 	}
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
@@ -390,14 +391,5 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
 	// Hence, regarding internal resources' observability deactivation,
 	// this would not enable tracing.
-	return tracing.WrapMiddleware(ctx, middleware), nil
-}
-
-func inSlice(element string, stack []string) bool {
-	for _, value := range stack {
-		if value == element {
-			return true
-		}
-	}
-	return false
+	return observability.WrapMiddleware(ctx, middleware), nil
 }
