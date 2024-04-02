@@ -217,7 +217,7 @@ providers:
 _Optional, Default: false_
 
 Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).
-This option currently enables support for `TCPRoutes` and `TLSRoutes`.
+This option currently enables support for `TCPRoute` and `TLSRoute`.
 
 ```yaml tab="File (YAML)"
 providers:
