@@ -64,8 +64,8 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, sb := range routes {
-			if sb.Match(req, &mux.RouteMatch{}) {
+		for _, route := range routes {
+			if route.Match(req, &mux.RouteMatch{}) {
 				return true
 			}
 		}
