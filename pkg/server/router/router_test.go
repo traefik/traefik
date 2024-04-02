@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -697,6 +698,32 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 			},
 			expectedError: 2,
+		},
+		{
+			desc: "Router priority exceeding max user-defined priority",
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*dynamic.Middleware{},
+			routerConfig: map[string]*dynamic.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    math.MaxInt,
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			tlsOptions:    map[string]tls.Options{},
+			expectedError: 1,
 		},
 		{
 			desc: "Router with broken tlsOption",
