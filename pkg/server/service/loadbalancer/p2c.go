@@ -13,7 +13,7 @@ type rnd interface {
 // The idea of this is two take two of the backends at random from the available backends, and select
 // the backend that has the fewest in-flight requests. This algorithm more effectively balances the
 // load than a round-robin approach, while also being constant time when picking: The strategy also
-// has more beneficial "herd" behaviour than the "fewest connections" algorithm, especially when the
+// has more beneficial "herd" behavior than the "fewest connections" algorithm, especially when the
 // load balancer doesn't have perfect knowledge about the global number of connections to the backend,
 // for example, when running in a distributed fashion.
 type strategyPowerOfTwoChoices struct {
@@ -43,7 +43,7 @@ func (s *strategyPowerOfTwoChoices) nextServer(map[string]struct{}) *namedHandle
 	h1, h2 := s.healthy[n1], s.healthy[n2]
 	// ensure h1 has fewer inflight requests than h2
 	if h2.inflight.Load() < h1.inflight.Load() {
-		h1, h2 = h2, h1
+		return h2
 	}
 
 	return h1

@@ -1,7 +1,7 @@
 package loadbalancer
 
 import (
-	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func testHandlers(inflights ...int) []*namedHandler {
 	var out []*namedHandler
 	for i, inflight := range inflights {
 		h := &namedHandler{
-			name: fmt.Sprint(i),
+			name: strconv.Itoa(i),
 		}
 		h.inflight.Store(int64(inflight))
 		out = append(out, h)
