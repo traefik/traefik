@@ -5,7 +5,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
@@ -18,6 +20,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
+
+const maxUserPriority = math.MaxInt - 1000
 
 type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *tcp.Chain
@@ -74,8 +78,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 
 	entryPointHandlers := make(map[string]*Router)
 	for _, entryPointName := range entryPoints {
-		entryPointName := entryPointName
-
 		routers := entryPointsRouters[entryPointName]
 
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
@@ -296,6 +298,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
 			routerConfig.AddError(routerErr, true)
 			logger.Error().Err(routerErr).Send()
+			continue
+		}
+
+		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
+			routerErr := fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
+			routerConfig.AddError(routerErr, true)
+			logger.Error().Err(routerErr).Send()
+			continue
 		}
 
 		var handler tcp.Handler

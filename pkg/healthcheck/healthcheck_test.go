@@ -243,7 +243,6 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -405,7 +404,6 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

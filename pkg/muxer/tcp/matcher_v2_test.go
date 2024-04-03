@@ -461,8 +461,6 @@ func Test_addTCPRouteV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -561,7 +559,6 @@ func TestParseHostSNIV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
 
@@ -606,8 +603,6 @@ func Test_HostSNICatchAllV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -708,8 +703,6 @@ func Test_HostSNIV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -823,8 +816,6 @@ func Test_HostSNIRegexpV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -916,8 +907,6 @@ func Test_ClientIPV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -985,8 +974,6 @@ func Test_ALPNV2(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

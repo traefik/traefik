@@ -1495,8 +1495,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1626,8 +1624,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1679,8 +1675,6 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1855,7 +1849,6 @@ func TestGetCertificates(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
