@@ -52,7 +52,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		currentPath = req.URL.EscapedPath()
 	}
 
-	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(currentPath) {
+	if rp.regexp != nil && rp.regexp.MatchString(currentPath) {
 		req.Header.Add(replacepath.ReplacedPathHeader, currentPath)
 		req.URL.RawPath = rp.regexp.ReplaceAllString(currentPath, rp.replacement)
 

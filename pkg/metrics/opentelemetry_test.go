@@ -89,8 +89,6 @@ func TestOpenTelemetry_labels(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -181,8 +179,6 @@ func TestOpenTelemetry_GaugeCollectorAdd(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -275,8 +271,6 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
