@@ -61,7 +61,7 @@ require (
 	github.com/tidwall/gjson v1.17.0
 	github.com/traefik/grpc-web v0.16.0
 	github.com/traefik/paerser v0.2.0
-	github.com/traefik/yaegi v0.15.1
+	github.com/traefik/yaegi v0.16.1
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
 	github.com/vulcand/oxy/v2 v2.0.0-20230427132221-be5cf38f3c1c

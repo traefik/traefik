@@ -1097,8 +1097,8 @@ github.com/traefik/grpc-web v0.16.0 h1:eeUWZaFg6ZU0I9dWOYE2D5qkNzRBmXzzuRlxdltas
 github.com/traefik/grpc-web v0.16.0/go.mod h1:2ttniSv7pTgBWIU2HZLokxRfFX3SA60c/DTmQQgVml4=
 github.com/traefik/paerser v0.2.0 h1:zqCLGSXoNlcBd+mzqSCLjon/I6phqIjeJL2xFB2ysgQ=
 github.com/traefik/paerser v0.2.0/go.mod h1:afzaVcgF8A+MpTnPG4wBr4whjanCSYA6vK5RwaYVtRc=
-github.com/traefik/yaegi v0.15.1 h1:YA5SbaL6HZA0Exh9T/oArRHqGN2HQ+zgmCY7dkoTXu4=
-github.com/traefik/yaegi v0.15.1/go.mod h1:AVRxhaI2G+nUsaM1zyktzwXn69G3t/AuTDrCiTds9p0=
+github.com/traefik/yaegi v0.16.1 h1:f1De3DVJqIDKmnasUF6MwmWv1dSEEat0wcpXhD2On3E=
+github.com/traefik/yaegi v0.16.1/go.mod h1:4eVhbPb3LnD2VigQjhYbEJ69vDRFdT2HQNrXx8eEwUY=
 github.com/transip/gotransip/v6 v6.23.0 h1:PsTdjortrEZ8IFFifEryzjVjOy9SgK4ahlnhKBBIQgA=
 github.com/transip/gotransip/v6 v6.23.0/go.mod h1:nzv9eN2tdsUrm5nG5ZX6AugYIU4qgsMwIn2c0EZLk8c=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
