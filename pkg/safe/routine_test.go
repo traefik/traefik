@@ -63,7 +63,6 @@ func TestPoolWithCtx(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			// These subtests cannot be run in parallel, since the testRoutine
 			// is shared across the subtests.

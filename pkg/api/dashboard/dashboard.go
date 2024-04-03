@@ -39,7 +39,7 @@ func Append(router *mux.Router, customAssets fs.FS) {
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
 			w.Header().Del("Content-Type")
 
-			http.StripPrefix("/dashboard/", http.FileServer(http.FS(assets))).ServeHTTP(w, r)
+			http.StripPrefix("/dashboard/", http.FileServerFS(assets)).ServeHTTP(w, r)
 		})
 }
 
@@ -56,7 +56,7 @@ func (g Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
 	w.Header().Del("Content-Type")
 
-	http.FileServer(http.FS(assets)).ServeHTTP(w, r)
+	http.FileServerFS(assets).ServeHTTP(w, r)
 }
 
 func safePrefix(req *http.Request) string {

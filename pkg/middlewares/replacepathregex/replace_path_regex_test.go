@@ -45,6 +45,28 @@ func TestReplacePathRegex(t *testing.T) {
 			expectedHeader:  "/whoami/and/whoami",
 		},
 		{
+			desc: "empty replacement",
+			path: "/whoami/and/whoami",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "",
+				Regex:       `/whoami`,
+			},
+			expectedPath:    "/and",
+			expectedRawPath: "/and",
+			expectedHeader:  "/whoami/and/whoami",
+		},
+		{
+			desc: "empty trimmed replacement",
+			path: "/whoami/and/whoami",
+			config: dynamic.ReplacePathRegex{
+				Replacement: " ",
+				Regex:       `/whoami`,
+			},
+			expectedPath:    "/and",
+			expectedRawPath: "/and",
+			expectedHeader:  "/whoami/and/whoami",
+		},
+		{
 			desc: "no match",
 			path: "/whoami/and/whoami",
 			config: dynamic.ReplacePathRegex{

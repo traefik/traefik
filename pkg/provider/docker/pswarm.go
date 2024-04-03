@@ -187,8 +187,7 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 
 	networkMap := make(map[string]*dockertypes.NetworkResource)
 	for _, network := range networkList {
-		networkToAdd := network
-		networkMap[network.ID] = &networkToAdd
+		networkMap[network.ID] = &network
 	}
 
 	var dockerDataList []dockerData
