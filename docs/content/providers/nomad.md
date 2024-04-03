@@ -163,7 +163,7 @@ providers:
 _Optional, Default=""_
 
 Token is used to provide a per-request ACL token, if Nomad ACLs are enabled.
-The ACL rights that you should apply to this token is 'read-job' as described here in the [nomad documentation about ACL](https://developer.hashicorp.com/nomad/tutorials/access-control/access-control-policies)
+The appropriate ACL privilege for this token is 'read-job', as outlined in the [Nomad documentation on ACL](https://developer.hashicorp.com/nomad/tutorials/access-control/access-control-policies).
 
 ```yaml tab="File (YAML)"
 providers:
