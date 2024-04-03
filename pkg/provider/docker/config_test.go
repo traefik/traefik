@@ -395,7 +395,6 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3649,8 +3648,6 @@ func TestDynConfBuilder_build(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3837,7 +3834,6 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3950,7 +3946,6 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -4020,7 +4015,6 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 	}
 
 	for serviceID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 
