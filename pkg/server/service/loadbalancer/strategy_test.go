@@ -11,6 +11,7 @@ import (
 var Sink *namedHandler
 
 func benchmarkStrategy(b *testing.B, s strategy, total, down int) {
+	b.Helper()
 	if down >= total {
 		b.Fatalf("down >= total")
 	}
