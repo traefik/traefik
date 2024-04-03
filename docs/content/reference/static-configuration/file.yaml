@@ -163,6 +163,7 @@ providers:
       - foobar
     labelSelector: foobar
     throttleDuration: 42s
+    experimentalChannel: true
   rest:
     insecure: true
   consulCatalog:
@@ -192,6 +193,9 @@ providers:
     connectByDefault: true
     serviceName: foobar
     watch: true
+    strictChecks:
+      - foobar
+      - foobar
     namespaces:
       - foobar
       - foobar
@@ -415,6 +419,12 @@ tracing:
   globalAttributes:
     name0: foobar
     name1: foobar
+  capturedRequestHeaders:
+    - foobar
+    - foobar
+  capturedResponseHeaders:
+    - foobar
+    - foobar
   sampleRate: 42
   addInternals: true
   otlp:

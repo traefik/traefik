@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -241,12 +242,9 @@ func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 }
 
 func containsNTLMorNegotiate(h []string) bool {
-	for _, s := range h {
-		if strings.HasPrefix(s, "NTLM") || strings.HasPrefix(s, "Negotiate") {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(h, func(s string) bool {
+		return strings.HasPrefix(s, "NTLM") || strings.HasPrefix(s, "Negotiate")
+	})
 }
 
 func createRootCACertPool(rootCAs []types.FileOrContent) *x509.CertPool {

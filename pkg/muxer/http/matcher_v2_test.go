@@ -69,7 +69,6 @@ func TestClientIPV2Matcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -146,7 +145,6 @@ func TestMethodV2Matcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -271,7 +269,6 @@ func TestHostV2Matcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -374,7 +371,6 @@ func TestHostRegexpV2Matcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -454,10 +450,21 @@ func TestPathV2Matcher(t *testing.T) {
 				"https://example.com/css/main.css": http.StatusNotFound,
 			},
 		},
+		{
+			desc: "valid Path matcher with regexp",
+			rule: "Path(`/css{path:(/.*)?}`)",
+			expected: map[string]int{
+				"https://example.com":                              http.StatusNotFound,
+				"https://example.com/css/main.css":                 http.StatusOK,
+				"https://example.org/css/main.css":                 http.StatusOK,
+				"https://example.com/css/components/component.css": http.StatusOK,
+				"https://example.com/css.css":                      http.StatusNotFound,
+				"https://example.com/js/main.js":                   http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -535,10 +542,21 @@ func TestPathPrefixV2Matcher(t *testing.T) {
 				"https://example.com/css/main.css": http.StatusOK,
 			},
 		},
+		{
+			desc: "valid PathPrefix matcher with regexp",
+			rule: "PathPrefix(`/css-{name:[0-9]?}`)",
+			expected: map[string]int{
+				"https://example.com":                                     http.StatusNotFound,
+				"https://example.com/css-1/main.css":                      http.StatusOK,
+				"https://example.org/css-222/main.css":                    http.StatusOK,
+				"https://example.com/css-333333/components/component.css": http.StatusOK,
+				"https://example.com/css.css":                             http.StatusNotFound,
+				"https://example.com/js/main.js":                          http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -625,8 +643,6 @@ func TestHeadersMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -734,7 +750,6 @@ func TestHeaderRegexpV2Matcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -827,7 +842,6 @@ func TestHostRegexp(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1495,8 +1509,6 @@ func Test_addRoute(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

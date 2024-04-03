@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -73,7 +75,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 		return
 	}
 
-	err := p.routerTransform.Apply(ctx, rt, ingress.Annotations)
+	err := p.routerTransform.Apply(ctx, rt, ingress)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
@@ -710,6 +712,24 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 	}
 
 	return errorPageMiddleware, balancerServerHTTP, nil
+}
+
+func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
+	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+
+	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
 }
 
 func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {

@@ -1,5 +1,5 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import { createStore } from 'vuex'
+import { store } from 'quasar/wrappers'
 
 import core from './core'
 import entrypoints from './entrypoints'
@@ -8,15 +8,13 @@ import tcp from './tcp'
 import udp from './udp'
 import platform from './platform'
 
-Vue.use(Vuex)
-
 /*
  * If not building with SSR mode, you can
  * directly export the Store instantiation
  */
 
-export default function (/* { ssrContext } */) {
-  const Store = new Vuex.Store({
+export default store((/* { ssrContext } */) => {
+  const Store = createStore({
     modules: {
       core,
       entrypoints,
@@ -32,4 +30,4 @@ export default function (/* { ssrContext } */) {
   })
 
   return Store
-}
+})

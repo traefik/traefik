@@ -10,8 +10,8 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/replacepath"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -52,7 +52,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		currentPath = req.URL.EscapedPath()
 	}
 
-	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(currentPath) {
+	if rp.regexp != nil && rp.regexp.MatchString(currentPath) {
 		req.Header.Add(replacepath.ReplacedPathHeader, currentPath)
 		req.URL.RawPath = rp.regexp.ReplaceAllString(currentPath, rp.replacement)
 
@@ -63,7 +63,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 		if err != nil {
 			middlewares.GetLogger(context.Background(), rp.name, typeName).Error().Err(err).Send()
-			tracing.SetStatusErrorf(req.Context(), err.Error())
+			observability.SetStatusErrorf(req.Context(), err.Error())
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}

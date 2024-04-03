@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -74,7 +75,8 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
-	labelSelector string
+	labelSelector       string
+	experimentalChannel bool
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -195,17 +197,20 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
 		_, err = factoryGateway.Gateway().V1beta1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
+		}
+
+		if c.experimentalChannel {
+			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
+			_, err = factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
@@ -567,10 +572,6 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
-	for _, watchedNamespace := range c.watchedNamespaces {
-		if watchedNamespace == ns {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(c.watchedNamespaces, ns)
 }

@@ -1,8 +1,5 @@
 run:
   timeout: 10m
-  skip-files: []
-  skip-dirs:
-    - pkg/provider/kubernetes/crd/generated/
 
 linters-settings:
   govet:
@@ -209,15 +206,20 @@ linters:
     - maintidx # kind of duplicate of gocyclo
     - nonamedreturns # Too strict
     - gosmopolitan  # not relevant
+    - exportloopref # Useless with go1.22
+    - musttag
+    - intrange # bug (fixed in golangci-lint v1.58)
 
 issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-dirs:
+    - pkg/provider/kubernetes/crd/generated/
   exclude:
     - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
     - "should have a package comment, unless it's in another file for this package"
-    - 'fmt.Sprintf can be replaced with string addition'
+    - 'fmt.Sprintf can be replaced with string'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:

@@ -1134,8 +1134,6 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
 		require.NoError(s.T(), err)
 		req.Host = test.hostHeader
@@ -1179,8 +1177,6 @@ func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: true,
 		}

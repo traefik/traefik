@@ -132,8 +132,8 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	if item.Status != api.HealthPassing && item.Status != api.HealthWarning {
-		logger.Debug().Msg("Filtering unhealthy or starting item")
+	if !p.includesHealthStatus(item.Status) {
+		logger.Debug().Msgf("Status %q is not included in the configured strictChecks of %q", item.Status, strings.Join(p.StrictChecks, ","))
 		return false
 	}
 
@@ -323,4 +323,9 @@ func getName(i itemData) string {
 	hasher := fnv.New64()
 	hasher.Write([]byte(strings.Join(tags, "")))
 	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
+}
+
+// defaultStrictChecks returns the default healthchecks to allow an upstream to be registered a route for loadbalancers.
+func defaultStrictChecks() []string {
+	return []string{api.HealthPassing, api.HealthWarning}
 }

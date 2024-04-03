@@ -1,3 +1,32 @@
+## [v3.0.0-rc3](https://github.com/traefik/traefik/tree/v3.0.0-rc3) (2024-03-13)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc2...v3.0.0-rc3)
+
+**Misc:**
+- Merge branch v2.11 into v3.0 ([#10519](https://github.com/traefik/traefik/pull/10519) by [rtribotte](https://github.com/rtribotte))
+
+## [v3.0.0-rc2](https://github.com/traefik/traefik/tree/v3.0.0-rc2) (2024-03-12)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc1...v3.0.0-rc2)
+
+**Enhancements:**
+- **[consul]** ConsulCatalog StrictChecks ([#10388](https://github.com/traefik/traefik/pull/10388) by [djenriquez](https://github.com/djenriquez))
+- **[metrics,tracing]** Upgrade opentelemetry dependencies ([#10472](https://github.com/traefik/traefik/pull/10472) by [mmatur](https://github.com/mmatur))
+- **[middleware,authentication,tracing]** Add captured headers options for tracing ([#10457](https://github.com/traefik/traefik/pull/10457) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,metrics]** Semconv OTLP stable HTTP metrics ([#10421](https://github.com/traefik/traefik/pull/10421) by [mmatur](https://github.com/mmatur))
+- **[plugins]** Upgrade http-wasm host to v0.6.0 to support clients using v0.4.0 ([#10475](https://github.com/traefik/traefik/pull/10475) by [jcchavezs](https://github.com/jcchavezs))
+- **[tracing]** Support OTEL_PROPAGATORS to configure tracing propagation ([#10465](https://github.com/traefik/traefik/pull/10465) by [youkoulayley](https://github.com/youkoulayley))
+
+**Bug fixes:**
+- Fix a regression on flags using spaces between key and value ([#10445](https://github.com/traefik/traefik/pull/10445) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s,k8s/gatewayapi]** Add ReferenceGrants to Gateway API Traefik controller RBAC ([#10462](https://github.com/traefik/traefik/pull/10462) by [rtribotte](https://github.com/rtribotte))
+- **[k8s]** Fix invalid version in docs about Gateway API on Traefik v3 ([#10474](https://github.com/traefik/traefik/pull/10474) by [mloiseleur](https://github.com/mloiseleur))
+- **[rules]** Improve ruleSyntax option documentation ([#10441](https://github.com/traefik/traefik/pull/10441) by [rtribotte](https://github.com/rtribotte))
+- Fix typo in migration docs ([#10478](https://github.com/traefik/traefik/pull/10478) by [Eisberge](https://github.com/Eisberge))
+
+**Misc:**
+- Merge v2.11 into v3.0 ([#10513](https://github.com/traefik/traefik/pull/10513) by [mmatur](https://github.com/mmatur))
+
 ## [v3.0.0-rc1](https://github.com/traefik/traefik/tree/v3.0.0-rc1) (2024-02-13)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta5...v3.0.0-rc1)
 

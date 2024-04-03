@@ -302,7 +302,7 @@ func (s *TracingSuite) TestOpentelemetryRetry() {
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
@@ -425,7 +425,7 @@ func (s *TracingSuite) TestNoInternals() {
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))

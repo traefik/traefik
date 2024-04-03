@@ -9,7 +9,7 @@ GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/nul
 
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 BIN_NAME := traefik
-CODENAME := cheddar
+CODENAME ?= cheddar
 
 DATE := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
 

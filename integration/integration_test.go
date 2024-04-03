@@ -243,7 +243,7 @@ func (s *BaseSuite) createComposeProject(name string) {
 		}
 
 		if containerConfig.Deploy.Replicas > 0 {
-			for i := 0; i < containerConfig.Deploy.Replicas; i++ {
+			for i := range containerConfig.Deploy.Replicas {
 				id = fmt.Sprintf("%s-%d", id, i+1)
 				con, err := s.createContainer(ctx, containerConfig, id, mounts)
 				require.NoError(s.T(), err)

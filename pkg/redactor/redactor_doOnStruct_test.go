@@ -369,7 +369,6 @@ func Test_doOnStruct(t *testing.T) {
 	}
 
 	for _, test := range testCase {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			val := reflect.ValueOf(test.base).Elem()

@@ -998,7 +998,6 @@ func TestHandler_HTTP(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1050,7 +1049,7 @@ func TestHandler_HTTP(t *testing.T) {
 
 func generateHTTPRouters(nbRouters int) map[string]*runtime.RouterInfo {
 	routers := make(map[string]*runtime.RouterInfo, nbRouters)
-	for i := 0; i < nbRouters; i++ {
+	for i := range nbRouters {
 		routers[fmt.Sprintf("bar%2d@myprovider", i)] = &runtime.RouterInfo{
 			Router: &dynamic.Router{
 				EntryPoints: []string{"web"},
