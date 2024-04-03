@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -66,7 +67,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 		return
 	}
 
-	err := p.routerTransform.Apply(ctx, rt, ingress.Annotations)
+	err := p.routerTransform.Apply(ctx, rt, ingress)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
@@ -418,13 +419,9 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
 	// configuration through the new kubernetes ingressClass
 	if ingress.Spec.IngressClassName != nil {
-		for _, ic := range ingressClasses {
-			if *ingress.Spec.IngressClassName == ic.ObjectMeta.Name {
-				return true
-			}
-		}
-
-		return false
+		return slices.ContainsFunc(ingressClasses, func(ic *netv1.IngressClass) bool {
+			return *ingress.Spec.IngressClassName == ic.ObjectMeta.Name
+		})
 	}
 
 	return p.IngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||

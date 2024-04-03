@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
@@ -88,6 +89,7 @@ type Configuration struct {
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
 	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	StrictChecks      []string        `description:"A list of service health statuses to allow taking traffic." json:"strictChecks,omitempty" toml:"strictChecks,omitempty" yaml:"strictChecks,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -98,6 +100,7 @@ func (c *Configuration) SetDefaults() {
 	c.ExposedByDefault = true
 	c.DefaultRule = defaultTemplateRule
 	c.ServiceName = "traefik"
+	c.StrictChecks = defaultStrictChecks()
 }
 
 // Provider is the Consul Catalog provider implementation.
@@ -576,6 +579,21 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+// includesHealthStatus returns true if the status passed in exists in the configured StrictChecks configuration. Statuses are case insensitive.
+func (p *Provider) includesHealthStatus(status string) bool {
+	for _, s := range p.StrictChecks {
+		// If the "any" status is included, assume all health checks are included
+		if strings.EqualFold(s, api.HealthAny) {
+			return true
+		}
+
+		if strings.EqualFold(s, status) {
+			return true
+		}
+	}
+	return false
 }
 
 func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {

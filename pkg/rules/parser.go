@@ -31,7 +31,6 @@ func NewParser(matchers []string) (predicate.Parser, error) {
 	parserFuncs := make(map[string]interface{})
 
 	for _, matcherName := range matchers {
-		matcherName := matcherName
 		fn := func(value ...string) TreeBuilder {
 			return func() *Tree {
 				return &Tree{

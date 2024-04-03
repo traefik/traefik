@@ -34,11 +34,11 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 	s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
 
 	// wait for Traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("rest@internal"))
 	require.NoError(s.T(), err)
 
 	// Expected a 404 as we did not configure anything.
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	config := &dynamic.Configuration{
@@ -67,7 +67,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 
 	confChanges := 10
 
-	for i := 0; i < confChanges; i++ {
+	for i := range confChanges {
 		config.HTTP.Routers[fmt.Sprintf("routerHTTP%d", i)] = router
 		data, err := json.Marshal(config)
 		require.NoError(s.T(), err)

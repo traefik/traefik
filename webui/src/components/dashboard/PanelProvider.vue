@@ -1,5 +1,8 @@
 <template>
-  <q-card flat bordered>
+  <q-card
+    flat
+    bordered
+  >
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col text-center">
@@ -11,16 +14,23 @@
     </q-card-section>
     <q-card-section>
       <div class="text-h6 text-center text-weight-bold">
-        {{getName}}
+        {{ getName }}
       </div>
     </q-card-section>
   </q-card>
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'PanelProvider',
-  props: ['name'],
+  props: {
+    name: {
+      default: '',
+      type: String
+    }
+  },
   computed: {
     getName () {
       return this.name
@@ -32,19 +42,19 @@ export default {
         return 'providers/plugin.svg'
       }
       if (name.startsWith('consul-')) {
-        return `providers/consul.svg`
+        return 'providers/consul.svg'
       }
       if (name.startsWith('consulcatalog-')) {
-        return `providers/consulcatalog.svg`
+        return 'providers/consulcatalog.svg'
       }
       if (name.startsWith('nomad-')) {
-        return `providers/nomad.svg`
+        return 'providers/nomad.svg'
       }
 
       return `providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
