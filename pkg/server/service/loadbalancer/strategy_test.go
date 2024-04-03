@@ -1,9 +1,10 @@
 package loadbalancer
 
 import (
-	"math/rand/v2"
 	"strconv"
 	"testing"
+
+	"math/rand/v2"
 )
 
 // Sink is an exported global variable to prevent the compiler from optimizing
