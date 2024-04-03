@@ -1244,8 +1244,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/traefik/paerser v0.2.0 h1:zqCLGSXoNlcBd+mzqSCLjon/I6phqIjeJL2xFB2ysgQ=
 github.com/traefik/paerser v0.2.0/go.mod h1:afzaVcgF8A+MpTnPG4wBr4whjanCSYA6vK5RwaYVtRc=
-github.com/traefik/yaegi v0.15.1 h1:YA5SbaL6HZA0Exh9T/oArRHqGN2HQ+zgmCY7dkoTXu4=
-github.com/traefik/yaegi v0.15.1/go.mod h1:AVRxhaI2G+nUsaM1zyktzwXn69G3t/AuTDrCiTds9p0=
+github.com/traefik/yaegi v0.16.1 h1:f1De3DVJqIDKmnasUF6MwmWv1dSEEat0wcpXhD2On3E=
+github.com/traefik/yaegi v0.16.1/go.mod h1:4eVhbPb3LnD2VigQjhYbEJ69vDRFdT2HQNrXx8eEwUY=
 github.com/transip/gotransip/v6 v6.23.0 h1:PsTdjortrEZ8IFFifEryzjVjOy9SgK4ahlnhKBBIQgA=
 github.com/transip/gotransip/v6 v6.23.0/go.mod h1:nzv9eN2tdsUrm5nG5ZX6AugYIU4qgsMwIn2c0EZLk8c=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
