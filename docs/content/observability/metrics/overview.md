@@ -21,7 +21,7 @@ and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
 _Optional, Default="false"_
 
-Enables metrics for internal resources.
+Enables metrics for internal resources (e.g.: `ping@internals`).
 
 ```yaml tab="File (YAML)"
 metrics:
