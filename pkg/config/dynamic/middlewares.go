@@ -41,7 +41,7 @@ type Middleware struct {
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 
 	// Gateway API HTTPRoute filters middlewares.
-	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" yaml:"-" toml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
