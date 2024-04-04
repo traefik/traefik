@@ -1925,7 +1925,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			var err error
 			middleware, err = createUrlRewriteMiddleware(&rule.Matches, filter.URLRewrite)
 			if err != nil {
-				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
+				return nil, fmt.Errorf("creating url rewrite middleware: %w", err)
 			}
 
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
