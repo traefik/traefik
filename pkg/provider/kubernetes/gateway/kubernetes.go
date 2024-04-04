@@ -1921,6 +1921,13 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			}
 
 			middlewares[name] = middleware
+
+		case gatev1.HTTPRouteFilterRequestHeaderModifier:
+			middleware = createRequestHeaderModifier(filter.RequestHeaderModifier)
+
+			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+			middlewares[middlewareName] = middleware
+
 		default:
 			// As per the spec:
 			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -1948,6 +1955,34 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	}
 
 	return filterFunc(string(extensionRef.Name), namespace)
+}
+
+// createRequestHeaderModifier does not enforce/check the configuration,
+// as the spec indicates that either the webhook or CEL (since v1.0 GA Release) should enforce that.
+func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middleware {
+	var set map[string]string
+	for _, header := range filter.Set {
+		if set == nil {
+			set = map[string]string{}
+		}
+		set[string(header.Name)] = header.Value
+	}
+
+	var add map[string]string
+	for _, header := range filter.Add {
+		if add == nil {
+			add = map[string]string{}
+		}
+		add[string(header.Name)] = header.Value
+	}
+
+	return &dynamic.Middleware{
+		RequestHeaderModifier: &dynamic.RequestHeaderModifier{
+			Set:    set,
+			Add:    add,
+			Remove: filter.Remove,
+		},
+	}
 }
 
 func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {
