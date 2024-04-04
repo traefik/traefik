@@ -912,7 +912,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 				continue
 			}
 
-			middlewares, err := p.loadMiddlewares(listener, route.Namespace, routerKey, routeRule.Filters)
+			middlewares, err := p.loadMiddlewares(listener, route.Namespace, routerKey, routeRule)
 			if err != nil {
 				// update "ResolvedRefs" status true with "InvalidFilters" reason
 				conditions = append(conditions, metav1.Condition{
@@ -1887,7 +1887,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 	return wrrSvc, services, nil
 }
 
-func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, prefix string, rule gatev1.HTTPRouteRule) (map[string]*dynamic.Middleware, error) {
 	middlewares := make(map[string]*dynamic.Middleware)
 
 	// The spec allows for an empty string in which case we should use the
@@ -1902,7 +1902,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 		return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
 	}
 
-	for i, filter := range filters {
+	for i, filter := range rule.Filters {
 		var middleware *dynamic.Middleware
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
@@ -1921,11 +1921,18 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			}
 
 			middlewares[name] = middleware
-
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+		case gatev1.HTTPRouteFilterURLRewrite:
+			var err error
+			middleware, err = createUrlRewriteMiddleware(&rule.Matches, filter.URLRewrite)
+			if err != nil {
+				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
+			}
 
+			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+			middlewares[middlewareName] = middleware
 		default:
 			// As per the spec:
 			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -2014,6 +2021,31 @@ func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedi
 			Permanent:   statusCode == http.StatusMovedPermanently,
 		},
 	}, nil
+}
+
+func createUrlRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) (*dynamic.Middleware, error) {
+	if filter.Path.Type == gatev1.FullPathHTTPPathModifier {
+		return &dynamic.Middleware{
+			ReplacePath: &dynamic.ReplacePath{
+				Path: *filter.Path.ReplacePrefixMatch,
+			},
+		}, nil
+	} else if filter.Path.Type == gatev1.PrefixMatchHTTPPathModifier {
+		var pathToReplace string
+		for _, m := range *matches {
+			if *m.Path.Type == gatev1.PathMatchPathPrefix {
+				pathToReplace = *m.Path.Value
+			}
+		}
+		return &dynamic.Middleware{
+			ReplacePathRegex: &dynamic.ReplacePathRegex{
+				Regex:       fmt.Sprintf("^%s", pathToReplace),
+				Replacement: *filter.Path.ReplacePrefixMatch,
+			},
+		}, nil
+	}
+
+	return nil, nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
