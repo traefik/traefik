@@ -12,7 +12,7 @@ IPAllowList limits allowed requests based on the client IP.
 
 ## Configuration Examples
 
-```yaml tab="Docker & Swarm"
+```yaml tab="Docker"
 # Accepts request from defined IP
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
@@ -33,6 +33,18 @@ spec:
 ```yaml tab="Consul Catalog"
 # Accepts request from defined IP
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32,192.168.1.7"
+}
+```
+
+```yaml tab="Rancher"
+# Accepts request from defined IP
+labels:
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -85,7 +97,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-```yaml tab="Docker & Swarm"
+```yaml tab="Docker"
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
@@ -111,6 +123,20 @@ spec:
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32, 192.168.1.7",
+  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth": "2"
+}
+```
+
+```yaml tab="Rancher"
+# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+labels:
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -151,7 +177,7 @@ http:
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
     | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
 
-```yaml tab="Docker & Swarm"
+```yaml tab="Docker"
 # Exclude from `X-Forwarded-For`
 labels:
     - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
@@ -177,7 +203,22 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Exclude from `X-Forwarded-For`
+- "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
+  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
+}
+```
+
+```yaml tab="Rancher"
+# Exclude from `X-Forwarded-For`
+labels:
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -187,12 +228,12 @@ http:
     test-ipallowlist:
       ipAllowList:
         sourceRange:
-         - "127.0.0.1/32"
-         - "192.168.1.0/24"
+         - 127.0.0.1/32
+         - 192.168.1.0/24
         ipStrategy:
           excludedIPs:
-            - "127.0.0.1/32"
-            - "192.168.1.7"
+            - 127.0.0.1/32
+            - 192.168.1.7
 ```
 
 ```toml tab="File (TOML)"
