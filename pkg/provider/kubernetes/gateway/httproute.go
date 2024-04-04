@@ -320,6 +320,22 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, route
 
 			middlewares[name] = middleware
 
+		case gatev1.HTTPRouteFilterURLRewrite:
+			if filter.URLRewrite.Hostname != nil {
+				middleware := createRewriteHostHeaderMiddlewareFilter(filter.URLRewrite)
+				middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-host-%d", routerName, strings.ToLower(string(filter.Type)), i))
+				middlewares[middlewareName] = middleware
+			}
+			if filter.URLRewrite.Path != nil {
+				var err error
+				middleware, err := createURLRewriteMiddleware(nil, filter.URLRewrite)
+				if err != nil {
+					return nil, fmt.Errorf("unsupported filter type %s: %w", filter.Type, err)
+				}
+				middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-path-%d", routerName, strings.ToLower(string(filter.Type)), i))
+				middlewares[middlewareName] = middleware
+			}
+
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
 			// In all cases where incompatible or unsupported filters are
@@ -595,6 +611,45 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch *
 			Path:       path,
 			PathPrefix: pathPrefix,
 			StatusCode: ptr.Deref(filter.StatusCode, http.StatusFound),
+		},
+	}
+}
+
+func createURLRewriteMiddleware(matches []gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) (*dynamic.Middleware, error) {
+	switch filter.Path.Type {
+	case gatev1.FullPathHTTPPathModifier:
+		return &dynamic.Middleware{
+			ReplacePath: &dynamic.ReplacePath{
+				Path: *filter.Path.ReplacePrefixMatch,
+			},
+		}, nil
+	case gatev1.PrefixMatchHTTPPathModifier:
+		var pathToReplace string
+		for _, m := range matches {
+			if m.Path == nil {
+				continue
+			}
+			if *m.Path.Type == gatev1.PathMatchPathPrefix {
+				pathToReplace = *m.Path.Value
+			}
+		}
+		return &dynamic.Middleware{
+			ReplacePathRegex: &dynamic.ReplacePathRegex{
+				Regex:       fmt.Sprintf("^%s", pathToReplace),
+				Replacement: *filter.Path.ReplacePrefixMatch,
+			},
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported Filter Path Type %s", filter.Path.Type)
+	}
+}
+
+func createRewriteHostHeaderMiddlewareFilter(filter *gatev1.HTTPURLRewriteFilter) *dynamic.Middleware {
+	headers := map[string]string{}
+	headers["Host"] = string(*filter.Hostname)
+	return &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomRequestHeaders: headers,
 		},
 	}
 }
