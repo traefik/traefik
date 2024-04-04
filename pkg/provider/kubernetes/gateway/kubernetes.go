@@ -1925,12 +1925,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
 		case gatev1.HTTPRouteFilterURLRewrite:
-			var err error
-			middleware, err = createURLRewriteMiddleware(&rule.Matches, filter.URLRewrite)
-			if err != nil {
-				return nil, fmt.Errorf("creating url rewrite middleware: %w", err)
-			}
-
+			middleware = createURLRewriteMiddleware(&rule.Matches, filter.URLRewrite)
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = middleware
 		default:
@@ -2023,13 +2018,13 @@ func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedi
 	}, nil
 }
 
-func createURLRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) (*dynamic.Middleware, error) {
+func createURLRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) *dynamic.Middleware {
 	if filter.Path.Type == gatev1.FullPathHTTPPathModifier {
 		return &dynamic.Middleware{
 			ReplacePath: &dynamic.ReplacePath{
 				Path: *filter.Path.ReplacePrefixMatch,
 			},
-		}, nil
+		}
 	} else if filter.Path.Type == gatev1.PrefixMatchHTTPPathModifier {
 		var pathToReplace string
 		for _, m := range *matches {
@@ -2042,10 +2037,10 @@ func createURLRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1
 				Regex:       fmt.Sprintf("^%s", pathToReplace),
 				Replacement: *filter.Path.ReplacePrefixMatch,
 			},
-		}, nil
+		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
