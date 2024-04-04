@@ -1993,7 +1993,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
 		case gatev1.HTTPRouteFilterURLRewrite:
 			var err error
-			middleware, err = createUrlRewriteMiddleware(&rule.Matches, filter.URLRewrite)
+			middleware, err = createURLRewriteMiddleware(&rule.Matches, filter.URLRewrite)
 			if err != nil {
 				return nil, fmt.Errorf("creating url rewrite middleware: %w", err)
 			}
@@ -2090,7 +2090,7 @@ func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedi
 	}, nil
 }
 
-func createUrlRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) (*dynamic.Middleware, error) {
+func createURLRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) (*dynamic.Middleware, error) {
 	if filter.Path.Type == gatev1.FullPathHTTPPathModifier {
 		return &dynamic.Middleware{
 			ReplacePath: &dynamic.ReplacePath{
