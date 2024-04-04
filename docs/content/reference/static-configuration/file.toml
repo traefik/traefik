@@ -26,6 +26,7 @@
         readTimeout = "42s"
         writeTimeout = "42s"
         idleTimeout = "42s"
+        lingeringTimeout = "42s"
     [entryPoints.EntryPoint0.proxyProtocol]
       insecure = true
       trustedIPs = ["foobar", "foobar"]

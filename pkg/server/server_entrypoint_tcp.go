@@ -244,24 +244,14 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 			panic(err)
 		}
 
+		if e.transportConfiguration != nil &&
+			e.transportConfiguration.RespondingTimeouts != nil &&
+			e.transportConfiguration.RespondingTimeouts.LingeringTimeout > 0 {
+			lingeringTimeout := time.Duration(e.transportConfiguration.RespondingTimeouts.LingeringTimeout)
+			writeCloser = newLingeringConnection(writeCloser, lingeringTimeout)
+		}
+
 		safe.Go(func() {
-			// Enforce read/write deadlines at the connection level,
-			// because when we're peeking the first byte to determine whether we are doing TLS,
-			// the deadlines at the server level are not taken into account.
-			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
-				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
-				if err != nil {
-					logger.Errorf("Error while setting read deadline: %v", err)
-				}
-			}
-
-			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
-				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
-				if err != nil {
-					logger.Errorf("Error while setting write deadline: %v", err)
-				}
-			}
-
 			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
 		})
 	}
@@ -389,6 +379,55 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	default:
 		return nil, fmt.Errorf("unknown connection type %T", typedConn)
 	}
+}
+
+// lingeringConn represents a writeCloser with lingeringTimeout handling.
+type lingeringConn struct {
+	tcp.WriteCloser
+
+	lingeringTimeout time.Duration
+
+	rdlMu sync.RWMutex
+	// readDeadline is the current readDeadline set by an upper caller.
+	// In case of HTTP, the HTTP go server manipulates deadlines on the connection.
+	readDeadline time.Time
+}
+
+// newLingeringConnection returns the given writeCloser augmented with lingeringTimeout handling.
+func newLingeringConnection(conn tcp.WriteCloser, timeout time.Duration) tcp.WriteCloser {
+	return &lingeringConn{
+		WriteCloser:      conn,
+		lingeringTimeout: timeout,
+	}
+}
+
+// Read reads data from the connection and postpones the connection readDeadline according to the lingeringTimeout config.
+// It also ensures that the upper level set readDeadline is enforced.
+func (l *lingeringConn) Read(b []byte) (int, error) {
+	if l.lingeringTimeout > 0 {
+		deadline := time.Now().Add(l.lingeringTimeout)
+
+		l.rdlMu.RLock()
+		if !l.readDeadline.IsZero() && deadline.After(l.readDeadline) {
+			deadline = l.readDeadline
+		}
+		l.rdlMu.RUnlock()
+
+		if err := l.WriteCloser.SetReadDeadline(deadline); err != nil {
+			return 0, err
+		}
+	}
+
+	return l.WriteCloser.Read(b)
+}
+
+// SetReadDeadline sets and save the read deadline.
+func (l *lingeringConn) SetReadDeadline(t time.Time) error {
+	l.rdlMu.Lock()
+	l.readDeadline = t
+	l.rdlMu.Unlock()
+
+	return l.WriteCloser.SetReadDeadline(t)
 }
 
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted

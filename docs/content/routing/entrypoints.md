@@ -507,6 +507,42 @@ Setting them has no effect for UDP entryPoints.
     ## Static configuration
     --entryPoints.name.address=:8888
     --entryPoints.name.transport.respondingTimeouts.idleTimeout=42
+
+??? info "`transport.respondingTimeouts.lingeringTimeout`"
+
+    _Optional, Default=2s_
+
+    `lingeringTimeout` is the maximum duration between each TCP read operation on the connection.
+    As a layer 4 timeout, it also applies during HTTP handling, but respect the configured HTTP server `readTimeout`.
+
+    If zero, the lingering is disabled.  
+    Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+    If no units are provided, the value is parsed assuming seconds.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      name:
+        address: ":8888"
+        transport:
+          respondingTimeouts:
+            lingeringTimeout: 42
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.name]
+        address = ":8888"
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            lingeringTimeout = 42
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.name.address=:8888
+    --entryPoints.name.transport.respondingTimeouts.lingeringTimeout=42
     ```
 
 #### `lifeCycle`
