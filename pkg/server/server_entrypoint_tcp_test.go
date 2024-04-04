@@ -231,6 +231,82 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	}
 }
 
+func TestLingeringTimeoutWithoutFirstByte(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil)
+	require.NoError(t, err)
+
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	conn, err := startEntrypoint(entryPoint, router)
+	require.NoError(t, err)
+
+	errChan := make(chan error)
+
+	go func() {
+		b := make([]byte, 2048)
+		_, err := conn.Read(b)
+		errChan <- err
+	}()
+
+	select {
+	case err := <-errChan:
+		require.Equal(t, io.EOF, err)
+	case <-time.Tick(5 * time.Second):
+		t.Error("Timeout while read")
+	}
+}
+
+func TestLingeringTimeoutWithFirstByte(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.LingeringTimeout = ptypes.Duration(time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil)
+	require.NoError(t, err)
+
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	conn, err := startEntrypoint(entryPoint, router)
+	require.NoError(t, err)
+
+	_, err = conn.Write([]byte("GET /some HTTP/1.1\r\n"))
+	require.NoError(t, err)
+
+	errChan := make(chan error)
+
+	go func() {
+		b := make([]byte, 2048)
+		_, err := conn.Read(b)
+		errChan <- err
+	}()
+
+	select {
+	case err := <-errChan:
+		require.Equal(t, io.EOF, err)
+	case <-time.Tick(5 * time.Second):
+		t.Error("Timeout while read")
+	}
+}
+
 func TestKeepAliveMaxRequests(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()

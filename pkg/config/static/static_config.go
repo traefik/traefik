@@ -47,6 +47,9 @@ const (
 	// prior to shutting down.
 	DefaultGraceTimeout = 10 * time.Second
 
+	// DefaultLingeringTimeout defines the default maximum duration between each read operation on the connection.
+	DefaultLingeringTimeout = 2 * time.Second
+
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 
@@ -120,14 +123,16 @@ func (a *API) SetDefaults() {
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
 type RespondingTimeouts struct {
-	ReadTimeout  ptypes.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
-	WriteTimeout ptypes.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
-	IdleTimeout  ptypes.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
+	ReadTimeout      ptypes.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout     ptypes.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	IdleTimeout      ptypes.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
+	LingeringTimeout ptypes.Duration `description:"LingeringTimeout is the maximum duration between each TCP read operation on the connection." json:"lingeringTimeout,omitempty" toml:"lingeringTimeout,omitempty" yaml:"lingeringTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (a *RespondingTimeouts) SetDefaults() {
 	a.IdleTimeout = ptypes.Duration(DefaultIdleTimeout)
+	a.LingeringTimeout = ptypes.Duration(DefaultLingeringTimeout)
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
