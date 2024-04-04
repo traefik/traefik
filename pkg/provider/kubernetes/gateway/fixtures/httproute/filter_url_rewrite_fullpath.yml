@@ -1,0 +1,57 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "example.com"
+  rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /foo
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replacePrefixMatch: /bar
