@@ -1923,7 +1923,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewares[name] = middleware
 		case gatev1.HTTPRouteFilterURLRewrite:
 			var err error
-			middleware, err = createUrlRewriteMiddleware(&rule.Matches, filter.URLRewrite)
+			middleware, err = createURLRewriteMiddleware(&rule.Matches, filter.URLRewrite)
 			if err != nil {
 				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
 			}
