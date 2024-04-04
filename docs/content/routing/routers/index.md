@@ -293,6 +293,14 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+??? warning "Maximum Value"
+  
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
+
 ??? info "How default priorities are computed"
 
     ```yaml tab="File (YAML)"
@@ -667,7 +675,8 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
+For non-TLS connections, if HTTP and TCP routers listen on the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+For TLS connections, if HTTPS and TCP-TLS routers listen on the same EntryPoint, the HTTPS routers will apply *before* the TCP-TLS routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
@@ -895,6 +904,14 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+
+??? warning "Maximum Value"
+
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
 
 ??? info "How default priorities are computed"
 

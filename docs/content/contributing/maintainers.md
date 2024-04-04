@@ -21,6 +21,8 @@ description: "Traefik Proxy is an open source software with a thriving community
 * Harold Ozouf [@jspdown](https://github.com/jspdown)
 * Tom Moulard [@tommoulard](https://github.com/tommoulard)
 * Landry Benguigui [@lbenguigui](https://github.com/lbenguigui)
+* Simon Delicata [@sdelicata](https://github.com/sdelicata)
+* Baptiste Mayelle [@youkoulayley](https://github.com/youkoulayley)
 
 ## Past Maintainers
 

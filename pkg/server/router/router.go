@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
+	"strings"
 
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
@@ -20,6 +22,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
 )
+
+const maxUserPriority = math.MaxInt - 1000
 
 type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *alice.Chain
@@ -67,7 +71,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	entryPointHandlers := make(map[string]http.Handler)
 
 	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
-		entryPointName := entryPointName
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
 		handler, err := m.buildEntryPointHandler(ctx, routers)
@@ -115,6 +118,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	for routerName, routerConfig := range configs {
 		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
+
+		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
+			err = fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
+			routerConfig.AddError(err, true)
+			logger.Error(err)
+			continue
+		}
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
