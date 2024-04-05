@@ -99,25 +99,23 @@ func TestRequestHeaderModifier(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var actualHeaders http.Header
+			var gotHeaders http.Header
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				actualHeaders = r.Header
+				gotHeaders = r.Header
 			})
 
 			handler, err := NewRequestHeaderModifier(context.Background(), next, test.config, "foo-request-header-modifier")
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-			req.RequestURI = req.URL.RequestURI()
 			if test.requestHeaders != nil {
 				req.Header = test.requestHeaders
 			}
 
-			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
-
+			resp := httptest.NewRecorder()
 			handler.ServeHTTP(resp, req)
 
-			assert.Equal(t, test.expectedHeaders, actualHeaders)
+			assert.Equal(t, test.expectedHeaders, gotHeaders)
 		})
 	}
 }

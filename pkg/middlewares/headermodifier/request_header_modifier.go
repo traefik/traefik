@@ -9,9 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const (
-	typeName = "RequestHeaderModifier"
-)
+const typeName = "RequestHeaderModifier"
 
 // requestHeaderModifier is a middleware used to modify the headers of an HTTP request.
 type requestHeaderModifier struct {
