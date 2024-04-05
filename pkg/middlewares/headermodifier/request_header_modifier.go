@@ -13,7 +13,7 @@ const (
 	typeName = "RequestHeaderModifier"
 )
 
-// requestHeaderModifier is a middleware used to strip prefix from an URL request.
+// requestHeaderModifier is a middleware used to modify the headers of an HTTP request.
 type requestHeaderModifier struct {
 	next http.Handler
 	name string
