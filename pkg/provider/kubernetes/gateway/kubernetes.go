@@ -1925,7 +1925,10 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
 		case gatev1.HTTPRouteFilterURLRewrite:
-			middleware = createURLRewriteMiddleware(&rule.Matches, filter.URLRewrite)
+			middleware, err := createURLRewriteMiddleware(rule.Matches, filter.URLRewrite)
+			if err != nil {
+				return nil, fmt.Errorf("unsupported filter type %s: %w", filter.Type, err)
+			}
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = middleware
 		default:
@@ -2018,16 +2021,20 @@ func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedi
 	}, nil
 }
 
-func createURLRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) *dynamic.Middleware {
-	if filter.Path.Type == gatev1.FullPathHTTPPathModifier {
+func createURLRewriteMiddleware(matches []gatev1.HTTPRouteMatch, filter *gatev1.HTTPURLRewriteFilter) (*dynamic.Middleware, error) {
+	switch filter.Path.Type {
+	case gatev1.FullPathHTTPPathModifier:
 		return &dynamic.Middleware{
 			ReplacePath: &dynamic.ReplacePath{
 				Path: *filter.Path.ReplacePrefixMatch,
 			},
-		}
-	} else if filter.Path.Type == gatev1.PrefixMatchHTTPPathModifier {
+		}, nil
+	case gatev1.PrefixMatchHTTPPathModifier:
 		var pathToReplace string
-		for _, m := range *matches {
+		for _, m := range matches {
+			if m.Path == nil {
+				continue
+			}
 			if *m.Path.Type == gatev1.PathMatchPathPrefix {
 				pathToReplace = *m.Path.Value
 			}
@@ -2037,10 +2044,10 @@ func createURLRewriteMiddleware(matches *[]gatev1.HTTPRouteMatch, filter *gatev1
 				Regex:       fmt.Sprintf("^%s", pathToReplace),
 				Replacement: *filter.Path.ReplacePrefixMatch,
 			},
-		}
+		}, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("Unsupported Filter Path Type %s", filter.Path.Type))
 	}
-
-	return nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
