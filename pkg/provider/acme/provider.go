@@ -33,9 +33,6 @@ import (
 
 const resolverSuffix = ".acme"
 
-// ocspMustStaple enables OCSP stapling as from https://github.com/go-acme/lego/issues/270.
-var ocspMustStaple = false
-
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
 	Email                string `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
@@ -427,7 +424,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-							for i := 0; i < len(domains); i++ {
+							for i := range len(domains) {
 								domain := domains[i]
 								safe.Go(func() {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
@@ -464,7 +461,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-							for i := 0; i < len(domains); i++ {
+							for i := range len(domains) {
 								domain := domains[i]
 								safe.Go(func() {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
@@ -585,7 +582,6 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 	request := certificate.ObtainRequest{
 		Domains:        domains,
 		Bundle:         true,
-		MustStaple:     ocspMustStaple,
 		PreferredChain: p.PreferredChain,
 	}
 
@@ -630,7 +626,6 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 	request := certificate.ObtainRequest{
 		Domains:        domains,
 		Bundle:         true,
-		MustStaple:     ocspMustStaple,
 		PreferredChain: p.PreferredChain,
 	}
 
@@ -821,11 +816,18 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
 
-		renewedCert, err := client.Certificate.Renew(certificate.Resource{
+		res := certificate.Resource{
 			Domain:      cert.Domain.Main,
 			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
-		}, true, ocspMustStaple, p.PreferredChain)
+		}
+
+		opts := &certificate.RenewOptions{
+			Bundle:         true,
+			PreferredChain: p.PreferredChain,
+		}
+
+		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
 		if err != nil {
 			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
 			continue

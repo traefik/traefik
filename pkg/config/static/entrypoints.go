@@ -97,7 +97,7 @@ type RedirectEntryPoint struct {
 func (r *RedirectEntryPoint) SetDefaults() {
 	r.Scheme = "https"
 	r.Permanent = true
-	r.Priority = math.MaxInt32 - 1
+	r.Priority = math.MaxInt - 1
 }
 
 // TLSConfig is the default TLS configuration for all the routers associated to the concerned entry point.

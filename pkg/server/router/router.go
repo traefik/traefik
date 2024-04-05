@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
+	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -13,13 +15,15 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/denyrouterrecursion"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
-	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
+
+const maxUserPriority = math.MaxInt - 1000
 
 type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *alice.Chain
@@ -65,8 +69,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	entryPointHandlers := make(map[string]http.Handler)
 
 	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
-		entryPointName := entryPointName
-
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
@@ -119,6 +121,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 
 		if routerConfig.Priority == 0 {
 			routerConfig.Priority = httpmuxer.GetRulePriority(routerConfig.Rule)
+		}
+
+		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
+			err = fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
+			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
+			continue
 		}
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
@@ -221,11 +230,11 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return chain.Extend(*mHandler).Then(sHandler)
 	}
 
-	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
+	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
 
 	if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsRouterEnabled() {
 		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, provider.GetQualifiedName(ctx, router.Service))
-		chain = chain.Append(tracing.WrapMiddleware(ctx, metricsHandler))
+		chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 	}
 
 	if router.DefaultRule {

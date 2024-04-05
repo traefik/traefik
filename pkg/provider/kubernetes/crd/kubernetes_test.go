@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikcrdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -1569,8 +1570,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -4755,7 +4754,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -5265,8 +5263,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -5358,8 +5354,6 @@ func TestParseServiceProtocol(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -5590,7 +5584,6 @@ func TestGetServicePort(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -6704,8 +6697,6 @@ func TestCrossNamespace(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -6975,8 +6966,6 @@ func TestExternalNameService(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -7158,8 +7147,6 @@ func TestNativeLB(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -7341,8 +7328,6 @@ func TestNodePortLB(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -7433,6 +7418,62 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("test2", hashedPassword))
 }
 
+func TestFillExtensionBuilderRegistry(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		namespaces []string
+		wantErr    require.ErrorAssertionFunc
+	}{
+		{
+			desc:    "no filter on namespaces",
+			wantErr: require.NoError,
+		},
+		{
+			desc:       "filter on default namespace",
+			namespaces: []string{"default"},
+			wantErr:    require.NoError,
+		},
+		{
+			desc:       "filter on not-default namespace",
+			namespaces: []string{"not-default"},
+			wantErr:    require.Error,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			r := &extensionBuilderRegistryMock{}
+
+			p := Provider{Namespaces: test.namespaces}
+			p.FillExtensionBuilderRegistry(r)
+
+			filterFunc, ok := r.groupKindFilterFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["Middleware"]
+			require.True(t, ok)
+
+			name, conf, err := filterFunc("my-middleware", "default")
+			test.wantErr(t, err)
+
+			if err == nil {
+				assert.Nil(t, conf)
+				assert.Equal(t, "default-my-middleware@kubernetescrd", name)
+			}
+
+			backendFunc, ok := r.groupKindBackendFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["TraefikService"]
+			require.True(t, ok)
+
+			name, svc, err := backendFunc("my-service", "default")
+			test.wantErr(t, err)
+
+			if err == nil {
+				assert.Nil(t, svc)
+				assert.Equal(t, "default-my-service@kubernetescrd", name)
+			}
+		})
+	}
+}
+
 func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
 	t.Helper()
 
@@ -7456,4 +7497,35 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	}
 
 	return k8sObjects, crdObjects
+}
+
+type extensionBuilderRegistryMock struct {
+	groupKindFilterFuncs  map[string]map[string]gateway.BuildFilterFunc
+	groupKindBackendFuncs map[string]map[string]gateway.BuildBackendFunc
+}
+
+// RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
+func (p *extensionBuilderRegistryMock) RegisterFilterFuncs(group, kind string, builderFunc gateway.BuildFilterFunc) {
+	if p.groupKindFilterFuncs == nil {
+		p.groupKindFilterFuncs = map[string]map[string]gateway.BuildFilterFunc{}
+	}
+
+	if p.groupKindFilterFuncs[group] == nil {
+		p.groupKindFilterFuncs[group] = map[string]gateway.BuildFilterFunc{}
+	}
+
+	p.groupKindFilterFuncs[group][kind] = builderFunc
+}
+
+// RegisterBackendFuncs registers an allowed Group, Kind, and builder for the Backend ExtensionRef objects.
+func (p *extensionBuilderRegistryMock) RegisterBackendFuncs(group, kind string, builderFunc gateway.BuildBackendFunc) {
+	if p.groupKindBackendFuncs == nil {
+		p.groupKindBackendFuncs = map[string]map[string]gateway.BuildBackendFunc{}
+	}
+
+	if p.groupKindBackendFuncs[group] == nil {
+		p.groupKindBackendFuncs[group] = map[string]gateway.BuildBackendFunc{}
+	}
+
+	p.groupKindBackendFuncs[group][kind] = builderFunc
 }

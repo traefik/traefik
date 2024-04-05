@@ -139,7 +139,7 @@ Default middlewares for the routers linked to the entry point.
 Applies a permanent redirection. (Default: ```true```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.priority`:  
-Priority of the generated router. (Default: ```2147483646```)
+Priority of the generated router. (Default: ```9223372036854775806```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
 Scheme used for the redirection. (Default: ```https```)
@@ -337,7 +337,7 @@ Enable metrics on routers. (Default: ```false```)
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.otlp.explicitboundaries`:  
-Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
+Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.075000, 0.100000, 0.250000, 0.500000, 0.750000, 1.000000, 2.500000, 5.000000, 7.500000, 10.000000```)
 
 `--metrics.otlp.grpc.endpoint`:  
 Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
@@ -537,6 +537,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`--providers.consulcatalog.strictchecks`:  
+A list of service health statuses to allow taking traffic. (Default: ```passing, warning```)
+
 `--providers.consulcatalog.watch`:  
 Watch Consul API events. (Default: ```false```)
 
@@ -725,6 +728,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetesgateway.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
+
+`--providers.kubernetesgateway.experimentalchannel`:  
+Toggles Experimental Channel resources support (TCPRoute, TLSRoute...). (Default: ```false```)
 
 `--providers.kubernetesgateway.labelselector`:  
 Kubernetes label selector to select specific GatewayClasses.
@@ -1013,6 +1019,12 @@ OpenTracing configuration. (Default: ```false```)
 
 `--tracing.addinternals`:  
 Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
+
+`--tracing.capturedrequestheaders`:  
+Request headers to add as attributes for server and client spans.
+
+`--tracing.capturedresponseheaders`:  
+Response headers to add as attributes for server and client spans.
 
 `--tracing.globalattributes.<name>`:  
 Defines additional attributes (key:value) on all spans.

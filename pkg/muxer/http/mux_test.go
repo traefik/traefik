@@ -222,8 +222,6 @@ func TestMuxer(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -378,14 +376,12 @@ func Test_addRoutePriority(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
 			for _, route := range test.cases {
-				route := route
 				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("X-From", route.xFrom)
 				})
@@ -446,7 +442,6 @@ func TestParseDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
 
@@ -511,7 +506,6 @@ func TestEmptyHost(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -550,7 +544,6 @@ func TestGetRulePriority(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

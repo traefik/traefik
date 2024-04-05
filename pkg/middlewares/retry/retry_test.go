@@ -101,7 +101,6 @@ func TestRetry(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -203,7 +202,7 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 	}
 
 	// Validate that we don't have headers from previous attempts
-	for i := 0; i < attempt; i++ {
+	for i := range attempt {
 		headerName := fmt.Sprintf("X-Foo-Test-%d", i)
 		headerValue = responseRecorder.Header().Get("headerName")
 		if headerValue != "" {
@@ -272,7 +271,6 @@ func TestRetryWebsocket(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

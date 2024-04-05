@@ -76,7 +76,7 @@ func TestLogRotation(t *testing.T) {
 	halfDone := make(chan bool)
 	writeDone := make(chan bool)
 	go func() {
-		for i := 0; i < iterations; i++ {
+		for i := range iterations {
 			handler.ServeHTTP(recorder, req)
 			if i == iterations/2 {
 				halfDone <- true
@@ -180,7 +180,6 @@ func TestLoggerHeaderFields(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			logFile, err := os.CreateTemp(t.TempDir(), "*.log")
 			require.NoError(t, err)
@@ -469,7 +468,6 @@ func TestLoggerJSON(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -687,7 +685,6 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			// NOTE: It is not possible to run these cases in parallel because we capture Stdout
 

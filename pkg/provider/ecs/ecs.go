@@ -402,7 +402,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 }
 
 func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ssm.InstanceInformation, error) {
-	instanceIds := make(map[string]string)
+	instanceIDs := make(map[string]string)
 	miInstances := make(map[string]*ssm.InstanceInformation)
 
 	var containerInstancesArns []*string
@@ -424,7 +424,7 @@ func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clu
 		}
 
 		for _, container := range resp.ContainerInstances {
-			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			instanceIDs[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
 
 			// Disallow EC2 Instance IDs
 			// This prevents considering EC2 instances in ECS
@@ -452,7 +452,7 @@ func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clu
 				if len(page.InstanceInformationList) > 0 {
 					for _, i := range page.InstanceInformationList {
 						if i.InstanceId != nil {
-							miInstances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+							miInstances[instanceIDs[aws.StringValue(i.InstanceId)]] = i
 						}
 					}
 				}
@@ -468,7 +468,7 @@ func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clu
 }
 
 func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {
-	instanceIds := make(map[string]string)
+	instanceIDs := make(map[string]string)
 	ec2Instances := make(map[string]*ec2.Instance)
 
 	var containerInstancesArns []*string
@@ -490,7 +490,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 		}
 
 		for _, container := range resp.ContainerInstances {
-			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			instanceIDs[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
 			// Disallow Instance IDs of the form mi-*
 			// This prevents considering external instances in ECS Anywhere setups
 			// and getting InvalidInstanceID.Malformed error when calling the describe-instances endpoint.
@@ -513,7 +513,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 					for _, r := range page.Reservations {
 						for _, i := range r.Instances {
 							if i.InstanceId != nil {
-								ec2Instances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+								ec2Instances[instanceIDs[aws.StringValue(i.InstanceId)]] = i
 							}
 						}
 					}
