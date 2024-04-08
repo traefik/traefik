@@ -520,6 +520,8 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 	}
 
+	paerserDuration := ptypes.Duration(111 * time.Second)
+
 	config.EntryPoints = static.EntryPoints{
 		"foobar": {
 			Address: "foo Address",
@@ -529,9 +531,14 @@ func TestDo_staticConfiguration(t *testing.T) {
 					GraceTimeOut:              ptypes.Duration(111 * time.Second),
 				},
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  ptypes.Duration(111 * time.Second),
-					WriteTimeout: ptypes.Duration(111 * time.Second),
-					IdleTimeout:  ptypes.Duration(111 * time.Second),
+					HTTP: &static.HTTPRespondingTimeouts{
+						ReadTimeout:  &paerserDuration,
+						WriteTimeout: &paerserDuration,
+						IdleTimeout:  &paerserDuration,
+					},
+					TCP: &static.TCPRespondingTimeouts{
+						LingeringTimeout: ptypes.Duration(111 * time.Second),
+					},
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{

@@ -397,10 +397,11 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 
 #### `respondingTimeouts`
 
-`respondingTimeouts` are timeouts for incoming requests to the Traefik instance.
-Setting them has no effect for UDP entryPoints.
+##### `http`
 
-??? info "`transport.respondingTimeouts.readTimeout`"
+`respondingTimeouts.http` are timeouts for incoming requests to the Traefik instance.
+
+??? info "`transport.respondingTimeouts.http.readTimeout`"
 
     _Optional, Default=0s_
 
@@ -417,7 +418,8 @@ Setting them has no effect for UDP entryPoints.
         address: ":8888"
         transport:
           respondingTimeouts:
-            readTimeout: 42
+            http:
+              readTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -425,18 +427,17 @@ Setting them has no effect for UDP entryPoints.
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport]
-          [entryPoints.name.transport.respondingTimeouts]
-            readTimeout = 42
+        [entryPoints.name.transport.respondingTimeouts.http]
+          readTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.readTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.http.readTimeout=42
     ```
 
-??? info "`transport.respondingTimeouts.writeTimeout`"
+??? info "`transport.respondingTimeouts.http.writeTimeout`"
 
     _Optional, Default=0s_
 
@@ -454,7 +455,8 @@ Setting them has no effect for UDP entryPoints.
         address: ":8888"
         transport:
           respondingTimeouts:
-            writeTimeout: 42
+            http:
+              writeTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -462,18 +464,17 @@ Setting them has no effect for UDP entryPoints.
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport]
-          [entryPoints.name.transport.respondingTimeouts]
-            writeTimeout = 42
+        [entryPoints.name.transport.respondingTimeouts.http]
+          writeTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.writeTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.http.writeTimeout=42
     ```
 
-??? info "`transport.respondingTimeouts.idleTimeout`"
+??? info "`transport.respondingTimeouts.http.idleTimeout`"
 
     _Optional, Default=180s_
 
@@ -490,7 +491,8 @@ Setting them has no effect for UDP entryPoints.
         address: ":8888"
         transport:
           respondingTimeouts:
-            idleTimeout: 42
+            http:
+              idleTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -498,17 +500,20 @@ Setting them has no effect for UDP entryPoints.
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport]
-          [entryPoints.name.transport.respondingTimeouts]
-            idleTimeout = 42
+        [entryPoints.name.transport.respondingTimeouts.http]
+          idleTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.idleTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.http.idleTimeout=42
 
-??? info "`transport.respondingTimeouts.lingeringTimeout`"
+##### `tcp`
+
+`respondingTimeouts.tcp` are timeouts for client connections to the Traefik instance.
+
+??? info "`transport.respondingTimeouts.tcp.lingeringTimeout`"
 
     _Optional, Default=2s_
 
@@ -526,7 +531,8 @@ Setting them has no effect for UDP entryPoints.
         address: ":8888"
         transport:
           respondingTimeouts:
-            lingeringTimeout: 42
+            tcp:
+              lingeringTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -534,15 +540,14 @@ Setting them has no effect for UDP entryPoints.
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport]
-          [entryPoints.name.transport.respondingTimeouts]
-            lingeringTimeout = 42
+        [entryPoints.name.transport.respondingTimeouts.tcp]
+          lingeringTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.lingeringTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.tcp.lingeringTimeout=42
     ```
 
 #### `lifeCycle`

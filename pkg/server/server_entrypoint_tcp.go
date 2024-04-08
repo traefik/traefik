@@ -246,8 +246,9 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 		if e.transportConfiguration != nil &&
 			e.transportConfiguration.RespondingTimeouts != nil &&
-			e.transportConfiguration.RespondingTimeouts.LingeringTimeout > 0 {
-			lingeringTimeout := time.Duration(e.transportConfiguration.RespondingTimeouts.LingeringTimeout)
+			e.transportConfiguration.RespondingTimeouts.TCP != nil &&
+			e.transportConfiguration.RespondingTimeouts.TCP.LingeringTimeout > 0 {
+			lingeringTimeout := time.Duration(e.transportConfiguration.RespondingTimeouts.TCP.LingeringTimeout)
 			writeCloser = newLingeringConnection(writeCloser, lingeringTimeout)
 		}
 
@@ -458,7 +459,7 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
-	timeout := entryPoint.Transport.RespondingTimeouts.ReadTimeout
+	timeout := *entryPoint.Transport.RespondingTimeouts.HTTP.ReadTimeout
 	// proxyproto use 200ms if ReadHeaderTimeout is set to 0 and not no timeout
 	if timeout == 0 {
 		timeout = -1
@@ -627,9 +628,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	serverHTTP := &http.Server{
 		Handler:      handler,
 		ErrorLog:     httpServerLogger,
-		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		ReadTimeout:  time.Duration(*configuration.Transport.RespondingTimeouts.HTTP.ReadTimeout),
+		WriteTimeout: time.Duration(*configuration.Transport.RespondingTimeouts.HTTP.WriteTimeout),
+		IdleTimeout:  time.Duration(*configuration.Transport.RespondingTimeouts.HTTP.IdleTimeout),
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
