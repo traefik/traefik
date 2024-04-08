@@ -382,6 +382,9 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	}
 
 	gatewayStatus, err := p.makeGatewayStatus(gateway, listenerStatuses, svc)
+	if err != nil {
+		return nil, fmt.Errorf("an error occurred creating the gateway status: %w", err)
+	}
 	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
