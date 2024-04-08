@@ -2113,7 +2113,7 @@ func createURLRewriteMiddleware(matches []gatev1.HTTPRouteMatch, filter *gatev1.
 			},
 		}, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("Unsupported Filter Path Type %s", filter.Path.Type))
+		return nil, fmt.Errorf("unsupported Filter Path Type %s", filter.Path.Type)
 	}
 }
 
