@@ -51,13 +51,15 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint            string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token               types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath    string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces          []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector       string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	Endpoint                string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                   types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath        string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces              []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector           string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	ThrottleDuration        ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	ExperimentalChannel     bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	GatewayServiceName      string              `description:"Name of the baking Kubernetes Service Object that is behind a Gateway Resource" json:"gatewayServiceName,omitempty" toml:"gatewayServiceName,omitempty" yaml:"gatewayServiceName,omitempty" export:"true"`
+	GatewayServiceNamespace string              `description:"Namespace of the baking Kubernetes Service Object that is behind a Gateway Resource." json:"gatewayServiceNamespace,omitempty" toml:"gatewayServiceNamespace,omitempty" yaml:"gatewayServiceNamespace,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -368,15 +370,25 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	// and cannot be configured on the Gateway.
 	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
 
-	gatewayStatus, errG := p.makeGatewayStatus(gateway, listenerStatuses)
+	var svc *corev1.Service
+	if p.GatewayServiceName != "" && p.GatewayServiceNamespace != "" {
+		service, exists, err := client.GetService(p.GatewayServiceName, p.GatewayServiceNamespace)
+		if err != nil {
+			return nil, err
+		} else if !exists {
+			return nil, fmt.Errorf("couldn't find a gateway service by the name %s and namespace %s", p.GatewayServiceName, p.GatewayServiceNamespace)
+		}
+		svc = service
+	}
 
-	err := client.UpdateGatewayStatus(gateway, gatewayStatus)
+	gatewayStatus, err := p.makeGatewayStatus(gateway, listenerStatuses, svc)
+	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
 	}
 
-	if errG != nil {
-		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", errG)
+	if err != nil {
+		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", err)
 	}
 
 	if len(tlsConfigs) > 0 {
@@ -618,10 +630,24 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 	return listenerStatuses
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses []gatev1.ListenerStatus) (gatev1.GatewayStatus, error) {
-	// As Status.Addresses are not implemented yet, we initialize an empty array to follow the API expectations.
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses []gatev1.ListenerStatus, svc *corev1.Service) (gatev1.GatewayStatus, error) {
 	gatewayStatus := gatev1.GatewayStatus{
 		Addresses: []gatev1.GatewayStatusAddress{},
+	}
+
+	if svc != nil && len(svc.Status.LoadBalancer.Ingress) > 0 {
+		for _, addr := range svc.Status.LoadBalancer.Ingress {
+			var addrType gatev1.AddressType
+			var addrValue string
+			if addr.IP != "" {
+				addrType = "IPAddress"
+				addrValue = addr.IP
+			} else if addr.Hostname != "" {
+				addrType = "Hostname"
+				addrValue = addr.Hostname
+			}
+			gatewayStatus.Addresses = append(gatewayStatus.Addresses, gatev1.GatewayStatusAddress{Type: &addrType, Value: addrValue})
+		}
 	}
 
 	var result error
