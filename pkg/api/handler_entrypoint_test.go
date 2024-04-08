@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 )
@@ -55,9 +56,11 @@ func TestHandler_EntryPoints(t *testing.T) {
 								GraceTimeOut:              2,
 							},
 							RespondingTimeouts: &static.RespondingTimeouts{
-								ReadTimeout:  3,
-								WriteTimeout: 4,
-								IdleTimeout:  5,
+								HTTP: &static.HTTPRespondingTimeouts{
+									ReadTimeout:  paerserDurationPtr(3),
+									WriteTimeout: paerserDurationPtr(4),
+									IdleTimeout:  paerserDurationPtr(5),
+								},
 							},
 						},
 						ProxyProtocol: &static.ProxyProtocol{
@@ -77,9 +80,11 @@ func TestHandler_EntryPoints(t *testing.T) {
 								GraceTimeOut:              20,
 							},
 							RespondingTimeouts: &static.RespondingTimeouts{
-								ReadTimeout:  30,
-								WriteTimeout: 40,
-								IdleTimeout:  50,
+								HTTP: &static.HTTPRespondingTimeouts{
+									ReadTimeout:  paerserDurationPtr(3),
+									WriteTimeout: paerserDurationPtr(4),
+									IdleTimeout:  paerserDurationPtr(5),
+								},
 							},
 						},
 						ProxyProtocol: &static.ProxyProtocol{
@@ -262,4 +267,9 @@ func generateEntryPoints(nb int) map[string]*static.EntryPoint {
 	}
 
 	return eps
+}
+
+func paerserDurationPtr(duration int) *ptypes.Duration {
+	d := ptypes.Duration(duration)
+	return &d
 }
