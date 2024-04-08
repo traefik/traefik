@@ -387,10 +387,6 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", err)
-	}
-
 	if len(tlsConfigs) > 0 {
 		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
 	}
