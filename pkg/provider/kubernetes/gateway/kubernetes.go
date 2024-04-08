@@ -1925,12 +1925,11 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
 		case gatev1.HTTPRouteFilterURLRewrite:
-			urlMiddlewares := make(map[string]*dynamic.Middleware)
 			var err error
 			if filter.URLRewrite.Hostname != nil {
 				middleware = createRewriteHostHeaderMiddlewareFilter(filter.URLRewrite)
 				middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-host-%d", prefix, strings.ToLower(string(filter.Type)), i))
-				urlMiddlewares[middlewareName] = middleware
+				middlewares[middlewareName] = middleware
 			}
 			if filter.URLRewrite.Path != nil {
 				middleware, err = createURLRewriteMiddleware(rule.Matches, filter.URLRewrite)
@@ -1938,19 +1937,7 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 					return nil, fmt.Errorf("unsupported filter type %s: %w", filter.Type, err)
 				}
 				middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-path-%d", prefix, strings.ToLower(string(filter.Type)), i))
-				urlMiddlewares[middlewareName] = middleware
-			}
-
-			if len(urlMiddlewares) > 0 {
-				chain := &dynamic.Chain{Middlewares: []string{}}
-				for mname := range urlMiddlewares {
-					chain.Middlewares = append(chain.Middlewares, mname)
-					middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-chain-%d", prefix, strings.ToLower(string(filter.Type)), i))
-					urlMiddlewares[middlewareName] = middleware
-				}
-			}
-			for mname, mw := range urlMiddlewares {
-				middlewares[mname] = mw
+				middlewares[middlewareName] = middleware
 			}
 		default:
 			// As per the spec:
