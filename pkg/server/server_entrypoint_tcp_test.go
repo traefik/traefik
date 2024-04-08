@@ -69,8 +69,10 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 
 	epConfig.LifeCycle.RequestAcceptGraceTimeout = 0
 	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(5 * time.Second)
-	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(5 * time.Second)
-	epConfig.RespondingTimeouts.WriteTimeout = ptypes.Duration(5 * time.Second)
+	readTimeout := ptypes.Duration(5 * time.Second)
+	epConfig.RespondingTimeouts.HTTP.ReadTimeout = &readTimeout
+	writeTimeout := ptypes.Duration(5 * time.Second)
+	epConfig.RespondingTimeouts.HTTP.WriteTimeout = &writeTimeout
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
@@ -157,7 +159,8 @@ func startEntrypoint(entryPoint *TCPEntryPoint, router *tcprouter.Router) (net.C
 func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
+	readTimeout := ptypes.Duration(2 * time.Second)
+	epConfig.RespondingTimeouts.HTTP.ReadTimeout = &readTimeout
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",
@@ -194,7 +197,8 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 func TestReadTimeoutWithFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
+	readTimeout := ptypes.Duration(2 * time.Second)
+	epConfig.RespondingTimeouts.HTTP.ReadTimeout = &readTimeout
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",
@@ -270,7 +274,7 @@ func TestLingeringTimeoutWithoutFirstByte(t *testing.T) {
 func TestLingeringTimeoutWithFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.LingeringTimeout = ptypes.Duration(time.Second)
+	epConfig.RespondingTimeouts.TCP.LingeringTimeout = ptypes.Duration(time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",
