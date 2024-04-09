@@ -738,6 +738,21 @@ Kubernetes label selector to select specific GatewayClasses.
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetesgateway.statusaddress.hostname`:  
+Hostname used for Kubernetes Gateway status address.
+
+`--providers.kubernetesgateway.statusaddress.ip`:  
+IP used to set Kubernetes Gateway status address.
+
+`--providers.kubernetesgateway.statusaddress.service`:  
+Published Kubernetes Service to copy status addresses from.
+
+`--providers.kubernetesgateway.statusaddress.service.name`:  
+Name of the Kubernetes service.
+
+`--providers.kubernetesgateway.statusaddress.service.namespace`:  
+Namespace of the Kubernetes service.
+
 `--providers.kubernetesgateway.throttleduration`:  
 Kubernetes refresh throttle duration (Default: ```0```)
 

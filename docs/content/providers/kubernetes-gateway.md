@@ -212,6 +212,85 @@ providers:
 --providers.kubernetesgateway.namespaces=default,production
 ```
 
+### `statusAddress`
+
+#### `ip`
+
+_Optional, Default: ""_
+
+This IP will get copied to the Gateway `status.addresses`, and currently only supports one IP value (IPv4 or IPv6).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    statusAddress:
+      ip: "1.2.3.4"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway.statusAddress]
+  ip = "1.2.3.4"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.statusaddress.ip=1.2.3.4
+```
+
+#### `hostname`
+
+_Optional, Default: ""_
+
+This Hostname will get copied to the Gateway `status.addresses`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    statusAddress:
+      hostname: "example.net"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway.statusAddress]
+  hostname = "example.net"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.statusaddress.hostname=example.net
+```
+
+#### `service`
+
+_Optional_
+
+The Kubernetes service to copy status addresses from.
+When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the gateways.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    statusAddress:
+      service:
+        namespace: default
+        name: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway.statusAddress.service]
+  namespace = "default"
+  name = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.statusaddress.service.namespace=default
+--providers.kubernetesgateway.statusaddress.service.name=foo
+```
+
 ### `experimentalChannel`
 
 _Optional, Default: false_
