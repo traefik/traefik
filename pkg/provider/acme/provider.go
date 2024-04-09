@@ -552,7 +552,6 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	p.resolvingDomainsMutex.Lock()
 
-	sort.Strings(domains)
 	domainKey := strings.Join(domains, ",")
 
 	if _, ok := p.resolvingDomains[domainKey]; ok {
