@@ -147,6 +147,12 @@
     labelSelector = "foobar"
     throttleDuration = "42s"
     experimentalChannel = true
+    [providers.kubernetesGateway.statusAddress]
+      ip = "foobar"
+      hostname = "foobar"
+      [providers.kubernetesGateway.statusAddress.service]
+        name = "foobar"
+        namespace = "foobar"
   [providers.rest]
     insecure = true
   [providers.consulCatalog]

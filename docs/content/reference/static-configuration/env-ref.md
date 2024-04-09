@@ -738,6 +738,21 @@ Kubernetes label selector to select specific GatewayClasses.
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_HOSTNAME`:  
+Hostname used for Kubernetes Gateway status address.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_IP`:  
+IP used to set Kubernetes Gateway status address.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_SERVICE`:  
+Published Kubernetes Service to copy status addresses from.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_SERVICE_NAME`:  
+Name of the Kubernetes service.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_SERVICE_NAMESPACE`:  
+Namespace of the Kubernetes service.
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_THROTTLEDURATION`:  
 Kubernetes refresh throttle duration (Default: ```0```)
 
