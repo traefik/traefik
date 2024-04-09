@@ -719,7 +719,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses [
 
 func (p *Provider) gatewayAddresses(client Client) ([]gatev1.GatewayStatusAddress, error) {
 	if p.StatusAddress == nil {
-		return []gatev1.GatewayStatusAddress{}, nil
+		return nil, nil
 	}
 
 	if p.StatusAddress.IP != "" {
@@ -736,14 +736,14 @@ func (p *Provider) gatewayAddresses(client Client) ([]gatev1.GatewayStatusAddres
 		}}, nil
 	}
 
-	publishedSvcRef := p.StatusAddress.Service
-	if publishedSvcRef.Name != "" && publishedSvcRef.Namespace != "" {
-		svc, exists, err := client.GetService(publishedSvcRef.Name, publishedSvcRef.Namespace)
+	svcRef := p.StatusAddress.Service
+	if svcRef.Name != "" && svcRef.Namespace != "" {
+		svc, exists, err := client.GetService(svcRef.Namespace, svcRef.Name)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get service: %w", err)
 		}
 		if !exists {
-			return nil, fmt.Errorf("could not find a service with name %s in namespace %s", publishedSvcRef.Name, publishedSvcRef.Namespace)
+			return nil, fmt.Errorf("could not find a service with name %s in namespace %s", svcRef.Name, svcRef.Namespace)
 		}
 
 		var addresses []gatev1.GatewayStatusAddress
