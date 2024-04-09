@@ -762,9 +762,10 @@ func (p *Provider) gatewayAddresses(client Client) ([]gatev1.GatewayStatusAddres
 				})
 			}
 		}
+		return addresses, nil
 	}
 
-	return nil, fmt.Errorf("empty Gateway status address configuration")
+	return nil, errors.New("empty Gateway status address configuration")
 }
 
 func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.ProtocolType) (string, error) {
