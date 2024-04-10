@@ -1,3 +1,29 @@
+## [v3.0.0-rc4](https://github.com/traefik/traefik/tree/v3.0.0-rc4) (2024-04-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc3...v3.0.0-rc4)
+
+**Enhancements:**
+- **[k8s/gatewayapi]** Add option to set Gateway status address ([#10582](https://github.com/traefik/traefik/pull/10582) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/gatewayapi]** Handle middlewares in filters extension reference ([#10511](https://github.com/traefik/traefik/pull/10511) by [youkoulayley](https://github.com/youkoulayley))
+- **[k8s/gatewayapi]** Toggle support for experimental channel ([#10435](https://github.com/traefik/traefik/pull/10435) by [SantoDE](https://github.com/SantoDE))
+- **[k8s/ingress,k8s/crd,k8s,k8s/gatewayapi]** Use runtime.Object in routerTransform ([#10523](https://github.com/traefik/traefik/pull/10523) by [juliens](https://github.com/juliens))
+- **[nomad]** Allow empty services ([#10375](https://github.com/traefik/traefik/pull/10375) by [chrispruitt](https://github.com/chrispruitt))
+- **[webui,middleware,k8s/gatewayapi]** Support RequestHeaderModifier filter ([#10521](https://github.com/traefik/traefik/pull/10521) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[docker]** Fix struct names in comment ([#10503](https://github.com/traefik/traefik/pull/10503) by [hishope](https://github.com/hishope))
+- **[logs]** Avoid cumulative send anonymous usage log ([#10579](https://github.com/traefik/traefik/pull/10579) by [mmatur](https://github.com/mmatur))
+- **[rules]** Support regexp in path/pathprefix in matcher v2 ([#10546](https://github.com/traefik/traefik/pull/10546) by [youkoulayley](https://github.com/youkoulayley))
+- **[webui]** Add missing Docker Swarm logo ([#10529](https://github.com/traefik/traefik/pull/10529) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Fix typo and improve explanation on internal resources ([#10563](https://github.com/traefik/traefik/pull/10563) by [mloiseleur](https://github.com/mloiseleur))
+- Fix typo in dialer_test.go ([#10552](https://github.com/traefik/traefik/pull/10552) by [eltociear](https://github.com/eltociear))
+
+**Misc:**
+- Merge branch v2.11 into v3.0 ([#10587](https://github.com/traefik/traefik/pull/10587) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.11 into v3.0 ([#10566](https://github.com/traefik/traefik/pull/10566) by [mmatur](https://github.com/mmatur))
+- Merge current v2.11 into v3.0 ([#10564](https://github.com/traefik/traefik/pull/10564) by [ldez](https://github.com/ldez))
+
 ## [v2.11.1](https://github.com/traefik/traefik/tree/v2.11.1) (2024-04-10)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.0...v2.11.1)
 
