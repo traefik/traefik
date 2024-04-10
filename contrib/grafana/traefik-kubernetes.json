@@ -1520,7 +1520,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum(traefik_entrypoint_open_connections{entrypoint=~\"$entrypoint\"}) by (entrypoint)\n",
+          "expr": "sum(traefik_open_connections{entrypoint=~\"$entrypoint\"}) by (entrypoint)\n",
           "legendFormat": "{{entrypoint}}",
           "range": true,
           "refId": "A"
@@ -1560,14 +1560,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(traefik_entrypoint_open_connections, entrypoint)",
+        "definition": "label_values(traefik_entrypoint_requests_total,entrypoint)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
         "name": "entrypoint",
         "options": [],
         "query": {
-          "query": "label_values(traefik_entrypoint_open_connections, entrypoint)",
+          "query": "label_values(traefik_entrypoint_requests_total,entrypoint)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -1582,14 +1582,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(traefik_service_open_connections, service)",
+        "definition": "label_values(traefik_service_requests_total,service)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(traefik_service_open_connections, service)",
+          "query": "label_values(traefik_service_requests_total,service)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -1608,6 +1608,6 @@
   "timezone": "",
   "title": "Traefik Official Kubernetes Dashboard",
   "uid": "n5bu_kv4k",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
