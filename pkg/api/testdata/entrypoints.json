@@ -23,9 +23,11 @@
 				"requestAcceptGraceTimeout": "1ns"
 			},
 			"respondingTimeouts": {
-				"idleTimeout": "5ns",
-				"readTimeout": "3ns",
-				"writeTimeout": "4ns"
+				"http": {
+					"idleTimeout": "5ns",
+					"readTimeout": "3ns",
+					"writeTimeout": "4ns"
+				}
 			}
 		}
 	},
@@ -53,9 +55,11 @@
 				"requestAcceptGraceTimeout": "10ns"
 			},
 			"respondingTimeouts": {
-				"idleTimeout": "50ns",
-				"readTimeout": "30ns",
-				"writeTimeout": "40ns"
+				"http": {
+					"idleTimeout": "5ns",
+					"readTimeout": "3ns",
+					"writeTimeout": "4ns"
+				}
 			}
 		}
 	}
