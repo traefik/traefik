@@ -48,6 +48,9 @@ const (
 	// DefaultUDPTimeout defines how long to wait by default on an idle session,
 	// before releasing all resources related to that session.
 	DefaultUDPTimeout = 3 * time.Second
+
+	// defaultLingeringTimeout defines the default maximum duration between each read operation on the connection.
+	defaultLingeringTimeout = 2 * time.Second
 )
 
 // Configuration is the static configuration.
@@ -155,16 +158,44 @@ func (a *API) SetDefaults() {
 	a.Dashboard = true
 }
 
-// RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
+// RespondingTimeouts contains timeout configurations.
 type RespondingTimeouts struct {
-	ReadTimeout  ptypes.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
-	WriteTimeout ptypes.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
-	IdleTimeout  ptypes.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
+	// Deprecated: please use `respondingTimeouts.http.readTimeout` instead.
+	ReadTimeout *ptypes.Duration `description:"(Deprecated) ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	// Deprecated: please use `respondingTimeouts.http.writeTimeout` instead.
+	WriteTimeout *ptypes.Duration `description:"(Deprecated) WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	// Deprecated: please use `respondingTimeouts.http.idleTimeout` instead.
+	IdleTimeout *ptypes.Duration `description:"(Deprecated) IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
+
+	HTTP *HTTPRespondingTimeouts `description:"Defines the HTTP responding timeouts." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
+	TCP  *TCPRespondingTimeouts  `description:"Defines the TCP responding timeouts." json:"tcp,omitempty" toml:"tcp,omitempty" yaml:"tcp,omitempty" export:"true"`
+}
+
+// HTTPRespondingTimeouts contains HTTP timeout configurations for incoming requests to the Traefik instance.
+type HTTPRespondingTimeouts struct {
+	ReadTimeout  *ptypes.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout *ptypes.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	IdleTimeout  *ptypes.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
+}
+
+// TCPRespondingTimeouts contains TCP timeout configurations for client connections to the Traefik instance.
+type TCPRespondingTimeouts struct {
+	LingeringTimeout ptypes.Duration `description:"LingeringTimeout is the maximum duration between each TCP read operation on the connection. If zero, no timeout is set." json:"lingeringTimeout,omitempty" toml:"lingeringTimeout,omitempty" yaml:"lingeringTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (a *RespondingTimeouts) SetDefaults() {
-	a.IdleTimeout = ptypes.Duration(DefaultIdleTimeout)
+	noTimeout := ptypes.Duration(0)
+	defaultIdleTimeout := ptypes.Duration(DefaultIdleTimeout)
+	a.HTTP = &HTTPRespondingTimeouts{
+		ReadTimeout:  &noTimeout,
+		WriteTimeout: &noTimeout,
+		IdleTimeout:  &defaultIdleTimeout,
+	}
+
+	a.TCP = &TCPRespondingTimeouts{
+		LingeringTimeout: ptypes.Duration(defaultLingeringTimeout),
+	}
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
@@ -245,6 +276,39 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			c.EntryPoints = make(EntryPoints)
 		}
 		c.EntryPoints["http"] = ep
+	}
+
+	for _, entrypoint := range c.EntryPoints {
+		if entrypoint.Transport == nil ||
+			entrypoint.Transport.RespondingTimeouts == nil {
+			continue
+		}
+
+		respondingTimeouts := entrypoint.Transport.RespondingTimeouts
+
+		if respondingTimeouts.ReadTimeout != nil &&
+			respondingTimeouts.HTTP != nil &&
+			respondingTimeouts.HTTP.ReadTimeout == nil {
+			log.WithoutContext().Warnf("Option `respondingTimeouts.readTimeout` is deprecated, please use `respondingTimeouts.http.readTimeout` instead.")
+			respondingTimeouts.HTTP.ReadTimeout = respondingTimeouts.ReadTimeout
+			respondingTimeouts.ReadTimeout = nil
+		}
+
+		if respondingTimeouts.WriteTimeout != nil &&
+			respondingTimeouts.HTTP != nil &&
+			respondingTimeouts.HTTP.WriteTimeout == nil {
+			log.WithoutContext().Warnf("Option `respondingTimeouts.writeTimeout` is deprecated, please use `respondingTimeouts.http.writeTimeout` instead.")
+			respondingTimeouts.HTTP.WriteTimeout = respondingTimeouts.WriteTimeout
+			respondingTimeouts.WriteTimeout = nil
+		}
+
+		if respondingTimeouts.IdleTimeout != nil &&
+			respondingTimeouts.HTTP != nil &&
+			respondingTimeouts.HTTP.IdleTimeout == nil {
+			log.WithoutContext().Warnf("Option `respondingTimeouts.idleTimeout` is deprecated, please use `respondingTimeouts.http.idleTimeout` instead.")
+			respondingTimeouts.HTTP.IdleTimeout = respondingTimeouts.IdleTimeout
+			respondingTimeouts.IdleTimeout = nil
+		}
 	}
 
 	// Creates the internal traefik entry point if needed
@@ -355,6 +419,31 @@ func (c *Configuration) ValidateConfiguration() error {
 	if c.Metrics != nil && c.Metrics.OTLP != nil {
 		if c.Metrics.OTLP.GRPC != nil && c.Metrics.OTLP.GRPC.TLS != nil && c.Metrics.OTLP.GRPC.Insecure {
 			return errors.New("metrics OTLP GRPC: TLS and Insecure options are mutually exclusive")
+		}
+	}
+
+	for epName, entrypoint := range c.EntryPoints {
+		if entrypoint.Transport == nil ||
+			entrypoint.Transport.RespondingTimeouts == nil ||
+			entrypoint.Transport.RespondingTimeouts.HTTP == nil {
+			continue
+		}
+
+		respondingTimeouts := entrypoint.Transport.RespondingTimeouts
+
+		if respondingTimeouts.ReadTimeout != nil &&
+			respondingTimeouts.HTTP.ReadTimeout != nil {
+			return fmt.Errorf("entrypoint %q has `readTimeout` option is defined multiple times (`respondingTimeouts.readTimeout` is deprecated)", epName)
+		}
+
+		if respondingTimeouts.WriteTimeout != nil &&
+			respondingTimeouts.HTTP.WriteTimeout != nil {
+			return fmt.Errorf("entrypoint %q has `writeTimeout` option is defined multiple times (`respondingTimeouts.writeTimeout` is deprecated)", epName)
+		}
+
+		if respondingTimeouts.IdleTimeout != nil &&
+			respondingTimeouts.HTTP.IdleTimeout != nil {
+			return fmt.Errorf("entrypoint %q has `idleTimeout` option is defined multiple times (`respondingTimeouts.idleTimeout` is deprecated)", epName)
 		}
 	}
 
