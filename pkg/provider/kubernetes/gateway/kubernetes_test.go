@@ -6296,30 +6296,6 @@ func Test_makeListenerKey(t *testing.T) {
 	}
 }
 
-func hostnamePtr(hostname gatev1.Hostname) *gatev1.Hostname {
-	return &hostname
-}
-
-func groupPtr(group gatev1.Group) *gatev1.Group {
-	return &group
-}
-
-func sectionNamePtr(sectionName gatev1.SectionName) *gatev1.SectionName {
-	return &sectionName
-}
-
-func namespacePtr(namespace gatev1.Namespace) *gatev1.Namespace {
-	return &namespace
-}
-
-func kindPtr(kind gatev1.Kind) *gatev1.Kind {
-	return &kind
-}
-
-func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
-
-func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
-
 func Test_referenceGrantMatchesFrom(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -6557,6 +6533,131 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		})
 	}
 }
+
+func Test_gatewayAddresses(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		statusAddress *StatusAddress
+		paths         []string
+		wantErr       require.ErrorAssertionFunc
+		want          []gatev1.GatewayStatusAddress
+	}{
+		{
+			desc:    "nothing",
+			wantErr: require.NoError,
+		},
+		{
+			desc:          "empty configuration",
+			statusAddress: &StatusAddress{},
+			wantErr:       require.Error,
+		},
+		{
+			desc: "IP address",
+			statusAddress: &StatusAddress{
+				IP: "1.2.3.4",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: "1.2.3.4",
+				},
+			},
+		},
+		{
+			desc: "hostname address",
+			statusAddress: &StatusAddress{
+				Hostname: "foo.bar",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: "foo.bar",
+				},
+			},
+		},
+		{
+			desc: "service",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "status-address",
+					Namespace: "default",
+				},
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: "foo.bar",
+				},
+				{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: "1.2.3.4",
+				},
+			},
+		},
+		{
+			desc: "missing service",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "status-address2",
+					Namespace: "default",
+				},
+			},
+			wantErr: require.Error,
+		},
+		{
+			desc: "service without load-balancer status",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "whoamitcp-bar",
+					Namespace: "bar",
+				},
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{StatusAddress: test.statusAddress}
+
+			got, err := p.gatewayAddresses(newClientMock(test.paths...))
+			test.wantErr(t, err)
+
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func hostnamePtr(hostname gatev1.Hostname) *gatev1.Hostname {
+	return &hostname
+}
+
+func groupPtr(group gatev1.Group) *gatev1.Group {
+	return &group
+}
+
+func sectionNamePtr(sectionName gatev1.SectionName) *gatev1.SectionName {
+	return &sectionName
+}
+
+func namespacePtr(namespace gatev1.Namespace) *gatev1.Namespace {
+	return &namespace
+}
+
+func kindPtr(kind gatev1.Kind) *gatev1.Kind {
+	return &kind
+}
+
+func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
+
+func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
 
 func objectNamePtr(objectName gatev1.ObjectName) *gatev1.ObjectName {
 	return &objectName
