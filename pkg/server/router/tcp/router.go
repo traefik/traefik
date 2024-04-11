@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
@@ -125,6 +126,17 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	if err != nil {
 		conn.Close()
 		return
+	}
+
+	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
+	err = conn.SetReadDeadline(time.Time{})
+	if err != nil {
+		log.Error().Err(err).Msg("Error while setting read deadline")
+	}
+
+	err = conn.SetWriteDeadline(time.Time{})
+	if err != nil {
+		log.Error().Err(err).Msg("Error while setting write deadline")
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)

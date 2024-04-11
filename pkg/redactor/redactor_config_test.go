@@ -511,7 +511,16 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SendAnonymousUsage: true,
 	}
 
-	paerserDuration := ptypes.Duration(111 * time.Second)
+	config.ServersTransport = &static.ServersTransport{
+		InsecureSkipVerify:  true,
+		RootCAs:             []types.FileOrContent{"root.ca"},
+		MaxIdleConnsPerHost: 42,
+		ForwardingTimeouts: &static.ForwardingTimeouts{
+			DialTimeout:           42,
+			ResponseHeaderTimeout: 42,
+			IdleConnTimeout:       42,
+		},
+	}
 
 	config.EntryPoints = static.EntryPoints{
 		"foobar": &static.EntryPoint{
@@ -522,14 +531,9 @@ func TestDo_staticConfiguration(t *testing.T) {
 					GraceTimeOut:              ptypes.Duration(111 * time.Second),
 				},
 				RespondingTimeouts: &static.RespondingTimeouts{
-					HTTP: &static.HTTPRespondingTimeouts{
-						ReadTimeout:  &paerserDuration,
-						WriteTimeout: &paerserDuration,
-						IdleTimeout:  &paerserDuration,
-					},
-					TCP: &static.TCPRespondingTimeouts{
-						LingeringTimeout: ptypes.Duration(111 * time.Second),
-					},
+					ReadTimeout:  ptypes.Duration(111 * time.Second),
+					WriteTimeout: ptypes.Duration(111 * time.Second),
+					IdleTimeout:  ptypes.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
