@@ -202,7 +202,7 @@ Duration to keep accepting requests before Traefik initiates the graceful shutdo
 IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set. (Default: ```180```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_READTIMEOUT`:  
-ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```0```)
+ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```60```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_WRITETIMEOUT`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
@@ -738,6 +738,21 @@ Kubernetes label selector to select specific GatewayClasses.
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_HOSTNAME`:  
+Hostname used for Kubernetes Gateway status address.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_IP`:  
+IP used to set Kubernetes Gateway status address.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_SERVICE`:  
+Published Kubernetes Service to copy status addresses from.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_SERVICE_NAME`:  
+Name of the Kubernetes service.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_SERVICE_NAMESPACE`:  
+Namespace of the Kubernetes service.
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_THROTTLEDURATION`:  
 Kubernetes refresh throttle duration (Default: ```0```)
 
@@ -788,6 +803,9 @@ Kubernetes bearer token (not needed for in-cluster client). It accepts either a 
 
 `TRAEFIK_PROVIDERS_NOMAD`:  
 Enable Nomad backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ALLOWEMPTYSERVICES`:  
+Allow the creation of services without endpoints. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_NOMAD_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.

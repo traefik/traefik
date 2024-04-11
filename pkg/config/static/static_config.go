@@ -42,6 +42,9 @@ const (
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 
+	// DefaultReadTimeout defines the default maximum duration for reading the entire request, including the body.
+	DefaultReadTimeout = 60 * time.Second
+
 	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 
@@ -164,6 +167,7 @@ type RespondingTimeouts struct {
 
 // SetDefaults sets the default values.
 func (a *RespondingTimeouts) SetDefaults() {
+	a.ReadTimeout = ptypes.Duration(DefaultReadTimeout)
 	a.IdleTimeout = ptypes.Duration(DefaultIdleTimeout)
 }
 

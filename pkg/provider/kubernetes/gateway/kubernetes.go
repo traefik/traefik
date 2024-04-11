@@ -58,6 +58,7 @@ type Provider struct {
 	LabelSelector       string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -69,6 +70,19 @@ type Provider struct {
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
+}
+
+// StatusAddress holds the Gateway Status address configuration.
+type StatusAddress struct {
+	IP       string     `description:"IP used to set Kubernetes Gateway status address." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
+	Hostname string     `description:"Hostname used for Kubernetes Gateway status address." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	Service  ServiceRef `description:"Published Kubernetes Service to copy status addresses from." json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+}
+
+// ServiceRef holds a Kubernetes service reference.
+type ServiceRef struct {
+	Name      string `description:"Name of the Kubernetes service." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Namespace string `description:"Namespace of the Kubernetes service." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 }
 
 // BuildFilterFunc returns the name of the filter and the related dynamic.Middleware if needed.
@@ -368,9 +382,14 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	// and cannot be configured on the Gateway.
 	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
 
-	gatewayStatus, errG := p.makeGatewayStatus(gateway, listenerStatuses)
+	addresses, err := p.gatewayAddresses(client)
+	if err != nil {
+		return nil, fmt.Errorf("get Gateway status addresses: %w", err)
+	}
 
-	err := client.UpdateGatewayStatus(gateway, gatewayStatus)
+	gatewayStatus, errG := p.makeGatewayStatus(gateway, listenerStatuses, addresses)
+
+	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
 	}
@@ -618,11 +637,8 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 	return listenerStatuses
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses []gatev1.ListenerStatus) (gatev1.GatewayStatus, error) {
-	// As Status.Addresses are not implemented yet, we initialize an empty array to follow the API expectations.
-	gatewayStatus := gatev1.GatewayStatus{
-		Addresses: []gatev1.GatewayStatusAddress{},
-	}
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses []gatev1.ListenerStatus, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, error) {
+	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
 	var result error
 	for i, listener := range listenerStatuses {
@@ -699,6 +715,57 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses [
 	)
 
 	return gatewayStatus, nil
+}
+
+func (p *Provider) gatewayAddresses(client Client) ([]gatev1.GatewayStatusAddress, error) {
+	if p.StatusAddress == nil {
+		return nil, nil
+	}
+
+	if p.StatusAddress.IP != "" {
+		return []gatev1.GatewayStatusAddress{{
+			Type:  ptr.To(gatev1.IPAddressType),
+			Value: p.StatusAddress.IP,
+		}}, nil
+	}
+
+	if p.StatusAddress.Hostname != "" {
+		return []gatev1.GatewayStatusAddress{{
+			Type:  ptr.To(gatev1.HostnameAddressType),
+			Value: p.StatusAddress.Hostname,
+		}}, nil
+	}
+
+	svcRef := p.StatusAddress.Service
+	if svcRef.Name != "" && svcRef.Namespace != "" {
+		svc, exists, err := client.GetService(svcRef.Namespace, svcRef.Name)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get service: %w", err)
+		}
+		if !exists {
+			return nil, fmt.Errorf("could not find a service with name %s in namespace %s", svcRef.Name, svcRef.Namespace)
+		}
+
+		var addresses []gatev1.GatewayStatusAddress
+		for _, addr := range svc.Status.LoadBalancer.Ingress {
+			switch {
+			case addr.IP != "":
+				addresses = append(addresses, gatev1.GatewayStatusAddress{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: addr.IP,
+				})
+
+			case addr.Hostname != "":
+				addresses = append(addresses, gatev1.GatewayStatusAddress{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: addr.Hostname,
+				})
+			}
+		}
+		return addresses, nil
+	}
+
+	return nil, errors.New("empty Gateway status address configuration")
 }
 
 func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.ProtocolType) (string, error) {
@@ -1921,6 +1988,11 @@ func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, p
 			}
 
 			middlewares[name] = middleware
+
+		case gatev1.HTTPRouteFilterRequestHeaderModifier:
+			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+
 		default:
 			// As per the spec:
 			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -1948,6 +2020,28 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	}
 
 	return filterFunc(string(extensionRef.Name), namespace)
+}
+
+// createRequestHeaderModifier does not enforce/check the configuration,
+// as the spec indicates that either the webhook or CEL (since v1.0 GA Release) should enforce that.
+func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middleware {
+	sets := map[string]string{}
+	for _, header := range filter.Set {
+		sets[string(header.Name)] = header.Value
+	}
+
+	adds := map[string]string{}
+	for _, header := range filter.Add {
+		adds[string(header.Name)] = header.Value
+	}
+
+	return &dynamic.Middleware{
+		RequestHeaderModifier: &dynamic.RequestHeaderModifier{
+			Set:    sets,
+			Add:    adds,
+			Remove: filter.Remove,
+		},
+	}
 }
 
 func createRedirectRegexMiddleware(scheme string, filter *gatev1.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {

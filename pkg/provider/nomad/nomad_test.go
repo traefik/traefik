@@ -2,8 +2,11 @@ package nomad
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -11,6 +14,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
+
+var responses = map[string][]byte{}
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err.Error())
+		os.Exit(1)
+	}
+	m.Run()
+}
 
 func Test_globalConfig(t *testing.T) {
 	cases := []struct {
@@ -131,15 +145,311 @@ func TestProvider_SetDefaults_Endpoint(t *testing.T) {
 	}
 }
 
+func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling1(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job1"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job1"):
+			_, _ = w.Write(responses["job_job1_WithGroupService_Scaling1"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job1"):
+			_, _ = w.Write(responses["service_job1"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling0(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job2"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job2"):
+			_, _ = w.Write(responses["job_job2_WithGroupService_Scaling0"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job2"):
+			_, _ = w.Write(responses["service_job2"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job3"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job3"):
+			_, _ = w.Write(responses["job_job3_WithGroupService_ScalingDisabled"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job3"):
+			_, _ = w.Write(responses["service_job3"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled_Stopped(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job4"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job4"):
+			_, _ = w.Write(responses["job_job4_WithGroupService_ScalingDisabled_Stopped"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job4"):
+			_, _ = w.Write(responses["service_job4"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+
+	// Should not be listed as job is stopped
+	require.Empty(t, items)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling1(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job5"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job5"):
+			_, _ = w.Write(responses["job_job5_WithGroupTaskService_Scaling1"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job5task1"):
+			_, _ = w.Write(responses["service_job5task1"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job5task2"):
+			_, _ = w.Write(responses["service_job5task2"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling0(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job6"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job6"):
+			_, _ = w.Write(responses["job_job6_WithGroupTaskService_Scaling0"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job6task1"):
+			_, _ = w.Write(responses["service_job6task1"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job6task2"):
+			_, _ = w.Write(responses["service_job6task2"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_TCP(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job7"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job7"):
+			_, _ = w.Write(responses["job_job7_TCP"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job7"):
+			_, _ = w.Write(responses["service_job7"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_UDP(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job8"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job8"):
+			_, _ = w.Write(responses["job_job8_UDP"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job8"):
+			_, _ = w.Write(responses["service_job8"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+}
+
+func Test_getNomadServiceDataWithEmptyServices_ScalingEnabled_Stopped(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/jobs"):
+			_, _ = w.Write(responses["jobs_job9"])
+		case strings.HasSuffix(r.RequestURI, "/v1/job/job9"):
+			_, _ = w.Write(responses["job_job9_ScalingEnabled_Stopped"])
+		case strings.HasSuffix(r.RequestURI, "/v1/service/job9"):
+			_, _ = w.Write(responses["service_job9"])
+		}
+	}))
+
+	t.Cleanup(ts.Close)
+
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	err := p.Init()
+	require.NoError(t, err)
+
+	// fudge client, avoid starting up via Provide
+	p.client, err = createClient(p.namespace, p.Endpoint)
+	require.NoError(t, err)
+
+	// make the query for services
+	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	require.NoError(t, err)
+
+	// Should not be listed as job is stopped
+	require.Empty(t, items)
+}
+
+func setup() error {
+	responsesDir := "./fixtures"
+	files, err := os.ReadDir(responsesDir)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".json" {
+			content, err := os.ReadFile(filepath.Join(responsesDir, file.Name()))
+			if err != nil {
+				return err
+			}
+			responses[strings.TrimSuffix(filepath.Base(file.Name()), filepath.Ext(file.Name()))] = content
+		}
+	}
+	return nil
+}
+
 func Test_getNomadServiceData(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/services"):
-			_, _ = w.Write([]byte(services))
+			_, _ = w.Write(responses["services"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/redis"):
-			_, _ = w.Write([]byte(redis))
+			_, _ = w.Write(responses["service_redis"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/hello-nomad"):
-			_, _ = w.Write([]byte(hello))
+			_, _ = w.Write(responses["service_hello"])
 		}
 	}))
 	t.Cleanup(ts.Close)
@@ -159,71 +469,3 @@ func Test_getNomadServiceData(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }
-
-const services = `
-[
-  {
-    "Namespace": "default",
-    "Services": [
-      {
-        "ServiceName": "redis",
-        "Tags": [
-          "traefik.enable=true"
-        ]
-      },
-      {
-        "ServiceName": "hello-nomad",
-        "Tags": [
-          "traefik.enable=true",
-          "traefik.http.routers.hellon.entrypoints=web",
-          "traefik.http.routers.hellon.service=hello-nomad"
-        ]
-      }
-    ]
-  }
-]
-`
-
-const redis = `
-[
-  {
-    "Address": "127.0.0.1",
-    "AllocID": "07501480-8175-8071-7da6-133bd1ff890f",
-    "CreateIndex": 46,
-    "Datacenter": "dc1",
-    "ID": "_nomad-task-07501480-8175-8071-7da6-133bd1ff890f-group-redis-redis-redis",
-    "JobID": "echo",
-    "ModifyIndex": 46,
-    "Namespace": "default",
-    "NodeID": "6d7f412e-e7ff-2e66-d47b-867b0e9d8726",
-    "Port": 30826,
-    "ServiceName": "redis",
-    "Tags": [
-      "traefik.enable=true"
-    ]
-  }
-]
-`
-
-const hello = `
-[
-  {
-    "Address": "127.0.0.1",
-    "AllocID": "71a63a80-a98a-93ee-4fd7-73b808577c20",
-    "CreateIndex": 18,
-    "Datacenter": "dc1",
-    "ID": "_nomad-task-71a63a80-a98a-93ee-4fd7-73b808577c20-group-hello-nomad-hello-nomad-http",
-    "JobID": "echo",
-    "ModifyIndex": 18,
-    "Namespace": "default",
-    "NodeID": "6d7f412e-e7ff-2e66-d47b-867b0e9d8726",
-    "Port": 20627,
-    "ServiceName": "hello-nomad",
-    "Tags": [
-      "traefik.enable=true",
-      "traefik.http.routers.hellon.entrypoints=web",
-      "traefik.http.routers.hellon.service=hello-nomad"
-    ]
-  }
-]
-`

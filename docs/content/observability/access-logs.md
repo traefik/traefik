@@ -30,7 +30,7 @@ accessLog: {}
 
 _Optional, Default="false"_
 
-Enables accessLogs for internal resources.
+Enables accessLogs for internal resources (e.g.: `ping@internal`).
 
 ```yaml tab="File (YAML)"
 accesslog:
@@ -187,7 +187,7 @@ accessLog:
 
   [accessLog.fields]
     defaultMode = "keep"
-    
+
     [accessLog.fields.names]
       "ClientUsername" = "drop"
 
