@@ -3,6 +3,7 @@
 
 **Bug fixes:**
 - **[server]** Revert LingeringTimeout and change default value for ReadTimeout ([#10599](https://github.com/traefik/traefik/pull/10599) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Set default ReadTimeout value to 60s ([#10602](https://github.com/traefik/traefik/pull/10602) by [rtribotte](https://github.com/rtribotte))
 
 ## [v2.11.1](https://github.com/traefik/traefik/tree/v2.11.1) (2024-04-10)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.0...v2.11.1)
