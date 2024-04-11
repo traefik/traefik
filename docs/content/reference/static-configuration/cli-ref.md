@@ -183,26 +183,14 @@ Duration to give active requests a chance to finish before Traefik stops. (Defau
 `--entrypoints.<name>.transport.lifecycle.requestacceptgracetimeout`:  
 Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure. (Default: ```0```)
 
-`--entrypoints.<name>.transport.respondingtimeouts.http.idletimeout`:  
+`--entrypoints.<name>.transport.respondingtimeouts.idletimeout`:  
 IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set. (Default: ```180```)
 
-`--entrypoints.<name>.transport.respondingtimeouts.http.readtimeout`:  
-ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```0```)
-
-`--entrypoints.<name>.transport.respondingtimeouts.http.writetimeout`:  
-WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
-
-`--entrypoints.<name>.transport.respondingtimeouts.idletimeout`:  
-(Deprecated) IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set. (Default: ```0```)
-
 `--entrypoints.<name>.transport.respondingtimeouts.readtimeout`:  
-(Deprecated) ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```0```)
-
-`--entrypoints.<name>.transport.respondingtimeouts.tcp.lingeringtimeout`:  
-LingeringTimeout is the maximum duration between each TCP read operation on the connection. If zero, no timeout is set. (Default: ```2```)
+ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```5```)
 
 `--entrypoints.<name>.transport.respondingtimeouts.writetimeout`:  
-(Deprecated) WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
+WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
