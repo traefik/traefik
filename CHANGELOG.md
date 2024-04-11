@@ -1,3 +1,9 @@
+## [v3.0.0-rc5](https://github.com/traefik/traefik/tree/v3.0.0-rc4) (2024-04-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc4...v3.0.0-rc5)
+
+**Misc:**
+- Merge current v2.11 into v3.0 ([#10604](https://github.com/traefik/traefik/pull/10604) by [ldez](https://github.com/ldez))
+
 ## [v2.11.2](https://github.com/traefik/traefik/tree/v2.11.2) (2024-04-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.1...v2.11.2)
 
