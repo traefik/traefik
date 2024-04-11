@@ -242,6 +242,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/healthCheck/mode` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/path` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/port` | `42` |
+| `traefik/http/services/Service02/loadBalancer/healthCheck/recheck` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/scheme` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/status` | `42` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/timeout` | `42s` |
