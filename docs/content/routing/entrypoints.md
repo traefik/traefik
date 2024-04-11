@@ -397,11 +397,10 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 
 #### `respondingTimeouts`
 
-##### `http`
+`respondingTimeouts` are timeouts for incoming requests to the Traefik instance.
+Setting them has no effect for UDP entryPoints.
 
-`respondingTimeouts.http` are timeouts for incoming requests to the Traefik instance.
-
-??? info "`transport.respondingTimeouts.http.readTimeout`"
+??? info "`transport.respondingTimeouts.readTimeout`"
 
     _Optional, Default=0s_
 
@@ -418,8 +417,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":8888"
         transport:
           respondingTimeouts:
-            http:
-              readTimeout: 42
+            readTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -427,17 +425,18 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.http]
-          readTimeout = 42
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            readTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.http.readTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.readTimeout=42
     ```
 
-??? info "`transport.respondingTimeouts.http.writeTimeout`"
+??? info "`transport.respondingTimeouts.writeTimeout`"
 
     _Optional, Default=0s_
 
@@ -455,8 +454,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":8888"
         transport:
           respondingTimeouts:
-            http:
-              writeTimeout: 42
+            writeTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -464,17 +462,18 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.http]
-          writeTimeout = 42
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            writeTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.http.writeTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.writeTimeout=42
     ```
 
-??? info "`transport.respondingTimeouts.http.idleTimeout`"
+??? info "`transport.respondingTimeouts.idleTimeout`"
 
     _Optional, Default=180s_
 
@@ -491,8 +490,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":8888"
         transport:
           respondingTimeouts:
-            http:
-              idleTimeout: 42
+            idleTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -500,54 +498,15 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.http]
-          idleTimeout = 42
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            idleTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.http.idleTimeout=42
-
-##### `tcp`
-
-`respondingTimeouts.tcp` are timeouts for client connections to the Traefik instance.
-
-??? info "`transport.respondingTimeouts.tcp.lingeringTimeout`"
-
-    _Optional, Default=2s_
-
-    `lingeringTimeout` is the maximum duration between each TCP read operation on the connection.
-    As a layer 4 timeout, it also applies during HTTP handling, but respect the configured HTTP server `readTimeout`.
-
-    If zero, the lingering is disabled.  
-    Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
-    If no units are provided, the value is parsed assuming seconds.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      name:
-        address: ":8888"
-        transport:
-          respondingTimeouts:
-            tcp:
-              lingeringTimeout: 42
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.name]
-        address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.tcp]
-          lingeringTimeout = 42
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.tcp.lingeringTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.idleTimeout=42
     ```
 
 #### `lifeCycle`
