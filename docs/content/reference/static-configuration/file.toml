@@ -26,12 +26,6 @@
         readTimeout = "42s"
         writeTimeout = "42s"
         idleTimeout = "42s"
-        [entryPoints.EntryPoint0.transport.respondingTimeouts.http]
-          readTimeout = "42s"
-          writeTimeout = "42s"
-          idleTimeout = "42s"
-        [entryPoints.EntryPoint0.transport.respondingTimeouts.tcp]
-          lingeringTimeout = "42s"
     [entryPoints.EntryPoint0.proxyProtocol]
       insecure = true
       trustedIPs = ["foobar", "foobar"]

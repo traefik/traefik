@@ -24,12 +24,6 @@ entryPoints:
         readTimeout: 42s
         writeTimeout: 42s
         idleTimeout: 42s
-        http:
-          readTimeout: 42s
-          writeTimeout: 42s
-          idleTimeout: 42s
-        tcp:
-          lingeringTimeout: 42s
       keepAliveMaxTime: 42s
       keepAliveMaxRequests: 42
     proxyProtocol:
