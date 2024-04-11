@@ -402,14 +402,14 @@ Setting them has no effect for UDP entryPoints.
 
 ??? info "`transport.respondingTimeouts.readTimeout`"
 
-    _Optional, Default=5s_
+    _Optional, Default=60s_
 
     `readTimeout` is the maximum duration for reading the entire request, including the body.
 
     If zero, no timeout exists.  
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
     If no units are provided, the value is parsed assuming seconds.
-    For requests with large payloads, this timeout value might be increased.
+    We strongly suggest to adapt this value accordingly to the your needs.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
