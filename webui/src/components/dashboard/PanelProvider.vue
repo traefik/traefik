@@ -6,7 +6,7 @@
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col text-center">
-          <q-avatar class="provider-logo">
+          <q-avatar class="provider-logo" font-size="inherit">
             <q-icon :name="`img:${getLogoPath}`" />
           </q-avatar>
         </div>
