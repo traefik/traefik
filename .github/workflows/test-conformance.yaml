@@ -31,8 +31,5 @@ jobs:
       - name: Avoid generating webui
         run: touch webui/static/index.html
 
-      - name: Build Traefik image
-        run: make build-image-dirty
-
       - name: K8s Gateway API conformance test
-        run: make test-gateway-api-conformance-ci
+        run: make test-gateway-api-conformance
