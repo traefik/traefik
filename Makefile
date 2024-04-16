@@ -102,13 +102,7 @@ test-integration: binary
 
 .PHONY: test-gateway-api-conformance
 #? test-gateway-api-conformance: Run the conformance tests
-test-gateway-api-conformance: binary build-image-dirty
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance $(TESTFLAGS)
-
-## TODO: Need to be fixed to work in all situations.
-.PHONY: test-gateway-api-conformance-ci
-#? test-gateway-api-conformance-ci: Run the conformance tests
-test-gateway-api-conformance-ci:
+test-gateway-api-conformance: build-image-dirty
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance $(TESTFLAGS)
 
 .PHONY: pull-images

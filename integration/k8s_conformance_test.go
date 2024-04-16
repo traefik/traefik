@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
+	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"gopkg.in/yaml.v3"
@@ -43,9 +44,9 @@ const (
 type K8sConformanceSuite struct {
 	BaseSuite
 
-	k3sContainerIP string
-	kubeClient     client.Client
-	clientSet      *kclientset.Clientset
+	k3sContainer *k3s.K3sContainer
+	kubeClient   client.Client
+	clientSet    *kclientset.Clientset
 }
 
 func TestK8sConformanceSuite(t *testing.T) {
@@ -62,14 +63,14 @@ func (s *K8sConformanceSuite) SetupSuite() {
 	// Avoid panic.
 	klog.SetLogger(zap.New())
 
-	ctx := context.Background()
-
 	provider, err := testcontainers.ProviderDocker.GetProvider()
 	if err != nil {
 		s.T().Fatal(err)
 	}
 
-	// ensure image is available locally
+	ctx := context.Background()
+
+	// Ensure image is available locally.
 	images, err := provider.ListImages(ctx)
 	if err != nil {
 		s.T().Fatal(err)
@@ -81,55 +82,27 @@ func (s *K8sConformanceSuite) SetupSuite() {
 		s.T().Fatal("Traefik image is not present")
 	}
 
-	k3sContainer, err := k3s.RunContainer(ctx,
+	s.k3sContainer, err = k3s.RunContainer(ctx,
 		testcontainers.WithImage(k3sImage),
 		k3s.WithManifest("./fixtures/k8s-conformance/00-experimental-v1.0.0.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/02-traefik.yml"),
+		network.WithNetwork(nil, s.network),
 	)
 	if err != nil {
 		s.T().Fatal(err)
 	}
 
-	s.T().Cleanup(func() {
-		if s.T().Failed() || *showLog {
-			k3sLogs, err := k3sContainer.Logs(context.Background())
-			if err == nil {
-				if res, err := io.ReadAll(k3sLogs); err == nil {
-					s.T().Log(string(res))
-				}
-			}
-
-			exitCode, result, err := k3sContainer.Exec(context.Background(), []string{"kubectl", "logs", "-n", traefikNamespace, traefikDeployment})
-			if err == nil || exitCode == 0 {
-				if res, err := io.ReadAll(result); err == nil {
-					s.T().Log(string(res))
-				}
-			}
-		}
-
-		err = k3sContainer.Terminate(context.Background())
-		if err != nil {
-			s.T().Fatal(err)
-		}
-	})
-
-	s.k3sContainerIP, err = k3sContainer.ContainerIP(ctx)
-	if err != nil {
+	if err = s.k3sContainer.LoadImages(ctx, traefikImage); err != nil {
 		s.T().Fatal(err)
 	}
 
-	err = k3sContainer.LoadImages(ctx, traefikImage)
-	if err != nil {
-		s.T().Fatal(err)
-	}
-
-	exitCode, _, err := k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", traefikNamespace, traefikDeployment, "--for=condition=Available", "--timeout=30s"})
+	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", traefikNamespace, traefikDeployment, "--for=condition=Available", "--timeout=30s"})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Traefik pod is not ready: %v", err)
 	}
 
-	kubeConfigYaml, err := k3sContainer.GetKubeConfig(ctx)
+	kubeConfigYaml, err := s.k3sContainer.GetKubeConfig(ctx)
 	if err != nil {
 		s.T().Fatal(err)
 	}
@@ -149,29 +122,51 @@ func (s *K8sConformanceSuite) SetupSuite() {
 		s.T().Fatalf("Error initializing Kubernetes REST client: %v", err)
 	}
 
-	err = gatev1alpha2.AddToScheme(s.kubeClient.Scheme())
-	if err != nil {
+	if err = gatev1alpha2.AddToScheme(s.kubeClient.Scheme()); err != nil {
 		s.T().Fatal(err)
 	}
 
-	err = gatev1beta1.AddToScheme(s.kubeClient.Scheme())
-	if err != nil {
+	if err = gatev1beta1.AddToScheme(s.kubeClient.Scheme()); err != nil {
 		s.T().Fatal(err)
 	}
 
-	err = gatev1.AddToScheme(s.kubeClient.Scheme())
-	if err != nil {
+	if err = gatev1.AddToScheme(s.kubeClient.Scheme()); err != nil {
 		s.T().Fatal(err)
 	}
 }
 
 func (s *K8sConformanceSuite) TearDownSuite() {
+	ctx := context.Background()
+
+	if s.T().Failed() || *showLog {
+		k3sLogs, err := s.k3sContainer.Logs(ctx)
+		if err == nil {
+			if res, err := io.ReadAll(k3sLogs); err == nil {
+				s.T().Log(string(res))
+			}
+		}
+
+		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", traefikNamespace, traefikDeployment})
+		if err == nil || exitCode == 0 {
+			if res, err := io.ReadAll(result); err == nil {
+				s.T().Log(string(res))
+			}
+		}
+	}
+
+	if err := s.k3sContainer.Terminate(ctx); err != nil {
+		s.T().Fatal(err)
+	}
+
 	s.BaseSuite.TearDownSuite()
 }
 
 func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	// Wait for traefik to start
-	err := try.GetRequest("http://"+s.k3sContainerIP+":8080/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
+	k3sContainerIP, err := s.k3sContainer.ContainerIP(context.Background())
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://"+k3sContainerIP+":8080/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
 	opts := ksuite.Options{
