@@ -645,6 +645,8 @@ func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreak
 		}
 	}
 
+	cb.ResponseCode = circuitBreaker.ResponseCode
+
 	return cb, nil
 }
 
