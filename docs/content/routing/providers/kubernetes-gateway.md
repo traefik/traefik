@@ -233,7 +233,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
             - headers:                          # [11]
                 name: foo                       # [12]
                 value: bar                      # [13]
-        - backendRefs:                          # [14]
+          backendRefs:                          # [14]
             - name: whoamitcp                   # [15]
               weight: 1                         # [16]
               port: 8080                        # [17]
