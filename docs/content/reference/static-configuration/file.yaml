@@ -164,6 +164,12 @@ providers:
     labelSelector: foobar
     throttleDuration: 42s
     experimentalChannel: true
+    statusAddress:
+      ip: foobar
+      hostname: foobar
+      service:
+        name: foobar
+        namespace: foobar
   rest:
     insecure: true
   consulCatalog:
@@ -216,6 +222,7 @@ providers:
     stale: true
     exposedByDefault: true
     refreshInterval: 42s
+    allowEmptyServices: true
     namespaces:
       - foobar
       - foobar

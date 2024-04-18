@@ -511,6 +511,17 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SendAnonymousUsage: true,
 	}
 
+	config.ServersTransport = &static.ServersTransport{
+		InsecureSkipVerify:  true,
+		RootCAs:             []types.FileOrContent{"root.ca"},
+		MaxIdleConnsPerHost: 42,
+		ForwardingTimeouts: &static.ForwardingTimeouts{
+			DialTimeout:           42,
+			ResponseHeaderTimeout: 42,
+			IdleConnTimeout:       42,
+		},
+	}
+
 	config.EntryPoints = static.EntryPoints{
 		"foobar": &static.EntryPoint{
 			Address: "foo Address",

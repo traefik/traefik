@@ -34,6 +34,8 @@ type TCPIPWhiteList struct {
 // +k8s:deepcopy-gen=true
 
 // TCPIPAllowList holds the TCP IPAllowList middleware configuration.
+// This middleware limits allowed requests based on the client IP.
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/
 type TCPIPAllowList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`

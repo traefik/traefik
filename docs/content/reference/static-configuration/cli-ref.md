@@ -202,7 +202,7 @@ Duration to keep accepting requests before Traefik initiates the graceful shutdo
 IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set. (Default: ```180```)
 
 `--entrypoints.<name>.transport.respondingtimeouts.readtimeout`:  
-ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```0```)
+ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```60```)
 
 `--entrypoints.<name>.transport.respondingtimeouts.writetimeout`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
@@ -738,6 +738,21 @@ Kubernetes label selector to select specific GatewayClasses.
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetesgateway.statusaddress.hostname`:  
+Hostname used for Kubernetes Gateway status address.
+
+`--providers.kubernetesgateway.statusaddress.ip`:  
+IP used to set Kubernetes Gateway status address.
+
+`--providers.kubernetesgateway.statusaddress.service`:  
+Published Kubernetes Service to copy status addresses from.
+
+`--providers.kubernetesgateway.statusaddress.service.name`:  
+Name of the Kubernetes service.
+
+`--providers.kubernetesgateway.statusaddress.service.namespace`:  
+Namespace of the Kubernetes service.
+
 `--providers.kubernetesgateway.throttleduration`:  
 Kubernetes refresh throttle duration (Default: ```0```)
 
@@ -788,6 +803,9 @@ Kubernetes bearer token (not needed for in-cluster client). It accepts either a 
 
 `--providers.nomad`:  
 Enable Nomad backend with default settings. (Default: ```false```)
+
+`--providers.nomad.allowemptyservices`:  
+Allow the creation of services without endpoints. (Default: ```false```)
 
 `--providers.nomad.constraints`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
