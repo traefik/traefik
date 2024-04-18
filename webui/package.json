@@ -5,6 +5,7 @@
   "productName": "Traefik",
   "cordovaId": "us.containo.traefik",
   "private": true,
+  "type": "module",
   "scripts": {
     "transfer": "node dev/scripts/transfer.js",
     "lint": "eslint --ext .js,.vue src",
