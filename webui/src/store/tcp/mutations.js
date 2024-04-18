@@ -1,4 +1,4 @@
-import { withPagination } from '../../_helpers/Mutations'
+import { withPagination } from '../../_helpers/Mutations.js'
 
 // ----------------------------
 // Get All Routers

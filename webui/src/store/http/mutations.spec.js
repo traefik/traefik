@@ -1,7 +1,5 @@
 import { expect } from 'chai'
-import store from './index.js'
-
-const {
+import {
   getAllRoutersRequest,
   getAllRoutersSuccess,
   getAllRoutersFailure,
@@ -11,7 +9,7 @@ const {
   getAllMiddlewaresRequest,
   getAllMiddlewaresSuccess,
   getAllMiddlewaresFailure
-} = store.mutations
+} from './mutations.js'
 
 describe('http mutations', function () {
   /* Routers */

@@ -5,10 +5,11 @@
   "productName": "Traefik",
   "cordovaId": "us.containo.traefik",
   "private": true,
+  "type": "module",
   "scripts": {
     "transfer": "node dev/scripts/transfer.js",
     "lint": "eslint --ext .js,.vue src",
-    "test-unit": "mocha-webpack --mode=production './src/**/*.spec.js'",
+    "test-unit": "mocha './src/**/*.spec.js'",
     "dev": "export APP_ENV='development' && quasar dev",
     "build-quasar": "quasar build",
     "build-staging": "export NODE_ENV='production' && export APP_ENV='development' && yarn build-quasar",
