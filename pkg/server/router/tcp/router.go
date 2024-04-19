@@ -100,6 +100,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// If there is a handler matching the connection metadata,
 		// we let it handle the connection.
 		if handler != nil {
+			// Remove read/write deadline and delegate this to underlying TCP server.
+			if err := conn.SetDeadline(time.Time{}); err != nil {
+				log.Error().Err(err).Msg("Error while setting deadline")
+			}
+
 			handler.ServeTCP(conn)
 			return
 		}
@@ -128,15 +133,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
-	err = conn.SetReadDeadline(time.Time{})
-	if err != nil {
-		log.Error().Err(err).Msg("Error while setting read deadline")
-	}
-
-	err = conn.SetWriteDeadline(time.Time{})
-	if err != nil {
-		log.Error().Err(err).Msg("Error while setting write deadline")
+	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		log.Error().Err(err).Msg("Error while setting deadline")
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
