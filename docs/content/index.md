@@ -18,7 +18,7 @@ Traefik is natively compliant with every major cluster technology, such as Kuber
 With Traefik, there is no need to maintain and synchronize a separate configuration file: everything happens automatically, in real time (no restarts, no connection interruptions).
 With Traefik, you spend time developing and deploying new features to your system, not on configuring and maintaining its working state.   
 
-Developing Traefik, our main goal is to make it simple to use, and we're sure you'll enjoy it.
+Developing Traefik, our main goal is to make it effortless to use, and we're sure you'll enjoy it.
 
 -- The Traefik Maintainer Team 
 

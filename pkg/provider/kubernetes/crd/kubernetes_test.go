@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikcrdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -23,12 +24,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 var _ provider.Provider = (*Provider)(nil)
 
 func Int(v int) *int    { return &v }
 func Bool(v bool) *bool { return &v }
+
+func init() {
+	// required by k8s.MustParseYaml
+	err := traefikv1alpha1.AddToScheme(kscheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func TestLoadIngressRouteTCPs(t *testing.T) {
 	testCases := []struct {
@@ -571,8 +581,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -673,9 +683,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -741,9 +751,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -809,8 +819,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -1035,6 +1045,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{
 						"default-test.route-fdd3e9338e47a45efefc": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								TerminationDelay: Int(500),
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -1064,8 +1075,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Stores: map[string]tls.Store{
 						"default": {
 							DefaultCertificate: &tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -1405,7 +1416,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "test",
 								InsecureSkipVerify: true,
-								RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+								RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
 								Certificates: tls.Certificates{
 									{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 									{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
@@ -1559,13 +1570,28 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			if test.expected == nil {
 				return
+			}
+
+			k8sObjects, crdObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
 			}
 
 			p := Provider{
@@ -1575,8 +1601,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			clientMock := newClientMock(test.paths...)
-			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
+			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2917,8 +2942,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -2979,9 +3004,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3063,10 +3088,35 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Options: "default-foo",
 							},
 						},
+						"default-test-route-default-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-default-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-foo",
+							},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-default-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -3100,9 +3150,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3178,9 +3228,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3251,8 +3301,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
 							ClientAuth: tls.ClientAuth{
-								CAFiles: []tls.FileOrContent{
-									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								CAFiles: []types.FileOrContent{
+									types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
@@ -3602,7 +3652,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address: "test.com",
-								TLS: &types.ClientTLS{
+								TLS: &dynamic.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
@@ -3881,8 +3931,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Stores: map[string]tls.Store{
 						"default": {
 							DefaultCertificate: &tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -3938,8 +3988,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 							Stores: []string{"default"},
 						},
@@ -4017,10 +4067,33 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
+						"default-test-route-default-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-default-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-default-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -4215,7 +4288,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"foo-test": {
 							ServerName:         "test",
 							InsecureSkipVerify: true,
-							RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+							RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
 							Certificates: tls.Certificates{
 								{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
@@ -4513,12 +4586,28 @@ func TestLoadIngressRoutes(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			if test.expected == nil {
 				return
+			}
+
+			k8sObjects, crdObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
 			}
 
 			p := Provider{
@@ -4528,8 +4617,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			clientMock := newClientMock(test.paths...)
-			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
+			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5007,13 +5095,28 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			if test.expected == nil {
 				return
+			}
+
+			k8sObjects, crdObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
 			}
 
 			p := Provider{
@@ -5023,8 +5126,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			clientMock := newClientMock(test.paths...)
-			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
+			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5084,8 +5186,6 @@ func TestParseServiceProtocol(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -5316,7 +5416,6 @@ func TestGetServicePort(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -6430,48 +6529,10 @@ func TestCrossNamespace(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var k8sObjects []runtime.Object
-			var crdObjects []runtime.Object
-			for _, path := range test.paths {
-				yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
-				if err != nil {
-					panic(err)
-				}
-
-				objects := k8s.MustParseYaml(yamlContent)
-				for _, obj := range objects {
-					switch o := obj.(type) {
-					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
-						k8sObjects = append(k8sObjects, o)
-					case *traefikv1alpha1.IngressRoute:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteTCP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteUDP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.Middleware:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.MiddlewareTCP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TraefikService:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSOption:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSStore:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.ServersTransport:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.ServersTransportTCP:
-						crdObjects = append(crdObjects, o)
-					default:
-					}
-				}
-			}
+			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
@@ -6737,42 +6798,10 @@ func TestExternalNameService(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var k8sObjects []runtime.Object
-			var crdObjects []runtime.Object
-			for _, path := range test.paths {
-				yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
-				if err != nil {
-					panic(err)
-				}
-
-				objects := k8s.MustParseYaml(yamlContent)
-				for _, obj := range objects {
-					switch o := obj.(type) {
-					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
-						k8sObjects = append(k8sObjects, o)
-					case *traefikv1alpha1.IngressRoute:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteTCP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteUDP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.Middleware:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TraefikService:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSOption:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSStore:
-						crdObjects = append(crdObjects, o)
-					default:
-					}
-				}
-			}
+			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
@@ -6950,42 +6979,191 @@ func TestNativeLB(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var k8sObjects []runtime.Object
-			var crdObjects []runtime.Object
-			for _, path := range test.paths {
-				yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
-				if err != nil {
-					panic(err)
-				}
+			k8sObjects, crdObjects := readResources(t, test.paths)
 
-				objects := k8s.MustParseYaml(yamlContent)
-				for _, obj := range objects {
-					switch o := obj.(type) {
-					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
-						k8sObjects = append(k8sObjects, o)
-					case *traefikv1alpha1.IngressRoute:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteTCP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteUDP:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.Middleware:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TraefikService:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSOption:
-						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSStore:
-						crdObjects = append(crdObjects, o)
-					default:
-					}
-				}
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll([]string{"default", "cross-ns"}, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
 			}
+
+			p := Provider{}
+
+			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestNodePortLB(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		ingressClass string
+		paths        []string
+		expected     *dynamic.Configuration
+	}{
+		{
+			desc: "Empty",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTP with node port LB",
+			paths: []string{"services.yml", "with_node_port_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6f97418635c7e18853da": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6f97418635c7e18853da",
+							Rule:        "Host(`foo.com`)",
+							Priority:    0,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6f97418635c7e18853da": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://172.16.4.4:32456",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "TCP with native Service LB",
+			paths: []string{"tcp/services.yml", "tcp/with_node_port_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "172.16.4.4:32456",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDP with native Service LB",
+			paths: []string{"udp/services.yml", "udp/with_node_port_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "172.16.4.4:32456",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
@@ -7067,7 +7245,119 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	username = components[0]
 	hashedPassword = components[1]
 
-	assert.Equal(t, username, "test2")
-	assert.Equal(t, hashedPassword, "$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0")
+	assert.Equal(t, "test2", username)
+	assert.Equal(t, "$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", hashedPassword)
 	assert.True(t, auth.CheckSecret("test2", hashedPassword))
+}
+
+func TestFillExtensionBuilderRegistry(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		namespaces []string
+		wantErr    require.ErrorAssertionFunc
+	}{
+		{
+			desc:    "no filter on namespaces",
+			wantErr: require.NoError,
+		},
+		{
+			desc:       "filter on default namespace",
+			namespaces: []string{"default"},
+			wantErr:    require.NoError,
+		},
+		{
+			desc:       "filter on not-default namespace",
+			namespaces: []string{"not-default"},
+			wantErr:    require.Error,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			r := &extensionBuilderRegistryMock{}
+
+			p := Provider{Namespaces: test.namespaces}
+			p.FillExtensionBuilderRegistry(r)
+
+			filterFunc, ok := r.groupKindFilterFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["Middleware"]
+			require.True(t, ok)
+
+			name, conf, err := filterFunc("my-middleware", "default")
+			test.wantErr(t, err)
+
+			if err == nil {
+				assert.Nil(t, conf)
+				assert.Equal(t, "default-my-middleware@kubernetescrd", name)
+			}
+
+			backendFunc, ok := r.groupKindBackendFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["TraefikService"]
+			require.True(t, ok)
+
+			name, svc, err := backendFunc("my-service", "default")
+			test.wantErr(t, err)
+
+			if err == nil {
+				assert.Nil(t, svc)
+				assert.Equal(t, "default-my-service@kubernetescrd", name)
+			}
+		})
+	}
+}
+
+func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
+	t.Helper()
+
+	var k8sObjects []runtime.Object
+	var crdObjects []runtime.Object
+	for _, path := range paths {
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		if err != nil {
+			panic(err)
+		}
+
+		objects := k8s.MustParseYaml(yamlContent)
+		for _, obj := range objects {
+			switch obj.GetObjectKind().GroupVersionKind().Group {
+			case "traefik.io":
+				crdObjects = append(crdObjects, obj)
+			default:
+				k8sObjects = append(k8sObjects, obj)
+			}
+		}
+	}
+
+	return k8sObjects, crdObjects
+}
+
+type extensionBuilderRegistryMock struct {
+	groupKindFilterFuncs  map[string]map[string]gateway.BuildFilterFunc
+	groupKindBackendFuncs map[string]map[string]gateway.BuildBackendFunc
+}
+
+// RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
+func (p *extensionBuilderRegistryMock) RegisterFilterFuncs(group, kind string, builderFunc gateway.BuildFilterFunc) {
+	if p.groupKindFilterFuncs == nil {
+		p.groupKindFilterFuncs = map[string]map[string]gateway.BuildFilterFunc{}
+	}
+
+	if p.groupKindFilterFuncs[group] == nil {
+		p.groupKindFilterFuncs[group] = map[string]gateway.BuildFilterFunc{}
+	}
+
+	p.groupKindFilterFuncs[group][kind] = builderFunc
+}
+
+// RegisterBackendFuncs registers an allowed Group, Kind, and builder for the Backend ExtensionRef objects.
+func (p *extensionBuilderRegistryMock) RegisterBackendFuncs(group, kind string, builderFunc gateway.BuildBackendFunc) {
+	if p.groupKindBackendFuncs == nil {
+		p.groupKindBackendFuncs = map[string]map[string]gateway.BuildBackendFunc{}
+	}
+
+	if p.groupKindBackendFuncs[group] == nil {
+		p.groupKindBackendFuncs[group] = map[string]gateway.BuildBackendFunc{}
+	}
+
+	p.groupKindBackendFuncs[group][kind] = builderFunc
 }

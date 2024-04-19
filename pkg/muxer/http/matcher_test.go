@@ -65,7 +65,6 @@ func TestClientIPMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -73,7 +72,7 @@ func TestClientIPMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -139,7 +138,6 @@ func TestMethodMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -147,7 +145,7 @@ func TestMethodMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -257,7 +255,6 @@ func TestHostMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -265,7 +262,7 @@ func TestHostMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -357,7 +354,6 @@ func TestHostRegexpMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -365,7 +361,7 @@ func TestHostRegexpMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -431,7 +427,6 @@ func TestPathMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -439,7 +434,7 @@ func TestPathMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -524,7 +519,6 @@ func TestPathRegexpMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -532,7 +526,7 @@ func TestPathRegexpMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -596,7 +590,6 @@ func TestPathPrefixMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -604,7 +597,7 @@ func TestPathPrefixMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -683,8 +676,6 @@ func TestHeaderMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -692,7 +683,7 @@ func TestHeaderMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -792,7 +783,6 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -800,7 +790,7 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -881,7 +871,6 @@ func TestQueryMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -889,7 +878,7 @@ func TestQueryMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -995,7 +984,6 @@ func TestQueryRegexpMatcher(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1003,7 +991,7 @@ func TestQueryRegexpMatcher(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return

@@ -139,7 +139,7 @@
 						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -153,7 +153,7 @@
 			],
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
@@ -163,7 +163,7 @@
 						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -177,7 +177,7 @@
 			],
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
@@ -187,7 +187,7 @@
 						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -202,7 +202,7 @@
 			],
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-whoami-80@kubernetescrd": {
@@ -212,7 +212,7 @@
 						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true,
@@ -223,7 +223,7 @@
 			"status": "enabled",
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-wrr1@kubernetescrd": {
@@ -295,7 +295,7 @@
 						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.4:8080"
+						"address": "10.42.0.6:8080"
 					}
 				]
 			},
@@ -347,10 +347,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.5:8090"
+						"address": "10.42.0.4:8090"
 					},
 					{
-						"address": "10.42.0.6:8090"
+						"address": "10.42.0.7:8090"
 					}
 				]
 			},

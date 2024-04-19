@@ -26,4 +26,4 @@ Dynamic configuration with Kubernetes Custom Resource
 --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
 ```
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

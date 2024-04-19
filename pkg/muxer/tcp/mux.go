@@ -41,8 +41,9 @@ func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (
 
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
-	routes routes
-	parser predicate.Parser
+	routes   routes
+	parser   predicate.Parser
+	parserV2 predicate.Parser
 }
 
 // NewMuxer returns a TCP muxer.
@@ -57,7 +58,20 @@ func NewMuxer() (*Muxer, error) {
 		return nil, fmt.Errorf("error while creating rules parser: %w", err)
 	}
 
-	return &Muxer{parser: parser}, nil
+	var matchersV2 []string
+	for matcher := range tcpFuncsV2 {
+		matchersV2 = append(matchersV2, matcher)
+	}
+
+	parserV2, err := rules.NewParser(matchersV2)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating v2 rules parser: %w", err)
+	}
+
+	return &Muxer{
+		parser:   parser,
+		parserV2: parserV2,
+	}, nil
 }
 
 // Match returns the handler of the first route matching the connection metadata,
@@ -106,10 +120,26 @@ func GetRulePriority(rule string) int {
 
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
-func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
-	parse, err := m.parser.Parse(rule)
-	if err != nil {
-		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler tcp.Handler) error {
+	var parse interface{}
+	var err error
+	var matcherFuncs map[string]func(*matchersTree, ...string) error
+
+	switch syntax {
+	case "v2":
+		parse, err = m.parserV2.Parse(rule)
+		if err != nil {
+			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		}
+
+		matcherFuncs = tcpFuncsV2
+	default:
+		parse, err = m.parser.Parse(rule)
+		if err != nil {
+			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		}
+
+		matcherFuncs = tcpFuncs
 	}
 
 	buildTree, ok := parse.(rules.TreeBuilder)
@@ -120,7 +150,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 	ruleTree := buildTree()
 
 	var matchers matchersTree
-	err = matchers.addRule(ruleTree)
+	err = matchers.addRule(ruleTree, matcherFuncs)
 	if err != nil {
 		return fmt.Errorf("error while adding rule %s: %w", rule, err)
 	}
@@ -153,6 +183,9 @@ func (m *Muxer) HasRoutes() bool {
 func ParseHostSNI(rule string) ([]string, error) {
 	var matchers []string
 	for matcher := range tcpFuncs {
+		matchers = append(matchers, matcher)
+	}
+	for matcher := range tcpFuncsV2 {
 		matchers = append(matchers, matcher)
 	}
 
@@ -237,25 +270,27 @@ func (m *matchersTree) match(meta ConnData) bool {
 	}
 }
 
-func (m *matchersTree) addRule(rule *rules.Tree) error {
+type matcherFuncs map[string]func(*matchersTree, ...string) error
+
+func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherFuncs) error {
 	switch rule.Matcher {
 	case "and", "or":
 		m.operator = rule.Matcher
 		m.left = &matchersTree{}
-		err := m.left.addRule(rule.RuleLeft)
+		err := m.left.addRule(rule.RuleLeft, funcs)
 		if err != nil {
 			return err
 		}
 
 		m.right = &matchersTree{}
-		return m.right.addRule(rule.RuleRight)
+		return m.right.addRule(rule.RuleRight, funcs)
 	default:
 		err := rules.CheckRule(rule)
 		if err != nil {
 			return err
 		}
 
-		err = tcpFuncs[rule.Matcher](m, rule.Value...)
+		err = funcs[rule.Matcher](m, rule.Value...)
 		if err != nil {
 			return err
 		}

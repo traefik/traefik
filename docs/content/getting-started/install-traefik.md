@@ -19,7 +19,7 @@ Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and
 * [YAML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.yml)
 * [TOML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.toml)
 
-```bash
+```shell
 docker run -d -p 8080:8080 -p 80:80 \
     -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v3.0
 ```
@@ -59,7 +59,7 @@ You can update the chart repository by running:
 helm repo update
 ```
 
-And install it with the `helm` command line:
+And install it with the Helm command line:
 
 ```bash
 helm install traefik traefik/traefik
@@ -69,7 +69,7 @@ helm install traefik traefik/traefik
 
     All [Helm features](https://helm.sh/docs/intro/using_helm/) are supported.
 
-    Examples are provided [here](https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md). 
+    Examples are provided [here](https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md).
 
     For instance, installing the chart in a dedicated namespace:
 
@@ -106,7 +106,7 @@ helm install traefik traefik/traefik
 
 ### Exposing the Traefik dashboard
 
-This HelmChart does not expose the Traefik dashboard by default, for security concerns.
+This Helm chart does not expose the Traefik dashboard by default, for security concerns.
 Thus, there are multiple ways to expose the dashboard.
 For instance, the dashboard access could be achieved through a port-forward:
 

@@ -6,18 +6,17 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.20'
+  GO_VERSION: '1.22'
   CGO_ENABLED: 0
-  IN_DOCKER: ""
 
 jobs:
 
   build-webui:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -27,7 +26,7 @@ jobs:
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: webui.tar.gz
           path: webui.tar.gz
@@ -36,41 +35,25 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-20.04, macos-latest, windows-latest ]
+        os: [ ubuntu-22.04, macos-latest, windows-latest ]
     needs:
       - build-webui
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          path: go/src/github.com/traefik/traefik
-          fetch-depth: 0
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            '%LocalAppData%\go-build'
-          key: ${{ runner.os }}-build-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-build-go-
-
       - name: Artifact webui
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: webui.tar.gz
-          path: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
       - name: Untar webui
         run: tar xvf webui.tar.gz

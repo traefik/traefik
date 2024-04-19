@@ -5,15 +5,16 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
 	schemeHTTP  = "http"
 	schemeHTTPS = "https"
 )
+
+const typeName = "Redirect"
 
 var uriRegexp = regexp.MustCompile(`^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`)
 
@@ -45,8 +46,8 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, r
 	}, nil
 }
 
-func (r *redirect) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
+func (r *redirect) GetTracingInformation() (string, string, trace.SpanKind) {
+	return r.name, typeName, trace.SpanKindInternal
 }
 
 func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

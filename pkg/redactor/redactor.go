@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 
 	"github.com/mitchellh/copystructure"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"mvdan.cc/xurls/v2"
 )
 
@@ -67,8 +66,7 @@ func do(baseConfig interface{}, tag string, redactByDefault, indent bool) (strin
 }
 
 func doOnJSON(input string) string {
-	mailExp := regexp.MustCompile(`\w[-.\w]*\w@\w[-.\w]*\w\.\w{2,3}"`)
-	return xurls.Relaxed().ReplaceAllString(mailExp.ReplaceAllString(input, maskLarge+"\""), maskLarge)
+	return xurls.Relaxed().ReplaceAllString(input, maskLarge)
 }
 
 func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
@@ -85,7 +83,7 @@ func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
 			}
 		}
 	case reflect.Struct:
-		for i := 0; i < field.NumField(); i++ {
+		for i := range field.NumField() {
 			fld := field.Field(i)
 			stField := field.Type().Field(i)
 			if !isExported(stField) {
@@ -140,7 +138,7 @@ func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
 			}
 		}
 	case reflect.Slice:
-		for j := 0; j < field.Len(); j++ {
+		for j := range field.Len() {
 			if err := doOnStruct(field.Index(j), tag, redactByDefault); err != nil {
 				return err
 			}
@@ -166,8 +164,8 @@ func reset(field reflect.Value, name string) error {
 		}
 	case reflect.String:
 		if field.String() != "" {
-			if field.Type().AssignableTo(reflect.TypeOf(tls.FileOrContent(""))) {
-				field.Set(reflect.ValueOf(tls.FileOrContent(maskShort)))
+			if field.Type().AssignableTo(reflect.TypeOf(types.FileOrContent(""))) {
+				field.Set(reflect.ValueOf(types.FileOrContent(maskShort)))
 			} else {
 				field.Set(reflect.ValueOf(maskShort))
 			}
@@ -181,7 +179,7 @@ func reset(field reflect.Value, name string) error {
 			switch field.Type().Elem().Kind() {
 			case reflect.String:
 				slice := reflect.MakeSlice(field.Type(), field.Len(), field.Len())
-				for j := 0; j < field.Len(); j++ {
+				for j := range field.Len() {
 					slice.Index(j).SetString(maskShort)
 				}
 				field.Set(slice)

@@ -877,8 +877,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -1495,8 +1495,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1626,8 +1624,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1679,8 +1675,56 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
+			clientMock := newClientMock(generateTestFilename(test.desc))
+
+			p := Provider{IngressClass: test.ingressClass}
+			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		ingressClass string
+		expected     *dynamic.Configuration
+	}{
+		{
+			desc: "Ingress with node port lb",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://172.16.4.4:32456",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1834,14 +1878,14 @@ func TestGetCertificates(t *testing.T) {
 			result: map[string]*tls.CertAndStores{
 				"testing-test-secret": {
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("tls-crt"),
-						KeyFile:  tls.FileOrContent("tls-key"),
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
 					},
 				},
 				"testing-test-secret2": {
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("tls-crt"),
-						KeyFile:  tls.FileOrContent("tls-key"),
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
 					},
 				},
 			},
@@ -1855,7 +1899,6 @@ func TestGetCertificates(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

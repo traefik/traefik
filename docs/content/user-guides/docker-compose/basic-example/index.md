@@ -1,16 +1,15 @@
 ---
 title: "Traefik Docker Documentation"
-description: "This guide covers a Docker Compose file exposing a service using the Docker provider in Traefik Proxy. Read the technical documentation."
+description: "Learn how to use Docker Compose to expose a service with Traefik Proxy."
 ---
 
 # Docker Compose example
 
-In this section, we quickly go over a Docker Compose file exposing a service using the Docker provider.
-This will also be used as a starting point for the other Docker Compose guides.
+In this section, you will learn how to use [Docker Compose](https://docs.docker.com/compose/ "Link to Docker Compose") to expose a service using the Docker provider.
 
 ## Setup
 
-- Edit a `docker-compose.yml` file with the following content:
+Create a `docker-compose.yml` file with the following content:
 
 ```yaml
 --8<-- "content/user-guides/docker-compose/basic-example/docker-compose.yml"
@@ -45,33 +44,44 @@ This will also be used as a starting point for the other Docker Compose guides.
 
     ```
 
-- Replace `whoami.localhost` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
-- Run `docker-compose up -d` within the folder where you created the previous file.
-- Wait a bit and visit `http://your_own_domain` to confirm everything went fine.
-	You should see the output of the whoami service. Something similar to:
+Replace `whoami.localhost` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 
-	```text
-	Hostname: d7f919e54651
-	IP: 127.0.0.1
-	IP: 192.168.64.2
-	GET / HTTP/1.1
-	Host: whoami.localhost
-	User-Agent: curl/7.52.1
-	Accept: */*
-	Accept-Encoding: gzip
-	X-Forwarded-For: 192.168.64.1
-	X-Forwarded-Host: whoami.localhost
-	X-Forwarded-Port: 80
-	X-Forwarded-Proto: http
-	X-Forwarded-Server: 7f0c797dbc51
-	X-Real-Ip: 192.168.64.1
-	```
+Now run `docker-compose up -d` within the folder where you created the previous file.  
+This will start Docker Compose in background mode.
+
+!!! info "This can take a moment"
+
+    Docker Compose will now create and start the services declared in the `docker-compose.yml`.
+
+Wait a bit and visit `http://your_own_domain` to confirm everything went fine.
+
+You should see the output of the whoami service.  
+It should be similar to the following example:
+
+```text
+Hostname: d7f919e54651
+IP: 127.0.0.1
+IP: 192.168.64.2
+GET / HTTP/1.1
+Host: whoami.localhost
+User-Agent: curl/7.52.1
+Accept: */*
+Accept-Encoding: gzip
+X-Forwarded-For: 192.168.64.1
+X-Forwarded-Host: whoami.localhost
+X-Forwarded-Port: 80
+X-Forwarded-Proto: http
+X-Forwarded-Server: 7f0c797dbc51
+X-Real-Ip: 192.168.64.1
+```
 
 ## Details
 
-- As an example, we use [whoami](https://github.com/traefik/whoami "Link to the GitHub repo of whoami") (a tiny Go server that prints OS information and HTTP request to output) which was used to define our `simple-service` container.
+Let's break it down and go through it, step-by-step.
 
-- We define an entry point, along with the exposure of the matching port within Docker Compose, which allow us to "open and accept" HTTP traffic:
+You use [whoami](https://github.com/traefik/whoami "Link to the GitHub repo of whoami"), a tiny Go server that prints OS information and HTTP request to output as service container.
+
+Second, you define an entry point, along with the exposure of the matching port within Docker Compose, which allows to "open and accept" HTTP traffic:
 
 ```yaml
 command:
@@ -82,7 +92,7 @@ ports:
   - "80:80"
 ```
 
-- We expose the Traefik API to be able to check the configuration if needed:
+Third, you expose the Traefik API to be able to check the configuration if needed:
 
 ```yaml
 command:
@@ -101,7 +111,7 @@ ports:
     curl -s 127.0.0.1:8080/api/rawdata | jq .
     ```
 
-- We allow Traefik to gather configuration from Docker:
+Fourth, you allow Traefik to gather configuration from Docker:
 
 ```yaml
 traefik:

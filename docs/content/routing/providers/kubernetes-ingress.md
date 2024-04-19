@@ -287,6 +287,16 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.nativelb: "true"
     ```
 
+??? info "`traefik.ingress.kubernetes.io/service.nodeportlb`"
+
+    Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+    It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+    By default, NodePortLB is false.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.nodeportlb: "true"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
 
     Overrides the default scheme.
@@ -349,6 +359,14 @@ which in turn will create the resulting routers, services, handlers, etc.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
     ```
 
 ## Path Types on Kubernetes 1.18+
@@ -864,4 +882,4 @@ This will allow users to create a "default router" that will match all unmatched
 
     To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

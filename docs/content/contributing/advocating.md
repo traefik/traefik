@@ -1,14 +1,14 @@
 ---
 title: "Traefik Advocation Documentation"
-description: "There are many ways to contribute to Traefik Proxy. If you're talking about Traefik, let us know and we'll promote your enthusiasm!"
+description: "There are many ways to contribute to Traefik Proxy. Let us know if you’re talking about Traefik, and we'll promote your enthusiasm!"
 ---
 
 # Advocating
 
-Spread the Love & Tell Us about It
+Spread the Love & Tell Us About It
 {: .subtitle }
 
-Traefik Proxy was started by the community for the community.
+Traefik Proxy was started by the community and for the community.
 You can contribute to the Traefik community in three main ways:
 
 **Spread the word!** Guides, videos, blog posts, how-to articles, and showing off your network design all help spread the word about Traefik Proxy

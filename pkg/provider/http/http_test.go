@@ -268,5 +268,5 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	assert.Equal(t, 1, len(configurationChan))
+	assert.Len(t, configurationChan, 1)
 }

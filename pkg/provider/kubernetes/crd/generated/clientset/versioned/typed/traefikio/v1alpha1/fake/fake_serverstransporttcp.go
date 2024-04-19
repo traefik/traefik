@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2023 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2024 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import (
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -44,9 +43,9 @@ type FakeServersTransportTCPs struct {
 	ns   string
 }
 
-var serverstransporttcpsResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "serverstransporttcps"}
+var serverstransporttcpsResource = v1alpha1.SchemeGroupVersion.WithResource("serverstransporttcps")
 
-var serverstransporttcpsKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "ServersTransportTCP"}
+var serverstransporttcpsKind = v1alpha1.SchemeGroupVersion.WithKind("ServersTransportTCP")
 
 // Get takes name of the serversTransportTCP, and returns the corresponding serversTransportTCP object, and an error if there is any.
 func (c *FakeServersTransportTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServersTransportTCP, err error) {
@@ -113,7 +112,7 @@ func (c *FakeServersTransportTCPs) Update(ctx context.Context, serversTransportT
 // Delete takes name of the serversTransportTCP and deletes it. Returns an error if one occurs.
 func (c *FakeServersTransportTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(serverstransporttcpsResource, c.ns, name), &v1alpha1.ServersTransportTCP{})
+		Invokes(testing.NewDeleteActionWithOptions(serverstransporttcpsResource, c.ns, name, opts), &v1alpha1.ServersTransportTCP{})
 
 	return err
 }

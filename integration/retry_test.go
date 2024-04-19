@@ -1,14 +1,16 @@
 package integration
 
 import (
+	"io"
 	"net/http"
-	"os"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type RetrySuite struct {
@@ -16,73 +18,86 @@ type RetrySuite struct {
 	whoamiIP string
 }
 
-func (s *RetrySuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "retry")
-	s.composeUp(c)
-
-	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
+func TestRetrySuite(t *testing.T) {
+	suite.Run(t, new(RetrySuite))
 }
 
-func (s *RetrySuite) TestRetry(c *check.C) {
-	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
+func (s *RetrySuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.createComposeProject("retry")
+	s.composeUp()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
-	c.Assert(err, checker.IsNil)
+	s.whoamiIP = s.getComposeServiceIP("whoami")
+}
+
+func (s *RetrySuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *RetrySuite) TestRetry() {
+	file := s.adaptFile("fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	require.NoError(s.T(), err)
 
 	response, err := http.Get("http://127.0.0.1:8000/")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// The test only verifies that the retry middleware makes sure that the working service is eventually reached.
-	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-func (s *RetrySuite) TestRetryBackoff(c *check.C) {
-	file := s.adaptFile(c, "fixtures/retry/backoff.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
+func (s *RetrySuite) TestRetryBackoff() {
+	file := s.adaptFile("fixtures/retry/backoff.toml", struct{ WhoamiIP string }{s.whoamiIP})
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	require.NoError(s.T(), err)
 
 	response, err := http.Get("http://127.0.0.1:8000/")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// The test only verifies that the retry middleware allows finally to reach the working service.
-	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
-	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
-	defer os.Remove(file)
+func (s *RetrySuite) TestRetryWebsocket() {
+	file := s.adaptFile("fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	require.NoError(s.T(), err)
 
 	// The test only verifies that the retry middleware makes sure that the working service is eventually reached.
 	_, response, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8000/echo", nil)
-	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, http.StatusSwitchingProtocols)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusSwitchingProtocols, response.StatusCode)
 
 	// The test verifies a second time that the working service is eventually reached.
 	_, response, err = websocket.DefaultDialer.Dial("ws://127.0.0.1:8000/echo", nil)
-	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, http.StatusSwitchingProtocols)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusSwitchingProtocols, response.StatusCode)
+}
+
+func (s *RetrySuite) TestRetryWithStripPrefix() {
+	file := s.adaptFile("fixtures/retry/strip_prefix.toml", struct{ WhoamiIP string }{s.whoamiIP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	require.NoError(s.T(), err)
+
+	response, err := http.Get("http://127.0.0.1:8000/test")
+	require.NoError(s.T(), err)
+
+	body, err := io.ReadAll(response.Body)
+	require.NoError(s.T(), err)
+
+	assert.Contains(s.T(), string(body), "GET / HTTP/1.1")
+	assert.Contains(s.T(), string(body), "X-Forwarded-Prefix: /test")
 }

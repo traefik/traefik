@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -30,11 +31,31 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/router"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
+
+type key string
+
+const (
+	connStateKey       key    = "connState"
+	debugConnectionEnv string = "DEBUG_CONNECTION"
+)
+
+var (
+	clientConnectionStates   = map[string]*connState{}
+	clientConnectionStatesMu = sync.RWMutex{}
+)
+
+type connState struct {
+	State            string
+	KeepAliveState   string
+	Start            time.Time
+	HTTPRequestCount int
+}
 
 type httpForwarder struct {
 	net.Listener
@@ -70,6 +91,11 @@ type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
 func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, metricsRegistry metrics.Registry) (TCPEntryPoints, error) {
+	if os.Getenv(debugConnectionEnv) != "" {
+		expvar.Publish("clientConnectionStates", expvar.Func(func() any {
+			return clientConnectionStates
+		}))
+	}
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -362,7 +388,7 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	case *proxyproto.Conn:
 		underlying, ok := typedConn.TCPConn()
 		if !ok {
-			return nil, fmt.Errorf("underlying connection is not a tcp connection")
+			return nil, errors.New("underlying connection is not a tcp connection")
 		}
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
@@ -399,7 +425,12 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
-	proxyListener := &proxyproto.Listener{Listener: listener}
+	timeout := entryPoint.Transport.RespondingTimeouts.ReadTimeout
+	// proxyproto use 200ms if ReadHeaderTimeout is set to 0 and not no timeout
+	if timeout == 0 {
+		timeout = -1
+	}
+	proxyListener := &proxyproto.Listener{Listener: listener, ReadHeaderTimeout: time.Duration(timeout)}
 
 	if entryPoint.ProxyProtocol.Insecure {
 		log.Ctx(ctx).Info().Msg("Enabling ProxyProtocol without trusted IPs: Insecure")
@@ -430,7 +461,8 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listener, err := net.Listen("tcp", entryPoint.GetAddress())
+	listenConfig := newListenConfig(entryPoint)
+	listener, err := listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
 	if err != nil {
 		return nil, fmt.Errorf("error opening listener: %w", err)
 	}
@@ -517,7 +549,7 @@ func (c *connectionTracker) Close() {
 }
 
 type stoppable interface {
-	Shutdown(context.Context) error
+	Shutdown(ctx context.Context) error
 	Close() error
 }
 
@@ -553,6 +585,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
+	handler = denyFragment(handler)
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
 	} else {
@@ -567,12 +600,48 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		})
 	}
 
+	debugConnection := os.Getenv(debugConnectionEnv) != ""
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
+	}
+
 	serverHTTP := &http.Server{
 		Handler:      handler,
 		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+	}
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+			cState := &connState{Start: time.Now()}
+			if debugConnection {
+				clientConnectionStatesMu.Lock()
+				clientConnectionStates[getConnKey(c)] = cState
+				clientConnectionStatesMu.Unlock()
+			}
+			return context.WithValue(ctx, connStateKey, cState)
+		}
+
+		if debugConnection {
+			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
+				clientConnectionStatesMu.Lock()
+				if clientConnectionStates[getConnKey(c)] != nil {
+					clientConnectionStates[getConnKey(c)].State = state.String()
+				}
+				clientConnectionStatesMu.Unlock()
+			}
+		}
+	}
+
+	prevConnContext := serverHTTP.ConnContext
+	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = service.AddTransportOnContext(ctx)
+		if prevConnContext != nil {
+			return prevConnContext(ctx, c)
+		}
+		return ctx
 	}
 
 	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
@@ -583,7 +652,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 			NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
 		})
-
 		if err != nil {
 			return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
 		}
@@ -601,6 +669,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		Forwarder: listener,
 		Switcher:  httpSwitcher,
 	}, nil
+}
+
+func getConnKey(conn net.Conn) string {
+	return fmt.Sprintf("%s => %s", conn.RemoteAddr(), conn.LocalAddr())
 }
 
 func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *trackedConnection {
@@ -638,5 +710,22 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 		} else {
 			h.ServeHTTP(rw, req)
 		}
+	})
+}
+
+// When go receives an HTTP request, it assumes the absence of fragment URL.
+// However, it is still possible to send a fragment in the request.
+// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
+// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
+func denyFragment(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if strings.Contains(req.URL.RawPath, "#") {
+			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
 	})
 }

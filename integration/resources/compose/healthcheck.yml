@@ -11,8 +11,3 @@ services:
 
   whoami4:
     image: traefik/whoami
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

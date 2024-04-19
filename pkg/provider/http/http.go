@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -44,11 +45,11 @@ func (p *Provider) SetDefaults() {
 // Init the provider.
 func (p *Provider) Init() error {
 	if p.Endpoint == "" {
-		return fmt.Errorf("non-empty endpoint is required")
+		return errors.New("non-empty endpoint is required")
 	}
 
 	if p.PollInterval <= 0 {
-		return fmt.Errorf("poll interval must be greater than 0")
+		return errors.New("poll interval must be greater than 0")
 	}
 
 	p.httpClient = &http.Client{

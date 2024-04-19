@@ -12,6 +12,9 @@
         "rule": "HostRegexp(`^.+$`)"
       }
     },
+    "services": {
+      "noop": {}
+    },
     "middlewares": {
       "redirect-web-to-443": {
         "redirectScheme": {
@@ -20,9 +23,6 @@
           "permanent": true
         }
       }
-    },
-    "services": {
-      "noop": {}
     }
   },
   "tcp": {},

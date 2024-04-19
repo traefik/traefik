@@ -1,0 +1,37 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.trust]
+    address = ":8000"
+    [entryPoints.trust.proxyProtocol]
+      trustedIPs = ["127.0.0.1"]
+  [entryPoints.nottrust]
+      address = ":9000"
+      [entryPoints.nottrust.proxyProtocol]
+        trustedIPs = ["1.2.3.4"]
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "Path(`/whoami`)"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}"

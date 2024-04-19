@@ -1,0 +1,33 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "ERROR"
+  filePath = "traefik.log"
+
+[accessLog]
+  filePath = "access.log"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+  [entryPoints.frontendRedirect]
+    address = ":8005"
+  [entryPoints.httpFrontendAuth]
+    address = ":8006"
+  [entryPoints.httpRateLimit]
+    address = ":8007"
+  [entryPoints.digestAuth]
+    address = ":8008"
+  [entryPoints.preflight]
+    address = ":8009"
+
+[api]
+  insecure = true
+
+[providers]
+  [providers.docker]
+    exposedByDefault = false
+    defaultRule = "Host(`{{ normalize .Name }}.docker.local`)"
+    watch = true

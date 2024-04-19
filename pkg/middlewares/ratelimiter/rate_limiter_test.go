@@ -18,6 +18,8 @@ import (
 	"golang.org/x/time/rate"
 )
 
+const delta float64 = 1e-10
+
 func TestNewRateLimiter(t *testing.T) {
 	testCases := []struct {
 		desc             string
@@ -97,7 +99,6 @@ func TestNewRateLimiter(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -141,7 +142,7 @@ func TestNewRateLimiter(t *testing.T) {
 				assert.Equal(t, test.requestHeader, hd)
 			}
 			if test.expectedRTL != 0 {
-				assert.Equal(t, test.expectedRTL, rtl.rate)
+				assert.InDelta(t, float64(test.expectedRTL), float64(rtl.rate), delta)
 			}
 		})
 	}
@@ -256,7 +257,6 @@ func TestRateLimit(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			if test.loadDuration >= time.Minute && testing.Short() {
 				t.Skip("skipping test in short mode.")

@@ -5,28 +5,27 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	checker "github.com/vdemeester/shakers"
 )
 
 type HTTPSuite struct{ BaseSuite }
 
-func (s *HTTPSuite) TestSimpleConfiguration(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
-	defer display(c)
+func TestHTTPSuite(t *testing.T) {
+	suite.Run(t, new(HTTPSuite))
+}
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-
-	defer s.killCmd(cmd)
+func (s *HTTPSuite) TestSimpleConfiguration() {
+	s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
 
 	// Expect a 404 as we configured nothing.
-	err = try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusNotFound))
+	require.NoError(s.T(), err)
 
 	// Provide a configuration, fetched by Traefik provider.
 	configuration := &dynamic.Configuration{
@@ -55,14 +54,14 @@ func (s *HTTPSuite) TestSimpleConfiguration(c *check.C) {
 	}
 
 	configData, err := json.Marshal(configuration)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	server := startTestServerWithResponse(configData)
 	defer server.Close()
 
 	// Expect configuration to be applied.
 	err = try.GetRequest("http://127.0.0.1:9090/api/rawdata", 3*time.Second, try.BodyContains("routerHTTP@http", "serviceHTTP@http", "http://bacon:80"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 }
 
 func startTestServerWithResponse(response []byte) (ts *httptest.Server) {

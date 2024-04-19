@@ -1,0 +1,19 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints.web]
+  address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.redis]
+  rootKey = "traefik"
+  endpoints = ["{{ .RedisAddress }}"]
+
+[providers.redis.sentinel]
+  masterName = "mymaster"

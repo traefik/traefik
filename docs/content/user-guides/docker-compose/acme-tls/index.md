@@ -3,9 +3,9 @@ title: "Traefik Docker TLS Challenge Documentation"
 description: "Learn how to create a certificate with the Let's Encrypt TLS challenge to use HTTPS on a service exposed with Traefik Proxy. Read the technical documentation."
 ---
 
-# Docker-compose with let's encrypt: TLS Challenge
+# Docker-compose with Let's Encrypt: TLS Challenge
 
-This guide aim to demonstrate how to create a certificate with the let's encrypt TLS challenge to use https on a simple service exposed with Traefik.  
+This guide aim to demonstrate how to create a certificate with the Let's Encrypt TLS challenge to use https on a simple service exposed with Traefik.  
 Please also read the [basic example](../basic-example) for details on how to expose such a service.  
 
 ## Prerequisite
@@ -38,7 +38,7 @@ For the TLS challenge you will need:
 !!! Note
 
     If you uncommented the `acme.caserver` line, you will get an SSL error, but if you display the certificate and see it was emitted by `Fake LE Intermediate X1` then it means all is good.
-    (It is the staging environment intermediate certificate used by let's encrypt).
+    (It is the staging environment intermediate certificate used by Let's Encrypt).
     You can now safely comment the `acme.caserver` line, remove the `letsencrypt/acme.json` file and restart Traefik to issue a valid certificate.
 
 ## Explanation
@@ -55,7 +55,7 @@ ports:
   - "443:443"
 ```
 
-- We configure the Https let's encrypt challenge:
+- We configure the TLS Let's Encrypt challenge:
 
 ```yaml
 command:

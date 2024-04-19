@@ -71,11 +71,11 @@ with a router attached to the service `api@internal` in the
 to allow defining:
 
 - One or more security features through [middlewares](../middlewares/overview.md)
-  like authentication ([basicAuth](../middlewares/http/basicauth.md) , [digestAuth](../middlewares/http/digestauth.md),
+  like authentication ([basicAuth](../middlewares/http/basicauth.md), [digestAuth](../middlewares/http/digestauth.md),
   [forwardAuth](../middlewares/http/forwardauth.md)) or [allowlisting](../middlewares/http/ipallowlist.md).
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
-  through Traefik itself (sometimes referred as "Traefik-ception").
+  through Traefik itself (sometimes referred to as "Traefik-ception").
 
 ### Dashboard Router Rule
 
@@ -83,7 +83,7 @@ As underlined in the [documentation for the `api.dashboard` option](./api.md#das
 the [router rule](../routing/routers/index.md#rule) defined for Traefik must match
 the path prefixes `/api` and `/dashboard`.
 
-We recommend to use a "Host Based rule" as ```Host(`traefik.example.com`)``` to match everything on the host domain,
+We recommend using a "Host Based rule" as ```Host(`traefik.example.com`)``` to match everything on the host domain,
 or to make sure that the defined rule captures both prefixes:
 
 ```bash tab="Host Rule"

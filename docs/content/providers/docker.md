@@ -163,7 +163,7 @@ See the [Docker API Access](#docker-api-access) section for more information.
 
     services:
       traefik:
-         image: traefik:v3.0 # The official v2 Traefik docker image
+         image: traefik:v3.0 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -192,9 +192,9 @@ See the [Docker API Access](#docker-api-access) section for more information.
 
 ??? example "Using SSH"
 
-    Using Docker 18.09+ you can connect Traefik to daemon using SSH
+    Using Docker 18.09+ you can connect Traefik to daemon using SSH.
     We specify the SSH host and user in Traefik's configuration file.
-    Note that is server requires public keys for authentication you must have those accessible for user who runs Traefik.
+    Note that if the server requires public keys for authentication, you must have them accessible for the user running Traefik.
 
     ```yaml tab="File (YAML)"
     providers:
@@ -361,6 +361,13 @@ providers:
 --providers.docker.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
 # ...
 ```
+
+??? info "Default rule and Traefik service"
+
+    The exposure of the Traefik container, combined with the default rule mechanism,
+    can lead to create a router targeting itself in a loop.
+    In this case, to prevent an infinite loop,
+    Traefik adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `httpClientTimeout`
 

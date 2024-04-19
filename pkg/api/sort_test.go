@@ -828,7 +828,6 @@ func TestSortRouters(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(fmt.Sprintf("%s-%s", test.direction, test.sortBy), func(t *testing.T) {
 			t.Parallel()
 
@@ -1339,7 +1338,6 @@ func TestSortServices(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(fmt.Sprintf("%s-%s", test.direction, test.sortBy), func(t *testing.T) {
 			t.Parallel()
 
@@ -1674,7 +1672,6 @@ func TestSortMiddlewares(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(fmt.Sprintf("%s-%s", test.direction, test.sortBy), func(t *testing.T) {
 			t.Parallel()
 

@@ -94,23 +94,7 @@ func isWebSocketUpgrade(req *http.Request) bool {
 }
 
 func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
-	statusCode := http.StatusInternalServerError
-
-	switch {
-	case errors.Is(err, io.EOF):
-		statusCode = http.StatusBadGateway
-	case errors.Is(err, context.Canceled):
-		statusCode = StatusClientClosedRequest
-	default:
-		var netErr net.Error
-		if errors.As(err, &netErr) {
-			if netErr.Timeout() {
-				statusCode = http.StatusGatewayTimeout
-			} else {
-				statusCode = http.StatusBadGateway
-			}
-		}
-	}
+	statusCode := computeStatusCode(err)
 
 	logger := log.Ctx(req.Context())
 	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
@@ -119,6 +103,26 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
 		logger.Debug().Err(werr).Msg("Error while writing status code")
 	}
+}
+
+func computeStatusCode(err error) int {
+	switch {
+	case errors.Is(err, io.EOF):
+		return http.StatusBadGateway
+	case errors.Is(err, context.Canceled):
+		return StatusClientClosedRequest
+	default:
+		var netErr net.Error
+		if errors.As(err, &netErr) {
+			if netErr.Timeout() {
+				return http.StatusGatewayTimeout
+			}
+
+			return http.StatusBadGateway
+		}
+	}
+
+	return http.StatusInternalServerError
 }
 
 func statusText(statusCode int) string {

@@ -6,7 +6,7 @@ services:
       traefik.enable: true
       traefik.http.routers.rt1.rule: Host(`no.override.allowlist.docker.local`)
       traefik.http.routers.rt1.middlewares: wl1
-      traefik.http.middlewares.wl1.ipallowList.sourceRange: 8.8.8.8
+      traefik.http.middlewares.wl1.ipallowlist.sourceRange: 8.8.8.8
 
   overrideIPStrategyRemoteAddrAllowlist:
     image: traefik/whoami
@@ -34,8 +34,3 @@ services:
       traefik.http.routers.rt4.middlewares: wl4
       traefik.http.middlewares.wl4.ipallowlist.sourceRange: 8.8.8.8
       traefik.http.middlewares.wl4.ipallowlist.ipStrategy.excludedIPs: 10.0.0.1,10.0.0.2
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

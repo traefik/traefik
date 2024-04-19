@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
 	"testing"
@@ -170,6 +171,21 @@ func TestHandler_EntryPoints(t *testing.T) {
 			},
 		},
 		{
+			desc: "one entry point by id containing slash",
+			path: "/api/entrypoints/" + url.PathEscape("foo / bar"),
+			conf: static.Configuration{
+				Global: &static.Global{},
+				API:    &static.API{},
+				EntryPoints: map[string]*static.EntryPoint{
+					"foo / bar": {Address: ":81"},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/entrypoint-foo-slash-bar.json",
+			},
+		},
+		{
 			desc: "one entry point by id, that does not exist",
 			path: "/api/entrypoints/foo",
 			conf: static.Configuration{
@@ -194,7 +210,6 @@ func TestHandler_EntryPoints(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -212,7 +227,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
@@ -240,7 +255,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 
 func generateEntryPoints(nb int) map[string]*static.EntryPoint {
 	eps := make(map[string]*static.EntryPoint, nb)
-	for i := 0; i < nb; i++ {
+	for i := range nb {
 		eps[fmt.Sprintf("ep%2d", i)] = &static.EntryPoint{
 			Address: ":" + strconv.Itoa(i),
 		}

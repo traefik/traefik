@@ -244,6 +244,14 @@ A Story of key & values
     |-----------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/maxage`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                          | Value |
+    |---------------------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/maxage` | `42`  |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
@@ -305,6 +313,12 @@ A Story of key & values
     | Key (Path)                                                             | Value  |
     |------------------------------------------------------------------------|--------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly` | `true` |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/maxage`"
+
+    | Key (Path)                                                           | Value |
+    |----------------------------------------------------------------------|-------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
 
 ### Middleware
 

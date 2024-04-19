@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -13,6 +14,7 @@ import (
 	traefikinformers "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
@@ -45,6 +47,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	GetNodes() ([]*corev1.Node, bool, error)
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -52,9 +55,10 @@ type clientWrapper struct {
 	csCrd  traefikclientset.Interface
 	csKube kclientset.Interface
 
-	factoriesCrd    map[string]traefikinformers.SharedInformerFactory
-	factoriesKube   map[string]kinformers.SharedInformerFactory
-	factoriesSecret map[string]kinformers.SharedInformerFactory
+	factoryClusterScope kinformers.SharedInformerFactory
+	factoriesCrd        map[string]traefikinformers.SharedInformerFactory
+	factoriesKube       map[string]kinformers.SharedInformerFactory
+	factoriesSecret     map[string]kinformers.SharedInformerFactory
 
 	labelSelector string
 
@@ -120,14 +124,19 @@ func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, fmt.Errorf("read token: %w", err)
+	}
+
 	config := &rest.Config{
 		Host:        endpoint,
-		BearerToken: token,
+		BearerToken: string(tokenData),
 	}
 
 	if caFilePath != "" {
@@ -226,11 +235,18 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesSecret[ns] = factorySecret
 	}
 
+	c.factoryClusterScope = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+	_, err := c.factoryClusterScope.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ns := range namespaces {
 		c.factoriesCrd[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
 	}
+	c.factoryClusterScope.Start(stopCh)
 
 	for _, ns := range namespaces {
 		for t, ok := range c.factoriesCrd[ns].WaitForCacheSync(stopCh) {
@@ -249,6 +265,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
+		}
+	}
+
+	for t, ok := range c.factoryClusterScope.WaitForCacheSync(stopCh) {
+		if !ok {
+			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
 		}
 	}
 
@@ -444,6 +466,12 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	return secret, exist, err
 }
 
+func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
+	nodes, err := c.factoryClusterScope.Core().V1().Nodes().Lister().List(labels.Everything())
+	exist, err := translateNotFoundError(err)
+	return nodes, exist, err
+}
+
 // lookupNamespace returns the lookup namespace key for the given namespace.
 // When listening on all namespaces, it returns the client-go identifier ("")
 // for all-namespaces. Otherwise, it returns the given namespace.
@@ -463,12 +491,8 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
-	for _, watchedNamespace := range c.watchedNamespaces {
-		if watchedNamespace == ns {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(c.watchedNamespaces, ns)
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return

@@ -2,6 +2,7 @@ package acme
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -119,7 +120,7 @@ func (c *ChallengeTLSALPN) ListenConfiguration(conf dynamic.Configuration) {
 	c.muChans.Lock()
 
 	for _, certificate := range conf.TLS.Certificates {
-		if !containsACMETLS1(certificate.Stores) {
+		if !slices.Contains(certificate.Stores, tlsalpn01.ACMETLS1Protocol) {
 			continue
 		}
 
@@ -152,8 +153,8 @@ func createMessage(certs map[string]*Certificate) dynamic.Message {
 	for _, cert := range certs {
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
-				CertFile: traefiktls.FileOrContent(cert.Certificate),
-				KeyFile:  traefiktls.FileOrContent(cert.Key),
+				CertFile: types.FileOrContent(cert.Certificate),
+				KeyFile:  types.FileOrContent(cert.Key),
 			},
 			Stores: []string{tlsalpn01.ACMETLS1Protocol},
 		}
@@ -161,14 +162,4 @@ func createMessage(certs map[string]*Certificate) dynamic.Message {
 	}
 
 	return conf
-}
-
-func containsACMETLS1(stores []string) bool {
-	for _, store := range stores {
-		if store == tlsalpn01.ACMETLS1Protocol {
-			return true
-		}
-	}
-
-	return false
 }

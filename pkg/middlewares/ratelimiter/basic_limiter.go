@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
 
 type BasicLimiter struct {
@@ -67,12 +68,14 @@ func (b *BasicLimiter) Allow(
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := b.buckets.Set(source, bucket, b.ttl); err != nil {
 		b.logger.Error().Err(err).Msg("Could not insert/update bucket")
+		observability.SetStatusErrorf(req.Context(), "Could not insert/update bucket")
 		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
 		return false, err
 	}
 
 	res := bucket.Reserve()
 	if !res.OK() {
+		observability.SetStatusErrorf(req.Context(), "No bursty traffic allowed")
 		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
 		return false, nil
 	}

@@ -1,7 +1,7 @@
 package tcp
 
 import (
-	"fmt"
+	"errors"
 )
 
 // Constructor A constructor for a piece of TCP middleware.
@@ -29,7 +29,7 @@ func NewChain(constructors ...Constructor) Chain {
 // Then adds an handler at the end of the chain.
 func (c Chain) Then(h Handler) (Handler, error) {
 	if h == nil {
-		return nil, fmt.Errorf("cannot add a nil handler to the chain")
+		return nil, errors.New("cannot add a nil handler to the chain")
 	}
 
 	for i := range c.constructors {

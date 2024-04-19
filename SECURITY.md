@@ -16,7 +16,7 @@ Each version is supported until the next one is released (e.g. 1.1.x will be sup
 We use [Semantic Versioning](https://semver.org/).
 
 | Version   | Supported          |
-| --------- | ------------------ |
+|-----------|--------------------|
 | `2.2.x`   | :white_check_mark: |
 | `< 2.2.x` | :x:                |
 | `1.7.x`   | :white_check_mark: |
@@ -25,4 +25,6 @@ We use [Semantic Versioning](https://semver.org/).
 ## Reporting a Vulnerability
 
 We want to keep Traefik safe for everyone.
-If you've discovered a security vulnerability in Traefik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).
+If you've discovered a security vulnerability in Traefik,
+we appreciate your help in disclosing it to us in a responsible manner,
+by creating a [security advisory](https://github.com/traefik/traefik/security/advisories).
