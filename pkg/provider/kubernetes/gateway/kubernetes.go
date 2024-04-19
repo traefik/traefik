@@ -72,6 +72,12 @@ type Provider struct {
 	routerTransform k8s.RouterTransform
 }
 
+// Entrypoint defines the available entry points.
+type Entrypoint struct {
+	Address        string
+	HasHTTPTLSConf bool
+}
+
 // StatusAddress holds the Gateway Status address configuration.
 type StatusAddress struct {
 	IP       string     `description:"IP used to set Kubernetes Gateway status address." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
@@ -135,12 +141,6 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
-}
-
-// Entrypoint defines the available entry points.
-type Entrypoint struct {
-	Address        string
-	HasHTTPTLSConf bool
 }
 
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
@@ -786,93 +786,6 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
-	group := gatev1.Group(gatev1.GroupName)
-
-	switch protocol {
-	case gatev1.TCPProtocolType:
-		if experimentalChannel {
-			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
-		}
-
-		return nil, []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
-		}}
-
-	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
-		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
-
-	case gatev1.TLSProtocolType:
-		if experimentalChannel {
-			return []gatev1.RouteGroupKind{
-				{Kind: kindTCPRoute, Group: &group},
-				{Kind: kindTLSRoute, Group: &group},
-			}, nil
-		}
-
-		return nil, []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
-		}}
-	}
-
-	return nil, []metav1.Condition{{
-		Type:               string(gatev1.ListenerConditionAccepted),
-		Status:             metav1.ConditionFalse,
-		LastTransitionTime: metav1.Now(),
-		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
-		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
-	}}
-}
-
-func getAllowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
-	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
-		return supportedKinds, nil
-	}
-
-	var (
-		routeKinds = []gatev1.RouteGroupKind{}
-		conditions []metav1.Condition
-	)
-
-	uniqRouteKinds := map[gatev1.Kind]struct{}{}
-	for _, routeKind := range listener.AllowedRoutes.Kinds {
-		var isSupported bool
-		for _, kind := range supportedKinds {
-			if routeKind.Kind == kind.Kind && routeKind.Group != nil && *routeKind.Group == *kind.Group {
-				isSupported = true
-				break
-			}
-		}
-
-		if !isSupported {
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(gatev1.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %s/%s", listener.Protocol, groupToString(routeKind.Group), routeKind.Kind),
-			})
-			continue
-		}
-
-		if _, exists := uniqRouteKinds[routeKind.Kind]; !exists {
-			routeKinds = append(routeKinds, routeKind)
-			uniqRouteKinds[routeKind.Kind] = struct{}{}
-		}
-	}
-
-	return routeKinds, conditions
-}
-
 func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
@@ -1049,6 +962,428 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 	}
 
 	return conditions
+}
+
+// loadServices is generating a WRR service, even when there is only one target.
+func (p *Provider) loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
+	services := map[string]*dynamic.Service{}
+
+	wrrSvc := &dynamic.Service{
+		Weighted: &dynamic.WeightedRoundRobin{
+			Services: []dynamic.WRRService{},
+		},
+	}
+
+	for _, backendRef := range backendRefs {
+		if backendRef.Group == nil || backendRef.Kind == nil {
+			// Should not happen as this is validated by kubernetes
+			continue
+		}
+
+		if isInternalService(backendRef.BackendRef) {
+			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.BackendRef.Name)
+		}
+
+		weight := int(ptr.Deref(backendRef.Weight, 1))
+
+		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
+			if backendRef.Namespace != nil && string(*backendRef.Namespace) != namespace {
+				// TODO: support backend reference grant.
+				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+			}
+
+			name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
+			if err != nil {
+				return nil, nil, fmt.Errorf("unable to load HTTPBackendRef %s/%s/%s: %w", *backendRef.Group, *backendRef.Kind, backendRef.Name, err)
+			}
+
+			services[name] = service
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: name, Weight: &weight})
+			continue
+		}
+
+		lb := &dynamic.ServersLoadBalancer{}
+		lb.SetDefaults()
+
+		svc := dynamic.Service{LoadBalancer: lb}
+
+		// TODO support cross namespace through ReferencePolicy
+		service, exists, err := client.GetService(namespace, string(backendRef.Name))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if !exists {
+			return nil, nil, errors.New("service not found")
+		}
+
+		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
+			// If the port is unspecified and the backend is a Service
+			// object consisting of multiple port definitions, the route
+			// must be dropped from the Gateway. The controller should
+			// raise the "ResolvedRefs" condition on the Gateway with the
+			// "DroppedRoutes" reason. The gateway status for this route
+			// should be updated with a condition that describes the error
+			// more specifically.
+			log.Error().Msg("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
+			continue
+		}
+
+		var portSpec corev1.ServicePort
+		var match bool
+
+		for _, p := range service.Spec.Ports {
+			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
+				portSpec = p
+				match = true
+				break
+			}
+		}
+
+		if !match {
+			return nil, nil, errors.New("service port not found")
+		}
+
+		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
+		if endpointsErr != nil {
+			return nil, nil, endpointsErr
+		}
+
+		if !endpointsExists {
+			return nil, nil, errors.New("endpoints not found")
+		}
+
+		if len(endpoints.Subsets) == 0 {
+			return nil, nil, errors.New("subset not found")
+		}
+
+		var port int32
+		var portStr string
+		for _, subset := range endpoints.Subsets {
+			for _, p := range subset.Ports {
+				if portSpec.Name == p.Name {
+					port = p.Port
+					break
+				}
+			}
+
+			if port == 0 {
+				return nil, nil, errors.New("cannot define a port")
+			}
+
+			protocol := getProtocol(portSpec)
+
+			portStr = strconv.FormatInt(int64(port), 10)
+			for _, addr := range subset.Addresses {
+				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(addr.IP, portStr)),
+				})
+			}
+		}
+
+		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
+		services[serviceName] = &svc
+
+		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
+	}
+
+	if len(wrrSvc.Weighted.Services) == 0 {
+		return nil, nil, errors.New("no service has been created")
+	}
+
+	return wrrSvc, services, nil
+}
+
+func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
+	// Support for cross-provider references (e.g: api@internal).
+	// This provides the same behavior as for IngressRoutes.
+	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+		return string(backendRef.Name), nil, nil
+	}
+
+	backendFunc, ok := p.groupKindBackendFuncs[string(*backendRef.Group)][string(*backendRef.Kind)]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	}
+	if backendFunc == nil {
+		return "", nil, fmt.Errorf("undefined backendFunc for HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	}
+
+	return backendFunc(string(backendRef.Name), namespace)
+}
+
+func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+	middlewares := make(map[string]*dynamic.Middleware)
+
+	// The spec allows for an empty string in which case we should use the
+	// scheme of the request which in this case is the listener scheme.
+	var listenerScheme string
+	switch listener.Protocol {
+	case gatev1.HTTPProtocolType:
+		listenerScheme = "http"
+	case gatev1.HTTPSProtocolType:
+		listenerScheme = "https"
+	default:
+		return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
+	}
+
+	for i, filter := range filters {
+		var middleware *dynamic.Middleware
+		switch filter.Type {
+		case gatev1.HTTPRouteFilterRequestRedirect:
+			var err error
+			middleware, err = createRedirectRegexMiddleware(listenerScheme, filter.RequestRedirect)
+			if err != nil {
+				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
+			}
+
+			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+			middlewares[middlewareName] = middleware
+		case gatev1.HTTPRouteFilterExtensionRef:
+			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
+			if err != nil {
+				return nil, fmt.Errorf("unsupported filter %s: %w", filter.Type, err)
+			}
+
+			middlewares[name] = middleware
+
+		case gatev1.HTTPRouteFilterRequestHeaderModifier:
+			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+
+		default:
+			// As per the spec:
+			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
+			// In all cases where incompatible or unsupported filters are
+			// specified, implementations MUST add a warning condition to
+			// status.
+			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
+		}
+	}
+
+	return middlewares, nil
+}
+
+func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRef *gatev1.LocalObjectReference) (string, *dynamic.Middleware, error) {
+	if extensionRef == nil {
+		return "", nil, errors.New("filter extension ref undefined")
+	}
+
+	filterFunc, ok := p.groupKindFilterFuncs[string(extensionRef.Group)][string(extensionRef.Kind)]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
+	}
+	if filterFunc == nil {
+		return "", nil, fmt.Errorf("undefined filterFunc for filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
+	}
+
+	return filterFunc(string(extensionRef.Name), namespace)
+}
+
+// loadTCPServices is generating a WRR service, even when there is only one target.
+func loadTCPServices(client Client, namespace string, backendRefs []gatev1.BackendRef) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
+	services := map[string]*dynamic.TCPService{}
+
+	wrrSvc := &dynamic.TCPService{
+		Weighted: &dynamic.TCPWeightedRoundRobin{
+			Services: []dynamic.TCPWRRService{},
+		},
+	}
+
+	for _, backendRef := range backendRefs {
+		if backendRef.Group == nil || backendRef.Kind == nil {
+			// Should not happen as this is validated by kubernetes
+			continue
+		}
+
+		if isInternalService(backendRef) {
+			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.Name)
+		}
+
+		weight := int(ptr.Deref(backendRef.Weight, 1))
+
+		if isTraefikService(backendRef) {
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
+			continue
+		}
+
+		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
+			return nil, nil, fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+		}
+
+		svc := dynamic.TCPService{
+			LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+		}
+
+		service, exists, err := client.GetService(namespace, string(backendRef.Name))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if !exists {
+			return nil, nil, errors.New("service not found")
+		}
+
+		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
+			// If the port is unspecified and the backend is a Service
+			// object consisting of multiple port definitions, the route
+			// must be dropped from the Gateway. The controller should
+			// raise the "ResolvedRefs" condition on the Gateway with the
+			// "DroppedRoutes" reason. The gateway status for this route
+			// should be updated with a condition that describes the error
+			// more specifically.
+			log.Error().Msg("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
+			continue
+		}
+
+		var portSpec corev1.ServicePort
+		var match bool
+
+		for _, p := range service.Spec.Ports {
+			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
+				portSpec = p
+				match = true
+				break
+			}
+		}
+
+		if !match {
+			return nil, nil, errors.New("service port not found")
+		}
+
+		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
+		if endpointsErr != nil {
+			return nil, nil, endpointsErr
+		}
+
+		if !endpointsExists {
+			return nil, nil, errors.New("endpoints not found")
+		}
+
+		if len(endpoints.Subsets) == 0 {
+			return nil, nil, errors.New("subset not found")
+		}
+
+		var port int32
+		var portStr string
+		for _, subset := range endpoints.Subsets {
+			for _, p := range subset.Ports {
+				if portSpec.Name == p.Name {
+					port = p.Port
+					break
+				}
+			}
+
+			if port == 0 {
+				return nil, nil, errors.New("cannot define a port")
+			}
+
+			portStr = strconv.FormatInt(int64(port), 10)
+			for _, addr := range subset.Addresses {
+				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
+					Address: net.JoinHostPort(addr.IP, portStr),
+				})
+			}
+		}
+
+		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
+		services[serviceName] = &svc
+
+		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
+	}
+
+	if len(wrrSvc.Weighted.Services) == 0 {
+		return nil, nil, errors.New("no service has been created")
+	}
+
+	return wrrSvc, services, nil
+}
+
+func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+	group := gatev1.Group(gatev1.GroupName)
+
+	switch protocol {
+	case gatev1.TCPProtocolType:
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
+
+	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
+		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
+
+	case gatev1.TLSProtocolType:
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{
+				{Kind: kindTCPRoute, Group: &group},
+				{Kind: kindTLSRoute, Group: &group},
+			}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
+	}
+
+	return nil, []metav1.Condition{{
+		Type:               string(gatev1.ListenerConditionAccepted),
+		Status:             metav1.ConditionFalse,
+		LastTransitionTime: metav1.Now(),
+		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
+		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
+	}}
+}
+
+func getAllowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
+		return supportedKinds, nil
+	}
+
+	var (
+		routeKinds = []gatev1.RouteGroupKind{}
+		conditions []metav1.Condition
+	)
+
+	uniqRouteKinds := map[gatev1.Kind]struct{}{}
+	for _, routeKind := range listener.AllowedRoutes.Kinds {
+		var isSupported bool
+		for _, kind := range supportedKinds {
+			if routeKind.Kind == kind.Kind && routeKind.Group != nil && *routeKind.Group == *kind.Group {
+				isSupported = true
+				break
+			}
+		}
+
+		if !isSupported {
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %s/%s", listener.Protocol, groupToString(routeKind.Group), routeKind.Kind),
+			})
+			continue
+		}
+
+		if _, exists := uniqRouteKinds[routeKind.Kind]; !exists {
+			routeKinds = append(routeKinds, routeKind)
+			uniqRouteKinds[routeKind.Kind] = struct{}{}
+		}
+	}
+
+	return routeKinds, conditions
 }
 
 func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
@@ -1685,341 +2020,6 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	}
 
 	return cert, key, nil
-}
-
-// loadServices is generating a WRR service, even when there is only one target.
-func (p *Provider) loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
-	services := map[string]*dynamic.Service{}
-
-	wrrSvc := &dynamic.Service{
-		Weighted: &dynamic.WeightedRoundRobin{
-			Services: []dynamic.WRRService{},
-		},
-	}
-
-	for _, backendRef := range backendRefs {
-		if backendRef.Group == nil || backendRef.Kind == nil {
-			// Should not happen as this is validated by kubernetes
-			continue
-		}
-
-		if isInternalService(backendRef.BackendRef) {
-			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.BackendRef.Name)
-		}
-
-		weight := int(ptr.Deref(backendRef.Weight, 1))
-
-		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
-			if backendRef.Namespace != nil && string(*backendRef.Namespace) != namespace {
-				// TODO: support backend reference grant.
-				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-			}
-
-			name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
-			if err != nil {
-				return nil, nil, fmt.Errorf("unable to load HTTPBackendRef %s/%s/%s: %w", *backendRef.Group, *backendRef.Kind, backendRef.Name, err)
-			}
-
-			services[name] = service
-			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: name, Weight: &weight})
-			continue
-		}
-
-		lb := &dynamic.ServersLoadBalancer{}
-		lb.SetDefaults()
-
-		svc := dynamic.Service{LoadBalancer: lb}
-
-		// TODO support cross namespace through ReferencePolicy
-		service, exists, err := client.GetService(namespace, string(backendRef.Name))
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if !exists {
-			return nil, nil, errors.New("service not found")
-		}
-
-		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
-			// If the port is unspecified and the backend is a Service
-			// object consisting of multiple port definitions, the route
-			// must be dropped from the Gateway. The controller should
-			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason. The gateway status for this route
-			// should be updated with a condition that describes the error
-			// more specifically.
-			log.Error().Msg("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
-			continue
-		}
-
-		var portSpec corev1.ServicePort
-		var match bool
-
-		for _, p := range service.Spec.Ports {
-			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
-				portSpec = p
-				match = true
-				break
-			}
-		}
-
-		if !match {
-			return nil, nil, errors.New("service port not found")
-		}
-
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
-		}
-
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
-			}
-
-			protocol := getProtocol(portSpec)
-
-			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(addr.IP, portStr)),
-				})
-			}
-		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
-	}
-
-	if len(wrrSvc.Weighted.Services) == 0 {
-		return nil, nil, errors.New("no service has been created")
-	}
-
-	return wrrSvc, services, nil
-}
-
-func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
-	// Support for cross-provider references (e.g: api@internal).
-	// This provides the same behavior as for IngressRoutes.
-	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
-		return string(backendRef.Name), nil, nil
-	}
-
-	backendFunc, ok := p.groupKindBackendFuncs[string(*backendRef.Group)][string(*backendRef.Kind)]
-	if !ok {
-		return "", nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-	}
-	if backendFunc == nil {
-		return "", nil, fmt.Errorf("undefined backendFunc for HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-	}
-
-	return backendFunc(string(backendRef.Name), namespace)
-}
-
-// loadTCPServices is generating a WRR service, even when there is only one target.
-func loadTCPServices(client Client, namespace string, backendRefs []gatev1.BackendRef) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
-	services := map[string]*dynamic.TCPService{}
-
-	wrrSvc := &dynamic.TCPService{
-		Weighted: &dynamic.TCPWeightedRoundRobin{
-			Services: []dynamic.TCPWRRService{},
-		},
-	}
-
-	for _, backendRef := range backendRefs {
-		if backendRef.Group == nil || backendRef.Kind == nil {
-			// Should not happen as this is validated by kubernetes
-			continue
-		}
-
-		if isInternalService(backendRef) {
-			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.Name)
-		}
-
-		weight := int(ptr.Deref(backendRef.Weight, 1))
-
-		if isTraefikService(backendRef) {
-			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
-			continue
-		}
-
-		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
-			return nil, nil, fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-		}
-
-		svc := dynamic.TCPService{
-			LoadBalancer: &dynamic.TCPServersLoadBalancer{},
-		}
-
-		service, exists, err := client.GetService(namespace, string(backendRef.Name))
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if !exists {
-			return nil, nil, errors.New("service not found")
-		}
-
-		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
-			// If the port is unspecified and the backend is a Service
-			// object consisting of multiple port definitions, the route
-			// must be dropped from the Gateway. The controller should
-			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason. The gateway status for this route
-			// should be updated with a condition that describes the error
-			// more specifically.
-			log.Error().Msg("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
-			continue
-		}
-
-		var portSpec corev1.ServicePort
-		var match bool
-
-		for _, p := range service.Spec.Ports {
-			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
-				portSpec = p
-				match = true
-				break
-			}
-		}
-
-		if !match {
-			return nil, nil, errors.New("service port not found")
-		}
-
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
-		}
-
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
-			}
-
-			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
-					Address: net.JoinHostPort(addr.IP, portStr),
-				})
-			}
-		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
-	}
-
-	if len(wrrSvc.Weighted.Services) == 0 {
-		return nil, nil, errors.New("no service has been created")
-	}
-
-	return wrrSvc, services, nil
-}
-
-func (p *Provider) loadMiddlewares(listener gatev1.Listener, namespace string, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
-	middlewares := make(map[string]*dynamic.Middleware)
-
-	// The spec allows for an empty string in which case we should use the
-	// scheme of the request which in this case is the listener scheme.
-	var listenerScheme string
-	switch listener.Protocol {
-	case gatev1.HTTPProtocolType:
-		listenerScheme = "http"
-	case gatev1.HTTPSProtocolType:
-		listenerScheme = "https"
-	default:
-		return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
-	}
-
-	for i, filter := range filters {
-		var middleware *dynamic.Middleware
-		switch filter.Type {
-		case gatev1.HTTPRouteFilterRequestRedirect:
-			var err error
-			middleware, err = createRedirectRegexMiddleware(listenerScheme, filter.RequestRedirect)
-			if err != nil {
-				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
-			}
-
-			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
-			middlewares[middlewareName] = middleware
-		case gatev1.HTTPRouteFilterExtensionRef:
-			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
-			if err != nil {
-				return nil, fmt.Errorf("unsupported filter %s: %w", filter.Type, err)
-			}
-
-			middlewares[name] = middleware
-
-		case gatev1.HTTPRouteFilterRequestHeaderModifier:
-			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
-			middlewares[middlewareName] = createRequestHeaderModifier(filter.RequestHeaderModifier)
-
-		default:
-			// As per the spec:
-			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
-			// In all cases where incompatible or unsupported filters are
-			// specified, implementations MUST add a warning condition to
-			// status.
-			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
-		}
-	}
-
-	return middlewares, nil
-}
-
-func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRef *gatev1.LocalObjectReference) (string, *dynamic.Middleware, error) {
-	if extensionRef == nil {
-		return "", nil, errors.New("filter extension ref undefined")
-	}
-
-	filterFunc, ok := p.groupKindFilterFuncs[string(extensionRef.Group)][string(extensionRef.Kind)]
-	if !ok {
-		return "", nil, fmt.Errorf("unsupported filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
-	}
-	if filterFunc == nil {
-		return "", nil, fmt.Errorf("undefined filterFunc for filter extension ref %s/%s/%s", extensionRef.Group, extensionRef.Kind, extensionRef.Name)
-	}
-
-	return filterFunc(string(extensionRef.Name), namespace)
 }
 
 // createRequestHeaderModifier does not enforce/check the configuration,
