@@ -20,7 +20,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 12.11+](https://nodejs.org) [Yarn](https://yarnpkg.com/)
+- prerequisite: [Node 20.11+](https://nodejs.org) [Yarn 1.22.19](https://yarnpkg.com/)
 
 - Go to the `webui/` directory
 
@@ -57,7 +57,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 - [Node](https://nodejs.org)
 - [Yarn](https://yarnpkg.com/)
-- [Webpack](https://github.com/webpack/webpack)
+- [Quasar](https://quasar.dev/)
 - [Vue](https://vuejs.org/)
 - [Bulma](https://bulma.io)
 - [D3](https://d3js.org)

@@ -5,7 +5,7 @@ const { configure } = require('quasar/wrappers')
 
 module.exports = configure(function (ctx) {
   return {
-   eslint: {
+    eslint: {
       warnings: true,
       errors: true
     },
@@ -122,10 +122,10 @@ module.exports = configure(function (ctx) {
     build: {
       // Needed to have relative assets in the index.html
       // https://github.com/quasarframework/quasar/issues/8513#issuecomment-1127654470
-      extendViteConf(viteConf, {isServer, isClient}) {
+      extendViteConf(viteConf, { isServer, isClient }) {
         viteConf.base = "";
       },
-     viteVuePluginOptions: {
+      viteVuePluginOptions: {
         template: {
           compilerOptions: {
             isCustomElement: (tag) => tag.startsWith('hub-')
@@ -186,7 +186,7 @@ module.exports = configure(function (ctx) {
         clientsClaim: true
       },
 
-      chainWebpackCustomSW (chain) {
+      chainWebpackCustomSW(chain) {
         chain.plugin('eslint-webpack-plugin')
           .use(ESLintPlugin, [{ extensions: ['js'] }])
       },
@@ -237,7 +237,7 @@ module.exports = configure(function (ctx) {
     electron: {
       // bundler: 'builder', // or 'packager'
 
-      extendWebpack (cfg) {
+      extendWebpack(cfg) {
         // do something with Electron main process Webpack cfg
         // chainWebpack also available besides this extendWebpack
       },
