@@ -328,6 +328,24 @@ http:
               - foobar
           requestHeaderName: foobar
           requestHost: true
+        redis:
+          endpoints:
+            - foobar
+            - foobar
+          tls:
+            ca: foobar
+            cert: foobar
+            key: foobar
+            insecureSkipVerify: true
+          username: foobar
+          password: foobar
+          db: 42
+          poolSize: 42
+          minIdleConns: 42
+          idleConnTimeout: 42ns
+          readTimeout: 42ns
+          writeTimeout: 42ns
+          dialTimeout: 42ns
     Middleware19:
       redirectRegex:
         regex: foobar

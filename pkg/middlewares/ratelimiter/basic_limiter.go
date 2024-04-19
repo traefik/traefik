@@ -10,8 +10,8 @@ import (
 	"github.com/mailgun/ttlmap"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/time/rate"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"golang.org/x/time/rate"
 )
 
 type BasicLimiter struct {

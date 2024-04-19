@@ -3,15 +3,14 @@ name: Test Unit
 on:
   pull_request:
     branches:
-      - "*"
+      - '*'
 
 env:
-  IN_DOCKER: ""
   GO_VERSION: '1.22'
 
 jobs:
   test-unit:
-    runs-on:  ubuntu-22.04
+    runs-on: ubuntu-22.04
 
     services:
       # Label used to access the service container
@@ -27,10 +26,6 @@ jobs:
         ports:
           # Maps port 6379 on service container to the host
           - 6379:6379
-
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
     steps:
       - name: Check out code

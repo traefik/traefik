@@ -125,7 +125,6 @@ func TestRateLimitRedis(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			randPort := rand.Int()
 			if test.loadDuration >= time.Minute && testing.Short() {
