@@ -10,7 +10,7 @@ env:
 
 jobs:
 
-  test-unit:
+  test-unit-app:
     runs-on: ubuntu-22.04
 
     steps:
@@ -28,4 +28,22 @@ jobs:
         run: touch webui/static/index.html
 
       - name: Tests
-        run: make test-unit
+        run: make test-unit-app
+
+  test-unit-webui:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.11'
+          cache: 'yarn'
+          cache-dependency-path: 'webui/yarn.lock'
+
+      - name: Tests
+        run: make test-unit-webui

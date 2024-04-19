@@ -92,8 +92,17 @@ test: test-unit test-integration
 
 .PHONY: test-unit
 #? test-unit: Run the unit tests
-test-unit:
+test-unit: test-unit-app test-unit-webui
+
+.PHONY: test-unit-app
+#? test-unit: Run the unit tests for the application
+test-unit-app:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -cover "-coverprofile=cover.out" -v $(TESTFLAGS) ./pkg/... ./cmd/...
+
+.PHONY: test-unit-webui
+#? test-unit: Run the unit tests for the application
+test-unit-webui:
+	yarn --cwd ./webui install && yarn --cwd ./webui test:unit:ci
 
 .PHONY: test-integration
 #? test-integration: Run the integration tests
