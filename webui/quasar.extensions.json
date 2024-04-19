@@ -1,0 +1,5 @@
+{
+  "@quasar/testing-unit-vitest": {
+    "options": []
+  }
+}
