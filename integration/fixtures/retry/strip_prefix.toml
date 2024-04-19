@@ -1,0 +1,40 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    middlewares = [ "retry", "strip-prefix" ]
+    rule = "PathPrefix(`/`)"
+
+[http.middlewares.retry.retry]
+  attempts = 3
+
+[http.middlewares.strip-prefix.stripPrefix]
+  prefixes = [ "/test" ]
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{ .WhoamiIP }}:8080"
+
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{ .WhoamiIP }}:80"

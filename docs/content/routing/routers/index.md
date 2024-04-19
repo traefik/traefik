@@ -442,6 +442,14 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+??? warning "Maximum Value"
+  
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
+
 ??? info "How default priorities are computed"
 
     ```yaml tab="File (YAML)"
@@ -514,6 +522,65 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ```
 
     In this configuration, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
+
+### RuleSyntax
+
+_Optional, Default=""_
+
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+`ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
+
+??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-v3:
+          rule: HostRegexp(`[a-z]+\\.traefik\\.com`)
+          ruleSyntax: v3
+        Router-v2:
+          rule: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
+          ruleSyntax: v2
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.Router-v3]
+        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+        ruleSyntax = v3
+      [http.routers.Router-v2]
+        rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+        ruleSyntax = v2
+    ```
+
+    ```yaml tab="Kubernetes traefik.io/v1alpha1"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: default
+    
+    spec:
+      routes:
+        # route v3
+        - match: HostRegexp(`[a-z]+\\.traefik\\.com`)
+          syntax: v3
+          kind: Rule
+
+        # route v2
+        - match: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
+          syntax: v2
+          kind: Rule
+    ```
+
+    In this configuration, the ruleSyntax is configured to allow `Router-v2` to use v2 syntax,
+    while for `Router-v3` it is configured to use v3 syntax.
 
 ### Middlewares
 
@@ -816,7 +883,7 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply _before_ the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
@@ -968,12 +1035,12 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                                                                 | Description                                                                                      |
-|------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)                                                | Checks if the connection's Server Name Indication is equal to `domain`.                          |
-| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)                                          | Checks if the connection's Server Name Indication matches `regexp`.                              |
-| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-disable -->  | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
-| [```ALPN(`protocol`)```](#alpn)                                                                      | Checks if the connection's ALPN protocol equals `protocol`.                                      |
+| Rule                                                        | Description                                                                                      |
+|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |<!-- markdownlint-disable-line MD051 -->
+| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
 !!! tip "Backticks or Quotes?"
 
@@ -1089,6 +1156,14 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+??? warning "Maximum Value"
+
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
+
 ??? info "How default priorities are computed"
 
     ```yaml tab="File (YAML)"
@@ -1160,6 +1235,65 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ```
 
     In this configuration, the priority is configured so that `Router-1` will handle requests from `192.168.0.12`.
+
+### RuleSyntax
+
+_Optional, Default=""_
+
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+`ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
+
+??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    tcp:
+      routers:
+        Router-v3:
+          rule: ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)
+          ruleSyntax: v3
+        Router-v2:
+          rule: ClientIP(`192.168.0.11`, `192.168.0.12`)
+          ruleSyntax: v2
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [tcp.routers]
+      [tcp.routers.Router-v3]
+        rule = "ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)"
+        ruleSyntax = v3
+      [tcp.routers.Router-v2]
+        rule = "ClientIP(`192.168.0.11`, `192.168.0.12`)"
+        ruleSyntax = v2
+    ```
+
+    ```yaml tab="Kubernetes traefik.io/v1alpha1"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRouteTCP
+    metadata:
+      name: test.route
+      namespace: default
+    
+    spec:
+      routes:
+        # route v3
+        - match: ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)
+          syntax: v3
+          kind: Rule
+
+        # route v2
+        - match: ClientIP(`192.168.0.11`, `192.168.0.12`)
+          syntax: v2
+          kind: Rule
+    ```
+
+    In this configuration, the ruleSyntax is configured to allow `Router-v2` to use v2 syntax,
+    while for `Router-v3` it is configured to use v3 syntax.
 
 ### Middlewares
 

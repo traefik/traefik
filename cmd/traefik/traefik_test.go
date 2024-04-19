@@ -95,7 +95,6 @@ func TestAppendCertMetric(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -130,12 +129,6 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 				},
 				"traefik": {
 					Address: ":8080",
-				},
-				"traefikhub-api": {
-					Address: ":9900",
-				},
-				"traefikhub-tunl": {
-					Address: ":9901",
 				},
 			},
 			expected: []string{"web"},

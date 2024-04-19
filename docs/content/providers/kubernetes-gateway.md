@@ -14,7 +14,7 @@ The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports the Gateway API [v0.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v0.4.0) specification.
+This provider is proposed as an experimental feature and partially supports Gateway API [v1.0.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.0.0) specification.
 
 !!! warning "Enabling The Experimental Kubernetes Gateway Provider"
 
@@ -80,17 +80,13 @@ This provider is proposed as an experimental feature and partially supports the 
 
 The Kubernetes Gateway API project provides several guides on how to use the APIs.
 These guides can help you to go further than the example above.
-The [getting started guide](https://gateway-api.sigs.k8s.io/v1alpha2/guides/) details how to install the CRDs from their repository.
-
-!!! note ""
-
-    Keep in mind that the Traefik Gateway provider only supports the `v0.4.0` (v1alpha2).
+The [getting started guide](https://gateway-api.sigs.k8s.io/guides/) details how to install the CRDs from their repository.
 
 For now, the Traefik Gateway Provider can be used while following the below guides:
 
-* [Simple Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/guides/simple-gateway/)
-* [HTTP routing](https://gateway-api.sigs.k8s.io/v1alpha2/guides/http-routing/)
-* [TLS](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)
+* [Simple Gateway](https://gateway-api.sigs.k8s.io/guides/simple-gateway/)
+* [HTTP routing](https://gateway-api.sigs.k8s.io/guides/http-routing/)
+* [TLS](https://gateway-api.sigs.k8s.io/guides/tls/)
 
 ## Resource Configuration
 
@@ -216,6 +212,29 @@ providers:
 --providers.kubernetesgateway.namespaces=default,production
 ```
 
+### `experimentalChannel`
+
+_Optional, Default: false_
+
+Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).
+This option currently enables support for `TCPRoute` and `TLSRoute`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    experimentalChannel: true
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+    experimentalChannel = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.experimentalchannel=true
+```
+
 ### `labelselector`
 
 _Optional, Default: ""_
@@ -271,4 +290,4 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

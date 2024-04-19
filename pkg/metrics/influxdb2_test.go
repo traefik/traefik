@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -26,7 +25,6 @@ func TestInfluxDB2(t *testing.T) {
 		c <- &bodyStr
 		_, _ = fmt.Fprintln(w, "ok")
 	}))
-	defer ts.Close()
 
 	influxDB2Registry := RegisterInfluxDB2(context.Background(),
 		&types.InfluxDB2{
@@ -39,7 +37,11 @@ func TestInfluxDB2(t *testing.T) {
 			AddRoutersLabels:     true,
 			AddServicesLabels:    true,
 		})
-	defer StopInfluxDB2()
+
+	t.Cleanup(func() {
+		StopInfluxDB2()
+		ts.Close()
+	})
 
 	if !influxDB2Registry.IsEpEnabled() || !influxDB2Registry.IsRouterEnabled() || !influxDB2Registry.IsSvcEnabled() {
 		t.Fatalf("InfluxDB2Registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
@@ -136,15 +138,4 @@ func TestInfluxDB2(t *testing.T) {
 	msgServiceRetries := <-c
 
 	assertMessage(t, *msgServiceRetries, expectedServiceRetries)
-}
-
-func assertMessage(t *testing.T, msg string, patterns []string) {
-	t.Helper()
-	for _, pattern := range patterns {
-		re := regexp.MustCompile(pattern)
-		match := re.FindStringSubmatch(msg)
-		if len(match) != 2 {
-			t.Errorf("Got %q %v, want %q", msg, match, pattern)
-		}
-	}
 }

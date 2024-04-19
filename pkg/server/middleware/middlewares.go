@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/containous/alice"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/auth"
@@ -22,6 +24,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcert"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter"
 	"github.com/traefik/traefik/v3/pkg/middlewares/redirect"
@@ -30,7 +34,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
-	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
@@ -97,7 +100,7 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 	if !ok {
 		currentStack = []string{}
 	}
-	if inSlice(middlewareName, currentStack) {
+	if slices.Contains(currentStack, middlewareName) {
 		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
 	}
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
@@ -182,7 +185,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return contenttype.New(ctx, next, middlewareName)
+			return contenttype.New(ctx, next, *config.ContentType, middlewareName)
 		}
 	}
 
@@ -233,6 +236,19 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return headers.New(ctx, next, *config.Headers, middlewareName)
+		}
+	}
+
+	// IPWhiteList
+	if config.IPWhiteList != nil {
+		qualifiedName := provider.GetQualifiedName(ctx, middlewareName)
+		log.Warn().Msgf("Middleware %q of type IPWhiteList is deprecated, please use IPAllowList instead.", qualifiedName)
+
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
 		}
 	}
 
@@ -372,14 +388,8 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	return tracing.Wrap(ctx, middleware), nil
-}
-
-func inSlice(element string, stack []string) bool {
-	for _, value := range stack {
-		if value == element {
-			return true
-		}
-	}
-	return false
+	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
+	// Hence, regarding internal resources' observability deactivation,
+	// this would not enable tracing.
+	return observability.WrapMiddleware(ctx, middleware), nil
 }

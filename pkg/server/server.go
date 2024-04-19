@@ -9,19 +9,16 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/metrics"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 )
 
 // Server is the reverse-proxy/load-balancer engine.
 type Server struct {
-	watcher        *ConfigurationWatcher
-	tcpEntryPoints TCPEntryPoints
-	udpEntryPoints UDPEntryPoints
-	chainBuilder   *middleware.ChainBuilder
-
-	accessLoggerMiddleware *accesslog.Handler
+	watcher          *ConfigurationWatcher
+	tcpEntryPoints   TCPEntryPoints
+	udpEntryPoints   UDPEntryPoints
+	observabilityMgr *middleware.ObservabilityMgr
 
 	signals  chan os.Signal
 	stopChan chan bool
@@ -30,18 +27,15 @@ type Server struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher,
-	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler,
-) *Server {
+func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher, observabilityMgr *middleware.ObservabilityMgr) *Server {
 	srv := &Server{
-		watcher:                watcher,
-		tcpEntryPoints:         entryPoints,
-		chainBuilder:           chainBuilder,
-		accessLoggerMiddleware: accessLoggerMiddleware,
-		signals:                make(chan os.Signal, 1),
-		stopChan:               make(chan bool, 1),
-		routinesPool:           routinesPool,
-		udpEntryPoints:         entryPointsUDP,
+		watcher:          watcher,
+		tcpEntryPoints:   entryPoints,
+		observabilityMgr: observabilityMgr,
+		signals:          make(chan os.Signal, 1),
+		stopChan:         make(chan bool, 1),
+		routinesPool:     routinesPool,
+		udpEntryPoints:   entryPointsUDP,
 	}
 
 	srv.configureSignals()
@@ -73,7 +67,6 @@ func (s *Server) Wait() {
 
 // Stop stops the server.
 func (s *Server) Stop() {
-	//nolint:zerologlint // false-positive https://github.com/ykadowak/zerologlint/issues/3
 	defer log.Info().Msg("Server stopped")
 
 	s.tcpEntryPoints.Stop()
@@ -104,7 +97,7 @@ func (s *Server) Close() {
 
 	close(s.stopChan)
 
-	s.chainBuilder.Close()
+	s.observabilityMgr.Close()
 
 	cancel()
 }

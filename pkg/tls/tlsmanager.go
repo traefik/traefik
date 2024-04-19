@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -68,6 +69,13 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	defer m.lock.Unlock()
 
 	m.configs = configs
+	for optionName, option := range m.configs {
+		// Handle `PreferServerCipherSuites` depreciation
+		if option.PreferServerCipherSuites != nil {
+			log.Ctx(ctx).Warn().Msgf("TLSOption %q uses `PreferServerCipherSuites` option, but this option is deprecated and ineffective, please remove this option.", optionName)
+		}
+	}
+
 	m.storesConfig = stores
 	m.certs = certs
 
@@ -182,7 +190,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
-		if isACMETLS(clientHello) {
+		if slices.Contains(clientHello.SupportedProtos, tlsalpn01.ACMETLS1Protocol) {
 			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
 				log.Debug().Msgf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
@@ -419,14 +427,4 @@ func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate,
 		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
 	}
 	return &cert, nil
-}
-
-func isACMETLS(clientHello *tls.ClientHelloInfo) bool {
-	for _, proto := range clientHello.SupportedProtos {
-		if proto == tlsalpn01.ACMETLS1Protocol {
-			return true
-		}
-	}
-
-	return false
 }

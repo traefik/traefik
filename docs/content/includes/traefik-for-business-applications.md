@@ -2,10 +2,13 @@
 
 !!! question "Using Traefik for Business Applications?"
 
-    If you are using Traefik in your organization, consider [Traefik Enterprise](https://traefik.io/traefik-enterprise/). You can use it as your:
+    If you are using Traefik in your organization, consider our enterprise-grade solutions:
 
-    - [API Gateway](https://traefik.io/solutions/api-gateway/)
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Docker Swarm Ingress Controller](https://traefik.io/solutions/docker-swarm-ingress/)
+    - API Management  
+      [Explore](https://traefik.io/solutions/api-management/) // [Watch Demo Video](https://info.traefik.io/watch-traefik-hub-demo)
+    - API Gateway  
+      [Explore](https://traefik.io/solutions/api-gateway/) // [Watch Demo Video](https://info.traefik.io/watch-traefikee-demo)
+    - Ingress Controller  
+      [Kubernetes](https://traefik.io/solutions/kubernetes-ingress/) // [Docker Swarm](https://traefik.io/solutions/docker-swarm-ingress/)
 
-    Traefik Enterprise simplifies the discovery, security, and deployment of APIs and microservices across any environment. See it in action in [this short video walkthrough](https://info.traefik.io/watch-traefikee-demo).
+    These tools help businesses discover, deploy, secure, and manage microservices and APIs easily, at scale, across any environment.

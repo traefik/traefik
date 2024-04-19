@@ -45,19 +45,20 @@ func Test_doOnJSON_simple(t *testing.T) {
 				"URL": "foo domain.com foo",
 				"URL": "foo sub.domain.com foo",
 				"URL": "foo sub.sub.domain.com foo",
-				"URL": "foo sub.sub.sub.domain.com.us foo"
+				"URL": "foo sub.sub.sub.domain.com.us foo",
+				"URL":"https://hub.example.com","foo":"bar"
 			}`,
 			expectedOutput: `{
 				"URL": "foo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx foo",
 				"URL": "foo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx foo",
 				"URL": "foo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx foo",
-				"URL": "foo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx foo"
+				"URL": "foo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx foo",
+				"URL":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","foo":"bar"
 			}`,
 		},
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			output := doOnJSON(test.input)

@@ -228,15 +228,6 @@ func (c *Configuration) PopulateUsedBy() {
 	}
 }
 
-func contains(entryPoints []string, entryPointName string) bool {
-	for _, name := range entryPoints {
-		if name == entryPointName {
-			return true
-		}
-	}
-	return false
-}
-
 func getProviderName(elementName string) string {
 	parts := strings.Split(elementName, "@")
 	if len(parts) > 1 {

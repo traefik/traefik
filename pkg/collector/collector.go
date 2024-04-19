@@ -20,8 +20,6 @@ import (
 const collectorURL = "https://collect.traefik.io/yYaUej3P42cziRVzv6T5w2aYy9po2Mrn"
 
 // Collected data.
-//
-//nolint:musttag // cannot be changed for historical reasons.
 type data struct {
 	Version       string
 	Codename      string

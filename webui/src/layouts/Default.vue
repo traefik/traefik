@@ -1,6 +1,5 @@
 <template>
   <q-layout view="hHh lpR fFf">
-
     <nav-bar>
       <router-view name="NavBar" />
     </nav-bar>
@@ -8,12 +7,11 @@
     <q-page-container>
       <router-view />
     </q-page-container>
-
   </q-layout>
 </template>
 
 <script>
-import NavBar from '../components/_commons/NavBar'
+import NavBar from '../components/_commons/NavBar.vue'
 
 export default {
   name: 'Default',

@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/metrics/dogstatsd"
@@ -15,6 +16,8 @@ var (
 	datadogClient         *dogstatsd.Dogstatsd
 	datadogLoopCancelFunc context.CancelFunc
 )
+
+const unixAddressPrefix = "unix://"
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
@@ -99,10 +102,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 }
 
 func initDatadogClient(ctx context.Context, config *types.Datadog) {
-	address := config.Address
-	if len(address) == 0 {
-		address = "localhost:8125"
-	}
+	network, address := parseDatadogAddress(config.Address)
 
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
@@ -110,8 +110,25 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 		ticker := time.NewTicker(time.Duration(config.PushInterval))
 		defer ticker.Stop()
 
-		datadogClient.SendLoop(ctx, ticker.C, "udp", address)
+		datadogClient.SendLoop(ctx, ticker.C, network, address)
 	})
+}
+
+func parseDatadogAddress(address string) (string, string) {
+	network := "udp"
+
+	var addr string
+	switch {
+	case strings.HasPrefix(address, unixAddressPrefix):
+		network = "unix"
+		addr = address[len(unixAddressPrefix):]
+	case address != "":
+		addr = address
+	default:
+		addr = "localhost:8125"
+	}
+
+	return network, addr
 }
 
 // StopDatadog stops the Datadog metrics pusher.

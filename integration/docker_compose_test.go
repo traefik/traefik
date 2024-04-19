@@ -3,15 +3,16 @@ package integration
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	checker "github.com/vdemeester/shakers"
 )
 
 // Docker tests suite.
@@ -19,12 +20,21 @@ type DockerComposeSuite struct {
 	BaseSuite
 }
 
-func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "minimal")
-	s.composeUp(c)
+func TestDockerComposeSuite(t *testing.T) {
+	suite.Run(t, new(DockerComposeSuite))
 }
 
-func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
+func (s *DockerComposeSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+	s.createComposeProject("minimal")
+	s.composeUp()
+}
+
+func (s *DockerComposeSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *DockerComposeSuite) TestComposeScale() {
 	tempObjects := struct {
 		DockerHost  string
 		DefaultRule string
@@ -32,41 +42,36 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 		DockerHost:  s.getDockerHost(),
 		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
-	file := s.adaptFile(c, "fixtures/docker/minimal.toml", tempObjects)
-	defer os.Remove(file)
+	file := s.adaptFile("fixtures/docker/minimal.toml", tempObjects)
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	req.Host = "my.super.host"
 
-	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
-	c.Assert(err, checker.IsNil)
+	_, err := try.ResponseUntilStatusCode(req, 5*time.Second, http.StatusOK)
+	require.NoError(s.T(), err)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 	defer resp.Body.Close()
 
 	var rtconf api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&rtconf)
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	// check that we have only three routers (the one from this test + 2 unrelated internal ones)
-	c.Assert(rtconf.Routers, checker.HasLen, 3)
+	assert.Len(s.T(), rtconf.Routers, 3)
 
 	// check that we have only one service (not counting the internal ones) with n servers
 	services := rtconf.Services
-	c.Assert(services, checker.HasLen, 4)
+	assert.Len(s.T(), services, 4)
 	for name, service := range services {
 		if strings.HasSuffix(name, "@internal") {
 			continue
 		}
-		c.Assert(name, checker.Equals, "whoami1-"+s.composeProject.Name+"@docker")
-		c.Assert(service.LoadBalancer.Servers, checker.HasLen, 2)
+		assert.Equal(s.T(), "service-mini@docker", name)
+		assert.Len(s.T(), service.LoadBalancer.Servers, 2)
 		// We could break here, but we don't just to keep us honest.
 	}
 }

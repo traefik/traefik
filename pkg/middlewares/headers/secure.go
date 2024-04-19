@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/unrolled/secure"
 )
 
@@ -45,6 +46,6 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 
 func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.secure.HandlerFuncWithNextForRequestOnly(rw, req, func(writer http.ResponseWriter, request *http.Request) {
-		s.next.ServeHTTP(newResponseModifier(writer, request, s.secure.ModifyResponseHeaders), request)
+		s.next.ServeHTTP(middlewares.NewResponseModifier(writer, request, s.secure.ModifyResponseHeaders), request)
 	})
 }

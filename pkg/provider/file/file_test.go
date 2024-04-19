@@ -156,10 +156,10 @@ func TestProvideWithWatch(t *testing.T) {
 				require.NotNil(t, conf.Configuration.HTTP)
 				numServices := len(conf.Configuration.HTTP.Services) + len(conf.Configuration.TCP.Services) + len(conf.Configuration.UDP.Services)
 				numRouters := len(conf.Configuration.HTTP.Routers) + len(conf.Configuration.TCP.Routers) + len(conf.Configuration.UDP.Routers)
-				assert.Equal(t, numServices, 0)
-				assert.Equal(t, numRouters, 0)
+				assert.Equal(t, 0, numServices)
+				assert.Equal(t, 0, numRouters)
 				require.NotNil(t, conf.Configuration.TLS)
-				assert.Len(t, conf.Configuration.TLS.Certificates, 0)
+				assert.Empty(t, conf.Configuration.TLS.Certificates)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}

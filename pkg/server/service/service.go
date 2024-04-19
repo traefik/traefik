@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -13,16 +14,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
@@ -39,7 +42,7 @@ type RoundTripperGetter interface {
 // Manager The service manager.
 type Manager struct {
 	routinePool         *safe.Pool
-	metricsRegistry     metrics.Registry
+	observabilityMgr    *middleware.ObservabilityMgr
 	bufferPool          httputil.BufferPool
 	roundTripperManager RoundTripperGetter
 
@@ -50,10 +53,10 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
-		metricsRegistry:     metricsRegistry,
+		observabilityMgr:    observabilityMgr,
 		bufferPool:          newBufferPool(),
 		roundTripperManager: roundTripperManager,
 		services:            make(map[string]http.Handler),
@@ -86,7 +89,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 
 	value := reflect.ValueOf(*conf.Service)
 	var count int
-	for i := 0; i < value.NumField(); i++ {
+	for i := range value.NumField() {
 		if !value.Field(i).IsNil() {
 			count++
 		}
@@ -287,7 +290,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		hasher := fnv.New64a()
 		_, _ = hasher.Write([]byte(server.URL)) // this will never return an error.
 
-		proxyName := fmt.Sprintf("%x", hasher.Sum(nil))
+		proxyName := hex.EncodeToString(hasher.Sum(nil))
 
 		target, err := url.Parse(server.URL)
 		if err != nil {
@@ -297,17 +300,41 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
 			Msg("Creating server")
 
-		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
+		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, nil)
-
-		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
-			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			// Wrapping the roundTripper with the Tracing roundTripper,
+			// to handle the reverseProxy client span creation.
+			roundTripper = newObservabilityRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
 		}
 
-		lb.Add(proxyName, proxy, nil)
+		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
+
+		// Prevents from enabling observability for internal resources.
+
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) {
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		}
+
+		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
+			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
+
+			proxy, err = alice.New().
+				Append(observability.WrapMiddleware(ctx, metricsHandler)).
+				Then(proxy)
+			if err != nil {
+				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
+			}
+		}
+
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
+			proxy = observability.NewService(ctx, serviceName, proxy)
+		}
+
+		lb.Add(proxyName, proxy, server.Weight)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
@@ -318,7 +345,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	if service.HealthCheck != nil {
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
-			m.metricsRegistry,
+			m.observabilityMgr.MetricsRegistry(),
 			service.HealthCheck,
 			lb,
 			info,

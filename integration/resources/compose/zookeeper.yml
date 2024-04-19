@@ -2,8 +2,3 @@ version: "3.8"
 services:
   zookeeper:
     image: zookeeper:3.5
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

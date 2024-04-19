@@ -122,41 +122,29 @@
 
 [tracing]
   serviceName = "foobar"
-  spanNameLimit = 42
-  [tracing.jaeger]
-    samplingServerURL = "foobar"
-    samplingType = "foobar"
-    samplingParam = 42.0
-    localAgentHostPort = "foobar"
-    gen128Bit = true
-    propagation = "foobar"
-    traceContextHeaderName = "foobar"
-  [tracing.zipkin]
-    httpEndpoint = "foobar"
-    sameSpan = true
-    id128Bit = true
-    debug = true
-    sampleRate = 42.0
-  [tracing.datadog]
-    localAgentHostPort = "foobar"
-    localAgentSocket = "foobar"
-    debug = true
-    prioritySampling = true
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    samplingPriorityHeaderName = "foobar"
-    bagagePrefixHeaderName = "foobar"
-  [tracing.instana]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    logLevel = "foobar"
-  [tracing.haystack]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    globalTag = "foobar"
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    spanIDHeaderName = "foobar"
+  sampleRate = 42
+  [tracing.headers]
+    header1 = "foobar"
+    header2 = "foobar"
+  [tracing.globalAttributes]
+    attr1 = "foobar"
+    attr2 = "foobar"
+  [tracing.otlp.grpc]
+    endpoint = "foobar"
+    insecure = true
+    [tracing.otlp.grpc.tls]
+      ca = "foobar"
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [tracing.otlp.http]
+    endpoint = "foobar"
+    insecure = true
+    [tracing.otlp.http.tls]
+      ca = "foobar"
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
 
 [hostResolver]
   cnameFlattening = true

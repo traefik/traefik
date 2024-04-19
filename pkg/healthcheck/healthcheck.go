@@ -69,11 +69,6 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
-	if timeout >= interval {
-		logger.Warn().Msgf("Health check timeout should be lower than the health check interval. Interval set to timeout + 1 second (%s).", interval)
-		interval = timeout + time.Second
-	}
-
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -260,8 +255,8 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 		return fmt.Errorf("gRPC health check failed: %w", err)
 	}
 
-	if resp.Status != healthpb.HealthCheckResponse_SERVING {
-		return fmt.Errorf("received gRPC status code: %v", resp.Status)
+	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
+		return fmt.Errorf("received gRPC status code: %v", resp.GetStatus())
 	}
 
 	return nil

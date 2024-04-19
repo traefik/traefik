@@ -1,58 +1,31 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 # shellcheck disable=SC2046
 
 set -e -o pipefail
 
-PROJECT_MODULE="github.com/traefik/traefik"
-MODULE_VERSION="v3"
-IMAGE_NAME="kubernetes-codegen:latest"
-CURRENT_DIR="$(pwd)"
+source /go/src/k8s.io/code-generator/kube_codegen.sh
 
-echo "Building codegen Docker image..."
-docker build --build-arg KUBE_VERSION=v0.20.2 \
-             --build-arg USER="${USER}" \
-             --build-arg UID="$(id -u)" \
-             --build-arg GID="$(id -g)" \
-             -f "./script/codegen.Dockerfile" \
-             -t "${IMAGE_NAME}" \
-             "."
+git config --global --add safe.directory "/go/src/${PROJECT_MODULE}"
 
-echo "Generating Traefik clientSet code ..."
-docker run --rm \
-           -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
-           -w "/go/src/${PROJECT_MODULE}" \
-           "${IMAGE_NAME}" \
-           /go/src/k8s.io/code-generator/generate-groups.sh all \
-           ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated \
-           ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd \
-           "traefikio:v1alpha1" \
-           --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl
+rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"
+mkdir -p "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"
 
-echo "Generating DeepCopy code ..."
+# TODO: remove the workaround when the issue is solved in the code-generator
+# (https://github.com/kubernetes/code-generator/issues/165).
+# Here, we create the soft link named "${PROJECT_MODULE}" to the parent directory of
+# Traefik to ensure the layout required by the kube_codegen.sh script.
+ln -s "/go/src/${PROJECT_MODULE}/pkg" "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"
 
-docker run --rm \
-           -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
-           -w "/go/src/${PROJECT_MODULE}" \
-           "${IMAGE_NAME}" \
-           deepcopy-gen \
-           --input-dirs ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/config/dynamic \
-           --input-dirs ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/tls \
-           --input-dirs ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/types \
-           --output-package ${PROJECT_MODULE}/${MODULE_VERSION} -O zz_generated.deepcopy \
-           --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl
+kube::codegen::gen_helpers \
+    --input-pkg-root "${PROJECT_MODULE}/pkg" \
+    --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
+    --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
 
-echo "Generating the CRD definitions for the documentation ..."
-docker run --rm \
-           -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
-           -w "/go/src/${PROJECT_MODULE}" \
-           "${IMAGE_NAME}" \
-           controller-gen crd:crdVersions=v1 \
-           paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...} \
-           output:dir=./docs/content/reference/dynamic-configuration/
+kube::codegen::gen_client \
+    --with-watch \
+    --input-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd" \
+    --output-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
+    --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
+    --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
 
-echo "Concatenate the CRD definitions for publication and integration tests ..."
-cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.io_*.yaml > "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
-cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-traefik-crd.yml
-
-cp -r "${CURRENT_DIR}/${MODULE_VERSION}"/* "${CURRENT_DIR}"
-rm -rf "${CURRENT_DIR:?}/${MODULE_VERSION}"
+rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"

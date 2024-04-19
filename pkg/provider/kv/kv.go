@@ -134,6 +134,16 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 func (p *Provider) buildConfiguration(ctx context.Context) (*dynamic.Configuration, error) {
 	pairs, err := p.kvClient.List(ctx, p.RootKey, nil)
 	if err != nil {
+		if errors.Is(err, store.ErrKeyNotFound) {
+			// This empty configuration satisfies the pkg/server/configurationwatcher.go isEmptyConfiguration func constraints,
+			// and will not be discarded by the configuration watcher.
+			return &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: make(map[string]*dynamic.Router),
+				},
+			}, nil
+		}
+
 		return nil, err
 	}
 

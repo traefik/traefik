@@ -233,6 +233,79 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
+### ReusePort
+
+_Optional, Default=false_
+
+The `ReusePort` option enables EntryPoints from the same or different processes
+listening on the same TCP/UDP port by utilizing the `SO_REUSEPORT` socket option.
+It also allows the kernel to act like a load balancer to distribute incoming
+connections between entry points.
+
+For example, you can use it with the [transport.lifeCycle](#lifecycle) to do
+canary deployments against Traefik itself. Like upgrading Traefik version or
+reloading the static configuration without any service downtime.
+
+!!! warning "Supported platforms"
+
+    The `ReusePort` option currently works only on Linux, FreeBSD, OpenBSD and Darwin.
+    It will be ignored on other platforms.
+
+    There is a known bug in the Linux kernel that may cause unintended TCP connection failures when using the `ReusePort` option.
+    For more details, see https://lwn.net/Articles/853637/.
+
+??? example "Listen on the same port"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+        reusePort: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      reusePort = true
+    ```
+
+    ```bash tab="CLI"
+    --entrypoints.web.address=:80
+    --entrypoints.web.reusePort=true
+    ```
+
+    Now it is possible to run multiple Traefik processes with the same EntryPoint configuration.
+
+??? example "Listen on the same port but bind to a different host"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+        reusePort: true
+      privateWeb:
+        address: "192.168.1.2:80"
+        reusePort: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      reusePort = true
+    [entryPoints.privateWeb]
+      address = "192.168.1.2:80"
+      reusePort = true
+    ```
+
+    ```bash tab="CLI"
+    --entrypoints.web.address=:80
+    --entrypoints.web.reusePort=true
+    --entrypoints.privateWeb.address=192.168.1.2:80
+    --entrypoints.privateWeb.reusePort=true
+    ```
+
+    Requests to `192.168.1.2:80` will only be handled by routers that have `privateWeb` as the entry point.
+
 ### AsDefault
 
 _Optional, Default=false_
@@ -248,7 +321,7 @@ EntryPoints in this list are used (by default) on HTTP and TCP routers that do n
     If at least one EntryPoint has the `AsDefault` option set to `true`,
     then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
 
-    Some built-in EntryPoints are always excluded from the list, namely: `traefik`, `traefikhub-api`, and `traefikhub-tunl`.
+    Some built-in EntryPoints are always excluded from the list, namely: `traefik`.
 
 !!! warning "Only TCP and HTTP"
 
@@ -623,17 +696,77 @@ Controls the behavior of Traefik during the shutdown phase.
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     ```
 
+#### `keepAliveMaxRequests`
+
+_Optional, Default=0_
+
+The maximum number of requests Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
+
+```yaml tab="File (YAML)"
+## Static configuration
+entryPoints:
+  name:
+    address: ":8888"
+    transport:
+      keepAliveMaxRequests: 42
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[entryPoints]
+  [entryPoints.name]
+    address = ":8888"
+    [entryPoints.name.transport]
+      keepAliveMaxRequests = 42
+```
+
+```bash tab="CLI"
+## Static configuration
+--entryPoints.name.address=:8888
+--entryPoints.name.transport.keepAliveMaxRequests=42
+```
+
+#### `keepAliveMaxTime`
+
+_Optional, Default=0s_
+
+The maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
+
+```yaml tab="File (YAML)"
+## Static configuration
+entryPoints:
+  name:
+    address: ":8888"
+    transport:
+      keepAliveMaxTime: 42s
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[entryPoints]
+  [entryPoints.name]
+    address = ":8888"
+    [entryPoints.name.transport]
+      keepAliveMaxTime = 42s
+```
+
+```bash tab="CLI"
+## Static configuration
+--entryPoints.name.address=:8888
+--entryPoints.name.transport.keepAliveMaxTime=42s
+```
+
 ### ProxyProtocol
 
-Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
+Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
 
-If Proxy Protocol header parsing is enabled for the entry point, this entry point can accept connections with or without Proxy Protocol headers.
+If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers.
 
-If the Proxy Protocol header is passed, then the version is determined automatically.
+If the PROXY protocol header is passed, then the version is determined automatically.
 
 ??? info "`proxyProtocol.trustedIPs`"
 
-    Enabling Proxy Protocol with Trusted IPs.
+    Enabling PROXY protocol with Trusted IPs.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -696,7 +829,7 @@ If the Proxy Protocol header is passed, then the version is determined automatic
 
 !!! warning "Queuing Traefik behind Another Load Balancer"
 
-    When queuing Traefik behind another load-balancer, make sure to configure Proxy Protocol on both sides.
+    When queuing Traefik behind another load-balancer, make sure to configure PROXY protocol on both sides.
     Not doing so could introduce a security risk in your system (enabling request forgery).
 
 ## HTTP Options
@@ -839,7 +972,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
 
 ??? info "`entryPoint.priority`"
 
-    _Optional, Default=MaxInt32-1 (2147483646)_
+    _Optional, Default=MaxInt-1_
 
     Priority of the generated router.
 

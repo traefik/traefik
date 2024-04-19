@@ -222,8 +222,6 @@ func TestMuxer(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -231,7 +229,7 @@ func TestMuxer(t *testing.T) {
 			require.NoError(t, err)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -378,14 +376,12 @@ func Test_addRoutePriority(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
 			for _, route := range test.cases {
-				route := route
 				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("X-From", route.xFrom)
 				})
@@ -394,7 +390,7 @@ func Test_addRoutePriority(t *testing.T) {
 					route.priority = GetRulePriority(route.rule)
 				}
 
-				err := muxer.AddRoute(route.rule, route.priority, handler)
+				err := muxer.AddRoute(route.rule, "", route.priority, handler)
 				require.NoError(t, err, route.rule)
 			}
 
@@ -446,7 +442,6 @@ func TestParseDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
 
@@ -511,7 +506,6 @@ func TestEmptyHost(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -519,7 +513,7 @@ func TestEmptyHost(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, handler)
 			require.NoError(t, err)
 
 			// RequestDecorator is necessary for the host rule
@@ -550,7 +544,6 @@ func TestGetRulePriority(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

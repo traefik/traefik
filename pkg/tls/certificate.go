@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -48,8 +48,8 @@ var (
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself.
 type Certificate struct {
-	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
+	CertFile types.FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
+	KeyFile  types.FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
 }
 
 // Certificates defines traefik certificates type
@@ -71,33 +71,6 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	}
 
 	return certs
-}
-
-// FileOrContent hold a file path or content.
-type FileOrContent string
-
-func (f FileOrContent) String() string {
-	return string(f)
-}
-
-// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
-func (f FileOrContent) IsPath() bool {
-	_, err := os.Stat(f.String())
-	return err == nil
-}
-
-func (f FileOrContent) Read() ([]byte, error) {
-	var content []byte
-	if f.IsPath() {
-		var err error
-		content, err = os.ReadFile(f.String())
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		content = []byte(f)
-	}
-	return content, nil
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by store name.
@@ -229,8 +202,8 @@ func (c *Certificates) Set(value string) error {
 			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*c = append(*c, Certificate{
-			CertFile: FileOrContent(files[0]),
-			KeyFile:  FileOrContent(files[1]),
+			CertFile: types.FileOrContent(files[0]),
+			KeyFile:  types.FileOrContent(files[1]),
 		})
 	}
 	return nil

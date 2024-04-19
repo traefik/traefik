@@ -9,9 +9,5 @@ services:
     cap_add:                  # Required for tailscale to work
       - net_admin
       - sys_module
-    command: tailscaled
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true
+    command:
+      - tailscaled

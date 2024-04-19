@@ -65,6 +65,7 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
 			Services:          make(map[string]*dynamic.TCPService),
+			Models:            make(map[string]*dynamic.TCPModel),
 			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
@@ -107,7 +108,7 @@ func (i *Provider) acme(cfg *dynamic.Configuration) {
 			Rule:        "PathPrefix(`/.well-known/acme-challenge/`)",
 			EntryPoints: eps,
 			Service:     "acme-http@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 		}
 
 		cfg.HTTP.Routers["acme-http"] = rt
@@ -191,8 +192,13 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 }
 
 func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
+	defaultRuleSyntax := ""
+	if i.staticCfg.Core != nil && i.staticCfg.Core.DefaultRuleSyntax != "" {
+		defaultRuleSyntax = i.staticCfg.Core.DefaultRuleSyntax
+	}
+
 	for name, ep := range i.staticCfg.EntryPoints {
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" {
 			continue
 		}
 
@@ -208,7 +214,19 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			}
 		}
 
+		m.DefaultRuleSyntax = defaultRuleSyntax
+
 		cfg.HTTP.Models[name] = m
+
+		if cfg.TCP == nil {
+			continue
+		}
+
+		mTCP := &dynamic.TCPModel{
+			DefaultRuleSyntax: defaultRuleSyntax,
+		}
+
+		cfg.TCP.Models[name] = mTCP
 	}
 }
 
@@ -221,7 +239,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["api"] = &dynamic.Router{
 			EntryPoints: []string{defaultInternalEntryPointName},
 			Service:     "api@internal",
-			Priority:    math.MaxInt32 - 1,
+			Priority:    math.MaxInt - 1,
 			Rule:        "PathPrefix(`/api`)",
 		}
 
@@ -229,7 +247,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 			cfg.HTTP.Routers["dashboard"] = &dynamic.Router{
 				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "dashboard@internal",
-				Priority:    math.MaxInt32 - 2,
+				Priority:    math.MaxInt - 2,
 				Rule:        "PathPrefix(`/`)",
 				Middlewares: []string{"dashboard_redirect@internal", "dashboard_stripprefix@internal"},
 			}
@@ -250,7 +268,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 			cfg.HTTP.Routers["debug"] = &dynamic.Router{
 				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "api@internal",
-				Priority:    math.MaxInt32 - 1,
+				Priority:    math.MaxInt - 1,
 				Rule:        "PathPrefix(`/debug`)",
 			}
 		}
@@ -272,7 +290,7 @@ func (i *Provider) pingConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["ping"] = &dynamic.Router{
 			EntryPoints: []string{i.staticCfg.Ping.EntryPoint},
 			Service:     "ping@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/ping`)",
 		}
 	}
@@ -289,7 +307,7 @@ func (i *Provider) restConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["rest"] = &dynamic.Router{
 			EntryPoints: []string{defaultInternalEntryPointName},
 			Service:     "rest@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/api/providers`)",
 		}
 	}
@@ -306,7 +324,7 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["prometheus"] = &dynamic.Router{
 			EntryPoints: []string{i.staticCfg.Metrics.Prometheus.EntryPoint},
 			Service:     "prometheus@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/metrics`)",
 		}
 	}

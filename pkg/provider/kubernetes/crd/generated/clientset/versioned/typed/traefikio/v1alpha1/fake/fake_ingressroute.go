@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2023 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2024 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import (
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -44,9 +43,9 @@ type FakeIngressRoutes struct {
 	ns   string
 }
 
-var ingressroutesResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "ingressroutes"}
+var ingressroutesResource = v1alpha1.SchemeGroupVersion.WithResource("ingressroutes")
 
-var ingressroutesKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute"}
+var ingressroutesKind = v1alpha1.SchemeGroupVersion.WithKind("IngressRoute")
 
 // Get takes name of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
 func (c *FakeIngressRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.IngressRoute, err error) {
@@ -113,7 +112,7 @@ func (c *FakeIngressRoutes) Update(ctx context.Context, ingressRoute *v1alpha1.I
 // Delete takes name of the ingressRoute and deletes it. Returns an error if one occurs.
 func (c *FakeIngressRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(ingressroutesResource, c.ns, name), &v1alpha1.IngressRoute{})
+		Invokes(testing.NewDeleteActionWithOptions(ingressroutesResource, c.ns, name, opts), &v1alpha1.IngressRoute{})
 
 	return err
 }

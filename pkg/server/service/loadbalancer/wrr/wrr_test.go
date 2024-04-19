@@ -24,7 +24,7 @@ func TestBalancer(t *testing.T) {
 	}), Int(1))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -52,7 +52,7 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -97,7 +97,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -119,14 +119,14 @@ func TestBalancerDownThenUp(t *testing.T) {
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 3, recorder.save["first"])
 
 	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 1, recorder.save["first"])
@@ -168,7 +168,7 @@ func TestBalancerPropagate(t *testing.T) {
 	})
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 2, recorder.save["first"])
@@ -181,7 +181,7 @@ func TestBalancerPropagate(t *testing.T) {
 	// fourth gets downed, but balancer2 still up since third is still up.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 2, recorder.save["first"])
@@ -195,7 +195,7 @@ func TestBalancerPropagate(t *testing.T) {
 	// down as well for topBalancer.
 	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "third", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 4, recorder.save["first"])
@@ -220,6 +220,53 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 
 func TestSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{
+			Name:     "test",
+			Secure:   true,
+			HTTPOnly: true,
+			SameSite: "none",
+			MaxAge:   42,
+		},
+	}, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(1))
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(2))
+
+	recorder := &responseRecorder{
+		ResponseRecorder: httptest.NewRecorder(),
+		save:             map[string]int{},
+		cookies:          make(map[string]*http.Cookie),
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	for range 3 {
+		for _, cookie := range recorder.Result().Cookies() {
+			assert.NotContains(t, "test=first", cookie.Value)
+			assert.NotContains(t, "test=second", cookie.Value)
+			req.AddCookie(cookie)
+		}
+		recorder.ResponseRecorder = httptest.NewRecorder()
+
+		balancer.ServeHTTP(recorder, req)
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 3, recorder.save["second"])
+	assert.True(t, recorder.cookies["test"].HttpOnly)
+	assert.True(t, recorder.cookies["test"].Secure)
+	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
+	assert.Equal(t, 42, recorder.cookies["test"].MaxAge)
+}
+
+func TestSticky_FallBack(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{Name: "test"},
 	}, false)
 
@@ -236,10 +283,8 @@ func TestSticky(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 3; i++ {
-		for _, cookie := range recorder.Result().Cookies() {
-			req.AddCookie(cookie)
-		}
+	req.AddCookie(&http.Cookie{Name: "test", Value: "second"})
+	for range 3 {
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
 		balancer.ServeHTTP(recorder, req)
@@ -266,7 +311,7 @@ func TestBalancerBias(t *testing.T) {
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
-	for i := 0; i < 14; i++ {
+	for range 14 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -282,11 +327,15 @@ type responseRecorder struct {
 	save     map[string]int
 	sequence []string
 	status   []int
+	cookies  map[string]*http.Cookie
 }
 
 func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.save[r.Header().Get("server")]++
 	r.sequence = append(r.sequence, r.Header().Get("server"))
 	r.status = append(r.status, statusCode)
+	for _, cookie := range r.Result().Cookies() {
+		r.cookies[cookie.Name] = cookie
+	}
 	r.ResponseRecorder.WriteHeader(statusCode)
 }

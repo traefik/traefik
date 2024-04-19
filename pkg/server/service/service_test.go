@@ -62,7 +62,6 @@ func TestGetLoadBalancer(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -306,7 +305,6 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			serviceInfo := &runtime.ServiceInfo{Service: &dynamic.Service{LoadBalancer: test.service}}
 			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, serviceInfo)
@@ -393,7 +391,7 @@ func Test1xxResponses(t *testing.T) {
 	}
 
 	handler, err := sm.getLoadBalancerServiceHandler(context.Background(), "foobar", info)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	frontend := httptest.NewServer(handler)
 	t.Cleanup(frontend.Close)
@@ -439,7 +437,7 @@ func Test1xxResponses(t *testing.T) {
 	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, frontend.URL, nil)
 
 	res, err := frontendClient.Do(req)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	defer res.Body.Close()
 
@@ -498,7 +496,6 @@ func TestManager_Build(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

@@ -1,0 +1,42 @@
+name: Test K8s Gateway API conformance
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - 'pkg/provider/kubernetes/gateway/**'
+      - 'integration/k8s_conformance_test.go'
+
+env:
+  GO_VERSION: '1.22'
+  CGO_ENABLED: 0
+
+jobs:
+
+  test-conformance:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Avoid generating webui
+        run: touch webui/static/index.html
+
+      - name: Build binary
+        run: make binary
+
+      - name: Setcap
+        run: |
+          sudo setcap 'cap_net_bind_service=+ep' dist/linux/amd64/traefik
+
+      - name: K8s Gateway API conformance test
+        run: make test-gateway-api-conformance-ci

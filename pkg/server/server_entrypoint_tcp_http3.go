@@ -33,7 +33,8 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		return nil, errors.New("advertised port must be greater than or equal to zero")
 	}
 
-	conn, err := net.ListenPacket("udp", configuration.GetAddress())
+	listenConfig := newListenConfig(configuration)
+	conn, err := listenConfig.ListenPacket(ctx, "udp", configuration.GetAddress())
 	if err != nil {
 		return nil, fmt.Errorf("starting listener: %w", err)
 	}

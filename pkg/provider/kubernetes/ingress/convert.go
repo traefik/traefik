@@ -12,7 +12,7 @@ type marshaler interface {
 }
 
 type unmarshaler interface {
-	Unmarshal([]byte) error
+	Unmarshal(data []byte) error
 }
 
 type LoadBalancerIngress interface {

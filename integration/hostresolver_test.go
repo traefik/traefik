@@ -2,27 +2,33 @@ package integration
 
 import (
 	"net/http"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
-	checker "github.com/vdemeester/shakers"
 )
 
 type HostResolverSuite struct{ BaseSuite }
 
-func (s *HostResolverSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "hostresolver")
-	s.composeUp(c)
+func TestHostResolverSuite(t *testing.T) {
+	suite.Run(t, new(HostResolverSuite))
 }
 
-func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
-	defer display(c)
+func (s *HostResolverSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.createComposeProject("hostresolver")
+	s.composeUp()
+}
+
+func (s *HostResolverSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *HostResolverSuite) TestSimpleConfig() {
+	s.traefikCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
 
 	testCase := []struct {
 		desc   string
@@ -43,10 +49,10 @@ func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
 
 	for _, test := range testCase {
 		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 		req.Host = test.host
 
-		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.status), try.HasBody())
-		c.Assert(err, checker.IsNil)
+		err = try.Request(req, 5*time.Second, try.StatusCodeIs(test.status), try.HasBody())
+		require.NoError(s.T(), err)
 	}
 }
