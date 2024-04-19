@@ -47,7 +47,6 @@
     "eslint": "^8.11.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.19.1",
-    "eslint-plugin-mocha": "^10.2.0",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-vue": "^9.0.0",
