@@ -276,6 +276,9 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 	}
 
 	if port == "" {
+		if p.AllowEmptyServices {
+			return nil
+		}
 		return errors.New("port is missing")
 	}
 
@@ -310,7 +313,7 @@ func (p *DynConfBuilder) getIPPort(ctx context.Context, container dockerData, se
 		port = getPort(container, serverPort)
 	}
 
-	if len(ip) == 0 {
+	if len(ip) == 0 && !p.AllowEmptyServices {
 		return "", "", fmt.Errorf("unable to find the IP address for the container %q: the server is ignored", container.Name)
 	}
 
