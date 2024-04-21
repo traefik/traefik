@@ -35,7 +35,7 @@ type Shared struct {
 	defaultRuleTpl *template.Template
 }
 
-func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
+func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string, allowEmptyServices bool) dockerData {
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
@@ -43,8 +43,8 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	}
 
 	// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
-	// We register only container which are running
-	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
+	// We register only container which are running unless we explicitly want all containers
+	if allowEmptyServices || containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
 		return parseContainer(containerInspected)
 	}
 
@@ -201,6 +201,10 @@ func getPort(container dockerData, serverPort string) string {
 }
 
 func getServiceName(container dockerData) string {
+	if condition {
+		
+	}
+
 	serviceName := container.ServiceName
 
 	if values, err := getStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
