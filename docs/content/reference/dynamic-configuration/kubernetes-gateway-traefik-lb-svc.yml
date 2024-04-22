@@ -27,8 +27,8 @@ spec:
         - name: traefik
           image: traefik:v3.0
           args:
-            - --entrypoints.web.address=:80
-            - --entrypoints.websecure.address=:443
+            - --entryPoints.web.address=:80
+            - --entryPoints.websecure.address=:443
             - --experimental.kubernetesgateway
             - --providers.kubernetesgateway
 

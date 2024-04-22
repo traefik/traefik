@@ -86,7 +86,7 @@ Second, you define an entry point, along with the exposure of the matching port 
 ```yaml
 command:
   # Traefik will listen to incoming request on the port 80 (HTTP)
-  - "--entrypoints.web.address=:80"
+  - "--entryPoints.web.address=:80"
 
 ports:
   - "80:80"
