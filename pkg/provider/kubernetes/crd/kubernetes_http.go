@@ -394,8 +394,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 	var servers []dynamic.Server
 	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-			return nil, fmt.Errorf("HealthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
-		}
+		return nil, fmt.Errorf("HealthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
