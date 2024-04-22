@@ -149,7 +149,7 @@ which in turn will create the resulting routers, services, handlers, etc.
             - name: traefik
               image: traefik:v2.11
               args:
-                - --entrypoints.web.address=:80
+                - --entryPoints.web.address=:80
                 - --providers.kubernetesingress
               ports:
                 - name: web
@@ -396,8 +396,8 @@ TLS can be enabled through the [HTTP options](../entrypoints.md#tls) of an Entry
 
 ```bash tab="CLI"
 # Static configuration
---entrypoints.websecure.address=:443
---entrypoints.websecure.http.tls
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.tls
 ```
 
 ```yaml tab="File (YAML)"
@@ -552,8 +552,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
             - name: traefik
               image: traefik:v2.11
               args:
-                - --entrypoints.websecure.address=:443
-                - --entrypoints.websecure.http.tls
+                - --entryPoints.websecure.address=:443
+                - --entryPoints.websecure.http.tls
                 - --providers.kubernetesingress
               ports:
                 - name: websecure
@@ -762,7 +762,7 @@ For more options, please refer to the available [annotations](#on-ingress).
             - name: traefik
               image: traefik:v2.11
               args:
-                - --entrypoints.websecure.address=:443
+                - --entryPoints.websecure.address=:443
                 - --providers.kubernetesingress
               ports:
                 - name: websecure

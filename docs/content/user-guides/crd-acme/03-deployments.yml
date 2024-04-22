@@ -30,8 +30,8 @@ spec:
           args:
             - --api.insecure
             - --accesslog
-            - --entrypoints.web.Address=:8000
-            - --entrypoints.websecure.Address=:4443
+            - --entryPoints.web.Address=:8000
+            - --entryPoints.websecure.Address=:4443
             - --providers.kubernetescrd
             - --certificatesresolvers.myresolver.acme.tlschallenge
             - --certificatesresolvers.myresolver.acme.email=foo@you.com
