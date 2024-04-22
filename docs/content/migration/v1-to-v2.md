@@ -354,7 +354,7 @@ To apply a redirection:
     ```
 
     ```bash tab="CLI"
-    --entrypoints=Name:web Address::80 Redirect.EntryPoint:websecure
+    --entryPoints=Name:web Address::80 Redirect.EntryPoint:websecure
     --entryPoints='Name:websecure Address::443 TLS'
     ```
 
@@ -394,10 +394,10 @@ To apply a redirection:
     ```bash tab="CLI"
     ## static configuration
 
-    --entrypoints.web.address=:80
-    --entrypoints.web.http.redirections.entrypoint.to=websecure
-    --entrypoints.web.http.redirections.entrypoint.scheme=https
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.redirections.entrypoint.to=websecure
+    --entryPoints.web.http.redirections.entrypoint.scheme=https
+    --entryPoints.websecure.address=:443
     --providers.docker=true
     ```
 
@@ -750,8 +750,8 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```
 
     ```bash tab="CLI"
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
     --certificatesresolvers.myresolver.acme.email=your-email@example.com
     --certificatesresolvers.myresolver.acme.storage=acme.json
     --certificatesresolvers.myresolver.acme.tlschallenge=true
@@ -1078,7 +1078,7 @@ To activate the dashboard, you can either:
       routers:
         api:
           rule: Host(`traefik.docker.localhost`)
-          entrypoints:
+          entryPoints:
             - websecure
           service: api@internal
           middlewares:

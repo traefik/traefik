@@ -50,7 +50,7 @@ What changed between the basic example:
 ```yaml
 command:
   # Traefik will listen to incoming request on the port 443 (https)
-  - "--entrypoints.websecure.address=:443"
+  - "--entryPoints.websecure.address=:443"
 ports:
   - "443:443"
 ```

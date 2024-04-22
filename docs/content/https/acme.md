@@ -116,8 +116,8 @@ Please check the [configuration examples below](#configuration-examples) for mor
     ```
 
     ```bash tab="CLI"
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
     # ...
     --certificatesresolvers.myresolver.acme.email=your-email@example.com
     --certificatesresolvers.myresolver.acme.storage=acme.json
@@ -241,8 +241,8 @@ when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpc
     ```
 
     ```bash tab="CLI"
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
     # ...
     --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
     ```

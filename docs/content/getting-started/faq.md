@@ -93,7 +93,7 @@ The example below is a file provider only version (`yaml`) of what this configur
 ```yaml tab="Static configuration"
 # traefik.yml
 
-entrypoints:
+entryPoints:
   web:
     address: :80
 
