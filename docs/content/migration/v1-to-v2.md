@@ -1078,7 +1078,7 @@ To activate the dashboard, you can either:
       routers:
         api:
           rule: Host(`traefik.docker.localhost`)
-          entrypoints:
+          entryPoints:
             - websecure
           service: api@internal
           middlewares:
