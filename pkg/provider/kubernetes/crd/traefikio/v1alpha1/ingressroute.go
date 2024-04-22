@@ -131,6 +131,8 @@ type LoadBalancerSpec struct {
 	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
 	// By default, NodePortLB is false.
 	NodePortLB bool `json:"nodePortLB,omitempty"`
+	// Healthcheck defines health checks for the service.
+	HealthCheck *dynamic.ServerHealthCheck `json:"healthCheck,omitempty"`
 }
 
 type ResponseForwarding struct {
