@@ -384,7 +384,7 @@ func (c *clientWrapper) GetGateways() []*gatev1.Gateway {
 	var result []*gatev1.Gateway
 
 	for ns, factory := range c.factoriesGateway {
-		gateways, err := factory.Gateway().V1().Gateways().Lister().List(labels.Everything())
+		gateways, err := factory.Gateway().V1().Gateways().Lister().Gateways(ns).List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list Gateways in namespace %s", ns)
 			continue
