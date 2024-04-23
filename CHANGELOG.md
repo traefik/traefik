@@ -1,3 +1,85 @@
+## [v3.0.0-rc5](https://github.com/traefik/traefik/tree/v3.0.0-rc4) (2024-04-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc4...v3.0.0-rc5)
+
+**Misc:**
+- Merge current v2.11 into v3.0 ([#10604](https://github.com/traefik/traefik/pull/10604) by [ldez](https://github.com/ldez))
+
+## [v2.11.2](https://github.com/traefik/traefik/tree/v2.11.2) (2024-04-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.1...v2.11.2)
+
+**Bug fixes:**
+- **[server]** Revert LingeringTimeout and change default value for ReadTimeout ([#10599](https://github.com/traefik/traefik/pull/10599) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Set default ReadTimeout value to 60s ([#10602](https://github.com/traefik/traefik/pull/10602) by [rtribotte](https://github.com/rtribotte))
+
+## [v3.0.0-rc4](https://github.com/traefik/traefik/tree/v3.0.0-rc4) (2024-04-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc3...v3.0.0-rc4)
+
+**Enhancements:**
+- **[k8s/gatewayapi]** Add option to set Gateway status address ([#10582](https://github.com/traefik/traefik/pull/10582) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/gatewayapi]** Handle middlewares in filters extension reference ([#10511](https://github.com/traefik/traefik/pull/10511) by [youkoulayley](https://github.com/youkoulayley))
+- **[k8s/gatewayapi]** Toggle support for experimental channel ([#10435](https://github.com/traefik/traefik/pull/10435) by [SantoDE](https://github.com/SantoDE))
+- **[k8s/ingress,k8s/crd,k8s,k8s/gatewayapi]** Use runtime.Object in routerTransform ([#10523](https://github.com/traefik/traefik/pull/10523) by [juliens](https://github.com/juliens))
+- **[nomad]** Allow empty services ([#10375](https://github.com/traefik/traefik/pull/10375) by [chrispruitt](https://github.com/chrispruitt))
+- **[webui,middleware,k8s/gatewayapi]** Support RequestHeaderModifier filter ([#10521](https://github.com/traefik/traefik/pull/10521) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[docker]** Fix struct names in comment ([#10503](https://github.com/traefik/traefik/pull/10503) by [hishope](https://github.com/hishope))
+- **[logs]** Avoid cumulative send anonymous usage log ([#10579](https://github.com/traefik/traefik/pull/10579) by [mmatur](https://github.com/mmatur))
+- **[rules]** Support regexp in path/pathprefix in matcher v2 ([#10546](https://github.com/traefik/traefik/pull/10546) by [youkoulayley](https://github.com/youkoulayley))
+- **[webui]** Add missing Docker Swarm logo ([#10529](https://github.com/traefik/traefik/pull/10529) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Fix typo and improve explanation on internal resources ([#10563](https://github.com/traefik/traefik/pull/10563) by [mloiseleur](https://github.com/mloiseleur))
+- Fix typo in dialer_test.go ([#10552](https://github.com/traefik/traefik/pull/10552) by [eltociear](https://github.com/eltociear))
+
+**Misc:**
+- Merge branch v2.11 into v3.0 ([#10587](https://github.com/traefik/traefik/pull/10587) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.11 into v3.0 ([#10566](https://github.com/traefik/traefik/pull/10566) by [mmatur](https://github.com/mmatur))
+- Merge current v2.11 into v3.0 ([#10564](https://github.com/traefik/traefik/pull/10564) by [ldez](https://github.com/ldez))
+
+## [v2.11.1](https://github.com/traefik/traefik/tree/v2.11.1) (2024-04-10)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.0...v2.11.1)
+
+**Bug fixes:**
+- **[acme,tls]** Enforce handling of ACME-TLS/1 challenges ([#10536](https://github.com/traefik/traefik/pull/10536) by [rtribotte](https://github.com/rtribotte))
+- **[acme]** Update go-acme/lego to v4.16.1 ([#10508](https://github.com/traefik/traefik/pull/10508) by [ldez](https://github.com/ldez))
+- **[acme]** Close created file in ACME local store CheckFile func ([#10574](https://github.com/traefik/traefik/pull/10574) by [testwill](https://github.com/testwill))
+- **[docker,http3]** Update to quic-go v0.42.0 and docker/cli v24.0.9 ([#10572](https://github.com/traefik/traefik/pull/10572) by [mloiseleur](https://github.com/mloiseleur))
+- **[docker,marathon,rancher,ecs,tls,nomad]** Allow to configure TLSStore default generated certificate with labels ([#10439](https://github.com/traefik/traefik/pull/10439) by [kevinpollet](https://github.com/kevinpollet))
+- **[ecs]** Adjust ECS network interface detection logic ([#10550](https://github.com/traefik/traefik/pull/10550) by [amaxine](https://github.com/amaxine))
+- **[logs,tls]** Fix log when default TLSStore and TLSOptions are defined multiple times ([#10499](https://github.com/traefik/traefik/pull/10499) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Allow empty replacement with ReplacePathRegex middleware ([#10538](https://github.com/traefik/traefik/pull/10538) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Update Yaegi to v0.16.1 ([#10565](https://github.com/traefik/traefik/pull/10565) by [ldez](https://github.com/ldez))
+- **[provider,rules]** Don&#39;t allow routers higher than internal ones ([#10428](https://github.com/traefik/traefik/pull/10428) by [ldez](https://github.com/ldez))
+- **[rules]** Reserve priority range for internal routers ([#10541](https://github.com/traefik/traefik/pull/10541) by [youkoulayley](https://github.com/youkoulayley))
+- **[server,tcp]** Introduce Lingering Timeout ([#10569](https://github.com/traefik/traefik/pull/10569) by [rtribotte](https://github.com/rtribotte))
+- **[tcp]** Enforce failure for TCP HostSNI with hostname ([#10540](https://github.com/traefik/traefik/pull/10540) by [youkoulayley](https://github.com/youkoulayley))
+- **[tracing]** Bump Elastic APM to v2.4.8 ([#10512](https://github.com/traefik/traefik/pull/10512) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Fix dashboard exposition through a router ([#10518](https://github.com/traefik/traefik/pull/10518) by [mmatur](https://github.com/mmatur))
+- **[webui]** Display IPAllowlist middleware configuration in dashboard ([#10459](https://github.com/traefik/traefik/pull/10459) by [youkoulayley](https://github.com/youkoulayley))
+- **[webui]** Make text more readable in dark mode ([#10473](https://github.com/traefik/traefik/pull/10473) by [hood](https://github.com/hood))
+- **[webui]** Migrate to Quasar 2.x and Vue.js 3.x ([#10416](https://github.com/traefik/traefik/pull/10416) by [andsarr](https://github.com/andsarr))
+- **[webui]** Add a horizontal scroll for the mobile view ([#10480](https://github.com/traefik/traefik/pull/10480) by [framebassman](https://github.com/framebassman))
+
+**Documentation:**
+- **[acme]** Update gandiv5 env variable in providers table ([#10506](https://github.com/traefik/traefik/pull/10506) by [dominiwe](https://github.com/dominiwe))
+- **[acme]** Fix multiple dns provider documentation ([#10496](https://github.com/traefik/traefik/pull/10496) by [mmatur](https://github.com/mmatur))
+- **[docker]** Fix paragraph in entrypoints and Docker docs ([#10491](https://github.com/traefik/traefik/pull/10491) by [luigir-it](https://github.com/luigir-it))
+- **[k8s]** Improve middleware example ([#10532](https://github.com/traefik/traefik/pull/10532) by [mloiseleur](https://github.com/mloiseleur))
+- **[metrics]** Fix host header mention in prometheus metrics doc ([#10502](https://github.com/traefik/traefik/pull/10502) by [MorphBonehunter](https://github.com/MorphBonehunter))
+- **[metrics]** Fix typo in statsd metrics docs ([#10437](https://github.com/traefik/traefik/pull/10437) by [xpac1985](https://github.com/xpac1985))
+- **[middleware]** Improve excludedIPs example with IPWhiteList and IPAllowList middleware ([#10554](https://github.com/traefik/traefik/pull/10554) by [mloiseleur](https://github.com/mloiseleur))
+- **[nomad]** Improve documentation about Nomad ACL minimum rights ([#10482](https://github.com/traefik/traefik/pull/10482) by [Thadir](https://github.com/Thadir))
+- **[server]** Add specification for TCP TLS routers in documentation ([#10510](https://github.com/traefik/traefik/pull/10510) by [shivanipawar00](https://github.com/shivanipawar00))
+- **[tls]** Fix default value for peerCertURI option ([#10470](https://github.com/traefik/traefik/pull/10470) by [marcmognol](https://github.com/marcmognol))
+- Update releases page ([#10449](https://github.com/traefik/traefik/pull/10449) by [ldez](https://github.com/ldez))
+- Update releases page ([#10443](https://github.com/traefik/traefik/pull/10443) by [ldez](https://github.com/ldez))
+- Add youkoulayley to maintainers ([#10517](https://github.com/traefik/traefik/pull/10517) by [emilevauge](https://github.com/emilevauge))
+- Add sdelicata to maintainers ([#10515](https://github.com/traefik/traefik/pull/10515) by [emilevauge](https://github.com/emilevauge))
+
+**Misc:**
+- **[webui]** Modify the Hub Button ([#10583](https://github.com/traefik/traefik/pull/10583) by [mdeliatf](https://github.com/mdeliatf))
+
 ## [v3.0.0-rc3](https://github.com/traefik/traefik/tree/v3.0.0-rc3) (2024-03-13)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.0-rc2...v3.0.0-rc3)
 

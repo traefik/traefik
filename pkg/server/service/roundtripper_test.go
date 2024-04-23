@@ -536,7 +536,7 @@ func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
 	return x509svid.ParseRaw(certDER, keyPKCS8)
 }
 
-// fakeSpiffeSource allows retrieving staticly an SVID and its associated bundle.
+// fakeSpiffeSource allows retrieving statically an SVID and its associated bundle.
 type fakeSpiffeSource struct {
 	bundle *x509bundle.Bundle
 	svid   *x509svid.SVID

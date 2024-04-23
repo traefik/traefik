@@ -14,7 +14,7 @@ jobs:
 
   docs:
     name: Doc Process
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: github.repository == 'traefik/traefik'
 
     steps:
