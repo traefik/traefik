@@ -1269,10 +1269,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-4a1b73e6f83804949a37": {
+						"default-http-app-1-my-gateway-web-6cf37fa71907768d925c": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-4a1b73e6f83804949a37-wrr",
-							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`) && Header(`my-header`,`foo`) && Header(`my-header2`,`bar`)",
+							Service:     "default-http-app-1-my-gateway-web-6cf37fa71907768d925c-wrr",
+							Rule:        "Host(`foo.com`) && (Path(`/bar`) || PathPrefix(`/bar/`)) && Header(`my-header`,`foo`) && Header(`my-header2`,`bar`)",
 							RuleSyntax:  "v3",
 						},
 						"default-http-app-1-my-gateway-web-aaba0f24fd26e1ca2276": {
@@ -1284,7 +1284,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-4a1b73e6f83804949a37-wrr": {
+						"default-http-app-1-my-gateway-web-6cf37fa71907768d925c-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -5882,7 +5882,8 @@ func Test_shouldAttach(t *testing.T) {
 		listener       gatev1.Listener
 		routeNamespace string
 		routeSpec      gatev1.CommonRouteSpec
-		expectedAttach bool
+		wantAttach     bool
+		wantParentRef  gatev1.ParentReference
 	}{
 		{
 			desc: "No ParentRefs",
@@ -5899,7 +5900,7 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1.CommonRouteSpec{
 				ParentRefs: nil,
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Unsupported Kind",
@@ -5924,7 +5925,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Unsupported Group",
@@ -5949,7 +5950,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Kind is nil",
@@ -5973,7 +5974,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Group is nil",
@@ -5997,7 +5998,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "SectionName does not match a listener desc",
@@ -6022,7 +6023,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Namespace does not match the Gateway namespace",
@@ -6047,7 +6048,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Route namespace does not match the Gateway namespace",
@@ -6071,7 +6072,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Unsupported Kind",
@@ -6096,7 +6097,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Route namespace matches the Gateway namespace",
@@ -6120,7 +6121,13 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: true,
+			wantAttach: true,
+			wantParentRef: gatev1.ParentReference{
+				SectionName: sectionNamePtr("foo"),
+				Name:        "gateway",
+				Kind:        kindPtr("Gateway"),
+				Group:       groupPtr(gatev1.GroupName),
+			},
 		},
 		{
 			desc: "Namespace matches the Gateway namespace",
@@ -6145,7 +6152,14 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: true,
+			wantAttach: true,
+			wantParentRef: gatev1.ParentReference{
+				SectionName: sectionNamePtr("foo"),
+				Name:        "gateway",
+				Namespace:   namespacePtr("default"),
+				Kind:        kindPtr("Gateway"),
+				Group:       groupPtr(gatev1.GroupName),
+			},
 		},
 		{
 			desc: "Only one ParentRef matches the Gateway",
@@ -6175,7 +6189,13 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: true,
+			wantAttach: true,
+			wantParentRef: gatev1.ParentReference{
+				Name:      "gateway",
+				Namespace: namespacePtr("default"),
+				Kind:      kindPtr("Gateway"),
+				Group:     groupPtr(gatev1.GroupName),
+			},
 		},
 	}
 
@@ -6183,8 +6203,9 @@ func Test_shouldAttach(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := shouldAttach(test.gateway, test.listener, test.routeNamespace, test.routeSpec)
-			assert.Equal(t, test.expectedAttach, got)
+			gotParentRef, gotAttach := shouldAttach(test.gateway, test.listener, test.routeNamespace, test.routeSpec)
+			assert.Equal(t, test.wantAttach, gotAttach)
+			assert.Equal(t, test.wantParentRef, gotParentRef)
 		})
 	}
 }

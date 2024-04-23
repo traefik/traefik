@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,14 +32,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
-	"k8s.io/utils/strings/slices"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
-	providerName = "kubernetesgateway"
+	providerName   = "kubernetesgateway"
+	controllerName = "traefik.io/gateway-controller"
 
 	groupCore = "core"
 
@@ -286,7 +288,7 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 	}
 
 	for _, gatewayClass := range gatewayClasses {
-		if gatewayClass.Spec.ControllerName == "traefik.io/gateway-controller" {
+		if gatewayClass.Spec.ControllerName == controllerName {
 			gatewayClassNames[gatewayClass.Name] = struct{}{}
 
 			err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
@@ -355,6 +357,11 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 }
 
 func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway *gatev1.Gateway) (*dynamic.Configuration, error) {
+	addresses, err := p.gatewayAddresses(client)
+	if err != nil {
+		return nil, fmt.Errorf("get Gateway status addresses: %w", err)
+	}
+
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           map[string]*dynamic.Router{},
@@ -380,35 +387,43 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	// GatewayReasonListenersNotValid is used when one or more
 	// Listeners have an invalid or unsupported configuration
 	// and cannot be configured on the Gateway.
-	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
-
-	addresses, err := p.gatewayAddresses(client)
-	if err != nil {
-		return nil, fmt.Errorf("get Gateway status addresses: %w", err)
-	}
-
-	gatewayStatus, errG := p.makeGatewayStatus(gateway, listenerStatuses, addresses)
-
-	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
-	if err != nil {
-		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
-	}
-
-	if errG != nil {
-		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", errG)
-	}
+	listenerStatuses, httpRouteParentStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
 
 	if len(tlsConfigs) > 0 {
 		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
 	}
 
+	httpRouteStatuses := makeHTTPRouteStatuses(gateway.Namespace, httpRouteParentStatuses)
+	for nsName, status := range httpRouteStatuses {
+		if err := client.UpdateHTTPRouteStatus(ctx, gateway, nsName, status); err != nil {
+			log.Error().
+				Err(err).
+				Str("namespace", nsName.Namespace).
+				Str("name", nsName.Name).
+				Msg("Unable to update HTTPRoute status")
+		}
+	}
+
+	gatewayStatus, errG := p.makeGatewayStatus(gateway, listenerStatuses, addresses)
+	if err = client.UpdateGatewayStatus(gateway, gatewayStatus); err != nil {
+		log.Error().
+			Err(err).
+			Str("namespace", gateway.Namespace).
+			Str("name", gateway.Name).
+			Msg("Unable to update Gateway status")
+	}
+	if errG != nil {
+		return nil, fmt.Errorf("creating gateway status: %w", errG)
+	}
+
 	return conf, nil
 }
 
-func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []gatev1.ListenerStatus {
+func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) ([]gatev1.ListenerStatus, map[ktypes.NamespacedName][]gatev1.RouteParentStatus) {
 	logger := log.Ctx(ctx)
-	listenerStatuses := make([]gatev1.ListenerStatus, len(gateway.Spec.Listeners))
 	allocatedListeners := make(map[string]struct{})
+	listenerStatuses := make([]gatev1.ListenerStatus, len(gateway.Spec.Listeners))
+	httpRouteParentStatuses := make(map[ktypes.NamespacedName][]gatev1.RouteParentStatus)
 
 	for i, listener := range gateway.Spec.Listeners {
 		listenerStatuses[i] = gatev1.ListenerStatus{
@@ -625,7 +640,12 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		for _, routeKind := range routeKinds {
 			switch routeKind.Kind {
 			case kindHTTPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
+				listenerConditions, routeStatuses := p.gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, listenerConditions...)
+				for nsName, status := range routeStatuses {
+					httpRouteParentStatuses[nsName] = append(httpRouteParentStatuses[nsName], status)
+				}
+
 			case kindTCPRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTLSRoute:
@@ -634,7 +654,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		}
 	}
 
-	return listenerStatuses
+	return listenerStatuses, httpRouteParentStatuses
 }
 
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listenerStatuses []gatev1.ListenerStatus, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, error) {
@@ -786,10 +806,10 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1.Listener, gateway *gatev1.Gateway, client Client, conf *dynamic.Configuration) ([]metav1.Condition, map[ktypes.NamespacedName]gatev1.RouteParentStatus) {
+	// Should not happen due to validation.
 	if listener.AllowedRoutes == nil {
-		// Should not happen due to validation.
-		return nil
+		return nil, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -802,7 +822,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // Should never happen as the selector is validated by kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
+		}}, nil
 	}
 
 	routes, err := client.GetHTTPRoutes(namespaces)
@@ -815,17 +835,19 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch HTTPRoutes: %v", err),
-		}}
+		}}, nil
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No HTTPRoutes found")
-		return nil
+		return nil, nil
 	}
 
-	var conditions []metav1.Condition
+	var listenerConditions []metav1.Condition
+	routeStatuses := map[ktypes.NamespacedName]gatev1.RouteParentStatus{}
 	for _, route := range routes {
-		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
+		parentRef, ok := shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec)
+		if !ok {
 			continue
 		}
 
@@ -838,7 +860,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 
 		hostRule, err := hostRule(hostnames)
 		if err != nil {
-			conditions = append(conditions, metav1.Condition{
+			listenerConditions = append(listenerConditions, metav1.Condition{
 				Type:               string(gatev1.ListenerConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: gateway.Generation,
@@ -853,7 +875,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			rule, err := extractRule(routeRule, hostRule)
 			if err != nil {
 				// update "ResolvedRefs" status true with "UnsupportedPathOrHeaderType" reason
-				conditions = append(conditions, metav1.Condition{
+				listenerConditions = append(listenerConditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: gateway.Generation,
@@ -861,6 +883,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 					Reason:             "UnsupportedPathOrHeaderType", // TODO check the spec if a proper reason is introduced at some point
 					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot generate rule: %v", route.Name, err),
 				})
+				continue
 			}
 
 			router := dynamic.Router{
@@ -879,7 +902,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			routerKey, err := makeRouterKey(router.Rule, makeID(route.Namespace, routerName))
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
-				conditions = append(conditions, metav1.Condition{
+				listenerConditions = append(listenerConditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: gateway.Generation,
@@ -895,7 +918,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			middlewares, err := p.loadMiddlewares(listener, route.Namespace, routerKey, routeRule.Filters)
 			if err != nil {
 				// update "ResolvedRefs" status true with "InvalidFilters" reason
-				conditions = append(conditions, metav1.Condition{
+				listenerConditions = append(listenerConditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: gateway.Generation,
@@ -928,7 +951,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 				wrrService, subServices, err := p.loadServices(client, route.Namespace, routeRule.BackendRefs)
 				if err != nil {
 					// update "ResolvedRefs" status true with "DroppedRoutes" reason
-					conditions = append(conditions, metav1.Condition{
+					listenerConditions = append(listenerConditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
 						ObservedGeneration: gateway.Generation,
@@ -959,9 +982,30 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			routerKey = provider.Normalize(routerKey)
 			conf.HTTP.Routers[routerKey] = rt
 		}
+
+		routeStatuses[ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}] = gatev1.RouteParentStatus{
+			ParentRef:      parentRef,
+			ControllerName: controllerName,
+			Conditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.RouteConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteReasonAccepted),
+				},
+				{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteConditionResolvedRefs),
+				},
+			},
+		}
 	}
 
-	return conditions
+	return listenerConditions, routeStatuses
 }
 
 // loadServices is generating a WRR service, even when there is only one target.
@@ -1425,7 +1469,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Li
 
 	var conditions []metav1.Condition
 	for _, route := range routes {
-		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
+		if _, ok := shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec); !ok {
 			continue
 		}
 
@@ -1560,7 +1604,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1.Li
 
 	var conditions []metav1.Condition
 	for _, route := range routes {
-		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
+		if _, ok := shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec); !ok {
 			continue
 		}
 
@@ -1727,7 +1771,7 @@ func matchingHostnames(listener gatev1.Listener, hostnames []gatev1.Hostname) []
 	return matches
 }
 
-func shouldAttach(gateway *gatev1.Gateway, listener gatev1.Listener, routeNamespace string, routeSpec gatev1.CommonRouteSpec) bool {
+func shouldAttach(gateway *gatev1.Gateway, listener gatev1.Listener, routeNamespace string, routeSpec gatev1.CommonRouteSpec) (gatev1.ParentReference, bool) {
 	for _, parentRef := range routeSpec.ParentRefs {
 		if parentRef.Group == nil || *parentRef.Group != gatev1.GroupName {
 			continue
@@ -1747,11 +1791,11 @@ func shouldAttach(gateway *gatev1.Gateway, listener gatev1.Listener, routeNamesp
 		}
 
 		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
-			return true
+			return parentRef, true
 		}
 	}
 
-	return false
+	return gatev1.ParentReference{}, false
 }
 
 func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
@@ -1864,14 +1908,13 @@ func extractRule(routeRule gatev1.HTTPRouteRule, hostRule string) (string, error
 		var matchRules []string
 
 		if match.Path != nil && match.Path.Type != nil && match.Path.Value != nil {
-			// TODO handle other path types
 			switch *match.Path.Type {
 			case gatev1.PathMatchExact:
 				matchRules = append(matchRules, fmt.Sprintf("Path(`%s`)", *match.Path.Value))
 			case gatev1.PathMatchPathPrefix:
-				matchRules = append(matchRules, fmt.Sprintf("PathPrefix(`%s`)", *match.Path.Value))
+				matchRules = append(matchRules, buildPathMatchPathPrefixRule(*match.Path.Value))
 			default:
-				return "", fmt.Errorf("unsupported path match %s", *match.Path.Type)
+				return "", fmt.Errorf("unsupported path match type %s", *match.Path.Type)
 			}
 		}
 
@@ -1928,6 +1971,15 @@ func extractHeaderRules(headers []gatev1.HTTPHeaderMatch) ([]string, error) {
 	}
 
 	return headerRules, nil
+}
+
+func buildPathMatchPathPrefixRule(path string) string {
+	if path == "/" {
+		return "PathPrefix(`/`)"
+	}
+
+	path = strings.TrimSuffix(path, "/")
+	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
 func makeRouterKey(rule, name string) (string, error) {
@@ -2204,4 +2256,72 @@ func kindToString(p *gatev1.Kind) string {
 		return "<nil>"
 	}
 	return string(*p)
+}
+
+func makeHTTPRouteStatuses(gwNs string, routeParentStatuses map[ktypes.NamespacedName][]gatev1.RouteParentStatus) map[ktypes.NamespacedName]gatev1.HTTPRouteStatus {
+	res := map[ktypes.NamespacedName]gatev1.HTTPRouteStatus{}
+
+	for nsName, parentStatuses := range routeParentStatuses {
+		var httpRouteStatus gatev1.HTTPRouteStatus
+		for _, parentStatus := range parentStatuses {
+			exists := slices.ContainsFunc(httpRouteStatus.Parents, func(status gatev1.RouteParentStatus) bool {
+				return parentRefEquals(gwNs, parentStatus.ParentRef, status.ParentRef)
+			})
+			if !exists {
+				httpRouteStatus.Parents = append(httpRouteStatus.Parents, parentStatus)
+			}
+		}
+
+		res[nsName] = httpRouteStatus
+	}
+
+	return res
+}
+
+func parentRefEquals(gwNs string, p1, p2 gatev1.ParentReference) bool {
+	if !pointerEquals(p1.Group, p2.Group) {
+		return false
+	}
+
+	if !pointerEquals(p1.Kind, p2.Kind) {
+		return false
+	}
+
+	if !pointerEquals(p1.SectionName, p2.SectionName) {
+		return false
+	}
+
+	if p1.Name != p2.Name {
+		return false
+	}
+
+	p1Ns := gwNs
+	if p1.Namespace != nil {
+		p1Ns = string(*p1.Namespace)
+	}
+
+	p2Ns := gwNs
+	if p2.Namespace != nil {
+		p2Ns = string(*p2.Namespace)
+	}
+
+	return p1Ns == p2Ns
+}
+
+func pointerEquals[T comparable](p1, p2 *T) bool {
+	if p1 == nil && p2 == nil {
+		return true
+	}
+
+	var val1 T
+	if p1 != nil {
+		val1 = *p1
+	}
+
+	var val2 T
+	if p2 != nil {
+		val2 = *p2
+	}
+
+	return val1 == val2
 }
