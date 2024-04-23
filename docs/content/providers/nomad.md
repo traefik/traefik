@@ -163,6 +163,7 @@ providers:
 _Optional, Default=""_
 
 Token is used to provide a per-request ACL token, if Nomad ACLs are enabled.
+The appropriate ACL privilege for this token is 'read-job', as outlined in the [Nomad documentation on ACL](https://developer.hashicorp.com/nomad/tutorials/access-control/access-control-policies).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -510,4 +511,28 @@ providers:
 ```bash tab="CLI"
 --providers.nomad.namespaces=ns1,ns2
 # ...
+```
+
+### `allowEmptyServices`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`,
+it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer) if the targeted Nomad service has no endpoints available. This results in a `503` HTTP response instead of a `404`.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    allowEmptyServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  allowEmptyServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.allowEmptyServices=true
 ```

@@ -11,14 +11,15 @@ import (
 // CheckFile checks file permissions and content size.
 func CheckFile(name string) (bool, error) {
 	f, err := os.Open(name)
-	if err != nil {
-		if os.IsNotExist(err) {
-			f, err = os.Create(name)
-			if err != nil {
-				return false, err
-			}
-			return false, f.Chmod(0o600)
+	if err != nil && os.IsNotExist(err) {
+		nf, err := os.Create(name)
+		if err != nil {
+			return false, err
 		}
+		defer nf.Close()
+		return false, nf.Chmod(0o600)
+	}
+	if err != nil {
 		return false, err
 	}
 	defer f.Close()

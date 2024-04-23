@@ -1,0 +1,47 @@
+[
+  {
+    "ID": "job3",
+    "ParentID": "",
+    "Name": "job3",
+    "Namespace": "default",
+    "Datacenters": [
+      "dc1"
+    ],
+    "NodePool": "default",
+    "Multiregion": null,
+    "Type": "service",
+    "Priority": 50,
+    "Periodic": false,
+    "ParameterizedJob": false,
+    "Stop": false,
+    "Status": "running",
+    "StatusDescription": "",
+    "JobSummary": {
+      "JobID": "job3",
+      "Namespace": "default",
+      "Summary": {
+        "group1": {
+          "Queued": 0,
+          "Complete": 1,
+          "Failed": 0,
+          "Running": 1,
+          "Starting": 0,
+          "Lost": 0,
+          "Unknown": 0
+        }
+      },
+      "Children": {
+        "Pending": 0,
+        "Running": 0,
+        "Dead": 0
+      },
+      "CreateIndex": 2932,
+      "ModifyIndex": 9989
+    },
+    "CreateIndex": 2932,
+    "ModifyIndex": 9992,
+    "JobModifyIndex": 9983,
+    "SubmitTime": 1705690892484556300,
+    "Meta": null
+  }
+]

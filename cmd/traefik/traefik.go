@@ -593,16 +593,16 @@ func checkNewVersion() {
 }
 
 func stats(staticConfiguration *static.Configuration) {
-	logger := log.Info()
+	logger := log.With().Logger()
 
 	if staticConfiguration.Global.SendAnonymousUsage {
-		logger.Msg(`Stats collection is enabled.`)
-		logger.Msg(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
-		logger.Msg(`Help us improve Traefik by leaving this feature on :)`)
-		logger.Msg(`More details on: https://doc.traefik.io/traefik/contributing/data-collection/`)
+		logger.Info().Msg(`Stats collection is enabled.`)
+		logger.Info().Msg(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
+		logger.Info().Msg(`Help us improve Traefik by leaving this feature on :)`)
+		logger.Info().Msg(`More details on: https://doc.traefik.io/traefik/contributing/data-collection/`)
 		collect(staticConfiguration)
 	} else {
-		logger.Msg(`
+		logger.Info().Msg(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
 More details on: https://doc.traefik.io/traefik/contributing/data-collection/
