@@ -342,6 +342,9 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
             flushInterval: 1ms
           scheme: https
           serversTransport: transport   # [10]
+          healthCheck:                  # [11]
+            path: /health
+            interval: 15s
           sticky:
             cookie:
               httpOnly: true
