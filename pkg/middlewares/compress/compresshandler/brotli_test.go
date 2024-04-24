@@ -115,7 +115,7 @@ func Test_Brotli_NoBody(t *testing.T) {
 
 func Test_Brotli_MinSize(t *testing.T) {
 	cfg := Config{
-		MinSize: 128,
+		MinSize:   128,
 		Algorithm: Brotli,
 	}
 
@@ -353,7 +353,7 @@ func Test_Brotli_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm: Brotli,
+				Algorithm:            Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -458,7 +458,7 @@ func Test_Brotli_IncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm: Brotli,
+				Algorithm:            Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -563,7 +563,7 @@ func Test_Brotli_FlushExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm: Brotli,
+				Algorithm:            Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -682,7 +682,7 @@ func Test_Brotli_FlushIncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm: Brotli,
+				Algorithm:            Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
