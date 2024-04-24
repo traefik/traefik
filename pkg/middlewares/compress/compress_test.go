@@ -24,6 +24,7 @@ const (
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
 	brotliValue           = "br"
+	zstdValue             = "zstd"
 )
 
 func TestNegotiation(t *testing.T) {
@@ -44,7 +45,7 @@ func TestNegotiation(t *testing.T) {
 		{
 			desc:            "accept any header",
 			acceptEncHeader: "*",
-			expEncoding:     "br",
+			expEncoding:     "zstd",
 		},
 		{
 			desc:            "gzip accept header",
@@ -70,6 +71,26 @@ func TestNegotiation(t *testing.T) {
 			desc:            "multi accept header list, prefer br",
 			acceptEncHeader: "gzip, br",
 			expEncoding:     "br",
+		},
+		{
+			desc:            "zstd accept header",
+			acceptEncHeader: "zstd",
+			expEncoding:     "zstd",
+		},
+		{
+			desc:            "multi accept header, prefer zstd",
+			acceptEncHeader: "zstd;q=0.9, br;q=0.8, gzip;q=0.6",
+			expEncoding:     "zstd",
+		},
+		{
+			desc:            "multi accept header, prefer zstd",
+			acceptEncHeader: "gzip;q=1.0, br;q=0.8, zstd;q=0.7",
+			expEncoding:     "zstd",
+		},
+		{
+			desc:            "multi accept header list, prefer zstd",
+			acceptEncHeader: "gzip, br, zstd",
+			expEncoding:     "zstd",
 		},
 	}
 
