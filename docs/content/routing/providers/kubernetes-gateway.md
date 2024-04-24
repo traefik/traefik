@@ -234,7 +234,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
             - headers:                          # [11]
                 name: foo                       # [12]
                 value: bar                      # [13]
-        - backendRefs:                          # [14]
+          backendRefs:                          # [14]
             - name: whoamitcp                   # [15]
               weight: 1                         # [16]
               port: 8080                        # [17]
@@ -251,39 +251,51 @@ Kubernetes cluster before creating `HTTPRoute` objects.
             requestRedirect:                    # [27]
               scheme: https                     # [28]
               statusCode: 301                   # [29]
+          - type: RequestHeaderModifier         # [30]
+            requestHeaderModifier:              # [31]
+              set:
+                - name: X-Foo
+                  value: Bar
+              add:
+                - name: X-Bar
+                  value: Foo
+              remove:
+                - X-Baz
     ```
 
-| Ref  | Attribute         | Description                                                                                                                                                                 |
-|------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `parentRefs`      | References the resources (usually Gateways) that a Route wants to be attached to.                                                                                           |
-| [2]  | `name`            | Name of the referent.                                                                                                                                                       |
-| [3]  | `namespace`       | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.                                                             |
-| [4]  | `sectionName`     | Name of a section within the target resource (the Listener name).                                                                                                           |
-| [5]  | `hostnames`       | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                              |
-| [6]  | `rules`           | A list of HTTP matchers, filters and actions.                                                                                                                               |
-| [7]  | `matches`         | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
-| [8]  | `path`            | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
-| [9]  | `type`            | Type of match against the path Value (supported types: `Exact`, `Prefix`).                                                                                                  |
-| [10] | `value`           | The value of the HTTP path to match against.                                                                                                                                |
-| [11] | `headers`         | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
-| [12] | `name`            | Name of the HTTP header to be matched.                                                                                                                                      |
-| [13] | `value`           | Value of HTTP Header to be matched.                                                                                                                                         |
-| [14] | `backendRefs`     | Defines the backend(s) where matching requests should be sent.                                                                                                              |
-| [15] | `name`            | The name of the referent service.                                                                                                                                           |
-| [16] | `weight`          | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                  |
-| [17] | `port`            | The port of the referent service.                                                                                                                                           |
-| [18] | `group`           | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.                                                                 |
-| [19] | `kind`            | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                                                                                     |
-| [20] | `filters`         | Defines the filters (middlewares) applied to the route.                                                                                                                     |
-| [21] | `type`            | Defines the type of filter; ExtensionRef is used for configuring custom HTTP filters.                                                                                       |
-| [22] | `extensionRef`    | Configuration of the custom HTTP filter.                                                                                                                                    |
-| [23] | `group`           | Group of the kubernetes object to reference.                                                                                                                                |
-| [24] | `kind`            | Kind of the kubernetes object to reference.                                                                                                                                 |
-| [25] | `name`            | Name of the kubernetes object to reference.                                                                                                                                 |
-| [26] | `type`            | Defines the type of filter; RequestRedirect redirects a request to another location.                                                                                        |
-| [27] | `requestRedirect` | Configuration of redirect filter.                                                                                                                                           |
-| [28] | `scheme`          | Scheme is the scheme to be used in the value of the Location header in the response.                                                                                        |
-| [29] | `statusCode`      | StatusCode is the HTTP status code to be used in response.                                                                                                                  |
+| Ref  | Attribute               | Description                                                                                                                                                                 |
+|------|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `parentRefs`            | References the resources (usually Gateways) that a Route wants to be attached to.                                                                                           |
+| [2]  | `name`                  | Name of the referent.                                                                                                                                                       |
+| [3]  | `namespace`             | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.                                                             |
+| [4]  | `sectionName`           | Name of a section within the target resource (the Listener name).                                                                                                           |
+| [5]  | `hostnames`             | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                              |
+| [6]  | `rules`                 | A list of HTTP matchers, filters and actions.                                                                                                                               |
+| [7]  | `matches`               | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
+| [8]  | `path`                  | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
+| [9]  | `type`                  | Type of match against the path Value (supported types: `Exact`, `PathPrefix`).                                                                                              |
+| [10] | `value`                 | The value of the HTTP path to match against.                                                                                                                                |
+| [11] | `headers`               | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
+| [12] | `name`                  | Name of the HTTP header to be matched.                                                                                                                                      |
+| [13] | `value`                 | Value of HTTP Header to be matched.                                                                                                                                         |
+| [14] | `backendRefs`           | Defines the backend(s) where matching requests should be sent.                                                                                                              |
+| [15] | `name`                  | The name of the referent service.                                                                                                                                           |
+| [16] | `weight`                | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                  |
+| [17] | `port`                  | The port of the referent service.                                                                                                                                           |
+| [18] | `group`                 | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.                                                                 |
+| [19] | `kind`                  | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                                                                                     |
+| [20] | `filters`               | Defines the filters (middlewares) applied to the route.                                                                                                                     |
+| [21] | `type`                  | Defines the type of filter; ExtensionRef is used for configuring custom HTTP filters.                                                                                       |
+| [22] | `extensionRef`          | Configuration of the custom HTTP filter.                                                                                                                                    |
+| [23] | `group`                 | Group of the kubernetes object to reference.                                                                                                                                |
+| [24] | `kind`                  | Kind of the kubernetes object to reference.                                                                                                                                 |
+| [25] | `name`                  | Name of the kubernetes object to reference.                                                                                                                                 |
+| [26] | `type`                  | Defines the type of filter; RequestRedirect redirects a request to another location.                                                                                        |
+| [27] | `requestRedirect`       | Configuration of redirect filter.                                                                                                                                           |
+| [28] | `scheme`                | Scheme is the scheme to be used in the value of the Location header in the response.                                                                                        |
+| [29] | `statusCode`            | StatusCode is the HTTP status code to be used in response.                                                                                                                  |
+| [30] | `type`                  | Defines the type of filter; RequestHeaderModifier modifies request headers.                                                                                                 |
+| [31] | `requestHeaderModifier` | Configuration of RequestHeaderModifier filter.                                                                                                                              |
 
 ### Kind: `TCPRoute`
 

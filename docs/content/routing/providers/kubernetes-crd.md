@@ -53,9 +53,9 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
                 - --log.level=DEBUG
                 - --api
                 - --api.insecure
-                - --entrypoints.web.address=:80
-                - --entrypoints.tcpep.address=:8000
-                - --entrypoints.udpep.address=:9000/udp
+                - --entryPoints.web.address=:80
+                - --entryPoints.tcpep.address=:8000
+                - --entryPoints.udpep.address=:9000/udp
                 - --providers.kubernetescrd
               ports:
                 - name: web

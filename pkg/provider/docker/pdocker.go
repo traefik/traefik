@@ -135,7 +135,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					case event := <-eventsc:
 						if event.Action == "start" ||
 							event.Action == "die" ||
-							strings.HasPrefix(event.Action, "health_status") {
+							strings.HasPrefix(string(event.Action), "health_status") {
 							startStopHandle(event)
 						}
 					case err := <-errc:
