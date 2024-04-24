@@ -8,11 +8,11 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
-type Algorithm string;
+type Algorithm string
 
 const (
 	Undefined Algorithm = "N/A"
-	Brotli Algorithm = "br"
+	Brotli    Algorithm = "br"
 	Zstandard Algorithm = "zstd"
 )
 
@@ -82,7 +82,6 @@ func (z *zstdWriter) Write(p []byte) (n int, err error) {
 func (z *zstdWriter) ContentEncoding() string {
 	return string(Zstandard)
 }
-
 
 func NewBrWriter(in io.Writer) (CompressionWriter, error) {
 	writer := brotli.NewWriter(in)

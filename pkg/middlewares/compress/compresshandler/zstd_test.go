@@ -115,7 +115,7 @@ func Test_Zstandard_NoBody(t *testing.T) {
 
 func Test_Zstandard_MinSize(t *testing.T) {
 	cfg := Config{
-		MinSize: 128,
+		MinSize:   128,
 		Algorithm: Zstandard,
 	}
 
@@ -365,7 +365,7 @@ func Test_Zstandard_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm: Zstandard,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -389,7 +389,7 @@ func Test_Zstandard_ExcludedContentTypes(t *testing.T) {
 
 				reader, err := zstd.NewReader(rw.Body)
 				require.NoError(t, err)
-			
+
 				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
@@ -473,7 +473,7 @@ func Test_Zstandard_IncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm: Zstandard,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -497,7 +497,7 @@ func Test_Zstandard_IncludedContentTypes(t *testing.T) {
 
 				reader, err := zstd.NewReader(rw.Body)
 				require.NoError(t, err)
-			
+
 				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
@@ -581,7 +581,7 @@ func Test_Zstandard_FlushExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm: Zstandard,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -619,7 +619,7 @@ func Test_Zstandard_FlushExcludedContentTypes(t *testing.T) {
 
 				reader, err := zstd.NewReader(rw.Body)
 				require.NoError(t, err)
-			
+
 				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
@@ -703,7 +703,7 @@ func Test_Zstandard_FlushIncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm: Zstandard,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -741,7 +741,7 @@ func Test_Zstandard_FlushIncludedContentTypes(t *testing.T) {
 
 				reader, err := zstd.NewReader(rw.Body)
 				require.NoError(t, err)
-			
+
 				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)

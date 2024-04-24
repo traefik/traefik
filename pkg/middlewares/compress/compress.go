@@ -169,7 +169,7 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 	return wrapper(c.next), nil
 }
 
-func (c *compress) newCompressionHandler(algo compresshandler.Algorithm) (http.Handler, error){
+func (c *compress) newCompressionHandler(algo compresshandler.Algorithm) (http.Handler, error) {
 	cfg := compresshandler.Config{MinSize: c.minSize, Algorithm: algo}
 	if len(c.includes) > 0 {
 		cfg.IncludedContentTypes = c.includes

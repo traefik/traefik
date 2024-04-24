@@ -78,7 +78,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 				statusCode:           http.StatusOK,
 				excludedContentTypes: excludedContentTypes,
 				includedContentTypes: includedContentTypes,
-				writerError: err,
+				writerError:          err,
 			}
 			defer responseWriter.close()
 
@@ -90,8 +90,8 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
-	rw             http.ResponseWriter
-	compressionw   CompressionWriter
+	rw           http.ResponseWriter
+	compressionw CompressionWriter
 
 	minSize              int
 	excludedContentTypes []parsedContentType
