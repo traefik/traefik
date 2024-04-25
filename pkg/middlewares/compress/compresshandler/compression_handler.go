@@ -80,7 +80,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 			}
 			responseWriter := &responseWriter{
 				rw:                   rw,
-				compressionw:         compressionWriter,
+				compressionWriter:    compressionWriter,
 				minSize:              cfg.MinSize,
 				statusCode:           http.StatusOK,
 				excludedContentTypes: excludedContentTypes,
@@ -98,7 +98,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
 	rw           http.ResponseWriter
-	compressionw CompressionWriter
+	compressionWriter CompressionWriter
 
 	minSize              int
 	excludedContentTypes []parsedContentType
@@ -151,7 +151,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// We are now in compression cruise mode until the end of times.
 	if r.compressionStarted {
 		// If compressionStarted we assume we have sent headers already
-		return r.compressionw.Write(p)
+		return r.compressionWriter.Write(p)
 	}
 
 	// If we detect a contentEncoding, we know we are never going to compress.
@@ -203,13 +203,13 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// Since we know we are going to compress we will never be able to know the actual length.
 	r.rw.Header().Del(contentLength)
 
-	r.rw.Header().Set(contentEncoding, r.compressionw.ContentEncoding())
+	r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
 	r.rw.WriteHeader(r.statusCode)
 	r.headersSent = true
 
 	// Start with sending what we have previously buffered, before actually writing
 	// the bytes in argument.
-	n, err := r.compressionw.Write(r.buf)
+	n, err := r.compressionWriter.Write(r.buf)
 	if err != nil {
 		r.buf = r.buf[n:]
 		// Return zero because we haven't taken care of the bytes in argument yet.
@@ -228,7 +228,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	r.buf = r.buf[:0]
 
 	// Now that we emptied the buffer, we can actually write the given bytes.
-	return r.compressionw.Write(p)
+	return r.compressionWriter.Write(p)
 }
 
 // Flush flushes data to the appropriate underlying writer(s), although it does
@@ -266,7 +266,7 @@ func (r *responseWriter) Flush() {
 	// we have to do it ourselves.
 	defer func() {
 		// because we also ignore the error returned by Write anyway
-		_ = r.compressionw.Flush()
+		_ = r.compressionWriter.Flush()
 
 		if rw, ok := r.rw.(http.Flusher); ok {
 			rw.Flush()
@@ -274,7 +274,7 @@ func (r *responseWriter) Flush() {
 	}()
 
 	// We empty whatever is left of the buffer that Write never took care of.
-	n, err := r.compressionw.Write(r.buf)
+	n, err := r.compressionWriter.Write(r.buf)
 	if err != nil {
 		return
 	}
@@ -329,7 +329,7 @@ func (r *responseWriter) close() error {
 
 	if len(r.buf) == 0 {
 		// If we got here we know compression has started, so we can safely flush on bw.
-		return r.compressionw.Close()
+		return r.compressionWriter.Close()
 	}
 
 	// There is still data in the buffer, because we never reached minSize (to
@@ -347,16 +347,16 @@ func (r *responseWriter) close() error {
 
 	// There is still data in the buffer, simply because Write did not take care of it all.
 	// We flush it to the compressed writer.
-	n, err := r.compressionw.Write(r.buf)
+	n, err := r.compressionWriter.Write(r.buf)
 	if err != nil {
-		r.compressionw.Close()
+		r.compressionWriter.Close()
 		return err
 	}
 	if n < len(r.buf) {
-		r.compressionw.Close()
+		r.compressionWriter.Close()
 		return io.ErrShortWrite
 	}
-	return r.compressionw.Close()
+	return r.compressionWriter.Close()
 }
 
 // parsedContentType is the parsed representation of one of the inputs to ContentTypes.
