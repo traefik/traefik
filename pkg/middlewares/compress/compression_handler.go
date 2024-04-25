@@ -134,7 +134,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 			if err != nil {
 				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeNameHandler)
 				logMessage := fmt.Sprintf("create compression handler: %v", err)
-				logger.Debug().Msg(logMessage)
+				logger.Error().Msg(logMessage)
 				observability.SetStatusErrorf(r.Context(), logMessage)
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
