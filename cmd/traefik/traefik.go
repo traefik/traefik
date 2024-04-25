@@ -46,6 +46,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/winsvc"
 )
 
 func main() {
@@ -119,6 +120,11 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	}
 
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, svcCancel := context.WithCancel(ctx)
+	go func() {
+		<-winsvc.ChanExit
+		svcCancel()
+	}()
 
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
