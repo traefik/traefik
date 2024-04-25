@@ -15,8 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
 
-const typeNameHandler = "CompressHandler"
-
 const (
 	vary            = "Vary"
 	acceptEncoding  = "Accept-Encoding"
@@ -132,7 +130,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 
 			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
 			if err != nil {
-				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeNameHandler)
+				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeName)
 				logMessage := fmt.Sprintf("create compression handler: %v", err)
 				logger.Error().Msg(logMessage)
 				observability.SetStatusErrorf(r.Context(), logMessage)
