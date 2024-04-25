@@ -34,8 +34,8 @@ type Config struct {
 
 // NewWrapper returns a new Brotli compressing wrapper.
 func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
-	if cfg.Algorithm == Undefined {
-		return nil, errors.New("need an algorithm of compression defined")
+	if cfg.Algorithm == "" {
+		return nil, errors.New("compression algorithm undefined")
 	}
 
 	if cfg.MinSize < 0 {
