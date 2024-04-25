@@ -18,32 +18,79 @@ var (
 	bigTestBody   = []byte(strings.Repeat(strings.Repeat("aaabbbccc", 66)+" ", 6) + strings.Repeat("aaabbbccc", 66))
 )
 
-func Test_Zstandard_Vary(t *testing.T) {
-	h := newTestZstandardHandler(t, smallTestBody)
 
-	req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-	req.Header.Set(acceptEncoding, "zstd")
+func Test_Vary(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		h              http.Handler
+		acceptEncoding string
+	}{
+		{
+			desc:           "brotli",
+			h:              newTestBrotliHandler(t, smallTestBody),
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			h:              newTestZStandardHandler(t, smallTestBody),
+			acceptEncoding: "zstd",
+		},
+	}
 
-	rw := httptest.NewRecorder()
-	h.ServeHTTP(rw, req)
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	assert.Equal(t, http.StatusAccepted, rw.Code)
-	assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
+
+			rw := httptest.NewRecorder()
+			test.h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusAccepted, rw.Code)
+			assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
+		})
+	}
 }
 
-func Test_Zstandard_SmallBodyNoCompression(t *testing.T) {
-	h := newTestZstandardHandler(t, smallTestBody)
+func Test_SmallBodyNoCompression(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		h              http.Handler
+		acceptEncoding string
+	}{
 
-	req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-	req.Header.Set(acceptEncoding, "zstd")
+		{
+			desc:           "brotli",
+			h:              newTestBrotliHandler(t, smallTestBody),
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			h:              newTestZStandardHandler(t, smallTestBody),
+			acceptEncoding: "zstd",
+		},
+	}
 
-	rw := httptest.NewRecorder()
-	h.ServeHTTP(rw, req)
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			h := newTestBrotliHandler(t, smallTestBody)
 
-	// With less than 1024 bytes the response should not be compressed.
-	assert.Equal(t, http.StatusAccepted, rw.Code)
-	assert.Empty(t, rw.Header().Get(contentEncoding))
-	assert.Equal(t, smallTestBody, rw.Body.Bytes())
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
+
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			// With less than 1024 bytes the response should not be compressed.
+			assert.Equal(t, http.StatusAccepted, rw.Code)
+			assert.Empty(t, rw.Header().Get(contentEncoding))
+			assert.Equal(t, smallTestBody, rw.Body.Bytes())
+		})
+	}
 }
 
 func Test_Zstandard_AlreadyCompressed(t *testing.T) {
