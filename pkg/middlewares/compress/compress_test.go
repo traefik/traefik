@@ -23,8 +23,6 @@ const (
 	contentTypeHeader     = "Content-Type"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
-	brotliValue           = "br"
-	zstdValue             = "zstd"
 )
 
 func TestNegotiation(t *testing.T) {
