@@ -67,7 +67,7 @@ type CompressionWriter struct {
 }
 
 func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error) {
-	var writer compression = nil
+	var writer compression
 	switch algo {
 	case Brotli:
 		writer = brotli.NewWriter(in)
