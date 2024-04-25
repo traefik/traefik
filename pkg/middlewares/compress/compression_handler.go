@@ -23,22 +23,6 @@ const (
 	contentType     = "Content-Type"
 )
 
-// Config is the Brotli handler configuration.
-type Config struct {
-	// ExcludedContentTypes is the list of content types for which we should not compress.
-	// Mutually exclusive with the IncludedContentTypes option.
-	ExcludedContentTypes []string
-	// IncludedContentTypes is the list of content types for which compression should be exclusively enabled.
-	// Mutually exclusive with the ExcludedContentTypes option.
-	IncludedContentTypes []string
-	// MinSize is the minimum size (in bytes) required to enable compression.
-	MinSize int
-	// Algorithm used for the compression (currently Brotli and Zstandard)
-	Algorithm string
-	// MiddlewareName use for logging purposes
-	MiddlewareName string
-}
-
 const (
 	Brotli    = "br"
 	Zstandard = "zstd"
@@ -62,6 +46,22 @@ type compression interface {
 	Close() error
 }
 
+// Config is the Brotli handler configuration.
+type Config struct {
+	// ExcludedContentTypes is the list of content types for which we should not compress.
+	// Mutually exclusive with the IncludedContentTypes option.
+	ExcludedContentTypes []string
+	// IncludedContentTypes is the list of content types for which compression should be exclusively enabled.
+	// Mutually exclusive with the ExcludedContentTypes option.
+	IncludedContentTypes []string
+	// MinSize is the minimum size (in bytes) required to enable compression.
+	MinSize int
+	// Algorithm used for the compression (currently Brotli and Zstandard)
+	Algorithm string
+	// MiddlewareName use for logging purposes
+	MiddlewareName string
+}
+
 type CompressionWriter struct {
 	compression
 	alg string
@@ -71,12 +71,14 @@ func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error)
 	switch algo {
 	case Brotli:
 		return &CompressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
+
 	case Zstandard:
 		writer, err := zstd.NewWriter(in)
 		if err != nil {
 			return nil, err
 		}
 		return &CompressionWriter{compression: writer, alg: algo}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown compression algo: %s", algo)
 	}
@@ -86,8 +88,16 @@ func (c *CompressionWriter) ContentEncoding() string {
 	return c.alg
 }
 
-// NewWrapper returns a new Brotli compressing wrapper.
-func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
+// CompressionHandler handles Brolti and Zstd compression.
+type CompressionHandler struct {
+	cfg                  Config
+	excludedContentTypes []parsedContentType
+	includedContentTypes []parsedContentType
+	next                 http.Handler
+}
+
+// NewCompressionHandler returns a new compressing handler.
+func NewCompressionHandler(cfg Config, next http.Handler) (http.Handler, error) {
 	if cfg.Algorithm == "" {
 		return nil, errors.New("compression algorithm undefined")
 	}
@@ -120,33 +130,38 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 		includedContentTypes = append(includedContentTypes, parsedContentType{mediaType, params})
 	}
 
-	return func(h http.Handler) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
-			rw.Header().Add(vary, acceptEncoding)
-
-			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
-			if err != nil {
-				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeName)
-				logMessage := fmt.Sprintf("create compression handler: %v", err)
-				logger.Error().Msg(logMessage)
-				observability.SetStatusErrorf(r.Context(), logMessage)
-				rw.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			responseWriter := &responseWriter{
-				rw:                   rw,
-				compressionWriter:    compressionWriter,
-				minSize:              cfg.MinSize,
-				statusCode:           http.StatusOK,
-				excludedContentTypes: excludedContentTypes,
-				includedContentTypes: includedContentTypes,
-			}
-			defer responseWriter.close()
-
-			h.ServeHTTP(responseWriter, r)
-		}
+	return &CompressionHandler{
+		cfg:                  cfg,
+		excludedContentTypes: excludedContentTypes,
+		includedContentTypes: includedContentTypes,
+		next:                 next,
 	}, nil
+}
+
+func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Add(vary, acceptEncoding)
+
+	compressionWriter, err := NewCompressionWriter(c.cfg.Algorithm, rw)
+	if err != nil {
+		logger := middlewares.GetLogger(r.Context(), c.cfg.MiddlewareName, typeName)
+		logMessage := fmt.Sprintf("create compression handler: %v", err)
+		logger.Debug().Msg(logMessage)
+		observability.SetStatusErrorf(r.Context(), logMessage)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	responseWriter := &responseWriter{
+		rw:                   rw,
+		compressionWriter:    compressionWriter,
+		minSize:              c.cfg.MinSize,
+		statusCode:           http.StatusOK,
+		excludedContentTypes: c.excludedContentTypes,
+		includedContentTypes: c.includedContentTypes,
+	}
+	defer responseWriter.close()
+
+	c.next.ServeHTTP(responseWriter, r)
 }
 
 // TODO: check whether we want to implement content-type sniffing (as gzip does)

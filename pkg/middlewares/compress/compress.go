@@ -182,10 +182,5 @@ func (c *compress) newCompressionHandler(algo string, middlewareName string) (ht
 		cfg.ExcludedContentTypes = c.excludes
 	}
 
-	wrapper, err := NewWrapper(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("new %s wrapper: %w", algo, err)
-	}
-
-	return wrapper(c.next), nil
+	return NewCompressionHandler(cfg, c.next)
 }
