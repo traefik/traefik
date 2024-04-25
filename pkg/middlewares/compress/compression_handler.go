@@ -139,6 +139,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+
 			responseWriter := &responseWriter{
 				rw:                   rw,
 				compressionWriter:    compressionWriter,
