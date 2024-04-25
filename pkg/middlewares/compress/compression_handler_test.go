@@ -1,4 +1,4 @@
-package brotli
+package compress
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,44 +20,107 @@ var (
 )
 
 func Test_Vary(t *testing.T) {
-	h := newTestHandler(t, smallTestBody)
+	testCases := []struct {
+		desc           string
+		h              http.Handler
+		acceptEncoding string
+	}{
+		{
+			desc:           "brotli",
+			h:              newTestBrotliHandler(t, smallTestBody),
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			h:              newTestZstandardHandler(t, smallTestBody),
+			acceptEncoding: "zstd",
+		},
+	}
 
-	req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-	req.Header.Set(acceptEncoding, "br")
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	rw := httptest.NewRecorder()
-	h.ServeHTTP(rw, req)
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	assert.Equal(t, http.StatusAccepted, rw.Code)
-	assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
+			rw := httptest.NewRecorder()
+			test.h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusAccepted, rw.Code)
+			assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
+		})
+	}
 }
 
 func Test_SmallBodyNoCompression(t *testing.T) {
-	h := newTestHandler(t, smallTestBody)
+	testCases := []struct {
+		desc           string
+		h              http.Handler
+		acceptEncoding string
+	}{
+		{
+			desc:           "brotli",
+			h:              newTestBrotliHandler(t, smallTestBody),
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			h:              newTestZstandardHandler(t, smallTestBody),
+			acceptEncoding: "zstd",
+		},
+	}
 
-	req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-	req.Header.Set(acceptEncoding, "br")
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	rw := httptest.NewRecorder()
-	h.ServeHTTP(rw, req)
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	// With less than 1024 bytes the response should not be compressed.
-	assert.Equal(t, http.StatusAccepted, rw.Code)
-	assert.Empty(t, rw.Header().Get(contentEncoding))
-	assert.Equal(t, smallTestBody, rw.Body.Bytes())
+			rw := httptest.NewRecorder()
+			test.h.ServeHTTP(rw, req)
+
+			// With less than 1024 bytes the response should not be compressed.
+			assert.Equal(t, http.StatusAccepted, rw.Code)
+			assert.Empty(t, rw.Header().Get(contentEncoding))
+			assert.Equal(t, smallTestBody, rw.Body.Bytes())
+		})
+	}
 }
 
 func Test_AlreadyCompressed(t *testing.T) {
-	h := newTestHandler(t, bigTestBody)
+	testCases := []struct {
+		desc           string
+		h              http.Handler
+		acceptEncoding string
+	}{
+		{
+			desc:           "brotli",
+			h:              newTestBrotliHandler(t, bigTestBody),
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			h:              newTestZstandardHandler(t, bigTestBody),
+			acceptEncoding: "zstd",
+		},
+	}
 
-	req, _ := http.NewRequest(http.MethodGet, "/compressed", nil)
-	req.Header.Set(acceptEncoding, "br")
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	rw := httptest.NewRecorder()
-	h.ServeHTTP(rw, req)
+			req, _ := http.NewRequest(http.MethodGet, "/compressed", nil)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	assert.Equal(t, http.StatusAccepted, rw.Code)
-	assert.Equal(t, bigTestBody, rw.Body.Bytes())
+			rw := httptest.NewRecorder()
+			test.h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusAccepted, rw.Code)
+			assert.Equal(t, bigTestBody, rw.Body.Bytes())
+		})
+	}
 }
 
 func Test_NoBody(t *testing.T) {
@@ -91,7 +155,7 @@ func Test_NoBody(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			h := mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(test.statusCode)
 
 				_, err := rw.Write(test.body)
@@ -99,7 +163,7 @@ func Test_NoBody(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(acceptEncoding, "zstd")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -115,7 +179,8 @@ func Test_NoBody(t *testing.T) {
 
 func Test_MinSize(t *testing.T) {
 	cfg := Config{
-		MinSize: 128,
+		MinSize:   128,
+		Algorithm: Zstandard,
 	}
 
 	var bodySize int
@@ -132,7 +197,7 @@ func Test_MinSize(t *testing.T) {
 	))
 
 	req, _ := http.NewRequest(http.MethodGet, "/whatever", &bytes.Buffer{})
-	req.Header.Add(acceptEncoding, "br")
+	req.Header.Add(acceptEncoding, "zstd")
 
 	// Short response is not compressed
 	bodySize = cfg.MinSize - 1
@@ -146,18 +211,18 @@ func Test_MinSize(t *testing.T) {
 	rw = httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Equal(t, "br", rw.Result().Header.Get(contentEncoding))
+	assert.Equal(t, "zstd", rw.Result().Header.Get(contentEncoding))
 }
 
 func Test_MultipleWriteHeader(t *testing.T) {
-	h := mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	h := mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// We ensure that the subsequent call to WriteHeader is a noop.
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.WriteHeader(http.StatusNotFound)
 	}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(acceptEncoding, "br")
+	req.Header.Set(acceptEncoding, "zstd")
 
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
@@ -166,121 +231,247 @@ func Test_MultipleWriteHeader(t *testing.T) {
 }
 
 func Test_FlushBeforeWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-		rw.(http.Flusher).Flush()
+	testCases := []struct {
+		desc           string
+		h              func(http.Handler) http.HandlerFunc
+		readerBuilder  func(io.Reader) (io.Reader, error)
+		acceptEncoding string
+	}{
+		{
+			desc: "brotli",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
+			acceptEncoding: "br",
+		},
+		{
+			desc: "zstd",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
+			acceptEncoding: "zstd",
+		},
+	}
 
-		_, err := rw.Write(bigTestBody)
-		require.NoError(t, err)
-	})))
-	defer srv.Close()
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
-	require.NoError(t, err)
+			srv := httptest.NewServer(test.h(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				rw.(http.Flusher).Flush()
 
-	req.Header.Set(acceptEncoding, "br")
+				_, err := rw.Write(bigTestBody)
+				require.NoError(t, err)
+			})))
+			defer srv.Close()
 
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
+			require.NoError(t, err)
 
-	defer res.Body.Close()
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "br", res.Header.Get(contentEncoding))
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
 
-	got, err := io.ReadAll(brotli.NewReader(res.Body))
-	require.NoError(t, err)
-	assert.Equal(t, bigTestBody, got)
+			defer res.Body.Close()
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, test.acceptEncoding, res.Header.Get(contentEncoding))
+
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
+
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, bigTestBody, got)
+		})
+	}
 }
 
 func Test_FlushAfterWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
+	testCases := []struct {
+		desc           string
+		h              func(http.Handler) http.HandlerFunc
+		readerBuilder  func(io.Reader) (io.Reader, error)
+		acceptEncoding string
+	}{
+		{
+			desc: "brotli",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
+			acceptEncoding: "br",
+		},
+		{
+			desc: "zstd",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
+			acceptEncoding: "zstd",
+		},
+	}
 
-		_, err := rw.Write(bigTestBody[0:1])
-		require.NoError(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewServer(test.h(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
 
-		rw.(http.Flusher).Flush()
-		for _, b := range bigTestBody[1:] {
-			_, err := rw.Write([]byte{b})
+				_, err := rw.Write(bigTestBody[0:1])
+				require.NoError(t, err)
+
+				rw.(http.Flusher).Flush()
+				for _, b := range bigTestBody[1:] {
+					_, err := rw.Write([]byte{b})
+					require.NoError(t, err)
+				}
+			})))
+			defer srv.Close()
+
+			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 			require.NoError(t, err)
-		}
-	})))
-	defer srv.Close()
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
-	require.NoError(t, err)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	req.Header.Set(acceptEncoding, "br")
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
 
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+			defer res.Body.Close()
 
-	defer res.Body.Close()
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, test.acceptEncoding, res.Header.Get(contentEncoding))
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "br", res.Header.Get(contentEncoding))
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
 
-	got, err := io.ReadAll(brotli.NewReader(res.Body))
-	require.NoError(t, err)
-	assert.Equal(t, bigTestBody, got)
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, bigTestBody, got)
+		})
+	}
 }
 
 func Test_FlushAfterWriteNil(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
+	testCases := []struct {
+		desc           string
+		h              func(http.Handler) http.HandlerFunc
+		readerBuilder  func(io.Reader) (io.Reader, error)
+		acceptEncoding string
+	}{
+		{
+			desc: "brotli",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
+			acceptEncoding: "br",
+		},
+		{
+			desc: "zstd",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
+			acceptEncoding: "zstd",
+		},
+	}
 
-		_, err := rw.Write(nil)
-		require.NoError(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewServer(test.h(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
 
-		rw.(http.Flusher).Flush()
-	})))
-	defer srv.Close()
+				_, err := rw.Write(nil)
+				require.NoError(t, err)
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
-	require.NoError(t, err)
+				rw.(http.Flusher).Flush()
+			})))
+			defer srv.Close()
 
-	req.Header.Set(acceptEncoding, "br")
+			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
+			require.NoError(t, err)
 
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	defer res.Body.Close()
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Empty(t, res.Header.Get(contentEncoding))
+			defer res.Body.Close()
 
-	got, err := io.ReadAll(brotli.NewReader(res.Body))
-	require.NoError(t, err)
-	assert.Empty(t, got)
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Empty(t, res.Header.Get(contentEncoding))
+
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
+
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Empty(t, got)
+		})
+	}
 }
 
 func Test_FlushAfterAllWrites(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		for i := range bigTestBody {
-			_, err := rw.Write(bigTestBody[i : i+1])
+	testCases := []struct {
+		desc           string
+		h              func(http.Handler) http.HandlerFunc
+		readerBuilder  func(io.Reader) (io.Reader, error)
+		acceptEncoding string
+	}{
+		{
+			desc: "brotli",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
+			acceptEncoding: "br",
+		},
+		{
+			desc: "zstd",
+			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"}),
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
+			acceptEncoding: "zstd",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewServer(test.h(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				for i := range bigTestBody {
+					_, err := rw.Write(bigTestBody[i : i+1])
+					require.NoError(t, err)
+				}
+				rw.(http.Flusher).Flush()
+			})))
+			defer srv.Close()
+
+			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 			require.NoError(t, err)
-		}
-		rw.(http.Flusher).Flush()
-	})))
-	defer srv.Close()
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
-	require.NoError(t, err)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
 
-	req.Header.Set(acceptEncoding, "br")
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
 
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+			defer res.Body.Close()
 
-	defer res.Body.Close()
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, test.acceptEncoding, res.Header.Get(contentEncoding))
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "br", res.Header.Get(contentEncoding))
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
 
-	got, err := io.ReadAll(brotli.NewReader(res.Body))
-	require.NoError(t, err)
-	assert.Equal(t, bigTestBody, got)
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, bigTestBody, got)
+		})
+	}
 }
 
 func Test_ExcludedContentTypes(t *testing.T) {
@@ -352,6 +543,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -363,7 +555,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(acceptEncoding, "zstd")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -371,13 +563,16 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rw.Code)
 
 			if test.expCompression {
-				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
+				assert.Equal(t, "zstd", rw.Header().Get(contentEncoding))
 
-				got, err := io.ReadAll(brotli.NewReader(rw.Body))
+				reader, err := zstd.NewReader(rw.Body)
+				require.NoError(t, err)
+
+				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			} else {
-				assert.NotEqual(t, "br", rw.Header().Get("Content-Encoding"))
+				assert.NotEqual(t, "zstd", rw.Header().Get("Content-Encoding"))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
@@ -456,6 +651,7 @@ func Test_IncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -467,7 +663,7 @@ func Test_IncludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(acceptEncoding, "zstd")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -475,13 +671,16 @@ func Test_IncludedContentTypes(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rw.Code)
 
 			if test.expCompression {
-				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
+				assert.Equal(t, "zstd", rw.Header().Get(contentEncoding))
 
-				got, err := io.ReadAll(brotli.NewReader(rw.Body))
+				reader, err := zstd.NewReader(rw.Body)
+				require.NoError(t, err)
+
+				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			} else {
-				assert.NotEqual(t, "br", rw.Header().Get("Content-Encoding"))
+				assert.NotEqual(t, "zstd", rw.Header().Get("Content-Encoding"))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
@@ -560,6 +759,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -584,7 +784,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(acceptEncoding, "zstd")
 
 			// This doesn't allow checking flushes, but we validate if content is correct.
 			rw := httptest.NewRecorder()
@@ -593,13 +793,16 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rw.Code)
 
 			if test.expCompression {
-				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
+				assert.Equal(t, "zstd", rw.Header().Get(contentEncoding))
 
-				got, err := io.ReadAll(brotli.NewReader(rw.Body))
+				reader, err := zstd.NewReader(rw.Body)
+				require.NoError(t, err)
+
+				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			} else {
-				assert.NotEqual(t, "br", rw.Header().Get(contentEncoding))
+				assert.NotEqual(t, "zstd", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
@@ -678,6 +881,7 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
+				Algorithm:            Zstandard,
 			}
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -702,7 +906,7 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(acceptEncoding, "zstd")
 
 			// This doesn't allow checking flushes, but we validate if content is correct.
 			rw := httptest.NewRecorder()
@@ -711,13 +915,16 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rw.Code)
 
 			if test.expCompression {
-				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
+				assert.Equal(t, "zstd", rw.Header().Get(contentEncoding))
 
-				got, err := io.ReadAll(brotli.NewReader(rw.Body))
+				reader, err := zstd.NewReader(rw.Body)
+				require.NoError(t, err)
+
+				got, err := io.ReadAll(reader)
 				assert.NoError(t, err)
 				assert.Equal(t, bigTestBody, got)
 			} else {
-				assert.NotEqual(t, "br", rw.Header().Get(contentEncoding))
+				assert.NotEqual(t, "zstd", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
@@ -736,10 +943,10 @@ func mustNewWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFun
 	return w
 }
 
-func newTestHandler(t *testing.T, body []byte) http.Handler {
+func newTestBrotliHandler(t *testing.T, body []byte) http.Handler {
 	t.Helper()
 
-	return mustNewWrapper(t, Config{MinSize: 1024})(
+	return mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Compress"})(
 		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.Path == "/compressed" {
 				rw.Header().Set("Content-Encoding", "br")
@@ -752,7 +959,23 @@ func newTestHandler(t *testing.T, body []byte) http.Handler {
 	)
 }
 
-func TestParseContentType_equals(t *testing.T) {
+func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
+	t.Helper()
+
+	return mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Compress"})(
+		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if req.URL.Path == "/compressed" {
+				rw.Header().Set("Content-Encoding", "zstd")
+			}
+
+			rw.WriteHeader(http.StatusAccepted)
+			_, err := rw.Write(body)
+			require.NoError(t, err)
+		}),
+	)
+}
+
+func Test_ParseContentType_equals(t *testing.T) {
 	testCases := []struct {
 		desc      string
 		pct       parsedContentType
