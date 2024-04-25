@@ -23,22 +23,6 @@ const (
 	contentType     = "Content-Type"
 )
 
-// Config is the Brotli handler configuration.
-type Config struct {
-	// ExcludedContentTypes is the list of content types for which we should not compress.
-	// Mutually exclusive with the IncludedContentTypes option.
-	ExcludedContentTypes []string
-	// IncludedContentTypes is the list of content types for which compression should be exclusively enabled.
-	// Mutually exclusive with the ExcludedContentTypes option.
-	IncludedContentTypes []string
-	// MinSize is the minimum size (in bytes) required to enable compression.
-	MinSize int
-	// Algorithm used for the compression (currently Brotli and Zstandard)
-	Algorithm string
-	// MiddlewareName use for logging purposes
-	MiddlewareName string
-}
-
 const (
 	Brotli    = "br"
 	Zstandard = "zstd"
@@ -62,6 +46,22 @@ type compression interface {
 	Close() error
 }
 
+// Config is the Brotli handler configuration.
+type Config struct {
+	// ExcludedContentTypes is the list of content types for which we should not compress.
+	// Mutually exclusive with the IncludedContentTypes option.
+	ExcludedContentTypes []string
+	// IncludedContentTypes is the list of content types for which compression should be exclusively enabled.
+	// Mutually exclusive with the ExcludedContentTypes option.
+	IncludedContentTypes []string
+	// MinSize is the minimum size (in bytes) required to enable compression.
+	MinSize int
+	// Algorithm used for the compression (currently Brotli and Zstandard)
+	Algorithm string
+	// MiddlewareName use for logging purposes
+	MiddlewareName string
+}
+
 type CompressionWriter struct {
 	compression
 	alg string
@@ -71,12 +71,14 @@ func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error)
 	switch algo {
 	case Brotli:
 		return &CompressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
+
 	case Zstandard:
 		writer, err := zstd.NewWriter(in)
 		if err != nil {
 			return nil, err
 		}
 		return &CompressionWriter{compression: writer, alg: algo}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown compression algo: %s", algo)
 	}
