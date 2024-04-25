@@ -68,23 +68,18 @@ type CompressionWriter struct {
 }
 
 func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error) {
-	var writer compression
 	switch algo {
 	case Brotli:
-		writer = brotli.NewWriter(in)
-		break
+		return &CompressionWriter{compression: brotli.NewWriter(in), alg: Brotli}, nil
 	case Zstandard:
-		zstdWriter, err := zstd.NewWriter(in)
+		writer, err := zstd.NewWriter(in)
 		if err != nil {
 			return nil, err
 		}
-		writer = zstdWriter
-		break
+		return &CompressionWriter{compression: writer, alg: Zstandard}, nil
 	default:
 		return nil, fmt.Errorf("unknown compression algo: %s", algo)
 	}
-
-	return &CompressionWriter{compression: writer, alg: algo}, nil
 }
 
 func (c *CompressionWriter) ContentEncoding() string {
