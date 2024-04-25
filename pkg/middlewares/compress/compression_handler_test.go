@@ -2,12 +2,13 @@ package compress
 
 import (
 	"bytes"
-	"github.com/andybalholm/brotli"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/andybalholm/brotli"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +61,6 @@ func Test_SmallBodyNoCompression(t *testing.T) {
 		h              http.Handler
 		acceptEncoding string
 	}{
-
 		{
 			desc:           "brotli",
 			h:              newTestBrotliHandler(t, smallTestBody),
@@ -93,13 +93,11 @@ func Test_SmallBodyNoCompression(t *testing.T) {
 }
 
 func Test_AlreadyCompressed(t *testing.T) {
-
 	testCases := []struct {
 		desc           string
 		h              http.Handler
 		acceptEncoding string
 	}{
-
 		{
 			desc:           "brotli",
 			h:              newTestBrotliHandler(t, bigTestBody),
@@ -237,14 +235,12 @@ func Test_MultipleWriteHeader(t *testing.T) {
 }
 
 func Test_FlushBeforeWrite(t *testing.T) {
-
 	testCases := []struct {
 		desc           string
 		h              func(http.Handler) http.HandlerFunc
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
-
 		{
 			desc: "brotli",
 			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
@@ -306,7 +302,6 @@ func Test_FlushAfterWrite(t *testing.T) {
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
-
 		{
 			desc: "brotli",
 			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
@@ -371,7 +366,6 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
-
 		{
 			desc: "brotli",
 			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
@@ -426,14 +420,12 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 }
 
 func Test_FlushAfterAllWrites(t *testing.T) {
-
 	testCases := []struct {
 		desc           string
 		h              func(http.Handler) http.HandlerFunc
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
-
 		{
 			desc: "brotli",
 			h:    mustNewWrapper(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"}),
