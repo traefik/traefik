@@ -61,6 +61,7 @@ type compression interface {
 	// Close also makes sure to flush whatever was left to write from the buffer.
 	Close() error
 }
+
 type CompressionWriter struct {
 	compression
 	alg string
