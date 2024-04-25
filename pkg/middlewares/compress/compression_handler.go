@@ -164,69 +164,6 @@ func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 	c.next.ServeHTTP(responseWriter, r)
 }
 
-// NewWrapper returns a new Brotli compressing wrapper.
-func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
-	if cfg.Algorithm == "" {
-		return nil, errors.New("compression algorithm undefined")
-	}
-
-	if cfg.MinSize < 0 {
-		return nil, errors.New("minimum size must be greater than or equal to zero")
-	}
-
-	if len(cfg.ExcludedContentTypes) > 0 && len(cfg.IncludedContentTypes) > 0 {
-		return nil, errors.New("excludedContentTypes and includedContentTypes options are mutually exclusive")
-	}
-
-	var excludedContentTypes []parsedContentType
-	for _, v := range cfg.ExcludedContentTypes {
-		mediaType, params, err := mime.ParseMediaType(v)
-		if err != nil {
-			return nil, fmt.Errorf("parsing excluded media type: %w", err)
-		}
-
-		excludedContentTypes = append(excludedContentTypes, parsedContentType{mediaType, params})
-	}
-
-	var includedContentTypes []parsedContentType
-	for _, v := range cfg.IncludedContentTypes {
-		mediaType, params, err := mime.ParseMediaType(v)
-		if err != nil {
-			return nil, fmt.Errorf("parsing included media type: %w", err)
-		}
-
-		includedContentTypes = append(includedContentTypes, parsedContentType{mediaType, params})
-	}
-
-	return func(h http.Handler) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
-			rw.Header().Add(vary, acceptEncoding)
-
-			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
-			if err != nil {
-				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeName)
-				logMessage := fmt.Sprintf("create compression handler: %v", err)
-				logger.Error().Msg(logMessage)
-				observability.SetStatusErrorf(r.Context(), logMessage)
-				rw.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			responseWriter := &responseWriter{
-				rw:                   rw,
-				compressionWriter:    compressionWriter,
-				minSize:              cfg.MinSize,
-				statusCode:           http.StatusOK,
-				excludedContentTypes: excludedContentTypes,
-				includedContentTypes: includedContentTypes,
-			}
-			defer responseWriter.close()
-
-			h.ServeHTTP(responseWriter, r)
-		}
-	}, nil
-}
-
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
