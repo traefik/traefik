@@ -195,9 +195,6 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			LatestObservedGenerationSet:       5 * time.Second,
 			RequiredConsecutiveSuccesses:      0,
 		},
-		SupportedFeatures: sets.New[ksuite.SupportedFeature]().
-			Insert(ksuite.GatewayCoreFeatures.UnsortedList()...).
-			Insert(ksuite.ReferenceGrantCoreFeatures.UnsortedList()...),
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *k8sConformanceRunTest,
 		// Until the feature are all supported, following tests are skipped.
@@ -239,9 +236,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			Version:      version.Version,
 			Contact:      []string{"@traefik/maintainers"},
 		},
-		ConformanceProfiles: sets.New[ksuite.ConformanceProfileName](
-			ksuite.HTTPConformanceProfileName,
-		),
+		ConformanceProfiles: sets.New(ksuite.HTTPConformanceProfileName),
 	})
 	require.NoError(s.T(), err)
 
