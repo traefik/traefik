@@ -71,6 +71,13 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 			rw.Header().Add(vary, acceptEncoding)
 
 			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
+			if err != nil {
+				logMessage := fmt.Sprintf("create compression handler: %v", err)
+				logger.Debug().Msg(logMessage)
+				observability.SetStatusErrorf(req.Context(), logMessage)
+				rw.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			responseWriter := &responseWriter{
 				rw:                   rw,
 				compressionw:         compressionWriter,
