@@ -7183,11 +7183,11 @@ func (p *extensionBuilderRegistryMock) RegisterBackendFuncs(group, kind string, 
 
 func TestGlobalNativeLB(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		useNativeLB  bool
-		expected     *dynamic.Configuration
+		desc              string
+		ingressClass      string
+		paths             []string
+		NativeLBByDefault bool
+		expected          *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -7212,9 +7212,9 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
-			desc:        "HTTP with global native Service LB",
-			paths:       []string{"services.yml", "with_global_native_service_lb.yml"},
-			useNativeLB: true,
+			desc:              "HTTP with global native Service LB",
+			paths:             []string{"services.yml", "with_global_native_service_lb.yml"},
+			NativeLBByDefault: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7297,9 +7297,9 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
-			desc:        "TCP with global native Service LB",
-			paths:       []string{"tcp/services.yml", "tcp/with_global_native_service_lb.yml"},
-			useNativeLB: true,
+			desc:              "TCP with global native Service LB",
+			paths:             []string{"tcp/services.yml", "tcp/with_global_native_service_lb.yml"},
+			NativeLBByDefault: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7417,9 +7417,9 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
-			desc:        "UDP with global native Service LB",
-			paths:       []string{"udp/services.yml", "udp/with_global_native_service_lb.yml"},
-			useNativeLB: true,
+			desc:              "UDP with global native Service LB",
+			paths:             []string{"udp/services.yml", "udp/with_global_native_service_lb.yml"},
+			NativeLBByDefault: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
@@ -7511,7 +7511,7 @@ func TestGlobalNativeLB(t *testing.T) {
 				<-eventCh
 			}
 
-			p := Provider{UseNativeLB: test.useNativeLB}
+			p := Provider{NativeLBByDefault: test.NativeLBByDefault}
 
 			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)

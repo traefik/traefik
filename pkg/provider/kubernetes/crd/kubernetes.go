@@ -60,7 +60,7 @@ type Provider struct {
 	IngressClass              string              `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration          ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool                `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
-	UseNativeLB               bool                `description:"Use native Kubernetes Loadbalancing instead of traefik provided" json:"useNativeLB,omitempty" toml:"useNativeLB,omitempty" yaml:"useNativeLB,omitempty" export:"true"`
+	NativeLBByDefault         bool                `description:"Use native Kubernetes Loadbalancing instead of traefik provided" json:"NativeLBByDefault,omitempty" toml:"NativeLBByDefault,omitempty" yaml:"NativeLBByDefault,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 

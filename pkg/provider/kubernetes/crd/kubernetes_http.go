@@ -55,7 +55,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowCrossNamespace:       p.AllowCrossNamespace,
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
-			useNativeLB:               p.UseNativeLB,
+			NativeLBByDefault:         p.NativeLBByDefault,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
@@ -203,7 +203,7 @@ type configBuilder struct {
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
 	allowEmptyServices        bool
-	useNativeLB               bool
+	NativeLBByDefault         bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -397,7 +397,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}), nil
 	}
 
-	nativeLB := c.useNativeLB
+	nativeLB := c.NativeLBByDefault
 	if svc.NativeLB != nil {
 		nativeLB = *svc.NativeLB
 	}

@@ -127,7 +127,7 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
-		nativeLB := p.UseNativeLB
+		nativeLB := p.NativeLBByDefault
 		if svc.NativeLB != nil {
 			nativeLB = *svc.NativeLB
 		}

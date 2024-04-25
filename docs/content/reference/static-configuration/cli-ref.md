@@ -714,14 +714,14 @@ Kubernetes label selector to use.
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetescrd.nativelbbydefault`:  
+Use native Kubernetes Loadbalancing instead of traefik provided (Default: ```false```)
+
 `--providers.kubernetescrd.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetescrd.token`:  
 Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
-
-`--providers.kubernetescrd.usenativelb`:  
-Use native Kubernetes Loadbalancing instead of traefik provided (Default: ```false```)
 
 `--providers.kubernetesgateway`:  
 Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
