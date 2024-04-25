@@ -1,4 +1,4 @@
-package brotli
+package compresshandler
 
 import (
 	"bytes"
@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	smallTestBody = []byte("aaabbc" + strings.Repeat("aaabbbccc", 9) + "aaabbbc")
-	bigTestBody   = []byte(strings.Repeat(strings.Repeat("aaabbbccc", 66)+" ", 6) + strings.Repeat("aaabbbccc", 66))
+	brSmallTestBody = []byte("aaabbc" + strings.Repeat("aaabbbccc", 9) + "aaabbbc")
+	brBigTestBody   = []byte(strings.Repeat(strings.Repeat("aaabbbccc", 66)+" ", 6) + strings.Repeat("aaabbbccc", 66))
 )
 
-func Test_Vary(t *testing.T) {
-	h := newTestHandler(t, smallTestBody)
+func Test_Brotli_Vary(t *testing.T) {
+	h := newTestBrotliHandler(t, brSmallTestBody)
 
 	req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 	req.Header.Set(acceptEncoding, "br")
@@ -31,8 +31,8 @@ func Test_Vary(t *testing.T) {
 	assert.Equal(t, acceptEncoding, rw.Header().Get(vary))
 }
 
-func Test_SmallBodyNoCompression(t *testing.T) {
-	h := newTestHandler(t, smallTestBody)
+func Test_Brotli_SmallBodyNoCompression(t *testing.T) {
+	h := newTestBrotliHandler(t, brSmallTestBody)
 
 	req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 	req.Header.Set(acceptEncoding, "br")
@@ -43,11 +43,11 @@ func Test_SmallBodyNoCompression(t *testing.T) {
 	// With less than 1024 bytes the response should not be compressed.
 	assert.Equal(t, http.StatusAccepted, rw.Code)
 	assert.Empty(t, rw.Header().Get(contentEncoding))
-	assert.Equal(t, smallTestBody, rw.Body.Bytes())
+	assert.Equal(t, brSmallTestBody, rw.Body.Bytes())
 }
 
-func Test_AlreadyCompressed(t *testing.T) {
-	h := newTestHandler(t, bigTestBody)
+func Test_Brotli_AlreadyCompressed(t *testing.T) {
+	h := newTestBrotliHandler(t, brBigTestBody)
 
 	req, _ := http.NewRequest(http.MethodGet, "/compressed", nil)
 	req.Header.Set(acceptEncoding, "br")
@@ -56,10 +56,10 @@ func Test_AlreadyCompressed(t *testing.T) {
 	h.ServeHTTP(rw, req)
 
 	assert.Equal(t, http.StatusAccepted, rw.Code)
-	assert.Equal(t, bigTestBody, rw.Body.Bytes())
+	assert.Equal(t, brBigTestBody, rw.Body.Bytes())
 }
 
-func Test_NoBody(t *testing.T) {
+func Test_Brotli_NoBody(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		statusCode int
@@ -91,7 +91,7 @@ func Test_NoBody(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			h := mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(test.statusCode)
 
 				_, err := rw.Write(test.body)
@@ -113,13 +113,14 @@ func Test_NoBody(t *testing.T) {
 	}
 }
 
-func Test_MinSize(t *testing.T) {
+func Test_Brotli_MinSize(t *testing.T) {
 	cfg := Config{
-		MinSize: 128,
+		MinSize:   128,
+		Algorithm: Brotli,
 	}
 
 	var bodySize int
-	h := mustNewWrapper(t, cfg)(http.HandlerFunc(
+	h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(
 		func(rw http.ResponseWriter, req *http.Request) {
 			for i := 0; i < bodySize; i++ {
 				// We make sure to Write at least once less than minSize so that both
@@ -149,8 +150,8 @@ func Test_MinSize(t *testing.T) {
 	assert.Equal(t, "br", rw.Result().Header.Get(contentEncoding))
 }
 
-func Test_MultipleWriteHeader(t *testing.T) {
-	h := mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+func Test_Brotli_MultipleWriteHeader(t *testing.T) {
+	h := mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// We ensure that the subsequent call to WriteHeader is a noop.
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.WriteHeader(http.StatusNotFound)
@@ -165,12 +166,12 @@ func Test_MultipleWriteHeader(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rw.Code)
 }
 
-func Test_FlushBeforeWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+func Test_Brotli_FlushBeforeWrite(t *testing.T) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		rw.(http.Flusher).Flush()
 
-		_, err := rw.Write(bigTestBody)
+		_, err := rw.Write(brBigTestBody)
 		require.NoError(t, err)
 	})))
 	defer srv.Close()
@@ -190,18 +191,18 @@ func Test_FlushBeforeWrite(t *testing.T) {
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
-	assert.Equal(t, bigTestBody, got)
+	assert.Equal(t, brBigTestBody, got)
 }
 
-func Test_FlushAfterWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+func Test_Brotli_FlushAfterWrite(t *testing.T) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
-		_, err := rw.Write(bigTestBody[0:1])
+		_, err := rw.Write(brBigTestBody[0:1])
 		require.NoError(t, err)
 
 		rw.(http.Flusher).Flush()
-		for _, b := range bigTestBody[1:] {
+		for _, b := range brBigTestBody[1:] {
 			_, err := rw.Write([]byte{b})
 			require.NoError(t, err)
 		}
@@ -223,11 +224,11 @@ func Test_FlushAfterWrite(t *testing.T) {
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
-	assert.Equal(t, bigTestBody, got)
+	assert.Equal(t, brBigTestBody, got)
 }
 
-func Test_FlushAfterWriteNil(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+func Test_Brotli_FlushAfterWriteNil(t *testing.T) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
 		_, err := rw.Write(nil)
@@ -255,10 +256,10 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 	assert.Empty(t, got)
 }
 
-func Test_FlushAfterAllWrites(t *testing.T) {
-	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		for i := range bigTestBody {
-			_, err := rw.Write(bigTestBody[i : i+1])
+func Test_Brotli_FlushAfterAllWrites(t *testing.T) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for i := range brBigTestBody {
+			_, err := rw.Write(brBigTestBody[i : i+1])
 			require.NoError(t, err)
 		}
 		rw.(http.Flusher).Flush()
@@ -280,10 +281,10 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
-	assert.Equal(t, bigTestBody, got)
+	assert.Equal(t, brBigTestBody, got)
 }
 
-func Test_ExcludedContentTypes(t *testing.T) {
+func Test_Brotli_ExcludedContentTypes(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		contentType          string
@@ -352,13 +353,14 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
+				Algorithm:            Brotli,
 			}
-			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 
 				rw.WriteHeader(http.StatusOK)
 
-				_, err := rw.Write(bigTestBody)
+				_, err := rw.Write(brBigTestBody)
 				require.NoError(t, err)
 			}))
 
@@ -375,19 +377,19 @@ func Test_ExcludedContentTypes(t *testing.T) {
 
 				got, err := io.ReadAll(brotli.NewReader(rw.Body))
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			} else {
 				assert.NotEqual(t, "br", rw.Header().Get("Content-Encoding"))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			}
 		})
 	}
 }
 
-func Test_IncludedContentTypes(t *testing.T) {
+func Test_Brotli_IncludedContentTypes(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		contentType          string
@@ -456,13 +458,14 @@ func Test_IncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
+				Algorithm:            Brotli,
 			}
-			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 
 				rw.WriteHeader(http.StatusOK)
 
-				_, err := rw.Write(bigTestBody)
+				_, err := rw.Write(brBigTestBody)
 				require.NoError(t, err)
 			}))
 
@@ -479,19 +482,19 @@ func Test_IncludedContentTypes(t *testing.T) {
 
 				got, err := io.ReadAll(brotli.NewReader(rw.Body))
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			} else {
 				assert.NotEqual(t, "br", rw.Header().Get("Content-Encoding"))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			}
 		})
 	}
 }
 
-func Test_FlushExcludedContentTypes(t *testing.T) {
+func Test_Brotli_FlushExcludedContentTypes(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		contentType          string
@@ -560,12 +563,13 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
+				Algorithm:            Brotli,
 			}
-			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 				rw.WriteHeader(http.StatusOK)
 
-				tb := bigTestBody
+				tb := brBigTestBody
 				for len(tb) > 0 {
 					// Write 100 bytes per run
 					// Detection should not be affected (we send 100 bytes)
@@ -597,19 +601,19 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 
 				got, err := io.ReadAll(brotli.NewReader(rw.Body))
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			} else {
 				assert.NotEqual(t, "br", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			}
 		})
 	}
 }
 
-func Test_FlushIncludedContentTypes(t *testing.T) {
+func Test_Brotli_FlushIncludedContentTypes(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		contentType          string
@@ -678,12 +682,13 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
+				Algorithm:            Brotli,
 			}
-			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 				rw.WriteHeader(http.StatusOK)
 
-				tb := bigTestBody
+				tb := brBigTestBody
 				for len(tb) > 0 {
 					// Write 100 bytes per run
 					// Detection should not be affected (we send 100 bytes)
@@ -715,19 +720,19 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 
 				got, err := io.ReadAll(brotli.NewReader(rw.Body))
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			} else {
 				assert.NotEqual(t, "br", rw.Header().Get(contentEncoding))
 
 				got, err := io.ReadAll(rw.Body)
 				assert.NoError(t, err)
-				assert.Equal(t, bigTestBody, got)
+				assert.Equal(t, brBigTestBody, got)
 			}
 		})
 	}
 }
 
-func mustNewWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
+func mustNewBrotliWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
 	t.Helper()
 
 	w, err := NewWrapper(cfg)
@@ -736,10 +741,10 @@ func mustNewWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFun
 	return w
 }
 
-func newTestHandler(t *testing.T, body []byte) http.Handler {
+func newTestBrotliHandler(t *testing.T, body []byte) http.Handler {
 	t.Helper()
 
-	return mustNewWrapper(t, Config{MinSize: 1024})(
+	return mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(
 		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.Path == "/compressed" {
 				rw.Header().Set("Content-Encoding", "br")
@@ -752,7 +757,7 @@ func newTestHandler(t *testing.T, body []byte) http.Handler {
 	)
 }
 
-func TestParseContentType_equals(t *testing.T) {
+func Test_Brotli_ParseContentType_equals(t *testing.T) {
 	testCases := []struct {
 		desc      string
 		pct       parsedContentType
