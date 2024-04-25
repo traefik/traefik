@@ -88,6 +88,82 @@ func (c *CompressionWriter) ContentEncoding() string {
 	return c.alg
 }
 
+// CompressionHandler handles Brolti and Zstd compression.
+type CompressionHandler struct {
+	cfg                  Config
+	excludedContentTypes []parsedContentType
+	includedContentTypes []parsedContentType
+	next                 http.Handler
+}
+
+// NewCompressionHandler returns a new compressing handler.
+func NewCompressionHandler(cfg Config, next http.Handler) (http.Handler, error) {
+	if cfg.Algorithm == "" {
+		return nil, errors.New("compression algorithm undefined")
+	}
+
+	if cfg.MinSize < 0 {
+		return nil, errors.New("minimum size must be greater than or equal to zero")
+	}
+
+	if len(cfg.ExcludedContentTypes) > 0 && len(cfg.IncludedContentTypes) > 0 {
+		return nil, errors.New("excludedContentTypes and includedContentTypes options are mutually exclusive")
+	}
+
+	var excludedContentTypes []parsedContentType
+	for _, v := range cfg.ExcludedContentTypes {
+		mediaType, params, err := mime.ParseMediaType(v)
+		if err != nil {
+			return nil, fmt.Errorf("parsing excluded media type: %w", err)
+		}
+
+		excludedContentTypes = append(excludedContentTypes, parsedContentType{mediaType, params})
+	}
+
+	var includedContentTypes []parsedContentType
+	for _, v := range cfg.IncludedContentTypes {
+		mediaType, params, err := mime.ParseMediaType(v)
+		if err != nil {
+			return nil, fmt.Errorf("parsing included media type: %w", err)
+		}
+
+		includedContentTypes = append(includedContentTypes, parsedContentType{mediaType, params})
+	}
+
+	return &CompressionHandler{
+		cfg:                  cfg,
+		excludedContentTypes: excludedContentTypes,
+		includedContentTypes: includedContentTypes,
+		next:                 next,
+	}, nil
+}
+
+func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Add(vary, acceptEncoding)
+
+	compressionWriter, err := NewCompressionWriter(c.cfg.Algorithm, rw)
+	if err != nil {
+		logger := middlewares.GetLogger(r.Context(), c.cfg.MiddlewareName, typeName)
+		logMessage := fmt.Sprintf("create compression handler: %v", err)
+		logger.Debug().Msg(logMessage)
+		observability.SetStatusErrorf(r.Context(), logMessage)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	responseWriter := &responseWriter{
+		rw:                   rw,
+		compressionWriter:    compressionWriter,
+		minSize:              c.cfg.MinSize,
+		statusCode:           http.StatusOK,
+		excludedContentTypes: c.excludedContentTypes,
+		includedContentTypes: c.includedContentTypes,
+	}
+	defer responseWriter.close()
+
+	c.next.ServeHTTP(responseWriter, r)
+}
+
 // NewWrapper returns a new Brotli compressing wrapper.
 func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 	if cfg.Algorithm == "" {
