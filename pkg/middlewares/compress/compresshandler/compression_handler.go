@@ -4,11 +4,17 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"io"
 	"mime"
 	"net"
 	"net/http"
 )
+
+const typeName = "CompressHandler"
 
 const (
 	vary            = "Vary"
@@ -28,8 +34,55 @@ type Config struct {
 	IncludedContentTypes []string
 	// MinSize is the minimum size (in bytes) required to enable compression.
 	MinSize int
-	// Algorithmn used for the compression (currently Brotli and Zstandard)
-	Algorithm Algorithm
+	// Algorithm used for the compression (currently Brotli and Zstandard)
+	Algorithm string
+	//MiddlewareName use for logging purposes
+	MiddlewareName string
+}
+
+const (
+	Brotli    = "br"
+	Zstandard = "zstd"
+)
+
+type compression interface {
+	// Write data to the encoder.
+	// Input data will be buffered and as the buffer fills up
+	// content will be compressed and written to the output.
+	// When done writing, use Close to flush the remaining output
+	// and write CRC if requested.
+	Write(p []byte) (n int, err error)
+	// Flush will send the currently written data to output
+	// and block until everything has been written.
+	// This should only be used on rare occasions where pushing the currently queued data is critical.
+	Flush() error
+	// Close closes the underlying writers if/when appropriate.
+	// Note that the compressed writer should not be closed if we never used it,
+	// as it would otherwise send some extra "end of compression" bytes.
+	// Close also makes sure to flush whatever was left to write from the buffer.
+	Close() error
+}
+type CompressionWriter struct {
+	compression
+	alg string
+}
+
+func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error) {
+	switch algo {
+	case Brotli:
+		return &CompressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
+	case Zstandard:
+		writer, err := zstd.NewWriter(in)
+		if err != nil {
+			return nil, err
+		}
+		return &CompressionWriter{compression: writer}, nil
+	default:
+		return nil, fmt.Errorf("unknown compression algo: %s", algo)
+	}
+}
+func (c *CompressionWriter) ContentEncoding() string {
+	return c.alg
 }
 
 // NewWrapper returns a new Brotli compressing wrapper.
@@ -72,9 +125,10 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 
 			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
 			if err != nil {
+				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeName)
 				logMessage := fmt.Sprintf("create compression handler: %v", err)
 				logger.Debug().Msg(logMessage)
-				observability.SetStatusErrorf(req.Context(), logMessage)
+				observability.SetStatusErrorf(r.Context(), logMessage)
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -85,7 +139,6 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 				statusCode:           http.StatusOK,
 				excludedContentTypes: excludedContentTypes,
 				includedContentTypes: includedContentTypes,
-				writerError:          err,
 			}
 			defer responseWriter.close()
 
@@ -97,8 +150,8 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
-	rw           http.ResponseWriter
-	compressionWriter CompressionWriter
+	rw                http.ResponseWriter
+	compressionWriter *CompressionWriter
 
 	minSize              int
 	excludedContentTypes []parsedContentType
@@ -116,8 +169,6 @@ type responseWriter struct {
 
 	statusCodeSet bool
 	statusCode    int
-
-	writerError error
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -134,9 +185,6 @@ func (r *responseWriter) WriteHeader(statusCode int) {
 }
 
 func (r *responseWriter) Write(p []byte) (int, error) {
-	if r.writerError != nil {
-		return 0, fmt.Errorf("error starting the compression: %w", r.writerError)
-	}
 	// i.e. has write ever been called at least once with non nil data.
 	if !r.seenData && len(p) > 0 {
 		r.seenData = true
