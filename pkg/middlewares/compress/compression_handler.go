@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/andybalholm/brotli"
-	"github.com/klauspost/compress/zstd"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"io"
 	"mime"
 	"net"
 	"net/http"
+
+	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
 
 const typeNameHandler = "CompressHandler"
@@ -36,7 +37,7 @@ type Config struct {
 	MinSize int
 	// Algorithm used for the compression (currently Brotli and Zstandard)
 	Algorithm string
-	//MiddlewareName use for logging purposes
+	// MiddlewareName use for logging purposes
 	MiddlewareName string
 }
 
@@ -86,6 +87,7 @@ func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error)
 
 	return &CompressionWriter{compression: writer, alg: algo}, nil
 }
+
 func (c *CompressionWriter) ContentEncoding() string {
 	return c.alg
 }
