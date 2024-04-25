@@ -1,4 +1,4 @@
-package brotli
+package compress
 
 import (
 	"bufio"
@@ -10,7 +10,12 @@ import (
 	"net/http"
 
 	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
+
+const typeNameHandler = "CompressHandler"
 
 const (
 	vary            = "Vary"
@@ -30,10 +35,69 @@ type Config struct {
 	IncludedContentTypes []string
 	// MinSize is the minimum size (in bytes) required to enable compression.
 	MinSize int
+	// Algorithm used for the compression (currently Brotli and Zstandard)
+	Algorithm string
+	// MiddlewareName use for logging purposes
+	MiddlewareName string
+}
+
+const (
+	Brotli    = "br"
+	Zstandard = "zstd"
+)
+
+type compression interface {
+	// Write data to the encoder.
+	// Input data will be buffered and as the buffer fills up
+	// content will be compressed and written to the output.
+	// When done writing, use Close to flush the remaining output
+	// and write CRC if requested.
+	Write(p []byte) (n int, err error)
+	// Flush will send the currently written data to output
+	// and block until everything has been written.
+	// This should only be used on rare occasions where pushing the currently queued data is critical.
+	Flush() error
+	// Close closes the underlying writers if/when appropriate.
+	// Note that the compressed writer should not be closed if we never used it,
+	// as it would otherwise send some extra "end of compression" bytes.
+	// Close also makes sure to flush whatever was left to write from the buffer.
+	Close() error
+}
+type CompressionWriter struct {
+	compression
+	alg string
+}
+
+func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error) {
+	var writer compression = nil
+	switch algo {
+	case Brotli:
+		writer = brotli.NewWriter(in)
+		break
+	case Zstandard:
+		zstdWriter, err := zstd.NewWriter(in)
+		if err != nil {
+			return nil, err
+		}
+		writer = zstdWriter
+		break
+	default:
+		return nil, fmt.Errorf("unknown compression algo: %s", algo)
+	}
+
+	return &CompressionWriter{compression: writer, alg: algo}, nil
+}
+
+func (c *CompressionWriter) ContentEncoding() string {
+	return c.alg
 }
 
 // NewWrapper returns a new Brotli compressing wrapper.
 func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
+	if cfg.Algorithm == "" {
+		return nil, errors.New("compression algorithm undefined")
+	}
+
 	if cfg.MinSize < 0 {
 		return nil, errors.New("minimum size must be greater than or equal to zero")
 	}
@@ -66,17 +130,27 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 		return func(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Add(vary, acceptEncoding)
 
-			brw := &responseWriter{
+			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
+			if err != nil {
+				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeNameHandler)
+				logMessage := fmt.Sprintf("create compression handler: %v", err)
+				logger.Error().Msg(logMessage)
+				observability.SetStatusErrorf(r.Context(), logMessage)
+				rw.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			responseWriter := &responseWriter{
 				rw:                   rw,
-				bw:                   brotli.NewWriter(rw),
+				compressionWriter:    compressionWriter,
 				minSize:              cfg.MinSize,
 				statusCode:           http.StatusOK,
 				excludedContentTypes: excludedContentTypes,
 				includedContentTypes: includedContentTypes,
 			}
-			defer brw.close()
+			defer responseWriter.close()
 
-			h.ServeHTTP(brw, r)
+			h.ServeHTTP(responseWriter, r)
 		}
 	}, nil
 }
@@ -84,8 +158,8 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
-	rw http.ResponseWriter
-	bw *brotli.Writer
+	rw                http.ResponseWriter
+	compressionWriter *CompressionWriter
 
 	minSize              int
 	excludedContentTypes []parsedContentType
@@ -133,7 +207,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// We are now in compression cruise mode until the end of times.
 	if r.compressionStarted {
 		// If compressionStarted we assume we have sent headers already
-		return r.bw.Write(p)
+		return r.compressionWriter.Write(p)
 	}
 
 	// If we detect a contentEncoding, we know we are never going to compress.
@@ -185,13 +259,13 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// Since we know we are going to compress we will never be able to know the actual length.
 	r.rw.Header().Del(contentLength)
 
-	r.rw.Header().Set(contentEncoding, "br")
+	r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
 	r.rw.WriteHeader(r.statusCode)
 	r.headersSent = true
 
 	// Start with sending what we have previously buffered, before actually writing
 	// the bytes in argument.
-	n, err := r.bw.Write(r.buf)
+	n, err := r.compressionWriter.Write(r.buf)
 	if err != nil {
 		r.buf = r.buf[n:]
 		// Return zero because we haven't taken care of the bytes in argument yet.
@@ -210,7 +284,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	r.buf = r.buf[:0]
 
 	// Now that we emptied the buffer, we can actually write the given bytes.
-	return r.bw.Write(p)
+	return r.compressionWriter.Write(p)
 }
 
 // Flush flushes data to the appropriate underlying writer(s), although it does
@@ -248,7 +322,7 @@ func (r *responseWriter) Flush() {
 	// we have to do it ourselves.
 	defer func() {
 		// because we also ignore the error returned by Write anyway
-		_ = r.bw.Flush()
+		_ = r.compressionWriter.Flush()
 
 		if rw, ok := r.rw.(http.Flusher); ok {
 			rw.Flush()
@@ -256,7 +330,7 @@ func (r *responseWriter) Flush() {
 	}()
 
 	// We empty whatever is left of the buffer that Write never took care of.
-	n, err := r.bw.Write(r.buf)
+	n, err := r.compressionWriter.Write(r.buf)
 	if err != nil {
 		return
 	}
@@ -311,7 +385,7 @@ func (r *responseWriter) close() error {
 
 	if len(r.buf) == 0 {
 		// If we got here we know compression has started, so we can safely flush on bw.
-		return r.bw.Close()
+		return r.compressionWriter.Close()
 	}
 
 	// There is still data in the buffer, because we never reached minSize (to
@@ -329,16 +403,16 @@ func (r *responseWriter) close() error {
 
 	// There is still data in the buffer, simply because Write did not take care of it all.
 	// We flush it to the compressed writer.
-	n, err := r.bw.Write(r.buf)
+	n, err := r.compressionWriter.Write(r.buf)
 	if err != nil {
-		r.bw.Close()
+		r.compressionWriter.Close()
 		return err
 	}
 	if n < len(r.buf) {
-		r.bw.Close()
+		r.compressionWriter.Close()
 		return io.ErrShortWrite
 	}
-	return r.bw.Close()
+	return r.compressionWriter.Close()
 }
 
 // parsedContentType is the parsed representation of one of the inputs to ContentTypes.
