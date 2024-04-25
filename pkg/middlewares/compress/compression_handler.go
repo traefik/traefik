@@ -1,4 +1,4 @@
-package compresshandler
+package compress
 
 import (
 	"bufio"
@@ -14,7 +14,7 @@ import (
 	"net/http"
 )
 
-const typeName = "CompressHandler"
+const typeNameHandler = "CompressHandler"
 
 const (
 	vary            = "Vary"
@@ -125,7 +125,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 
 			compressionWriter, err := NewCompressionWriter(cfg.Algorithm, rw)
 			if err != nil {
-				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeName)
+				logger := middlewares.GetLogger(r.Context(), cfg.MiddlewareName, typeNameHandler)
 				logMessage := fmt.Sprintf("create compression handler: %v", err)
 				logger.Debug().Msg(logMessage)
 				observability.SetStatusErrorf(r.Context(), logMessage)

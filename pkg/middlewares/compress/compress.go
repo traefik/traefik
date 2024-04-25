@@ -12,7 +12,6 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/compress/compresshandler"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -78,12 +77,12 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 
 	var err error
 
-	c.zstdHandler, err = c.newCompressionHandler(compresshandler.Zstandard)
+	c.zstdHandler, err = c.newCompressionHandler(Zstandard, name)
 	if err != nil {
 		return nil, err
 	}
 
-	c.brotliHandler, err = c.newCompressionHandler(compresshandler.Brotli)
+	c.brotliHandler, err = c.newCompressionHandler(Brotli, name)
 	if err != nil {
 		return nil, err
 	}
@@ -169,15 +168,15 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 	return wrapper(c.next), nil
 }
 
-func (c *compress) newCompressionHandler(algo compresshandler.Algorithm) (http.Handler, error) {
-	cfg := compresshandler.Config{MinSize: c.minSize, Algorithm: algo}
+func (c *compress) newCompressionHandler(algo string, middlewareName string) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, Algorithm: algo, MiddlewareName: middlewareName}
 	if len(c.includes) > 0 {
 		cfg.IncludedContentTypes = c.includes
 	} else {
 		cfg.ExcludedContentTypes = c.excludes
 	}
 
-	wrapper, err := compresshandler.NewWrapper(cfg)
+	wrapper, err := NewWrapper(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new %s wrapper: %w", algo, err)
 	}

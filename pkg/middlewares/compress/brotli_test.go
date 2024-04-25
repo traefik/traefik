@@ -1,4 +1,4 @@
-package compresshandler
+package compress
 
 import (
 	"bytes"
@@ -91,7 +91,7 @@ func Test_Brotli_NoBody(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			h := mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(test.statusCode)
 
 				_, err := rw.Write(test.body)
@@ -99,7 +99,7 @@ func Test_Brotli_NoBody(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(compress.acceptEncoding, "br")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -107,16 +107,16 @@ func Test_Brotli_NoBody(t *testing.T) {
 			body, err := io.ReadAll(rw.Body)
 			require.NoError(t, err)
 
-			assert.Empty(t, rw.Header().Get(contentEncoding))
+			assert.Empty(t, rw.Header().Get(compress.contentEncoding))
 			assert.Empty(t, body)
 		})
 	}
 }
 
 func Test_Brotli_MinSize(t *testing.T) {
-	cfg := Config{
+	cfg := compress.Config{
 		MinSize:   128,
-		Algorithm: Brotli,
+		Algorithm: compress.Brotli,
 	}
 
 	var bodySize int
@@ -133,32 +133,32 @@ func Test_Brotli_MinSize(t *testing.T) {
 	))
 
 	req, _ := http.NewRequest(http.MethodGet, "/whatever", &bytes.Buffer{})
-	req.Header.Add(acceptEncoding, "br")
+	req.Header.Add(compress.acceptEncoding, "br")
 
 	// Short response is not compressed
 	bodySize = cfg.MinSize - 1
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Empty(t, rw.Result().Header.Get(contentEncoding))
+	assert.Empty(t, rw.Result().Header.Get(compress.contentEncoding))
 
 	// Long response is compressed
 	bodySize = cfg.MinSize
 	rw = httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Equal(t, "br", rw.Result().Header.Get(contentEncoding))
+	assert.Equal(t, "br", rw.Result().Header.Get(compress.contentEncoding))
 }
 
 func Test_Brotli_MultipleWriteHeader(t *testing.T) {
-	h := mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	h := mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// We ensure that the subsequent call to WriteHeader is a noop.
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.WriteHeader(http.StatusNotFound)
 	}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(acceptEncoding, "br")
+	req.Header.Set(compress.acceptEncoding, "br")
 
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
@@ -167,7 +167,7 @@ func Test_Brotli_MultipleWriteHeader(t *testing.T) {
 }
 
 func Test_Brotli_FlushBeforeWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		rw.(http.Flusher).Flush()
 
@@ -179,7 +179,7 @@ func Test_Brotli_FlushBeforeWrite(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "br")
+	req.Header.Set(compress.acceptEncoding, "br")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -187,7 +187,7 @@ func Test_Brotli_FlushBeforeWrite(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "br", res.Header.Get(contentEncoding))
+	assert.Equal(t, "br", res.Header.Get(compress.contentEncoding))
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
@@ -195,7 +195,7 @@ func Test_Brotli_FlushBeforeWrite(t *testing.T) {
 }
 
 func Test_Brotli_FlushAfterWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
 		_, err := rw.Write(brBigTestBody[0:1])
@@ -212,7 +212,7 @@ func Test_Brotli_FlushAfterWrite(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "br")
+	req.Header.Set(compress.acceptEncoding, "br")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -220,7 +220,7 @@ func Test_Brotli_FlushAfterWrite(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "br", res.Header.Get(contentEncoding))
+	assert.Equal(t, "br", res.Header.Get(compress.contentEncoding))
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
@@ -228,7 +228,7 @@ func Test_Brotli_FlushAfterWrite(t *testing.T) {
 }
 
 func Test_Brotli_FlushAfterWriteNil(t *testing.T) {
-	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
 		_, err := rw.Write(nil)
@@ -241,7 +241,7 @@ func Test_Brotli_FlushAfterWriteNil(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "br")
+	req.Header.Set(compress.acceptEncoding, "br")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -249,7 +249,7 @@ func Test_Brotli_FlushAfterWriteNil(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Empty(t, res.Header.Get(contentEncoding))
+	assert.Empty(t, res.Header.Get(compress.contentEncoding))
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
@@ -257,7 +257,7 @@ func Test_Brotli_FlushAfterWriteNil(t *testing.T) {
 }
 
 func Test_Brotli_FlushAfterAllWrites(t *testing.T) {
-	srv := httptest.NewServer(mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for i := range brBigTestBody {
 			_, err := rw.Write(brBigTestBody[i : i+1])
 			require.NoError(t, err)
@@ -269,7 +269,7 @@ func Test_Brotli_FlushAfterAllWrites(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "br")
+	req.Header.Set(compress.acceptEncoding, "br")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -277,7 +277,7 @@ func Test_Brotli_FlushAfterAllWrites(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "br", res.Header.Get(contentEncoding))
+	assert.Equal(t, "br", res.Header.Get(compress.contentEncoding))
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
@@ -350,10 +350,10 @@ func Test_Brotli_ExcludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            Brotli,
+				Algorithm:            compress.Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -365,7 +365,7 @@ func Test_Brotli_ExcludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(compress.acceptEncoding, "br")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -455,10 +455,10 @@ func Test_Brotli_IncludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            Brotli,
+				Algorithm:            compress.Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -470,7 +470,7 @@ func Test_Brotli_IncludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(compress.acceptEncoding, "br")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -560,10 +560,10 @@ func Test_Brotli_FlushExcludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            Brotli,
+				Algorithm:            compress.Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -588,7 +588,7 @@ func Test_Brotli_FlushExcludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(compress.acceptEncoding, "br")
 
 			// This doesn't allow checking flushes, but we validate if content is correct.
 			rw := httptest.NewRecorder()
@@ -679,10 +679,10 @@ func Test_Brotli_FlushIncludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            Brotli,
+				Algorithm:            compress.Brotli,
 			}
 			h := mustNewBrotliWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -707,7 +707,7 @@ func Test_Brotli_FlushIncludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "br")
+			req.Header.Set(compress.acceptEncoding, "br")
 
 			// This doesn't allow checking flushes, but we validate if content is correct.
 			rw := httptest.NewRecorder()
@@ -732,7 +732,7 @@ func Test_Brotli_FlushIncludedContentTypes(t *testing.T) {
 	}
 }
 
-func mustNewBrotliWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
+func mustNewBrotliWrapper(t *testing.T, cfg compress.Config) func(http.Handler) http.HandlerFunc {
 	t.Helper()
 
 	w, err := NewWrapper(cfg)
@@ -744,7 +744,7 @@ func mustNewBrotliWrapper(t *testing.T, cfg Config) func(http.Handler) http.Hand
 func newTestBrotliHandler(t *testing.T, body []byte) http.Handler {
 	t.Helper()
 
-	return mustNewBrotliWrapper(t, Config{MinSize: 1024, Algorithm: Brotli})(
+	return mustNewBrotliWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Brotli})(
 		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.Path == "/compressed" {
 				rw.Header().Set("Content-Encoding", "br")
@@ -760,7 +760,7 @@ func newTestBrotliHandler(t *testing.T, body []byte) http.Handler {
 func Test_Brotli_ParseContentType_equals(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		pct       parsedContentType
+		pct       compress.parsedContentType
 		mediaType string
 		params    map[string]string
 		expect    assert.BoolAssertionFunc
@@ -771,7 +771,7 @@ func Test_Brotli_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "simple content type",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 			},
 			mediaType: "plain/text",
@@ -779,7 +779,7 @@ func Test_Brotli_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "content type with params",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 				params: map[string]string{
 					"charset": "utf8",
@@ -793,7 +793,7 @@ func Test_Brotli_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "different content type",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 			},
 			mediaType: "application/json",
@@ -801,7 +801,7 @@ func Test_Brotli_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "content type with params",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 				params: map[string]string{
 					"charset": "utf8",
@@ -815,7 +815,7 @@ func Test_Brotli_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "different number of parameters",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 				params: map[string]string{
 					"charset": "utf8",

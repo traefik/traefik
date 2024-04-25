@@ -1,4 +1,4 @@
-package compresshandler
+package compress
 
 import (
 	"bytes"
@@ -18,7 +18,6 @@ var (
 	bigTestBody   = []byte(strings.Repeat(strings.Repeat("aaabbbccc", 66)+" ", 6) + strings.Repeat("aaabbbccc", 66))
 )
 
-
 func Test_Vary(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -32,7 +31,7 @@ func Test_Vary(t *testing.T) {
 		},
 		{
 			desc:           "zstd",
-			h:              newTestZStandardHandler(t, smallTestBody),
+			h:              newTestZstandardHandler(t, smallTestBody),
 			acceptEncoding: "zstd",
 		},
 	}
@@ -138,7 +137,7 @@ func Test_Zstandard_NoBody(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			h := mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(test.statusCode)
 
 				_, err := rw.Write(test.body)
@@ -146,7 +145,7 @@ func Test_Zstandard_NoBody(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			req.Header.Set(acceptEncoding, "zstd")
+			req.Header.Set(compress.acceptEncoding, "zstd")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -154,16 +153,16 @@ func Test_Zstandard_NoBody(t *testing.T) {
 			body, err := io.ReadAll(rw.Body)
 			require.NoError(t, err)
 
-			assert.Empty(t, rw.Header().Get(contentEncoding))
+			assert.Empty(t, rw.Header().Get(compress.contentEncoding))
 			assert.Empty(t, body)
 		})
 	}
 }
 
 func Test_Zstandard_MinSize(t *testing.T) {
-	cfg := Config{
+	cfg := compress.Config{
 		MinSize:   128,
-		Algorithm: Zstandard,
+		Algorithm: compress.Zstandard,
 	}
 
 	var bodySize int
@@ -180,32 +179,32 @@ func Test_Zstandard_MinSize(t *testing.T) {
 	))
 
 	req, _ := http.NewRequest(http.MethodGet, "/whatever", &bytes.Buffer{})
-	req.Header.Add(acceptEncoding, "zstd")
+	req.Header.Add(compress.acceptEncoding, "zstd")
 
 	// Short response is not compressed
 	bodySize = cfg.MinSize - 1
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Empty(t, rw.Result().Header.Get(contentEncoding))
+	assert.Empty(t, rw.Result().Header.Get(compress.contentEncoding))
 
 	// Long response is compressed
 	bodySize = cfg.MinSize
 	rw = httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Equal(t, "zstd", rw.Result().Header.Get(contentEncoding))
+	assert.Equal(t, "zstd", rw.Result().Header.Get(compress.contentEncoding))
 }
 
 func Test_Zstandard_MultipleWriteHeader(t *testing.T) {
-	h := mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	h := mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// We ensure that the subsequent call to WriteHeader is a noop.
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.WriteHeader(http.StatusNotFound)
 	}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(acceptEncoding, "zstd")
+	req.Header.Set(compress.acceptEncoding, "zstd")
 
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
@@ -214,7 +213,7 @@ func Test_Zstandard_MultipleWriteHeader(t *testing.T) {
 }
 
 func Test_Zstandard_FlushBeforeWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		rw.(http.Flusher).Flush()
 
@@ -226,7 +225,7 @@ func Test_Zstandard_FlushBeforeWrite(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "zstd")
+	req.Header.Set(compress.acceptEncoding, "zstd")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -234,7 +233,7 @@ func Test_Zstandard_FlushBeforeWrite(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "zstd", res.Header.Get(contentEncoding))
+	assert.Equal(t, "zstd", res.Header.Get(compress.contentEncoding))
 
 	reader, err := zstd.NewReader(res.Body)
 	require.NoError(t, err)
@@ -245,7 +244,7 @@ func Test_Zstandard_FlushBeforeWrite(t *testing.T) {
 }
 
 func Test_Zstandard_FlushAfterWrite(t *testing.T) {
-	srv := httptest.NewServer(mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
 		_, err := rw.Write(bigTestBody[0:1])
@@ -262,7 +261,7 @@ func Test_Zstandard_FlushAfterWrite(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "zstd")
+	req.Header.Set(compress.acceptEncoding, "zstd")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -270,7 +269,7 @@ func Test_Zstandard_FlushAfterWrite(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "zstd", res.Header.Get(contentEncoding))
+	assert.Equal(t, "zstd", res.Header.Get(compress.contentEncoding))
 
 	reader, err := zstd.NewReader(res.Body)
 	require.NoError(t, err)
@@ -281,7 +280,7 @@ func Test_Zstandard_FlushAfterWrite(t *testing.T) {
 }
 
 func Test_Zstandard_FlushAfterWriteNil(t *testing.T) {
-	srv := httptest.NewServer(mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
 		_, err := rw.Write(nil)
@@ -294,7 +293,7 @@ func Test_Zstandard_FlushAfterWriteNil(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "zstd")
+	req.Header.Set(compress.acceptEncoding, "zstd")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -302,7 +301,7 @@ func Test_Zstandard_FlushAfterWriteNil(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Empty(t, res.Header.Get(contentEncoding))
+	assert.Empty(t, res.Header.Get(compress.contentEncoding))
 
 	reader, err := zstd.NewReader(res.Body)
 	require.NoError(t, err)
@@ -313,7 +312,7 @@ func Test_Zstandard_FlushAfterWriteNil(t *testing.T) {
 }
 
 func Test_Zstandard_FlushAfterAllWrites(t *testing.T) {
-	srv := httptest.NewServer(mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for i := range bigTestBody {
 			_, err := rw.Write(bigTestBody[i : i+1])
 			require.NoError(t, err)
@@ -325,7 +324,7 @@ func Test_Zstandard_FlushAfterAllWrites(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
 	require.NoError(t, err)
 
-	req.Header.Set(acceptEncoding, "zstd")
+	req.Header.Set(compress.acceptEncoding, "zstd")
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -333,7 +332,7 @@ func Test_Zstandard_FlushAfterAllWrites(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "zstd", res.Header.Get(contentEncoding))
+	assert.Equal(t, "zstd", res.Header.Get(compress.contentEncoding))
 
 	reader, err := zstd.NewReader(res.Body)
 	require.NoError(t, err)
@@ -409,10 +408,10 @@ func Test_Zstandard_ExcludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            compress.Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -424,7 +423,7 @@ func Test_Zstandard_ExcludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "zstd")
+			req.Header.Set(compress.acceptEncoding, "zstd")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -517,10 +516,10 @@ func Test_Zstandard_IncludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            compress.Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -532,7 +531,7 @@ func Test_Zstandard_IncludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "zstd")
+			req.Header.Set(compress.acceptEncoding, "zstd")
 
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
@@ -625,10 +624,10 @@ func Test_Zstandard_FlushExcludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            compress.Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -653,7 +652,7 @@ func Test_Zstandard_FlushExcludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "zstd")
+			req.Header.Set(compress.acceptEncoding, "zstd")
 
 			// This doesn't allow checking flushes, but we validate if content is correct.
 			rw := httptest.NewRecorder()
@@ -747,10 +746,10 @@ func Test_Zstandard_FlushIncludedContentTypes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := Config{
+			cfg := compress.Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            compress.Zstandard,
 			}
 			h := mustNewZstandardWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
@@ -775,7 +774,7 @@ func Test_Zstandard_FlushIncludedContentTypes(t *testing.T) {
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set(acceptEncoding, "zstd")
+			req.Header.Set(compress.acceptEncoding, "zstd")
 
 			// This doesn't allow checking flushes, but we validate if content is correct.
 			rw := httptest.NewRecorder()
@@ -803,7 +802,7 @@ func Test_Zstandard_FlushIncludedContentTypes(t *testing.T) {
 	}
 }
 
-func mustNewZstandardWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
+func mustNewZstandardWrapper(t *testing.T, cfg compress.Config) func(http.Handler) http.HandlerFunc {
 	t.Helper()
 
 	w, err := NewWrapper(cfg)
@@ -815,7 +814,7 @@ func mustNewZstandardWrapper(t *testing.T, cfg Config) func(http.Handler) http.H
 func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
 	t.Helper()
 
-	return mustNewZstandardWrapper(t, Config{MinSize: 1024, Algorithm: Zstandard})(
+	return mustNewZstandardWrapper(t, compress.Config{MinSize: 1024, Algorithm: compress.Zstandard})(
 		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.Path == "/compressed" {
 				rw.Header().Set("Content-Encoding", "zstd")
@@ -831,7 +830,7 @@ func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
 func Test_Zstandard_ParseContentType_equals(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		pct       parsedContentType
+		pct       compress.parsedContentType
 		mediaType string
 		params    map[string]string
 		expect    assert.BoolAssertionFunc
@@ -842,7 +841,7 @@ func Test_Zstandard_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "simple content type",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 			},
 			mediaType: "plain/text",
@@ -850,7 +849,7 @@ func Test_Zstandard_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "content type with params",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 				params: map[string]string{
 					"charset": "utf8",
@@ -864,7 +863,7 @@ func Test_Zstandard_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "different content type",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 			},
 			mediaType: "application/json",
@@ -872,7 +871,7 @@ func Test_Zstandard_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "content type with params",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 				params: map[string]string{
 					"charset": "utf8",
@@ -886,7 +885,7 @@ func Test_Zstandard_ParseContentType_equals(t *testing.T) {
 		},
 		{
 			desc: "different number of parameters",
-			pct: parsedContentType{
+			pct: compress.parsedContentType{
 				mediaType: "plain/text",
 				params: map[string]string{
 					"charset": "utf8",
