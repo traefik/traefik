@@ -337,6 +337,29 @@ providers:
 --providers.kubernetescrd.allowexternalnameservices=true
 ```
 
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+If the parameter is set to true, during load balancer creation, only the Kubernetes Service clusterIP will be designated as a child, and Kubernetes Service will handle load balancing to the pods.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.nativeLBByDefault=true
+```
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

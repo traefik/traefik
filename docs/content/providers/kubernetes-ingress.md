@@ -467,6 +467,29 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+If the parameter is set to true, during load balancer creation, only the Kubernetes Service clusterIP will be designated as a child, and Kubernetes Service will handle load balancing to the pods.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.nativeLBByDefault=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
