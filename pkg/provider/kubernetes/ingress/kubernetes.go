@@ -52,7 +52,7 @@ type Provider struct {
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	DisableIngressClassLookup bool                `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
-	NativeLBByDefault         bool                `description:"Use native Kubernetes Loadbalancing instead of traefik provided" json:"NativeLBByDefault,omitempty" toml:"NativeLBByDefault,omitempty" yaml:"NativeLBByDefault,omitempty" export:"true"`
+	NativeLBByDefault         bool                `description:"Use native Kubernetes Loadbalancing instead of traefik provided" json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
