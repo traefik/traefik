@@ -10,7 +10,7 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.websecure.address=:443"
+      - "--entryPoints.websecure.address=:443"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"

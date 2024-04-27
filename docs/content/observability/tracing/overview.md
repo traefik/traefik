@@ -36,7 +36,7 @@ tracing: {}
 
 _Optional, Default="false"_
 
-Enables tracing for internal resources.
+Enables tracing for internal resources (e.g.: `ping@internal`).
 
 ```yaml tab="File (YAML)"
 tracing:

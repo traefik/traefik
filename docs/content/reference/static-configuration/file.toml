@@ -147,6 +147,12 @@
     labelSelector = "foobar"
     throttleDuration = "42s"
     experimentalChannel = true
+    [providers.kubernetesGateway.statusAddress]
+      ip = "foobar"
+      hostname = "foobar"
+      [providers.kubernetesGateway.statusAddress.service]
+        name = "foobar"
+        namespace = "foobar"
   [providers.rest]
     insecure = true
   [providers.consulCatalog]
@@ -185,6 +191,7 @@
     stale = true
     exposedByDefault = true
     refreshInterval = "42s"
+    allowEmptyServices = true
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"

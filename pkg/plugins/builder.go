@@ -141,7 +141,7 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 	case runtimeYaegi, "":
 		i, err := newInterpreter(ctx, goPath, manifest.Import)
 		if err != nil {
-			return nil, fmt.Errorf("failed to craete Yaegi intepreter: %w", err)
+			return nil, fmt.Errorf("failed to create Yaegi interpreter: %w", err)
 		}
 
 		return newYaegiMiddlewareBuilder(i, manifest.BasePkg, manifest.Import)

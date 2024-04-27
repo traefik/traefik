@@ -10,7 +10,7 @@ env:
 
 jobs:
   test-unit:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     services:
       # Label used to access the service container
