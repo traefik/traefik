@@ -319,7 +319,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				var mach *machine
-				if len(task.Attachments) != 0 {
+				if aws.StringValue(taskDef.NetworkMode) == "awsvpc" && len(task.Attachments) != 0 {
 					if len(container.NetworkInterfaces) == 0 {
 						logger.Error().Msgf("Skip container %s: no network interfaces", aws.StringValue(container.Name))
 						continue

@@ -207,7 +207,13 @@ func clean(element any) {
 
 	var svcFieldNames []string
 	for i := range valueSvcRoot.NumField() {
-		svcFieldNames = append(svcFieldNames, valueSvcRoot.Type().Field(i).Name)
+		field := valueSvcRoot.Type().Field(i)
+		// do not create empty node for hidden config.
+		if field.Tag.Get("file") == "-" && field.Tag.Get("kv") == "-" && field.Tag.Get("label") == "-" {
+			continue
+		}
+
+		svcFieldNames = append(svcFieldNames, field.Name)
 	}
 
 	sort.Strings(svcFieldNames)

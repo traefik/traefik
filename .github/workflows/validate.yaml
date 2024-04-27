@@ -13,7 +13,7 @@ env:
 jobs:
 
   validate:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
@@ -39,7 +39,7 @@ jobs:
         run: make validate
 
   validate-generate:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code

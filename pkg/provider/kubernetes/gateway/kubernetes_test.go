@@ -1518,6 +1518,75 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple HTTPRoute, request header modifier",
+			paths: []string{"services.yml", "httproute/filter_request_header_modifier.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-wrr",
+							Rule:        "Host(`example.org`) && PathPrefix(`/`)",
+							RuleSyntax:  "v3",
+							Middlewares: []string{"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-requestheadermodifier-0"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-requestheadermodifier-0": {
+							RequestHeaderModifier: &dynamic.RequestHeaderModifier{
+								Set:    map[string]string{"X-Foo": "Bar"},
+								Add:    map[string]string{"X-Bar": "Foo"},
+								Remove: []string{"X-Baz"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple HTTPRoute, redirect HTTP to HTTPS",
 			paths: []string{"services.yml", "httproute/filter_http_to_https.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
@@ -6227,30 +6296,6 @@ func Test_makeListenerKey(t *testing.T) {
 	}
 }
 
-func hostnamePtr(hostname gatev1.Hostname) *gatev1.Hostname {
-	return &hostname
-}
-
-func groupPtr(group gatev1.Group) *gatev1.Group {
-	return &group
-}
-
-func sectionNamePtr(sectionName gatev1.SectionName) *gatev1.SectionName {
-	return &sectionName
-}
-
-func namespacePtr(namespace gatev1.Namespace) *gatev1.Namespace {
-	return &namespace
-}
-
-func kindPtr(kind gatev1.Kind) *gatev1.Kind {
-	return &kind
-}
-
-func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
-
-func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
-
 func Test_referenceGrantMatchesFrom(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -6488,6 +6533,131 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		})
 	}
 }
+
+func Test_gatewayAddresses(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		statusAddress *StatusAddress
+		paths         []string
+		wantErr       require.ErrorAssertionFunc
+		want          []gatev1.GatewayStatusAddress
+	}{
+		{
+			desc:    "nothing",
+			wantErr: require.NoError,
+		},
+		{
+			desc:          "empty configuration",
+			statusAddress: &StatusAddress{},
+			wantErr:       require.Error,
+		},
+		{
+			desc: "IP address",
+			statusAddress: &StatusAddress{
+				IP: "1.2.3.4",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: "1.2.3.4",
+				},
+			},
+		},
+		{
+			desc: "hostname address",
+			statusAddress: &StatusAddress{
+				Hostname: "foo.bar",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: "foo.bar",
+				},
+			},
+		},
+		{
+			desc: "service",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "status-address",
+					Namespace: "default",
+				},
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: "foo.bar",
+				},
+				{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: "1.2.3.4",
+				},
+			},
+		},
+		{
+			desc: "missing service",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "status-address2",
+					Namespace: "default",
+				},
+			},
+			wantErr: require.Error,
+		},
+		{
+			desc: "service without load-balancer status",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "whoamitcp-bar",
+					Namespace: "bar",
+				},
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{StatusAddress: test.statusAddress}
+
+			got, err := p.gatewayAddresses(newClientMock(test.paths...))
+			test.wantErr(t, err)
+
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func hostnamePtr(hostname gatev1.Hostname) *gatev1.Hostname {
+	return &hostname
+}
+
+func groupPtr(group gatev1.Group) *gatev1.Group {
+	return &group
+}
+
+func sectionNamePtr(sectionName gatev1.SectionName) *gatev1.SectionName {
+	return &sectionName
+}
+
+func namespacePtr(namespace gatev1.Namespace) *gatev1.Namespace {
+	return &namespace
+}
+
+func kindPtr(kind gatev1.Kind) *gatev1.Kind {
+	return &kind
+}
+
+func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
+
+func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
 
 func objectNamePtr(objectName gatev1.ObjectName) *gatev1.ObjectName {
 	return &objectName
