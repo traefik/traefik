@@ -65,7 +65,6 @@ type Client interface {
 	ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error)
 }
 
@@ -222,10 +221,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -548,18 +543,6 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	exist, err := translateNotFoundError(err)
 
 	return service, exist, err
-}
-
-// GetEndpoints returns the named endpoints from the given namespace.
-func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-
-	endpoint, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-
-	return endpoint, exist, err
 }
 
 // GetEndpointSlicesForService returns the endpointslices for service of provided name from the given namespace.
