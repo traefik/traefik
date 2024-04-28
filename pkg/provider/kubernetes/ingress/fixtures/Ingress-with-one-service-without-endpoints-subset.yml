@@ -30,8 +30,14 @@ spec:
   clusterIP: 10.0.0.1
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: service1
+  name: service1-abc
   namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports: null
+endpoints: []
