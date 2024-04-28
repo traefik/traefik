@@ -31,25 +31,6 @@ spec:
   clusterIP: 10.0.0.1
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: service1
-  namespace: testing
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.1
-    ports:
-      - name: https-foo
-        port: 8443
-  - addresses:
-      - ip: 10.21.0.1
-    ports:
-      - name: https-foo
-        port: 8443
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:

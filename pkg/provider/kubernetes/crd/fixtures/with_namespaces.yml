@@ -1,19 +1,4 @@
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami6
-  namespace: baz
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.5
-      - ip: 10.10.0.6
-    ports:
-      - name: web
-        port: 8080
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -34,21 +19,6 @@ endpoints:
       ready: true
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami5
-  namespace: foo
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.3
-      - ip: 10.10.0.4
-    ports:
-      - name: web
-        port: 8080
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -67,21 +37,6 @@ endpoints:
       - 10.10.0.4
     conditions:
       ready: true
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami4
-  namespace: foo
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: web
-        port: 8080
 
 ---
 kind: EndpointSlice

@@ -29,19 +29,6 @@ spec:
   clusterIP: 10.0.0.1
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: service1
-  namespace: testing
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.1
-    ports:
-      - port: 8080
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
