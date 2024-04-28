@@ -56,3 +56,23 @@ subsets:
       - ip: 10.21.0.1
     ports:
       - port: 8080
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
+  - addresses:
+      - 10.10.0.1
+      - 10.21.0.1
+    conditions:
+      ready: true
