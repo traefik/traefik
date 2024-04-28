@@ -61,3 +61,45 @@ subsets:
       - name: http
         port: 8080
         protocol: TCP
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - name: http-admin
+    port: 8079
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 10.0.0.1
+    conditions:
+      ready: true
+    nodeName: admin.whoami.service1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-def
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 10.0.0.1
+    conditions:
+      ready: true
+    nodeName: whoami.service1

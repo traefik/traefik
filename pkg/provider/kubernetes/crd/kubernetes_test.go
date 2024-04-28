@@ -4620,9 +4620,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:               "IngressRoute, service with multiple subsets",
+			desc:               "IngressRoute, service with multiple endpointslices",
 			allowEmptyServices: true,
-			paths:              []string{"services.yml", "with_multiple_subsets.yml"},
+			paths:              []string{"services.yml", "with_multiple_endpointslices.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4726,7 +4726,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-without-endpoints-subsets-80",
+										Name:   "default-whoami-without-endpointslice-endpoints-80",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
@@ -4734,10 +4734,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-test-mirror": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami-without-endpoints-subsets-80",
+								Service: "default-whoami-without-endpointslice-endpoints-80",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name: "default-whoami-without-endpoints-subsets-80",
+										Name: "default-whoami-without-endpointslice-endpoints-80",
 									},
 									{
 										Name: "default-test-weighted",
@@ -4745,7 +4745,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-without-endpoints-subsets-80": {
+						"default-whoami-without-endpointslice-endpoints-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
