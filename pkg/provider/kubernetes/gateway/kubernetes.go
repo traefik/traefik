@@ -1088,47 +1088,49 @@ func (p *Provider) loadServices(client Client, namespace string, backendRefs []g
 			return nil, nil, errors.New("service port not found")
 		}
 
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
+		endpointSlices, endpointSlicesExists, endpointSlicesErr := client.GetEndpointSlicesForService(namespace, string(backendRef.Name))
+		if endpointSlicesErr != nil {
+			return nil, nil, endpointSlicesErr
 		}
 
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
+		if !endpointSlicesExists {
+			return nil, nil, errors.New("endpointslices not found")
 		}
 
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
+		for _, endpointSlice := range endpointSlices {
+			var port int32
+			var portStr string
+			for _, p := range endpointSlice.Ports {
+				if portSpec.Name == *p.Name {
+					port = *p.Port
 					break
 				}
 			}
 
 			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
+				continue
 			}
 
 			protocol := getProtocol(portSpec)
 
 			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(addr.IP, portStr)),
-				})
+			for _, endpoint := range endpointSlice.Endpoints {
+				if !(*endpoint.Conditions.Ready) {
+					continue
+				}
+
+				for _, endpointAdress := range endpoint.Addresses {
+					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+						URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(endpointAdress, portStr)),
+					})
+				}
 			}
+
+			serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
+			services[serviceName] = &svc
+
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
 		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
 	}
 
 	if len(wrrSvc.Weighted.Services) == 0 {
@@ -1295,45 +1297,47 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 			return nil, nil, errors.New("service port not found")
 		}
 
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
+		endpointSlices, endpointSlicesExists, endpointSlicesErr := client.GetEndpointSlicesForService(namespace, string(backendRef.Name))
+		if endpointSlicesErr != nil {
+			return nil, nil, endpointSlicesErr
 		}
 
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
+		if !endpointSlicesExists {
+			return nil, nil, errors.New("endpointslices not found")
 		}
 
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
+		for _, endpointSlice := range endpointSlices {
+			var port int32
+			var portStr string
+			for _, p := range endpointSlice.Ports {
+				if portSpec.Name == *p.Name {
+					port = *p.Port
 					break
 				}
 			}
 
 			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
+				continue
 			}
 
 			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
-					Address: net.JoinHostPort(addr.IP, portStr),
-				})
+			for _, endpoint := range endpointSlice.Endpoints {
+				if !(*endpoint.Conditions.Ready) {
+					continue
+				}
+
+				for _, endpointAdress := range endpoint.Addresses {
+					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
+						Address: net.JoinHostPort(endpointAdress, portStr),
+					})
+				}
 			}
+
+			serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
+			services[serviceName] = &svc
+
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
 		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
 	}
 
 	if len(wrrSvc.Weighted.Services) == 0 {
