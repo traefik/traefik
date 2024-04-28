@@ -39,13 +39,11 @@ func init() {
 type clientMock struct {
 	services       []*corev1.Service
 	secrets        []*corev1.Secret
-	endpoints      []*corev1.Endpoints
 	endpointSlices []*discoveryv1.EndpointSlice
 	namespaces     []*corev1.Namespace
 
 	apiServiceError        error
 	apiSecretError         error
-	apiEndpointsError      error
 	apiEndpointSlicesError error
 
 	gatewayClasses  []*gatev1.GatewayClass
@@ -76,8 +74,6 @@ func newClientMock(paths ...string) clientMock {
 				c.secrets = append(c.secrets, o)
 			case *corev1.Namespace:
 				c.namespaces = append(c.namespaces, o)
-			case *corev1.Endpoints:
-				c.endpoints = append(c.endpoints, o)
 			case *discoveryv1.EndpointSlice:
 				c.endpointSlices = append(c.endpointSlices, o)
 			case *gatev1.GatewayClass:
@@ -225,20 +221,6 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 		}
 	}
 	return nil, false, c.apiServiceError
-}
-
-func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	if c.apiEndpointsError != nil {
-		return nil, false, c.apiEndpointsError
-	}
-
-	for _, endpoints := range c.endpoints {
-		if inNamespace(endpoints.ObjectMeta, namespace) && endpoints.Name == name {
-			return endpoints, true, nil
-		}
-	}
-
-	return &corev1.Endpoints{}, false, nil
 }
 
 func (c clientMock) GetEndpointSlices(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {

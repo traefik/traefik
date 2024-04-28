@@ -13,21 +13,6 @@ spec:
     task: whoamiudp
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: myapp
-        port: 8000
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -61,21 +46,6 @@ spec:
   selector:
     app: traefiklabs
     task: whoamiudp2
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp2
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.3
-      - ip: 10.10.0.4
-    ports:
-      - name: myapp2
-        port: 8080
 
 ---
 kind: EndpointSlice
@@ -113,21 +83,6 @@ spec:
     task: whoamiudp3
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp3
-  namespace: ns3
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.7
-      - ip: 10.10.0.8
-    ports:
-      - name: myapp3
-        port: 8083
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -146,21 +101,6 @@ endpoints:
       - 10.10.0.8
     conditions:
       ready: true
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp3
-  namespace: ns4
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.9
-      - ip: 10.10.0.10
-    ports:
-      - name: myapp4
-        port: 8084
 
 ---
 kind: EndpointSlice
@@ -196,20 +136,6 @@ spec:
   selector:
     app: traefiklabs
     task: whoamiudp-ipv6
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp-ipv6
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: "fd00:10:244:0:1::3"
-    ports:
-      - name: myapp-ipv6
-        port: 8080
 
 ---
 kind: EndpointSlice
@@ -270,21 +196,6 @@ spec:
       port: 80
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp-cross-ns
-  namespace: cross-ns
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: myapp
-        port: 8000
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -319,13 +230,6 @@ spec:
   selector:
     app: traefiklabs
     task: whoamiudp
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoamiudp-without-endpoints-subsets
-  namespace: default
 
 ---
 kind: EndpointSlice
