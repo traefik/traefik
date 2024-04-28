@@ -6,6 +6,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 )
 
@@ -16,14 +17,16 @@ type clientMock struct {
 	services       []*corev1.Service
 	secrets        []*corev1.Secret
 	endpoints      []*corev1.Endpoints
+	endpointSlices []*discoveryv1.EndpointSlice
 	nodes          []*corev1.Node
 	ingressClasses []*netv1.IngressClass
 
-	apiServiceError       error
-	apiSecretError        error
-	apiEndpointsError     error
-	apiNodesError         error
-	apiIngressStatusError error
+	apiServiceError        error
+	apiSecretError         error
+	apiEndpointsError      error
+	apiEndpointSlicesError error
+	apiNodesError          error
+	apiIngressStatusError  error
 
 	watchChan chan interface{}
 }
@@ -45,6 +48,8 @@ func newClientMock(path string) clientMock {
 			c.secrets = append(c.secrets, o)
 		case *corev1.Endpoints:
 			c.endpoints = append(c.endpoints, o)
+		case *discoveryv1.EndpointSlice:
+			c.endpointSlices = append(c.endpointSlices, o)
 		case *corev1.Node:
 			c.nodes = append(c.nodes, o)
 		case *netv1.Ingress:
@@ -88,6 +93,22 @@ func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, boo
 	}
 
 	return &corev1.Endpoints{}, false, nil
+}
+
+func (c clientMock) GetEndpointSlices(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {
+	if c.apiEndpointSlicesError != nil {
+		return nil, false, c.apiEndpointSlicesError
+	}
+
+	result := []*discoveryv1.EndpointSlice{}
+
+	for _, endpointSlice := range c.endpointSlices {
+		if endpointSlice.Namespace == namespace && endpointSlice.Labels[discoveryv1.LabelServiceName] == serviceName {
+			result = append(result, endpointSlice)
+		}
+	}
+
+	return result, false, nil
 }
 
 func (c clientMock) GetNodes() ([]*corev1.Node, bool, error) {
