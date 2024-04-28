@@ -35,7 +35,6 @@ rules:
       - ""
     resources:
       - services
-      - endpoints
       - secrets
     verbs:
       - get

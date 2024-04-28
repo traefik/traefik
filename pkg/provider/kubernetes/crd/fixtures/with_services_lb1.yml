@@ -1,19 +1,4 @@
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami4
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: web
-        port: 80
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -32,21 +17,6 @@ endpoints:
       - 10.10.0.2
     conditions:
       ready: true
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami5
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.3
-      - ip: 10.10.0.4
-    ports:
-      - name: web
-        port: 8080
 
 ---
 kind: EndpointSlice
@@ -69,21 +39,6 @@ endpoints:
       ready: true
 
 ---
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami6
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.5
-      - ip: 10.10.0.6
-    ports:
-      - name: web
-        port: 80
-
----
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
@@ -102,21 +57,6 @@ endpoints:
       - 10.10.0.6
     conditions:
       ready: true
-
----
-kind: Endpoints
-apiVersion: v1
-metadata:
-  name: whoami7
-  namespace: default
-
-subsets:
-  - addresses:
-      - ip: 10.10.0.7
-      - ip: 10.10.0.8
-    ports:
-      - name: web
-        port: 8080
 
 ---
 kind: EndpointSlice
