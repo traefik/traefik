@@ -7,6 +7,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
@@ -36,14 +37,16 @@ func init() {
 }
 
 type clientMock struct {
-	services   []*corev1.Service
-	secrets    []*corev1.Secret
-	endpoints  []*corev1.Endpoints
-	namespaces []*corev1.Namespace
+	services       []*corev1.Service
+	secrets        []*corev1.Secret
+	endpoints      []*corev1.Endpoints
+	endpointSlices []*discoveryv1.EndpointSlice
+	namespaces     []*corev1.Namespace
 
-	apiServiceError   error
-	apiSecretError    error
-	apiEndpointsError error
+	apiServiceError        error
+	apiSecretError         error
+	apiEndpointsError      error
+	apiEndpointSlicesError error
 
 	gatewayClasses  []*gatev1.GatewayClass
 	gateways        []*gatev1.Gateway
@@ -75,6 +78,8 @@ func newClientMock(paths ...string) clientMock {
 				c.namespaces = append(c.namespaces, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
+			case *discoveryv1.EndpointSlice:
+				c.endpointSlices = append(c.endpointSlices, o)
 			case *gatev1.GatewayClass:
 				c.gatewayClasses = append(c.gatewayClasses, o)
 			case *gatev1.Gateway:
@@ -234,6 +239,22 @@ func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, boo
 	}
 
 	return &corev1.Endpoints{}, false, nil
+}
+
+func (c clientMock) GetEndpointSlices(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {
+	if c.apiEndpointSlicesError != nil {
+		return nil, false, c.apiEndpointSlicesError
+	}
+
+	result := []*discoveryv1.EndpointSlice{}
+
+	for _, endpointSlice := range c.endpointSlices {
+		if inNamespace(endpointSlice.ObjectMeta, namespace) && endpointSlice.Labels[discoveryv1.LabelServiceName] == serviceName {
+			result = append(result, endpointSlice)
+		}
+	}
+
+	return result, false, nil
 }
 
 func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
