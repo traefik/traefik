@@ -1,7 +1,9 @@
 package k8s
 
 import (
-	corev1 "k8s.io/api/core/v1"
+	"reflect"
+
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -47,64 +49,17 @@ func objChanged(oldObj, newObj interface{}) bool {
 		return false
 	}
 
-	if _, ok := oldObj.(*corev1.Endpoints); ok {
-		return endpointsChanged(oldObj.(*corev1.Endpoints), newObj.(*corev1.Endpoints))
+	if _, ok := oldObj.(*discoveryv1.EndpointSlice); ok {
+		return endpointSliceChanged(oldObj.(*discoveryv1.EndpointSlice), newObj.(*discoveryv1.EndpointSlice))
 	}
 
 	return true
 }
 
-func endpointsChanged(a, b *corev1.Endpoints) bool {
-	if len(a.Subsets) != len(b.Subsets) {
+func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
+	if len(a.Endpoints) != len(b.Endpoints) || len(a.Ports) != len(b.Ports) {
 		return true
 	}
 
-	for i, sa := range a.Subsets {
-		sb := b.Subsets[i]
-		if subsetsChanged(sa, sb) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func subsetsChanged(sa, sb corev1.EndpointSubset) bool {
-	if len(sa.Addresses) != len(sb.Addresses) {
-		return true
-	}
-
-	if len(sa.Ports) != len(sb.Ports) {
-		return true
-	}
-
-	// in Addresses and Ports, we should be able to rely on
-	// these being sorted and able to be compared
-	// they are supposed to be in a canonical format
-	for addr, aaddr := range sa.Addresses {
-		baddr := sb.Addresses[addr]
-		if aaddr.IP != baddr.IP {
-			return true
-		}
-
-		if aaddr.Hostname != baddr.Hostname {
-			return true
-		}
-	}
-
-	for port, aport := range sa.Ports {
-		bport := sb.Ports[port]
-		if aport.Name != bport.Name {
-			return true
-		}
-		if aport.Port != bport.Port {
-			return true
-		}
-
-		if aport.Protocol != bport.Protocol {
-			return true
-		}
-	}
-
-	return false
+	return !(reflect.DeepEqual(a.Endpoints, b.Endpoints) && reflect.DeepEqual(a.Ports, b.Ports))
 }
