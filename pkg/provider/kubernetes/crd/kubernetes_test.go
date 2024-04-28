@@ -4444,9 +4444,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:               "IngressRoute, service with multiple subsets",
+			desc:               "IngressRoute, service with multiple endpointslices",
 			allowEmptyServices: true,
-			paths:              []string{"services.yml", "with_multiple_subsets.yml"},
+			paths:              []string{"services.yml", "with_multiple_endpointslices.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},

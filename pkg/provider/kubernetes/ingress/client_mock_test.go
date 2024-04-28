@@ -108,7 +108,7 @@ func (c clientMock) GetEndpointSlices(namespace, serviceName string) ([]*discove
 		}
 	}
 
-	return result, false, nil
+	return result, len(result) > 0, nil
 }
 
 func (c clientMock) GetNodes() ([]*corev1.Node, bool, error) {

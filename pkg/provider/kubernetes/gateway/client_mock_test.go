@@ -254,7 +254,7 @@ func (c clientMock) GetEndpointSlices(namespace, serviceName string) ([]*discove
 		}
 	}
 
-	return result, false, nil
+	return result, len(result) > 0, nil
 }
 
 func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
