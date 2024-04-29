@@ -467,6 +467,30 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the `traefik.ingress.kubernetes.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-ingress.md#on-service).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.nativeLBByDefault=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
