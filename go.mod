@@ -55,7 +55,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.9.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
-	github.com/tailscale/tscert v0.0.0-20220316030059-54bbcb9f74e2
+	github.com/tailscale/tscert v0.0.0-20230806124524-28a91b69a046
 	github.com/testcontainers/testcontainers-go v0.30.0
 	github.com/testcontainers/testcontainers-go/modules/k3s v0.30.0
 	github.com/tetratelabs/wazero v1.5.0
