@@ -44,7 +44,7 @@ Traefik can be installed in Kubernetes using the Helm chart from <https://github
 
 Ensure that the following requirements are met:
 
-* Kubernetes 1.16+
+* Kubernetes 1.22+
 * Helm version 3.9+ is [installed](https://helm.sh/docs/intro/install/)
 
 Add Traefik Labs chart repository to Helm:
