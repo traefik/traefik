@@ -1906,13 +1906,13 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
+						"default-global-native-lb-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-							Service: "testing-service1-8080",
+							Service: "default-service1-8080",
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"testing-service1-8080": {
+						"default-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								PassHostHeader:     Bool(true),

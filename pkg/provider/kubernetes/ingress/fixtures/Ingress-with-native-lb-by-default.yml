@@ -1,8 +1,8 @@
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: ""
-  namespace: testing
+  name: global-native-lb
+  namespace: default
 spec:
   rules:
   - host: traefik.tchouk
@@ -21,7 +21,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: service1
-  namespace: testing
+  namespace: default
 spec:
   ports:
     - port: 8080

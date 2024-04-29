@@ -7314,15 +7314,15 @@ func TestGlobalNativeLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-global-native-lb-tcp-fdd3e9338e47a45efefc": {
+						"default-global-native-lb-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-global-native-lb-tcp-fdd3e9338e47a45efefc",
+							Service:     "default-global-native-lb-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-global-native-lb-tcp-fdd3e9338e47a45efefc": {
+						"default-global-native-lb-fdd3e9338e47a45efefc": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -7423,13 +7423,13 @@ func TestGlobalNativeLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-global-native-lb-udp-0": {
+						"default-global-native-lb-0": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-global-native-lb-udp-0",
+							Service:     "default-global-native-lb-0",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-global-native-lb-udp-0": {
+						"default-global-native-lb-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
