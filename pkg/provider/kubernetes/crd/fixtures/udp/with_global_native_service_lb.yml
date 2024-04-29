@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: global-native-lb
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - services:
+    - name: native-svc-udp
+      port: 8000
