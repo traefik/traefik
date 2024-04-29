@@ -52,7 +52,7 @@ type Provider struct {
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	DisableIngressClassLookup bool                `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
-	NativeLBByDefault         bool                `description:"Use native Kubernetes Loadbalancing instead of traefik provided" json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	NativeLBByDefault         bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -562,8 +562,6 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return nil, errors.New("service port not found")
 	}
 
-	nativeLB := p.NativeLBByDefault
-
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -573,6 +571,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	if err != nil {
 		return nil, err
 	}
+
+	nativeLB := p.NativeLBByDefault
 
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
@@ -590,6 +590,17 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		}
 	}
 
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))
+
+		svc.LoadBalancer.Servers = []dynamic.Server{
+			{URL: fmt.Sprintf("%s://%s", protocol, hostPort)},
+		}
+
+		return svc, nil
+	}
+
 	if nativeLB {
 		address, err := getNativeServiceAddress(*service, portSpec)
 		if err != nil {
@@ -599,17 +610,6 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
 		svc.LoadBalancer.Servers = []dynamic.Server{
 			{URL: fmt.Sprintf("%s://%s", protocol, address)},
-		}
-
-		return svc, nil
-	}
-
-	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
-		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))
-
-		svc.LoadBalancer.Servers = []dynamic.Server{
-			{URL: fmt.Sprintf("%s://%s", protocol, hostPort)},
 		}
 
 		return svc, nil

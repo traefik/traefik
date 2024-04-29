@@ -715,7 +715,7 @@ Kubernetes label selector to use.
 Kubernetes namespaces.
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_NATIVELBBYDEFAULT`:  
-Use native Kubernetes Loadbalancing instead of traefik provided (Default: ```false```)
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_THROTTLEDURATION`:  
 Ingress refresh throttle duration (Default: ```0```)
@@ -797,6 +797,9 @@ Kubernetes Ingress label selector to use.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NAMESPACES`:  
 Kubernetes namespaces.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NATIVELBBYDEFAULT`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_THROTTLEDURATION`:  
 Ingress refresh throttle duration (Default: ```0```)

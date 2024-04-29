@@ -341,7 +341,8 @@ providers:
 
 _Optional, Default: false_
 
-If the parameter is set to true, during load balancer creation, only the Kubernetes Service clusterIP will be designated as a child, and Kubernetes Service will handle load balancing to the pods.
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the IngressRoute `nativeLB` option [documentation](../routing/providers/kubernetes-crd.md#load-balancing).
 
 ```yaml tab="File (YAML)"
 providers:
