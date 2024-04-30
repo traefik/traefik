@@ -196,9 +196,28 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							RuleSyntax:  "v3",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-9000",
+										Weight: ptr.To(1),
+										Status: ptr.To(500),
+									},
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
@@ -586,7 +605,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -680,7 +699,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -749,7 +768,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -809,7 +828,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -869,7 +888,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -935,7 +954,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -945,7 +964,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami2-8080",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1021,11 +1040,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 									{
 										Name:   "default-whoami2-8080",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1113,7 +1132,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1123,7 +1142,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1204,7 +1223,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1214,7 +1233,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1289,7 +1308,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1299,7 +1318,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1359,7 +1378,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1425,7 +1444,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1435,7 +1454,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1511,7 +1530,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1580,7 +1599,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1649,7 +1668,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1717,7 +1736,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1826,7 +1845,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "whoami",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1875,7 +1894,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "whoami",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -1911,9 +1930,28 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							RuleSyntax:  "v3",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami",
+										Weight: ptr.To(1),
+										Status: ptr.To(500),
+									},
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
@@ -1942,9 +1980,28 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							RuleSyntax:  "v3",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami",
+										Weight: ptr.To(1),
+										Status: ptr.To(500),
+									},
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
@@ -1989,11 +2046,11 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "service@file",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2103,7 +2160,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2170,7 +2227,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2503,7 +2560,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2567,7 +2624,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2577,7 +2634,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2647,11 +2704,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-tcp-app-my-tcp-gateway-tcp-1-e3b0c44298fc1c149afb-wrr-0",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 									{
 										Name:   "default-tcp-app-my-tcp-gateway-tcp-1-e3b0c44298fc1c149afb-wrr-1",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2661,7 +2718,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2671,7 +2728,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2739,11 +2796,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "service@file",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2799,7 +2856,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{{
 									Name:   "default-whoamitcp-9000",
-									Weight: func(i int) *int { return &i }(1),
+									Weight: ptr.To(1),
 								}},
 							},
 						},
@@ -2863,7 +2920,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2925,7 +2982,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -2935,7 +2992,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3003,7 +3060,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3317,7 +3374,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3385,7 +3442,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3444,7 +3501,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3511,7 +3568,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3521,7 +3578,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3599,11 +3656,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "service@file",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3671,7 +3728,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3730,7 +3787,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3789,7 +3846,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3848,7 +3905,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3907,7 +3964,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3975,7 +4032,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -3985,7 +4042,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4056,7 +4113,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4115,11 +4172,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-tls-app-my-gateway-tcp-1-673acf455cb2dab0b43a-wrr-0",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 									{
 										Name:   "default-tls-app-my-gateway-tcp-1-673acf455cb2dab0b43a-wrr-1",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4129,7 +4186,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4139,7 +4196,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4374,7 +4431,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4384,7 +4441,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4394,7 +4451,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4437,7 +4494,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4447,7 +4504,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4559,7 +4616,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4569,7 +4626,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4579,7 +4636,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4622,7 +4679,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4632,7 +4689,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4729,7 +4786,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4739,7 +4796,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4749,7 +4806,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4783,7 +4840,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4793,7 +4850,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4837,7 +4894,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4847,7 +4904,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4889,7 +4946,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4899,7 +4956,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4979,7 +5036,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4989,7 +5046,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -4999,7 +5056,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5046,7 +5103,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5056,7 +5113,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5114,7 +5171,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5124,7 +5181,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5167,7 +5224,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5177,7 +5234,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr.To(1),
 									},
 								},
 							},
@@ -5387,7 +5444,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{{
 									Name:   "default-whoamitcp-9000",
-									Weight: func(i int) *int { return &i }(1),
+									Weight: ptr.To(1),
 								}},
 							},
 						},
