@@ -84,6 +84,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			for serviceName, service := range configuration.TCP.Services {
 				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
 			}
+			for modelName, model := range configuration.TCP.Models {
+				conf.TCP.Models[provider.MakeQualifiedName(pvd, modelName)] = model
+			}
 			for serversTransportName, serversTransport := range configuration.TCP.ServersTransports {
 				conf.TCP.ServersTransports[provider.MakeQualifiedName(pvd, serversTransportName)] = serversTransport
 			}
@@ -146,52 +149,50 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 }
 
 func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
-	if cfg.HTTP == nil || len(cfg.HTTP.Models) == 0 {
-		return cfg
-	}
+	if cfg.HTTP != nil && len(cfg.HTTP.Models) > 0 {
+		rts := make(map[string]*dynamic.Router)
 
-	rts := make(map[string]*dynamic.Router)
+		for name, rt := range cfg.HTTP.Routers {
+			router := rt.DeepCopy()
 
-	for name, rt := range cfg.HTTP.Routers {
-		router := rt.DeepCopy()
+			if !router.DefaultRule && router.RuleSyntax == "" {
+				for _, model := range cfg.HTTP.Models {
+					router.RuleSyntax = model.DefaultRuleSyntax
+					break
+				}
+			}
 
-		if !router.DefaultRule && router.RuleSyntax == "" {
-			for _, model := range cfg.HTTP.Models {
-				router.RuleSyntax = model.DefaultRuleSyntax
-				break
+			eps := router.EntryPoints
+			router.EntryPoints = nil
+
+			for _, epName := range eps {
+				m, ok := cfg.HTTP.Models[epName+"@internal"]
+				if ok {
+					cp := router.DeepCopy()
+
+					cp.EntryPoints = []string{epName}
+
+					if cp.TLS == nil {
+						cp.TLS = m.TLS
+					}
+
+					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
+
+					rtName := name
+					if len(eps) > 1 {
+						rtName = epName + "-" + name
+					}
+					rts[rtName] = cp
+				} else {
+					router.EntryPoints = append(router.EntryPoints, epName)
+
+					rts[name] = router
+				}
 			}
 		}
 
-		eps := router.EntryPoints
-		router.EntryPoints = nil
-
-		for _, epName := range eps {
-			m, ok := cfg.HTTP.Models[epName+"@internal"]
-			if ok {
-				cp := router.DeepCopy()
-
-				cp.EntryPoints = []string{epName}
-
-				if cp.TLS == nil {
-					cp.TLS = m.TLS
-				}
-
-				cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
-
-				rtName := name
-				if len(eps) > 1 {
-					rtName = epName + "-" + name
-				}
-				rts[rtName] = cp
-			} else {
-				router.EntryPoints = append(router.EntryPoints, epName)
-
-				rts[name] = router
-			}
-		}
+		cfg.HTTP.Routers = rts
 	}
-
-	cfg.HTTP.Routers = rts
 
 	if cfg.TCP == nil || len(cfg.TCP.Models) == 0 {
 		return cfg
