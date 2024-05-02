@@ -200,7 +200,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 	tcpRouters := make(map[string]*dynamic.TCPRouter)
 
-	for _, rt := range cfg.TCP.Routers {
+	for name, rt := range cfg.TCP.Routers {
 		router := rt.DeepCopy()
 
 		if router.RuleSyntax == "" {
@@ -209,6 +209,8 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 				break
 			}
 		}
+
+		tcpRouters[name] = router
 	}
 
 	cfg.TCP.Routers = tcpRouters
