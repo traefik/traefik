@@ -123,6 +123,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	if postgres {
+		// Remove read/write deadline and delegate this to underlying TCP server.
+		if err := conn.SetDeadline(time.Time{}); err != nil {
+			log.Error().Err(err).Msg("Error while setting deadline")
+		}
+
 		r.servePostgres(r.GetConn(conn, getPeeked(br)))
 		return
 	}
