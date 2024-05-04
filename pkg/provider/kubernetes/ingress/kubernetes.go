@@ -277,9 +277,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule:     "PathPrefix(`/`)",
-				Priority: math.MinInt32,
-				Service:  "default-backend",
+				Rule:       "PathPrefix(`/`)",
+				RuleSyntax: "v3",
+				Priority:   math.MinInt32,
+				Service:    "default-backend",
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
@@ -708,8 +709,9 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 	}
 
 	rt := &dynamic.Router{
-		Rule:    strings.Join(rules, " && "),
-		Service: serviceName,
+		Rule:       strings.Join(rules, " && "),
+		RuleSyntax: "v3",
+		Service:    serviceName,
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {
