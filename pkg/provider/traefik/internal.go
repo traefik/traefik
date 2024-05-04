@@ -141,6 +141,7 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 
 		rt := &dynamic.Router{
 			Rule:        "HostRegexp(`^.+$`)",
+			RuleSyntax:  "v3",
 			EntryPoints: []string{name},
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
