@@ -6,6 +6,7 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
+			"ruleSyntax": "v3",
 			"priority": 9223372036854775806,
 			"status": "enabled",
 			"using": [
@@ -22,6 +23,7 @@
 			],
 			"service": "dashboard@internal",
 			"rule": "PathPrefix(`/`)",
+			"ruleSyntax": "v3",
 			"priority": 9223372036854775805,
 			"status": "enabled",
 			"using": [
