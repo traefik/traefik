@@ -29,8 +29,15 @@ which in turn will create the resulting routers, services, handlers, etc.
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
@@ -427,8 +434,15 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
@@ -612,8 +626,15 @@ For more options, please refer to the available [annotations](#on-ingress).
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
