@@ -249,15 +249,24 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 			panic(err)
 		}
 
-		if e.transportConfiguration != nil &&
-			e.transportConfiguration.RespondingTimeouts != nil &&
-			e.transportConfiguration.RespondingTimeouts.TCP != nil &&
-			e.transportConfiguration.RespondingTimeouts.TCP.LingeringTimeout > 0 {
-			lingeringTimeout := time.Duration(e.transportConfiguration.RespondingTimeouts.TCP.LingeringTimeout)
-			writeCloser = newLingeringConnection(writeCloser, lingeringTimeout)
-		}
-
 		safe.Go(func() {
+			// Enforce read/write deadlines at the connection level,
+			// because when we're peeking the first byte to determine whether we are doing TLS,
+			// the deadlines at the server level are not taken into account.
+			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
+				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while setting read deadline")
+				}
+			}
+
+			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
+				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while setting write deadline")
+				}
+			}
+
 			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
 		})
 	}
@@ -389,55 +398,6 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	}
 }
 
-// lingeringConn represents a writeCloser with lingeringTimeout handling.
-type lingeringConn struct {
-	tcp.WriteCloser
-
-	lingeringTimeout time.Duration
-
-	rdlMu sync.RWMutex
-	// readDeadline is the current readDeadline set by an upper caller.
-	// In case of HTTP, the HTTP go server manipulates deadlines on the connection.
-	readDeadline time.Time
-}
-
-// newLingeringConnection returns the given writeCloser augmented with lingeringTimeout handling.
-func newLingeringConnection(conn tcp.WriteCloser, timeout time.Duration) tcp.WriteCloser {
-	return &lingeringConn{
-		WriteCloser:      conn,
-		lingeringTimeout: timeout,
-	}
-}
-
-// Read reads data from the connection and postpones the connection readDeadline according to the lingeringTimeout config.
-// It also ensures that the upper level set readDeadline is enforced.
-func (l *lingeringConn) Read(b []byte) (int, error) {
-	if l.lingeringTimeout > 0 {
-		deadline := time.Now().Add(l.lingeringTimeout)
-
-		l.rdlMu.RLock()
-		if !l.readDeadline.IsZero() && deadline.After(l.readDeadline) {
-			deadline = l.readDeadline
-		}
-		l.rdlMu.RUnlock()
-
-		if err := l.WriteCloser.SetReadDeadline(deadline); err != nil {
-			return 0, err
-		}
-	}
-
-	return l.WriteCloser.Read(b)
-}
-
-// SetReadDeadline sets and save the read deadline.
-func (l *lingeringConn) SetReadDeadline(t time.Time) error {
-	l.rdlMu.Lock()
-	l.readDeadline = t
-	l.rdlMu.Unlock()
-
-	return l.WriteCloser.SetReadDeadline(t)
-}
-
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
 // connections.
 type tcpKeepAliveListener struct {
@@ -465,7 +425,7 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
-	timeout := *entryPoint.Transport.RespondingTimeouts.HTTP.ReadTimeout
+	timeout := entryPoint.Transport.RespondingTimeouts.ReadTimeout
 	// proxyproto use 200ms if ReadHeaderTimeout is set to 0 and not no timeout
 	if timeout == 0 {
 		timeout = -1
@@ -648,9 +608,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	serverHTTP := &http.Server{
 		Handler:      handler,
 		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:  time.Duration(*configuration.Transport.RespondingTimeouts.HTTP.ReadTimeout),
-		WriteTimeout: time.Duration(*configuration.Transport.RespondingTimeouts.HTTP.WriteTimeout),
-		IdleTimeout:  time.Duration(*configuration.Transport.RespondingTimeouts.HTTP.IdleTimeout),
+		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {

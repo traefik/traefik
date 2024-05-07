@@ -9,7 +9,7 @@ jobs:
 
   docs:
     name: Check, verify and build documentation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code

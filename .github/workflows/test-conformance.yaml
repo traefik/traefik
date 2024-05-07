@@ -15,7 +15,7 @@ env:
 jobs:
 
   test-conformance:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
@@ -31,12 +31,5 @@ jobs:
       - name: Avoid generating webui
         run: touch webui/static/index.html
 
-      - name: Build binary
-        run: make binary
-
-      - name: Setcap
-        run: |
-          sudo setcap 'cap_net_bind_service=+ep' dist/linux/amd64/traefik
-
       - name: K8s Gateway API conformance test
-        run: make test-gateway-api-conformance-ci
+        run: make test-gateway-api-conformance

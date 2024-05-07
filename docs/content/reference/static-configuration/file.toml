@@ -42,12 +42,6 @@
         readTimeout = "42s"
         writeTimeout = "42s"
         idleTimeout = "42s"
-        [entryPoints.EntryPoint0.transport.respondingTimeouts.http]
-          readTimeout = "42s"
-          writeTimeout = "42s"
-          idleTimeout = "42s"
-        [entryPoints.EntryPoint0.transport.respondingTimeouts.tcp]
-          lingeringTimeout = "42s"
     [entryPoints.EntryPoint0.proxyProtocol]
       insecure = true
       trustedIPs = ["foobar", "foobar"]
@@ -130,6 +124,7 @@
     allowEmptyServices = true
     allowExternalNameServices = true
     disableIngressClassLookup = true
+    nativeLBByDefault = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -145,6 +140,7 @@
     ingressClass = "foobar"
     throttleDuration = "42s"
     allowEmptyServices = true
+    nativeLBByDefault = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
