@@ -827,7 +827,7 @@ http:
 ```
 
 !!! info "Multiple Hosts in a Rule"
-    The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
+    The rule ```Host(`test1.example.com`) || Host(`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
 
 #### `domains`
 
