@@ -310,6 +310,8 @@ type Headers struct {
 	CustomBrowserXSSValue string `json:"customBrowserXSSValue,omitempty" toml:"customBrowserXSSValue,omitempty" yaml:"customBrowserXSSValue,omitempty"`
 	// ContentSecurityPolicy defines the Content-Security-Policy header value.
 	ContentSecurityPolicy string `json:"contentSecurityPolicy,omitempty" toml:"contentSecurityPolicy,omitempty" yaml:"contentSecurityPolicy,omitempty"`
+	// ContentSecurityPolicyReportOnly defines the Content-Security-Policy-Report-Only header value.
+	ContentSecurityPolicyReportOnly string `json:"contentSecurityPolicyReportOnly,omitempty" toml:"contentSecurityPolicyReportOnly,omitempty" yaml:"contentSecurityPolicyReportOnly,omitempty"`
 	// PublicKey is the public key that implements HPKP to prevent MITM attacks with forged certificates.
 	PublicKey string `json:"publicKey,omitempty" toml:"publicKey,omitempty" yaml:"publicKey,omitempty"`
 	// ReferrerPolicy defines the Referrer-Policy header value.
@@ -373,6 +375,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.BrowserXSSFilter ||
 		h.CustomBrowserXSSValue != "" ||
 		h.ContentSecurityPolicy != "" ||
+		h.ContentSecurityPolicyReportOnly != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
 		(h.FeaturePolicy != nil && *h.FeaturePolicy != "") ||
