@@ -1,0 +1,9 @@
+Package: __PKG_NAME__
+Version: __PKG_VERSION__
+Section: web
+Priority: optional
+Architecture: __PKG_ARCH__
+Essential: no
+Maintainer: __PKG_MAINTAINER__
+Description: Traefik modern HTTP reverse proxy and load balancer.
+Depends: libc6 (>= 2.28)
