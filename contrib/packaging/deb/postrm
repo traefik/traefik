@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# skip systemd if not available (for example in WSL)
+if pidof systemd > /dev/null; then
+    #systemctl stop traefik
+    #systemctl disable traefik
+    systemctl daemon-reload
+fi
+

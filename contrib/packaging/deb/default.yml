@@ -1,0 +1,21 @@
+http:
+  routers:
+    router-default:
+      rule: Path(`/`)
+      entryPoints:
+        - web
+      service: default-service
+
+  services:
+    default-service:
+      loadBalancer:
+        servers:
+          # need to has http server on 8000 port
+          # for test you can do something like
+          # mkdir /var/wwww/html -p
+          # echo foo > /var/wwww/html/index.html
+          # cd /var/wwww/html
+          # python3 -m http.server 8000 &
+          # curl http://127.0.0.1:80 -v 
+          - url: http://127.0.0.1:8000 
+
