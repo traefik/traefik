@@ -169,14 +169,14 @@ The default is not to perform compression.
 
 ```yaml tab="File (YAML)"
 log:
-  compress: 3
+  compress: true
 ```
 
 ```toml tab="File (TOML)"
 [log]
-  compress = 3
+  compress = true
 ```
 
 ```bash tab="CLI"
---log.compress=3
+--log.compress=true
 ```
