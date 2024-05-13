@@ -38,7 +38,7 @@ spec:
   rules:
     - matches:
         - path:
-            type: PathPrefix
+            type: Unsupported
             value: /bar
       backendRefs:
         - name: whoami
