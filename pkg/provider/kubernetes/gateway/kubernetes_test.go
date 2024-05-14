@@ -1281,6 +1281,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`) && Header(`my-header`,`bar`)",
 							RuleSyntax:  "v3",
 						},
+						"default-http-app-1-my-gateway-web-d23f7039bc8036fb918c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-d23f7039bc8036fb918c-wrr",
+							Rule:        "Host(`foo.com`) && PathRegexp(`^/buzz/[0-9]+$`)",
+							RuleSyntax:  "v3",
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
@@ -1295,6 +1301,16 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							},
 						},
 						"default-http-app-1-my-gateway-web-aaba0f24fd26e1ca2276-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-http-app-1-my-gateway-web-d23f7039bc8036fb918c-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
