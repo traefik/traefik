@@ -53,9 +53,9 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
                 - --log.level=DEBUG
                 - --api
                 - --api.insecure
-                - --entrypoints.web.address=:80
-                - --entrypoints.tcpep.address=:8000
-                - --entrypoints.udpep.address=:9000/udp
+                - --entryPoints.web.address=:80
+                - --entryPoints.tcpep.address=:8000
+                - --entryPoints.udpep.address=:9000/udp
                 - --providers.kubernetescrd
               ports:
                 - name: web
@@ -897,15 +897,15 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     spec:
       mirroring:
-        name: svc1
+        name: svc1                      # svc1 receives 100% of the traffic
         port: 80
         mirrors:
-          - name: svc2
+          - name: svc2                  # svc2 receives a copy of 20% of this traffic
             port: 80
             percent: 20
-          - name: svc3
+          - name: svc3                  # svc3 receives a copy of 15% of this traffic
             kind: TraefikService
-            percent: 20
+            percent: 15
     ```
     
     ```yaml tab="Mirroring Traefik Service"
@@ -918,15 +918,15 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     spec:
       mirroring:
-        name: wrr1
+        name: wrr1                      # wrr1 receives 100% of the traffic
         kind: TraefikService
-         mirrors:
-           - name: svc2
-             port: 80
-             percent: 20
-           - name: svc3
-             kind: TraefikService
-             percent: 20
+        mirrors:
+          - name: svc2                  # svc2 receives a copy of 20% of this traffic
+            port: 80
+            percent: 20
+          - name: svc3                  # svc3 receives a copy of 10% of this traffic
+            kind: TraefikService
+            percent: 10
     ```
 
     ```yaml tab="K8s Service"

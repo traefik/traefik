@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -99,6 +100,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// If there is a handler matching the connection metadata,
 		// we let it handle the connection.
 		if handler != nil {
+			// Remove read/write deadline and delegate this to underlying TCP server.
+			if err := conn.SetDeadline(time.Time{}); err != nil {
+				log.WithoutContext().Errorf("Error while setting deadline: %v", err)
+			}
+
 			handler.ServeTCP(conn)
 			return
 		}
@@ -114,6 +120,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	if err != nil {
 		conn.Close()
 		return
+	}
+
+	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		log.WithoutContext().Errorf("Error while setting deadline: %v", err)
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)

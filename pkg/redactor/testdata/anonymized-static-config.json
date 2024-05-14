@@ -26,14 +26,9 @@
           "graceTimeOut": "1m51s"
         },
         "respondingTimeouts": {
-          "http": {
-            "readTimeout": "1m51s",
-            "writeTimeout": "1m51s",
-            "idleTimeout": "1m51s"
-          },
-          "tcp": {
-            "lingeringTimeout": "1m51s"
-          }
+          "readTimeout": "1m51s",
+          "writeTimeout": "1m51s",
+          "idleTimeout": "1m51s"
         }
       },
       "proxyProtocol": {

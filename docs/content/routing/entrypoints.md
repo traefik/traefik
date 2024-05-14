@@ -227,8 +227,8 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     ```
 
     ```bash tab="CLI"
-    --entrypoints.specificIPv4.address=192.168.2.7:8888
-    --entrypoints.specificIPv6.address=[2001:db8::1]:8888
+    --entryPoints.specificIPv4.address=192.168.2.7:8888
+    --entryPoints.specificIPv6.address=[2001:db8::1]:8888
     ```
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
@@ -295,7 +295,7 @@ In most scenarios, this entryPoint is the same as the one used for TLS traffic.
     
     ```bash tab="CLI"
     --experimental.http3=true 
-    --entrypoints.name.http3
+    --entryPoints.name.http3
     ```
 
 #### `advertisedPort`
@@ -326,7 +326,7 @@ It can be used to override the authority in the `alt-svc` header, for example if
     
     ```bash tab="CLI"
     --experimental.http3=true 
-    --entrypoints.name.http3.advertisedport=443
+    --entryPoints.name.http3.advertisedport=443
     ```
 
 ### Forwarded Headers
@@ -397,19 +397,19 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 
 #### `respondingTimeouts`
 
-##### `http`
+`respondingTimeouts` are timeouts for incoming requests to the Traefik instance.
+Setting them has no effect for UDP entryPoints.
 
-`respondingTimeouts.http` are timeouts for incoming requests to the Traefik instance.
+??? info "`transport.respondingTimeouts.readTimeout`"
 
-??? info "`transport.respondingTimeouts.http.readTimeout`"
-
-    _Optional, Default=0s_
+    _Optional, Default=60s_
 
     `readTimeout` is the maximum duration for reading the entire request, including the body.
 
     If zero, no timeout exists.  
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
     If no units are provided, the value is parsed assuming seconds.
+    We strongly suggest to adapt this value accordingly to the your needs.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -418,8 +418,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":8888"
         transport:
           respondingTimeouts:
-            http:
-              readTimeout: 42
+            readTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -427,17 +426,18 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.http]
-          readTimeout = 42
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            readTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.http.readTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.readTimeout=42
     ```
 
-??? info "`transport.respondingTimeouts.http.writeTimeout`"
+??? info "`transport.respondingTimeouts.writeTimeout`"
 
     _Optional, Default=0s_
 
@@ -455,8 +455,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":8888"
         transport:
           respondingTimeouts:
-            http:
-              writeTimeout: 42
+            writeTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -464,17 +463,18 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.http]
-          writeTimeout = 42
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            writeTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.http.writeTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.writeTimeout=42
     ```
 
-??? info "`transport.respondingTimeouts.http.idleTimeout`"
+??? info "`transport.respondingTimeouts.idleTimeout`"
 
     _Optional, Default=180s_
 
@@ -491,8 +491,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":8888"
         transport:
           respondingTimeouts:
-            http:
-              idleTimeout: 42
+            idleTimeout: 42
     ```
 
     ```toml tab="File (TOML)"
@@ -500,54 +499,15 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     [entryPoints]
       [entryPoints.name]
         address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.http]
-          idleTimeout = 42
+        [entryPoints.name.transport]
+          [entryPoints.name.transport.respondingTimeouts]
+            idleTimeout = 42
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.http.idleTimeout=42
-
-##### `tcp`
-
-`respondingTimeouts.tcp` are timeouts for client connections to the Traefik instance.
-
-??? info "`transport.respondingTimeouts.tcp.lingeringTimeout`"
-
-    _Optional, Default=2s_
-
-    `lingeringTimeout` is the maximum duration between each TCP read operation on the connection.
-    As a layer 4 timeout, it also applies during HTTP handling, but respect the configured HTTP server `readTimeout`.
-
-    If zero, the lingering is disabled.  
-    Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
-    If no units are provided, the value is parsed assuming seconds.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      name:
-        address: ":8888"
-        transport:
-          respondingTimeouts:
-            tcp:
-              lingeringTimeout: 42
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.name]
-        address = ":8888"
-        [entryPoints.name.transport.respondingTimeouts.tcp]
-          lingeringTimeout = 42
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.name.address=:8888
-    --entryPoints.name.transport.respondingTimeouts.tcp.lingeringTimeout=42
+    --entryPoints.name.transport.respondingTimeouts.idleTimeout=42
     ```
 
 #### `lifeCycle`
@@ -803,10 +763,10 @@ This whole section is dedicated to options, keyed by entry point, that will appl
     ```
 
     ```bash tab="CLI"
-    --entrypoints.web.address=:80
-    --entrypoints.web.http.redirections.entryPoint.to=websecure
-    --entrypoints.web.http.redirections.entryPoint.scheme=https
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.redirections.entryPoint.to=websecure
+    --entryPoints.web.http.redirections.entryPoint.scheme=https
+    --entryPoints.websecure.address=:443
     ```
 
 #### `entryPoint`
@@ -841,7 +801,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     ```
 
     ```bash tab="CLI"
-    --entrypoints.foo.http.redirections.entryPoint.to=websecure
+    --entryPoints.foo.http.redirections.entryPoint.to=websecure
     ```
 
 ??? info "`entryPoint.scheme`"
@@ -871,7 +831,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     ```
 
     ```bash tab="CLI"
-    --entrypoints.foo.http.redirections.entryPoint.scheme=https
+    --entryPoints.foo.http.redirections.entryPoint.scheme=https
     ```
 
 ??? info "`entryPoint.permanent`"
@@ -901,7 +861,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     ```
 
     ```bash tab="CLI"
-    --entrypoints.foo.http.redirections.entrypoint.permanent=true
+    --entryPoints.foo.http.redirections.entrypoint.permanent=true
     ```
 
 ??? info "`entryPoint.priority`"
@@ -931,7 +891,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     ```
 
     ```bash tab="CLI"
-    --entrypoints.foo.http.redirections.entrypoint.priority=10
+    --entryPoints.foo.http.redirections.entrypoint.priority=10
     ```
 
 ### EncodeQuerySemicolons
@@ -959,8 +919,8 @@ entryPoints:
 ```
 
 ```bash tab="CLI"
---entrypoints.websecure.address=:443
---entrypoints.websecure.http.encodequerysemicolons=true
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.encodequerysemicolons=true
 ```
 
 #### Examples
@@ -995,8 +955,8 @@ entryPoints:
 ```
 
 ```bash tab="CLI"
---entrypoints.websecure.address=:443
---entrypoints.websecure.http.middlewares=auth@file,strip@file
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.middlewares=auth@file,strip@file
 ```
 
 ### TLS
@@ -1042,13 +1002,13 @@ entryPoints:
 ```
 
 ```bash tab="CLI"
---entrypoints.websecure.address=:443
---entrypoints.websecure.http.tls.options=foobar
---entrypoints.websecure.http.tls.certResolver=leresolver
---entrypoints.websecure.http.tls.domains[0].main=example.com
---entrypoints.websecure.http.tls.domains[0].sans=foo.example.com,bar.example.com
---entrypoints.websecure.http.tls.domains[1].main=test.com
---entrypoints.websecure.http.tls.domains[1].sans=foo.test.com,bar.test.com
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.tls.options=foobar
+--entryPoints.websecure.http.tls.certResolver=leresolver
+--entryPoints.websecure.http.tls.domains[0].main=example.com
+--entryPoints.websecure.http.tls.domains[0].sans=foo.example.com,bar.example.com
+--entryPoints.websecure.http.tls.domains[1].main=test.com
+--entryPoints.websecure.http.tls.domains[1].sans=foo.test.com,bar.test.com
 ```
 
 ??? example "Let's Encrypt"
@@ -1071,8 +1031,8 @@ entryPoints:
     ```
 
     ```bash tab="CLI"
-    --entrypoints.websecure.address=:443
-    --entrypoints.websecure.http.tls.certResolver=leresolver
+    --entryPoints.websecure.address=:443
+    --entryPoints.websecure.http.tls.certResolver=leresolver
     ```
 
 ## UDP Options
@@ -1103,8 +1063,8 @@ entryPoints:
 ```
 
 ```bash tab="CLI"
-entrypoints.foo.address=:8000/udp
-entrypoints.foo.udp.timeout=10s
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.udp.timeout=10s
 ```
 
 {!traefik-for-business-applications.md!}
