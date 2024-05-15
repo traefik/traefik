@@ -368,7 +368,7 @@ Path are always starting with a `/`, except for `PathRegexp`.
     [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity):
 
     ```yaml
-    HostRegexp(`(?i)^/products`)
+    PathRegexp(`(?i)^/products`)
     ```
 
 #### Query and QueryRegexp
