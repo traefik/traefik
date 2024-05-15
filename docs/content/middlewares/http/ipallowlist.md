@@ -35,18 +35,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32,192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-# Accepts request from defined IP
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 # Accepts request from defined IP
 http:
@@ -125,20 +113,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32, 192.168.1.7",
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
-```
-
 ```yaml tab="File (YAML)"
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 http:
@@ -205,20 +179,6 @@ spec:
 # Exclude from `X-Forwarded-For`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-# Exclude from `X-Forwarded-For`
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
