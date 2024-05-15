@@ -5,7 +5,7 @@ description: "Traefik Proxy supports these metrics backend systems: Datadog, Inf
 
 # Metrics
 
-Traefik provides metrics to the [OpenTelemetry](./opentelemetry.md) format as well as the following vendor specific backends:
+Traefik provides metrics in the [OpenTelemetry](./opentelemetry.md) format as well as the following vendor specific backends:
 
 - [Datadog](./datadog.md)
 - [InfluxDB2](./influxdb2.md)
