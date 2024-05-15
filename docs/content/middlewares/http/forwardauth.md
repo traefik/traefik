@@ -300,7 +300,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -316,13 +316,6 @@ spec:
 - "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.test-auth.forwardAuth]
-    address = "https://example.com/auth"
-    addAuthCookiesToResponse = ["Session-Cookie", "State-Cookie"]
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -332,6 +325,13 @@ http:
         addAuthCookiesToResponse:
           - "Session-Cookie"
           - "State-Cookie"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    addAuthCookiesToResponse = ["Session-Cookie", "State-Cookie"]
 ```
 
 ### `tls`
