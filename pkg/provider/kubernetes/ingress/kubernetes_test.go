@@ -528,9 +528,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"default-router": {
-							Rule:     "PathPrefix(`/`)",
-							Service:  "default-backend",
-							Priority: math.MinInt32,
+							Rule:       "PathPrefix(`/`)",
+							RuleSyntax: "v3",
+							Service:    "default-backend",
+							Priority:   math.MinInt32,
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -993,9 +994,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"default-router": {
-							Rule:     "PathPrefix(`/`)",
-							Service:  "default-backend",
-							Priority: math.MinInt32,
+							Rule:       "PathPrefix(`/`)",
+							RuleSyntax: "v3",
+							Service:    "default-backend",
+							Priority:   math.MinInt32,
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1469,9 +1471,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"default-router": {
-							Rule:     "PathPrefix(`/`)",
-							Priority: math.MinInt32,
-							Service:  "default-backend",
+							Rule:       "PathPrefix(`/`)",
+							RuleSyntax: "v3",
+							Priority:   math.MinInt32,
+							Service:    "default-backend",
 						},
 					},
 					Services: map[string]*dynamic.Service{

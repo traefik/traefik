@@ -7,6 +7,7 @@
         ],
         "service": "api@internal",
         "rule": "PathPrefix(`/api`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775806
       },
       "dashboard": {
@@ -19,6 +20,7 @@
         ],
         "service": "dashboard@internal",
         "rule": "PathPrefix(`/`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775805
       },
       "debug": {
@@ -27,6 +29,7 @@
         ],
         "service": "api@internal",
         "rule": "PathPrefix(`/debug`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775806
       },
       "ping": {
@@ -35,6 +38,7 @@
         ],
         "service": "ping@internal",
         "rule": "PathPrefix(`/ping`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775807
       },
       "prometheus": {
@@ -43,6 +47,7 @@
         ],
         "service": "prometheus@internal",
         "rule": "PathPrefix(`/metrics`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775807
       },
       "rest": {
@@ -51,6 +56,7 @@
         ],
         "service": "rest@internal",
         "rule": "PathPrefix(`/api/providers`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775807
       }
     },
