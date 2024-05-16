@@ -8,12 +8,11 @@ description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary c
 How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
-The version 3 of Traefik introduces a number of breaking changes,
-which require one to update their configuration when they migrate from v2 to v3.
-The goal of this page is to recapitulate all of these changes,
-and in particular to give examples, feature by feature, 
-of how the configuration looked like in v2,
-and how it now looks like in v3.
+Traefik v3 introduces only a few breaking changes on the static configuration.
+This page summarizes the changes and gives examples for them.
+You can see how a feature looked like in v2 and how it changed in v3.
+It will help you update your configuration from v2 to v3 and migrate successfully.
+The migration takes less than 10 minutes in most cases.
 
 ## Static configuration
 
@@ -125,7 +124,7 @@ The `experimentalChannel` option should be used to enable the support for the ex
 #### HTTP3
 
 In v3, HTTP/3 is no longer an experimental feature.
-It can be enabled on entry points without the associated `experimental.http3` option, which is now removed.
+It can be enabled on entry points without the associated `experimental.http3` option (which is now removed).
 It is now unsupported and would prevent Traefik to start.
 
 ??? example "An example usage of v2 Experimental `http3` option"
@@ -147,7 +146,6 @@ It is now unsupported and would prevent Traefik to start.
 ##### Remediation
 
 The `http3` option should be removed from the static configuration experimental section.
-To configure `http3`, please checkout the [entrypoint configuration documentation](https://doc.traefik.io/traefik/v3.0/routing/entrypoints/#http3_1).
 
 ### Consul provider
 
@@ -363,8 +361,7 @@ The `endpoint.tls.caOptional` option should be removed from the Nomad provider s
 
 ### Rancher v1 Provider
 
-In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/),
-and Rancher v2 is supported as a standard Kubernetes provider.
+In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/). Rancher v2 is supported as a standard Kubernetes provider.
 
 ??? example "An example of Traefik v2 Rancher v1 configuration"
 
@@ -546,8 +543,8 @@ Traefik Pilot is no longer available since October 4th, 2022.
     --pilot.token=foobar
     ```
 
-In v2, Pilot configuration was deprecated and ineffective,
-it is now unsupported and would prevent Traefik to start.
+In v2, Pilot configuration was deprecated and ineffective.
+It is now unsupported and would prevent Traefik to start.
 
 #### Remediation
 
@@ -665,7 +662,7 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 ### TCP LoadBalancer `terminationDelay` option
 
 The TCP LoadBalancer `terminationDelay` option has been removed.
-This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
+This option can now be configured directly on the `TCPServersTransport` level. Please take a look at this [documentation](../routing/services/index.md#terminationdelay).
 
 ### Kubernetes CRDs API Group `traefik.containo.us`
 
@@ -708,7 +705,7 @@ In v3, the tracing feature has been revamped and is now powered exclusively by [
 !!! warning "Important"
 
     Traefik v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
-Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
+Traefik v3 focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
 
 Here are two possible transition strategies:
 
