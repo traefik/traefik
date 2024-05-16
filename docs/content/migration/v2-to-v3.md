@@ -8,7 +8,7 @@ description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary c
 How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
-Traefik v3 introduces a number of breaking changes.
+Traefik v3 introduces only a few breaking changes on the static configuration.
 This page summarizes the changes and gives examples for them.
 You can see how a feature looked like in v2 and how it changed in v3.
 It will help you update your configuration from v2 to v3 and migrate successfully.
