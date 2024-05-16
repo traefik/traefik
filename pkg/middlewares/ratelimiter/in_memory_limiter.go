@@ -2,19 +2,14 @@ package ratelimiter
 
 import (
 	"context"
-	"fmt"
-	"math"
-	"net/http"
 	"time"
 
 	"github.com/mailgun/ttlmap"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"golang.org/x/time/rate"
 )
 
-type BasicLimiter struct {
+type InMemoryRateLimiter struct {
 	rate  rate.Limit // reqs/s
 	burst int64
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
@@ -30,7 +25,7 @@ type BasicLimiter struct {
 	logger *zerolog.Logger
 }
 
-func NewBaseLimiter(
+func NewInMemoryRateLimiter(
 	rate rate.Limit,
 	burst int64,
 	maxDelay time.Duration,
@@ -41,7 +36,7 @@ func NewBaseLimiter(
 	if err != nil {
 		return nil, err
 	}
-	return &BasicLimiter{
+	return &InMemoryRateLimiter{
 		rate:     rate,
 		burst:    burst,
 		maxDelay: maxDelay,
@@ -52,9 +47,7 @@ func NewBaseLimiter(
 	}, nil
 }
 
-func (b *BasicLimiter) Allow(
-	ctx context.Context, source string, amount int64, req *http.Request, rw http.ResponseWriter,
-) (bool, error) {
+func (b *InMemoryRateLimiter) Allow(ctx context.Context, source string) (Result, error) {
 	// Get bucket which contain limiter information.
 	var bucket *rate.Limiter
 	if rlSource, exists := b.buckets.Get(source); exists {
@@ -67,35 +60,31 @@ func (b *BasicLimiter) Allow(
 	// because we want to update the expiryTime everytime we get the source,
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := b.buckets.Set(source, bucket, b.ttl); err != nil {
-		b.logger.Error().Err(err).Msg("Could not insert/update bucket")
-		observability.SetStatusErrorf(req.Context(), "Could not insert/update bucket")
-		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
-		return false, err
+		return Result{
+			Ok: false,
+		}, err
 	}
 
 	res := bucket.Reserve()
 	if !res.OK() {
-		observability.SetStatusErrorf(req.Context(), "No bursty traffic allowed")
-		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
-		return false, nil
+		return Result{
+			Ok: false,
+		}, nil
 	}
 	delay := res.Delay()
 	if delay > b.maxDelay {
 		res.Cancel()
-		b.serveDelayError(ctx, rw, delay)
-		return false, nil
+		return Result{
+			Ok:    false,
+			Delay: delay,
+		}, nil
 	}
 
 	time.Sleep(delay)
-	return true, nil
-}
 
-func (b *BasicLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
-	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
-	w.Header().Set("X-Retry-In", delay.String())
-	w.WriteHeader(http.StatusTooManyRequests)
-
-	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Could not serve 429")
-	}
+	return Result{
+		Ok:        true,
+		Remaining: bucket.Tokens(),
+		Delay:     delay,
+	}, nil
 }

@@ -198,8 +198,8 @@ func TestRateLimitRedis(t *testing.T) {
 
 			wantCount := int(int64(rate*float64(test.loadDuration)) + burst)
 
-			// Allow for a 5% leeway
-			maxCount := wantCount * 105 / 100
+			// Allow for a 2% leeway
+			maxCount := wantCount * 102 / 100
 
 			// With very high CPU loads,
 			// we can expect some extra delay in addition to the rate limiting we already do,

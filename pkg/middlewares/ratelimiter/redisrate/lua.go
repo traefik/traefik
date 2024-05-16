@@ -44,13 +44,8 @@ local wait_duration = 0
 if tokens < 0 then
     wait_duration = (tokens * -1) / bucket.limit
     if wait_duration > max_delay then
-        local nowR = redis.call("TIME")
-        local now = (tonumber(nowR[1]) * 1000000) + tonumber(nowR[2])
-        elapsed = now - t
-        delta = bucket.limit * elapsed
-        tokens = tokens + n + delta
+        tokens = tokens + n
         tokens = math.min(tokens, burst)
-        wait_duration = wait_duration + elapsed
     end
 end
 
@@ -58,4 +53,4 @@ redis.call('hset', key, 'last', t)
 redis.call('hset', key, 'tokens', tokens)
 redis.call('expire', key, ttl)
 
-return {tostring(true), tostring(wait_duration)}`)
+return {tostring(true), tostring(wait_duration),tostring(tokens)}`)

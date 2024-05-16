@@ -4,11 +4,15 @@ package ratelimiter
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/utils"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
@@ -29,12 +33,19 @@ type rateLimiter struct {
 	maxDelay      time.Duration
 	sourceMatcher utils.SourceExtractor
 	next          http.Handler
+	logger        *zerolog.Logger
 
 	limiter Limiter
 }
 
+type Result struct {
+	Ok        bool
+	Remaining float64
+	Delay     time.Duration
+}
+
 type Limiter interface {
-	Allow(ctx context.Context, token string, amount int64, req *http.Request, rw http.ResponseWriter) (bool, error)
+	Allow(ctx context.Context, token string) (Result, error)
 }
 
 // New returns a rate limiter middleware.
@@ -105,13 +116,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 			return nil, err
 		}
 	} else {
-		limiter, err = NewBaseLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
+		limiter, err = NewInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	rateLimmiter := &rateLimiter{
+		logger:        logger,
 		name:          name,
 		rate:          rate.Limit(rtl),
 		maxDelay:      maxDelay,
@@ -143,13 +155,34 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	allowed, err := rl.limiter.Allow(ctx, source, amount, req, rw)
+	result, err := rl.limiter.Allow(ctx, source)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
+		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
+		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
 
-	if allowed {
+	if !result.Ok {
+		observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
+		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
+	}
+
+	if result.Delay > rl.maxDelay {
+		rl.serveDelayError(ctx, rw, result.Delay)
+	}
+
+	if result.Ok {
 		rl.next.ServeHTTP(rw, req)
+	}
+}
+
+func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
+	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
+	w.Header().Set("X-Retry-In", delay.String())
+	w.WriteHeader(http.StatusTooManyRequests)
+
+	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Could not serve 429")
 	}
 }

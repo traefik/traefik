@@ -121,10 +121,15 @@ func (l Limiter) AllowTokenBucketN(ctx context.Context, key string, limit Limit,
 	if err != nil {
 		return nil, err
 	}
+	tokens, err := strconv.ParseFloat(values[2].(string), 64)
+	if err != nil {
+		return nil, err
+	}
 
 	res := &Result{
-		Ok:    ok,
-		Delay: dur(delay),
+		Ok:     ok,
+		Tokens: tokens,
+		Delay:  dur(delay),
 	}
 	return res, nil
 }
@@ -139,6 +144,8 @@ func dur(f float64) time.Duration {
 type Result struct {
 	// If meet bursty traffic or not.
 	Ok bool
+	// Remaining tokens
+	Tokens float64
 	// Delay for handling request.
 	Delay time.Duration
 }
