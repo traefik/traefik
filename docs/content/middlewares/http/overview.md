@@ -12,7 +12,7 @@ Controlling connections
 
 ## Configuration Example
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # As a Docker Label
 whoami:
   #  A container that exposes an API to show its IP address
@@ -26,19 +26,6 @@ whoami:
 
 ```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: middlewares.traefik.io
-spec:
-  group: traefik.io
-  version: v1alpha1
-  names:
-    kind: Middleware
-    plural: middlewares
-    singular: middleware
-  scope: Namespaced
-
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -67,22 +54,6 @@ spec:
 - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
 # Apply the middleware named `foo-add-prefix` to the router named `router1`
 - "traefik.http.routers.router1.middlewares=foo-add-prefix@consulcatalog"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
-  "traefik.http.routers.router1.middlewares": "foo-add-prefix@marathon"
-}
-```
-
-```yaml tab="Rancher"
-# As a Rancher Label
-labels:
-  # Create a middleware named `foo-add-prefix`
-  - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-  # Apply the middleware named `foo-add-prefix` to the router named `router1`
-  - "traefik.http.routers.router1.middlewares=foo-add-prefix@rancher"
 ```
 
 ```toml tab="File (TOML)"
@@ -142,7 +113,7 @@ http:
 | [Errors](errorpages.md)                   | Defines custom error pages                        | Request Lifecycle           |
 | [ForwardAuth](forwardauth.md)             | Delegates Authentication                          | Security, Authentication    |
 | [Headers](headers.md)                     | Adds / Updates headers                            | Security                    |
-| [IPWhiteList](ipwhitelist.md)             | Limits the allowed client IPs                     | Security, Request lifecycle |
+| [IPAllowList](ipallowlist.md)             | Limits the allowed client IPs                     | Security, Request lifecycle |
 | [InFlightReq](inflightreq.md)             | Limits the number of simultaneous connections     | Security, Request lifecycle |
 | [PassTLSClientCert](passtlsclientcert.md) | Adds Client Certificates in a Header              | Security                    |
 | [RateLimit](ratelimit.md)                 | Limits the call frequency                         | Security, Request lifecycle |

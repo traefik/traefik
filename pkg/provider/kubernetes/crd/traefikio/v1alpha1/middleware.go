@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -12,7 +12,7 @@ import (
 // +kubebuilder:storageversion
 
 // Middleware is the CRD implementation of a Traefik Middleware.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/overview/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/overview/
 type Middleware struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -26,12 +26,13 @@ type Middleware struct {
 
 // MiddlewareSpec defines the desired state of a Middleware.
 type MiddlewareSpec struct {
-	AddPrefix         *dynamic.AddPrefix         `json:"addPrefix,omitempty"`
-	StripPrefix       *dynamic.StripPrefix       `json:"stripPrefix,omitempty"`
-	StripPrefixRegex  *dynamic.StripPrefixRegex  `json:"stripPrefixRegex,omitempty"`
-	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
-	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
-	Chain             *Chain                     `json:"chain,omitempty"`
+	AddPrefix        *dynamic.AddPrefix        `json:"addPrefix,omitempty"`
+	StripPrefix      *dynamic.StripPrefix      `json:"stripPrefix,omitempty"`
+	StripPrefixRegex *dynamic.StripPrefixRegex `json:"stripPrefixRegex,omitempty"`
+	ReplacePath      *dynamic.ReplacePath      `json:"replacePath,omitempty"`
+	ReplacePathRegex *dynamic.ReplacePathRegex `json:"replacePathRegex,omitempty"`
+	Chain            *Chain                    `json:"chain,omitempty"`
+	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
 	IPAllowList       *dynamic.IPAllowList       `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
@@ -49,6 +50,7 @@ type MiddlewareSpec struct {
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                     `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
+	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/plugins/
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
@@ -58,7 +60,7 @@ type MiddlewareSpec struct {
 
 // ErrorPage holds the custom error middleware configuration.
 // This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/errorpages/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/
 type ErrorPage struct {
 	// Status defines which status or range of statuses should result in an error page.
 	// It can be either a status code as a number (500),
@@ -67,7 +69,7 @@ type ErrorPage struct {
 	// or a combination of the two (404,418,500-599).
 	Status []string `json:"status,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
-	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/errorpages/#service
+	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/#service
 	Service Service `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
@@ -86,13 +88,15 @@ type CircuitBreaker struct {
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
+	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
+	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // Chain holds the configuration of the chain middleware.
 // This middleware enables to define reusable combinations of other pieces of middleware.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/chain/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/chain/
 type Chain struct {
 	// Middlewares is the list of MiddlewareRef which composes the chain.
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
@@ -102,7 +106,7 @@ type Chain struct {
 
 // BasicAuth holds the basic auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/
 type BasicAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret string `json:"secret,omitempty"`
@@ -113,7 +117,7 @@ type BasicAuth struct {
 	// Default: false.
 	RemoveHeader bool `json:"removeHeader,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -121,7 +125,7 @@ type BasicAuth struct {
 
 // DigestAuth holds the digest auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/digestauth/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/digestauth/
 type DigestAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret string `json:"secret,omitempty"`
@@ -131,7 +135,7 @@ type DigestAuth struct {
 	// Default: traefik.
 	Realm string `json:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -139,7 +143,7 @@ type DigestAuth struct {
 
 // ForwardAuth holds the forward auth middleware configuration.
 // This middleware delegates the request authentication to a Service.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty"`
@@ -148,13 +152,15 @@ type ForwardAuth struct {
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/#authresponseheadersregex
+	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty"`
+	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
+	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 }
 
 // ClientTLS holds the client TLS configuration.
@@ -167,14 +173,16 @@ type ClientTLS struct {
 	CertSecret string `json:"certSecret,omitempty"`
 	// InsecureSkipVerify defines whether the server certificates should be validated.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	CAOptional         bool `json:"caOptional,omitempty"`
+
+	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
+	CAOptional *bool `json:"caOptional,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // RateLimit holds the rate limit configuration.
 // This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ratelimit/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ratelimit/
 type RateLimit struct {
 	// Average is the maximum rate, by default in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
@@ -198,7 +206,7 @@ type RateLimit struct {
 // Retry holds the retry middleware configuration.
 // This middleware reissues requests a given number of times to a backend server if that server does not reply.
 // As soon as the server answers, the middleware stops retrying, regardless of the response status.
-// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/retry/
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	Attempts int `json:"attempts,omitempty"`

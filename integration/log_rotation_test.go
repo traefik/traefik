@@ -12,17 +12,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
 )
 
-const (
-	traefikTestLogFileRotated       = traefikTestLogFile + ".rotated"
-	traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
-)
+const traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
 
 // Log rotation integration test suite.
 type LogRotationSuite struct{ BaseSuite }
@@ -47,21 +44,20 @@ func (s *LogRotationSuite) TearDownSuite() {
 
 	generatedFiles := []string{
 		traefikTestLogFile,
-		traefikTestLogFileRotated,
 		traefikTestAccessLogFile,
 		traefikTestAccessLogFileRotated,
 	}
 
 	for _, filename := range generatedFiles {
 		if err := os.Remove(filename); err != nil {
-			log.WithoutContext().Warning(err)
+			log.Warn().Err(err).Send()
 		}
 	}
 }
 
 func (s *LogRotationSuite) TestAccessLogRotation() {
 	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer s.displayTraefikLogFile(traefikTestLogFile)
 
 	// Verify Traefik started ok
@@ -111,46 +107,10 @@ func (s *LogRotationSuite) TestAccessLogRotation() {
 	s.verifyEmptyErrorLog(traefikTestLogFile)
 }
 
-func (s *LogRotationSuite) TestTraefikLogRotation() {
-	// Start Traefik
-	cmd := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
-
-	s.waitForTraefik("server1")
-
-	// Rename traefik log
-	err := os.Rename(traefikTestLogFile, traefikTestLogFileRotated)
-	require.NoError(s.T(), err)
-
-	// issue SIGUSR1 signal to server process
-	err = cmd.Process.Signal(syscall.SIGUSR1)
-	require.NoError(s.T(), err)
-
-	err = cmd.Process.Signal(syscall.SIGTERM)
-	require.NoError(s.T(), err)
-
-	// Allow time for switch to be processed
-	err = try.Do(3*time.Second, func() error {
-		_, err = os.Stat(traefikTestLogFile)
-		return err
-	})
-	require.NoError(s.T(), err)
-
-	// we have at least 6 lines in traefik.log.rotated
-	lineCount := s.verifyLogLines(traefikTestLogFileRotated, 0, false)
-
-	// GreaterOrEqualThan used to ensure test doesn't break
-	// If more log entries are output on startup
-	assert.GreaterOrEqual(s.T(), lineCount, 5)
-
-	// Verify traefik.log output as expected
-	lineCount = s.verifyLogLines(traefikTestLogFile, lineCount, false)
-	assert.GreaterOrEqual(s.T(), lineCount, 7)
-}
-
 func (s *LogRotationSuite) logAccessLogFile(fileName string) {
 	output, err := os.ReadFile(fileName)
 	require.NoError(s.T(), err)
-	log.WithoutContext().Infof("Contents of file %s\n%s", fileName, string(output))
+	log.Info().Msgf("Contents of file %s\n%s", fileName, string(output))
 }
 
 func (s *LogRotationSuite) verifyEmptyErrorLog(name string) {

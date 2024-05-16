@@ -19,8 +19,8 @@ version: '3'
 
 services:
   reverse-proxy:
-    # The official v2 Traefik docker image
-    image: traefik:v2.11
+    # The official v3 Traefik docker image
+    image: traefik:v3.0
     # Enables the web UI and tells Traefik to listen to docker
     command: --api.insecure=true --providers.docker
     ports:
@@ -71,9 +71,9 @@ Start the `whoami` service with the following command:
 docker-compose up -d whoami
 ```
 
-Go back to your browser (`http://localhost:8080/api/rawdata`) and see that Traefik has automatically detected the new container and updated its own configuration.
+Browse `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new container and updated its own configuration.
 
-When Traefik detects new services, it creates the corresponding routes so you can call them ... _let's see!_  (Here, you're using curl)
+When Traefik detects new services, it creates the corresponding routes, so you can call them ... _let's see!_  (Here, you're using curl)
 
 ```shell
 curl -H Host:whoami.docker.localhost http://127.0.0.1
@@ -95,7 +95,7 @@ Run more instances of your `whoami` service with the following command:
 docker-compose up -d --scale whoami=2
 ```
 
-Go back to your browser (`http://localhost:8080/api/rawdata`) and see that Traefik has automatically detected the new instance of the container.
+Browse to `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new instance of the container.
 
 Finally, see that Traefik load-balances between the two instances of your service by running the following command twice:
 
@@ -119,6 +119,6 @@ IP: 172.27.0.4
 
 !!! question "Where to Go Next?"
 
-    Now that you have a basic understanding of how Traefik can automatically create the routes to your services and load balance them, it is time to dive into [the documentation](/) and let Traefik work for you!
+    Now that you have a basic understanding of how Traefik can automatically create the routes to your services and load balance them, it is time to dive into [the documentation](/ "Link to the docs landing page") and let Traefik work for you!
 
 {!traefik-for-business-applications.md!}

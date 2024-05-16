@@ -945,73 +945,6 @@
             </div>
           </q-card-section>
 
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
-          <q-card-section v-if="middleware.ipWhiteList">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">
-                  Source Range
-                </div>
-                <q-chip
-                  v-for="(range, key) in exData(middleware).sourceRange"
-                  :key="key"
-                  dense
-                  class="app-chip app-chip-green"
-                >
-                  {{ range }}
-                </q-chip>
-              </div>
-            </div>
-          </q-card-section>
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - ipStrategy -->
-          <q-card-section v-if="middleware.ipWhiteList">
-            <div class="row items-start">
-              <div class="col-12">
-                <div class="text-subtitle2">
-                  IP Strategy
-                </div>
-              </div>
-              <div
-                v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.depth"
-                class="col-12"
-              >
-                <q-chip
-                  dense
-                  class="app-chip app-chip-accent"
-                >
-                  Depth :
-                </q-chip>
-                <q-chip
-                  dense
-                  class="app-chip app-chip-green"
-                >
-                  {{ exData(middleware).ipStrategy.depth }}
-                </q-chip>
-              </div>
-              <div
-                v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.excludedIPs"
-                class="col-12"
-              >
-                <div class="flex">
-                  <q-chip
-                    dense
-                    class="app-chip app-chip-accent"
-                  >
-                    Excluded IPs:
-                  </q-chip>
-                  <q-chip
-                    v-for="(excludedIPs, key) in exData(middleware).ipStrategy.excludedIPs"
-                    :key="key"
-                    dense
-                    class="app-chip app-chip-green"
-                  >
-                    {{ excludedIPs }}
-                  </q-chip>
-                </div>
-              </div>
-            </div>
-          </q-card-section>
-
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [rateLimit] - average & burst & period -->
           <q-card-section v-if="middleware.rateLimit">
             <div class="row items-start no-wrap">
@@ -1491,11 +1424,66 @@
               </div>
             </div>
           </q-card-section>
+
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [requestHeaderModifier] - set -->
+          <q-card-section v-if="middleware.requestHeaderModifier">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Set
+                </div>
+                <q-chip
+                  v-for="(val, key) in exData(middleware).set"
+                  :key="key"
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ key }}: {{ val }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [requestHeaderModifier] - add -->
+          <q-card-section v-if="middleware.requestHeaderModifier">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Add
+                </div>
+                <q-chip
+                  v-for="(val, key) in exData(middleware).add"
+                  :key="key"
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ key }}: {{ val }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [requestHeaderModifier] - remove -->
+          <q-card-section v-if="middleware.requestHeaderModifier">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Remove
+                </div>
+                <q-chip
+                  v-for="(name, key) in exData(middleware).remove"
+                  :key="key"
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ name }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
         </q-card-section>
 
         <q-card-section v-if="protocol === 'tcp'">
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
-          <q-card-section v-if="middleware.ipWhiteList">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - sourceRange -->
+          <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">

@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - '*'
-  push:
-    branches:
-      - 'gh-actions'
 
 env:
   GO_VERSION: '1.22'

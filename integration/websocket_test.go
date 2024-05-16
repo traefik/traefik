@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v3/integration/try"
 	"golang.org/x/net/websocket"
 )
 

@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"math"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,11 +26,11 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc               string
-		ingressClass       string
-		serverVersion      string
-		expected           *dynamic.Configuration
-		allowEmptyServices bool
+		desc                      string
+		ingressClass              string
+		expected                  *dynamic.Configuration
+		allowEmptyServices        bool
+		disableIngressClassLookup bool
 	}{
 		{
 			desc: "Empty ingresses",
@@ -69,6 +70,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -116,6 +120,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
 										Name:     "foobar",
@@ -158,6 +165,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -179,8 +189,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-bar-bar-3be6cfd7daba66cf2fdd": {
-							Rule:    "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar`) && PathPrefix(`/bar`)",
+						"testing-bar-bar-aba9a7d00e9b06a78e16": {
+							Rule:    "HostRegexp(`^[a-zA-Z0-9-]+\\.bar$`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
 						"testing-bar-bar-636bf36c00fedaab3d44": {
@@ -192,6 +202,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -226,6 +239,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -260,6 +276,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -290,6 +309,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -320,6 +342,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.11.0.1:80",
@@ -351,6 +376,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -385,6 +413,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -419,6 +450,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -432,6 +466,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service2-8082": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.2:8080",
@@ -463,6 +500,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -497,6 +537,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -527,6 +570,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8089",
@@ -557,6 +603,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8089",
@@ -587,6 +636,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8089",
@@ -621,6 +673,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8089",
@@ -634,6 +689,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-carotte": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8090",
@@ -664,6 +722,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8089",
@@ -698,6 +759,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8089",
@@ -711,6 +775,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"toto-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.11.0.1:8089",
@@ -763,6 +830,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
@@ -791,6 +861,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.11.0.1:80",
@@ -804,8 +877,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 							},
 						},
 					},
@@ -828,6 +901,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.1:8443",
@@ -858,6 +934,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.1:8443",
@@ -889,6 +968,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.1:8443",
@@ -920,6 +1002,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.30.0.1:8080",
@@ -950,6 +1035,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -1016,7 +1104,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"testing-foobar-com-bar": {
-							Rule:    "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.foobar.com`) && PathPrefix(`/bar`)",
+							Rule:    "HostRegexp(`^[a-zA-Z0-9-]+\\.foobar\\.com$`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -1024,6 +1112,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL:    "http://10.10.0.1:8080",
@@ -1038,36 +1129,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with ingressClass",
-			serverVersion: "v1.18",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "PathPrefix(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v18 Ingress with multiple ingressClasses",
-			serverVersion: "v1.18",
+			desc: "Ingress with multiple ingressClasses",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1086,6 +1148,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -1098,15 +1163,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with no pathType",
-			serverVersion: "v1.18",
+			desc:         "Ingress with ingressClasses filter",
+			ingressClass: "traefik-lb2",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
+						"testing-foo": {
+							Rule:    "PathPrefix(`/foo`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -1114,6 +1179,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -1126,64 +1194,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with empty pathType",
-			serverVersion: "v1.18",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v18 Ingress with implementationSpecific pathType",
-			serverVersion: "v1.18",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v18 Ingress with prefix pathType",
-			serverVersion: "v1.18",
+			desc: "Ingress with prefix pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1198,6 +1209,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -1210,8 +1224,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with exact pathType",
-			serverVersion: "v1.18",
+			desc: "Ingress with empty pathType",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1226,6 +1239,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -1238,8 +1254,163 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with missing ingressClass",
-			serverVersion: "v1.18",
+			desc: "Ingress with exact pathType",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "Path(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with implementationSpecific pathType",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "Path(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with ingress annotation",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
+			// Showing that disabling the ingressClass discovery still allow the discovery of ingresses with ingress annotation.
+			desc:                      "Ingress with ingress annotation",
+			disableIngressClassLookup: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with ingressClass",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
+			// Showing that disabling the ingressClass discovery avoid discovering Ingresses with an IngressClass.
+			desc:                      "Ingress with ingressClass",
+			disableIngressClassLookup: true,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1250,289 +1421,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with ingress annotation",
-			serverVersion: "v1.18",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "PathPrefix(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v18 Ingress with ingressClasses filter",
-			serverVersion: "v1.18",
-			ingressClass:  "traefik-lb2",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-foo": {
-							Rule:    "PathPrefix(`/foo`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with prefix pathType",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "PathPrefix(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with no pathType",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with empty pathType",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with exact pathType",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with implementationSpecific pathType",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "Path(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with ingress annotation",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "PathPrefix(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with ingressClass",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "PathPrefix(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with ingressClassv1",
-			serverVersion: "v1.19",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers: map[string]*dynamic.Router{
-						"testing-bar": {
-							Rule:    "PathPrefix(`/bar`)",
-							Service: "testing-service1-80",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"testing-service1-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:          "v19 Ingress with named port",
-			serverVersion: "v1.19",
+			desc: "Ingress with named port",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1547,6 +1436,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-foobar": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:4711",
@@ -1559,8 +1451,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v19 Ingress with missing ingressClass",
-			serverVersion: "v1.19",
+			desc: "Ingress with missing ingressClass",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1571,8 +1462,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v19 Ingress with defaultbackend",
-			serverVersion: "v1.19",
+			desc: "Ingress with defaultbackend",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1588,6 +1478,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
@@ -1605,35 +1498,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var paths []string
-			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingress", test.desc))
+			clientMock := newClientMock(generateTestFilename(test.desc))
+			p := Provider{
+				IngressClass:              test.ingressClass,
+				AllowEmptyServices:        test.allowEmptyServices,
+				DisableIngressClassLookup: test.disableIngressClassLookup,
 			}
-			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_endpoint", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_service", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_service", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_secret", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_secret", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
-			}
-
-			serverVersion := test.serverVersion
-			if serverVersion == "" {
-				serverVersion = "v1.17"
-			}
-
-			clientMock := newClientMock(serverVersion, paths...)
-			p := Provider{IngressClass: test.ingressClass, AllowEmptyServices: test.allowEmptyServices}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
@@ -1645,7 +1515,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 	testCases := []struct {
 		desc                      string
 		ingressClass              string
-		serverVersion             string
 		allowExternalNameServices bool
 		expected                  *dynamic.Configuration
 	}{
@@ -1677,6 +1546,9 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://traefik.wtf:8080",
@@ -1709,6 +1581,9 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1737,6 +1612,9 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1749,34 +1627,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var paths []string
-			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingress", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_endpoint", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_service", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_service", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_secret", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_secret", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
-			}
-
-			serverVersion := test.serverVersion
-			if serverVersion == "" {
-				serverVersion = "v1.17"
-			}
-
-			clientMock := newClientMock(serverVersion, paths...)
+			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
@@ -1789,10 +1640,9 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		ingressClass  string
-		serverVersion string
-		expected      *dynamic.Configuration
+		desc         string
+		ingressClass string
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "Ingress with native service lb",
@@ -1809,7 +1659,8 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
@@ -1827,34 +1678,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var paths []string
-			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingress", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_endpoint", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_service", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_service", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_secret", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_secret", test.desc))
-			}
-			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
-			if err == nil {
-				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
-			}
-
-			serverVersion := test.serverVersion
-			if serverVersion == "" {
-				serverVersion = "v1.17"
-			}
-
-			clientMock := newClientMock(serverVersion, paths...)
+			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
@@ -1864,8 +1688,58 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 	}
 }
 
-func generateTestFilename(suffix, desc string) string {
-	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
+func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		ingressClass string
+		expected     *dynamic.Configuration
+	}{
+		{
+			desc: "Ingress with node port lb",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://172.16.4.4:32456",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			clientMock := newClientMock(generateTestFilename(test.desc))
+
+			p := Provider{IngressClass: test.ingressClass}
+			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func generateTestFilename(desc string) string {
+	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+".yml")
 }
 
 func TestGetCertificates(t *testing.T) {
@@ -2004,14 +1878,14 @@ func TestGetCertificates(t *testing.T) {
 			result: map[string]*tls.CertAndStores{
 				"testing-test-secret": {
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("tls-crt"),
-						KeyFile:  tls.FileOrContent("tls-key"),
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
 					},
 				},
 				"testing-test-secret2": {
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("tls-crt"),
-						KeyFile:  tls.FileOrContent("tls-key"),
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
 					},
 				},
 			},

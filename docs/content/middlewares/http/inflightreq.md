@@ -14,7 +14,7 @@ To proactively prevent services from being overwhelmed with high load, the numbe
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
@@ -32,18 +32,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -69,7 +57,7 @@ http:
 The `amount` option defines the maximum amount of allowed simultaneous in-flight request.
 The middleware responds with `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy).
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
@@ -87,18 +75,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -146,7 +122,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and select 
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
@@ -165,17 +141,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -211,7 +176,7 @@ http:
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
     | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
@@ -232,17 +197,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -268,7 +222,7 @@ http:
 
 Name of the header used to group incoming requests.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
@@ -286,17 +240,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername": "username"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="File (YAML)"
@@ -319,7 +262,7 @@ http:
 
 Whether to consider the request host as the source.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
@@ -337,17 +280,6 @@ spec:
 
 ```yaml tab="Cosul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost": "true"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="File (YAML)"

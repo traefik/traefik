@@ -18,7 +18,7 @@ The Errors middleware returns a custom page in lieu of the default, according to
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
@@ -49,22 +49,6 @@ spec:
 - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
 - "traefik.http.middlewares.test-errors.errors.service=serviceError"
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-errors.errors.status": "500,501,503,505-599",
-  "traefik.http.middlewares.test-errors.errors.service": "serviceError",
-  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html"
-}
-```
-
-```yaml tab="Rancher"
-# Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
-labels:
-  - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
-  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```yaml tab="File (YAML)"

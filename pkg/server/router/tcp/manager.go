@@ -9,15 +9,16 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/snicheck"
-	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
-	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	tcpservice "github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
+	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 const maxUserPriority = math.MaxInt - 1000
@@ -79,11 +80,12 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 	for _, entryPointName := range entryPoints {
 		routers := entryPointsRouters[entryPointName]
 
-		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
+		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
+		ctx := logger.WithContext(rootCtx)
 
 		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
 		if err != nil {
-			log.FromContext(ctx).Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 		entryPointHandlers[entryPointName] = handler
@@ -110,7 +112,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// when assigning a handler to a route.
 	defaultTLSConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, traefiktls.DefaultTLSConfigName)
 	if err != nil {
-		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
+		log.Ctx(ctx).Error().Err(err).Msg("Error during the build of the default TLS configuration")
 	}
 
 	// Keyed by domain. The source of truth for doing SNI checking (domain fronting).
@@ -130,8 +132,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		ctxRouter := log.With(provider.AddInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
-		logger := log.FromContext(ctxRouter)
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerHTTPName).Logger()
+		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerHTTPName))
 
 		tlsOptionsName := traefiktls.DefaultTLSConfigName
 		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
@@ -142,7 +144,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
 			routerHTTPConfig.AddError(routerErr, true)
-			logger.Error(routerErr)
+			logger.Error().Err(routerErr).Send()
 			continue
 		}
 
@@ -177,7 +179,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			//	# When a request for "/foo" comes, even though it won't be routed by httpRouter2,
 			//	# if its SNI is set to foo.com, myTLSOptions will be used for the TLS connection.
 			//	# Otherwise, it will fallback to the default TLS config.
-			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
+			logger.Warn().Msgf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
 		}
 
 		// Even though the error is seemingly ignored (aside from logging it),
@@ -186,7 +188,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		tlsConf, tlsConfErr := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
 		if tlsConfErr != nil {
 			// Note: we do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
-			logger.Error(tlsConfErr)
+			logger.Error().Err(tlsConfErr).Send()
 		}
 
 		for _, domain := range domains {
@@ -213,7 +215,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// Keep in mind that defaultTLSConf might be nil here.
 	router.SetHTTPSHandler(sniCheck, defaultTLSConf)
 
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
 		if len(tlsConfigs) == 1 {
 			var optionsName string
@@ -227,12 +229,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			if config == nil {
 				// we use nil config as a signal to insert a handler
 				// that enforces that TLS connection attempts to the corresponding (broken) router should fail.
-				logger.Debugf("Adding special closing route for %s because broken TLS options %s", hostSNI, optionsName)
+				logger.Debug().Msgf("Adding special closing route for %s because broken TLS options %s", hostSNI, optionsName)
 				router.AddHTTPTLSConfig(hostSNI, nil)
 				continue
 			}
 
-			logger.Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
+			logger.Debug().Msgf("Adding route for %s with TLS options %s", hostSNI, optionsName)
 			router.AddHTTPTLSConfig(hostSNI, config)
 			continue
 		}
@@ -245,9 +247,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			routers = append(routers, v.routerName)
 		}
 
-		logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
+		logger.Warn().Msgf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
 		if defaultTLSConf == nil {
-			logger.Debugf("Adding special closing route for %s because broken default TLS options", hostSNI)
+			logger.Debug().Msgf("Adding special closing route for %s because broken default TLS options", hostSNI)
 		}
 
 		router.AddHTTPTLSConfig(hostSNI, defaultTLSConf)
@@ -261,20 +263,24 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 // addTCPHandlers creates the TCP handlers defined in configs, and adds them to router.
 func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, router *Router) {
 	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
-		logger := log.FromContext(ctxRouter)
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
+
+		if routerConfig.Priority == 0 {
+			routerConfig.Priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
+		}
 
 		if routerConfig.Service == "" {
 			err := errors.New("the service is missing on the router")
 			routerConfig.AddError(err, true)
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
 		if routerConfig.Rule == "" {
 			err := errors.New("router has no rule")
 			routerConfig.AddError(err, true)
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -282,7 +288,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule: %q , %w", routerConfig.Rule, err)
 			routerConfig.AddError(routerErr, true)
-			logger.Error(routerErr)
+			logger.Error().Err(routerErr).Send()
 			continue
 		}
 
@@ -291,14 +297,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if len(domains) > 0 && routerConfig.TLS == nil && domains[0] != "*" {
 			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
 			routerConfig.AddError(routerErr, true)
-			logger.Error(routerErr)
+			logger.Error().Err(routerErr).Send()
 			continue
 		}
 
 		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
 			routerErr := fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
 			routerConfig.AddError(routerErr, true)
-			logger.Error(routerErr)
+			logger.Error().Err(routerErr).Send()
 			continue
 		}
 
@@ -307,25 +313,27 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
 			if err != nil {
 				routerConfig.AddError(err, true)
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 		}
 
 		if routerConfig.TLS == nil {
-			logger.Debugf("Adding route for %q", routerConfig.Rule)
-			if err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
+			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
+
+			if err := router.muxerTCP.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 			}
 			continue
 		}
 
 		if routerConfig.TLS.Passthrough {
-			logger.Debugf("Adding Passthrough route for %q", routerConfig.Rule)
-			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
+			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
+
+			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 			}
 			continue
 		}
@@ -337,7 +345,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 			asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
 			routerConfig.AddError(asciiError, true)
-			logger.Error(asciiError)
+			logger.Error().Err(asciiError).Send()
 		}
 
 		tlsOptionsName := routerConfig.TLS.Options
@@ -353,15 +361,15 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
 		if err != nil {
 			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
 
-			logger.Error(err)
-			logger.Debugf("Adding special TLS closing route for %q because broken TLS options %s", routerConfig.Rule, tlsOptionsName)
+			logger.Debug().Msgf("Adding special TLS closing route for %q because broken TLS options %s", routerConfig.Rule, tlsOptionsName)
 
-			err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{})
-			if err != nil {
+			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, &brokenTLSRouter{}); err != nil {
 				routerConfig.AddError(err, true)
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 			}
+
 			continue
 		}
 
@@ -380,7 +388,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -389,12 +397,12 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			Config: tlsConf,
 		}
 
-		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
+		logger.Debug().Msgf("Adding TLS route for %q", routerConfig.Rule)
 
-		err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
-		if err != nil {
+		if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
 			routerConfig.AddError(err, true)
-			logger.Error(err)
+			logger.Error().Err(err).Send()
+			continue
 		}
 	}
 }

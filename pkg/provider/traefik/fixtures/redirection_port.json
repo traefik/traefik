@@ -9,8 +9,11 @@
           "redirect-web-to-443"
         ],
         "service": "noop@internal",
-        "rule": "HostRegexp(`{host:.+}`)"
+        "rule": "HostRegexp(`^.+$`)"
       }
+    },
+    "services": {
+      "noop": {}
     },
     "middlewares": {
       "redirect-web-to-443": {
@@ -20,9 +23,6 @@
           "permanent": true
         }
       }
-    },
-    "services": {
-      "noop": {}
     }
   },
   "tcp": {},

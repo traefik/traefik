@@ -15,9 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // HTTPSSuite tests suite.
@@ -891,8 +892,8 @@ func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName
 				Certificates: []*traefiktls.CertAndStores{
 					{
 						Certificate: traefiktls.Certificate{
-							CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-							KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+							CertFile: types.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+							KeyFile:  types.FileOrContent("fixtures/https/" + certFileName + ".key"),
 						},
 					},
 				},
@@ -1011,7 +1012,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive() {
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`[a-z1-9-]+\\\\.www\\\\.snitest\\\\.com`)"))
 	require.NoError(s.T(), err)
 
 	tlsConfig := &tls.Config{

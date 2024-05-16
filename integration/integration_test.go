@@ -26,16 +26,20 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/network"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
 	"gopkg.in/yaml.v3"
 )
 
-var showLog = flag.Bool("tlog", false, "always show Traefik logs")
+var (
+	showLog               = flag.Bool("tlog", false, "always show Traefik logs")
+	k8sConformance        = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
+	k8sConformanceRunTest = flag.String("k8sConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
+)
 
 const tailscaleSecretFilePath = "tailscale.secret"
 
@@ -226,7 +230,7 @@ func (s *BaseSuite) createComposeProject(name string) {
 			if strings.HasPrefix(split[0], "./") {
 				path, err := os.Getwd()
 				if err != nil {
-					log.WithoutContext().Errorf("can't determine current directory: %v", err)
+					log.Err(err).Msg("can't determine current directory")
 					continue
 				}
 				split[0] = strings.Replace(split[0], "./", path+"/", 1)
@@ -337,12 +341,12 @@ func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 
 func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	if cmd.Process == nil {
-		log.WithoutContext().Error("No process to kill")
+		log.Error().Msg("No process to kill")
 		return
 	}
 	err := cmd.Process.Kill()
 	if err != nil {
-		log.WithoutContext().Errorf("Kill: %v", err)
+		log.Error().Err(err).Msg("Kill")
 	}
 
 	time.Sleep(100 * time.Millisecond)
@@ -367,13 +371,13 @@ func (s *BaseSuite) displayLogK3S() {
 	if _, err := os.Stat(filePath); err == nil {
 		content, errR := os.ReadFile(filePath)
 		if errR != nil {
-			log.WithoutContext().Error(errR)
+			log.Error().Err(errR).Send()
 		}
-		log.WithoutContext().Println(string(content))
+		log.Print(string(content))
 	}
-	log.WithoutContext().Println()
-	log.WithoutContext().Println("################################")
-	log.WithoutContext().Println()
+	log.Print()
+	log.Print("################################")
+	log.Print()
 }
 
 func (s *BaseSuite) displayLogCompose() {
@@ -390,7 +394,7 @@ func (s *BaseSuite) displayLogCompose() {
 
 			trimLogs := bytes.Trim(bytes.TrimSpace(b), string([]byte{0}))
 			if len(trimLogs) > 0 {
-				log.WithoutContext().WithField("container", name).Info(string(trimLogs))
+				log.Info().Str("container", name).Msg(string(trimLogs))
 			}
 		}
 	}
@@ -398,10 +402,10 @@ func (s *BaseSuite) displayLogCompose() {
 
 func (s *BaseSuite) displayTraefikLog(output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		log.WithoutContext().Info("No Traefik logs.")
+		log.Info().Msg("No Traefik logs.")
 	} else {
 		for _, line := range strings.Split(output.String(), "\n") {
-			log.WithoutContext().Info(line)
+			log.Info().Msg(line)
 		}
 	}
 }
@@ -476,7 +480,7 @@ func (s *BaseSuite) setupVPN(keyFile string) {
 	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
-			log.WithoutContext().Error(err)
+			log.Error().Err(err).Send()
 		}
 
 		return

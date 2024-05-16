@@ -4,6 +4,7 @@
 
 [log]
   level = "DEBUG"
+  noColor = true
 
 [entryPoints]
   [entryPoints.web]
@@ -20,32 +21,12 @@
 [http.routers]
   [http.routers.router1]
     service = "service1"
-    rule = "PathPrefix(`/css/ct/nomiddleware`) || PathPrefix(`/pdf/ct/nomiddleware`)"
+    rule = "PathPrefix(`/`)"
 
   [http.routers.router2]
     service = "service1"
     middlewares = ["autodetect"]
-    rule = "PathPrefix(`/css/ct/middlewareauto`) || PathPrefix(`/pdf/ct/middlewareauto`)"
-
-  [http.routers.router3]
-    service = "service1"
-    middlewares = ["noautodetect"]
-    rule = "PathPrefix(`/css/ct/middlewarenoauto`) || PathPrefix(`/pdf/ct/middlewarenoauto`)"
-
-  [http.routers.router4]
-    service = "service1"
-    rule = "PathPrefix(`/css/noct/nomiddleware`) || PathPrefix(`/pdf/noct/nomiddleware`)"
-
-  [http.routers.router5]
-    service = "service1"
-    middlewares = ["autodetect"]
-    rule = "PathPrefix(`/css/noct/middlewareauto`) || PathPrefix(`/pdf/noct/middlewareauto`)"
-
-  [http.routers.router6]
-    service = "service1"
-    middlewares = ["noautodetect"]
-    rule = "PathPrefix(`/css/noct/middlewarenoauto`) || PathPrefix(`/pdf/noct/middlewarenoauto`)"
-
+    rule = "PathPrefix(`/autodetect`)"
 
 [http.services]
   [http.services.service1]
@@ -55,7 +36,3 @@
         url = "{{ .Server }}"
 
 [http.middlewares.autodetect.contentType]
-autoDetect=true
-
-[http.middlewares.noautodetect.contentType]
-autoDetect=false

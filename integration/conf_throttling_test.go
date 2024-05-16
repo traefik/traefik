@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 type ThrottlingSuite struct{ BaseSuite }
@@ -34,11 +34,11 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 	s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
 
 	// wait for Traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("rest@internal"))
 	require.NoError(s.T(), err)
 
 	// Expected a 404 as we did not configure anything.
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
 
 	config := &dynamic.Configuration{

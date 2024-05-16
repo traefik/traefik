@@ -19,7 +19,7 @@ spec:
       openAPIV3Schema:
         description: |-
           Middleware is the CRD implementation of a Traefik Middleware.
-          More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/overview/
+          More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/overview/
         properties:
           apiVersion:
             description: |-
@@ -45,7 +45,7 @@ spec:
                 description: |-
                   AddPrefix holds the add prefix middleware configuration.
                   This middleware updates the path of a request before forwarding it.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/addprefix/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/addprefix/
                 properties:
                   prefix:
                     description: |-
@@ -57,12 +57,12 @@ spec:
                 description: |-
                   BasicAuth holds the basic auth middleware configuration.
                   This middleware restricts access to your services to known users.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/
                 properties:
                   headerField:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
                     type: string
                   realm:
                     description: |-
@@ -83,7 +83,7 @@ spec:
                 description: |-
                   Buffering holds the buffering middleware configuration.
                   This middleware retries or limits the size of requests that can be forwarded to backends.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#maxrequestbodybytes
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#maxrequestbodybytes
                 properties:
                   maxRequestBodyBytes:
                     description: |-
@@ -115,14 +115,14 @@ spec:
                     description: |-
                       RetryExpression defines the retry conditions.
                       It is a logical combination of functions with operators AND (&&) and OR (||).
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#retryexpression
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#retryexpression
                     type: string
                 type: object
               chain:
                 description: |-
                   Chain holds the configuration of the chain middleware.
                   This middleware enables to define reusable combinations of other pieces of middleware.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/chain/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/chain/
                 properties:
                   middlewares:
                     description: Middlewares is the list of MiddlewareRef which composes
@@ -172,17 +172,28 @@ spec:
                       breaker will try to recover (as soon as it is in recovering
                       state).
                     x-kubernetes-int-or-string: true
+                  responseCode:
+                    description: ResponseCode is the status code that the circuit
+                      breaker will return while it is in the open state.
+                    type: integer
                 type: object
               compress:
                 description: |-
                   Compress holds the compress middleware configuration.
                   This middleware compresses responses before sending them to the client, using gzip compression.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/compress/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/compress/
                 properties:
                   excludedContentTypes:
-                    description: ExcludedContentTypes defines the list of content
-                      types to compare the Content-Type header of the incoming requests
-                      and responses before compressing.
+                    description: |-
+                      ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
+                      `application/grpc` is always excluded.
+                    items:
+                      type: string
+                    type: array
+                  includedContentTypes:
+                    description: IncludedContentTypes defines the list of content
+                      types to compare the Content-Type header of the responses before
+                      compressing.
                     items:
                       type: string
                     type: array
@@ -201,21 +212,19 @@ spec:
                     description: |-
                       AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
                       be automatically set to a value derived from the contents of the response.
-                      As a proxy, the default behavior should be to leave the header alone, regardless of what the backend did with it.
-                      However, the historic default was to always auto-detect and set the header if it was nil,
-                      and it is going to be kept that way in order to support users currently relying on it.
+                      Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
                     type: boolean
                 type: object
               digestAuth:
                 description: |-
                   DigestAuth holds the digest auth middleware configuration.
                   This middleware restricts access to your services to known users.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/digestauth/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/digestauth/
                 properties:
                   headerField:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
                     type: string
                   realm:
                     description: |-
@@ -235,7 +244,7 @@ spec:
                 description: |-
                   ErrorPage holds the custom error middleware configuration.
                   This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/errorpages/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/
                 properties:
                   query:
                     description: |-
@@ -245,7 +254,7 @@ spec:
                   service:
                     description: |-
                       Service defines the reference to a Kubernetes Service that will serve the error page.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/errorpages/#service
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/#service
                     properties:
                       kind:
                         description: Kind defines the kind of the Service.
@@ -268,6 +277,13 @@ spec:
                           whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                           The Kubernetes Service itself does load-balance to the pods.
                           By default, NativeLB is false.
+                        type: boolean
+                      nodePortLB:
+                        description: |-
+                          NodePortLB controls, when creating the load-balancer,
+                          whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                          It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                          By default, NodePortLB is false.
                         type: boolean
                       passHostHeader:
                         description: |-
@@ -310,7 +326,7 @@ spec:
                       sticky:
                         description: |-
                           Sticky defines the sticky sessions configuration.
-                          More info: https://doc.traefik.io/traefik/v2.11/routing/services/#sticky-sessions
+                          More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
                         properties:
                           cookie:
                             description: Cookie defines the sticky cookie configuration.
@@ -319,6 +335,12 @@ spec:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
+                              maxAge:
+                                description: |-
+                                  MaxAge indicates the number of seconds until the cookie expires.
+                                  When set to a negative number, the cookie expires immediately.
+                                  When set to zero, the cookie never expires.
+                                type: integer
                               name:
                                 description: Name defines the Cookie name.
                                 type: string
@@ -362,8 +384,14 @@ spec:
                 description: |-
                   ForwardAuth holds the forward auth middleware configuration.
                   This middleware delegates the request authentication to a Service.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/
                 properties:
+                  addAuthCookiesToResponse:
+                    description: AddAuthCookiesToResponse defines the list of cookies
+                      to copy from the authentication server response to the response.
+                    items:
+                      type: string
+                    type: array
                   address:
                     description: Address defines the authentication server address.
                     type: string
@@ -384,13 +412,15 @@ spec:
                   authResponseHeadersRegex:
                     description: |-
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/#authresponseheadersregex
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#authresponseheadersregex
                     type: string
                   tls:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
                     properties:
                       caOptional:
+                        description: 'Deprecated: TLS client authentication is a server
+                          side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).'
                         type: boolean
                       caSecret:
                         description: |-
@@ -412,11 +442,24 @@ spec:
                       forward) all X-Forwarded-* headers.'
                     type: boolean
                 type: object
+              grpcWeb:
+                description: |-
+                  GrpcWeb holds the gRPC web middleware configuration.
+                  This middleware converts a gRPC web request to an HTTP/2 gRPC request.
+                properties:
+                  allowOrigins:
+                    description: |-
+                      AllowOrigins is a list of allowable origins.
+                      Can also be a wildcard origin "*".
+                    items:
+                      type: string
+                    type: array
+                type: object
               headers:
                 description: |-
                   Headers holds the headers middleware configuration.
                   This middleware manages the requests and responses headers.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/headers/#customrequestheaders
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/headers/#customrequestheaders
                 properties:
                   accessControlAllowCredentials:
                     description: AccessControlAllowCredentials defines whether the
@@ -503,7 +546,8 @@ spec:
                       values to apply to the response.
                     type: object
                   featurePolicy:
-                    description: 'Deprecated: use PermissionsPolicy instead.'
+                    description: 'Deprecated: FeaturePolicy option is deprecated,
+                      please use PermissionsPolicy instead.'
                     type: string
                   forceSTSHeader:
                     description: ForceSTSHeader defines whether to add the STS header
@@ -541,10 +585,12 @@ spec:
                       This allows sites to control whether browsers forward the Referer header to other sites.
                     type: string
                   sslForceHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
+                    description: 'Deprecated: SSLForceHost option is deprecated, please
+                      use RedirectRegex instead.'
                     type: boolean
                   sslHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
+                    description: 'Deprecated: SSLHost option is deprecated, please
+                      use RedirectRegex instead.'
                     type: string
                   sslProxyHeaders:
                     additionalProperties:
@@ -554,12 +600,12 @@ spec:
                       It can be useful when using other proxies (example: "X-Forwarded-Proto": "https").
                     type: object
                   sslRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
-                      instead.'
+                    description: 'Deprecated: SSLRedirect option is deprecated, please
+                      use EntryPoint redirection or RedirectScheme instead.'
                     type: boolean
                   sslTemporaryRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
-                      instead.'
+                    description: 'Deprecated: SSLTemporaryRedirect option is deprecated,
+                      please use EntryPoint redirection or RedirectScheme instead.'
                     type: boolean
                   stsIncludeSubdomains:
                     description: STSIncludeSubdomains defines whether the includeSubDomains
@@ -580,7 +626,7 @@ spec:
                 description: |-
                   InFlightReq holds the in-flight request middleware configuration.
                   This middleware limits the number of requests being processed and served concurrently.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/inflightreq/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/inflightreq/
                 properties:
                   amount:
                     description: |-
@@ -593,12 +639,12 @@ spec:
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
                       If several strategies are defined at the same time, an error will be raised.
                       If none are set, the default is to use the requestHost.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/inflightreq/#sourcecriterion
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/inflightreq/#sourcecriterion
                     properties:
                       ipStrategy:
                         description: |-
                           IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                          More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/#ipstrategy
+                          More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -627,12 +673,12 @@ spec:
                 description: |-
                   IPAllowList holds the IP allowlist middleware configuration.
                   This middleware limits allowed requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/
                 properties:
                   ipStrategy:
                     description: |-
                       IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/#ipstrategy
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -646,6 +692,11 @@ spec:
                           type: string
                         type: array
                     type: object
+                  rejectStatusCode:
+                    description: |-
+                      RejectStatusCode defines the HTTP status code used for refused requests.
+                      If not set, the default is 403 (Forbidden).
+                    type: integer
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation).
@@ -654,16 +705,12 @@ spec:
                     type: array
                 type: object
               ipWhiteList:
-                description: |-
-                  IPWhiteList holds the IP whitelist middleware configuration.
-                  This middleware limits allowed requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipwhitelist/
-                  Deprecated: please use IPAllowList instead.
+                description: 'Deprecated: please use IPAllowList instead.'
                 properties:
                   ipStrategy:
                     description: |-
                       IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/#ipstrategy
+                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -688,7 +735,7 @@ spec:
                 description: |-
                   PassTLSClientCert holds the pass TLS client cert middleware configuration.
                   This middleware adds the selected data from the passed client TLS certificate to a header.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/passtlsclientcert/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/passtlsclientcert/
                 properties:
                   info:
                     description: Info selects the specific client certificate details
@@ -797,7 +844,7 @@ spec:
                 description: |-
                   RateLimit holds the rate limit configuration.
                   This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ratelimit/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ratelimit/
                 properties:
                   average:
                     description: |-
@@ -830,7 +877,7 @@ spec:
                       ipStrategy:
                         description: |-
                           IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                          More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/#ipstrategy
+                          More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -859,7 +906,7 @@ spec:
                 description: |-
                   RedirectRegex holds the redirect regex middleware configuration.
                   This middleware redirects a request using regex matching and replacement.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectregex/#regex
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/redirectregex/#regex
                 properties:
                   permanent:
                     description: Permanent defines whether the redirection is permanent
@@ -878,7 +925,7 @@ spec:
                 description: |-
                   RedirectScheme holds the redirect scheme middleware configuration.
                   This middleware redirects requests from a scheme/port to another.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectscheme/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/redirectscheme/
                 properties:
                   permanent:
                     description: Permanent defines whether the redirection is permanent
@@ -895,7 +942,7 @@ spec:
                 description: |-
                   ReplacePath holds the replace path middleware configuration.
                   This middleware replaces the path of the request URL and store the original path in an X-Replaced-Path header.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/replacepath/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/replacepath/
                 properties:
                   path:
                     description: Path defines the path to use as replacement in the
@@ -906,7 +953,7 @@ spec:
                 description: |-
                   ReplacePathRegex holds the replace path regex middleware configuration.
                   This middleware replaces the path of a URL using regex matching and replacement.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/replacepathregex/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/replacepathregex/
                 properties:
                   regex:
                     description: Regex defines the regular expression used to match
@@ -922,7 +969,7 @@ spec:
                   Retry holds the retry middleware configuration.
                   This middleware reissues requests a given number of times to a backend server if that server does not reply.
                   As soon as the server answers, the middleware stops retrying, regardless of the response status.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/retry/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/retry/
                 properties:
                   attempts:
                     description: Attempts defines how many times the request should
@@ -944,10 +991,11 @@ spec:
                 description: |-
                   StripPrefix holds the strip prefix middleware configuration.
                   This middleware removes the specified prefixes from the URL path.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/stripprefix/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/stripprefix/
                 properties:
                   forceSlash:
                     description: |-
+                      Deprecated: ForceSlash option is deprecated, please remove any usage of this option.
                       ForceSlash ensures that the resulting stripped path is not the empty string, by replacing it with / when necessary.
                       Default: true.
                     type: boolean
@@ -962,7 +1010,7 @@ spec:
                 description: |-
                   StripPrefixRegex holds the strip prefix regex middleware configuration.
                   This middleware removes the matching prefixes from the URL path.
-                  More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/stripprefixregex/
+                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/stripprefixregex/
                 properties:
                   regex:
                     description: Regex defines the regular expression to match the

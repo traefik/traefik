@@ -12,10 +12,26 @@
     dialTimeout = "42s"
     responseHeaderTimeout = "42s"
     idleConnTimeout = "42s"
+  [serversTransport.spiffe]
+    ids = ["foobar", "foobar"]
+    trustDomain = "foobar"
+
+[tcpServersTransport]
+  dialKeepAlive = "42s"
+  dialTimeout = "42s"
+  terminationDelay = "42s"
+  [tcpServersTransport.tls]
+    insecureSkipVerify = true
+    rootCAs = ["foobar", "foobar"]
+    [tcpServersTransport.tls.spiffe]
+      ids = ["foobar", "foobar"]
+      trustDomain = "foobar"
 
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
+    reusePort = true
+    asDefault = true
     [entryPoints.EntryPoint0.transport]
       keepAliveMaxTime = "42s"
       keepAliveMaxRequests = 42
@@ -62,20 +78,33 @@
 [providers]
   providersThrottleDuration = "42s"
   [providers.docker]
-    constraints = "foobar"
-    watch = true
-    endpoint = "foobar"
-    defaultRule = "foobar"
     exposedByDefault = true
-    useBindPortIP = true
-    swarmMode = true
-    network = "foobar"
-    swarmModeRefreshSeconds = "42s"
-    httpClientTimeout = "42s"
+    constraints = "foobar"
     allowEmptyServices = true
+    network = "foobar"
+    useBindPortIP = true
+    watch = true
+    defaultRule = "foobar"
+    endpoint = "foobar"
+    httpClientTimeout = "42s"
     [providers.docker.tls]
       ca = "foobar"
-      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [providers.swarm]
+    exposedByDefault = true
+    constraints = "foobar"
+    allowEmptyServices = true
+    network = "foobar"
+    useBindPortIP = true
+    watch = true
+    defaultRule = "foobar"
+    endpoint = "foobar"
+    httpClientTimeout = "42s"
+    refreshSeconds = "42s"
+    [providers.swarm.tls]
+      ca = "foobar"
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -84,29 +113,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-  [providers.marathon]
-    constraints = "foobar"
-    trace = true
-    watch = true
-    endpoint = "foobar"
-    defaultRule = "foobar"
-    exposedByDefault = true
-    dcosToken = "foobar"
-    dialerTimeout = "42s"
-    responseHeaderTimeout = "42s"
-    tlsHandshakeTimeout = "42s"
-    keepAlive = "42s"
-    forceTaskHostname = true
-    respectReadinessChecks = true
-    [providers.marathon.tls]
-      ca = "foobar"
-      caOptional = true
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
-    [providers.marathon.basic]
-      httpBasicAuthUser = "foobar"
-      httpBasicPassword = "foobar"
   [providers.kubernetesIngress]
     endpoint = "foobar"
     token = "foobar"
@@ -117,6 +123,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     allowExternalNameServices = true
+    disableIngressClassLookup = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -139,17 +146,15 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     throttleDuration = "42s"
+    experimentalChannel = true
+    [providers.kubernetesGateway.statusAddress]
+      ip = "foobar"
+      hostname = "foobar"
+      [providers.kubernetesGateway.statusAddress.service]
+        name = "foobar"
+        namespace = "foobar"
   [providers.rest]
     insecure = true
-  [providers.rancher]
-    constraints = "foobar"
-    watch = true
-    defaultRule = "foobar"
-    exposedByDefault = true
-    enableServiceHealthFilter = true
-    refreshSeconds = 42
-    intervalPoll = true
-    prefix = "foobar"
   [providers.consulCatalog]
     constraints = "foobar"
     prefix = "foobar"
@@ -163,7 +168,7 @@
     connectByDefault = true
     serviceName = "foobar"
     watch = true
-    namespace = "foobar"
+    strictChecks = ["foobar", "foobar"]
     namespaces = ["foobar", "foobar"]
     [providers.consulCatalog.endpoint]
       address = "foobar"
@@ -173,7 +178,6 @@
       endpointWaitTime = "42s"
       [providers.consulCatalog.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -187,7 +191,7 @@
     stale = true
     exposedByDefault = true
     refreshInterval = "42s"
-    namespace = "foobar"
+    allowEmptyServices = true
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"
@@ -196,7 +200,6 @@
       endpointWaitTime = "42s"
       [providers.nomad.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -207,6 +210,7 @@
     defaultRule = "foobar"
     clusters = ["foobar", "foobar"]
     autoDiscoverClusters = true
+    healthyTasksOnly = true
     ecsAnywhere = true
     region = "foobar"
     accessKeyID = "foobar"
@@ -215,11 +219,9 @@
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     token = "foobar"
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consul.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -230,7 +232,6 @@
     password = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -247,7 +248,6 @@
     db = 42
     [providers.redis.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -263,9 +263,11 @@
     endpoint = "foobar"
     pollInterval = "42s"
     pollTimeout = "42s"
+    [providers.http.headers]
+      name0 = "foobar"
+      name1 = "foobar"
     [providers.http.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -284,6 +286,7 @@
   disableDashboardAd = true
 
 [metrics]
+  addInternals = true
   [metrics.prometheus]
     buckets = [42.0, 42.0]
     addEntryPointsLabels = true
@@ -308,20 +311,6 @@
     addRoutersLabels = true
     addServicesLabels = true
     prefix = "foobar"
-  [metrics.influxDB]
-    address = "foobar"
-    protocol = "foobar"
-    pushInterval = "42s"
-    database = "foobar"
-    retentionPolicy = "foobar"
-    username = "foobar"
-    password = "foobar"
-    addEntryPointsLabels = true
-    addRoutersLabels = true
-    addServicesLabels = true
-    [metrics.influxDB.additionalLabels]
-      name0 = "foobar"
-      name1 = "foobar"
   [metrics.influxDB2]
     address = "foobar"
     token = "foobar"
@@ -334,6 +323,33 @@
     [metrics.influxDB2.additionalLabels]
       name0 = "foobar"
       name1 = "foobar"
+  [metrics.otlp]
+    addEntryPointsLabels = true
+    addRoutersLabels = true
+    addServicesLabels = true
+    explicitBoundaries = [42.0, 42.0]
+    pushInterval = "42s"
+    [metrics.otlp.grpc]
+      endpoint = "foobar"
+      insecure = true
+      [metrics.otlp.grpc.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [metrics.otlp.grpc.headers]
+        name0 = "foobar"
+        name1 = "foobar"
+    [metrics.otlp.http]
+      endpoint = "foobar"
+      [metrics.otlp.http.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [metrics.otlp.http.headers]
+        name0 = "foobar"
+        name1 = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -342,13 +358,19 @@
 
 [log]
   level = "foobar"
-  filePath = "foobar"
   format = "foobar"
+  noColor = true
+  filePath = "foobar"
+  maxSize = 42
+  maxAge = 42
+  maxBackups = 42
+  compress = true
 
 [accessLog]
   filePath = "foobar"
   format = "foobar"
   bufferingSize = 42
+  addInternals = true
   [accessLog.filters]
     statusCodes = ["foobar", "foobar"]
     retryAttempts = true
@@ -366,55 +388,35 @@
 
 [tracing]
   serviceName = "foobar"
-  spanNameLimit = 42
-  [tracing.jaeger]
-    samplingServerURL = "foobar"
-    samplingType = "foobar"
-    samplingParam = 42.0
-    localAgentHostPort = "foobar"
-    gen128Bit = true
-    propagation = "foobar"
-    traceContextHeaderName = "foobar"
-    disableAttemptReconnecting = true
-    [tracing.jaeger.collector]
+  capturedRequestHeaders = ["foobar", "foobar"]
+  capturedResponseHeaders = ["foobar", "foobar"]
+  sampleRate = 42.0
+  addInternals = true
+  [tracing.globalAttributes]
+    name0 = "foobar"
+    name1 = "foobar"
+  [tracing.otlp]
+    [tracing.otlp.grpc]
       endpoint = "foobar"
-      user = "foobar"
-      password = "foobar"
-  [tracing.zipkin]
-    httpEndpoint = "foobar"
-    sameSpan = true
-    id128Bit = true
-    sampleRate = 42.0
-  [tracing.datadog]
-    localAgentHostPort = "foobar"
-    localAgentSocket = "foobar"
-    globalTag = "foobar"
-    debug = true
-    prioritySampling = true
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    samplingPriorityHeaderName = "foobar"
-    bagagePrefixHeaderName = "foobar"
-    [tracing.datadog.globalTags]
-      name0 = "foobar"
-      name1 = "foobar"
-  [tracing.instana]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    logLevel = "foobar"
-    enableAutoProfile = true
-  [tracing.haystack]
-    localAgentHost = "foobar"
-    localAgentPort = 42
-    globalTag = "foobar"
-    traceIDHeaderName = "foobar"
-    parentIDHeaderName = "foobar"
-    spanIDHeaderName = "foobar"
-    baggagePrefixHeaderName = "foobar"
-  [tracing.elastic]
-    serverURL = "foobar"
-    secretToken = "foobar"
-    serviceEnvironment = "foobar"
+      insecure = true
+      [tracing.otlp.grpc.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [tracing.otlp.grpc.headers]
+        name0 = "foobar"
+        name1 = "foobar"
+    [tracing.otlp.http]
+      endpoint = "foobar"
+      [tracing.otlp.http.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [tracing.otlp.http.headers]
+        name0 = "foobar"
+        name1 = "foobar"
 
 [hostResolver]
   cnameFlattening = true
@@ -441,6 +443,7 @@
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
+    [certificatesResolvers.CertificateResolver0.tailscale]
   [certificatesResolvers.CertificateResolver1]
     [certificatesResolvers.CertificateResolver1.acme]
       email = "foobar"
@@ -460,14 +463,10 @@
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
-
-[pilot]
-  token = "foobar"
-  dashboard = true
+    [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]
   kubernetesGateway = true
-  http3 = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"
@@ -480,3 +479,9 @@
       moduleName = "foobar"
     [experimental.localPlugins.LocalDescriptor1]
       moduleName = "foobar"
+
+[core]
+  defaultRuleSyntax = "foobar"
+
+[spiffe]
+  workloadAPIAddr = "foobar"

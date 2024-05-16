@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
 )
 
 type tcpRouterRepresentation struct {
@@ -63,7 +62,8 @@ func newTCPMiddlewareRepresentation(name string, mi *runtime.TCPMiddlewareInfo) 
 func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpRouterRepresentation, 0, len(h.runtimeConfiguration.TCPRouters))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, rt := range h.runtimeConfiguration.TCPRouters {
 		if keepTCPRouter(name, rt, criterion) {
@@ -71,9 +71,7 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortRouters(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -87,7 +85,7 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -113,7 +111,7 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -121,7 +119,8 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpServiceRepresentation, 0, len(h.runtimeConfiguration.TCPServices))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, si := range h.runtimeConfiguration.TCPServices {
 		if keepTCPService(name, si, criterion) {
@@ -129,9 +128,7 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortServices(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -145,7 +142,7 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -171,7 +168,7 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -179,7 +176,8 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpMiddlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, mi := range h.runtimeConfiguration.TCPMiddlewares {
 		if keepTCPMiddleware(name, mi, criterion) {
@@ -187,9 +185,7 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortMiddlewares(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -203,7 +199,7 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -229,7 +225,7 @@ func (h Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request)
 
 	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -239,7 +235,10 @@ func keepTCPRouter(name string, item *runtime.TCPRouterInfo, criterion *searchCr
 		return true
 	}
 
-	return criterion.withStatus(item.Status) && criterion.searchIn(item.Rule, name)
+	return criterion.withStatus(item.Status) &&
+		criterion.searchIn(item.Rule, name) &&
+		criterion.filterService(item.Service) &&
+		criterion.filterMiddleware(item.Middlewares)
 }
 
 func keepTCPService(name string, item *runtime.TCPServiceInfo, criterion *searchCriterion) bool {

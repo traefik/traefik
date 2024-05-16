@@ -14,7 +14,7 @@ The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports the Gateway API [v0.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v0.4.0) specification.
+This provider is proposed as an experimental feature and partially supports Gateway API [v1.0.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.0.0) specification.
 
 !!! warning "Enabling The Experimental Kubernetes Gateway Provider"
 
@@ -41,7 +41,9 @@ This provider is proposed as an experimental feature and partially supports the 
     --experimental.kubernetesgateway=true --providers.kubernetesgateway=true #...
     ```
 
-## Configuration Requirements
+## Requirements
+
+{!kubernetes-requirements.md!}
 
 !!! tip "All Steps for a Successful Deployment"
 
@@ -78,17 +80,13 @@ This provider is proposed as an experimental feature and partially supports the 
 
 The Kubernetes Gateway API project provides several guides on how to use the APIs.
 These guides can help you to go further than the example above.
-The [getting started guide](https://gateway-api.sigs.k8s.io/v1alpha2/guides/) details how to install the CRDs from their repository.
-
-!!! note ""
-
-    Keep in mind that the Traefik Gateway provider only supports the `v0.4.0` (v1alpha2).
+The [getting started guide](https://gateway-api.sigs.k8s.io/guides/) details how to install the CRDs from their repository.
 
 For now, the Traefik Gateway Provider can be used while following the below guides:
 
-* [Simple Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/guides/simple-gateway/)
-* [HTTP routing](https://gateway-api.sigs.k8s.io/v1alpha2/guides/http-routing/)
-* [TLS](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)
+* [Simple Gateway](https://gateway-api.sigs.k8s.io/guides/simple-gateway/)
+* [HTTP routing](https://gateway-api.sigs.k8s.io/guides/http-routing/)
+* [TLS](https://gateway-api.sigs.k8s.io/guides/tls/)
 
 ## Resource Configuration
 
@@ -212,6 +210,108 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesgateway.namespaces=default,production
+```
+
+### `statusAddress`
+
+#### `ip`
+
+_Optional, Default: ""_
+
+This IP will get copied to the Gateway `status.addresses`, and currently only supports one IP value (IPv4 or IPv6).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    statusAddress:
+      ip: "1.2.3.4"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway.statusAddress]
+  ip = "1.2.3.4"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.statusaddress.ip=1.2.3.4
+```
+
+#### `hostname`
+
+_Optional, Default: ""_
+
+This Hostname will get copied to the Gateway `status.addresses`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    statusAddress:
+      hostname: "example.net"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway.statusAddress]
+  hostname = "example.net"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.statusaddress.hostname=example.net
+```
+
+#### `service`
+
+_Optional_
+
+The Kubernetes service to copy status addresses from.
+When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the gateways.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    statusAddress:
+      service:
+        namespace: default
+        name: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway.statusAddress.service]
+  namespace = "default"
+  name = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.statusaddress.service.namespace=default
+--providers.kubernetesgateway.statusaddress.service.name=foo
+```
+
+### `experimentalChannel`
+
+_Optional, Default: false_
+
+Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).
+This option currently enables support for `TCPRoute` and `TLSRoute`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    experimentalChannel: true
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+    experimentalChannel = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.experimentalchannel=true
 ```
 
 ### `labelselector`
