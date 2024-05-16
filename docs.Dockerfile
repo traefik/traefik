@@ -1,4 +1,4 @@
-FROM alpine:3.18
+FROM alpine:3.7
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin
 
@@ -7,4 +7,4 @@ WORKDIR /mkdocs
 VOLUME /mkdocs
 
 RUN apk --no-cache --no-progress add py-pip \
-  && pip install --user -r requirements.txt
+  && pip install --trusted-host pypi.python.org --user -r requirements.txt
