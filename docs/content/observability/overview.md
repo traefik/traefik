@@ -29,7 +29,7 @@ Read the [Access Logs documentation](./access-logs.md) to learn how to configure
 Traefik offers a metrics feature that provides valuable insights about the performance and usage.
 These metrics include the number of requests received, the requests duration, and more.
 
-Traefik supports these metrics systems: Prometheus, Datadog, InfluxDB 2.X, and StatsD.
+On top of supporting metrics in the OpenTelemetry format, Traefik supports the following vendor specific metrics systems: Prometheus, Datadog, InfluxDB 2.X, and StatsD.
 
 Read the [Metrics documentation](./metrics/overview.md) to learn how to configure it.
 
@@ -37,6 +37,6 @@ Read the [Metrics documentation](./metrics/overview.md) to learn how to configur
 
 The Traefik tracing system allows developers to gain deep visibility into the flow of requests through their infrastructure.
 
-Traefik supports these tracing with OpenTelemetry.
+Traefik provides tracing information in the OpenTelemery format.
 
 Read the [Tracing documentation](./tracing/overview.md) to learn how to configure it.
