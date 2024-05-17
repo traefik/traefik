@@ -662,7 +662,8 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 ### TCP LoadBalancer `terminationDelay` option
 
 The TCP LoadBalancer `terminationDelay` option has been removed.
-This option can now be configured directly on the `TCPServersTransport` level. Please take a look at this [documentation](../routing/services/index.md#terminationdelay).
+This option can now be configured directly on the `TCPServersTransport` level.
+Please take a look at this [documentation](../routing/services/index.md#terminationdelay).
 
 ### Kubernetes CRDs API Group `traefik.containo.us`
 
