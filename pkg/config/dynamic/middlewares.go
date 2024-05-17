@@ -39,6 +39,9 @@ type Middleware struct {
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
+
+	// Gateway API HTTPRoute filters middlewares.
+	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -420,11 +423,11 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // +k8s:deepcopy-gen=true
 
 // IPWhiteList holds the IP whitelist middleware configuration.
-// This middleware accepts / refuses requests based on the client IP.
+// This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipwhitelist/
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
-	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
@@ -432,7 +435,7 @@ type IPWhiteList struct {
 // +k8s:deepcopy-gen=true
 
 // IPAllowList holds the IP allowlist middleware configuration.
-// This middleware accepts / refuses requests based on the client IP.
+// This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/
 type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
@@ -673,3 +676,12 @@ type TLSClientCertificateSubjectDNInfo struct {
 
 // Users holds a list of users.
 type Users []string
+
+// +k8s:deepcopy-gen=true
+
+// RequestHeaderModifier holds the request header modifier configuration.
+type RequestHeaderModifier struct {
+	Set    map[string]string `json:"set,omitempty"`
+	Add    map[string]string `json:"add,omitempty"`
+	Remove []string          `json:"remove,omitempty"`
+}

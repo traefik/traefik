@@ -12,7 +12,7 @@ env:
 jobs:
 
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
@@ -32,7 +32,7 @@ jobs:
         run: make binary
 
   test-integration:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - build
     strategy:

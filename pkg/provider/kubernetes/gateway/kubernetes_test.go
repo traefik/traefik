@@ -3,6 +3,8 @@ package gateway
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,15 +14,34 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 )
 
 var _ provider.Provider = (*Provider)(nil)
+
+func init() {
+	// required by k8s.MustParseYaml
+	if err := gatev1.AddToScheme(kscheme.Scheme); err != nil {
+		panic(err)
+	}
+	if err := gatev1beta1.AddToScheme(kscheme.Scheme); err != nil {
+		panic(err)
+	}
+	if err := gatev1alpha2.AddToScheme(kscheme.Scheme); err != nil {
+		panic(err)
+	}
+}
 
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
@@ -1248,10 +1269,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-4a1b73e6f83804949a37": {
+						"default-http-app-1-my-gateway-web-6cf37fa71907768d925c": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-4a1b73e6f83804949a37-wrr",
-							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`) && Header(`my-header`,`foo`) && Header(`my-header2`,`bar`)",
+							Service:     "default-http-app-1-my-gateway-web-6cf37fa71907768d925c-wrr",
+							Rule:        "Host(`foo.com`) && (Path(`/bar`) || PathPrefix(`/bar/`)) && Header(`my-header`,`foo`) && Header(`my-header2`,`bar`)",
 							RuleSyntax:  "v3",
 						},
 						"default-http-app-1-my-gateway-web-aaba0f24fd26e1ca2276": {
@@ -1263,7 +1284,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-4a1b73e6f83804949a37-wrr": {
+						"default-http-app-1-my-gateway-web-6cf37fa71907768d925c-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -1518,6 +1539,75 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple HTTPRoute, request header modifier",
+			paths: []string{"services.yml", "httproute/filter_request_header_modifier.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-wrr",
+							Rule:        "Host(`example.org`) && PathPrefix(`/`)",
+							RuleSyntax:  "v3",
+							Middlewares: []string{"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-requestheadermodifier-0"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-requestheadermodifier-0": {
+							RequestHeaderModifier: &dynamic.RequestHeaderModifier{
+								Set:    map[string]string{"X-Foo": "Bar"},
+								Add:    map[string]string{"X-Bar": "Foo"},
+								Remove: []string{"X-Baz"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-364ce6ec04c3d49b19c4-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple HTTPRoute, redirect HTTP to HTTPS",
 			paths: []string{"services.yml", "httproute/filter_http_to_https.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
@@ -1664,9 +1754,27 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, ExperimentalChannel: test.experimentalChannel}
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: test.experimentalChannel,
+			}
 
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -1923,12 +2031,28 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
 			for group, kindFuncs := range test.groupKindBackendFuncs {
 				for kind, backendFunc := range kindFuncs {
 					p.RegisterBackendFuncs(group, kind, backendFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2139,12 +2263,28 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/filter_extension_ref.yml"})
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
 			for group, kindFuncs := range test.groupKindFilterFuncs {
 				for kind, filterFunc := range kindFuncs {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock([]string{"services.yml", "httproute/filter_extension_ref.yml"}...))
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2902,8 +3042,28 @@ func TestLoadTCPRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, ExperimentalChannel: true}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: true,
+			}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = true
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4030,8 +4190,28 @@ func TestLoadTLSRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, ExperimentalChannel: true}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: true,
+			}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = true
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5043,8 +5223,28 @@ func TestLoadMixedRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, ExperimentalChannel: test.experimentalChannel}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: test.experimentalChannel,
+			}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = test.experimentalChannel
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5234,8 +5434,28 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				return
 			}
 
-			p := Provider{EntryPoints: test.entryPoints, ExperimentalChannel: test.experimentalChannel}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: test.experimentalChannel,
+			}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = test.experimentalChannel
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			conf := p.loadConfigurationFromGateway(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5662,7 +5882,8 @@ func Test_shouldAttach(t *testing.T) {
 		listener       gatev1.Listener
 		routeNamespace string
 		routeSpec      gatev1.CommonRouteSpec
-		expectedAttach bool
+		wantAttach     bool
+		wantParentRef  gatev1.ParentReference
 	}{
 		{
 			desc: "No ParentRefs",
@@ -5679,7 +5900,7 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1.CommonRouteSpec{
 				ParentRefs: nil,
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Unsupported Kind",
@@ -5704,7 +5925,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Unsupported Group",
@@ -5729,7 +5950,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Kind is nil",
@@ -5753,7 +5974,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Group is nil",
@@ -5777,7 +5998,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "SectionName does not match a listener desc",
@@ -5802,7 +6023,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Namespace does not match the Gateway namespace",
@@ -5827,7 +6048,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Route namespace does not match the Gateway namespace",
@@ -5851,7 +6072,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Unsupported Kind",
@@ -5876,7 +6097,7 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: false,
+			wantAttach: false,
 		},
 		{
 			desc: "Route namespace matches the Gateway namespace",
@@ -5900,7 +6121,13 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: true,
+			wantAttach: true,
+			wantParentRef: gatev1.ParentReference{
+				SectionName: sectionNamePtr("foo"),
+				Name:        "gateway",
+				Kind:        kindPtr("Gateway"),
+				Group:       groupPtr(gatev1.GroupName),
+			},
 		},
 		{
 			desc: "Namespace matches the Gateway namespace",
@@ -5925,7 +6152,14 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: true,
+			wantAttach: true,
+			wantParentRef: gatev1.ParentReference{
+				SectionName: sectionNamePtr("foo"),
+				Name:        "gateway",
+				Namespace:   namespacePtr("default"),
+				Kind:        kindPtr("Gateway"),
+				Group:       groupPtr(gatev1.GroupName),
+			},
 		},
 		{
 			desc: "Only one ParentRef matches the Gateway",
@@ -5955,7 +6189,13 @@ func Test_shouldAttach(t *testing.T) {
 					},
 				},
 			},
-			expectedAttach: true,
+			wantAttach: true,
+			wantParentRef: gatev1.ParentReference{
+				Name:      "gateway",
+				Namespace: namespacePtr("default"),
+				Kind:      kindPtr("Gateway"),
+				Group:     groupPtr(gatev1.GroupName),
+			},
 		},
 	}
 
@@ -5963,8 +6203,9 @@ func Test_shouldAttach(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := shouldAttach(test.gateway, test.listener, test.routeNamespace, test.routeSpec)
-			assert.Equal(t, test.expectedAttach, got)
+			gotParentRef, gotAttach := shouldAttach(test.gateway, test.listener, test.routeNamespace, test.routeSpec)
+			assert.Equal(t, test.wantAttach, gotAttach)
+			assert.Equal(t, test.wantParentRef, gotParentRef)
 		})
 	}
 }
@@ -6227,30 +6468,6 @@ func Test_makeListenerKey(t *testing.T) {
 	}
 }
 
-func hostnamePtr(hostname gatev1.Hostname) *gatev1.Hostname {
-	return &hostname
-}
-
-func groupPtr(group gatev1.Group) *gatev1.Group {
-	return &group
-}
-
-func sectionNamePtr(sectionName gatev1.SectionName) *gatev1.SectionName {
-	return &sectionName
-}
-
-func namespacePtr(namespace gatev1.Namespace) *gatev1.Namespace {
-	return &namespace
-}
-
-func kindPtr(kind gatev1.Kind) *gatev1.Kind {
-	return &kind
-}
-
-func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
-
-func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
-
 func Test_referenceGrantMatchesFrom(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -6489,6 +6706,189 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 	}
 }
 
+func Test_gatewayAddresses(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		statusAddress *StatusAddress
+		paths         []string
+		wantErr       require.ErrorAssertionFunc
+		want          []gatev1.GatewayStatusAddress
+	}{
+		{
+			desc:    "nothing",
+			wantErr: require.NoError,
+		},
+		{
+			desc:          "empty configuration",
+			statusAddress: &StatusAddress{},
+			wantErr:       require.Error,
+		},
+		{
+			desc: "IP address",
+			statusAddress: &StatusAddress{
+				IP: "1.2.3.4",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: "1.2.3.4",
+				},
+			},
+		},
+		{
+			desc: "hostname address",
+			statusAddress: &StatusAddress{
+				Hostname: "foo.bar",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: "foo.bar",
+				},
+			},
+		},
+		{
+			desc: "service",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "status-address",
+					Namespace: "default",
+				},
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: "foo.bar",
+				},
+				{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: "1.2.3.4",
+				},
+			},
+		},
+		{
+			desc: "missing service",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "status-address2",
+					Namespace: "default",
+				},
+			},
+			wantErr: require.Error,
+		},
+		{
+			desc: "service without load-balancer status",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name:      "whoamitcp-bar",
+					Namespace: "bar",
+				},
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{StatusAddress: test.statusAddress}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			got, err := p.gatewayAddresses(client)
+			test.wantErr(t, err)
+
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func hostnamePtr(hostname gatev1.Hostname) *gatev1.Hostname {
+	return &hostname
+}
+
+func groupPtr(group gatev1.Group) *gatev1.Group {
+	return &group
+}
+
+func sectionNamePtr(sectionName gatev1.SectionName) *gatev1.SectionName {
+	return &sectionName
+}
+
+func namespacePtr(namespace gatev1.Namespace) *gatev1.Namespace {
+	return &namespace
+}
+
+func kindPtr(kind gatev1.Kind) *gatev1.Kind {
+	return &kind
+}
+
+func pathMatchTypePtr(p gatev1.PathMatchType) *gatev1.PathMatchType { return &p }
+
+func headerMatchTypePtr(h gatev1.HeaderMatchType) *gatev1.HeaderMatchType { return &h }
+
 func objectNamePtr(objectName gatev1.ObjectName) *gatev1.ObjectName {
 	return &objectName
+}
+
+// We cannot use the gateway-api fake.NewSimpleClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
+func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefake.Clientset {
+	t.Helper()
+
+	client := gatefake.NewSimpleClientset(objects...)
+	for _, object := range objects {
+		gateway, ok := object.(*gatev1.Gateway)
+		if !ok {
+			continue
+		}
+
+		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(context.Background(), gateway, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	return client
+}
+
+func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
+	t.Helper()
+
+	var k8sObjects []runtime.Object
+	var gwObjects []runtime.Object
+	for _, path := range paths {
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		if err != nil {
+			panic(err)
+		}
+
+		objects := k8s.MustParseYaml(yamlContent)
+		for _, obj := range objects {
+			switch obj.GetObjectKind().GroupVersionKind().Group {
+			case "gateway.networking.k8s.io":
+				gwObjects = append(gwObjects, obj)
+			default:
+				k8sObjects = append(k8sObjects, obj)
+			}
+		}
+	}
+
+	return k8sObjects, gwObjects
 }

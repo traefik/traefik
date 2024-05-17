@@ -12,7 +12,7 @@ env:
 jobs:
 
   build-webui:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
@@ -35,7 +35,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-22.04, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     needs:
       - build-webui
 
