@@ -361,7 +361,8 @@ The `endpoint.tls.caOptional` option should be removed from the Nomad provider s
 
 ### Rancher v1 Provider
 
-In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/). Rancher v2 is supported as a standard Kubernetes provider.
+In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/).
+Rancher v2 is supported as a standard Kubernetes provider.
 
 ??? example "An example of Traefik v2 Rancher v1 configuration"
 
