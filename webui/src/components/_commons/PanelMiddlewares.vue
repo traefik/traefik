@@ -809,13 +809,11 @@
                 <div class="text-subtitle2">
                   Content Security Policy
                 </div>
-
                 <q-card class="app-chip app-chip-green app-card-as-chip">
                   <q-card-section>
                     {{ exData(middleware).contentSecurityPolicy }}
                   </q-card-section>
                 </q-card>
-
               </div>
             </div>
           </q-card-section>
