@@ -660,6 +660,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return nil, errors.New("endpointslices not found")
 	}
 
+	addresses := map[string]bool{}
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
@@ -681,11 +682,14 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			}
 
 			for _, endpointAdress := range endpoint.Addresses {
-				hostPort := net.JoinHostPort(endpointAdress, strconv.Itoa(int(port)))
+				if _, exists := addresses[endpointAdress]; !exists {
+					addresses[endpointAdress] = true
+					hostPort := net.JoinHostPort(endpointAdress, strconv.Itoa(int(port)))
 
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-				})
+					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+						URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+					})
+				}
 			}
 		}
 	}

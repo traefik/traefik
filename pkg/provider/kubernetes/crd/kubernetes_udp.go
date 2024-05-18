@@ -175,6 +175,7 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 			return nil, fmt.Errorf("endpointslices not found for %s/%s", namespace, svc.Name)
 		}
 
+		addresses := map[string]bool{}
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			for _, p := range endpointSlice.Ports {
@@ -194,9 +195,12 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 				}
 
 				for _, endpointAdress := range endpoint.Addresses {
-					servers = append(servers, dynamic.UDPServer{
-						Address: net.JoinHostPort(endpointAdress, strconv.Itoa(int(port))),
-					})
+					if _, exists := addresses[endpointAdress]; !exists {
+						addresses[endpointAdress] = true
+						servers = append(servers, dynamic.UDPServer{
+							Address: net.JoinHostPort(endpointAdress, strconv.Itoa(int(port))),
+						})
+					}
 				}
 			}
 		}
