@@ -55,6 +55,26 @@ endpoints:
       ready: true
 
 ---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-svc-multiple-endpointslices-ghi
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-svc-multiple-endpointslices
+
+addressType: IPv4
+ports:
+  - name: web2
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.5
+      - 10.10.0.6
+    conditions:
+      ready: true
+
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
