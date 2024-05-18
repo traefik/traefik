@@ -1097,6 +1097,7 @@ func (p *Provider) loadServices(client Client, namespace string, backendRefs []g
 			return nil, nil, errors.New("endpointslices not found")
 		}
 
+		addresses := map[string]bool{}
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			var portStr string
@@ -1120,9 +1121,12 @@ func (p *Provider) loadServices(client Client, namespace string, backendRefs []g
 				}
 
 				for _, endpointAdress := range endpoint.Addresses {
-					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-						URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(endpointAdress, portStr)),
-					})
+					if _, exists := addresses[endpointAdress]; !exists {
+						addresses[endpointAdress] = true
+						svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+							URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(endpointAdress, portStr)),
+						})
+					}
 				}
 			}
 
@@ -1306,6 +1310,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 			return nil, nil, errors.New("endpointslices not found")
 		}
 
+		addresses := map[string]bool{}
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			var portStr string
@@ -1327,9 +1332,12 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 				}
 
 				for _, endpointAdress := range endpoint.Addresses {
-					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
-						Address: net.JoinHostPort(endpointAdress, portStr),
-					})
+					if _, exists := addresses[endpointAdress]; !exists {
+						addresses[endpointAdress] = true
+						svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
+							Address: net.JoinHostPort(endpointAdress, portStr),
+						})
+					}
 				}
 			}
 
