@@ -488,6 +488,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return nil, fmt.Errorf("endpointslices not found for %s/%s", namespace, sanitizedName)
 	}
 
+	addresses := map[string]bool{}
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
@@ -512,11 +513,14 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			}
 
 			for _, endpointAdress := range endpoint.Addresses {
-				hostPort := net.JoinHostPort(endpointAdress, strconv.Itoa(int(port)))
+				if _, exists := addresses[endpointAdress]; !exists {
+					addresses[endpointAdress] = true
+					hostPort := net.JoinHostPort(endpointAdress, strconv.Itoa(int(port)))
 
-				servers = append(servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-				})
+					servers = append(servers, dynamic.Server{
+						URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+					})
+				}
 			}
 		}
 	}
