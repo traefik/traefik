@@ -183,7 +183,7 @@ _Optional, Default: ""_
 
 A label selector can be defined to filter on specific resource objects only,
 this applies only to Traefik [Custom Resources](../routing/providers/kubernetes-crd.md#custom-resource-definition-crd)
-and has no effect on Kubernetes `Secrets`, `Endpoints` and `Services`.
+and has no effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.
 If left empty, Traefik processes all resource objects in the configured namespaces.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
