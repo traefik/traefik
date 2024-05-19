@@ -165,6 +165,10 @@ type testLoadBalancer struct {
 	numUpsertedServers int
 }
 
+func (lb *testLoadBalancer) GetStatus(ctx context.Context, childName string) bool {
+  return true // TODO: make GetStatus more meaningful
+}
+
 func (lb *testLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
 	if up {
 		lb.numUpsertedServers++

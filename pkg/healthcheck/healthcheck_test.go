@@ -26,30 +26,36 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 		config      *dynamic.ServerHealthCheck
 		expInterval time.Duration
 		expTimeout  time.Duration
+    expRecheck  time.Duration
 	}{
 		{
 			desc:        "default values",
 			config:      &dynamic.ServerHealthCheck{},
 			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
 			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+      expRecheck:  time.Duration(dynamic.DefaultHealthCheckRecheck),
 		},
 		{
 			desc: "out of range values",
 			config: &dynamic.ServerHealthCheck{
 				Interval: ptypes.Duration(-time.Second),
 				Timeout:  ptypes.Duration(-time.Second),
+				Recheck:  ptypes.Duration(-time.Second),
 			},
 			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
 			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			expRecheck:  time.Duration(dynamic.DefaultHealthCheckRecheck),
 		},
 		{
 			desc: "custom durations",
 			config: &dynamic.ServerHealthCheck{
 				Interval: ptypes.Duration(time.Second * 10),
 				Timeout:  ptypes.Duration(time.Second * 5),
+				Recheck:  ptypes.Duration(time.Second * 7),
 			},
 			expInterval: time.Second * 10,
 			expTimeout:  time.Second * 5,
+			expRecheck:  time.Second * 7,
 		},
 		{
 			desc: "interval shorter than timeout",
@@ -59,6 +65,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 			},
 			expInterval: time.Second,
 			expTimeout:  time.Second * 5,
+			expRecheck:  time.Duration(dynamic.DefaultHealthCheckRecheck),
 		},
 	}
 
@@ -67,6 +74,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, http.DefaultTransport, nil)
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
+			assert.Equal(t, test.expRecheck, healthChecker.recheck)
 		})
 	}
 }
