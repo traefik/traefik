@@ -172,6 +172,7 @@
 - "traefik.http.services.service02.loadbalancer.healthcheck.mode=foobar"
 - "traefik.http.services.service02.loadbalancer.healthcheck.path=foobar"
 - "traefik.http.services.service02.loadbalancer.healthcheck.port=42"
+- "traefik.http.services.service02.loadbalancer.healthcheck.recheck=42s"
 - "traefik.http.services.service02.loadbalancer.healthcheck.scheme=foobar"
 - "traefik.http.services.service02.loadbalancer.healthcheck.status=42"
 - "traefik.http.services.service02.loadbalancer.healthcheck.timeout=42s"
