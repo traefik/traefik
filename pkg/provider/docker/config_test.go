@@ -4,18 +4,20 @@ import (
 	"context"
 	"strconv"
 	"testing"
+	"time"
 
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-func TestDefaultRule(t *testing.T) {
+func TestDynConfBuilder_DefaultRule(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		containers  []dockerData
@@ -45,9 +47,10 @@ func TestDefaultRule(t *testing.T) {
 			defaultRule: "Host(`foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -71,6 +74,9 @@ func TestDefaultRule(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -104,9 +110,10 @@ func TestDefaultRule(t *testing.T) {
 			defaultRule: "Host(`{{ .Name }}.foo.bar`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -130,6 +137,9 @@ func TestDefaultRule(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -165,9 +175,10 @@ func TestDefaultRule(t *testing.T) {
 			defaultRule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -191,6 +202,9 @@ func TestDefaultRule(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -224,9 +238,10 @@ func TestDefaultRule(t *testing.T) {
 			defaultRule: `Host("{{ .Toto }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -244,6 +259,9 @@ func TestDefaultRule(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -277,9 +295,10 @@ func TestDefaultRule(t *testing.T) {
 			defaultRule: ``,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -297,6 +316,9 @@ func TestDefaultRule(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -330,9 +352,10 @@ func TestDefaultRule(t *testing.T) {
 			defaultRule: DefaultTemplateRule,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -356,6 +379,9 @@ func TestDefaultRule(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -373,8 +399,10 @@ func TestDefaultRule(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				ExposedByDefault: true,
-				DefaultRule:      test.defaultRule,
+				Shared: Shared{
+					ExposedByDefault: true,
+					DefaultRule:      test.defaultRule,
+				},
 			}
 
 			err := p.Init()
@@ -382,18 +410,20 @@ func TestDefaultRule(t *testing.T) {
 
 			for i := range len(test.containers) {
 				var err error
-				test.containers[i].ExtraConf, err = p.getConfiguration(test.containers[i])
+				test.containers[i].ExtraConf, err = p.extractLabels(test.containers[i])
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.containers)
+			builder := NewDynConfBuilder(p.Shared, nil)
+
+			configuration := builder.build(context.Background(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
 	}
 }
 
-func Test_buildConfiguration(t *testing.T) {
+func TestDynConfBuilder_build(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		containers         []dockerData
@@ -426,9 +456,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -469,9 +500,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -512,9 +544,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -553,9 +586,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -579,6 +613,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -627,9 +664,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -658,6 +696,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Test2": {
@@ -668,6 +709,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -718,9 +762,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -747,6 +792,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -781,9 +829,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -807,6 +856,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -843,9 +895,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -868,6 +921,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -902,9 +958,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -921,6 +978,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -962,9 +1022,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -987,6 +1048,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1023,9 +1087,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1043,6 +1108,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Service2": {
@@ -1053,6 +1121,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1088,9 +1159,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1113,6 +1185,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1167,9 +1242,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1255,9 +1331,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1324,9 +1401,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1353,6 +1431,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1387,9 +1468,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1412,6 +1494,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1473,9 +1558,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1508,6 +1594,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1562,9 +1651,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1591,6 +1681,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1664,9 +1757,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1696,6 +1790,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1750,9 +1847,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1773,6 +1871,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1846,9 +1947,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1872,6 +1974,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1926,9 +2031,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1954,6 +2060,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2006,9 +2115,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2026,6 +2136,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Test2": {
@@ -2036,6 +2149,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2070,9 +2186,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2096,6 +2213,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2131,9 +2251,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2157,6 +2278,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2192,9 +2316,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2212,6 +2337,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Service2": {
@@ -2222,6 +2350,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2252,9 +2383,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2293,9 +2425,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2336,9 +2469,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2366,9 +2500,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2397,9 +2532,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2418,6 +2554,9 @@ func Test_buildConfiguration(t *testing.T) {
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2442,9 +2581,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2485,11 +2625,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
 						"Test": {
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								TerminationDelay: Int(100),
-							},
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2520,9 +2659,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2554,9 +2694,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
@@ -2606,9 +2747,10 @@ func Test_buildConfiguration(t *testing.T) {
 			constraints: `Label("traefik.tags", "bar")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2650,9 +2792,10 @@ func Test_buildConfiguration(t *testing.T) {
 			constraints: `Label("traefik.tags", "foo")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2676,6 +2819,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2711,9 +2857,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2747,6 +2894,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2765,7 +2915,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels: map[string]string{
 						"traefik.tcp.routers.Test.rule":                               "HostSNI(`foo.bar`)",
-						"traefik.tcp.middlewares.Middleware1.ipwhitelist.sourcerange": "foobar, fiibar",
+						"traefik.tcp.middlewares.Middleware1.ipallowlist.sourcerange": "foobar, fiibar",
 						"traefik.tcp.routers.Test.middlewares":                        "Middleware1",
 					},
 					NetworkSettings: networkSettings{
@@ -2792,7 +2942,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
 						"Middleware1": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"foobar", "fiibar"},
 							},
 						},
@@ -2805,10 +2955,10 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2866,10 +3016,10 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2929,9 +3079,10 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -2978,10 +3129,10 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3042,10 +3193,10 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3106,9 +3257,10 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -3190,9 +3342,10 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
@@ -3215,6 +3368,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -3263,9 +3419,10 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -3279,14 +3436,14 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			// TODO: replace or delete?
 			desc: "tcp with label for tcp service, with termination delay",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.tcp.services.foo.loadbalancer.server.port":      "8080",
-						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
+						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -3313,10 +3470,10 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 								},
-								TerminationDelay: Int(200),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3365,9 +3522,10 @@ func Test_buildConfiguration(t *testing.T) {
 			useBindPortIP: true,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3391,6 +3549,9 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -3451,15 +3612,19 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3487,10 +3652,12 @@ func Test_buildConfiguration(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				AllowEmptyServices: test.allowEmptyServices,
-				DefaultRule:        "Host(`{{ normalize .Name }}.traefik.wtf`)",
-				ExposedByDefault:   true,
-				UseBindPortIP:      test.useBindPortIP,
+				Shared: Shared{
+					AllowEmptyServices: test.allowEmptyServices,
+					ExposedByDefault:   true,
+					UseBindPortIP:      test.useBindPortIP,
+					DefaultRule:        "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				},
 			}
 			p.Constraints = test.constraints
 
@@ -3499,18 +3666,20 @@ func Test_buildConfiguration(t *testing.T) {
 
 			for i := range len(test.containers) {
 				var err error
-				test.containers[i].ExtraConf, err = p.getConfiguration(test.containers[i])
+				test.containers[i].ExtraConf, err = p.extractLabels(test.containers[i])
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.containers)
+			builder := NewDynConfBuilder(p.Shared, nil)
+
+			configuration := builder.build(context.Background(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
 	}
 }
 
-func TestDockerGetIPPort(t *testing.T) {
+func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 	type expected struct {
 		ip    string
 		port  string
@@ -3670,12 +3839,12 @@ func TestDockerGetIPPort(t *testing.T) {
 
 			dData := parseContainer(test.container)
 
-			provider := &Provider{
+			builder := NewDynConfBuilder(Shared{
 				Network:       "testnet",
 				UseBindPortIP: true,
-			}
+			}, nil)
 
-			actualIP, actualPort, actualError := provider.getIPPort(context.Background(), dData, test.serverPort)
+			actualIP, actualPort, actualError := builder.getIPPort(context.Background(), dData, test.serverPort)
 			if test.expected.error {
 				require.Error(t, actualError)
 			} else {
@@ -3687,72 +3856,7 @@ func TestDockerGetIPPort(t *testing.T) {
 	}
 }
 
-func TestDockerGetPort(t *testing.T) {
-	testCases := []struct {
-		desc       string
-		container  docker.ContainerJSON
-		serverPort string
-		expected   string
-	}{
-		{
-			desc:      "no binding, no server port label",
-			container: containerJSON(name("foo")),
-			expected:  "",
-		},
-		{
-			desc: "binding, no server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"80/tcp": {},
-			})),
-			expected: "80",
-		},
-		{
-			desc: "binding, multiple ports, no server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"80/tcp":  {},
-				"443/tcp": {},
-			})),
-			expected: "80",
-		},
-		{
-			desc:       "no binding, server port label",
-			container:  containerJSON(),
-			serverPort: "8080",
-			expected:   "8080",
-		},
-		{
-			desc: "binding, server port label",
-			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": {},
-				})),
-			serverPort: "8080",
-			expected:   "8080",
-		},
-		{
-			desc: "binding, multiple ports, server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"8080/tcp": {},
-				"80/tcp":   {},
-			})),
-			serverPort: "8080",
-			expected:   "8080",
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			dData := parseContainer(test.container)
-
-			actual := getPort(dData, test.serverPort)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestDockerGetIPAddress(t *testing.T) {
+func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 	testCases := []struct {
 		desc      string
 		container docker.ContainerJSON
@@ -3845,24 +3949,26 @@ func TestDockerGetIPAddress(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			provider := &Provider{
+			conf := Shared{
 				Network: "webnet",
 			}
 
 			dData := parseContainer(test.container)
 
-			dData.ExtraConf.Docker.Network = provider.Network
+			dData.ExtraConf.Docker.Network = conf.Network
 			if len(test.network) > 0 {
 				dData.ExtraConf.Docker.Network = test.network
 			}
 
-			actual := provider.getIPAddress(context.Background(), dData)
+			builder := NewDynConfBuilder(conf, nil)
+
+			actual := builder.getIPAddress(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestSwarmGetIPAddress(t *testing.T) {
+func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -3912,46 +4018,13 @@ func TestSwarmGetIPAddress(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 
-			provider := &Provider{
-				SwarmMode: true,
-			}
-
-			dData, err := provider.parseService(context.Background(), test.service, test.networks)
-			require.NoError(t, err)
-
-			actual := provider.getIPAddress(context.Background(), dData)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestSwarmGetPort(t *testing.T) {
-	testCases := []struct {
-		service    swarm.Service
-		serverPort string
-		networks   map[string]*docker.NetworkResource
-		expected   string
-	}{
-		{
-			service: swarmService(
-				withEndpointSpec(modeDNSSR),
-			),
-			networks:   map[string]*docker.NetworkResource{},
-			serverPort: "8080",
-			expected:   "8080",
-		},
-	}
-
-	for serviceID, test := range testCases {
-		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
-			t.Parallel()
-
-			p := Provider{}
+			p := &SwarmProvider{}
 
 			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
-			actual := getPort(dData, test.serverPort)
+			builder := NewDynConfBuilder(p.Shared, nil)
+			actual := builder.getIPAddress(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

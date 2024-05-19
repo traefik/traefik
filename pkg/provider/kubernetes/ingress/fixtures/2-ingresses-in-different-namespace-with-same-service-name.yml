@@ -1,0 +1,102 @@
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: tchouk
+        port: 8089
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: toto
+
+subsets:
+  - addresses:
+      - ip: 10.11.0.1
+      - ip: 10.11.0.2
+    ports:
+      - name: tchouk
+        port: 8089
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+    - host: traefik.tchouk
+      http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name: service1
+                port:
+                  name: tchouk
+            pathType: Prefix
+          - path: /foo
+            backend:
+              service:
+                name: service1
+                port:
+                  name: carotte
+            pathType: Prefix
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: toto
+
+spec:
+  rules:
+    - host: toto.traefik.tchouk
+      http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name: service1
+                port:
+                  name: tchouk
+            pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+    - name: tchouk
+      port: 80
+  clusterIP: 10.0.0.1
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: toto
+
+spec:
+  ports:
+    - name: tchouk
+      port: 80
+  clusterIP: 10.0.0.1

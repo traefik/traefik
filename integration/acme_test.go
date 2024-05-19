@@ -12,15 +12,15 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider/acme"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // ACME test suites.
@@ -131,7 +131,7 @@ func (s *AcmeSuite) TearDownSuite() {
 	if s.fakeDNSServer != nil {
 		err := s.fakeDNSServer.Shutdown()
 		if err != nil {
-			log.WithoutContext().Info(err.Error())
+			log.Info().Msg(err.Error())
 		}
 	}
 

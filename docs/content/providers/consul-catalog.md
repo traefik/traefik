@@ -674,41 +674,6 @@ providers:
 
 For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
-### `namespace`
-
-??? warning "Deprecated in favor of the [`namespaces`](#namespaces) option."
-
-    _Optional, Default=""_
-    
-    The `namespace` option defines the namespace in which the consul catalog services will be discovered.
-    
-    !!! warning
-    
-        The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
-        which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
-    
-    !!! warning
-    
-        One should only define either the `namespaces` option or the `namespace` option.
-    
-    ```yaml tab="File (YAML)"
-    providers:
-      consulCatalog:
-        namespace: "production" 
-        # ...
-    ```
-    
-    ```toml tab="File (TOML)"
-    [providers.consulCatalog]
-      namespace = "production"
-      # ...
-    ```
-    
-    ```bash tab="CLI"
-    --providers.consulcatalog.namespace=production
-    # ...
-    ```
-
 ### `namespaces`
 
 _Optional, Default=""_
@@ -746,6 +711,32 @@ providers:
 
 ```bash tab="CLI"
 --providers.consulcatalog.namespaces=ns1,ns2
+# ...
+```
+
+### `strictChecks`
+
+_Optional, Default="passing,warning"_
+
+Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/services/usage/checks#define-initial-health-check-status) are allowed to take on traffic.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    strictChecks: 
+      - "passing"
+      - "warning"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  strictChecks = ["passing", "warning"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.strictChecks=passing,warning
 # ...
 ```
 

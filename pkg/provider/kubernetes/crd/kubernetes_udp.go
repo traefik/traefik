@@ -7,9 +7,9 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -20,7 +20,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	}
 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
-		logger := log.FromContext(log.With(ctx, log.Str("ingress", ingressRouteUDP.Name), log.Str("namespace", ingressRouteUDP.Namespace)))
+		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteUDP.Name).Str("namespace", ingressRouteUDP.Namespace).Logger()
 
 		if !shouldProcessIngress(p.IngressClass, ingressRouteUDP.Annotations[annotationKubernetesIngressClass]) {
 			continue
@@ -38,10 +38,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			for _, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
-					logger.
-						WithField("serviceName", service.Name).
-						WithField("servicePort", service.Port).
-						Errorf("Cannot create service: %v", err)
+					logger.Error().
+						Str("serviceName", service.Name).
+						Stringer("servicePort", &service.Port).
+						Err(err).
+						Msg("Cannot create service")
 					continue
 				}
 
@@ -120,21 +121,25 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 		return nil, err
 	}
 
-	if svc.NativeLB {
-		address, err := getNativeServiceAddress(*service, *svcPort)
-		if err != nil {
-			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
-		}
-
-		return []dynamic.UDPServer{{Address: address}}, nil
-	}
-
 	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
+		nativeLB := p.NativeLBByDefault
+		if svc.NativeLB != nil {
+			nativeLB = *svc.NativeLB
+		}
+		if nativeLB {
+			address, err := getNativeServiceAddress(*service, *svcPort)
+			if err != nil {
+				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			}
+
+			return []dynamic.UDPServer{{Address: address}}, nil
+		}
+
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
 		if endpointsErr != nil {
 			return nil, endpointsErr

@@ -47,6 +47,6 @@ jobs:
         run: $HOME/bin/seo -path=./site -product=traefik
 
       - name: Publish documentation
-        run: $HOME/bin/mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=containous --src-repo-name=traefik
+        run: $HOME/bin/mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=traefik --src-repo-name=traefik
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_REPO }}

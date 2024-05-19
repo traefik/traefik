@@ -38,7 +38,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     !!! info "v1"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     labels:
       - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
       - "traefik.frontend.auth.basic.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
@@ -100,7 +100,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     !!! info "v2"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     labels:
       - "traefik.http.routers.router0.rule=Host(`test.localhost`) && PathPrefix(`/test`)"
       - "traefik.http.routers.router0.middlewares=auth"
@@ -317,7 +317,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           namespace: default
     ```
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     labels:
       # myTLSOptions must be defined by another provider, in this instance in the File Provider.
       # see the cross provider section
@@ -428,7 +428,7 @@ To apply a redirection:
 
     !!! info "v2"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     labels:
       traefik.http.routers.app.rule: Host(`example.net`)
       traefik.http.routers.app.entrypoints: web
@@ -556,7 +556,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     !!! info "v1"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     labels:
       - "traefik.frontend.rule=Host:example.org;PathPrefixStrip:/admin"
     ```
@@ -588,7 +588,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     !!! info "v2"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     labels:
       - "traefik.http.routers.admin.rule=Host(`example.org`) && PathPrefix(`/admin`)"
       - "traefik.http.routers.admin.middlewares=admin-stripprefix"
@@ -1044,7 +1044,7 @@ To activate the dashboard, you can either:
 
     !!! info "v2"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     # dynamic configuration
     labels:
       - "traefik.http.routers.api.rule=Host(`traefik.docker.localhost`)"

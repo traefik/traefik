@@ -26,6 +26,26 @@ accessLog: {}
 --accesslog=true
 ```
 
+### `addInternals`
+
+_Optional, Default="false"_
+
+Enables accessLogs for internal resources (e.g.: `ping@internal`).
+
+```yaml tab="File (YAML)"
+accesslog:
+  addInternals: true
+```
+
+```toml tab="File (TOML)"
+[accesslog]
+  addInternals = true
+```
+
+```bash tab="CLI"
+--accesslog.addinternals
+```
+
 ### `filePath`
 
 By default access logs are written to the standard output.
@@ -167,7 +187,7 @@ accessLog:
 
   [accessLog.fields]
     defaultMode = "keep"
-    
+
     [accessLog.fields.names]
       "ClientUsername" = "drop"
 
@@ -229,6 +249,7 @@ accessLog:
     | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
     | `TLSVersion`            | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).                                                                                         |
     | `TLSCipher`             | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS)                                                           |
+    | `TLSClientSubject`      | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`)                                                               |
 
 ## Log Rotation
 
@@ -254,7 +275,7 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:v2.11
+    image: traefik:v3.0
     environment:
       - TZ=US/Alaska
     command:

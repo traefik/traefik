@@ -11,21 +11,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
-	xForwardedURI     = "X-Forwarded-Uri"
-	xForwardedMethod  = "X-Forwarded-Method"
-	forwardedTypeName = "ForwardedAuthType"
+	xForwardedURI    = "X-Forwarded-Uri"
+	xForwardedMethod = "X-Forwarded-Method"
 )
+
+const typeNameForward = "ForwardAuth"
 
 // hopHeaders Hop-by-hop headers to be removed in the authentication request.
 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
@@ -48,19 +50,27 @@ type forwardAuth struct {
 	client                   http.Client
 	trustForwardHeader       bool
 	authRequestHeaders       []string
+	addAuthCookiesToResponse map[string]struct{}
 }
 
 // NewForward creates a forward auth middleware.
 func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAuth, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, forwardedTypeName)).Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeNameForward)
+	logger.Debug().Msg("Creating middleware")
+
+	addAuthCookiesToResponse := make(map[string]struct{})
+	for _, cookieName := range config.AddAuthCookiesToResponse {
+		addAuthCookiesToResponse[cookieName] = struct{}{}
+	}
 
 	fa := &forwardAuth{
-		address:             config.Address,
-		authResponseHeaders: config.AuthResponseHeaders,
-		next:                next,
-		name:                name,
-		trustForwardHeader:  config.TrustForwardHeader,
-		authRequestHeaders:  config.AuthRequestHeaders,
+		address:                  config.Address,
+		authResponseHeaders:      config.AuthResponseHeaders,
+		next:                     next,
+		name:                     name,
+		trustForwardHeader:       config.TrustForwardHeader,
+		authRequestHeaders:       config.AuthRequestHeaders,
+		addAuthCookiesToResponse: addAuthCookiesToResponse,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -72,7 +82,18 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	}
 
 	if config.TLS != nil {
-		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
+		if config.TLS.CAOptional != nil {
+			logger.Warn().Msg("CAOptional option is deprecated, TLS client authentication is a server side option, please remove any usage of this option.")
+		}
+
+		clientTLS := &types.ClientTLS{
+			CA:                 config.TLS.CA,
+			Cert:               config.TLS.Cert,
+			Key:                config.TLS.Key,
+			InsecureSkipVerify: config.TLS.InsecureSkipVerify,
+		}
+
+		tlsConfig, err := clientTLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
@@ -90,38 +111,47 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.authResponseHeadersRegex = re
 	}
 
-	return connectionheader.Remover(fa), nil
+	return fa, nil
 }
 
-func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return fa.name, ext.SpanKindRPCClientEnum
+func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) {
+	return fa.name, typeNameForward, trace.SpanKindInternal
 }
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), fa.name, forwardedTypeName))
+	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
-	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
+	req = connectionheader.Remove(req)
+
+	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
-		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
-
+		logger.Debug().Msg(logMessage)
+		observability.SetStatusErrorf(req.Context(), logMessage)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Ensure tracing headers are in the request before we copy the headers to the
-	// forwardReq.
-	tracing.InjectRequestHeaders(req)
-
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
+
+	var forwardSpan trace.Span
+	var tracer *tracing.Tracer
+	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil {
+		var tracingCtx context.Context
+		tracingCtx, forwardSpan = tracer.Start(req.Context(), "AuthRequest", trace.WithSpanKind(trace.SpanKindClient))
+		defer forwardSpan.End()
+
+		forwardReq = forwardReq.WithContext(tracingCtx)
+
+		tracing.InjectContextIntoCarrier(forwardReq)
+		tracer.CaptureClientRequest(forwardSpan, forwardReq)
+	}
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
-		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+		logger.Debug().Msg(logMessage)
+		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -131,17 +161,23 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	body, readError := io.ReadAll(forwardResponse.Body)
 	if readError != nil {
 		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
-		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+		logger.Debug().Msg(logMessage)
+		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	// Ending the forward request span as soon as the response is handled.
+	// If any errors happen earlier, this span will be close by the defer instruction.
+	if forwardSpan != nil {
+		forwardSpan.End()
+	}
+
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
-		logger.Debugf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
+		logger.Debug().Msgf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
@@ -152,8 +188,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
-				logger.Debug(logMessage)
-				tracing.SetErrorWithEvent(req, logMessage)
+				logger.Debug().Msg(logMessage)
+				observability.SetStatusErrorf(forwardReq.Context(), logMessage)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
@@ -163,11 +199,11 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Set("Location", redirectURL.String())
 		}
 
-		tracing.LogResponseCode(tracing.GetSpan(req), forwardResponse.StatusCode)
+		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, forwardResponse.StatusCode, trace.SpanKindClient)
 		rw.WriteHeader(forwardResponse.StatusCode)
 
 		if _, err = rw.Write(body); err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 		}
 		return
 	}
@@ -194,8 +230,38 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	tracer.CaptureResponse(forwardSpan, forwardResponse.Header, forwardResponse.StatusCode, trace.SpanKindClient)
+
 	req.RequestURI = req.URL.RequestURI()
-	fa.next.ServeHTTP(rw, req)
+
+	authCookies := forwardResponse.Cookies()
+	if len(authCookies) == 0 {
+		fa.next.ServeHTTP(rw, req)
+		return
+	}
+
+	fa.next.ServeHTTP(middlewares.NewResponseModifier(rw, req, fa.buildModifier(authCookies)), req)
+}
+
+func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		cookies := res.Cookies()
+		res.Header.Del("Set-Cookie")
+
+		for _, cookie := range cookies {
+			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; !found {
+				res.Header.Add("Set-Cookie", cookie.String())
+			}
+		}
+
+		for _, cookie := range authCookies {
+			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; found {
+				res.Header.Add("Set-Cookie", cookie.String())
+			}
+		}
+
+		return nil
+	}
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {

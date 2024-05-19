@@ -166,7 +166,7 @@ subsets:
 apiVersion: v1
 kind: Service
 metadata:
-  name: external-svc
+  name: external-svc-tcp
   namespace: default
 spec:
   externalName: external.domain
@@ -176,7 +176,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: external.service.with.port
+  name: external.service.with.port.tcp
   namespace: default
 spec:
   externalName: external.domain
@@ -185,19 +185,6 @@ spec:
     - name: http
       protocol: TCP
       port: 80
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external.service.without.port
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-  ports:
-    - name: http
-      protocol: TCP
 
 ---
 apiVersion: v1
@@ -266,7 +253,7 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: native-svc
+  name: native-svc-tcp
   namespace: default
 
 spec:

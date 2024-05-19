@@ -58,7 +58,7 @@ func TestCapture(t *testing.T) {
 // $ go test -bench=. ./pkg/middlewares/capture/
 // goos: linux
 // goarch: amd64
-// pkg: github.com/traefik/traefik/v2/pkg/middlewares/capture
+// pkg: github.com/traefik/traefik/v3/pkg/middlewares/capture
 // cpu: Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz
 // BenchmarkCapture/2k-12				280507	 4015 ns/op	 510.03 MB/s	  5072 B/op	14 allocs/op
 // BenchmarkCapture/20k-12				135726	 8301 ns/op	2467.26 MB/s	 41936 B/op	14 allocs/op
@@ -188,44 +188,4 @@ func TestRequestReader(t *testing.T) {
 	err = rr.Close()
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), rr.size)
-}
-
-type rwWithCloseNotify struct {
-	*httptest.ResponseRecorder
-}
-
-func (r *rwWithCloseNotify) CloseNotify() <-chan bool {
-	panic("implement me")
-}
-
-func TestCloseNotifier(t *testing.T) {
-	testCases := []struct {
-		rw                      http.ResponseWriter
-		desc                    string
-		implementsCloseNotifier bool
-	}{
-		{
-			rw:                      httptest.NewRecorder(),
-			desc:                    "does not implement CloseNotifier",
-			implementsCloseNotifier: false,
-		},
-		{
-			rw:                      &rwWithCloseNotify{httptest.NewRecorder()},
-			desc:                    "implements CloseNotifier",
-			implementsCloseNotifier: true,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			_, ok := test.rw.(http.CloseNotifier)
-			assert.Equal(t, test.implementsCloseNotifier, ok)
-
-			rw := newResponseWriter(test.rw)
-			_, impl := rw.(http.CloseNotifier)
-			assert.Equal(t, test.implementsCloseNotifier, impl)
-		})
-	}
 }

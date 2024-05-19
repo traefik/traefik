@@ -1,0 +1,56 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+  - host: traefik.tchouk
+    http:
+      paths:
+      - path: /bar
+        backend:
+          service:
+            name: service1
+            port:
+              number: 80
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+    - name: carotte
+      port: 8082
+    - name: tchouk
+      port: 80
+  clusterIP: 10.0.0.1
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+    ports:
+      - name: carotte
+        port: 8090
+      - name: tchouk
+        port: 8089
+  - addresses:
+      - ip: 10.21.0.1
+    ports:
+      - name: carotte
+        port: 8090
+      - name: tchouk
+        port: 8089

@@ -26,7 +26,10 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'PanelProvider',
   props: {
-    name: String
+    name: {
+      default: '',
+      type: String
+    }
   },
   computed: {
     getName () {

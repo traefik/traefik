@@ -72,7 +72,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
 
     Using the add-foo-prefix middleware from other providers:
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     your-container: #
       image: your-docker-image
 
@@ -141,8 +141,6 @@ Below is the list of the currently supported providers in Traefik.
 | [Consul Catalog](./consul-catalog.md)             | Orchestrator | Label                | `consulcatalog`     |
 | [Nomad](./nomad.md)                               | Orchestrator | Label                | `nomad`             |
 | [ECS](./ecs.md)                                   | Orchestrator | Label                | `ecs`               |
-| [Marathon](./marathon.md)                         | Orchestrator | Label                | `marathon`          |
-| [Rancher](./rancher.md)                           | Orchestrator | Label                | `rancher`           |
 | [File](./file.md)                                 | Manual       | YAML/TOML format     | `file`              |
 | [Consul](./consul.md)                             | KV           | KV                   | `consul`            |
 | [Etcd](./etcd.md)                                 | KV           | KV                   | `etcd`              |
@@ -216,8 +214,6 @@ List of providers that support these features:
 - [ECS](./ecs.md#exposedbydefault)
 - [Consul Catalog](./consul-catalog.md#exposedbydefault)
 - [Nomad](./nomad.md#exposedbydefault)
-- [Rancher](./rancher.md#exposedbydefault)
-- [Marathon](./marathon.md#exposedbydefault)
 
 ### Constraints
 
@@ -227,8 +223,6 @@ List of providers that support constraints:
 - [ECS](./ecs.md#constraints)
 - [Consul Catalog](./consul-catalog.md#constraints)
 - [Nomad](./nomad.md#constraints)
-- [Rancher](./rancher.md#constraints)
-- [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
 - [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)
 - [Kubernetes Gateway](./kubernetes-gateway.md#labelselector)

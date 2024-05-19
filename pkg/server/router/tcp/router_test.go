@@ -17,13 +17,14 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v2/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/tls/generate"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
+	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type applyRouter func(conf *runtime.Configuration)
@@ -164,7 +165,9 @@ func Test_Routing(t *testing.T) {
 		},
 	}
 
-	serviceManager := tcp.NewManager(conf)
+	dialerManager := tcp2.NewDialerManager(nil)
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+	serviceManager := tcp.NewManager(conf, dialerManager)
 
 	certPEM, keyPEM, err := generate.KeyPair("foo.bar", time.Time{})
 	require.NoError(t, err)
@@ -191,7 +194,7 @@ func Test_Routing(t *testing.T) {
 			},
 		},
 		[]*traefiktls.CertAndStores{{
-			Certificate: traefiktls.Certificate{CertFile: traefiktls.FileOrContent(certPEM), KeyFile: traefiktls.FileOrContent(keyPEM)},
+			Certificate: traefiktls.Certificate{CertFile: types.FileOrContent(certPEM), KeyFile: types.FileOrContent(keyPEM)},
 			Stores:      []string{tlsalpn01.ACMETLS1Protocol},
 		}})
 
@@ -515,6 +518,21 @@ func Test_Routing(t *testing.T) {
 				{
 					desc:        "TCP TLS 1.2 connection should be handled by TCP service",
 					checkRouter: checkTCPTLS12,
+				},
+			},
+		},
+		{
+			desc:    "HTTPS router && HTTPS CatchAll router",
+			routers: []applyRouter{routerHTTPS, routerHTTPSPathPrefix},
+			checks: []checkCase{
+				{
+					desc:          "HTTPS TLS 1.0 request should fail",
+					checkRouter:   checkHTTPSTLS10,
+					expectedError: "wrong TLS version",
+				},
+				{
+					desc:        "HTTPS TLS 1.2 request should be handled by HTTPS service",
+					checkRouter: checkHTTPSTLS12,
 				},
 			},
 		},
@@ -987,4 +1005,90 @@ func checkHTTPSTLS10(addr string, timeout time.Duration) error {
 // It returns an error if it doesn't receive the expected response.
 func checkHTTPSTLS12(addr string, timeout time.Duration) error {
 	return checkHTTPS(addr, timeout, tls.VersionTLS12)
+}
+
+func TestPostgres(t *testing.T) {
+	router, err := NewRouter()
+	require.NoError(t, err)
+
+	// This test requires to have a TLS route, but does not actually check the
+	// content of the handler. It would require to code a TLS handshake to
+	// check the SNI and content of the handlerFunc.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
+	require.NoError(t, err)
+
+	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		_, _ = conn.Write([]byte("OK"))
+		_ = conn.Close()
+	}))
+	require.NoError(t, err)
+
+	mockConn := NewMockConn()
+	go router.ServeTCP(mockConn)
+
+	mockConn.dataRead <- PostgresStartTLSMsg
+	b := <-mockConn.dataWrite
+	require.Equal(t, PostgresStartTLSReply, b)
+
+	mockConn = NewMockConn()
+	go router.ServeTCP(mockConn)
+
+	mockConn.dataRead <- []byte("HTTP")
+	b = <-mockConn.dataWrite
+	require.Equal(t, []byte("OK"), b)
+}
+
+func NewMockConn() *MockConn {
+	return &MockConn{
+		dataRead:  make(chan []byte),
+		dataWrite: make(chan []byte),
+	}
+}
+
+type MockConn struct {
+	dataRead  chan []byte
+	dataWrite chan []byte
+}
+
+func (m *MockConn) Read(b []byte) (n int, err error) {
+	temp := <-m.dataRead
+	copy(b, temp)
+	return len(temp), nil
+}
+
+func (m *MockConn) Write(b []byte) (n int, err error) {
+	m.dataWrite <- b
+	return len(b), nil
+}
+
+func (m *MockConn) Close() error {
+	close(m.dataRead)
+	close(m.dataWrite)
+	return nil
+}
+
+func (m *MockConn) LocalAddr() net.Addr {
+	return nil
+}
+
+func (m *MockConn) RemoteAddr() net.Addr {
+	return &net.TCPAddr{}
+}
+
+func (m *MockConn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockConn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockConn) SetWriteDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockConn) CloseWrite() error {
+	close(m.dataRead)
+	close(m.dataWrite)
+	return nil
 }

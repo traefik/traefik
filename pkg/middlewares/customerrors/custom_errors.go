@@ -10,23 +10,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
 var (
-	// TODO: maybe remove at least for codeModifierWithCloseNotify.
-	_ middlewares.Stateful = &codeModifierWithCloseNotify{}
-	_ middlewares.Stateful = &codeCatcherWithCloseNotify{}
+	_ middlewares.Stateful = &codeModifier{}
+	_ middlewares.Stateful = &codeCatcher{}
 )
 
-const typeName = "customError"
+const typeName = "CustomError"
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -43,7 +41,7 @@ type customErrors struct {
 
 // New creates a new custom error pages middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, serviceBuilder serviceBuilder, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	httpCodeRanges, err := types.NewHTTPCodeRanges(config.Status)
 	if err != nil {
@@ -64,17 +62,16 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}, nil
 }
 
-func (c *customErrors) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return c.name, tracing.SpanKindNoneEnum
+func (c *customErrors) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
-	logger := log.FromContext(ctx)
+	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
 
 	if c.backendHandler == nil {
-		logger.Error("Error pages: no backend handler.")
-		tracing.SetErrorWithEvent(req, "Error pages: no backend handler.")
+		logger.Error().Msg("Error pages: no backend handler.")
+		observability.SetStatusErrorf(req.Context(), "Error pages: no backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
 	}
@@ -87,7 +84,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// check the recorder code against the configured http status code ranges
 	code := catcher.getCode()
-	logger.Debugf("Caught HTTP Status Code %d, returning error page", code)
+	logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
 
 	var query string
 	if len(c.backendQuery) > 0 {
@@ -98,13 +95,13 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	pageReq, err := newRequest("http://" + req.Host + query)
 	if err != nil {
-		logger.Error(err)
+		logger.Error().Err(err).Send()
+		observability.SetStatusErrorf(req.Context(), err.Error())
 		http.Error(rw, http.StatusText(code), code)
 		return
 	}
 
 	utils.CopyHeaders(pageReq.Header, req.Header)
-
 	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
 		pageReq.WithContext(req.Context()))
 }
@@ -124,13 +121,6 @@ func newRequest(baseURL string) (*http.Request, error) {
 	return req, nil
 }
 
-type responseInterceptor interface {
-	http.ResponseWriter
-	http.Flusher
-	getCode() int
-	isFilteredCode() bool
-}
-
 // codeCatcher is a response writer that detects as soon as possible
 // whether the response is a code within the ranges of codes it watches for.
 // If it is, it simply drops the data from the response.
@@ -144,17 +134,13 @@ type codeCatcher struct {
 	headersSent        bool
 }
 
-func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges) responseInterceptor {
-	catcher := &codeCatcher{
+func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges) *codeCatcher {
+	return &codeCatcher{
 		headerMap:      make(http.Header),
 		code:           http.StatusOK, // If backend does not call WriteHeader on us, we consider it's a 200.
 		responseWriter: rw,
 		httpCodeRanges: httpCodeRanges,
 	}
-	if _, ok := rw.(http.CloseNotifier); ok {
-		return &codeCatcherWithCloseNotify{catcher}
-	}
-	return catcher
 }
 
 func (cc *codeCatcher) Header() http.Header {
@@ -259,36 +245,9 @@ func (cc *codeCatcher) Flush() {
 	}
 }
 
-type codeCatcherWithCloseNotify struct {
-	*codeCatcher
-}
-
-// CloseNotify returns a channel that receives at most a single value (true)
-// when the client connection has gone away.
-func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
-	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
-}
-
 // codeModifier forwards a response back to the client,
 // while enforcing a given response code.
-type codeModifier interface {
-	http.ResponseWriter
-}
-
-// newCodeModifier returns a codeModifier that enforces the given code.
-func newCodeModifier(rw http.ResponseWriter, code int) codeModifier {
-	codeMod := &codeModifierWithoutCloseNotify{
-		headerMap:      make(http.Header),
-		code:           code,
-		responseWriter: rw,
-	}
-	if _, ok := rw.(http.CloseNotifier); ok {
-		return &codeModifierWithCloseNotify{codeMod}
-	}
-	return codeMod
-}
-
-type codeModifierWithoutCloseNotify struct {
+type codeModifier struct {
 	code int // the code enforced in the response.
 
 	// headerSent is whether the headers have already been sent,
@@ -299,8 +258,17 @@ type codeModifierWithoutCloseNotify struct {
 	responseWriter http.ResponseWriter
 }
 
+// newCodeModifier returns a codeModifier that enforces the given code.
+func newCodeModifier(rw http.ResponseWriter, code int) *codeModifier {
+	return &codeModifier{
+		headerMap:      make(http.Header),
+		code:           code,
+		responseWriter: rw,
+	}
+}
+
 // Header returns the response headers.
-func (r *codeModifierWithoutCloseNotify) Header() http.Header {
+func (r *codeModifier) Header() http.Header {
 	if r.headerSent {
 		return r.responseWriter.Header()
 	}
@@ -314,7 +282,7 @@ func (r *codeModifierWithoutCloseNotify) Header() http.Header {
 
 // Write calls WriteHeader to send the enforced code,
 // then writes the data directly to r.responseWriter.
-func (r *codeModifierWithoutCloseNotify) Write(buf []byte) (int, error) {
+func (r *codeModifier) Write(buf []byte) (int, error) {
 	r.WriteHeader(r.code)
 	return r.responseWriter.Write(buf)
 }
@@ -323,7 +291,7 @@ func (r *codeModifierWithoutCloseNotify) Write(buf []byte) (int, error) {
 // if it hasn't already been done.
 // WriteHeader is, in the specific case of 1xx status codes, a direct call to the wrapped ResponseWriter, without marking headers as sent,
 // allowing so further calls.
-func (r *codeModifierWithoutCloseNotify) WriteHeader(code int) {
+func (r *codeModifier) WriteHeader(code int) {
 	if r.headerSent {
 		return
 	}
@@ -348,7 +316,7 @@ func (r *codeModifierWithoutCloseNotify) WriteHeader(code int) {
 }
 
 // Hijack hijacks the connection.
-func (r *codeModifierWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (r *codeModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hijacker, ok := r.responseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
@@ -357,20 +325,10 @@ func (r *codeModifierWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, 
 }
 
 // Flush sends any buffered data to the client.
-func (r *codeModifierWithoutCloseNotify) Flush() {
+func (r *codeModifier) Flush() {
 	r.WriteHeader(r.code)
 
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
-}
-
-type codeModifierWithCloseNotify struct {
-	*codeModifierWithoutCloseNotify
-}
-
-// CloseNotify returns a channel that receives at most a single value (true)
-// when the client connection has gone away.
-func (r *codeModifierWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }

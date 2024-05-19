@@ -4,6 +4,7 @@
 
 [log]
   level = "DEBUG"
+  noColor = true
 
 [serversTransport]
   insecureSkipVerify=true
@@ -23,7 +24,7 @@
 [http.routers]
   [http.routers.router1]
     service = "service1"
-    rule = "Path(`/echo`,`/ws`)"
+    rule = "Path(`/echo`) || Path(`/ws`)"
     [http.routers.router1.tls]
 
 [http.services]

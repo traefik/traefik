@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // SNICheck is an HTTP handler that checks whether the TLS configuration for the server name is the same as for the host header.
@@ -36,11 +36,11 @@ func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		tlsOptionSNI := findTLSOptionName(s.tlsOptionsForHost, serverName, false)
 
 		if tlsOptionHeader != tlsOptionSNI {
-			log.WithoutContext().
-				WithField("host", host).
-				WithField("req.Host", req.Host).
-				WithField("req.TLS.ServerName", req.TLS.ServerName).
-				Debugf("TLS options difference: SNI:%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
+			log.Debug().
+				Str("host", host).
+				Str("req.Host", req.Host).
+				Str("req.TLS.ServerName", req.TLS.ServerName).
+				Msgf("TLS options difference: SNI:%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
 			http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
 			return
 		}

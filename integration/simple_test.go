@@ -18,12 +18,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 // SimpleSuite tests suite.
@@ -287,6 +287,10 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint() {
 
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyContains("_service_"))
 	require.NoError(s.T(), err)
+
+	// No metrics for internals.
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyNotContains("router=\"api@internal\"", "service=\"api@internal\""))
+	require.NoError(s.T(), err)
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService() {
@@ -420,71 +424,6 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName() {
 	require.NoError(s.T(), err)
 }
 
-func (s *SimpleSuite) TestIPStrategyWhitelist() {
-	s.createComposeProject("whitelist")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
-
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
-	require.NoError(s.T(), err)
-
-	testCases := []struct {
-		desc               string
-		xForwardedFor      string
-		host               string
-		expectedStatusCode int
-	}{
-		{
-			desc:               "override remote addr reject",
-			xForwardedFor:      "8.8.8.8,8.8.8.8",
-			host:               "override.remoteaddr.whitelist.docker.local",
-			expectedStatusCode: 403,
-		},
-		{
-			desc:               "override depth accept",
-			xForwardedFor:      "8.8.8.8,10.0.0.1,127.0.0.1",
-			host:               "override.depth.whitelist.docker.local",
-			expectedStatusCode: 200,
-		},
-		{
-			desc:               "override depth reject",
-			xForwardedFor:      "10.0.0.1,8.8.8.8,127.0.0.1",
-			host:               "override.depth.whitelist.docker.local",
-			expectedStatusCode: 403,
-		},
-		{
-			desc:               "override excludedIPs reject",
-			xForwardedFor:      "10.0.0.3,10.0.0.1,10.0.0.2",
-			host:               "override.excludedips.whitelist.docker.local",
-			expectedStatusCode: 403,
-		},
-		{
-			desc:               "override excludedIPs accept",
-			xForwardedFor:      "8.8.8.8,10.0.0.1,10.0.0.2",
-			host:               "override.excludedips.whitelist.docker.local",
-			expectedStatusCode: 200,
-		},
-	}
-
-	for _, test := range testCases {
-		req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
-		req.Header.Set("X-Forwarded-For", test.xForwardedFor)
-		req.Host = test.host
-		req.RequestURI = ""
-
-		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
-		if err != nil {
-			s.T().Fatalf("Error while %s: %v", test.desc, err)
-		}
-	}
-}
-
 func (s *SimpleSuite) TestIPStrategyAllowlist() {
 	s.createComposeProject("allowlist")
 
@@ -548,7 +487,7 @@ func (s *SimpleSuite) TestIPStrategyAllowlist() {
 	}
 }
 
-func (s *SimpleSuite) TestXForwardedHeaders() {
+func (s *SimpleSuite) TestIPStrategyWhitelist() {
 	s.createComposeProject("whitelist")
 
 	s.composeUp()
@@ -556,14 +495,77 @@ func (s *SimpleSuite) TestXForwardedHeaders() {
 
 	s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
+	require.NoError(s.T(), err)
+
+	testCases := []struct {
+		desc               string
+		xForwardedFor      string
+		host               string
+		expectedStatusCode int
+	}{
+		{
+			desc:               "override remote addr reject",
+			xForwardedFor:      "8.8.8.8,8.8.8.8",
+			host:               "override.remoteaddr.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override depth accept",
+			xForwardedFor:      "8.8.8.8,10.0.0.1,127.0.0.1",
+			host:               "override.depth.whitelist.docker.local",
+			expectedStatusCode: 200,
+		},
+		{
+			desc:               "override depth reject",
+			xForwardedFor:      "10.0.0.1,8.8.8.8,127.0.0.1",
+			host:               "override.depth.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override excludedIPs reject",
+			xForwardedFor:      "10.0.0.3,10.0.0.1,10.0.0.2",
+			host:               "override.excludedips.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override excludedIPs accept",
+			xForwardedFor:      "8.8.8.8,10.0.0.1,10.0.0.2",
+			host:               "override.excludedips.whitelist.docker.local",
+			expectedStatusCode: 200,
+		},
+	}
+
+	for _, test := range testCases {
+		req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+		req.Header.Set("X-Forwarded-For", test.xForwardedFor)
+		req.Host = test.host
+		req.RequestURI = ""
+
+		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
+		require.NoErrorf(s.T(), err, "Error during %s: %v", test.desc, err)
+	}
+}
+
+func (s *SimpleSuite) TestXForwardedHeaders() {
+	s.createComposeProject("allowlist")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
+
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
-		try.BodyContains("override.remoteaddr.whitelist.docker.local"))
+		try.BodyContains("override.remoteaddr.allowlist.docker.local"))
 	require.NoError(s.T(), err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
 	require.NoError(s.T(), err)
 
-	req.Host = "override.depth.whitelist.docker.local"
+	req.Host = "override.depth.allowlist.docker.local"
 	req.Header.Set("X-Forwarded-For", "8.8.8.8,10.0.0.1,127.0.0.1")
 
 	err = try.Request(req, 1*time.Second,
@@ -661,6 +663,66 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod() {
 	}
 }
 
+func (s *SimpleSuite) TestWithDefaultRuleSyntax() {
+	file := s.adaptFile("fixtures/with_default_rule_syntax.toml", struct{}{})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	require.NoError(s.T(), err)
+
+	// router1 has no error
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router1@file", 1*time.Second, try.BodyContains(`"status":"enabled"`))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/notfound", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/foo", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/bar", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	// router2 has an error because it uses the wrong rule syntax (v3 instead of v2)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("error while parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
+	require.NoError(s.T(), err)
+
+	// router3 has an error because it uses the wrong rule syntax (v2 instead of v3)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("error while adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
+	require.NoError(s.T(), err)
+}
+
+func (s *SimpleSuite) TestWithoutDefaultRuleSyntax() {
+	file := s.adaptFile("fixtures/without_default_rule_syntax.toml", struct{}{})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
+	require.NoError(s.T(), err)
+
+	// router1 has no error
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router1@file", 1*time.Second, try.BodyContains(`"status":"enabled"`))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/notfound", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/foo", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/bar", 1*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	// router2 has an error because it uses the wrong rule syntax (v3 instead of v2)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("error while adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
+	require.NoError(s.T(), err)
+
+	// router2 has an error because it uses the wrong rule syntax (v2 instead of v3)
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("error while parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
+	require.NoError(s.T(), err)
+}
+
 func (s *SimpleSuite) TestRouterConfigErrors() {
 	file := s.adaptFile("fixtures/router_errors.toml", struct{}{})
 
@@ -741,7 +803,7 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors() {
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the UDP service \"service1@file\" does not have any type defined"]`))
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
@@ -749,6 +811,49 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors() {
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
 	require.NoError(s.T(), err)
+}
+
+func (s *SimpleSuite) TestWRRServer() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	whoami1IP := s.getComposeServiceIP("whoami1")
+	whoami2IP := s.getComposeServiceIP("whoami2")
+
+	file := s.adaptFile("fixtures/wrr_server.toml", struct {
+		Server1 string
+		Server2 string
+	}{Server1: "http://" + whoami1IP, Server2: "http://" + whoami2IP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	repartition := map[string]int{}
+	for i := 0; i < 4; i++ {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		require.NoError(s.T(), err)
+
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+		body, err := io.ReadAll(response.Body)
+		require.NoError(s.T(), err)
+
+		if strings.Contains(string(body), whoami1IP) {
+			repartition[whoami1IP]++
+		}
+		if strings.Contains(string(body), whoami2IP) {
+			repartition[whoami2IP]++
+		}
+	}
+
+	assert.Equal(s.T(), 3, repartition[whoami1IP])
+	assert.Equal(s.T(), 1, repartition[whoami2IP])
 }
 
 func (s *SimpleSuite) TestWRR() {
@@ -1074,9 +1179,10 @@ func (s *SimpleSuite) TestSecureAPI() {
 func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header()["Content-Type"] = nil
-		switch req.URL.Path[:4] {
+		path := strings.TrimPrefix(req.URL.Path, "/autodetect")
+		switch path[:4] {
 		case "/css":
-			if !strings.Contains(req.URL.Path, "noct") {
+			if strings.Contains(req.URL.Path, "/ct") {
 				rw.Header().Set("Content-Type", "text/css")
 			}
 
@@ -1085,7 +1191,7 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 			_, err := rw.Write([]byte(".testcss { }"))
 			require.NoError(s.T(), err)
 		case "/pdf":
-			if !strings.Contains(req.URL.Path, "noct") {
+			if strings.Contains(req.URL.Path, "/ct") {
 				rw.Header().Set("Content-Type", "application/pdf")
 			}
 
@@ -1113,37 +1219,13 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	err = try.GetRequest("http://127.0.0.1:8000/css/ct", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+	err = try.GetRequest("http://127.0.0.1:8000/css/noct", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
 			return fmt.Errorf("should have no content type and %s is present", ct)
 		}
@@ -1151,12 +1233,24 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect() {
 	})
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
 			return fmt.Errorf("should have no content type and %s is present", ct)
 		}
 		return nil
 	})
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/css/ct", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/pdf/ct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/css/noct", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/pdf/noct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
 	require.NoError(s.T(), err)
 }
 
@@ -1233,7 +1327,7 @@ func (s *SimpleSuite) TestMuxer() {
 			expected: http.StatusOK,
 		},
 		{
-			desc:     "!Query with semicolon, no match",
+			desc:     "!Query with semicolon and empty query param value, no match",
 			request:  "GET /?foo=; HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8002",
 			expected: http.StatusNotFound,
@@ -1295,8 +1389,8 @@ func (s *SimpleSuite) TestDebugLog() {
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 
 	if regexp.MustCompile("ThisIsABearerToken").MatchReader(output) {
-		log.WithoutContext().Infof("Traefik Logs: %s", output.String())
-		log.WithoutContext().Info("Found Authorization Header in Traefik DEBUG logs")
+		log.Info().Msgf("Traefik Logs: %s", output.String())
+		log.Info().Msg("Found Authorization Header in Traefik DEBUG logs")
 		s.T().Fail()
 	}
 }
@@ -1352,7 +1446,7 @@ func (s *SimpleSuite) TestEncodeSemicolons() {
 		require.NoError(s.T(), err)
 
 		if resp.StatusCode != test.expected {
-			log.WithoutContext().Infof("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
+			log.Info().Msgf("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
 		}
 
 		if test.body != "" {

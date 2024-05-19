@@ -17,11 +17,11 @@ import (
 	"time"
 
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
@@ -74,7 +74,7 @@ func (s *K8sSuite) TearDownSuite() {
 
 	for _, filename := range generatedFiles {
 		if err := os.Remove(filename); err != nil {
-			log.WithoutContext().Warning(err)
+			log.Warn().Err(err).Send()
 		}
 	}
 }
@@ -115,6 +115,12 @@ func (s *K8sSuite) TestIngressclass() {
 	s.testConfiguration("testdata/rawdata-ingressclass.json", "8080")
 }
 
+func (s *K8sSuite) TestDisableIngressclassLookup() {
+	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
+
+	s.testConfiguration("testdata/rawdata-ingressclass-disabled.json", "8080")
+}
+
 func (s *K8sSuite) testConfiguration(path, apiPort string) {
 	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
@@ -137,7 +143,7 @@ func (s *K8sSuite) testConfiguration(path, apiPort string) {
 	}
 
 	if err != nil {
-		log.WithoutContext().Infof("In file update mode, got expected error: %v", err)
+		log.Info().Msgf("In file update mode, got expected error: %v", err)
 	}
 
 	var rtRepr api.RunTimeRepresentation
@@ -190,7 +196,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 		// The pods IPs are dynamic, so we cannot predict them,
 		// which is why we have to ignore them in the comparison.
 		rxURL := regexp.MustCompile(`"(url|address)":\s+(".*")`)
-		sanitizedExpected := rxURL.ReplaceAll(expected, []byte(`"$1": "XXXX"`))
+		sanitizedExpected := rxURL.ReplaceAll(bytes.TrimSpace(expected), []byte(`"$1": "XXXX"`))
 		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"$1": "XXXX"`))
 
 		rxServerStatus := regexp.MustCompile(`"http://.*?":\s+(".*")`)

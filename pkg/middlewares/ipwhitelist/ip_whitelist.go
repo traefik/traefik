@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -28,8 +28,8 @@ type ipWhiteLister struct {
 
 // New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist.
 func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, name string) (http.Handler, error) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
-	logger.Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
 
 	if len(config.SourceRange) == 0 {
 		return nil, errors.New("sourceRange is empty, IPWhiteLister not created")
@@ -45,7 +45,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 		return nil, err
 	}
 
-	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
+	logger.Debug().Msgf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
 
 	return &ipWhiteLister{
 		strategy:    strategy,
@@ -55,24 +55,24 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 	}, nil
 }
 
-func (wl *ipWhiteLister) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return wl.name, tracing.SpanKindNoneEnum
+func (wl *ipWhiteLister) GetTracingInformation() (string, string, trace.SpanKind) {
+	return wl.name, typeName, trace.SpanKindInternal
 }
 
 func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := middlewares.GetLoggerCtx(req.Context(), wl.name, typeName)
-	logger := log.FromContext(ctx)
+	logger := middlewares.GetLogger(req.Context(), wl.name, typeName)
+	ctx := logger.WithContext(req.Context())
 
 	clientIP := wl.strategy.GetIP(req)
 	err := wl.whiteLister.IsAuthorized(clientIP)
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
-		logger.Debug(msg)
-		tracing.SetErrorWithEvent(req, msg)
+		logger.Debug().Msg(msg)
+		observability.SetStatusErrorf(req.Context(), msg)
 		reject(ctx, rw)
 		return
 	}
-	logger.Debugf("Accepting IP %s", clientIP)
+	logger.Debug().Msgf("Accepting IP %s", clientIP)
 
 	wl.next.ServeHTTP(rw, req)
 }
@@ -83,6 +83,6 @@ func reject(ctx context.Context, rw http.ResponseWriter) {
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write([]byte(http.StatusText(statusCode)))
 	if err != nil {
-		log.FromContext(ctx).Error(err)
+		log.Ctx(ctx).Error().Err(err).Send()
 	}
 }

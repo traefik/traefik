@@ -16,25 +16,27 @@ import (
 	"time"
 
 	"github.com/containous/alice"
+	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/pires/go-proxyproto"
-	"github.com/sirupsen/logrus"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/server/router"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/service"
-	"github.com/traefik/traefik/v2/pkg/tcp"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
+	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/server/router"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/traefik/traefik/v3/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
-
-var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
 
 type key string
 
@@ -88,13 +90,12 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
-func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig) (TCPEntryPoints, error) {
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, metricsRegistry metrics.Registry) (TCPEntryPoints, error) {
 	if os.Getenv(debugConnectionEnv) != "" {
 		expvar.Publish("clientConnectionStates", expvar.Func(func() any {
 			return clientConnectionStates
 		}))
 	}
-
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -106,9 +107,13 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			continue
 		}
 
-		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		ctx := log.With().Str(logs.EntryPointName, entryPointName).Logger().WithContext(context.Background())
 
-		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig)
+		openConnectionsGauge := metricsRegistry.
+			OpenConnectionsGauge().
+			With("entrypoint", entryPointName, "protocol", "TCP")
+
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, openConnectionsGauge)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -119,7 +124,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 // Start the server entry points.
 func (eps TCPEntryPoints) Start() {
 	for entryPointName, serverEntryPoint := range eps {
-		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		ctx := log.With().Str(logs.EntryPointName, entryPointName).Logger().WithContext(context.Background())
 		go serverEntryPoint.Start(ctx)
 	}
 }
@@ -134,10 +139,10 @@ func (eps TCPEntryPoints) Stop() {
 		go func(entryPointName string, entryPoint *TCPEntryPoint) {
 			defer wg.Done()
 
-			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-			entryPoint.Shutdown(ctx)
+			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
+			entryPoint.Shutdown(logger.WithContext(context.Background()))
 
-			log.FromContext(ctx).Debugf("Entry point %s closed", entryPointName)
+			logger.Debug().Msg("Entrypoint closed")
 		}(epn, ep)
 	}
 
@@ -164,8 +169,8 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig) (*TCPEntryPoint, error) {
-	tracker := newConnectionTracker()
+func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
+	tracker := newConnectionTracker(openConnectionsGauge)
 
 	listener, err := buildListener(ctx, configuration)
 	if err != nil {
@@ -211,8 +216,8 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
-	logger := log.FromContext(ctx)
-	logger.Debug("Starting TCP Server")
+	logger := log.Ctx(ctx)
+	logger.Debug().Msg("Starting TCP Server")
 
 	if e.http3Server != nil {
 		go func() { _ = e.http3Server.Start() }()
@@ -221,7 +226,7 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 
 			var opErr *net.OpError
 			if errors.As(err, &opErr) && opErr.Temporary() {
@@ -251,14 +256,14 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
 				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
 				if err != nil {
-					logger.Errorf("Error while setting read deadline: %v", err)
+					logger.Error().Err(err).Msg("Error while setting read deadline")
 				}
 			}
 
 			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
 				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
 				if err != nil {
-					logger.Errorf("Error while setting write deadline: %v", err)
+					logger.Error().Err(err).Msg("Error while setting write deadline")
 				}
 			}
 
@@ -269,17 +274,17 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 // Shutdown stops the TCP connections.
 func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 	if reqAcceptGraceTimeOut > 0 {
-		logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+		logger.Info().Msgf("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 		time.Sleep(reqAcceptGraceTimeOut)
 	}
 
 	graceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.GraceTimeOut)
 	ctx, cancel := context.WithTimeout(ctx, graceTimeOut)
-	logger.Debugf("Waiting %s seconds before killing connections.", graceTimeOut)
+	logger.Debug().Msgf("Waiting %s seconds before killing connections", graceTimeOut)
 
 	var wg sync.WaitGroup
 
@@ -290,13 +295,15 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			return
 		}
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
+			logger.Debug().Err(err).Msg("Server failed to shutdown within deadline")
 			if err = server.Close(); err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 			}
 			return
 		}
-		logger.Error(err)
+
+		logger.Error().Err(err).Send()
+
 		// We expect Close to fail again because Shutdown most likely failed when trying to close a listener.
 		// We still call it however, to make sure that all connections get closed as well.
 		server.Close()
@@ -326,7 +333,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				return
 			}
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
+				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
 		}()
@@ -408,8 +415,7 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		// Some systems, such as OpenBSD, have no user-settable per-socket TCP
-		// keepalive options.
+		// Some systems, such as OpenBSD, have no user-settable per-socket TCP keepalive options.
 		if !errors.Is(err, syscall.ENOPROTOOPT) {
 			return nil, err
 		}
@@ -427,7 +433,7 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	proxyListener := &proxyproto.Listener{Listener: listener, ReadHeaderTimeout: time.Duration(timeout)}
 
 	if entryPoint.ProxyProtocol.Insecure {
-		log.FromContext(ctx).Infof("Enabling ProxyProtocol without trusted IPs: Insecure")
+		log.Ctx(ctx).Info().Msg("Enabling ProxyProtocol without trusted IPs: Insecure")
 		return proxyListener, nil
 	}
 
@@ -443,19 +449,20 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 		}
 
 		if !checker.ContainsIP(ipAddr.IP) {
-			log.FromContext(ctx).Debugf("IP %s is not in trusted IPs list, ignoring ProxyProtocol Headers and bypass connection", ipAddr.IP)
+			log.Ctx(ctx).Debug().Msgf("IP %s is not in trusted IPs list, ignoring ProxyProtocol Headers and bypass connection", ipAddr.IP)
 			return proxyproto.IGNORE, nil
 		}
 		return proxyproto.USE, nil
 	}
 
-	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+	log.Ctx(ctx).Info().Msgf("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
 	return proxyListener, nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listener, err := net.Listen("tcp", entryPoint.GetAddress())
+	listenConfig := newListenConfig(entryPoint)
+	listener, err := listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
 	if err != nil {
 		return nil, fmt.Errorf("error opening listener: %w", err)
 	}
@@ -471,34 +478,45 @@ func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.List
 	return listener, nil
 }
 
-func newConnectionTracker() *connectionTracker {
+func newConnectionTracker(openConnectionsGauge gokitmetrics.Gauge) *connectionTracker {
 	return &connectionTracker{
-		conns: make(map[net.Conn]struct{}),
+		conns:                make(map[net.Conn]struct{}),
+		openConnectionsGauge: openConnectionsGauge,
 	}
 }
 
 type connectionTracker struct {
-	conns map[net.Conn]struct{}
-	lock  sync.RWMutex
+	connsMu sync.RWMutex
+	conns   map[net.Conn]struct{}
+
+	openConnectionsGauge gokitmetrics.Gauge
 }
 
 // AddConnection add a connection in the tracked connections list.
 func (c *connectionTracker) AddConnection(conn net.Conn) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.connsMu.Lock()
 	c.conns[conn] = struct{}{}
+	c.connsMu.Unlock()
+
+	if c.openConnectionsGauge != nil {
+		c.openConnectionsGauge.Add(1)
+	}
 }
 
 // RemoveConnection remove a connection from the tracked connections list.
 func (c *connectionTracker) RemoveConnection(conn net.Conn) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.connsMu.Lock()
 	delete(c.conns, conn)
+	c.connsMu.Unlock()
+
+	if c.openConnectionsGauge != nil {
+		c.openConnectionsGauge.Add(-1)
+	}
 }
 
 func (c *connectionTracker) isEmpty() bool {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
+	c.connsMu.RLock()
+	defer c.connsMu.RUnlock()
 	return len(c.conns) == 0
 }
 
@@ -520,11 +538,11 @@ func (c *connectionTracker) Shutdown(ctx context.Context) error {
 
 // Close close all the connections in the tracked connections list.
 func (c *connectionTracker) Close() {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.connsMu.Lock()
+	defer c.connsMu.Unlock()
 	for conn := range c.conns {
 		if err := conn.Close(); err != nil {
-			log.WithoutContext().Errorf("Error while closing connection: %v", err)
+			log.Error().Err(err).Msg("Error while closing connection")
 		}
 		delete(c.conns, conn)
 	}
@@ -574,6 +592,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = http.AllowQuerySemicolons(handler)
 	}
 
+	handler = contenttype.DisableAutoDetection(handler)
+
 	if withH2c {
 		handler = h2c.NewHandler(handler, &http2.Server{
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
@@ -587,7 +607,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	serverHTTP := &http.Server{
 		Handler:      handler,
-		ErrorLog:     httpServerLogger,
+		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
@@ -641,7 +661,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
+			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
 		}
 	}()
 	return &httpServer{
@@ -700,7 +720,7 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 func denyFragment(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if strings.Contains(req.URL.RawPath, "#") {
-			log.WithoutContext().Debugf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
+			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
 			rw.WriteHeader(http.StatusBadRequest)
 
 			return

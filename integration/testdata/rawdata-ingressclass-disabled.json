@@ -1,0 +1,76 @@
+{
+	"routers": {
+		"api@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"ruleSyntax": "v3",
+			"priority": 9223372036854775806,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"dashboard@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"middlewares": [
+				"dashboard_redirect@internal",
+				"dashboard_stripprefix@internal"
+			],
+			"service": "dashboard@internal",
+			"rule": "PathPrefix(`/`)",
+			"ruleSyntax": "v3",
+			"priority": 9223372036854775805,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		}
+	},
+	"middlewares": {
+		"dashboard_redirect@internal": {
+			"redirectRegex": {
+				"regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
+				"replacement": "${1}/dashboard/",
+				"permanent": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"dashboard_stripprefix@internal": {
+			"stripPrefix": {
+				"prefixes": [
+					"/dashboard/",
+					"/dashboard"
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		}
+	},
+	"services": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"api@internal"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"noop@internal": {
+			"status": "enabled"
+		}
+	}
+}

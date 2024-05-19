@@ -10,5 +10,5 @@ spec:
 
   routes:
   - services:
-    - name: external.service.with.port
+    - name: external.service.with.port.udp
       port: 80

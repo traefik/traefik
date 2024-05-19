@@ -1,0 +1,45 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: example-com
+            port:
+              number: 80
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-com
+  namespace: testing
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  clusterIP: 10.0.0.1
+  type: ClusterIP
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: example-com
+  namespace: testing
+
+subsets:
+  - addresses:
+      - ip: 10.11.0.1
+    ports:
+      - name: http
+        port: 80

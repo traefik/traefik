@@ -147,6 +147,7 @@ spec:
       services:
         - name: whoamitcp
           port: 8080
+          serversTransport: mytransporttcp
       middlewares:
         - name: ipallowlist
   tls:
@@ -193,7 +194,6 @@ spec:
       - foobar
     clientAuthType: RequireAndVerifyClientCert
   sniStrict: true
-  preferServerCipherSuites: true
   alpnProtocols:
     - foobar
     - foobar
@@ -214,9 +214,30 @@ spec:
   certificatesSecrets:
     - foobar
     - foobar
+  peerCertURI: foobar
   maxIdleConnsPerHost: 1
   forwardingTimeouts:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
   disableHTTP2: true
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransporttcp
+  namespace: default
+
+spec:
+  serverName: foobar
+  insecureSkipVerify: true
+  rootCAsSecrets:
+    - foobar
+    - foobar
+  certificatesSecrets:
+    - foobar
+    - foobar
+  peerCertURI: foobar
+  dialTimeout: 42s
+  dialKeepAlive: 42s

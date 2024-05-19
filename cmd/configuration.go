@@ -4,7 +4,7 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 // TraefikCmdConfiguration wraps the static configuration and extra parameters.
@@ -27,6 +27,10 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			},
 			ServersTransport: &static.ServersTransport{
 				MaxIdleConnsPerHost: 200,
+			},
+			TCPServersTransport: &static.TCPServersTransport{
+				DialTimeout:   ptypes.Duration(30 * time.Second),
+				DialKeepAlive: ptypes.Duration(15 * time.Second),
 			},
 		},
 		ConfigFile: "",

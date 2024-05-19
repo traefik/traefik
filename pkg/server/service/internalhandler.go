@@ -10,7 +10,7 @@ import (
 
 type serviceManager interface {
 	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
-	LaunchHealthCheck()
+	LaunchHealthCheck(ctx context.Context)
 }
 
 // InternalHandlers is the internal HTTP handlers builder.

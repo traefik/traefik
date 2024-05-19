@@ -74,6 +74,14 @@ type ServersTransportListerExpansion interface{}
 // ServersTransportNamespaceLister.
 type ServersTransportNamespaceListerExpansion interface{}
 
+// ServersTransportTCPListerExpansion allows custom methods to be added to
+// ServersTransportTCPLister.
+type ServersTransportTCPListerExpansion interface{}
+
+// ServersTransportTCPNamespaceListerExpansion allows custom methods to be added to
+// ServersTransportTCPNamespaceLister.
+type ServersTransportTCPNamespaceListerExpansion interface{}
+
 // TLSOptionListerExpansion allows custom methods to be added to
 // TLSOptionLister.
 type TLSOptionListerExpansion interface{}

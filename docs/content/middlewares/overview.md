@@ -23,7 +23,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 ## Configuration Example
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # As a Docker Label
 whoami:
   #  A container that exposes an API to show its IP address
@@ -64,22 +64,6 @@ spec:
 - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
 # Apply the middleware named `foo-add-prefix` to the router named `router1`
 - "traefik.http.routers.router1.middlewares=foo-add-prefix@consulcatalog"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
-  "traefik.http.routers.router1.middlewares": "foo-add-prefix@marathon"
-}
-```
-
-```yaml tab="Rancher"
-# As a Rancher Label
-labels:
-  # Create a middleware named `foo-add-prefix`
-  - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-  # Apply the middleware named `foo-add-prefix` to the router named `router1`
-  - "traefik.http.routers.router1.middlewares=foo-add-prefix@rancher"
 ```
 
 ```yaml tab="File (YAML)"

@@ -10,11 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/label"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Configuration {
@@ -22,18 +23,18 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 	for _, i := range items {
 		svcName := provider.Normalize(i.Node + "-" + i.Name + "-" + i.ID)
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, svcName).Logger()
+		ctxSvc := logger.WithContext(ctx)
 
 		if !p.keepItem(ctxSvc, i) {
 			continue
 		}
 
-		logger := log.FromContext(ctx)
 		labels := tagsToLabels(i.Tags, p.Prefix)
 
 		config, err := label.DecodeConfiguration(labels)
 		if err != nil {
-			logger.Errorf("Failed to decode configuration: %v", err)
+			logger.Error().Err(err).Msg("Failed to decode configuration")
 			continue
 		}
 
@@ -42,7 +43,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		if len(config.TCP.Routers) > 0 || len(config.TCP.Services) > 0 {
 			tcpOrUDP = true
 			if err := p.buildTCPConfig(i, config.TCP); err != nil {
-				logger.Errorf("Failed to build TCP service configuration: %v", err)
+				logger.Error().Err(err).Msg("Failed to build TCP service configuration")
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxSvc, config.TCP)
@@ -51,7 +52,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		if len(config.UDP.Routers) > 0 || len(config.UDP.Services) > 0 {
 			tcpOrUDP = true
 			if err := p.buildUDPConfig(i, config.UDP); err != nil {
-				logger.Errorf("Failed to build UDP service configuration: %v", err)
+				logger.Error().Err(err).Msg("Failed to build UDP service configuration")
 				continue
 			}
 			provider.BuildUDPRouterConfiguration(ctxSvc, config.UDP)
@@ -67,7 +68,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 		// configure http service
 		if err := p.buildServiceConfig(i, config.HTTP); err != nil {
-			logger.Errorf("Failed to build HTTP service configuration: %v", err)
+			logger.Error().Err(err).Msg("Failed to build HTTP service configuration")
 			continue
 		}
 
@@ -88,19 +89,19 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-
-		lb := new(dynamic.TCPServersLoadBalancer)
-		lb.SetDefaults()
-
-		configuration.Services[getName(i)] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			getName(i): {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 
 	for _, service := range configuration.Services {
-		if err := p.addServerTCP(i, service.LoadBalancer); err != nil {
-			return err
+		// Leave load balancer empty when no address and allowEmptyServices = true
+		if !(i.Address == "" && p.AllowEmptyServices) {
+			if err := p.addServerTCP(i, service.LoadBalancer); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -117,8 +118,11 @@ func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguratio
 	}
 
 	for _, service := range configuration.Services {
-		if err := p.addServerUDP(i, service.LoadBalancer); err != nil {
-			return err
+		// Leave load balancer empty when no address and allowEmptyServices = true
+		if !(i.Address == "" && p.AllowEmptyServices) {
+			if err := p.addServerUDP(i, service.LoadBalancer); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -138,8 +142,11 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 	}
 
 	for _, service := range configuration.Services {
-		if err := p.addServer(i, service.LoadBalancer); err != nil {
-			return err
+		// Leave load balancer empty when no address and allowEmptyServices = true
+		if !(i.Address == "" && p.AllowEmptyServices) {
+			if err := p.addServer(i, service.LoadBalancer); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -148,20 +155,20 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 
 // TODO: check whether it is mandatory to filter again.
 func (p *Provider) keepItem(ctx context.Context, i item) bool {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	if !i.ExtraConf.Enable {
-		logger.Debug("Filtering disabled item")
+		logger.Debug().Msg("Filtering disabled item")
 		return false
 	}
 
 	matches, err := constraints.MatchTags(i.Tags, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraint expressions: %v", err)
+		logger.Error().Err(err).Msg("Error matching constraint expressions")
 		return false
 	}
 	if !matches {
-		logger.Debugf("Filtering out item due to constraints: %q", p.Constraints)
+		logger.Debug().Msgf("Filtering out item due to constraints: %q", p.Constraints)
 		return false
 	}
 

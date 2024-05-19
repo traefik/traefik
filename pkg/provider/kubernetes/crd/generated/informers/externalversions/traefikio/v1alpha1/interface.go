@@ -27,7 +27,7 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	internalinterfaces "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.
@@ -44,6 +44,8 @@ type Interface interface {
 	MiddlewareTCPs() MiddlewareTCPInformer
 	// ServersTransports returns a ServersTransportInformer.
 	ServersTransports() ServersTransportInformer
+	// ServersTransportTCPs returns a ServersTransportTCPInformer.
+	ServersTransportTCPs() ServersTransportTCPInformer
 	// TLSOptions returns a TLSOptionInformer.
 	TLSOptions() TLSOptionInformer
 	// TLSStores returns a TLSStoreInformer.
@@ -91,6 +93,11 @@ func (v *version) MiddlewareTCPs() MiddlewareTCPInformer {
 // ServersTransports returns a ServersTransportInformer.
 func (v *version) ServersTransports() ServersTransportInformer {
 	return &serversTransportInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ServersTransportTCPs returns a ServersTransportTCPInformer.
+func (v *version) ServersTransportTCPs() ServersTransportTCPInformer {
+	return &serversTransportTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // TLSOptions returns a TLSOptionInformer.

@@ -13,9 +13,30 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+  spiffe:
+    ids:
+      - foobar
+      - foobar
+    trustDomain: foobar
+tcpServersTransport:
+  dialKeepAlive: 42s
+  dialTimeout: 42s
+  terminationDelay: 42s
+  tls:
+    insecureSkipVerify: true
+    rootCAs:
+      - foobar
+      - foobar
+    spiffe:
+      ids:
+        - foobar
+        - foobar
+      trustDomain: foobar
 entryPoints:
   EntryPoint0:
     address: foobar
+    reusePort: true
+    asDefault: true
     transport:
       lifeCycle:
         requestAcceptGraceTimeout: 42s
@@ -68,51 +89,41 @@ entryPoints:
 providers:
   providersThrottleDuration: 42s
   docker:
+    exposedByDefault: true
     constraints: foobar
+    allowEmptyServices: true
+    network: foobar
+    useBindPortIP: true
     watch: true
-    endpoint: foobar
     defaultRule: foobar
+    endpoint: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
-    exposedByDefault: true
-    useBindPortIP: true
-    swarmMode: true
-    network: foobar
-    swarmModeRefreshSeconds: 42s
     httpClientTimeout: 42s
+  swarm:
+    exposedByDefault: true
+    constraints: foobar
     allowEmptyServices: true
+    network: foobar
+    useBindPortIP: true
+    watch: true
+    defaultRule: foobar
+    endpoint: foobar
+    tls:
+      ca: foobar
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+    httpClientTimeout: 42s
+    refreshSeconds: 42s
   file:
     directory: foobar
     watch: true
     filename: foobar
     debugLogGeneratedTemplate: true
-  marathon:
-    constraints: foobar
-    trace: true
-    watch: true
-    endpoint: foobar
-    defaultRule: foobar
-    exposedByDefault: true
-    dcosToken: foobar
-    tls:
-      ca: foobar
-      caOptional: true
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
-    dialerTimeout: 42s
-    responseHeaderTimeout: 42s
-    tlsHandshakeTimeout: 42s
-    keepAlive: 42s
-    forceTaskHostname: true
-    basic:
-      httpBasicAuthUser: foobar
-      httpBasicPassword: foobar
-    respectReadinessChecks: true
   kubernetesIngress:
     endpoint: foobar
     token: foobar
@@ -129,6 +140,8 @@ providers:
     throttleDuration: 42s
     allowEmptyServices: true
     allowExternalNameServices: true
+    disableIngressClassLookup: true
+    nativeLBByDefault: true
   kubernetesCRD:
     endpoint: foobar
     token: foobar
@@ -142,6 +155,7 @@ providers:
     ingressClass: foobar
     throttleDuration: 42s
     allowEmptyServices: true
+    nativeLBByDefault: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar
@@ -151,17 +165,15 @@ providers:
       - foobar
     labelSelector: foobar
     throttleDuration: 42s
+    experimentalChannel: true
+    statusAddress:
+      ip: foobar
+      hostname: foobar
+      service:
+        name: foobar
+        namespace: foobar
   rest:
     insecure: true
-  rancher:
-    constraints: foobar
-    watch: true
-    defaultRule: foobar
-    exposedByDefault: true
-    enableServiceHealthFilter: true
-    refreshSeconds: 42
-    intervalPoll: true
-    prefix: foobar
   consulCatalog:
     constraints: foobar
     endpoint:
@@ -171,7 +183,6 @@ providers:
       token: foobar
       tls:
         ca: foobar
-        caOptional: true
         cert: foobar
         key: foobar
         insecureSkipVerify: true
@@ -190,7 +201,9 @@ providers:
     connectByDefault: true
     serviceName: foobar
     watch: true
-    namespace: foobar
+    strictChecks:
+      - foobar
+      - foobar
     namespaces:
       - foobar
       - foobar
@@ -203,7 +216,6 @@ providers:
       token: foobar
       tls:
         ca: foobar
-        caOptional: true
         cert: foobar
         key: foobar
         insecureSkipVerify: true
@@ -212,7 +224,7 @@ providers:
     stale: true
     exposedByDefault: true
     refreshInterval: 42s
-    namespace: foobar
+    allowEmptyServices: true
     namespaces:
       - foobar
       - foobar
@@ -225,6 +237,7 @@ providers:
       - foobar
       - foobar
     autoDiscoverClusters: true
+    healthyTasksOnly: true
     ecsAnywhere: true
     region: foobar
     accessKeyID: foobar
@@ -237,11 +250,9 @@ providers:
     token: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
-    namespace: foobar
     namespaces:
       - foobar
       - foobar
@@ -252,7 +263,6 @@ providers:
       - foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -272,7 +282,6 @@ providers:
       - foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -291,9 +300,11 @@ providers:
     endpoint: foobar
     pollInterval: 42s
     pollTimeout: 42s
+    headers:
+      name0: foobar
+      name1: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -310,6 +321,7 @@ api:
   debug: true
   disableDashboardAd: true
 metrics:
+  addInternals: true
   prometheus:
     buckets:
       - 42
@@ -336,20 +348,6 @@ metrics:
     addRoutersLabels: true
     addServicesLabels: true
     prefix: foobar
-  influxDB:
-    address: foobar
-    protocol: foobar
-    pushInterval: 42s
-    database: foobar
-    retentionPolicy: foobar
-    username: foobar
-    password: foobar
-    addEntryPointsLabels: true
-    addRoutersLabels: true
-    addServicesLabels: true
-    additionalLabels:
-      name0: foobar
-      name1: foobar
   influxDB2:
     address: foobar
     token: foobar
@@ -362,14 +360,48 @@ metrics:
     additionalLabels:
       name0: foobar
       name1: foobar
+  otlp:
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    explicitBoundaries:
+      - 42
+      - 42
+    pushInterval: 42s
 ping:
   entryPoint: foobar
   manualRouting: true
   terminatingStatusCode: 42
 log:
   level: foobar
-  filePath: foobar
   format: foobar
+  noColor: true
+  filePath: foobar
+  maxSize: 42
+  maxAge: 42
+  maxBackups: 42
+  compress: true
 accessLog:
   filePath: foobar
   format: foobar
@@ -390,57 +422,42 @@ accessLog:
         name0: foobar
         name1: foobar
   bufferingSize: 42
+  addInternals: true
 tracing:
   serviceName: foobar
-  spanNameLimit: 42
-  jaeger:
-    samplingServerURL: foobar
-    samplingType: foobar
-    samplingParam: 42
-    localAgentHostPort: foobar
-    gen128Bit: true
-    propagation: foobar
-    traceContextHeaderName: foobar
-    collector:
+  globalAttributes:
+    name0: foobar
+    name1: foobar
+  capturedRequestHeaders:
+    - foobar
+    - foobar
+  capturedResponseHeaders:
+    - foobar
+    - foobar
+  sampleRate: 42
+  addInternals: true
+  otlp:
+    grpc:
       endpoint: foobar
-      user: foobar
-      password: foobar
-    disableAttemptReconnecting: true
-  zipkin:
-    httpEndpoint: foobar
-    sameSpan: true
-    id128Bit: true
-    sampleRate: 42
-  datadog:
-    localAgentHostPort: foobar
-    localAgentSocket: foobar
-    globalTag: foobar
-    globalTags:
-      name0: foobar
-      name1: foobar
-    debug: true
-    prioritySampling: true
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    samplingPriorityHeaderName: foobar
-    bagagePrefixHeaderName: foobar
-  instana:
-    localAgentHost: foobar
-    localAgentPort: 42
-    logLevel: foobar
-    enableAutoProfile: true
-  haystack:
-    localAgentHost: foobar
-    localAgentPort: 42
-    globalTag: foobar
-    traceIDHeaderName: foobar
-    parentIDHeaderName: foobar
-    spanIDHeaderName: foobar
-    baggagePrefixHeaderName: foobar
-  elastic:
-    serverURL: foobar
-    secretToken: foobar
-    serviceEnvironment: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
@@ -467,6 +484,7 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
+    tailscale: {}
   CertificateResolver1:
     acme:
       email: foobar
@@ -488,9 +506,7 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
-pilot:
-  token: foobar
-  dashboard: true
+    tailscale: {}
 experimental:
   plugins:
     Descriptor0:
@@ -505,4 +521,7 @@ experimental:
     LocalDescriptor1:
       moduleName: foobar
   kubernetesGateway: true
-  http3: true
+core:
+  defaultRuleSyntax: foobar
+spiffe:
+  workloadAPIAddr: foobar

@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/traefik/traefik/v2/pkg/log"
-	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/rs/zerolog/log"
+	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 const defaultBufSize = 4096
@@ -91,7 +91,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
 		connData, err := tcpmuxer.NewConnData("", conn, nil)
 		if err != nil {
-			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
+			log.Error().Err(err).Msg("Error while reading TCP connection data")
 			conn.Close()
 			return
 		}
@@ -102,7 +102,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		if handler != nil {
 			// Remove read/write deadline and delegate this to underlying TCP server.
 			if err := conn.SetDeadline(time.Time{}); err != nil {
-				log.WithoutContext().Errorf("Error while setting deadline: %v", err)
+				log.Error().Err(err).Msg("Error while setting deadline")
 			}
 
 			handler.ServeTCP(conn)
@@ -116,6 +116,22 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
+	postgres, err := isPostgres(br)
+	if err != nil {
+		conn.Close()
+		return
+	}
+
+	if postgres {
+		// Remove read/write deadline and delegate this to underlying TCP server.
+		if err := conn.SetDeadline(time.Time{}); err != nil {
+			log.Error().Err(err).Msg("Error while setting deadline")
+		}
+
+		r.servePostgres(r.GetConn(conn, getPeeked(br)))
+		return
+	}
+
 	hello, err := clientHelloInfo(br)
 	if err != nil {
 		conn.Close()
@@ -124,12 +140,12 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
 	if err := conn.SetDeadline(time.Time{}); err != nil {
-		log.WithoutContext().Errorf("Error while setting deadline: %v", err)
+		log.Error().Err(err).Msg("Error while setting deadline")
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
+		log.Error().Err(err).Msg("Error while reading TCP connection data")
 		conn.Close()
 		return
 	}
@@ -208,9 +224,9 @@ func (r *Router) acmeTLSALPNHandler() tcp.Handler {
 	})
 }
 
-// AddRoute defines a handler for the given rule.
-func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
-	return r.muxerTCP.AddRoute(rule, priority, target)
+// AddTCPRoute defines a handler for the given rule.
+func (r *Router) AddTCPRoute(rule string, priority int, target tcp.Handler) error {
+	return r.muxerTCP.AddRoute(rule, "", priority, target)
 }
 
 // AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
@@ -273,11 +289,9 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 			}
 		}
 
-		// muxerHTTPS only contains single HostSNI rules (and no other kind of rules),
-		// so there's no need for specifying a priority for them.
-		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", 0, tcpHandler)
-		if err != nil {
-			log.WithoutContext().Errorf("Error while adding route for host: %v", err)
+		rule := "HostSNI(`" + sniHost + "`)"
+		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
+			log.Error().Err(err).Msg("Error while adding route for host")
 		}
 	}
 
@@ -344,7 +358,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
-			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
+			log.Error().Err(err).Msg("Error while Peeking first byte")
 		}
 		return nil, err
 	}
@@ -370,7 +384,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.Errorf("Error while Peeking hello: %s", err)
+		log.Error().Err(err).Msg("Error while Peeking hello")
 		return &clientHello{
 			peeked: getPeeked(br),
 		}, nil
@@ -384,7 +398,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.Errorf("Error while Hello: %s", err)
+		log.Error().Err(err).Msg("Error while Hello")
 		return &clientHello{
 			isTLS:  true,
 			peeked: getPeeked(br),
@@ -413,7 +427,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 func getPeeked(br *bufio.Reader) string {
 	peeked, err := br.Peek(br.Buffered())
 	if err != nil {
-		log.Errorf("Could not get anything: %s", err)
+		log.Error().Err(err).Msg("Could not get anything")
 		return ""
 	}
 	return string(peeked)

@@ -13,6 +13,8 @@
             <main-table
               ref="mainTable"
               v-bind="getTableProps({ type: 'http-routers' })"
+              v-model:current-sort="sortBy"
+              v-model:current-sort-dir="sortDir"
               :data="allRouters.items"
               :on-load-more="handleLoadMore"
               :end-reached="allRouters.endReached"
@@ -52,7 +54,9 @@ export default defineComponent({
   data () {
     return {
       filter: '',
-      status: ''
+      status: '',
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
@@ -64,6 +68,12 @@ export default defineComponent({
     },
     'filter' () {
       this.refreshAll()
+    },
+    'sortBy' () {
+      this.refreshAll()
+    },
+    'sortDir' () {
+      this.refreshAll()
     }
   },
   beforeUnmount () {
@@ -73,8 +83,12 @@ export default defineComponent({
     ...mapActions('http', { getAllRouters: 'getAllRouters' }),
     getAllRoutersWithParams (params) {
       return this.getAllRouters({
+        serviceName: '',
+        middlewareName: '',
         query: this.filter,
         status: this.status,
+        sortBy: this.sortBy,
+        direction: this.sortDir,
         ...params
       })
     },

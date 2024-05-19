@@ -32,7 +32,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 type key string
@@ -65,14 +65,14 @@ func FromContext(ctx context.Context) (Capture, error) {
 // Capture is the object populated by the capture middleware,
 // holding probes that allow to gather information about the request and response.
 type Capture struct {
-	rr *readCounter
-	rw responseWriter
+	rr  *readCounter
+	crw *captureResponseWriter
 }
 
 // NeedsReset returns whether the given http.ResponseWriter is the capture's probe.
 func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
 	// This comparison is naive.
-	return c.rw != rw
+	return c.crw != rw
 }
 
 // Reset returns a new handler that renews the Capture's probes, and inserts
@@ -93,17 +93,17 @@ func (c *Capture) renew(rw http.ResponseWriter, req *http.Request) (http.Respons
 		c.rr = readCounter
 		newReq.Body = readCounter
 	}
-	c.rw = newResponseWriter(rw)
+	c.crw = &captureResponseWriter{rw: rw}
 
-	return c.rw, newReq
+	return c.crw, newReq
 }
 
 func (c *Capture) ResponseSize() int64 {
-	return c.rw.Size()
+	return c.crw.Size()
 }
 
 func (c *Capture) StatusCode() int {
-	return c.rw.Status()
+	return c.crw.Status()
 }
 
 // RequestSize returns the size of the request's body if it applies,
@@ -132,22 +132,7 @@ func (r *readCounter) Close() error {
 	return r.source.Close()
 }
 
-var _ middlewares.Stateful = &responseWriterWithCloseNotify{}
-
-type responseWriter interface {
-	http.ResponseWriter
-	Size() int64
-	Status() int
-}
-
-func newResponseWriter(rw http.ResponseWriter) responseWriter {
-	capt := &captureResponseWriter{rw: rw}
-	if _, ok := rw.(http.CloseNotifier); !ok {
-		return capt
-	}
-
-	return &responseWriterWithCloseNotify{capt}
-}
+var _ middlewares.Stateful = &captureResponseWriter{}
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks response status and size.
@@ -197,14 +182,4 @@ func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 	}
 
 	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
-}
-
-type responseWriterWithCloseNotify struct {
-	*captureResponseWriter
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
-func (r *responseWriterWithCloseNotify) CloseNotify() <-chan bool {
-	return r.rw.(http.CloseNotifier).CloseNotify()
 }

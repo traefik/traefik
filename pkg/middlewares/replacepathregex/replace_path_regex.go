@@ -8,12 +8,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/replacepath"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/middlewares/replacepath"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "ReplacePathRegex"
@@ -28,7 +27,7 @@ type replacePathRegex struct {
 
 // New creates a new replace path regex middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	exp, err := regexp.Compile(strings.TrimSpace(config.Regex))
 	if err != nil {
@@ -43,8 +42,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex
 	}, nil
 }
 
-func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return rp.name, tracing.SpanKindNoneEnum
+func (rp *replacePathRegex) GetTracingInformation() (string, string, trace.SpanKind) {
+	return rp.name, typeName, trace.SpanKindInternal
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -63,7 +62,8 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		var err error
 		req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 		if err != nil {
-			log.FromContext(middlewares.GetLoggerCtx(context.Background(), rp.name, typeName)).Error(err)
+			middlewares.GetLogger(context.Background(), rp.name, typeName).Error().Err(err).Send()
+			observability.SetStatusErrorf(req.Context(), err.Error())
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
