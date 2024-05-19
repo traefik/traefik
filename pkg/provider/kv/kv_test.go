@@ -47,6 +47,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/healthCheck/port":                              "42",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/interval":                          "1s",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/timeout":                           "1s",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/recheck":                           "1s",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/hostname":                          "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1":                     "foobar",
@@ -653,6 +654,7 @@ func Test_buildConfiguration(t *testing.T) {
 							Port:            42,
 							Interval:        ptypes.Duration(time.Second),
 							Timeout:         ptypes.Duration(time.Second),
+							Recheck:         ptypes.Duration(time.Second),
 							Hostname:        "foobar",
 							FollowRedirects: func(v bool) *bool { return &v }(true),
 							Headers: map[string]string{
