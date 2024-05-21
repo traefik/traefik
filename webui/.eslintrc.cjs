@@ -9,7 +9,6 @@ module.exports = {
   env: {
     node: true,
     browser: true,
-    mocha: true,
     'vue/setup-compiler-macros': true
   },
 
@@ -18,14 +17,12 @@ module.exports = {
     // consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
     'plugin:vue/vue3-essential',
     'plugin:vue/vue3-recommended',
-    'plugin:mocha/recommended',
     'standard'
   ],
 
   // required to lint *.vue files
   plugins: [
     'vue',
-    'mocha'
   ],
 
   globals: {
