@@ -47,5 +47,8 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webui/yarn.lock
 
+      - name: Install dependencies
+        run: yarn --cwd webui install
+
       - name: UI unit tests
         run: make test-ui-unit
