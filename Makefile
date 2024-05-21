@@ -88,7 +88,7 @@ crossbinary-default: generate generate-webui
 
 .PHONY: test
 #? test: Run the unit and integration tests
-test: test-unit test-integration
+test: test-unit test-integration test-ui-unit
 
 .PHONY: test-unit
 #? test-unit: Run the unit tests
@@ -99,6 +99,11 @@ test-unit:
 #? test-integration: Run the integration tests
 test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
+
+.PHONY: test-ui-unit
+#? test-unit: Run the unit tests for the webui
+test-ui-unit:
+	yarn --cwd webui test:unit:ci
 
 .PHONY: pull-images
 #? pull-images: Pull all Docker images to avoid timeout during integration tests

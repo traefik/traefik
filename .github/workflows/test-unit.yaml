@@ -7,6 +7,7 @@ on:
 
 env:
   GO_VERSION: '1.22'
+  NODE_VERSION: '20.11.x'
 
 jobs:
 
@@ -29,3 +30,22 @@ jobs:
 
       - name: Tests
         run: make test-unit
+
+  test-ui-unit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: webui/yarn.lock
+
+      - name: UI unit tests
+        run: make test-ui-unit
