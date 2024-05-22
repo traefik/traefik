@@ -101,7 +101,7 @@ test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 .PHONY: test-ui-unit
-#? test-unit: Run the unit tests for the webui
+#? test-ui-unit: Run the unit tests for the webui
 test-ui-unit:
 	yarn --cwd webui test:unit:ci
 
