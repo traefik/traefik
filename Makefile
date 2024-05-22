@@ -103,6 +103,7 @@ test-integration: binary
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui
 test-ui-unit:
+	yarn --cwd webui install
 	yarn --cwd webui test:unit:ci
 
 .PHONY: pull-images
