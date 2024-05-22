@@ -1,0 +1,127 @@
+# Global 
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+# EntryPoints 
+entryPoints:
+  web:
+    address: :80
+#  websecure:
+#    address: :443
+
+# dynamic configuration backend
+providers:
+  file:
+    directory: /etc/traefik/conf.d
+    watch: true
+
+# Traefik logs
+# Enabled by default and log to stdout
+log:
+  # Log level
+  #
+  # Optional
+  # Default: "ERROR" 
+  # set to DEBUG to view verbose logs
+  #
+  level: ERROR
+
+  # Sets the filepath for the traefik log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+  # comment to disable logging to file and only log to stdout
+  filePath: /var/log/traefik/server.log
+
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+#  format: json
+
+
+
+# Access logs
+
+# Enable access logs
+# By default it will write to stdout and produce logs in the textual
+# Common Log Format (CLF), extended with additional fields.
+#
+# Optional
+#
+accessLog:
+  # Sets the file path for the access log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+  filePath: /var/log/traefik/access.log
+
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+#  format: json
+
+
+# API and dashboard configuration
+# Enable API and dashboard
+#
+# Optional
+#
+#api:
+  # Enable the API in insecure mode
+  #
+  # Optional
+  # Default: false
+  #
+#  insecure: true
+
+  # Enabled Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+#  dashboard: false
+
+
+# Ping configuration
+# Enable ping
+#ping:
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+#  entryPoint: traefik
+
+# Docker configuration backend
+#providers:
+  # Enable Docker configuration backend
+#  docker:
+    # Docker server endpoint. Can be a tcp or a unix socket endpoint.
+    #
+    # Required
+    # Default: "unix:///var/run/docker.sock"
+    #
+#    endpoint: tcp://10.10.10.10:2375
+
+    # Default host rule.
+    #
+    # Optional
+    # Default: "Host(`{{ normalize .Name }}`)"
+    #
+#    defaultRule: Host(`{{ normalize .Name }}.docker.localhost`)
+
+    # Expose containers by default in traefik
+    #
+    # Optional
+    # Default: true
+    #
+#    exposedByDefault: false
