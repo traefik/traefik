@@ -5,7 +5,7 @@ const { configure } = require('quasar/wrappers')
 
 module.exports = configure(function (ctx) {
   return {
-   eslint: {
+    eslint: {
       warnings: true,
       errors: true
     },
@@ -122,10 +122,10 @@ module.exports = configure(function (ctx) {
     build: {
       // Needed to have relative assets in the index.html
       // https://github.com/quasarframework/quasar/issues/8513#issuecomment-1127654470
-      extendViteConf(viteConf, {isServer, isClient}) {
-        viteConf.base = "";
+      extendViteConf (viteConf, { isServer, isClient }) {
+        viteConf.base = ''
       },
-     viteVuePluginOptions: {
+      viteVuePluginOptions: {
         template: {
           compilerOptions: {
             isCustomElement: (tag) => tag.startsWith('hub-')
@@ -139,13 +139,13 @@ module.exports = configure(function (ctx) {
       publicPath: process.env.APP_PUBLIC_PATH || '',
       env: process.env.APP_ENV === 'development'
         ? { // staging:
-          APP_ENV: process.env.APP_ENV,
-          APP_API: process.env.APP_API || '/api'
-        }
+            APP_ENV: process.env.APP_ENV,
+            APP_API: process.env.APP_API || '/api'
+          }
         : { // production:
-          APP_ENV: process.env.APP_ENV,
-          APP_API: process.env.APP_API || '/api'
-        },
+            APP_ENV: process.env.APP_ENV,
+            APP_API: process.env.APP_API || '/api'
+          },
       uglifyOptions: {
         compress: {
           drop_console: process.env.APP_ENV === 'production',
@@ -173,7 +173,7 @@ module.exports = configure(function (ctx) {
     animations: [],
 
     ssr: {
-      pwa: false,
+      pwa: false
     },
 
     pwa: {
@@ -201,29 +201,29 @@ module.exports = configure(function (ctx) {
         theme_color: '#027be3',
         icons: [
           {
-            'src': 'icons/icon-128x128.png',
-            'sizes': '128x128',
-            'type': 'image/png'
+            src: 'icons/icon-128x128.png',
+            sizes: '128x128',
+            type: 'image/png'
           },
           {
-            'src': 'icons/icon-192x192.png',
-            'sizes': '192x192',
-            'type': 'image/png'
+            src: 'icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
           },
           {
-            'src': 'icons/icon-256x256.png',
-            'sizes': '256x256',
-            'type': 'image/png'
+            src: 'icons/icon-256x256.png',
+            sizes: '256x256',
+            type: 'image/png'
           },
           {
-            'src': 'icons/icon-384x384.png',
-            'sizes': '384x384',
-            'type': 'image/png'
+            src: 'icons/icon-384x384.png',
+            sizes: '384x384',
+            type: 'image/png'
           },
           {
-            'src': 'icons/icon-512x512.png',
-            'sizes': '512x512',
-            'type': 'image/png'
+            src: 'icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
           }
         ]
       }

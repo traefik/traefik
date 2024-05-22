@@ -339,6 +339,9 @@ Enable metrics on services. (Default: ```true```)
 `--metrics.otlp.explicitboundaries`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.075000, 0.100000, 0.250000, 0.500000, 0.750000, 1.000000, 2.500000, 5.000000, 7.500000, 10.000000```)
 
+`--metrics.otlp.grpc`:  
+gRPC configuration for the OpenTelemetry collector. (Default: ```false```)
+
 `--metrics.otlp.grpc.endpoint`:  
 Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
 
@@ -359,6 +362,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `--metrics.otlp.grpc.tls.key`:  
 TLS key
+
+`--metrics.otlp.http`:  
+HTTP configuration for the OpenTelemetry collector. (Default: ```false```)
 
 `--metrics.otlp.http.endpoint`:  
 Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
@@ -714,6 +720,9 @@ Kubernetes label selector to use.
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetescrd.nativelbbydefault`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
+
 `--providers.kubernetescrd.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
 
@@ -794,6 +803,9 @@ Kubernetes Ingress label selector to use.
 
 `--providers.kubernetesingress.namespaces`:  
 Kubernetes namespaces.
+
+`--providers.kubernetesingress.nativelbbydefault`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
@@ -1050,6 +1062,9 @@ Defines additional attributes (key:value) on all spans.
 `--tracing.otlp`:  
 Settings for OpenTelemetry. (Default: ```false```)
 
+`--tracing.otlp.grpc`:  
+gRPC configuration for the OpenTelemetry collector. (Default: ```false```)
+
 `--tracing.otlp.grpc.endpoint`:  
 Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
 
@@ -1070,6 +1085,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `--tracing.otlp.grpc.tls.key`:  
 TLS key
+
+`--tracing.otlp.http`:  
+HTTP configuration for the OpenTelemetry collector. (Default: ```false```)
 
 `--tracing.otlp.http.endpoint`:  
 Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)

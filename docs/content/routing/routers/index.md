@@ -368,7 +368,7 @@ Path are always starting with a `/`, except for `PathRegexp`.
     [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity):
 
     ```yaml
-    HostRegexp(`(?i)^/products`)
+    PathRegexp(`(?i)^/products`)
     ```
 
 #### Query and QueryRegexp
@@ -827,7 +827,7 @@ http:
 ```
 
 !!! info "Multiple Hosts in a Rule"
-    The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
+    The rule ```Host(`test1.example.com`) || Host(`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
 
 #### `domains`
 
