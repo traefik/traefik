@@ -577,6 +577,11 @@ func (in *LoadBalancerSpec) DeepCopyInto(out *LoadBalancerSpec) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.NativeLB != nil {
+		in, out := &in.NativeLB, &out.NativeLB
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
@@ -1333,6 +1338,11 @@ func (in *ServiceTCP) DeepCopyInto(out *ServiceTCP) {
 		*out = new(dynamic.ProxyProtocol)
 		**out = **in
 	}
+	if in.NativeLB != nil {
+		in, out := &in.NativeLB, &out.NativeLB
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
@@ -1353,6 +1363,11 @@ func (in *ServiceUDP) DeepCopyInto(out *ServiceUDP) {
 	if in.Weight != nil {
 		in, out := &in.Weight, &out.Weight
 		*out = new(int)
+		**out = **in
+	}
+	if in.NativeLB != nil {
+		in, out := &in.NativeLB, &out.NativeLB
+		*out = new(bool)
 		**out = **in
 	}
 	return
