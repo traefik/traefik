@@ -998,7 +998,7 @@ func (p *Provider) loadHTTPService(client Client, route *gatev1.HTTPRoute, backe
 	if group != groupCore || kind != "Service" {
 		// TODO support cross namespace through ReferencePolicy.
 		if namespaceStr != route.Namespace {
-			return "", nil, &metav1.Condition{
+			return serviceName, nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
