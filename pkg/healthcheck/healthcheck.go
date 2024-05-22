@@ -23,9 +23,10 @@ import (
 
 const modeGRPC = "grpc"
 
-// StatusSetter should be implemented by a service that, when the status of a
+// StatusHanlder should be implemented by a service that, when the status of a
 // registered target change, needs to be notified of that change.
-type StatusSetter interface {
+type StatusHandler interface {
+	GetStatus(ctx context.Context, childName string) bool
 	SetStatus(ctx context.Context, childName string, up bool)
 }
 
@@ -41,12 +42,13 @@ type metricsHealthCheck interface {
 }
 
 type ServiceHealthChecker struct {
-	balancer StatusSetter
+	balancer StatusHandler
 	info     *runtime.ServiceInfo
 
 	config   *dynamic.ServerHealthCheck
 	interval time.Duration
 	timeout  time.Duration
+	recheck  time.Duration
 
 	metrics metricsHealthCheck
 
@@ -54,7 +56,7 @@ type ServiceHealthChecker struct {
 	targets map[string]*url.URL
 }
 
-func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL) *ServiceHealthChecker {
+func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusHandler, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL) *ServiceHealthChecker {
 	logger := log.Ctx(ctx)
 
 	interval := time.Duration(config.Interval)
@@ -67,6 +69,12 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 	if timeout <= 0 {
 		logger.Error().Msg("Health check timeout smaller than zero")
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
+	}
+
+	recheck := time.Duration(config.Recheck)
+	if recheck <= 0 {
+		logger.Error().Msg("Health check recheck interval smaller than zero")
+		recheck = time.Duration(dynamic.DefaultHealthCheckRecheck)
 	}
 
 	client := &http.Client{
@@ -85,6 +93,7 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		config:   config,
 		interval: interval,
 		timeout:  timeout,
+		recheck:  recheck,
 		targets:  targets,
 		client:   client,
 		metrics:  metrics,
@@ -126,6 +135,8 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 					serverUpMetricValue = float64(0)
 				}
 
+				current := shc.balancer.GetStatus(ctx, proxyName)
+
 				shc.balancer.SetStatus(ctx, proxyName, up)
 
 				statusStr := runtime.StatusDown
@@ -138,6 +149,25 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 				shc.metrics.ServiceServerUpGauge().
 					With("service", proxyName, "url", target.String()).
 					Set(serverUpMetricValue)
+
+				if up && !current {
+					// service was down and is now up
+					ticker.Stop()
+					log.Ctx(ctx).Debug().
+						Str("targetURL", target.String()).
+						Msg("Health check succeeded. Resetting healthcheck interval")
+					ticker = time.NewTicker(shc.interval)
+				}
+
+				if !up && current {
+					// service was up and is now down
+					ticker.Stop()
+					log.Ctx(ctx).Debug().
+						Str("targetURL", target.String()).
+						Msg("Health check failed. Setting healthcheck interval to recheck interval")
+					ticker = time.NewTicker(shc.recheck)
+				}
+
 			}
 		}
 	}
