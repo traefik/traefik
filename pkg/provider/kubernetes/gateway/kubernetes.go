@@ -843,46 +843,52 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 		return nil, nil
 	}
 
-	var listenerConditions []metav1.Condition
 	routeStatuses := map[ktypes.NamespacedName]gatev1.RouteParentStatus{}
 	for _, route := range routes {
+		routeNsName := ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}
+
 		parentRef, ok := shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec)
 		if !ok {
+			// TODO: to add an invalid HTTPRoute status when no parent is matching,
+			//   we have to start the attachment evaluation from the route not from the listeners.
+			//   This will fix the HTTPRouteInvalidParentRefNotMatchingSectionName test.
 			continue
+		}
+
+		routeConditions := []metav1.Condition{
+			{
+				Type:               string(gatev1.RouteConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonAccepted),
+			},
+			{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteConditionResolvedRefs),
+			},
 		}
 
 		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
 		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
+			// TODO update the corresponding route parent status.
 			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
 			continue
 		}
 
 		hostRule, err := hostRule(hostnames)
 		if err != nil {
-			listenerConditions = append(listenerConditions, metav1.Condition{
-				Type:               string(gatev1.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "InvalidRouteHostname", // TODO check the spec if a proper reason is introduced at some point
-				Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", route.Name, err),
-			})
+			// TODO update the route status condition.
 			continue
 		}
 
 		for _, routeRule := range route.Spec.Rules {
 			rule, err := extractRule(routeRule, hostRule)
 			if err != nil {
-				// update "ResolvedRefs" status true with "UnsupportedPathOrHeaderType" reason
-				listenerConditions = append(listenerConditions, metav1.Condition{
-					Type:               string(gatev1.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: gateway.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "UnsupportedPathOrHeaderType", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot generate rule: %v", route.Name, err),
-				})
+				// TODO update the route status condition.
 				continue
 			}
 
@@ -893,7 +899,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			}
 
 			if listener.Protocol == gatev1.HTTPSProtocolType && listener.TLS != nil {
-				// TODO support let's encrypt
+				// TODO support let's encrypt.
 				router.TLS = &dynamic.RouterTLSConfig{}
 			}
 
@@ -901,33 +907,13 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			routerName := route.Name + "-" + gateway.Name + "-" + ep
 			routerKey, err := makeRouterKey(router.Rule, makeID(route.Namespace, routerName))
 			if err != nil {
-				// update "ResolvedRefs" status true with "DroppedRoutes" reason
-				listenerConditions = append(listenerConditions, metav1.Condition{
-					Type:               string(gatev1.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: gateway.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "InvalidRouterKey", // Should never happen
-					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
-				})
-
-				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				// TODO update the route status condition.
 				continue
 			}
 
 			middlewares, err := p.loadMiddlewares(listener, route.Namespace, routerKey, routeRule.Filters)
 			if err != nil {
-				// update "ResolvedRefs" status true with "InvalidFilters" reason
-				listenerConditions = append(listenerConditions, metav1.Condition{
-					Type:               string(gatev1.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: gateway.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "InvalidFilters", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("Cannot load HTTPRoute filter %s/%s: %v", route.Namespace, route.Name, err),
-				})
-
-				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				// TODO update the route status condition.
 				continue
 			}
 
@@ -948,32 +934,35 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef) {
 				router.Service = string(routeRule.BackendRefs[0].Name)
 			} else {
-				wrrService, subServices, err := p.loadServices(client, route.Namespace, routeRule.BackendRefs)
-				if err != nil {
-					// update "ResolvedRefs" status true with "DroppedRoutes" reason
-					listenerConditions = append(listenerConditions, metav1.Condition{
-						Type:               string(gatev1.ListenerConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: gateway.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             "InvalidBackendRefs", // TODO check the spec if a proper reason is introduced at some point
-						Message:            fmt.Sprintf("Cannot load HTTPRoute service %s/%s: %v", route.Namespace, route.Name, err),
-					})
+				var wrr dynamic.WeightedRoundRobin
+				for _, backendRef := range routeRule.BackendRefs {
+					weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 
-					// TODO update the RouteStatus condition / deduplicate conditions on listener
-					continue
-				}
-
-				for svcName, svc := range subServices {
-					if svc != nil {
-						conf.HTTP.Services[svcName] = svc
+					name, svc, errCondition := p.loadHTTPService(client, route, backendRef)
+					if errCondition != nil {
+						routeConditions = appendCondition(routeConditions, *errCondition)
+						wrr.Services = append(wrr.Services, dynamic.WRRService{
+							Name:   name,
+							Weight: weight,
+							Status: ptr.To(500),
+						})
+						continue
 					}
+
+					if svc != nil {
+						conf.HTTP.Services[name] = svc
+					}
+
+					wrr.Services = append(wrr.Services, dynamic.WRRService{
+						Name:   name,
+						Weight: weight,
+					})
 				}
 
-				serviceName := provider.Normalize(routerKey + "-wrr")
-				conf.HTTP.Services[serviceName] = wrrService
+				wrrName := provider.Normalize(routerKey + "-wrr")
+				conf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
 
-				router.Service = serviceName
+				router.Service = wrrName
 			}
 
 			rt := &router
@@ -983,159 +972,85 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			conf.HTTP.Routers[routerKey] = rt
 		}
 
-		routeStatuses[ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}] = gatev1.RouteParentStatus{
+		routeStatuses[routeNsName] = gatev1.RouteParentStatus{
 			ParentRef:      parentRef,
 			ControllerName: controllerName,
-			Conditions: []metav1.Condition{
-				{
-					Type:               string(gatev1.RouteConditionAccepted),
-					Status:             metav1.ConditionTrue,
-					ObservedGeneration: route.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.RouteReasonAccepted),
-				},
-				{
-					Type:               string(gatev1.RouteConditionResolvedRefs),
-					Status:             metav1.ConditionTrue,
-					ObservedGeneration: route.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.RouteConditionResolvedRefs),
-				},
-			},
+			Conditions:     routeConditions,
 		}
 	}
 
-	return listenerConditions, routeStatuses
+	return nil, routeStatuses
 }
 
-// loadServices is generating a WRR service, even when there is only one target.
-func (p *Provider) loadServices(client Client, namespace string, backendRefs []gatev1.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
-	services := map[string]*dynamic.Service{}
-
-	wrrSvc := &dynamic.Service{
-		Weighted: &dynamic.WeightedRoundRobin{
-			Services: []dynamic.WRRService{},
-		},
+// loadHTTPService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
+// Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
+func (p *Provider) loadHTTPService(client Client, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+	group := groupCore
+	if backendRef.Group != nil && *backendRef.Group != "" {
+		group = string(*backendRef.Group)
 	}
 
-	for _, backendRef := range backendRefs {
-		if backendRef.Group == nil || backendRef.Kind == nil {
-			// Should not happen as this is validated by kubernetes
-			continue
-		}
+	kind := ptr.Deref(backendRef.Kind, "Service")
+	namespace := ptr.Deref(backendRef.Namespace, gatev1.Namespace(route.Namespace))
+	namespaceStr := string(namespace)
+	serviceName := provider.Normalize(makeID(namespaceStr, string(backendRef.Name)))
 
-		if isInternalService(backendRef.BackendRef) {
-			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.BackendRef.Name)
-		}
-
-		weight := int(ptr.Deref(backendRef.Weight, 1))
-
-		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
-			if backendRef.Namespace != nil && string(*backendRef.Namespace) != namespace {
-				// TODO: support backend reference grant.
-				return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
+	if group != groupCore || kind != "Service" {
+		// TODO support cross namespace through ReferencePolicy.
+		if namespaceStr != route.Namespace {
+			return serviceName, nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonRefNotPermitted),
+				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s namespace not allowed", group, kind, namespace, backendRef.Name),
 			}
-
-			name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
-			if err != nil {
-				return nil, nil, fmt.Errorf("unable to load HTTPBackendRef %s/%s/%s: %w", *backendRef.Group, *backendRef.Kind, backendRef.Name, err)
-			}
-
-			services[name] = service
-			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: name, Weight: &weight})
-			continue
 		}
 
-		lb := &dynamic.ServersLoadBalancer{}
-		lb.SetDefaults()
-
-		svc := dynamic.Service{LoadBalancer: lb}
-
-		// TODO support cross namespace through ReferencePolicy
-		service, exists, err := client.GetService(namespace, string(backendRef.Name))
+		name, service, err := p.loadHTTPBackendRef(namespaceStr, backendRef)
 		if err != nil {
-			return nil, nil, err
-		}
-
-		if !exists {
-			return nil, nil, errors.New("service not found")
-		}
-
-		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
-			// If the port is unspecified and the backend is a Service
-			// object consisting of multiple port definitions, the route
-			// must be dropped from the Gateway. The controller should
-			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason. The gateway status for this route
-			// should be updated with a condition that describes the error
-			// more specifically.
-			log.Error().Msg("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
-			continue
-		}
-
-		var portSpec corev1.ServicePort
-		var match bool
-
-		for _, p := range service.Spec.Ports {
-			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
-				portSpec = p
-				match = true
-				break
+			return serviceName, nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonInvalidKind),
+				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
 			}
 		}
 
-		if !match {
-			return nil, nil, errors.New("service port not found")
-		}
-
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
-		}
-
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
-			}
-
-			protocol := getProtocol(portSpec)
-
-			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(addr.IP, portStr)),
-				})
-			}
-		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
+		return name, service, nil
 	}
 
-	if len(wrrSvc.Weighted.Services) == 0 {
-		return nil, nil, errors.New("no service has been created")
+	port := ptr.Deref(backendRef.Port, gatev1.PortNumber(0))
+	if port == 0 {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
+		}
 	}
 
-	return wrrSvc, services, nil
+	portStr := strconv.FormatInt(int64(port), 10)
+	serviceName = provider.Normalize(serviceName + "-" + portStr)
+
+	lb, err := loadHTTPServers(client, namespaceStr, backendRef)
+	if err != nil {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+		}
+	}
+
+	return serviceName, &dynamic.Service{LoadBalancer: lb}, nil
 }
 
 func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
@@ -1222,6 +1137,72 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	}
 
 	return filterFunc(string(extensionRef.Name), namespace)
+}
+
+// TODO support cross namespace through ReferencePolicy.
+func loadHTTPServers(client Client, namespace string, backendRef gatev1.HTTPBackendRef) (*dynamic.ServersLoadBalancer, error) {
+	service, exists, err := client.GetService(namespace, string(backendRef.Name))
+	if err != nil {
+		return nil, fmt.Errorf("getting service: %w", err)
+	}
+	if !exists {
+		return nil, errors.New("service not found")
+	}
+
+	var portSpec corev1.ServicePort
+	var match bool
+
+	for _, p := range service.Spec.Ports {
+		if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
+			portSpec = p
+			match = true
+			break
+		}
+	}
+	if !match {
+		return nil, errors.New("service port not found")
+	}
+
+	endpoints, endpointsExists, err := client.GetEndpoints(namespace, string(backendRef.Name))
+	if err != nil {
+		return nil, fmt.Errorf("getting endpoints: %w", err)
+	}
+	if !endpointsExists {
+		return nil, errors.New("endpoints not found")
+	}
+
+	if len(endpoints.Subsets) == 0 {
+		return nil, errors.New("subset not found")
+	}
+
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+
+	var port int32
+	var portStr string
+	for _, subset := range endpoints.Subsets {
+		for _, p := range subset.Ports {
+			if portSpec.Name == p.Name {
+				port = p.Port
+				break
+			}
+		}
+
+		if port == 0 {
+			return nil, errors.New("cannot define a port")
+		}
+
+		protocol := getProtocol(portSpec)
+
+		portStr = strconv.FormatInt(int64(port), 10)
+		for _, addr := range subset.Addresses {
+			lb.Servers = append(lb.Servers, dynamic.Server{
+				URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(addr.IP, portStr)),
+			})
+		}
+	}
+
+	return lb, nil
 }
 
 // loadTCPServices is generating a WRR service, even when there is only one target.
@@ -2324,4 +2305,15 @@ func pointerEquals[T comparable](p1, p2 *T) bool {
 	}
 
 	return val1 == val2
+}
+
+func appendCondition(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
+	res := []metav1.Condition{condition}
+	for _, c := range conditions {
+		if c.Type != condition.Type {
+			res = append(res, c)
+		}
+	}
+
+	return res
 }
