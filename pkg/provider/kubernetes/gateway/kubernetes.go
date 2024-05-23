@@ -1894,6 +1894,8 @@ func extractRule(routeRule gatev1.HTTPRouteRule, hostRule string) (string, error
 				matchRules = append(matchRules, fmt.Sprintf("Path(`%s`)", *match.Path.Value))
 			case gatev1.PathMatchPathPrefix:
 				matchRules = append(matchRules, buildPathMatchPathPrefixRule(*match.Path.Value))
+			case gatev1.PathMatchRegularExpression:
+				matchRules = append(matchRules, fmt.Sprintf("PathRegexp(`%s`)", *match.Path.Value))
 			default:
 				return "", fmt.Errorf("unsupported path match type %s", *match.Path.Type)
 			}
