@@ -1,0 +1,27 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    priority: 12
+
+    services:
+    - name: external-svc
+      port: 443
+      healthCheck:
+        path: /health1
+        interval: 15s
+    - name: external-svc-with-https
+      port: 443
+      healthCheck:
+        path: /health2
+        interval: 20s
