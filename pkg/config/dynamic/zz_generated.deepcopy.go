@@ -2187,6 +2187,11 @@ func (in *WRRService) DeepCopyInto(out *WRRService) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.Status != nil {
+		in, out := &in.Status, &out.Status
+		*out = new(int)
+		**out = **in
+	}
 	return
 }
 

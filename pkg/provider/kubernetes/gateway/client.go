@@ -14,6 +14,7 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -51,6 +52,7 @@ type Client interface {
 	GetGatewayClasses() ([]*gatev1.GatewayClass, error)
 	UpdateGatewayStatus(gateway *gatev1.Gateway, gatewayStatus gatev1.GatewayStatus) error
 	UpdateGatewayClassStatus(gatewayClass *gatev1.GatewayClass, condition metav1.Condition) error
+	UpdateHTTPRouteStatus(ctx context.Context, gateway *gatev1.Gateway, nsName ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error
 	GetGateways() []*gatev1.Gateway
 	GetHTTPRoutes(namespaces []string) ([]*gatev1.HTTPRoute, error)
 	GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error)
@@ -384,7 +386,7 @@ func (c *clientWrapper) GetGateways() []*gatev1.Gateway {
 	var result []*gatev1.Gateway
 
 	for ns, factory := range c.factoriesGateway {
-		gateways, err := factory.Gateway().V1().Gateways().Lister().List(labels.Everything())
+		gateways, err := factory.Gateway().V1().Gateways().Lister().Gateways(ns).List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list Gateways in namespace %s", ns)
 			continue
@@ -450,6 +452,46 @@ func (c *clientWrapper) UpdateGatewayStatus(gateway *gatev1.Gateway, gatewayStat
 		return fmt.Errorf("failed to update Gateway %q status: %w", gateway.Name, err)
 	}
 
+	return nil
+}
+
+func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, gateway *gatev1.Gateway, nsName ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error {
+	if !c.isWatchedNamespace(nsName.Namespace) {
+		return fmt.Errorf("updating HTTPRoute status %s/%s: namespace is not within watched namespaces", nsName.Namespace, nsName.Name)
+	}
+
+	route, err := c.factoriesGateway[c.lookupNamespace(nsName.Namespace)].Gateway().V1().HTTPRoutes().Lister().HTTPRoutes(nsName.Namespace).Get(nsName.Name)
+	if err != nil {
+		return fmt.Errorf("getting HTTPRoute %s/%s: %w", nsName.Namespace, nsName.Name, err)
+	}
+
+	var statuses []gatev1.RouteParentStatus
+	for _, status := range route.Status.Parents {
+		if status.ControllerName != controllerName {
+			statuses = append(statuses, status)
+			continue
+		}
+		if status.ParentRef.Namespace != nil && string(*status.ParentRef.Namespace) != gateway.Namespace {
+			statuses = append(statuses, status)
+			continue
+		}
+		if string(status.ParentRef.Name) != gateway.Name {
+			statuses = append(statuses, status)
+			continue
+		}
+	}
+	statuses = append(statuses, status.Parents...)
+
+	route = route.DeepCopy()
+	route.Status = gatev1.HTTPRouteStatus{
+		RouteStatus: gatev1.RouteStatus{
+			Parents: statuses,
+		},
+	}
+
+	if _, err := c.csGateway.GatewayV1().HTTPRoutes(nsName.Namespace).UpdateStatus(ctx, route, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("updating HTTPRoute %s/%s status: %w", nsName.Namespace, nsName.Name, err)
+	}
 	return nil
 }
 
