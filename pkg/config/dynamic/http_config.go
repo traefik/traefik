@@ -128,6 +128,10 @@ type WeightedRoundRobin struct {
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+
+	// Status defines an HTTP status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific HTTP status to be returned.
+	Status *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // SetDefaults Default values for a WRRService.

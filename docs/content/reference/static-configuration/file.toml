@@ -124,6 +124,7 @@
     allowEmptyServices = true
     allowExternalNameServices = true
     disableIngressClassLookup = true
+    nativeLBByDefault = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -139,6 +140,7 @@
     ingressClass = "foobar"
     throttleDuration = "42s"
     allowEmptyServices = true
+    nativeLBByDefault = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

@@ -52,6 +52,7 @@ type Provider struct {
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	DisableIngressClassLookup bool                `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
+	NativeLBByDefault         bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -276,9 +277,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule:     "PathPrefix(`/`)",
-				Priority: math.MinInt32,
-				Service:  "default-backend",
+				Rule:       "PathPrefix(`/`)",
+				RuleSyntax: "v3",
+				Priority:   math.MinInt32,
+				Service:    "default-backend",
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
@@ -571,6 +573,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return nil, err
 	}
 
+	nativeLB := p.NativeLBByDefault
+
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
 
@@ -582,19 +586,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
 
-		if svcConfig.Service.NativeLB {
-			address, err := getNativeServiceAddress(*service, portSpec)
-			if err != nil {
-				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
-			}
-
-			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
-
-			svc.LoadBalancer.Servers = []dynamic.Server{
-				{URL: fmt.Sprintf("%s://%s", protocol, address)},
-			}
-
-			return svc, nil
+		if svcConfig.Service.NativeLB != nil {
+			nativeLB = *svcConfig.Service.NativeLB
 		}
 
 		if svcConfig.Service.NodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
@@ -639,6 +632,20 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 		svc.LoadBalancer.Servers = []dynamic.Server{
 			{URL: fmt.Sprintf("%s://%s", protocol, hostPort)},
+		}
+
+		return svc, nil
+	}
+
+	if nativeLB {
+		address, err := getNativeServiceAddress(*service, portSpec)
+		if err != nil {
+			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+		}
+
+		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+		svc.LoadBalancer.Servers = []dynamic.Server{
+			{URL: fmt.Sprintf("%s://%s", protocol, address)},
 		}
 
 		return svc, nil
