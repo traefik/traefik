@@ -230,7 +230,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
-		ctx = log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
+		ctxIngress := log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
 
 		if !p.shouldProcessIngress(ingress, ingressClasses) {
 			continue
@@ -238,24 +238,24 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 		rtConfig, err := parseRouterConfig(ingress.Annotations)
 		if err != nil {
-			log.FromContext(ctx).Errorf("Failed to parse annotations: %v", err)
+			log.FromContext(ctxIngress).Errorf("Failed to parse annotations: %v", err)
 			continue
 		}
 
-		err = getCertificates(ctx, ingress, client, certConfigs)
+		err = getCertificates(ctxIngress, ingress, client, certConfigs)
 		if err != nil {
-			log.FromContext(ctx).Errorf("Error configuring TLS: %v", err)
+			log.FromContext(ctxIngress).Errorf("Error configuring TLS: %v", err)
 		}
 
 		if len(ingress.Spec.Rules) == 0 && ingress.Spec.DefaultBackend != nil {
 			if _, ok := conf.HTTP.Services["default-backend"]; ok {
-				log.FromContext(ctx).Error("The default backend already exists.")
+				log.FromContext(ctxIngress).Error("The default backend already exists.")
 				continue
 			}
 
 			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
 			if err != nil {
-				log.FromContext(ctx).
+				log.FromContext(ctxIngress).
 					WithField("serviceName", ingress.Spec.DefaultBackend.Service.Name).
 					WithField("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
 					Errorf("Cannot create service: %v", err)
@@ -263,7 +263,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			if len(service.LoadBalancer.Servers) == 0 && !p.AllowEmptyServices {
-				log.FromContext(ctx).
+				log.FromContext(ctxIngress).
 					WithField("serviceName", ingress.Spec.DefaultBackend.Service.Name).
 					WithField("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
 					Errorf("Skipping service: no endpoints found")
@@ -282,7 +282,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.TLS = rtConfig.Router.TLS
 			}
 
-			p.applyRouterTransform(ctx, rt, ingress)
+			p.applyRouterTransform(ctxIngress, rt, ingress)
 
 			conf.HTTP.Routers["default-router"] = rt
 			conf.HTTP.Services["default-backend"] = service
@@ -292,7 +292,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 		for _, rule := range ingress.Spec.Rules {
 			if err := p.updateIngressStatus(ingress, client); err != nil {
-				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
+				log.FromContext(ctxIngress).Errorf("Error while updating ingress status: %v", err)
 			}
 
 			if rule.HTTP == nil {
@@ -302,7 +302,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			for _, pa := range rule.HTTP.Paths {
 				service, err := p.loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
-					log.FromContext(ctx).
+					log.FromContext(ctxIngress).
 						WithField("serviceName", pa.Backend.Service.Name).
 						WithField("servicePort", pa.Backend.Service.Port.String()).
 						Errorf("Cannot create service: %v", err)
@@ -310,7 +310,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				}
 
 				if len(service.LoadBalancer.Servers) == 0 && !p.AllowEmptyServices {
-					log.FromContext(ctx).
+					log.FromContext(ctxIngress).
 						WithField("serviceName", pa.Backend.Service.Name).
 						WithField("servicePort", pa.Backend.Service.Port.String()).
 						Errorf("Skipping service: no endpoints found")
@@ -328,7 +328,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				rt := loadRouter(rule, pa, rtConfig, serviceName)
 
-				p.applyRouterTransform(ctx, rt, ingress)
+				p.applyRouterTransform(ctxIngress, rt, ingress)
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host+pa.Path), "-")
 
@@ -342,12 +342,12 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
-			log.FromContext(ctx).Debugf("Multiple routers are defined with the same key %q, generating hashes to avoid conflicts", routerKey)
+			log.FromContext(ctxIngress).Debugf("Multiple routers are defined with the same key %q, generating hashes to avoid conflicts", routerKey)
 
 			for _, router := range conflictingRouters {
 				key, err := makeRouterKeyWithHash(routerKey, router.Rule)
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.FromContext(ctxIngress).Error(err)
 					continue
 				}
 
