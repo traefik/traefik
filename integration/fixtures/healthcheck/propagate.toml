@@ -84,6 +84,7 @@
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
+      recheck = "0.5s"
     [[http.services.wsp1.loadBalancer.servers]]
       url = "http://{{.Server1}}:80"
   [http.services.wsp2.loadBalancer]
@@ -91,6 +92,7 @@
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
+      recheck = "0.5s"
     [[http.services.wsp2.loadBalancer.servers]]
       url = "http://{{.Server2}}:80"
   [http.services.wsp3.loadBalancer]
@@ -98,6 +100,7 @@
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
+      recheck = "0.5s"
     [[http.services.wsp3.loadBalancer.servers]]
       url = "http://{{.Server3}}:80"
   [http.services.wsp4.loadBalancer]
@@ -105,6 +108,7 @@
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
+      recheck = "0.5s"
     [[http.services.wsp4.loadBalancer.servers]]
       url = "http://{{.Server4}}:80"
   [http.services.wsp12b.loadBalancer]
@@ -112,6 +116,7 @@
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
+      recheck = "0.5s"
     [[http.services.wsp12b.loadBalancer.servers]]
       url = "http://{{.Server1}}:80"
     [[http.services.wsp12b.loadBalancer.servers]]
