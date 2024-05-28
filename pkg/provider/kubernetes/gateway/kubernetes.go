@@ -908,18 +908,13 @@ func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []g
 
 	var matches []gatev1.Hostname
 	for _, routeHostname := range routeHostnames {
-		if routeHostname == *listenerHostname {
-			matches = append(matches, routeHostname)
+		if match := findMatchingHostname(*listenerHostname, routeHostname); match != "" {
+			matches = append(matches, match)
 			continue
 		}
 
-		if hostnameMatches(*listenerHostname, routeHostname) {
-			matches = append(matches, lessWildcards(routeHostname, *listenerHostname))
-			continue
-		}
-
-		if hostnameMatches(routeHostname, *listenerHostname) {
-			matches = append(matches, lessWildcards(routeHostname, *listenerHostname))
+		if match := findMatchingHostname(routeHostname, *listenerHostname); match != "" {
+			matches = append(matches, match)
 			continue
 		}
 	}
@@ -927,18 +922,26 @@ func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []g
 	return matches, len(matches) > 0
 }
 
-func hostnameMatches(h1, h2 gatev1.Hostname) bool {
+func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
+	if h1 == h2 {
+		return h1
+	}
+
 	if !strings.HasPrefix(string(h1), "*.") {
-		return false
+		return ""
 	}
 
 	trimmedH1 := strings.TrimPrefix(string(h1), "*")
 	// root domain doesn't match subdomain wildcard.
 	if trimmedH1 == string(h2) {
-		return false
+		return ""
 	}
 
-	return strings.HasSuffix(string(h2), trimmedH1)
+	if !strings.HasSuffix(string(h2), trimmedH1) {
+		return ""
+	}
+
+	return lessWildcards(h1, h2)
 }
 
 func lessWildcards(h1, h2 gatev1.Hostname) gatev1.Hostname {
