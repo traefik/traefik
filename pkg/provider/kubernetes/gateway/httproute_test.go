@@ -8,15 +8,16 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func Test_hostRule(t *testing.T) {
+func Test_buildHostRule(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		hostnames    []gatev1.Hostname
-		expectedRule string
-		expectErr    bool
+		desc             string
+		hostnames        []gatev1.Hostname
+		expectedRule     string
+		expectedPriority int
+		expectErr        bool
 	}{
 		{
-			desc:         "Empty rule and matches",
+			desc:         "Empty (should not happen)",
 			expectedRule: "",
 		},
 		{
@@ -24,7 +25,8 @@ func Test_hostRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{
 				"Foo",
 			},
-			expectedRule: "Host(`Foo`)",
+			expectedRule:     "Host(`Foo`)",
+			expectedPriority: 3,
 		},
 		{
 			desc: "Multiple Hosts",
@@ -33,7 +35,8 @@ func Test_hostRule(t *testing.T) {
 				"Bar",
 				"Bir",
 			},
-			expectedRule: "(Host(`Foo`) || Host(`Bar`) || Host(`Bir`))",
+			expectedRule:     "(Host(`Foo`) || Host(`Bar`) || Host(`Bir`))",
+			expectedPriority: 3,
 		},
 		{
 			desc: "Several Host and wildcard",
@@ -42,14 +45,16 @@ func Test_hostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule: "(HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.foo$`) || Host(`bar.foo`) || Host(`foo.foo`))",
+			expectedRule:     "(HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.foo$`) || Host(`bar.foo`) || Host(`foo.foo`))",
+			expectedPriority: 9,
 		},
 		{
 			desc: "Host with wildcard",
 			hostnames: []gatev1.Hostname{
 				"*.bar.foo",
 			},
-			expectedRule: "HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.foo$`)",
+			expectedRule:     "HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.foo$`)",
+			expectedPriority: 9,
 		},
 	}
 
@@ -57,216 +62,209 @@ func Test_hostRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rule := hostRule(test.hostnames)
+			rule, priority := buildHostRule(test.hostnames)
 			assert.Equal(t, test.expectedRule, rule)
+			assert.Equal(t, test.expectedPriority, priority)
 		})
 	}
 }
 
-func Test_routerRule(t *testing.T) {
+func Test_buildRouterRule(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		routeRule     gatev1.HTTPRouteRule
-		hostRule      string
-		expectedRule  string
-		expectedError bool
+		desc             string
+		routeMatches     []gatev1.HTTPRouteMatch
+		hostnames        []gatev1.Hostname
+		expectedRule     string
+		expectedPriority int
+		expectedError    bool
 	}{
 		{
-			desc:         "Empty rule and matches",
-			expectedRule: "PathPrefix(`/`)",
+			desc:             "Empty rule and matches ",
+			expectedRule:     "PathPrefix(`/`)",
+			expectedPriority: 1,
 		},
 		{
-			desc:         "One Host rule without matches",
-			hostRule:     "Host(`foo.com`)",
-			expectedRule: "Host(`foo.com`) && PathPrefix(`/`)",
+			desc:             "One Host rule without matches",
+			hostnames:        []gatev1.Hostname{"foo.com"},
+			expectedRule:     "Host(`foo.com`)",
+			expectedPriority: 7,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: ptr.To(gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchPathPrefix),
-							Value: ptr.To("/"),
-						}),
-						Headers: nil,
-					},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: ptr.To(gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchPathPrefix),
+						Value: ptr.To("/"),
+					}),
+					Headers: nil,
 				},
 			},
-			expectedRule: "PathPrefix(`/`)",
+			expectedRule:     "PathPrefix(`/`)",
+			expectedPriority: 1,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: ptr.To(gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchPathPrefix),
-							Value: ptr.To("/"),
-						}),
-						Headers: []gatev1.HTTPHeaderMatch{
-							{Name: "foo", Value: "bar"},
-						},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: ptr.To(gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchPathPrefix),
+						Value: ptr.To("/"),
+					}),
+					Headers: []gatev1.HTTPHeaderMatch{
+						{Name: "foo", Value: "bar"},
 					},
 				},
 			},
-			expectedRule: "PathPrefix(`/`) && Header(`foo`,`bar`)",
+			expectedRule:     "PathPrefix(`/`) && Header(`foo`,`bar`)",
+			expectedPriority: 91,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{Path: nil},
-				},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{Path: nil},
 			},
-			expectedRule: "PathPrefix(`/`)",
+			expectedRule:     "PathPrefix(`/`)",
+			expectedPriority: 1,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Type",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  nil,
-							Value: ptr.To("/foo/"),
-						},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  nil,
+						Value: ptr.To("/foo/"),
 					},
 				},
 			},
-			expectedRule: "(Path(`/foo`) || PathPrefix(`/foo/`))",
+			expectedRule:     "(Path(`/foo`) || PathPrefix(`/foo/`))",
+			expectedPriority: 10490,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: nil,
-						},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: nil,
 					},
 				},
 			},
-			expectedRule: "Path(`/`)",
+			expectedRule:     "Path(`/`)",
+			expectedPriority: 99990,
 		},
 		{
 			desc: "One Path in matches",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: ptr.To("/foo/"),
-						},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: ptr.To("/foo/"),
 					},
 				},
 			},
-			expectedRule: "Path(`/foo/`)",
+			expectedRule:     "Path(`/foo/`)",
+			expectedPriority: 99990,
 		},
 		{
 			desc: "One Path in matches and another empty",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: ptr.To("/foo/"),
-						},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: ptr.To("/foo/"),
 					},
-					{},
 				},
+				{},
 			},
-			expectedRule: "Path(`/foo/`) || PathPrefix(`/`)",
+			expectedRule:     "Path(`/foo/`) || PathPrefix(`/`)",
+			expectedPriority: 99980,
 		},
 		{
 			desc: "Path OR Header rules",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: ptr.To("/foo/"),
-						},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: ptr.To("/foo/"),
 					},
-					{
-						Headers: []gatev1.HTTPHeaderMatch{
-							{
-								Type:  ptr.To(gatev1.HeaderMatchExact),
-								Name:  "my-header",
-								Value: "foo",
-							},
+				},
+				{
+					Headers: []gatev1.HTTPHeaderMatch{
+						{
+							Type:  ptr.To(gatev1.HeaderMatchExact),
+							Name:  "my-header",
+							Value: "foo",
 						},
 					},
 				},
 			},
-			expectedRule: "Path(`/foo/`) || PathPrefix(`/`) && Header(`my-header`,`foo`)",
+			expectedRule:     "Path(`/foo/`) || PathPrefix(`/`) && Header(`my-header`,`foo`)",
+			expectedPriority: 99980,
 		},
 		{
 			desc: "Path && Header rules",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: ptr.To("/foo/"),
-						},
-						Headers: []gatev1.HTTPHeaderMatch{
-							{
-								Type:  ptr.To(gatev1.HeaderMatchExact),
-								Name:  "my-header",
-								Value: "foo",
-							},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: ptr.To("/foo/"),
+					},
+					Headers: []gatev1.HTTPHeaderMatch{
+						{
+							Type:  ptr.To(gatev1.HeaderMatchExact),
+							Name:  "my-header",
+							Value: "foo",
 						},
 					},
 				},
 			},
-			expectedRule: "Path(`/foo/`) && Header(`my-header`,`foo`)",
+			expectedRule:     "Path(`/foo/`) && Header(`my-header`,`foo`)",
+			expectedPriority: 100090,
 		},
 		{
-			desc:     "Host && Path && Header rules",
-			hostRule: "Host(`foo.com`)",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: ptr.To("/foo/"),
-						},
-						Headers: []gatev1.HTTPHeaderMatch{
-							{
-								Type:  ptr.To(gatev1.HeaderMatchExact),
-								Name:  "my-header",
-								Value: "foo",
-							},
+			desc:      "Host && Path && Header rules",
+			hostnames: []gatev1.Hostname{"foo.com"},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: ptr.To("/foo/"),
+					},
+					Headers: []gatev1.HTTPHeaderMatch{
+						{
+							Type:  ptr.To(gatev1.HeaderMatchExact),
+							Name:  "my-header",
+							Value: "foo",
 						},
 					},
 				},
 			},
-			expectedRule: "Host(`foo.com`) && Path(`/foo/`) && Header(`my-header`,`foo`)",
+			expectedRule:     "Host(`foo.com`) && (Path(`/foo/`) && Header(`my-header`,`foo`))",
+			expectedPriority: 100097,
 		},
 		{
-			desc:     "Host && (Path || Header) rules",
-			hostRule: "Host(`foo.com`)",
-			routeRule: gatev1.HTTPRouteRule{
-				Matches: []gatev1.HTTPRouteMatch{
-					{
-						Path: &gatev1.HTTPPathMatch{
-							Type:  ptr.To(gatev1.PathMatchExact),
-							Value: ptr.To("/foo/"),
-						},
+			desc:      "Host && (Path || Header) rules",
+			hostnames: []gatev1.Hostname{"foo.com"},
+			routeMatches: []gatev1.HTTPRouteMatch{
+				{
+					Path: &gatev1.HTTPPathMatch{
+						Type:  ptr.To(gatev1.PathMatchExact),
+						Value: ptr.To("/foo/"),
 					},
-					{
-						Headers: []gatev1.HTTPHeaderMatch{
-							{
-								Type:  ptr.To(gatev1.HeaderMatchExact),
-								Name:  "my-header",
-								Value: "foo",
-							},
+				},
+				{
+					Headers: []gatev1.HTTPHeaderMatch{
+						{
+							Type:  ptr.To(gatev1.HeaderMatchExact),
+							Name:  "my-header",
+							Value: "foo",
 						},
 					},
 				},
 			},
-			expectedRule: "Host(`foo.com`) && (Path(`/foo/`) || PathPrefix(`/`) && Header(`my-header`,`foo`))",
+			expectedRule:     "Host(`foo.com`) && (Path(`/foo/`) || PathPrefix(`/`) && Header(`my-header`,`foo`))",
+			expectedPriority: 99987,
 		},
 	}
 
@@ -274,8 +272,9 @@ func Test_routerRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rule := routerRule(test.routeRule, test.hostRule)
+			rule, priority := buildRouterRule(test.hostnames, test.routeMatches)
 			assert.Equal(t, test.expectedRule, rule)
+			assert.Equal(t, test.expectedPriority, priority)
 		})
 	}
 }
