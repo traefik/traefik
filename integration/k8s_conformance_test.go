@@ -195,13 +195,23 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			LatestObservedGenerationSet:       5 * time.Second,
 			RequiredConsecutiveSuccesses:      0,
 		},
+		SupportedFeatures: sets.New(ksuite.SupportGateway, ksuite.SupportHTTPRoute).
+			Union(ksuite.HTTPRouteExtendedFeatures),
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *k8sConformanceRunTest,
 		// Until the feature are all supported, following tests are skipped.
 		SkipTests: []string{
-			tests.HTTPRouteInvalidCrossNamespaceParentRef.ShortName,
-			tests.HTTPRoutePartiallyInvalidViaInvalidReferenceGrant.ShortName,
-			tests.HTTPRouteReferenceGrant.ShortName,
+			tests.HTTPRouteMethodMatching.ShortName,
+			tests.HTTPRouteQueryParamMatching.ShortName,
+			tests.HTTPRouteRedirectPath.ShortName,
+			tests.HTTPRouteRedirectPortAndScheme.ShortName,
+			tests.HTTPRouteRequestMirror.ShortName,
+			tests.HTTPRouteRequestMultipleMirrors.ShortName,
+			tests.HTTPRouteResponseHeaderModifier.ShortName,
+			tests.HTTPRouteRewriteHost.ShortName,
+			tests.HTTPRouteRewritePath.ShortName,
+			tests.HTTPRouteTimeoutBackendRequest.ShortName,
+			tests.HTTPRouteTimeoutRequest.ShortName,
 		},
 	}
 
