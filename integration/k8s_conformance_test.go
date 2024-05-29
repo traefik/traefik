@@ -199,12 +199,8 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 		RunTest:                    *k8sConformanceRunTest,
 		// Until the feature are all supported, following tests are skipped.
 		SkipTests: []string{
-			tests.HTTPRouteListenerHostnameMatching.ShortName,
 			tests.HTTPRouteInvalidCrossNamespaceParentRef.ShortName,
-			tests.HTTPRouteMatchingAcrossRoutes.ShortName,
 			tests.HTTPRoutePartiallyInvalidViaInvalidReferenceGrant.ShortName,
-			tests.HTTPRoutePathMatchOrder.ShortName,
-			tests.HTTPRouteHeaderMatching.ShortName,
 			tests.HTTPRouteReferenceGrant.ShortName,
 		},
 	}
