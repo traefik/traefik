@@ -93,6 +93,7 @@ type Configuration struct {
 	ExposedByDefault   bool            `description:"Expose Nomad services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	RefreshInterval    ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
 	AllowEmptyServices bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	DefaultEntryPoints []string        `description:"A list of default entry points." json:"defaultEntryPoints,omitempty" toml:"defaultEntryPoints,omitempty" yaml:"defaultEntryPoints,omitempty"`
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.

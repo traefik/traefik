@@ -486,6 +486,9 @@ Consider every service as Connect capable by default. (Default: ```false```)
 `--providers.consulcatalog.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
+`--providers.consulcatalog.defaultentrypoints`:  
+A list of default entry points.
+
 `--providers.consulcatalog.defaultrule`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
@@ -558,6 +561,9 @@ Disregards the Docker containers health checks with respect to the creation or r
 `--providers.docker.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
+`--providers.docker.defaultentrypoints`:  
+A list of default entry points.
+
 `--providers.docker.defaultrule`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
@@ -605,6 +611,9 @@ ECS Cluster names. (Default: ```default```)
 
 `--providers.ecs.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.ecs.defaultentrypoints`:  
+A list of default entry points.
 
 `--providers.ecs.defaultrule`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
@@ -822,6 +831,9 @@ Allow the creation of services without endpoints. (Default: ```false```)
 `--providers.nomad.constraints`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
 
+`--providers.nomad.defaultentrypoints`:  
+A list of default entry points.
+
 `--providers.nomad.defaultrule`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
@@ -935,6 +947,9 @@ Disregards the Docker containers health checks with respect to the creation or r
 
 `--providers.swarm.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.swarm.defaultentrypoints`:  
+A list of default entry points.
 
 `--providers.swarm.defaultrule`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)

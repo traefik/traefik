@@ -462,6 +462,9 @@ Consider every service as Connect capable by default. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_DEFAULTENTRYPOINTS`:  
+A list of default entry points.
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
@@ -558,6 +561,9 @@ Disregards the Docker containers health checks with respect to the creation or r
 `TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
+`TRAEFIK_PROVIDERS_DOCKER_DEFAULTENTRYPOINTS`:  
+A list of default entry points.
+
 `TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
@@ -605,6 +611,9 @@ ECS Cluster names. (Default: ```default```)
 
 `TRAEFIK_PROVIDERS_ECS_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_ECS_DEFAULTENTRYPOINTS`:  
+A list of default entry points.
 
 `TRAEFIK_PROVIDERS_ECS_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
@@ -822,6 +831,9 @@ Allow the creation of services without endpoints. (Default: ```false```)
 `TRAEFIK_PROVIDERS_NOMAD_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
 
+`TRAEFIK_PROVIDERS_NOMAD_DEFAULTENTRYPOINTS`:  
+A list of default entry points.
+
 `TRAEFIK_PROVIDERS_NOMAD_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
@@ -935,6 +947,9 @@ Disregards the Docker containers health checks with respect to the creation or r
 
 `TRAEFIK_PROVIDERS_SWARM_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_SWARM_DEFAULTENTRYPOINTS`:  
+A list of default entry points.
 
 `TRAEFIK_PROVIDERS_SWARM_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)

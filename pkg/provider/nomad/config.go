@@ -46,8 +46,10 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 				logger.Error().Err(err).Msg("Failed to build TCP service configuration")
 				continue
 			}
-			provider.BuildTCPRouterConfiguration(ctxSvc, config.TCP)
+			provider.BuildTCPRouterConfiguration(ctxSvc, config.TCP, p.DefaultEntryPoints)
 		}
+
+		serviceName := getName(i)
 
 		if len(config.UDP.Routers) > 0 || len(config.UDP.Services) > 0 {
 			tcpOrUDP = true
@@ -55,7 +57,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 				logger.Error().Err(err).Msg("Failed to build UDP service configuration")
 				continue
 			}
-			provider.BuildUDPRouterConfiguration(ctxSvc, config.UDP)
+			provider.BuildUDPRouterConfiguration(ctxSvc, config.UDP, serviceName, p.DefaultEntryPoints)
 		}
 
 		// tcp/udp, skip configuring http service
@@ -80,7 +82,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 			Labels: labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i), p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, config.HTTP, serviceName, p.defaultRuleTpl, p.DefaultEntryPoints, model)
 		configurations[svcName] = config
 	}
 

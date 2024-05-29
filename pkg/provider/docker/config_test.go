@@ -429,6 +429,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 		containers         []dockerData
 		useBindPortIP      bool
 		constraints        string
+		defaultEntryPoints []string
 		expected           *dynamic.Configuration
 		allowEmptyServices bool
 	}{
@@ -1062,7 +1063,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with rule label and two services",
+			desc: "one http container with rule label and two services",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -3645,6 +3646,186 @@ func TestDynConfBuilder_build(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "with default entry points",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo1.rule":         "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo2.rule":         "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo2.entrypoints":  "specified-entry",
+						"traefik.udp.routers.foo3.service":      "Test",
+						"traefik.udp.routers.foo4.entrypoints":  "specified-entry",
+						"traefik.http.routers.foo6.rule":        "/",
+						"traefik.http.routers.foo7.entrypoints": "specified-entry",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{{
+								HostIP:   "192.168.0.1",
+								HostPort: "8081",
+							}},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultEntryPoints: []string{"default-entry"},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"foo1": {
+							Rule:        "HostSNI(`foo.bar`)",
+							EntryPoints: []string{"default-entry"},
+							Service:     "Test",
+						},
+						"foo2": {
+							Rule:        "HostSNI(`foo.bar`)",
+							EntryPoints: []string{"specified-entry"},
+							Service:     "Test",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{{
+									Address: "127.0.0.1:80",
+								}},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo3": {
+							Service:     "Test",
+							EntryPoints: []string{"default-entry"},
+						},
+						"foo4": {
+							Service:     "Test",
+							EntryPoints: []string{"specified-entry"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{{
+									Address: "127.0.0.1:80",
+								}},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"foo6": {
+							Service:     "Test",
+							Rule:        "/",
+							EntryPoints: []string{"default-entry"},
+							DefaultRule: false,
+						},
+						"foo7": {
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							EntryPoints: []string{"specified-entry"},
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "udp with default entry points",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.udp.services.foo.loadbalancer.server.port": "80",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/udp"): []nat.PortBinding{{
+								HostIP:   "192.168.0.1",
+								HostPort: "8081",
+							}},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultEntryPoints: []string{"default-entry"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"Test": {
+							EntryPoints: []string{"default-entry"},
+							Service:     "foo",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:80",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -3660,6 +3841,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				},
 			}
 			p.Constraints = test.constraints
+			p.DefaultEntryPoints = test.defaultEntryPoints
 
 			err := p.Init()
 			require.NoError(t, err)

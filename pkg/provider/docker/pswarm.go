@@ -44,6 +44,7 @@ func (p *SwarmProvider) SetDefaults() {
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.RefreshSeconds = ptypes.Duration(15 * time.Second)
 	p.DefaultRule = DefaultTemplateRule
+	p.DefaultEntryPoints = make([]string, 0)
 }
 
 // Init the provider.

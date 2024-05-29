@@ -96,6 +96,9 @@
       "useBindPortIP": true,
       "watch": true,
       "defaultRule": "xxxx",
+      "defaultEntryPoints": [
+        "xxxx"
+      ],
       "endpoint": "xxxx",
       "tls": {
         "ca": "xxxx",
@@ -113,6 +116,9 @@
       "useBindPortIP": true,
       "watch": true,
       "defaultRule": "xxxx",
+      "defaultEntryPoints": [
+        "xxxx"
+      ],
       "endpoint": "xxxx",
       "tls": {
         "ca": "xxxx",
@@ -198,6 +204,9 @@
       "cache": true,
       "exposedByDefault": true,
       "defaultRule": "xxxx",
+      "defaultEntryPoints": [
+        "xxxx"
+      ],
       "namespaces": [
         "xxxx",
         "xxxx"
@@ -208,6 +217,9 @@
       "exposedByDefault": true,
       "refreshSeconds": 42,
       "defaultRule": "xxxx",
+      "defaultEntryPoints": [
+        "xxxx"
+      ],
       "clusters": [
         "Cluster1",
         "Cluster2"

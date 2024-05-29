@@ -369,6 +369,33 @@ providers:
     In this case, to prevent an infinite loop,
     Traefik adds an internal middleware to refuse the request if it comes from the same router.
 
+### `defaultEntryPoints`
+
+_Optional, Default=""_
+
+The default entry points for all services.
+
+Can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.entryPoints` tag.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    defaultEntryPoints:
+      - privateWeb
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  defaultEntryPoints = ["privateWeb"] 
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.defaultEntryPoints=privateWeb
+# ...
+```
+
 ### `httpClientTimeout`
 
 _Optional, Default=0_

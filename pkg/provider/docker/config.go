@@ -55,8 +55,10 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 				logger.Error().Err(err).Send()
 				continue
 			}
-			provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP)
+			provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP, p.DefaultEntryPoints)
 		}
+
+		serviceName := getServiceName(container)
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
 			tcpOrUDP = true
@@ -66,7 +68,7 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 				logger.Error().Err(err).Send()
 				continue
 			}
-			provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP)
+			provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP, serviceName, p.DefaultEntryPoints)
 		}
 
 		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
@@ -82,8 +84,6 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 			continue
 		}
 
-		serviceName := getServiceName(container)
-
 		model := struct {
 			Name          string
 			ContainerName string
@@ -94,7 +94,7 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 			Labels:        container.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, p.DefaultEntryPoints, model)
 
 		configurations[containerName] = confFromLabel
 	}
