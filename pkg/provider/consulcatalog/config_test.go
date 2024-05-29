@@ -328,11 +328,12 @@ func TestDefaultRule(t *testing.T) {
 
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		items        []itemData
-		constraints  string
-		ConnectAware bool
-		expected     *dynamic.Configuration
+		desc               string
+		items              []itemData
+		constraints        string
+		ConnectAware       bool
+		defaultEntryPoints []string
+		expected           *dynamic.Configuration
 	}{
 		{
 			desc: "one container no label",
@@ -1065,7 +1066,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with rule label and two services",
+			desc: "one http container with rule label and two services",
 			items: []itemData{
 				{
 					ID:   "Test",
@@ -1122,6 +1123,179 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one tcp container with rule label and two services",
+			items: []itemData{
+				{
+					ID:   "Test",
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.Router1.rule":                      "HostSNI(`foo.com`)",
+						"traefik.tcp.services.Service1.loadbalancer.server.tls": "true",
+						"traefik.tcp.services.Service2.loadbalancer.server.tls": "true",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Service1": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.1:80",
+										TLS:     true,
+									},
+								},
+							},
+						},
+						"Service2": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.1:80",
+										TLS:     true,
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one udp container with no rule label and two services and default entry points",
+			items: []itemData{
+				{
+					ID:   "Test",
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.services.Service1.loadbalancer.server.port": "8080",
+						"traefik.udp.services.Service2.loadbalancer.server.port": "8080",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			defaultEntryPoints: []string{"entry"},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{
+						"Service1": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+							},
+						},
+						"Service2": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one udp container with rule label and two services",
+			items: []itemData{
+				{
+					ID:   "Test",
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.routers.Router1.entryPoints":                "mydns",
+						"traefik.udp.services.Service1.loadbalancer.server.port": "8080",
+						"traefik.udp.services.Service2.loadbalancer.server.port": "8080",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{
+						"Service1": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+							},
+						},
+						"Service2": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
@@ -3343,6 +3517,165 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "with default entry points",
+			items: []itemData{
+				{
+					ID:   "Test",
+					Node: "Node1",
+					Name: "dev/Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo1.rule":         "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo2.rule":         "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo2.entrypoints":  "specified-entry",
+						"traefik.udp.routers.foo3.service":      "dev-Test",
+						"traefik.udp.routers.foo4.entrypoints":  "specified-entry",
+						"traefik.http.routers.foo6.rule":        "/",
+						"traefik.http.routers.foo7.entrypoints": "specified-entry",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			defaultEntryPoints: []string{"default-entry"},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"foo1": {
+							Rule:        "HostSNI(`foo.bar`)",
+							EntryPoints: []string{"default-entry"},
+							Service:     "dev-Test",
+						},
+						"foo2": {
+							Rule:        "HostSNI(`foo.bar`)",
+							EntryPoints: []string{"specified-entry"},
+							Service:     "dev-Test",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"dev-Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{{
+									Address: "127.0.0.1:80",
+								}},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo3": {
+							Service:     "dev-Test",
+							EntryPoints: []string{"default-entry"},
+						},
+						"foo4": {
+							Service:     "dev-Test",
+							EntryPoints: []string{"specified-entry"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"dev-Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{{
+									Address: "127.0.0.1:80",
+								}},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"foo6": {
+							Service:     "dev-Test",
+							Rule:        "/",
+							EntryPoints: []string{"default-entry"},
+							DefaultRule: false,
+						},
+						"foo7": {
+							Service:     "dev-Test",
+							Rule:        "Host(`dev-Test.traefik.wtf`)",
+							EntryPoints: []string{"specified-entry"},
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"dev-Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "udp with default entry points",
+			items: []itemData{
+				{
+					ID:   "Test",
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.services.foo.loadbalancer.server.port": "80",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			defaultEntryPoints: []string{"default-entry"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"Test": {
+							EntryPoints: []string{"default-entry"},
+							Service:     "foo",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:80",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -3355,6 +3688,7 @@ func Test_buildConfiguration(t *testing.T) {
 			config.DefaultRule = "Host(`{{ normalize .Name }}.traefik.wtf`)"
 			config.ConnectAware = test.ConnectAware
 			config.Constraints = test.constraints
+			config.DefaultEntryPoints = test.defaultEntryPoints
 
 			p := Provider{
 				Configuration: config,

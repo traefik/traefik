@@ -350,7 +350,7 @@ providers:
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
-The default host rule for all services.
+The default rule for all services.
 
 For a given service, if no routing rule was defined by a tag, it is defined by this `defaultRule` instead.
 The `defaultRule` must be set to a valid [Go template](https://pkg.go.dev/text/template/),
@@ -384,6 +384,33 @@ providers:
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
     Traefik adds an internal middleware to refuse the request if it comes from the same router.
+
+### `defaultEntryPoints`
+
+_Optional, Default=""_
+
+The default entry points for all services.
+
+Can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.entryPoints` tag.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    defaultEntryPoints:
+      - privateWeb
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  defaultEntryPoints = ["privateWeb"] 
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.defaultEntryPoints=privateWeb
+# ...
+```
 
 ### `constraints`
 

@@ -85,6 +85,7 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    defaultEntryPoints = ["foobar", "foobar"]
     endpoint = "foobar"
     httpClientTimeout = "42s"
     [providers.docker.tls]
@@ -100,6 +101,7 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    defaultEntryPoints = ["foobar", "foobar"]
     endpoint = "foobar"
     httpClientTimeout = "42s"
     refreshSeconds = "42s"
@@ -166,6 +168,7 @@
     cache = true
     exposedByDefault = true
     defaultRule = "foobar"
+    defaultEntryPoints = ["foobar", "foobar"]
     connectAware = true
     connectByDefault = true
     serviceName = "foobar"
@@ -194,6 +197,7 @@
     exposedByDefault = true
     refreshInterval = "42s"
     allowEmptyServices = true
+    defaultEntryPoints = ["foobar", "foobar"]
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"
@@ -210,6 +214,7 @@
     exposedByDefault = true
     refreshSeconds = 42
     defaultRule = "foobar"
+    defaultEntryPoints = ["foobar", "foobar"]
     clusters = ["foobar", "foobar"]
     autoDiscoverClusters = true
     healthyTasksOnly = true

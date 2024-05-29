@@ -40,6 +40,7 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.DefaultRule = DefaultTemplateRule
+	p.DefaultEntryPoints = make([]string, 0)
 }
 
 // Init the provider.

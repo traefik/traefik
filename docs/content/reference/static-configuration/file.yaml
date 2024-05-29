@@ -96,6 +96,9 @@ providers:
     useBindPortIP: true
     watch: true
     defaultRule: foobar
+    defaultEntryPoints:
+      - foobar
+      - foobar
     endpoint: foobar
     tls:
       ca: foobar
@@ -111,6 +114,9 @@ providers:
     useBindPortIP: true
     watch: true
     defaultRule: foobar
+    defaultEntryPoints:
+      - foobar
+      - foobar
     endpoint: foobar
     tls:
       ca: foobar
@@ -197,6 +203,9 @@ providers:
     cache: true
     exposedByDefault: true
     defaultRule: foobar
+    defaultEntryPoints:
+      - foobar
+      - foobar
     connectAware: true
     connectByDefault: true
     serviceName: foobar
@@ -225,6 +234,9 @@ providers:
     exposedByDefault: true
     refreshInterval: 42s
     allowEmptyServices: true
+    defaultEntryPoints:
+      - foobar
+      - foobar
     namespaces:
       - foobar
       - foobar
@@ -233,6 +245,9 @@ providers:
     exposedByDefault: true
     refreshSeconds: 42
     defaultRule: foobar
+    defaultEntryPoints:
+      - foobar
+      - foobar
     clusters:
       - foobar
       - foobar

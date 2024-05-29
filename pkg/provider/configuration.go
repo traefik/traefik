@@ -408,7 +408,7 @@ func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*tem
 }
 
 // BuildTCPRouterConfiguration builds a router configuration.
-func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCPConfiguration) {
+func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCPConfiguration, defaultEntryPoints []string) {
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 
@@ -430,34 +430,48 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 				router.Service = serviceName
 			}
 		}
+
+		if len(router.EntryPoints) == 0 && len(defaultEntryPoints) > 0 {
+			router.EntryPoints = defaultEntryPoints
+		}
 	}
 }
 
 // BuildUDPRouterConfiguration builds a router configuration.
-func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDPConfiguration) {
+func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDPConfiguration, defaultRouterName string, defaultEntryPoints []string) {
+	if len(configuration.Routers) == 0 && len(defaultEntryPoints) > 0 {
+		if len(configuration.Services) > 1 {
+			log.Ctx(ctx).Info().Msg("Could not create a router for the container: too many services")
+		} else {
+			configuration.Routers = make(map[string]*dynamic.UDPRouter)
+			configuration.Routers[defaultRouterName] = &dynamic.UDPRouter{}
+		}
+	}
+
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 
-		if router.Service != "" {
-			continue
+		if router.Service == "" {
+			if len(configuration.Services) > 1 {
+				delete(configuration.Routers, routerName)
+				loggerRouter.
+					Error().Msg("Could not define the service name for the router: too many services")
+				continue
+			}
+
+			for serviceName := range configuration.Services {
+				router.Service = serviceName
+			}
 		}
 
-		if len(configuration.Services) > 1 {
-			delete(configuration.Routers, routerName)
-			loggerRouter.
-				Error().Msg("Could not define the service name for the router: too many services")
-			continue
-		}
-
-		for serviceName := range configuration.Services {
-			router.Service = serviceName
-			break
+		if len(router.EntryPoints) == 0 && len(defaultEntryPoints) > 0 {
+			router.EntryPoints = defaultEntryPoints
 		}
 	}
 }
 
 // BuildRouterConfiguration builds a router configuration.
-func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
+func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, defaultEntryPoints []string, model interface{}) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
 			log.Ctx(ctx).Info().Msg("Could not create a router for the container: too many services")
@@ -500,6 +514,10 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			for serviceName := range configuration.Services {
 				router.Service = serviceName
 			}
+		}
+
+		if len(router.EntryPoints) == 0 && len(defaultEntryPoints) > 0 {
+			router.EntryPoints = defaultEntryPoints
 		}
 	}
 }

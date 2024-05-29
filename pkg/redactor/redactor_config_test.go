@@ -605,6 +605,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 			UseBindPortIP:      true,
 			Watch:              true,
 			DefaultRule:        "PathPrefix(`/`)",
+			DefaultEntryPoints: []string{"foobar"},
 		},
 		ClientConfig: docker.ClientConfig{
 			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
@@ -626,6 +627,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 			UseBindPortIP:      true,
 			Watch:              true,
 			DefaultRule:        "PathPrefix(`/`)",
+			DefaultEntryPoints: []string{"foobar"},
 		},
 		ClientConfig: docker.ClientConfig{
 			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
@@ -697,13 +699,14 @@ func TestDo_staticConfiguration(t *testing.T) {
 				},
 				EndpointWaitTime: 42,
 			},
-			Prefix:            "MyPrefix",
-			RefreshInterval:   42,
-			RequireConsistent: true,
-			Stale:             true,
-			Cache:             true,
-			ExposedByDefault:  true,
-			DefaultRule:       "PathPrefix(`/`)",
+			Prefix:             "MyPrefix",
+			RefreshInterval:    42,
+			RequireConsistent:  true,
+			Stale:              true,
+			Cache:              true,
+			ExposedByDefault:   true,
+			DefaultRule:        "PathPrefix(`/`)",
+			DefaultEntryPoints: []string{"foobar"},
 		},
 		Namespaces: []string{"ns1", "ns2"},
 	}
@@ -719,6 +722,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Region:               "Awsregion",
 		AccessKeyID:          "AwsAccessKeyID",
 		SecretAccessKey:      "AwsSecretAccessKey",
+		DefaultEntryPoints:   []string{"foobar"},
 	}
 
 	config.Providers.Consul = &consul.ProviderBuilder{

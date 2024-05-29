@@ -37,7 +37,10 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			continue
 		}
 
+		serviceName := getName(item)
+
 		var tcpOrUDP bool
+
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
 			tcpOrUDP = true
 
@@ -57,7 +60,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 				continue
 			}
 
-			provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP)
+			provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP, p.DefaultEntryPoints)
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
@@ -67,7 +70,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 				logger.Error().Err(err).Send()
 				continue
 			}
-			provider.BuildUDPRouterConfiguration(ctxSvc, confFromLabel.UDP)
+			provider.BuildUDPRouterConfiguration(ctxSvc, confFromLabel.UDP, serviceName, p.DefaultEntryPoints)
 		}
 
 		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
@@ -101,7 +104,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			Labels: item.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, getName(item), p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, p.DefaultEntryPoints, model)
 
 		configurations[svcName] = confFromLabel
 	}
