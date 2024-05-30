@@ -98,6 +98,47 @@ spec:
                         description: Service defines an upstream HTTP service to proxy
                           traffic to.
                         properties:
+                          healthCheck:
+                            description: Healthcheck defines health checks for the
+                              service.
+                            properties:
+                              followRedirects:
+                                type: boolean
+                              headers:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              hostname:
+                                type: string
+                              interval:
+                                description: |-
+                                  Duration is a custom type suitable for parsing duration values.
+                                  It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                  the latter case, seconds are assumed.
+                                format: int64
+                                type: integer
+                              method:
+                                type: string
+                              mode:
+                                type: string
+                              path:
+                                type: string
+                              port:
+                                type: integer
+                              scheme:
+                                type: string
+                              status:
+                                type: integer
+                              timeout:
+                                description: |-
+                                  Duration is a custom type suitable for parsing duration values.
+                                  It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                  the latter case, seconds are assumed.
+                                format: int64
+                                type: integer
+                            required:
+                            - followRedirects
+                            type: object
                           kind:
                             description: Kind defines the kind of the Service.
                             enum:
@@ -919,6 +960,46 @@ spec:
                       Service defines the reference to a Kubernetes Service that will serve the error page.
                       More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/#service
                     properties:
+                      healthCheck:
+                        description: Healthcheck defines health checks for the service.
+                        properties:
+                          followRedirects:
+                            type: boolean
+                          headers:
+                            additionalProperties:
+                              type: string
+                            type: object
+                          hostname:
+                            type: string
+                          interval:
+                            description: |-
+                              Duration is a custom type suitable for parsing duration values.
+                              It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                              the latter case, seconds are assumed.
+                            format: int64
+                            type: integer
+                          method:
+                            type: string
+                          mode:
+                            type: string
+                          path:
+                            type: string
+                          port:
+                            type: integer
+                          scheme:
+                            type: string
+                          status:
+                            type: integer
+                          timeout:
+                            description: |-
+                              Duration is a custom type suitable for parsing duration values.
+                              It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                              the latter case, seconds are assumed.
+                            format: int64
+                            type: integer
+                        required:
+                        - followRedirects
+                        type: object
                       kind:
                         description: Kind defines the kind of the Service.
                         enum:
@@ -2295,6 +2376,46 @@ spec:
               mirroring:
                 description: Mirroring defines the Mirroring service configuration.
                 properties:
+                  healthCheck:
+                    description: Healthcheck defines health checks for the service.
+                    properties:
+                      followRedirects:
+                        type: boolean
+                      headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      hostname:
+                        type: string
+                      interval:
+                        description: |-
+                          Duration is a custom type suitable for parsing duration values.
+                          It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                          the latter case, seconds are assumed.
+                        format: int64
+                        type: integer
+                      method:
+                        type: string
+                      mode:
+                        type: string
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                      scheme:
+                        type: string
+                      status:
+                        type: integer
+                      timeout:
+                        description: |-
+                          Duration is a custom type suitable for parsing duration values.
+                          It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                          the latter case, seconds are assumed.
+                        format: int64
+                        type: integer
+                    required:
+                    - followRedirects
+                    type: object
                   kind:
                     description: Kind defines the kind of the Service.
                     enum:
@@ -2314,6 +2435,46 @@ spec:
                     items:
                       description: MirrorService holds the mirror configuration.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for the service.
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            mode:
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            status:
+                              type: integer
+                            timeout:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -2548,6 +2709,46 @@ spec:
                       description: Service defines an upstream HTTP service to proxy
                         traffic to.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for the service.
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            mode:
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            status:
+                              type: integer
+                            timeout:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
+                              type: integer
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
