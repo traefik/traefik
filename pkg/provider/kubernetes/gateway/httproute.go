@@ -74,7 +74,11 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, client Client, gatewayLis
 					}
 				}
 
-				resolveRefCondition := p.loadHTTPRoute(logger.WithContext(ctx), client, listener, route, hostnames, conf)
+				routeConf, resolveRefCondition := p.loadHTTPRoute(logger.WithContext(ctx), client, listener, route, hostnames)
+				if accepted && listener.Attached {
+					mergeHTTPConfiguration(routeConf, conf)
+				}
+
 				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
@@ -94,7 +98,16 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, client Client, gatewayLis
 	}
 }
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, conf *dynamic.Configuration) metav1.Condition {
+func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+	routeConf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
+		},
+	}
+
 	routeCondition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
 		Status:             metav1.ConditionTrue,
@@ -134,14 +147,14 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 				Weight: ptr.To(1),
 			})
 
-			conf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
+			routeConf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
 			router.Service = wrrName
 		} else {
 			for name, middleware := range middlewares {
 				// If the middleware config is nil in the return of the loadMiddlewares function,
 				// it means that we just need a reference to that middleware.
 				if middleware != nil {
-					conf.HTTP.Middlewares[name] = middleware
+					routeConf.HTTP.Middlewares[name] = middleware
 				}
 
 				router.Middlewares = append(router.Middlewares, name)
@@ -165,7 +178,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 					}
 
 					if svc != nil {
-						conf.HTTP.Services[name] = svc
+						routeConf.HTTP.Services[name] = svc
 					}
 
 					wrr.Services = append(wrr.Services, dynamic.WRRService{
@@ -174,7 +187,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 					})
 				}
 
-				conf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
+				routeConf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
 				router.Service = wrrName
 			}
 		}
@@ -183,10 +196,10 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 		p.applyRouterTransform(ctx, rt, route)
 
 		routerKey = provider.Normalize(routerKey)
-		conf.HTTP.Routers[routerKey] = rt
+		routeConf.HTTP.Routers[routerKey] = rt
 	}
 
-	return routeCondition
+	return routeConf, routeCondition
 }
 
 // loadHTTPService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
@@ -608,4 +621,36 @@ func getProtocol(portSpec corev1.ServicePort) string {
 	}
 
 	return protocol
+}
+
+func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
+	if from == nil || from.HTTP == nil || to == nil {
+		return
+	}
+
+	if to.HTTP == nil {
+		to.HTTP = from.HTTP
+		return
+	}
+
+	if to.HTTP.Routers == nil {
+		to.HTTP.Routers = map[string]*dynamic.Router{}
+	}
+	for routerName, router := range from.HTTP.Routers {
+		to.HTTP.Routers[routerName] = router
+	}
+
+	if to.HTTP.Middlewares == nil {
+		to.HTTP.Middlewares = map[string]*dynamic.Middleware{}
+	}
+	for middlewareName, middleware := range from.HTTP.Middlewares {
+		to.HTTP.Middlewares[middlewareName] = middleware
+	}
+
+	if to.HTTP.Services == nil {
+		to.HTTP.Services = map[string]*dynamic.Service{}
+	}
+	for serviceName, service := range from.HTTP.Services {
+		to.HTTP.Services[serviceName] = service
+	}
 }
