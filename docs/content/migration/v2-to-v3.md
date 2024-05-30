@@ -8,18 +8,13 @@ description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary c
 How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
-The version 3 of Traefik introduces a number of breaking changes,
-which require one to update their configuration when they migrate from v2 to v3.
-The goal of this page is to recapitulate all of these changes,
-and in particular to give examples, feature by feature, 
-of how the configuration looked like in v2,
-and how it now looks like in v3.
+This guide shows you how to progressively migrate from Traefik v2 to v3.
 
-## Static configuration
+## Step 1: Identify Changes in Static Configuration and Test v3
 
-### Docker & Docker Swarm
+Check the following changes in static configuration brought by Traefik v3.
 
-#### SwarmMode
+### SwarmMode
 
 In v3, the provider Docker has been split into 2 providers:
 
@@ -109,13 +104,13 @@ The `experimentalChannel` option should be used to enable the support for the ex
       kubernetesGateway:
         experimentalChannel: true
     ```
-    
+
     ```toml tab="File (TOML)"
     [providers.kubernetesGateway]
         experimentalChannel = true
       # ...
     ```
-    
+
     ```bash tab="CLI"
     --providers.kubernetesgateway.experimentalchannel=true
     ```
@@ -553,7 +548,46 @@ it is now unsupported and would prevent Traefik to start.
 
 All Pilot related configuration should be removed from the static configuration.
 
-## Dynamic configuration
+---
+
+Once you have prepared your static configuration, add the following snippet to it:
+
+```yaml
+# static configuration
+core:
+  defaultRuleSyntax: v2
+```
+
+The snippet makes static configuration use the default [v2 syntax](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/?ref=traefik.io#configure-the-default-syntax-in-static-configuration "Link to configure default syntax in static config").
+
+Start Traefik v3 with this new configuration to test it.
+
+!!! info
+    If you don’t get any error logs while testing, you are good to go!
+    Otherwise, follow the remaining migration options highlighted in the logs.
+
+Once your Traefik test instances are starting and routing to your applications, proceed to the next step.
+
+## Step 2: Migrate Production Instances to Traefik v3
+
+Use progressive migration strategy  ([Kubernetes rolling update mechanism](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/ "Link to the Kubernetes rolling update documentation"), for example) to migrate your production instances to v3.
+
+!!! Warning
+    Ensure you have a [real-time monitoring solution](https://traefik.io/blog/capture-traefik-metrics-for-apps-on-kubernetes-with-prometheus/ "Link to the blog on capturing Traefik metrics with Prometheus") for your ingress traffic to detect issues instantly.
+
+During the progressive migration, monitor your ingress traffic for any errors. Be prepared to rollback to a working state in case of any issues.
+
+!!! Info
+    If you encounter any issues, leverage debug and access logs provided by Traefik to understand what went wrong and how to fix it.
+
+Once every Traefik instance is updated, you will be on Traefik v3!
+
+## Step 3: Progressively Migrate Dynamic Configuration
+
+!!! info
+    You can do this later, as Traefik v3 is compatible with the v2 format for [dynamic configuration](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#dynamic-configuration "Link to dynamic configuration changes").
+
+Check the following changes in dynamic configuration.
 
 ### Router Rule Matchers
 
@@ -700,15 +734,14 @@ One should use the `ContentType` middleware to enable the `Content-Type` header 
 
 #### gRPC Metrics
 
-In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.  
+In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.
 
 #### Tracing
 
 In v3, the tracing feature has been revamped and is now powered exclusively by [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel") (OTel).
 !!! warning "Important"
-
     Traefik v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
-Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
+    Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
 
 Here are two possible transition strategies:
 
@@ -734,3 +767,22 @@ Please take a look at the observability documentation for more information:
 - [AccessLogs](../observability/access-logs.md#addinternals)
 - [Metrics](../observability/metrics/overview.md#addinternals)
 - [Tracing](../observability/tracing/overview.md#addinternals)
+
+
+[Switch each router to the v3 syntax](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#configure-the-syntax-per-router "Link to configuring the syntax per router") progressively.
+Test and update each Ingress resource and ensure that ingress traffic is not impacted.
+
+---
+
+Once a v3 Ingress resource migration is validated, deploy the resource and delete the v2 Ingress resource.
+Repeat until all Ingress resources are migrated.
+
+Remove the following snippet added to the static configuration in Step 1:
+
+```yaml
+# static configuration
+core:
+  defaultRuleSyntax: v2
+```
+
+You are now fully migrated to Traefik v3 🎉
