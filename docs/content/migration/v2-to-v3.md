@@ -40,7 +40,7 @@ In v3, the provider Docker has been split into 2 providers:
 
 This configuration is now unsupported and would prevent Traefik to start.
 
-##### Remediation
+#### Remediation
 
 In v3, the `swarmMode` should not be used with the Docker provider, and, to use Swarm, the Swarm provider should be used instead.
 
@@ -767,7 +767,6 @@ Please take a look at the observability documentation for more information:
 - [AccessLogs](../observability/access-logs.md#addinternals)
 - [Metrics](../observability/metrics/overview.md#addinternals)
 - [Tracing](../observability/tracing/overview.md#addinternals)
-
 
 [Switch each router to the v3 syntax](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#configure-the-syntax-per-router "Link to configuring the syntax per router") progressively.
 Test and update each Ingress resource and ensure that ingress traffic is not impacted.
