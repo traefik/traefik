@@ -37,7 +37,8 @@ const (
 	providerName   = "kubernetesgateway"
 	controllerName = "traefik.io/gateway-controller"
 
-	groupCore = "core"
+	groupCore    = "core"
+	groupGateway = "gateway.networking.k8s.io"
 
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
@@ -579,7 +580,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, client Client, gate
 						continue
 					}
 
-					referenceGrants = filterReferenceGrantsFrom(referenceGrants, "gateway.networking.k8s.io", "Gateway", gateway.Namespace)
+					referenceGrants = filterReferenceGrantsFrom(referenceGrants, groupGateway, kindGateway, gateway.Namespace)
 					referenceGrants = filterReferenceGrantsTo(referenceGrants, groupCore, "Secret", string(certificateRef.Name))
 					if len(referenceGrants) == 0 {
 						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -1193,13 +1194,38 @@ func kindToString(p *gatev1.Kind) string {
 	return string(*p)
 }
 
-func appendCondition(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
-	res := []metav1.Condition{condition}
+func updateRouteConditionAccepted(conditions []metav1.Condition, reason string) []metav1.Condition {
+	var conds []metav1.Condition
 	for _, c := range conditions {
-		if c.Type != condition.Type {
-			res = append(res, c)
+		if c.Type == string(gatev1.RouteConditionAccepted) && c.Status != metav1.ConditionTrue {
+			c.Reason = reason
+			c.LastTransitionTime = metav1.Now()
+
+			if reason == string(gatev1.RouteReasonAccepted) {
+				c.Status = metav1.ConditionTrue
+			}
 		}
+
+		conds = append(conds, c)
 	}
 
-	return res
+	return conds
+}
+
+func upsertRouteConditionResolvedRefs(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
+	var (
+		curr  *metav1.Condition
+		conds []metav1.Condition
+	)
+	for _, c := range conditions {
+		if c.Type == string(gatev1.RouteConditionResolvedRefs) {
+			curr = &c
+			continue
+		}
+		conds = append(conds, c)
+	}
+	if curr != nil && curr.Status == metav1.ConditionFalse && condition.Status == metav1.ConditionTrue {
+		return append(conds, *curr)
+	}
+	return append(conds, condition)
 }
