@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -20,10 +24,22 @@ import (
 // CertificateData holds runtime data for runtime TLS certificate handling.
 type CertificateData struct {
 	config       *Certificate
+	ocspLock     *sync.RWMutex
 	Certificate  *tls.Certificate
+	MustStaple   bool
 	OCSPServer   []string
 	OCSPResponse *ocsp.Response
 }
+
+// Constants for PKIX MustStaple extension.
+var (
+	tlsFeatureExtensionOID = asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 24}
+	ocspMustStapleFeature  = []byte{0x30, 0x03, 0x02, 0x01, 0x05}
+	mustStapleExtension    = pkix.Extension{
+		Id:    tlsFeatureExtensionOID,
+		Value: ocspMustStapleFeature,
+	}
+)
 
 // CertificateCollection defines traefik CertificateCollection type.
 type CertificateCollection []CertificateData
@@ -84,9 +100,18 @@ func (c *CertificateData) AppendCertificate(certs map[string]map[string]*Certifi
 		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
 	} else {
 		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
+
+		mustStaple := false
+		for _, ext := range parsedCert.ExtraExtensions {
+			if ext.Id.Equal(mustStapleExtension.Id) && reflect.DeepEqual(ext.Value, mustStapleExtension.Value) {
+				mustStaple = true
+			}
+		}
+
 		certs[storeName][certKey] = &CertificateData{
 			Certificate: &tlsCert,
 			OCSPServer:  parsedCert.OCSPServer,
+			MustStaple:  mustStaple,
 			config: &Certificate{
 				SANs: SANs,
 				OCSP: types.OCSPConfig{
@@ -136,10 +161,20 @@ func (c *CertificateData) StapleOCSP() error {
 		return nil
 	}
 
+	if c.ocspLock == nil {
+		c.ocspLock = &sync.RWMutex{}
+	}
+
+	c.ocspLock.RLock()
 	ocspResponse := c.OCSPResponse
+	c.ocspLock.RUnlock()
+
 	if ocspResponse != nil && time.Now().Before(ocspResponse.ThisUpdate.Add(ocspResponse.NextUpdate.Sub(ocspResponse.ThisUpdate)/2)) {
 		return nil
 	}
+
+	c.ocspLock.Lock()
+	defer c.ocspLock.Unlock()
 
 	leaf, _ := x509.ParseCertificate(c.Certificate.Certificate[0])
 	var issuerCertificate *x509.Certificate
@@ -168,6 +203,8 @@ func (c *CertificateData) StapleOCSP() error {
 		c.Certificate.OCSPStaple = ocspBytes
 		c.OCSPResponse = ocspResp
 	}
+
+	// @todo check revocation status
 
 	return nil
 }
