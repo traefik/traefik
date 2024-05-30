@@ -2434,7 +2434,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "with one external service and health check",
-			paths: []string{"services.yml", "with_one_external-service-and-health-check.yml"},
+			paths: []string{"services.yml", "with_one_external_service_and_health_check.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2482,7 +2482,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "with two external services and health check",
-			paths: []string{"services.yml", "with_two_external-services-and-health-check.yml"},
+			paths: []string{"services.yml", "with_two_external_services_and_health_check.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2561,7 +2561,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "with one external service and one regular service and health check",
-			paths: []string{"services.yml", "with_one_external-svc-and-regular-svc-health-check.yml"},
+			paths: []string{"services.yml", "with_one_external_svc_and_regular_svc_health_check.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
