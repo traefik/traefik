@@ -5620,7 +5620,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			desc:  "For Service",
 			paths: []string{"services.yml", "referencegrant/for_service.yml"},
 			entryPoints: map[string]Entrypoint{
-				"https": {Address: ":443"},
+				"http": {Address: ":80"},
 			},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -5635,18 +5635,17 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-https-f381ad97110137b4d42c": {
-							EntryPoints: []string{"https"},
+						"default-http-app-1-my-gateway-http-f381ad97110137b4d42c": {
+							EntryPoints: []string{"http"},
 							Rule:        "Host(`foo.example.com`)",
-							Service:     "default-http-app-1-my-gateway-https-f381ad97110137b4d42c-wrr",
+							Service:     "default-http-app-1-my-gateway-http-f381ad97110137b4d42c-wrr",
 							RuleSyntax:  "v3",
 							Priority:    15,
-							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-https-f381ad97110137b4d42c-wrr": {
+						"default-http-app-1-my-gateway-http-f381ad97110137b4d42c-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{

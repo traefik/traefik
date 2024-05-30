@@ -64,7 +64,10 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, client Client, gatewayList
 					}
 				}
 
-				resolveRefCondition := p.loadTCPRoute(client, listener, route, conf)
+				routeConf, resolveRefCondition := p.loadTCPRoute(client, listener, route)
+				if accepted && listener.Attached {
+					mergeTCPConfiguration(routeConf, conf)
+				}
 				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
@@ -84,7 +87,16 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, client Client, gatewayList
 	}
 }
 
-func (p *Provider) loadTCPRoute(client Client, listener gatewayListener, route *gatev1alpha2.TCPRoute, conf *dynamic.Configuration) metav1.Condition {
+func (p *Provider) loadTCPRoute(client Client, listener gatewayListener, route *gatev1alpha2.TCPRoute) (*dynamic.Configuration, metav1.Condition) {
+	routeConf := &dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
+		},
+	}
+
 	routeCondition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
 		Status:             metav1.ConditionTrue,
@@ -120,7 +132,7 @@ func (p *Provider) loadTCPRoute(client Client, listener gatewayListener, route *
 
 		wrrService, subServices, err := loadTCPServices(client, route.Namespace, rule.BackendRefs)
 		if err != nil {
-			return metav1.Condition{
+			return routeConf, metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -131,19 +143,19 @@ func (p *Provider) loadTCPRoute(client Client, listener gatewayListener, route *
 		}
 
 		for svcName, svc := range subServices {
-			conf.TCP.Services[svcName] = svc
+			routeConf.TCP.Services[svcName] = svc
 		}
 
 		serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
-		conf.TCP.Services[serviceName] = wrrService
+		routeConf.TCP.Services[serviceName] = wrrService
 
 		ruleServiceNames = append(ruleServiceNames, serviceName)
 	}
 
 	if len(ruleServiceNames) == 1 {
 		router.Service = ruleServiceNames[0]
-		conf.TCP.Routers[routerKey] = &router
-		return routeCondition
+		routeConf.TCP.Routers[routerKey] = &router
+		return routeConf, routeCondition
 	}
 
 	routeServiceKey := routerKey + "-wrr"
@@ -156,12 +168,12 @@ func (p *Provider) loadTCPRoute(client Client, listener gatewayListener, route *
 		routeService.Weighted.Services = append(routeService.Weighted.Services, service)
 	}
 
-	conf.TCP.Services[routeServiceKey] = routeService
+	routeConf.TCP.Services[routeServiceKey] = routeService
 
 	router.Service = routeServiceKey
-	conf.TCP.Routers[routerKey] = &router
+	routeConf.TCP.Routers[routerKey] = &router
 
-	return routeCondition
+	return routeConf, routeCondition
 }
 
 // loadTCPServices is generating a WRR service, even when there is only one target.
@@ -281,4 +293,36 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1.Backe
 	}
 
 	return wrrSvc, services, nil
+}
+
+func mergeTCPConfiguration(from, to *dynamic.Configuration) {
+	if from == nil || from.TCP == nil || to == nil {
+		return
+	}
+
+	if to.TCP == nil {
+		to.TCP = from.TCP
+		return
+	}
+
+	if to.TCP.Routers == nil {
+		to.TCP.Routers = map[string]*dynamic.TCPRouter{}
+	}
+	for routerName, router := range from.TCP.Routers {
+		to.TCP.Routers[routerName] = router
+	}
+
+	if to.TCP.Middlewares == nil {
+		to.TCP.Middlewares = map[string]*dynamic.TCPMiddleware{}
+	}
+	for middlewareName, middleware := range from.TCP.Middlewares {
+		to.TCP.Middlewares[middlewareName] = middleware
+	}
+
+	if to.TCP.Services == nil {
+		to.TCP.Services = map[string]*dynamic.TCPService{}
+	}
+	for serviceName, service := range from.TCP.Services {
+		to.TCP.Services[serviceName] = service
+	}
 }
