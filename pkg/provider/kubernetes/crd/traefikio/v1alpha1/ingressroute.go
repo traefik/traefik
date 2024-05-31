@@ -131,8 +131,8 @@ type LoadBalancerSpec struct {
 	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
 	// By default, NodePortLB is false.
 	NodePortLB bool `json:"nodePortLB,omitempty"`
-	// Healthcheck defines health checks for the service.
-	HealthCheck *dynamic.ServerHealthCheck `json:"healthCheck,omitempty"`
+	// Healthcheck defines health checks for ExternalName services.
+	HealthCheck *ServerHealthCheck `json:"healthCheck,omitempty"`
 }
 
 type ResponseForwarding struct {
@@ -142,6 +142,36 @@ type ResponseForwarding struct {
 	// for such responses, writes are flushed to the client immediately.
 	// Default: 100ms
 	FlushInterval string `json:"flushInterval,omitempty"`
+}
+
+type ServerHealthCheck struct {
+	// Scheme replaces the server URL scheme for the health check endpoint.
+	Scheme string `json:"scheme,omitempty"`
+	// Mode defines the health check mode.
+	// If defined to grpc, will use the gRPC health check protocol to probe the server.
+	// Default: http
+	Mode string `json:"mode,omitempty"`
+	// Path defines the server URL path for the health check endpoint.
+	Path string `json:"path,omitempty"`
+	// Method defines the healthcheck method.
+	Method string `json:"method,omitempty"`
+	// Status defines the expected HTTP status code of the response to the health check request.
+	Status int `json:"status,omitempty"`
+	// Port defines the server URL port for the health check endpoint.
+	Port int `json:"port,omitempty"`
+	// Interval defines the frequency of the health check calls.
+	// Default: 30s
+	Interval *intstr.IntOrString `json:"interval,omitempty"`
+	// Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+	// Default: 5s
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+	// Hostname defines the value of hostname in the Host header of the health check request.
+	Hostname string `json:"hostname,omitempty"`
+	// FollowRedirects defines whether redirects should be followed during the health check calls.
+	// Default: true
+	FollowRedirects *bool `json:"followRedirects,omitempty"`
+	// Headers defines custom headers to be sent to the health check endpoint.
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 // Service defines an upstream HTTP service to proxy traffic to.

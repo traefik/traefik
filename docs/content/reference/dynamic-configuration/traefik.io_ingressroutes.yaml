@@ -99,45 +99,65 @@ spec:
                           traffic to.
                         properties:
                           healthCheck:
-                            description: Healthcheck defines health checks for the
-                              service.
+                            description: Healthcheck defines health checks for ExternalName
+                              services.
                             properties:
                               followRedirects:
+                                description: |-
+                                  FollowRedirects defines whether redirects should be followed during the health check calls.
+                                  Default: true
                                 type: boolean
                               headers:
                                 additionalProperties:
                                   type: string
+                                description: Headers defines custom headers to be
+                                  sent to the health check endpoint.
                                 type: object
                               hostname:
+                                description: Hostname defines the value of hostname
+                                  in the Host header of the health check request.
                                 type: string
                               interval:
+                                anyOf:
+                                - type: integer
+                                - type: string
                                 description: |-
-                                  Duration is a custom type suitable for parsing duration values.
-                                  It supports `time.ParseDuration`-compatible values and suffix-less digits; in
-                                  the latter case, seconds are assumed.
-                                format: int64
-                                type: integer
+                                  Interval defines the frequency of the health check calls.
+                                  Default: 30s
+                                x-kubernetes-int-or-string: true
                               method:
+                                description: Method defines the healthcheck method.
                                 type: string
                               mode:
+                                description: |-
+                                  Mode defines the health check mode.
+                                  If defined to grpc, will use the gRPC health check protocol to probe the server.
+                                  Default: http
                                 type: string
                               path:
+                                description: Path defines the server URL path for
+                                  the health check endpoint.
                                 type: string
                               port:
+                                description: Port defines the server URL port for
+                                  the health check endpoint.
                                 type: integer
                               scheme:
+                                description: Scheme replaces the server URL scheme
+                                  for the health check endpoint.
                                 type: string
                               status:
+                                description: Status defines the expected HTTP status
+                                  code of the response to the health check request.
                                 type: integer
                               timeout:
+                                anyOf:
+                                - type: integer
+                                - type: string
                                 description: |-
-                                  Duration is a custom type suitable for parsing duration values.
-                                  It supports `time.ParseDuration`-compatible values and suffix-less digits; in
-                                  the latter case, seconds are assumed.
-                                format: int64
-                                type: integer
-                            required:
-                            - followRedirects
+                                  Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                                  Default: 5s
+                                x-kubernetes-int-or-string: true
                             type: object
                           kind:
                             description: Kind defines the kind of the Service.

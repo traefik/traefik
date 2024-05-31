@@ -305,7 +305,36 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 	lb.Servers = servers
-	lb.HealthCheck = svc.HealthCheck
+
+	if svc.HealthCheck != nil {
+		lb.HealthCheck = &dynamic.ServerHealthCheck{
+			Scheme:   svc.HealthCheck.Scheme,
+			Path:     svc.HealthCheck.Path,
+			Method:   svc.HealthCheck.Method,
+			Status:   svc.HealthCheck.Status,
+			Port:     svc.HealthCheck.Port,
+			Hostname: svc.HealthCheck.Hostname,
+			Headers:  svc.HealthCheck.Headers,
+		}
+		lb.HealthCheck.SetDefaults()
+
+		if svc.HealthCheck.FollowRedirects != nil {
+			lb.HealthCheck.FollowRedirects = svc.HealthCheck.FollowRedirects
+		}
+		if svc.HealthCheck.Mode != "http" {
+			lb.HealthCheck.Mode = svc.HealthCheck.Mode
+		}
+		if svc.HealthCheck.Interval != nil {
+			if err := lb.HealthCheck.Interval.Set(svc.HealthCheck.Interval.String()); err != nil {
+				return nil, err
+			}
+		}
+		if svc.HealthCheck.Timeout != nil {
+			if err := lb.HealthCheck.Timeout.Set(svc.HealthCheck.Timeout.String()); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
