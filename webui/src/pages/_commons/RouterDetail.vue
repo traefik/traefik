@@ -281,8 +281,8 @@ export default defineComponent({
     PanelMiddlewares
   },
   props: {
-    name: String,
-    type: String
+    name: { type: String, default: '', required: false },
+    type: { type: String, default: '', required: false }
   },
   data () {
     return {

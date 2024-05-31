@@ -131,7 +131,7 @@ export default defineComponent({
   },
   props: {
     data: Object,
-    protocol: String
+    protocol: { type: String, default: '', required: false }
   }
 })
 </script>

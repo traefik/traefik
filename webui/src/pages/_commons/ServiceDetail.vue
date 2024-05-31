@@ -224,8 +224,8 @@ export default defineComponent({
   },
   mixins: [GetTablePropsMixin],
   props: {
-    name: String,
-    type: String
+    name: { type: String, default: '', required: false },
+    type: { type: String, default: '', required: false }
   },
   data () {
     return {
