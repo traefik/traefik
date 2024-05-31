@@ -29,11 +29,8 @@ jobs:
 
       - name: Build webui
         working-directory: ./webui
-        env:
-          NODE_ENV: production
-          APP_ENV: production
         run: |
-          yarn install --production
+          yarn install
           yarn build
 
       - name: Package webui
