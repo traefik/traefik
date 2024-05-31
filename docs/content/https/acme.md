@@ -709,6 +709,98 @@ certificatesResolvers:
 # ...
 ```
 
+### `caCertificates`
+
+_Optional, Default=[]_
+
+It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
+
+Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caCertificates:
+        - path/certificates1.pem
+        - path/certificates2.pem
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caCertificates = [ "path/certificates1.pem", "path/certificates2.pem" ]
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caCertificates="path/certificates1.pem,path/certificates2.pem"
+# ...
+```
+
+### `caUseSystemCertPool`
+
+_Optional, Default=false_
+
+It can be defined globally by using the environment variable `LEGO_CA_SYSTEM_CERT_POOL`.
+
+Define if the certificates pool must use a copy of the system cert pool.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caUseSystemCertPool: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caUseSystemCertPool = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caUseSystemCertPool=true
+# ...
+```
+
+### `caTlsServerName`
+
+_Optional, Default=""_
+
+It can be defined globally by using the environment variable `LEGO_CA_SERVER_NAME`.
+
+Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caTlsServerName: "my-server"
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caTlsServerName = "my-server"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caTlsServerName="my-server"
+# ...
+```
+
 ## Fallback
 
 If Let's Encrypt is not reachable, the following certificates will apply:
