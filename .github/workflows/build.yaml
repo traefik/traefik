@@ -27,7 +27,7 @@ jobs:
           cache: yarn
 
       - name: Build webui
-        working_directory: ./webui
+        working-directory: ./webui
         env:
           NODE_ENV: production
           APP_ENV: production
