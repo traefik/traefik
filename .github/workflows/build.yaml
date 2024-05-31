@@ -21,11 +21,11 @@ jobs:
           fetch-depth: 0
 
       - name: Setup node
-        working-directory: ./webui
         uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: .webui/.nvmrc
           cache: yarn
+          cache-dependency-path: .webui/yarn.lock
 
       - name: Build webui
         working-directory: ./webui
