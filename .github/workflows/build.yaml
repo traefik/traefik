@@ -22,8 +22,9 @@ jobs:
 
       - name: Setup node
         uses: actions/setup-node@v4
+        working-directory: ./webui
         with:
-          node-version-file: ./webui/.nvmrc
+          node-version-file: .nvmrc
           cache: yarn
 
       - name: Build webui
