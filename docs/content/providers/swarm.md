@@ -149,6 +149,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
           It allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
         - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
         - SSH public key authentication (SSH is supported with Docker > 18.09)
+        - Authorization with the socket, by Adding HTTP BasicAuth Authorization and proxy to Docker daemon socket.
 
     ??? info "More Resources and Examples"
 
@@ -260,6 +261,28 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
     # ...
     ```
 
+??? example "Using HTTP or TCP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using HTTP or TCP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "http://127.0.0.1:2375"("tcp://127.0.0.1:2375")
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "http://127.0.0.1:2375"("tcp://127.0.0.1:2375")
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=http://127.0.0.1:2375(tcp://127.0.0.1:2375)
+    # ...
+    ```
+
 ```yaml tab="File (YAML)"
 providers:
   swarm:
@@ -273,6 +296,33 @@ providers:
 
 ```bash tab="CLI"
 --providers.swarm.endpoint=unix:///var/run/docker.sock
+```
+
+### `basicAuth`
+
+_Optional, Default=""_
+
+If your socket has proxy and need HTTP BasicAuth, then you need config basicAuth.  
+When setting `basicAuth="username:password"`, you tell Traefik to use BasicAuth to connect Docker.
+
+Traefik will use base64 encode `username:password` and add it to Headers `Authorization`.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    basicAuth: "username:password"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  basicAuth = "username:password"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.basicAuth="username:password"
+# ...
 ```
 
 ### `useBindPortIP`
