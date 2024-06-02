@@ -142,6 +142,13 @@ spec:
                                 description: Port defines the server URL port for
                                   the health check endpoint.
                                 type: integer
+                              recheck:
+                                description: |-
+                                  Duration is a custom type suitable for parsing duration values.
+                                  It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                  the latter case, seconds are assumed.
+                                format: int64
+                                type: integer
                               scheme:
                                 description: Scheme replaces the server URL scheme
                                   for the health check endpoint.
@@ -1028,6 +1035,13 @@ spec:
                           port:
                             description: Port defines the server URL port for the
                               health check endpoint.
+                            type: integer
+                          recheck:
+                            description: |-
+                              Duration is a custom type suitable for parsing duration values.
+                              It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                              the latter case, seconds are assumed.
+                            format: int64
                             type: integer
                           scheme:
                             description: Scheme replaces the server URL scheme for
@@ -2470,6 +2484,13 @@ spec:
                         description: Port defines the server URL port for the health
                           check endpoint.
                         type: integer
+                      recheck:
+                        description: |-
+                          Duration is a custom type suitable for parsing duration values.
+                          It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                          the latter case, seconds are assumed.
+                        format: int64
+                        type: integer
                       scheme:
                         description: Scheme replaces the server URL scheme for the
                           health check endpoint.
@@ -2549,6 +2570,13 @@ spec:
                             port:
                               description: Port defines the server URL port for the
                                 health check endpoint.
+                              type: integer
+                            recheck:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
                               type: integer
                             scheme:
                               description: Scheme replaces the server URL scheme for
@@ -2844,6 +2872,13 @@ spec:
                             port:
                               description: Port defines the server URL port for the
                                 health check endpoint.
+                              type: integer
+                            recheck:
+                              description: |-
+                                Duration is a custom type suitable for parsing duration values.
+                                It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                                the latter case, seconds are assumed.
+                              format: int64
                               type: integer
                             scheme:
                               description: Scheme replaces the server URL scheme for
