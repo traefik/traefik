@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/redisrate"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -75,7 +76,8 @@ func TestRateLimitRedis(t *testing.T) {
 		{
 			desc: "lower than 1/s",
 			config: dynamic.RateLimit{
-				Average: 5,
+				// Average: 5, // Bug on gopher-lua on parsing the string to number "5e-07" => 0.0000005
+				Average: 1,
 				Period:  ptypes.Duration(10 * time.Second),
 			},
 			loadDuration: 2 * time.Second,
@@ -85,7 +87,8 @@ func TestRateLimitRedis(t *testing.T) {
 		{
 			desc: "lower than 1/s, longer",
 			config: dynamic.RateLimit{
-				Average: 5,
+				// Average: 5, // Bug on gopher-lua on parsing the operand "5e-07" => 0.0000005
+				Average: 1,
 				Period:  ptypes.Duration(10 * time.Second),
 			},
 			loadDuration: time.Minute,
@@ -142,6 +145,10 @@ func TestRateLimitRedis(t *testing.T) {
 			}
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
+			l := h.(*rateLimiter)
+			limiter := l.limiter.(*RedisLimiter)
+			l.limiter = injectClient(l.limiter.(*RedisLimiter), redisrate.NewMockRedisClient(limiter.ttl))
+			h = l
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)
 			start := time.Now()

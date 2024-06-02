@@ -2,6 +2,8 @@ package ratelimiter
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,6 +14,8 @@ import (
 	"golang.org/x/time/rate"
 )
 
+const redisPrefix = "rate:"
+
 type RedisLimiter struct {
 	rate     rate.Limit // reqs/s
 	burst    int64
@@ -19,7 +23,8 @@ type RedisLimiter struct {
 
 	period  ptypes.Duration
 	logger  *zerolog.Logger
-	limiter *redisrate.Limiter
+	ttl     int
+	rClient redisrate.Rediser
 }
 
 func NewRedisLimiter(
@@ -48,33 +53,32 @@ func NewRedisLimiter(
 		}
 		options.TLSConfig = tlsConfig
 	}
-
-	limiter := redisrate.NewLimiter(redis.NewUniversalClient(options), ttl, maxDelay)
-
-	return &RedisLimiter{
+	rClient := redis.NewUniversalClient(options)
+	limiter := &RedisLimiter{
 		rate:     rate,
 		burst:    burst,
 		period:   config.Period,
 		maxDelay: maxDelay,
 		logger:   logger,
-		limiter:  limiter,
-	}, nil
+		ttl:      ttl,
+		rClient:  rClient,
+	}
+
+	return limiter, nil
+}
+
+func injectClient(r *RedisLimiter, client redisrate.Rediser) *RedisLimiter {
+	r.rClient = client
+	return r
 }
 
 func (r *RedisLimiter) Allow(ctx context.Context, source string) (Result, error) {
-	res, err := r.limiter.Allow(
+	res, err := r.evaluateScript(
 		ctx,
 		source,
-		redisrate.Limit{
-			Rate:   r.rate,
-			Period: time.Duration(r.period),
-			Burst:  r.burst,
-		},
 	)
 	if err != nil {
-		return Result{
-			Ok: false,
-		}, err
+		return Result{}, err
 	}
 
 	if !res.Ok {
@@ -90,11 +94,53 @@ func (r *RedisLimiter) Allow(ctx context.Context, source string) (Result, error)
 		}, nil
 	}
 
-	time.Sleep(res.Delay)
+	select {
+	case <-ctx.Done():
+		return Result{Ok: false}, nil
+	case <-time.After(res.Delay):
+	}
 
 	return Result{
 		Ok:        true,
-		Remaining: res.Tokens,
+		Remaining: res.Remaining,
 		Delay:     res.Delay,
 	}, nil
+}
+
+func (r *RedisLimiter) evaluateScript(ctx context.Context, key string) (*Result, error) {
+	if r.rate == rate.Inf {
+		return &Result{
+			Ok:        true,
+			Remaining: 1.0,
+		}, nil
+	}
+
+	rate := r.rate / 1000000
+	t := time.Now().UnixMicro()
+	params := []interface{}{float64(rate), r.burst, r.ttl, t, r.maxDelay.Microseconds()}
+	v, err := redisrate.AllowTokenBucketScript.Run(ctx, r.rClient, []string{redisPrefix + key}, params...).Result()
+	if err != nil {
+		return nil, err
+	}
+	values := v.([]interface{})
+
+	ok, err := strconv.ParseBool(values[0].(string))
+	if err != nil {
+		return nil, fmt.Errorf("redisrate: fail to parse ok value from redis rate lua script: %w", err)
+	}
+	delay, err := strconv.ParseFloat(values[1].(string), 64)
+	if err != nil {
+		return nil, fmt.Errorf("redisrate: fail to parse delay value from redis rate lua script: %w", err)
+	}
+	tokens, err := strconv.ParseFloat(values[2].(string), 64)
+	if err != nil {
+		return nil, fmt.Errorf("redisrate: fail to parse tokens value from redis rate lua script: %w", err)
+	}
+
+	res := &Result{
+		Ok:        ok,
+		Remaining: tokens,
+		Delay:     time.Duration(delay * float64(time.Microsecond)),
+	}
+	return res, nil
 }
