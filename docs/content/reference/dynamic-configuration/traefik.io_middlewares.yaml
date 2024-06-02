@@ -282,6 +282,13 @@ spec:
                             type: string
                           port:
                             type: integer
+                          recheck:
+                            description: |-
+                              Duration is a custom type suitable for parsing duration values.
+                              It supports `time.ParseDuration`-compatible values and suffix-less digits; in
+                              the latter case, seconds are assumed.
+                            format: int64
+                            type: integer
                           scheme:
                             type: string
                           status:
