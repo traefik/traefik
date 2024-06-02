@@ -60,9 +60,7 @@ func (b *InMemoryRateLimiter) Allow(ctx context.Context, source string) (Result,
 	// because we want to update the expiryTime everytime we get the source,
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := b.buckets.Set(source, bucket, b.ttl); err != nil {
-		return Result{
-			Ok: false,
-		}, err
+		return Result{}, err
 	}
 
 	res := bucket.Reserve()
@@ -80,10 +78,14 @@ func (b *InMemoryRateLimiter) Allow(ctx context.Context, source string) (Result,
 		}, nil
 	}
 
-	time.Sleep(delay)
+	select {
+	case <-ctx.Done():
+		return Result{Ok: false}, nil
+	case <-time.After(delay):
+	}
 
 	return Result{
-		Ok:        true,
+		Ok:        res.OK(),
 		Remaining: bucket.Tokens(),
 		Delay:     delay,
 	}, nil

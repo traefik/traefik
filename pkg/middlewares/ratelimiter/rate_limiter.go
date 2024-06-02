@@ -164,12 +164,12 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if !result.Ok {
-		observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
-		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
-	}
-
-	if result.Delay > rl.maxDelay {
-		rl.serveDelayError(ctx, rw, result.Delay)
+		if result.Delay > rl.maxDelay {
+			rl.serveDelayError(ctx, rw, result.Delay)
+		} else {
+			observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
+			http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
+		}
 	}
 
 	if result.Ok {

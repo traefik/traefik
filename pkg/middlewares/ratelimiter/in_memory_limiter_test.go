@@ -20,7 +20,7 @@ import (
 
 const delta float64 = 1e-10
 
-func TestNewRateLimiter(t *testing.T) {
+func TestNewInMemoryRateLimiter(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		config           dynamic.RateLimit
@@ -148,7 +148,7 @@ func TestNewRateLimiter(t *testing.T) {
 	}
 }
 
-func TestRateLimit(t *testing.T) {
+func TestInMemoryRateLimit(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		config       dynamic.RateLimit
