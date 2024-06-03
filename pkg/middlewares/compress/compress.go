@@ -113,6 +113,8 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	acceptEncoding, ok := req.Header[acceptEncodingHeader]
 	if !ok {
 		if c.defaultEncoding != "" {
+			// RFC says: "If no Accept-Encoding header field is in the request, any content coding is considered acceptable by the user agent."
+			// https://www.rfc-editor.org/rfc/rfc9110#field.accept-encoding
 			c.chooseHandler(c.defaultEncoding, rw, req)
 			return
 		}
