@@ -233,7 +233,7 @@ metadata:
   name: test-compress
 spec:
   compress:
-    minResponseBodyBytes: 1200
+    defaultEncoding: gzip
 ```
 
 ```yaml tab="Consul Catalog"

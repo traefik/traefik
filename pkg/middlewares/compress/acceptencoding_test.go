@@ -18,12 +18,12 @@ func Test_getCompressionType(t *testing.T) {
 			expected: brotliName,
 		},
 		{
-			desc:     "unknown compression type (no weight)",
+			desc:     "known compression type (no weight)",
 			values:   []string{"compress, gzip"},
 			expected: gzipName,
 		},
 		{
-			desc:     "unknown compression types (no weight) use default",
+			desc:     "unknown compression types, use default (no weight)",
 			values:   []string{"compress, rar"},
 			expected: "foo",
 		},
