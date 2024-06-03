@@ -27,35 +27,37 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 		defaultType = brotliName
 	}
 
-	accepts, hasWeight := parseAcceptsEncoding(acceptEncoding)
+	encodings, hasWeight := parseAcceptsEncoding(acceptEncoding)
 
 	if hasWeight {
-		for _, a := range accepts {
-			if a.Type == identityName && a.Weight != nil && *a.Weight == 0 {
-				return notAcceptable
-			}
-
-			if a.Type == wildcardName && a.Weight != nil && *a.Weight == 0 {
-				return notAcceptable
-			}
-
-			if a.Type == wildcardName {
-				return defaultType
-			}
-
-			return a.Type
+		if len(encodings) == 0 {
+			return identityName
 		}
 
-		return identityName
+		encoding := encodings[0]
+
+		if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
+			return notAcceptable
+		}
+
+		if encoding.Type == wildcardName && encoding.Weight != nil && *encoding.Weight == 0 {
+			return notAcceptable
+		}
+
+		if encoding.Type == wildcardName {
+			return defaultType
+		}
+
+		return encoding.Type
 	}
 
 	for _, dt := range []string{brotliName, gzipName} {
-		if slices.ContainsFunc(accepts, func(e Encoding) bool { return e.Type == dt }) {
+		if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}
 	}
 
-	if slices.ContainsFunc(accepts, func(e Encoding) bool { return e.Type == wildcardName }) {
+	if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == wildcardName }) {
 		return defaultType
 	}
 
