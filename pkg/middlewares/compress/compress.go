@@ -77,12 +77,12 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 
 	var err error
 
-	c.zstdHandler, err = c.newCompressionHandler(Zstandard, name)
+	c.brotliHandler, err = c.newCompressionHandler(Brotli, name)
 	if err != nil {
 		return nil, err
 	}
 
-	c.brotliHandler, err = c.newCompressionHandler(Brotli, name)
+	c.zstdHandler, err = c.newCompressionHandler(Zstandard, name)
 	if err != nil {
 		return nil, err
 	}
@@ -123,13 +123,13 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if encodingAccepts(acceptEncoding, "zstd") {
-		c.zstdHandler.ServeHTTP(rw, req)
+	if encodingAccepts(acceptEncoding, "br") {
+		c.brotliHandler.ServeHTTP(rw, req)
 		return
 	}
 
-	if encodingAccepts(acceptEncoding, "br") {
-		c.brotliHandler.ServeHTTP(rw, req)
+	if encodingAccepts(acceptEncoding, "zstd") {
+		c.zstdHandler.ServeHTTP(rw, req)
 		return
 	}
 
