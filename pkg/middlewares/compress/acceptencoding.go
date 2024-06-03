@@ -23,7 +23,7 @@ type Encoding struct {
 
 func getCompressionType(acceptEncoding []string, defaultType string) string {
 	if defaultType == "" {
-		// Follows the pre-existing default order inside Traefik: br > gzip.
+		// Keeps the pre-existing default inside Traefik.
 		defaultType = brotliName
 	}
 
@@ -65,18 +65,18 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 }
 
 func parseAcceptsEncoding(acceptEncoding []string) ([]Encoding, bool) {
-	var values []Encoding
+	var encodings []Encoding
 	var hasWeight bool
 
-	for _, ae := range acceptEncoding {
-		for _, e := range strings.Split(strings.ReplaceAll(ae, " ", ""), ",") {
-			parsed := strings.SplitN(strings.TrimSpace(e), ";", 2)
+	for _, line := range acceptEncoding {
+		for _, item := range strings.Split(strings.ReplaceAll(line, " ", ""), ",") {
+			parsed := strings.SplitN(item, ";", 2)
 			if len(parsed) == 0 {
 				continue
 			}
 
 			switch parsed[0] {
-			case "br", "gzip", "identity", "*":
+			case brotliName, gzipName, identityName, wildcardName:
 				// supported encoding
 			default:
 				continue
@@ -90,16 +90,16 @@ func parseAcceptsEncoding(acceptEncoding []string) ([]Encoding, bool) {
 				hasWeight = true
 			}
 
-			values = append(values, Encoding{
+			encodings = append(encodings, Encoding{
 				Type:   parsed[0],
 				Weight: weight,
 			})
 		}
 	}
 
-	slices.SortFunc(values, compareEncoding)
+	slices.SortFunc(encodings, compareEncoding)
 
-	return values, hasWeight
+	return encodings, hasWeight
 }
 
 func compareEncoding(a, b Encoding) int {

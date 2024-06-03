@@ -85,27 +85,43 @@ func Test_parseEncodingAccepts(t *testing.T) {
 		assertWeight assert.BoolAssertionFunc
 	}{
 		{
-			desc:         "weight",
-			values:       []string{"br;q=1.0, gzip;q=0.8, *;q=0.1"},
-			expected:     []Encoding{{Type: "br", Weight: ptr[float64](1)}, {Type: "gzip", Weight: ptr(0.8)}, {Type: "*", Weight: ptr(0.1)}},
+			desc:   "weight",
+			values: []string{"br;q=1.0, gzip;q=0.8, *;q=0.1"},
+			expected: []Encoding{
+				{Type: brotliName, Weight: ptr[float64](1)},
+				{Type: gzipName, Weight: ptr(0.8)},
+				{Type: wildcardName, Weight: ptr(0.1)},
+			},
 			assertWeight: assert.True,
 		},
 		{
-			desc:         "mixed",
-			values:       []string{"gzip, br;q=1.0, *;q=0"},
-			expected:     []Encoding{{Type: "br", Weight: ptr[float64](1)}, {Type: "gzip"}, {Type: "*", Weight: ptr[float64](0)}},
+			desc:   "mixed",
+			values: []string{"gzip, br;q=1.0, *;q=0"},
+			expected: []Encoding{
+				{Type: brotliName, Weight: ptr[float64](1)},
+				{Type: gzipName},
+				{Type: wildcardName, Weight: ptr[float64](0)},
+			},
 			assertWeight: assert.True,
 		},
 		{
-			desc:         "no weight",
-			values:       []string{"gzip, br, *"},
-			expected:     []Encoding{{Type: "gzip"}, {Type: "br"}, {Type: "*"}},
+			desc:   "no weight",
+			values: []string{"gzip, br, *"},
+			expected: []Encoding{
+				{Type: gzipName},
+				{Type: brotliName},
+				{Type: wildcardName},
+			},
 			assertWeight: assert.False,
 		},
 		{
-			desc:         "weight and identity",
-			values:       []string{"gzip;q=1.0, identity; q=0.5, *;q=0"},
-			expected:     []Encoding{{Type: "gzip", Weight: ptr[float64](1)}, {Type: "identity", Weight: ptr(0.5)}, {Type: "*", Weight: ptr[float64](0)}},
+			desc:   "weight and identity",
+			values: []string{"gzip;q=1.0, identity; q=0.5, *;q=0"},
+			expected: []Encoding{
+				{Type: gzipName, Weight: ptr[float64](1)},
+				{Type: identityName, Weight: ptr(0.5)},
+				{Type: wildcardName, Weight: ptr[float64](0)},
+			},
 			assertWeight: assert.True,
 		},
 	}
