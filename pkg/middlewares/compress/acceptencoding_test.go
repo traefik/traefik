@@ -79,6 +79,12 @@ func Test_parseEncodingAccepts(t *testing.T) {
 			assertWeight: assert.True,
 		},
 		{
+			desc:         "mixed",
+			values:       []string{"gzip, br;q=1.0, *;q=0"},
+			expected:     []Encoding{{Type: "br", Weight: ptr[float64](1)}, {Type: "gzip"}, {Type: "*", Weight: ptr[float64](0)}},
+			assertWeight: assert.True,
+		},
+		{
 			desc:         "no weight",
 			values:       []string{"gzip, br, *"},
 			expected:     []Encoding{{Type: "gzip"}, {Type: "br"}, {Type: "*"}},
