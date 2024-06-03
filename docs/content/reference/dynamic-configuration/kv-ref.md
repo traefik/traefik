@@ -26,6 +26,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware06/compress/includedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/includedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/minResponseBodyBytes` | `42` |
+| `traefik/http/middlewares/Middleware06/compress/defaultEncoding` | `foobar` |
 | `traefik/http/middlewares/Middleware07/contentType/autoDetect` | `true` |
 | `traefik/http/middlewares/Middleware08/digestAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware08/digestAuth/realm` | `foobar` |
