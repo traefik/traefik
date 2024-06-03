@@ -22,6 +22,11 @@ type Encoding struct {
 }
 
 func getCompressionType(acceptEncoding []string, defaultType string) string {
+	if defaultType == "" {
+		// Follows the pre-existing default order inside Traefik: br > gzip.
+		defaultType = brotliName
+	}
+
 	accepts, hasWeight := parseAcceptsEncoding(acceptEncoding)
 
 	if hasWeight {
@@ -35,34 +40,23 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 			}
 
 			if a.Type == wildcardName {
-				continue
+				return defaultType
 			}
 
 			return a.Type
 		}
 
-		if defaultType != "" {
-			return defaultType
-		}
-
-		// Follows the pre-existing default order inside Traefik: br > gzip.
-		return brotliName
+		return identityName
 	}
 
-	// fallback on pre-existing order inside Traefik
 	for _, dt := range []string{brotliName, gzipName} {
 		if slices.ContainsFunc(accepts, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}
 	}
 
-	if defaultType != "" {
-		return defaultType
-	}
-
 	if slices.ContainsFunc(accepts, func(e Encoding) bool { return e.Type == wildcardName }) {
-		// Follows the pre-existing default order inside Traefik: br > gzip.
-		return brotliName
+		return defaultType
 	}
 
 	return identityName
