@@ -8,9 +8,10 @@ import (
 
 func Test_getCompressionType(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		values   []string
-		expected string
+		desc        string
+		values      []string
+		defaultType string
+		expected    string
 	}{
 		{
 			desc:     "br > gzip (no weight)",
@@ -30,7 +31,13 @@ func Test_getCompressionType(t *testing.T) {
 		{
 			desc:     "wildcard return the default compression type",
 			values:   []string{"*"},
-			expected: "foo",
+			expected: brotliName,
+		},
+		{
+			desc:        "wildcard return the custom default compression type",
+			values:      []string{"*"},
+			defaultType: "foo",
+			expected:    "foo",
 		},
 		{
 			desc:     "follows weight",
@@ -52,13 +59,18 @@ func Test_getCompressionType(t *testing.T) {
 			values:   []string{"compress;q=1.0, *;q=0"},
 			expected: notAcceptable,
 		},
+		{
+			desc:     "non-zero is higher than 0",
+			values:   []string{"gzip, *;q=0"},
+			expected: gzipName,
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			encodingType := getCompressionType(test.values, "foo")
+			encodingType := getCompressionType(test.values, test.defaultType)
 
 			assert.Equal(t, test.expected, encodingType)
 		})
