@@ -217,7 +217,7 @@ http:
 
 ### `defaultEncoding`
 
-_Optional_
+_Optional, Default=""_
 
 `defaultEncoding` specify the default encoding to use if the header `Accept-Encoding` is defined but empty or if there is no supported encoding.
 
