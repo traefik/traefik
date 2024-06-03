@@ -25,7 +25,7 @@ func Test_getCompressionType(t *testing.T) {
 		{
 			desc:     "unknown compression types, use default (no weight)",
 			values:   []string{"compress, rar"},
-			expected: "foo",
+			expected: identityName,
 		},
 		{
 			desc:     "wildcard return the default compression type",

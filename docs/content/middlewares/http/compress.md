@@ -219,7 +219,9 @@ http:
 
 _Optional, Default=""_
 
-`defaultEncoding` specify the default encoding to use if the header `Accept-Encoding` is defined but empty or if there is no supported encoding.
+`defaultEncoding` specify the default encoding to use if the header `Accept-Encoding` is not present or a wildcard (`*`).
+
+There is no fallback on the `defaultEncoding` when the header value is empty or unsupported.
 
 ```yaml tab="Docker & Swarm"
 labels:
