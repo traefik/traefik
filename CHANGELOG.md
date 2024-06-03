@@ -1,3 +1,39 @@
+## [v3.0.1](https://github.com/traefik/traefik/tree/v3.0.1) (2024-05-22)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0...v3.0.1)
+
+**Bug fixes:**
+- **[k8s/ingress]** Fix rule syntax version for all internal routers ([#10689](https://github.com/traefik/traefik/pull/10689) by [HalloTschuess](https://github.com/HalloTschuess))
+- **[metrics,tracing]** Allow empty configuration for OpenTelemetry metrics and tracing ([#10729](https://github.com/traefik/traefik/pull/10729) by [rtribotte](https://github.com/rtribotte))
+- **[provider,tls]** Bump tscert dependency to 28a91b69a046 ([#10668](https://github.com/traefik/traefik/pull/10668) by [kevinpollet](https://github.com/kevinpollet))
+- **[rules,tcp]** Fix the rule syntax mechanism for TCP ([#10680](https://github.com/traefik/traefik/pull/10680) by [lbenguigui](https://github.com/lbenguigui))
+- **[tls,server]** Remove deadlines when handling PostgreSQL connections ([#10675](https://github.com/traefik/traefik/pull/10675) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Add support for IP White list ([#10740](https://github.com/traefik/traefik/pull/10740) by [davidbaptista](https://github.com/davidbaptista))
+
+**Documentation:**
+- **[http3]** Add link to the new http3 config in migration ([#10673](https://github.com/traefik/traefik/pull/10673) by [yyewolf](https://github.com/yyewolf))
+- **[logs]** Fix log.compress value ([#10716](https://github.com/traefik/traefik/pull/10716) by [mmatur](https://github.com/mmatur))
+- **[metrics]** Fix OTel documentation ([#10723](https://github.com/traefik/traefik/pull/10723) by [nmengin](https://github.com/nmengin))
+- **[middleware]** Fix doc consistency forwardauth ([#10724](https://github.com/traefik/traefik/pull/10724) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Remove providers not supported in documentation ([#10725](https://github.com/traefik/traefik/pull/10725) by [mmatur](https://github.com/mmatur))
+- **[rules]** Fix typo in PathRegexp explanation ([#10719](https://github.com/traefik/traefik/pull/10719) by [BreadInvasion](https://github.com/BreadInvasion))
+- **[rules]** Fix router documentation example ([#10704](https://github.com/traefik/traefik/pull/10704) by [ldez](https://github.com/ldez))
+
+## [v2.11.3](https://github.com/traefik/traefik/tree/v2.11.3) (2024-05-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.2...v2.11.3)
+
+**Bug fixes:**
+- **[server]** Remove deadlines for non-TLS connections ([#10615](https://github.com/traefik/traefik/pull/10615) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Display of Content Security Policy values getting out of screen ([#10710](https://github.com/traefik/traefik/pull/10710) by [brandonfl](https://github.com/brandonfl))
+- **[webui]** Fix provider icon size ([#10621](https://github.com/traefik/traefik/pull/10621) by [framebassman](https://github.com/framebassman))
+
+**Documentation:**
+- **[k8s/crd]** Fix migration/v2.md ([#10658](https://github.com/traefik/traefik/pull/10658) by [stemar94](https://github.com/stemar94))
+- **[k8s/gatewayapi]** Fix HTTPRoute use of backendRefs ([#10630](https://github.com/traefik/traefik/pull/10630) by [sakaru](https://github.com/sakaru))
+- **[k8s/gatewayapi]** Fix HTTPRoute path type ([#10629](https://github.com/traefik/traefik/pull/10629) by [sakaru](https://github.com/sakaru))
+- **[k8s]** Improve mirroring example on Kubernetes ([#10701](https://github.com/traefik/traefik/pull/10701) by [mloiseleur](https://github.com/mloiseleur))
+- Consistent entryPoints capitalization in CLI flag usage ([#10650](https://github.com/traefik/traefik/pull/10650) by [jnoordsij](https://github.com/jnoordsij))
+- Fix unfinished migration sentence for v2.11.2 ([#10633](https://github.com/traefik/traefik/pull/10633) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.0.0](https://github.com/traefik/traefik/tree/v3.0.0) (2024-04-29)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta1...v3.0.0)
 

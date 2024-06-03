@@ -656,6 +656,50 @@ func Test_applyModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "with TCP model, two entry points",
+			input: dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"test": {
+							EntryPoints: []string{"websecure", "web"},
+						},
+						"test2": {
+							EntryPoints: []string{"web"},
+							RuleSyntax:  "barfoo",
+						},
+					},
+					Middlewares: make(map[string]*dynamic.TCPMiddleware),
+					Services:    make(map[string]*dynamic.TCPService),
+					Models: map[string]*dynamic.TCPModel{
+						"websecure@internal": {
+							DefaultRuleSyntax: "foobar",
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"test": {
+							EntryPoints: []string{"websecure", "web"},
+							RuleSyntax:  "foobar",
+						},
+						"test2": {
+							EntryPoints: []string{"web"},
+							RuleSyntax:  "barfoo",
+						},
+					},
+					Middlewares: make(map[string]*dynamic.TCPMiddleware),
+					Services:    make(map[string]*dynamic.TCPService),
+					Models: map[string]*dynamic.TCPModel{
+						"websecure@internal": {
+							DefaultRuleSyntax: "foobar",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
