@@ -16,10 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 func TestOpenTelemetry_labels(t *testing.T) {
@@ -361,10 +362,10 @@ func TestOpenTelemetry(t *testing.T) {
 	}
 
 	registry.EntryPointReqsCounter().With(nil, "entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	registry.EntryPointReqsTLSCounter().With("entrypoint", "test2", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+	registry.EntryPointReqsTLSCounter().With(nil, "entrypoint", "test2", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	registry.EntryPointReqDurationHistogram().With("entrypoint", "test3").Observe(10000)
-	registry.EntryPointReqsBytesCounter().With("entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	registry.EntryPointRespsBytesCounter().With("entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	registry.EntryPointReqsBytesCounter().With(nil, "entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	registry.EntryPointRespsBytesCounter().With(nil, "entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 
 	tryAssertMessage(t, c, expectedEntryPoints)
 
@@ -378,10 +379,10 @@ func TestOpenTelemetry(t *testing.T) {
 
 	registry.RouterReqsCounter().With(nil, "router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	registry.RouterReqsCounter().With(nil, "router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	registry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+	registry.RouterReqsTLSCounter().With(nil, "router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	registry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
-	registry.RouterReqsBytesCounter().With("router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	registry.RouterRespsBytesCounter().With("router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	registry.RouterReqsBytesCounter().With(nil, "router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	registry.RouterRespsBytesCounter().With(nil, "router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 
 	tryAssertMessage(t, c, expectedRouters)
 
@@ -396,11 +397,11 @@ func TestOpenTelemetry(t *testing.T) {
 
 	registry.ServiceReqsCounter().With(nil, "service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	registry.ServiceReqsCounter().With(nil, "service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	registry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+	registry.ServiceReqsTLSCounter().With(nil, "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	registry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	registry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1").Set(1)
-	registry.ServiceReqsBytesCounter().With("service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	registry.ServiceRespsBytesCounter().With("service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	registry.ServiceReqsBytesCounter().With(nil, "service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	registry.ServiceRespsBytesCounter().With(nil, "service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 
 	tryAssertMessage(t, c, expectedServices)
 

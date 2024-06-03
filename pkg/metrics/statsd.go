@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-kit/kit/metrics/statsd"
 	"github.com/rs/zerolog/log"
+
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -67,30 +68,30 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdEntryPointReqsName, 1.0))
-		registry.entryPointReqsTLSCounter = statsdClient.NewCounter(statsdEntryPointReqsTLSName, 1.0)
+		registry.entryPointReqsTLSCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdEntryPointReqsTLSName, 1.0))
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0), time.Millisecond)
-		registry.entryPointReqsBytesCounter = statsdClient.NewCounter(statsdEntryPointReqsBytesName, 1.0)
-		registry.entryPointRespsBytesCounter = statsdClient.NewCounter(statsdEntryPointRespsBytesName, 1.0)
+		registry.entryPointReqsBytesCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdEntryPointReqsBytesName, 1.0))
+		registry.entryPointRespsBytesCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdEntryPointRespsBytesName, 1.0))
 	}
 
 	if config.AddRoutersLabels {
 		registry.routerEnabled = config.AddRoutersLabels
 		registry.routerReqsCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdRouterReqsName, 1.0))
-		registry.routerReqsTLSCounter = statsdClient.NewCounter(statsdRouterReqsTLSName, 1.0)
+		registry.routerReqsTLSCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdRouterReqsTLSName, 1.0))
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterReqsDurationName, 1.0), time.Millisecond)
-		registry.routerReqsBytesCounter = statsdClient.NewCounter(statsdRouterReqsBytesName, 1.0)
-		registry.routerRespsBytesCounter = statsdClient.NewCounter(statsdRouterRespsBytesName, 1.0)
+		registry.routerReqsBytesCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdRouterReqsBytesName, 1.0))
+		registry.routerRespsBytesCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdRouterRespsBytesName, 1.0))
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdServiceReqsName, 1.0))
-		registry.serviceReqsTLSCounter = statsdClient.NewCounter(statsdServiceReqsTLSName, 1.0)
+		registry.serviceReqsTLSCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdServiceReqsTLSName, 1.0))
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdServiceReqsDurationName, 1.0), time.Millisecond)
 		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdServiceRetriesTotalName, 1.0)
 		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServiceServerUpName)
-		registry.serviceReqsBytesCounter = statsdClient.NewCounter(statsdServiceReqsBytesName, 1.0)
-		registry.serviceRespsBytesCounter = statsdClient.NewCounter(statsdServiceRespsBytesName, 1.0)
+		registry.serviceReqsBytesCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdServiceReqsBytesName, 1.0))
+		registry.serviceRespsBytesCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdServiceRespsBytesName, 1.0))
 	}
 
 	return registry

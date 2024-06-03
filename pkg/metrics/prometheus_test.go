@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	th "github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -125,11 +126,11 @@ func TestPrometheus(t *testing.T) {
 		Observe(1)
 	prometheusRegistry.
 		EntryPointRespsBytesCounter().
-		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 	prometheusRegistry.
 		EntryPointReqsBytesCounter().
-		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 
 	prometheusRegistry.
@@ -138,7 +139,7 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		RouterReqsTLSCounter().
-		With("router", "demo", "service", "service1", "tls_version", "foo", "tls_cipher", "bar").
+		With(nil, "router", "demo", "service", "service1", "tls_version", "foo", "tls_cipher", "bar").
 		Add(1)
 	prometheusRegistry.
 		RouterReqDurationHistogram().
@@ -146,11 +147,11 @@ func TestPrometheus(t *testing.T) {
 		Observe(10000)
 	prometheusRegistry.
 		RouterRespsBytesCounter().
-		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		RouterReqsBytesCounter().
-		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 
 	prometheusRegistry.
@@ -159,7 +160,7 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		ServiceReqsTLSCounter().
-		With("service", "service1", "tls_version", "foo", "tls_cipher", "bar").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "service", "service1", "tls_version", "foo", "tls_cipher", "bar").
 		Add(1)
 	prometheusRegistry.
 		ServiceReqDurationHistogram().
@@ -175,11 +176,11 @@ func TestPrometheus(t *testing.T) {
 		Set(1)
 	prometheusRegistry.
 		ServiceRespsBytesCounter().
-		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceReqsBytesCounter().
-		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 
 	delayForTrackingCompletion()
@@ -244,6 +245,7 @@ func TestPrometheus(t *testing.T) {
 				"method":     http.MethodGet,
 				"protocol":   "http",
 				"entrypoint": "http",
+				"useragent":  "foobar",
 			},
 			assert: buildCounterAssert(t, entryPointReqsBytesTotalName, 1),
 		},
@@ -254,6 +256,7 @@ func TestPrometheus(t *testing.T) {
 				"method":     http.MethodGet,
 				"protocol":   "http",
 				"entrypoint": "http",
+				"useragent":  "foobar",
 			},
 			assert: buildCounterAssert(t, entryPointRespsBytesTotalName, 1),
 		},
@@ -276,6 +279,7 @@ func TestPrometheus(t *testing.T) {
 				"router":      "demo",
 				"tls_version": "foo",
 				"tls_cipher":  "bar",
+				"useragent":   "",
 			},
 			assert: buildCounterAssert(t, routerReqsTLSTotalName, 1),
 		},
@@ -293,22 +297,24 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: routerReqsBytesTotalName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-				"router":   "demo",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"router":    "demo",
+				"useragent": "",
 			},
 			assert: buildCounterAssert(t, routerReqsBytesTotalName, 1),
 		},
 		{
 			name: routerRespsBytesTotalName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-				"router":   "demo",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"router":    "demo",
+				"useragent": "",
 			},
 			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
 		},
@@ -329,6 +335,7 @@ func TestPrometheus(t *testing.T) {
 				"service":     "service1",
 				"tls_version": "foo",
 				"tls_cipher":  "bar",
+				"useragent":   "foobar",
 			},
 			assert: buildCounterAssert(t, serviceReqsTLSTotalName, 1),
 		},
@@ -360,20 +367,22 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: serviceReqsBytesTotalName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"useragent": "foobar",
 			},
 			assert: buildCounterAssert(t, serviceReqsBytesTotalName, 1),
 		},
 		{
 			name: serviceRespsBytesTotalName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"useragent": "foobar",
 			},
 			assert: buildCounterAssert(t, serviceRespsBytesTotalName, 1),
 		},

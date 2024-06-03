@@ -12,14 +12,15 @@ import (
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -37,10 +38,10 @@ const (
 type metricsMiddleware struct {
 	next                 http.Handler
 	reqsCounter          metrics.CounterWithHeaders
-	reqsTLSCounter       gokitmetrics.Counter
+	reqsTLSCounter       metrics.CounterWithHeaders
 	reqDurationHistogram metrics.ScalableHistogram
-	reqsBytesCounter     gokitmetrics.Counter
-	respsBytesCounter    gokitmetrics.Counter
+	reqsBytesCounter     metrics.CounterWithHeaders
+	respsBytesCounter    metrics.CounterWithHeaders
 	baseLabels           []string
 	name                 string
 }
@@ -132,7 +133,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		tlsLabels = append(tlsLabels, m.baseLabels...)
 		tlsLabels = append(tlsLabels, "tls_version", traefiktls.GetVersion(req.TLS), "tls_cipher", traefiktls.GetCipherName(req.TLS))
 
-		m.reqsTLSCounter.With(tlsLabels...).Add(1)
+		m.reqsTLSCounter.With(req.Header, tlsLabels...).Add(1)
 	}
 
 	ctx := req.Context()
@@ -165,8 +166,8 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	labels = append(labels, "code", strconv.Itoa(code))
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 	m.reqsCounter.With(req.Header, labels...).Add(1)
-	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
-	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
+	m.respsBytesCounter.With(req.Header, labels...).Add(float64(capt.ResponseSize()))
+	m.reqsBytesCounter.With(req.Header, labels...).Add(float64(capt.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
