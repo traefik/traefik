@@ -30,7 +30,7 @@ func Test_getCompressionType(t *testing.T) {
 		{
 			desc:     "wildcard return the default compression type",
 			values:   []string{"*"},
-			expected: brotliName,
+			expected: "foo",
 		},
 		{
 			desc:     "follows weight",
