@@ -107,7 +107,15 @@ func floatCompare(lhs, rhs *float64) int {
 		return 0
 	}
 
+	if lhs == nil && *rhs == 0 {
+		return -1
+	}
+
 	if lhs == nil {
+		return 1
+	}
+
+	if rhs == nil && *lhs == 0 {
 		return 1
 	}
 
