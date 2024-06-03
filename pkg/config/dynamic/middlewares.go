@@ -175,7 +175,7 @@ type Compress struct {
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
 	// DefaultEncoding defines the default encoding to use if the header `Accept-Encoding` is defined but empty or if there is no supported encoding.
-	DefaultEncoding string `json:"defaultEncoding" toml:"defaultEncoding" yaml:"defaultEncoding" export:"true"`
+	DefaultEncoding string `json:"defaultEncoding,omitempty" toml:"defaultEncoding,omitempty" yaml:"defaultEncoding,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
