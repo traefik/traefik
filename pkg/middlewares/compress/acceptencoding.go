@@ -97,14 +97,14 @@ func parseAcceptsEncoding(acceptEncoding []string) ([]Encoding, bool) {
 		}
 	}
 
-	slices.SortFunc(values, func(a, b Encoding) int {
-		return floatCompare(a.Weight, b.Weight)
-	})
+	slices.SortFunc(values, compareEncoding)
 
 	return values, hasWeight
 }
 
-func floatCompare(lhs, rhs *float64) int {
+func compareEncoding(a, b Encoding) int {
+	lhs, rhs := a.Weight, b.Weight
+
 	if lhs == nil && rhs == nil {
 		return 0
 	}
