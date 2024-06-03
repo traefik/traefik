@@ -50,21 +50,22 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 	}
 
 	// fallback on pre-existing order inside Traefik
-	defaultTypes := []string{defaultType, brotliName, gzipName}
-
-	for _, dt := range defaultTypes {
-		if dt == "" {
-			continue
-		}
-
-		if slices.ContainsFunc(accepts, func(e Encoding) bool {
-			return e.Type == dt || e.Type == wildcardName
-		}) {
+	for _, dt := range []string{brotliName, gzipName} {
+		if slices.ContainsFunc(accepts, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}
 	}
 
-	return defaultType
+	if defaultType != "" {
+		return defaultType
+	}
+
+	if slices.ContainsFunc(accepts, func(e Encoding) bool { return e.Type == wildcardName }) {
+		// Follows the pre-existing default order inside Traefik: br > gzip.
+		return brotliName
+	}
+
+	return identityName
 }
 
 func parseAcceptsEncoding(acceptEncoding []string) ([]Encoding, bool) {
