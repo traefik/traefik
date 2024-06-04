@@ -281,6 +281,22 @@
           [http.middlewares.Middleware18.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+        [http.middlewares.Middleware18.rateLimit.redis]
+          endpoints = ["foobar", "foobar"]
+          username = "foobar"
+          password = "foobar"
+          db = 42
+          poolSize = 42
+          minIdleConns = 42
+          idleConnTimeout = "42ns"
+          omitempty = "42ns"
+          writeTimeout = "42ns"
+          dialTimeout = "42ns"
+          [http.middlewares.Middleware18.rateLimit.redis.tls]
+            ca = "foobar"
+            cert = "foobar"
+            key = "foobar"
+            insecureSkipVerify = true
     [http.middlewares.Middleware19]
       [http.middlewares.Middleware19.redirectRegex]
         regex = "foobar"
