@@ -8,26 +8,27 @@ const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
 // ClientAuth defines the parameters of the client authentication part of the TLS connection, if any.
 type ClientAuth struct {
-	CAFiles []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty"`
 	// ClientAuthType defines the client authentication type to apply.
 	// The available values are: "NoClientCert", "RequestClientCert", "VerifyClientCertIfGiven" and "RequireAndVerifyClientCert".
 	ClientAuthType string `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
+
+	CAFiles []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // Options configures TLS for an entry point.
 type Options struct {
+	// Deprecated: https://github.com/golang/go/issues/45430
+	PreferServerCipherSuites *bool `json:"preferServerCipherSuites,omitempty" toml:"preferServerCipherSuites,omitempty" yaml:"preferServerCipherSuites,omitempty" export:"true"`
+
 	MinVersion       string     `json:"minVersion,omitempty" toml:"minVersion,omitempty" yaml:"minVersion,omitempty" export:"true"`
 	MaxVersion       string     `json:"maxVersion,omitempty" toml:"maxVersion,omitempty" yaml:"maxVersion,omitempty" export:"true"`
 	CipherSuites     []string   `json:"cipherSuites,omitempty" toml:"cipherSuites,omitempty" yaml:"cipherSuites,omitempty" export:"true"`
 	CurvePreferences []string   `json:"curvePreferences,omitempty" toml:"curvePreferences,omitempty" yaml:"curvePreferences,omitempty" export:"true"`
+	ALPNProtocols    []string   `json:"alpnProtocols,omitempty" toml:"alpnProtocols,omitempty" yaml:"alpnProtocols,omitempty" export:"true"`
 	ClientAuth       ClientAuth `json:"clientAuth,omitempty" toml:"clientAuth,omitempty" yaml:"clientAuth,omitempty"`
 	SniStrict        bool       `json:"sniStrict,omitempty" toml:"sniStrict,omitempty" yaml:"sniStrict,omitempty" export:"true"`
-	ALPNProtocols    []string   `json:"alpnProtocols,omitempty" toml:"alpnProtocols,omitempty" yaml:"alpnProtocols,omitempty" export:"true"`
-
-	// Deprecated: https://github.com/golang/go/issues/45430
-	PreferServerCipherSuites *bool `json:"preferServerCipherSuites,omitempty" toml:"preferServerCipherSuites,omitempty" yaml:"preferServerCipherSuites,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for an Options struct.
@@ -48,10 +49,10 @@ type Store struct {
 
 // GeneratedCert defines the default generated certificate configuration.
 type GeneratedCert struct {
-	// Resolver is the name of the resolver that will be used to issue the DefaultCertificate.
-	Resolver string `json:"resolver,omitempty" toml:"resolver,omitempty" yaml:"resolver,omitempty" export:"true"`
 	// Domain is the domain definition for the DefaultCertificate.
 	Domain *types.Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty" export:"true"`
+	// Resolver is the name of the resolver that will be used to issue the DefaultCertificate.
+	Resolver string `json:"resolver,omitempty" toml:"resolver,omitempty" yaml:"resolver,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

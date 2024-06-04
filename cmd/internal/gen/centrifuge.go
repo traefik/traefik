@@ -36,16 +36,16 @@ type Element struct {
 // Centrifuge a centrifuge.
 // Generate Go Structures from Go structures.
 type Centrifuge struct {
-	IncludedImports []string
-	ExcludedTypes   []string
-	ExcludedFiles   []string
-
 	TypeCleaner    func(types.Type, string) string
 	PackageCleaner func(string) string
 
-	rootPkg string
 	fileSet *token.FileSet
 	pkg     *types.Package
+
+	rootPkg         string
+	IncludedImports []string
+	ExcludedTypes   []string
+	ExcludedFiles   []string
 }
 
 // NewCentrifuge creates a new Centrifuge.

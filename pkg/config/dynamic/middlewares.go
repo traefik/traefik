@@ -82,21 +82,21 @@ type AddPrefix struct {
 // This middleware restricts access to your services to known users.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/
 type BasicAuth struct {
-	// Users is an array of authorized users.
-	// Each user must be declared using the name:hashed-password format.
-	// Tip: Use htpasswd to generate the passwords.
-	Users Users `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
 	// UsersFile is the path to an external file that contains the authorized users.
 	UsersFile string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
 	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
 	// Default: traefik.
 	Realm string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
-	// RemoveHeader sets the removeHeader option to true to remove the authorization header before forwarding the request to your service.
-	// Default: false.
-	RemoveHeader bool `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+	// Users is an array of authorized users.
+	// Each user must be declared using the name:hashed-password format.
+	// Tip: Use htpasswd to generate the passwords.
+	Users Users `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
+	// RemoveHeader sets the removeHeader option to true to remove the authorization header before forwarding the request to your service.
+	// Default: false.
+	RemoveHeader bool `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -105,6 +105,10 @@ type BasicAuth struct {
 // This middleware retries or limits the size of requests that can be forwarded to backends.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#maxrequestbodybytes
 type Buffering struct {
+	// RetryExpression defines the retry conditions.
+	// It is a logical combination of functions with operators AND (&&) and OR (||).
+	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#retryexpression
+	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
 	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
 	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
 	// Default: 0 (no maximum).
@@ -119,10 +123,6 @@ type Buffering struct {
 	// MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
 	// Default: 1048576 (1Mi).
 	MemResponseBodyBytes int64 `json:"memResponseBodyBytes,omitempty" toml:"memResponseBodyBytes,omitempty" yaml:"memResponseBodyBytes,omitempty" export:"true"`
-	// RetryExpression defines the retry conditions.
-	// It is a logical combination of functions with operators AND (&&) and OR (||).
-	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#retryexpression
-	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -182,19 +182,19 @@ type Compress struct {
 // This middleware restricts access to your services to known users.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/digestauth/
 type DigestAuth struct {
-	// Users defines the authorized users.
-	// Each user should be declared using the name:realm:encoded-password format.
-	Users Users `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
 	// UsersFile is the path to an external file that contains the authorized users for the middleware.
 	UsersFile string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
-	// RemoveHeader defines whether to remove the authorization header before forwarding the request to the backend.
-	RemoveHeader bool `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
 	// Default: traefik.
 	Realm string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+	// Users defines the authorized users.
+	// Each user should be declared using the name:realm:encoded-password format.
+	Users Users `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
+	// RemoveHeader defines whether to remove the authorization header before forwarding the request to the backend.
+	RemoveHeader bool `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -202,17 +202,17 @@ type DigestAuth struct {
 // ErrorPage holds the custom error middleware configuration.
 // This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 type ErrorPage struct {
+	// Service defines the name of the service that will serve the error page.
+	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	// Query defines the URL for the error page (hosted by service).
+	// The {status} variable can be used in order to insert the status code in the URL.
+	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
 	// Status defines which status or range of statuses should result in an error page.
 	// It can be either a status code as a number (500),
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
 	Status []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
-	// Service defines the name of the service that will serve the error page.
-	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	// Query defines the URL for the error page (hosted by service).
-	// The {status} variable can be used in order to insert the status code in the URL.
-	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -223,20 +223,20 @@ type ErrorPage struct {
 type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	// TLS defines the configuration used to secure the connection to the authentication server.
-	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
-	TrustForwardHeader bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
-	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
-	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty" toml:"authResponseHeadersRegex,omitempty" yaml:"authResponseHeadersRegex,omitempty" export:"true"`
+	// TLS defines the configuration used to secure the connection to the authentication server.
+	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
+	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
+	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+	TrustForwardHeader bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -245,12 +245,13 @@ type ForwardAuth struct {
 // CA, Cert and Key can be either path or file contents.
 // TODO: remove this struct when CAOptional option will be removed.
 type ClientTLS struct {
+	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
+	CAOptional *bool `description:"TLS CA.Optional" json:"caOptional,omitempty" toml:"caOptional,omitempty" yaml:"caOptional,omitempty" export:"true"`
+
 	CA                 string `description:"TLS CA" json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
 	Cert               string `description:"TLS cert" json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty"`
 	Key                string `description:"TLS key" json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
 	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
-	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
-	CAOptional *bool `description:"TLS CA.Optional" json:"caOptional,omitempty" toml:"caOptional,omitempty" yaml:"caOptional,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -385,10 +386,10 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
-	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
-	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
+	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
+	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
 
@@ -427,9 +428,9 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipwhitelist/
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
+	IPStrategy *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.
-	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
-	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -438,9 +439,9 @@ type IPWhiteList struct {
 // This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/
 type IPAllowList struct {
+	IPStrategy *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
-	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
-	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	// RejectStatusCode defines the HTTP status code used for refused requests.
 	// If not set, the default is 403 (Forbidden).
 	RejectStatusCode int `json:"rejectStatusCode,omitempty" toml:"rejectStatusCode,omitempty" yaml:"rejectStatusCode,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
@@ -452,14 +453,14 @@ type IPAllowList struct {
 // This middleware limits the number of requests being processed and served concurrently.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/inflightreq/
 type InFlightReq struct {
-	// Amount defines the maximum amount of allowed simultaneous in-flight request.
-	// The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
-	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the requestHost.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/inflightreq/#sourcecriterion
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+	// Amount defines the maximum amount of allowed simultaneous in-flight request.
+	// The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
+	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -468,10 +469,10 @@ type InFlightReq struct {
 // This middleware adds the selected data from the passed client TLS certificate to a header.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/passtlsclientcert/
 type PassTLSClientCert struct {
-	// PEM sets the X-Forwarded-Tls-Client-Cert header with the certificate.
-	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
+	// PEM sets the X-Forwarded-Tls-Client-Cert header with the certificate.
+	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -492,6 +493,11 @@ type SourceCriterion struct {
 // RateLimit holds the rate limit configuration.
 // This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
 type RateLimit struct {
+	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
+	// If several strategies are defined at the same time, an error will be raised.
+	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
+	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+
 	// Average is the maximum rate, by default in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
@@ -505,11 +511,6 @@ type RateLimit struct {
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
 	Burst int64 `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty" export:"true"`
-
-	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
-	// If several strategies are defined at the same time, an error will be raised.
-	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
-	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
