@@ -121,7 +121,7 @@ func Test_MinSize(t *testing.T) {
 	var bodySize int
 	h := mustNewWrapper(t, cfg)(http.HandlerFunc(
 		func(rw http.ResponseWriter, req *http.Request) {
-			for i := 0; i < bodySize; i++ {
+			for range bodySize {
 				// We make sure to Write at least once less than minSize so that both
 				// cases below go through the same algo: i.e. they start buffering
 				// because they haven't reached minSize.
