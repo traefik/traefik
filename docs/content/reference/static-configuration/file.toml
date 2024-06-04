@@ -448,6 +448,7 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      deadPeriod = "42ns"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
@@ -471,6 +472,7 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      deadPeriod = "42ns"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"

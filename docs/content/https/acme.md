@@ -650,6 +650,34 @@ certificatesResolvers:
 # ...
 ```
 
+### `deadPeriod`
+
+_Optional, Default=0_
+
+Period before considering a certificate as dead.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      deadPeriod: 2d
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  deadPeriod="2d"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.deadPeriod=2d
+# ...
+```
+
 ### `preferredChain`
 
 _Optional, Default=""_

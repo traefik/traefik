@@ -492,6 +492,7 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      deadPeriod: 42ns
       caCertificates:
         - foobar
         - foobar
@@ -519,6 +520,7 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      deadPeriod: 42ns
       caCertificates:
         - foobar
         - foobar

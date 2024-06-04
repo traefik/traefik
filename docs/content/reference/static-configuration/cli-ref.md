@@ -72,6 +72,9 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`--certificatesresolvers.<name>.acme.deadperiod`:  
+Period before considering a certificate as dead. (Default: ```0s```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
