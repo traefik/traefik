@@ -235,7 +235,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
-		ctx = logger.WithContext(ctx)
+		ctxIngress := logger.WithContext(ctx)
 
 		if !p.shouldProcessIngress(ingress, ingressClasses) {
 			continue
@@ -247,7 +247,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
-		err = getCertificates(ctx, ingress, client, certConfigs)
+		err = getCertificates(ctxIngress, ingress, client, certConfigs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error configuring TLS")
 		}
@@ -289,7 +289,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.TLS = rtConfig.Router.TLS
 			}
 
-			p.applyRouterTransform(ctx, rt, ingress)
+			p.applyRouterTransform(ctxIngress, rt, ingress)
 
 			conf.HTTP.Routers["default-router"] = rt
 			conf.HTTP.Services["default-backend"] = service
@@ -336,7 +336,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				rt := loadRouter(rule, pa, rtConfig, serviceName)
 
-				p.applyRouterTransform(ctx, rt, ingress)
+				p.applyRouterTransform(ctxIngress, rt, ingress)
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host+pa.Path), "-")
 
