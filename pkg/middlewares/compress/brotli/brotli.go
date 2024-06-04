@@ -160,6 +160,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 			}
 			if !found {
 				r.compressionDisabled = true
+				r.rw.WriteHeader(r.statusCode)
 				return r.rw.Write(p)
 			}
 		}
@@ -167,6 +168,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		for _, excludedContentType := range r.excludedContentTypes {
 			if excludedContentType.equals(mediaType, params) {
 				r.compressionDisabled = true
+				r.rw.WriteHeader(r.statusCode)
 				return r.rw.Write(p)
 			}
 		}
