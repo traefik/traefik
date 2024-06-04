@@ -645,6 +645,35 @@ certificatesResolvers:
 | >= 24 hours          | 6 hours           | 10 min                  |
 | < 24 hours           | 20 min            | 1 min                   |
 
+### `deadPeriod`
+
+_Optional, Default=0_
+
+Period before considering a certificate as dead.
+
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      deadPeriod: 2
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  deadPeriod=2
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.deadPeriod=2
+# ...
+```
+
 ### `preferredChain`
 
 _Optional, Default=""_
