@@ -219,30 +219,14 @@ func (p *Provider) loadHTTPService(client Client, route *gatev1.HTTPRoute, backe
 
 	serviceName := provider.Normalize(makeID(namespace, string(backendRef.Name)))
 
-	if namespace != route.Namespace {
-		refGrants, err := client.ListReferenceGrants(namespace)
-		if err != nil {
-			return serviceName, nil, &metav1.Condition{
-				Type:               string(gatev1.RouteConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: route.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.RouteReasonRefNotPermitted),
-				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s namespace not allowed", group, kind, namespace, backendRef.Name),
-			}
-		}
-
-		refGrants = filterReferenceGrantsFrom(refGrants, groupGateway, kindHTTPRoute, route.Namespace)
-		refGrants = filterReferenceGrantsTo(refGrants, group, string(kind), string(backendRef.Name))
-		if len(refGrants) == 0 {
-			return serviceName, nil, &metav1.Condition{
-				Type:               string(gatev1.RouteConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: route.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.RouteReasonRefNotPermitted),
-				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s namespace not allowed", group, kind, namespace, backendRef.Name),
-			}
+	if err := isReferenceGranted(client, groupGateway, kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
 		}
 	}
 
