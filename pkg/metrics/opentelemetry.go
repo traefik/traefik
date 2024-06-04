@@ -131,7 +131,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 			"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method."))
 		reg.entryPointReqsTLSCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, entryPointReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used."))
-		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
+		reg.entryPointReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(newOTLPHistogramFrom(meter, entryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			"ms"), time.Second)
 		reg.entryPointReqsBytesCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, entryPointReqsBytesTotalName,
@@ -145,7 +145,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 			"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method."))
 		reg.routerReqsTLSCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, routerReqsTLSTotalName,
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used."))
-		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
+		reg.routerReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(newOTLPHistogramFrom(meter, routerReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			"ms"), time.Second)
 		reg.routerReqsBytesCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, routerReqsBytesTotalName,
@@ -159,7 +159,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 			"How many HTTP requests processed on a service, partitioned by status code, protocol, and method."))
 		reg.serviceReqsTLSCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, serviceReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher."))
-		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
+		reg.serviceReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(newOTLPHistogramFrom(meter, serviceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			"ms"), time.Second)
 		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,

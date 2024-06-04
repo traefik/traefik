@@ -80,7 +80,7 @@ func TestInfluxDB2(t *testing.T) {
 
 	influxDB2Registry.EntryPointReqsCounter().With(nil, "entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDB2Registry.EntryPointReqsTLSCounter().With(nil, "entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
-	influxDB2Registry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
+	influxDB2Registry.EntryPointReqDurationHistogram().With(nil, "entrypoint", "test").Observe(10000)
 	influxDB2Registry.EntryPointReqsBytesCounter().With(nil, "entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDB2Registry.EntryPointRespsBytesCounter().With(nil, "entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	msgEntrypoint := <-c
@@ -99,7 +99,7 @@ func TestInfluxDB2(t *testing.T) {
 	influxDB2Registry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDB2Registry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDB2Registry.RouterReqsTLSCounter().With(nil, "router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
-	influxDB2Registry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+	influxDB2Registry.RouterReqDurationHistogram().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDB2Registry.RouterReqsBytesCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDB2Registry.RouterRespsBytesCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	msgRouter := <-c
@@ -119,7 +119,7 @@ func TestInfluxDB2(t *testing.T) {
 	influxDB2Registry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDB2Registry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDB2Registry.ServiceReqsTLSCounter().With(nil, "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
-	influxDB2Registry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+	influxDB2Registry.ServiceReqDurationHistogram().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDB2Registry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1").Set(1)
 	influxDB2Registry.ServiceReqsBytesCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDB2Registry.ServiceRespsBytesCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)

@@ -122,7 +122,7 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		EntryPointReqDurationHistogram().
-		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Observe(1)
 	prometheusRegistry.
 		EntryPointRespsBytesCounter().
@@ -143,7 +143,7 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		RouterReqDurationHistogram().
-		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
 	prometheusRegistry.
 		RouterRespsBytesCounter().
@@ -164,7 +164,7 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		ServiceReqDurationHistogram().
-		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
 	prometheusRegistry.
 		ServiceRetriesCounter().
@@ -235,6 +235,7 @@ func TestPrometheus(t *testing.T) {
 				"method":     http.MethodGet,
 				"protocol":   "http",
 				"entrypoint": "http",
+				"useragent":  "foobar",
 			},
 			assert: buildHistogramAssert(t, entryPointReqDurationName, 1),
 		},
@@ -286,11 +287,12 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: routerReqDurationName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-				"router":   "demo",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"router":    "demo",
+				"useragent": "",
 			},
 			assert: buildHistogramAssert(t, routerReqDurationName, 1),
 		},
@@ -342,10 +344,11 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: serviceReqDurationName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"useragent": "foobar",
 			},
 			assert: buildHistogramAssert(t, serviceReqDurationName, 1),
 		},

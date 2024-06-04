@@ -90,7 +90,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBEntryPointReqsName))
 		registry.entryPointReqsTLSCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBEntryPointReqsTLSName))
-		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
+		registry.entryPointReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(influxDB2Store.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
 		registry.entryPointReqsBytesCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBEntryPointReqsBytesName))
 		registry.entryPointRespsBytesCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBEntryPointRespsBytesName))
 	}
@@ -99,7 +99,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		registry.routerEnabled = config.AddRoutersLabels
 		registry.routerReqsCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBRouterReqsName))
 		registry.routerReqsTLSCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBRouterReqsTLSName))
-		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBRouterReqsDurationName), time.Second)
+		registry.routerReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(influxDB2Store.NewHistogram(influxDBRouterReqsDurationName), time.Second)
 		registry.routerReqsBytesCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBRouterReqsBytesName))
 		registry.routerRespsBytesCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBRouterRespsBytesName))
 	}
@@ -108,7 +108,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBServiceReqsName))
 		registry.serviceReqsTLSCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBServiceReqsTLSName))
-		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBServiceReqsDurationName), time.Second)
+		registry.serviceReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(influxDB2Store.NewHistogram(influxDBServiceReqsDurationName), time.Second)
 		registry.serviceRetriesCounter = influxDB2Store.NewCounter(influxDBServiceRetriesTotalName)
 		registry.serviceServerUpGauge = influxDB2Store.NewGauge(influxDBServiceServerUpName)
 		registry.serviceReqsBytesCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBServiceReqsBytesName))

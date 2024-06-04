@@ -33,7 +33,7 @@ type Registry interface {
 
 	EntryPointReqsCounter() CounterWithHeaders
 	EntryPointReqsTLSCounter() CounterWithHeaders
-	EntryPointReqDurationHistogram() ScalableHistogram
+	EntryPointReqDurationHistogram() ScalableHistogramWithHeaders
 	EntryPointReqsBytesCounter() CounterWithHeaders
 	EntryPointRespsBytesCounter() CounterWithHeaders
 
@@ -41,7 +41,7 @@ type Registry interface {
 
 	RouterReqsCounter() CounterWithHeaders
 	RouterReqsTLSCounter() CounterWithHeaders
-	RouterReqDurationHistogram() ScalableHistogram
+	RouterReqDurationHistogram() ScalableHistogramWithHeaders
 	RouterReqsBytesCounter() CounterWithHeaders
 	RouterRespsBytesCounter() CounterWithHeaders
 
@@ -49,7 +49,7 @@ type Registry interface {
 
 	ServiceReqsCounter() CounterWithHeaders
 	ServiceReqsTLSCounter() CounterWithHeaders
-	ServiceReqDurationHistogram() ScalableHistogram
+	ServiceReqDurationHistogram() ScalableHistogramWithHeaders
 	ServiceRetriesCounter() metrics.Counter
 	ServiceServerUpGauge() metrics.Gauge
 	ServiceReqsBytesCounter() CounterWithHeaders
@@ -72,17 +72,17 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
 	var entryPointReqsCounter []CounterWithHeaders
 	var entryPointReqsTLSCounter []CounterWithHeaders
-	var entryPointReqDurationHistogram []ScalableHistogram
+	var entryPointReqDurationHistogram []ScalableHistogramWithHeaders
 	var entryPointReqsBytesCounter []CounterWithHeaders
 	var entryPointRespsBytesCounter []CounterWithHeaders
 	var routerReqsCounter []CounterWithHeaders
 	var routerReqsTLSCounter []CounterWithHeaders
-	var routerReqDurationHistogram []ScalableHistogram
+	var routerReqDurationHistogram []ScalableHistogramWithHeaders
 	var routerReqsBytesCounter []CounterWithHeaders
 	var routerRespsBytesCounter []CounterWithHeaders
 	var serviceReqsCounter []CounterWithHeaders
 	var serviceReqsTLSCounter []CounterWithHeaders
-	var serviceReqDurationHistogram []ScalableHistogram
+	var serviceReqDurationHistogram []ScalableHistogramWithHeaders
 	var serviceRetriesCounter []metrics.Counter
 	var serviceServerUpGauge []metrics.Gauge
 	var serviceReqsBytesCounter []CounterWithHeaders
@@ -164,17 +164,17 @@ func NewMultiRegistry(registries []Registry) Registry {
 		tlsCertsNotAfterTimestampGauge: multi.NewGauge(tlsCertsNotAfterTimestampGauge...),
 		entryPointReqsCounter:          NewMultiCounterWithHeaders(entryPointReqsCounter...),
 		entryPointReqsTLSCounter:       NewMultiCounterWithHeaders(entryPointReqsTLSCounter...),
-		entryPointReqDurationHistogram: MultiHistogram(entryPointReqDurationHistogram),
+		entryPointReqDurationHistogram: NewMultiScalableHistogramWithHeaders(entryPointReqDurationHistogram...),
 		entryPointReqsBytesCounter:     NewMultiCounterWithHeaders(entryPointReqsBytesCounter...),
 		entryPointRespsBytesCounter:    NewMultiCounterWithHeaders(entryPointRespsBytesCounter...),
 		routerReqsCounter:              NewMultiCounterWithHeaders(routerReqsCounter...),
 		routerReqsTLSCounter:           NewMultiCounterWithHeaders(routerReqsTLSCounter...),
-		routerReqDurationHistogram:     MultiHistogram(routerReqDurationHistogram),
+		routerReqDurationHistogram:     NewMultiScalableHistogramWithHeaders(routerReqDurationHistogram...),
 		routerReqsBytesCounter:         NewMultiCounterWithHeaders(routerReqsBytesCounter...),
 		routerRespsBytesCounter:        NewMultiCounterWithHeaders(routerRespsBytesCounter...),
 		serviceReqsCounter:             NewMultiCounterWithHeaders(serviceReqsCounter...),
 		serviceReqsTLSCounter:          NewMultiCounterWithHeaders(serviceReqsTLSCounter...),
-		serviceReqDurationHistogram:    MultiHistogram(serviceReqDurationHistogram),
+		serviceReqDurationHistogram:    NewMultiScalableHistogramWithHeaders(serviceReqDurationHistogram...),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
 		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
 		serviceReqsBytesCounter:        NewMultiCounterWithHeaders(serviceReqsBytesCounter...),
@@ -192,17 +192,17 @@ type standardRegistry struct {
 	tlsCertsNotAfterTimestampGauge metrics.Gauge
 	entryPointReqsCounter          CounterWithHeaders
 	entryPointReqsTLSCounter       CounterWithHeaders
-	entryPointReqDurationHistogram ScalableHistogram
+	entryPointReqDurationHistogram ScalableHistogramWithHeaders
 	entryPointReqsBytesCounter     CounterWithHeaders
 	entryPointRespsBytesCounter    CounterWithHeaders
 	routerReqsCounter              CounterWithHeaders
 	routerReqsTLSCounter           CounterWithHeaders
-	routerReqDurationHistogram     ScalableHistogram
+	routerReqDurationHistogram     ScalableHistogramWithHeaders
 	routerReqsBytesCounter         CounterWithHeaders
 	routerRespsBytesCounter        CounterWithHeaders
 	serviceReqsCounter             CounterWithHeaders
 	serviceReqsTLSCounter          CounterWithHeaders
-	serviceReqDurationHistogram    ScalableHistogram
+	serviceReqDurationHistogram    ScalableHistogramWithHeaders
 	serviceRetriesCounter          metrics.Counter
 	serviceServerUpGauge           metrics.Gauge
 	serviceReqsBytesCounter        CounterWithHeaders
@@ -245,7 +245,7 @@ func (r *standardRegistry) EntryPointReqsTLSCounter() CounterWithHeaders {
 	return r.entryPointReqsTLSCounter
 }
 
-func (r *standardRegistry) EntryPointReqDurationHistogram() ScalableHistogram {
+func (r *standardRegistry) EntryPointReqDurationHistogram() ScalableHistogramWithHeaders {
 	return r.entryPointReqDurationHistogram
 }
 
@@ -265,7 +265,7 @@ func (r *standardRegistry) RouterReqsTLSCounter() CounterWithHeaders {
 	return r.routerReqsTLSCounter
 }
 
-func (r *standardRegistry) RouterReqDurationHistogram() ScalableHistogram {
+func (r *standardRegistry) RouterReqDurationHistogram() ScalableHistogramWithHeaders {
 	return r.routerReqDurationHistogram
 }
 
@@ -285,7 +285,7 @@ func (r *standardRegistry) ServiceReqsTLSCounter() CounterWithHeaders {
 	return r.serviceReqsTLSCounter
 }
 
-func (r *standardRegistry) ServiceReqDurationHistogram() ScalableHistogram {
+func (r *standardRegistry) ServiceReqDurationHistogram() ScalableHistogramWithHeaders {
 	return r.serviceReqDurationHistogram
 }
 
