@@ -131,10 +131,12 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	capt, err := capture.FromContext(ctx)
 	if err != nil {
+		ctxMetrics := req.Context()
 		for i := 0; i < len(m.baseLabels); i += 2 {
-			ctx = log.With(ctx, log.Str(m.baseLabels[i], m.baseLabels[i+1]))
+			//nolint:fatcontext // false positive
+			ctxMetrics = log.With(ctxMetrics, log.Str(m.baseLabels[i], m.baseLabels[i+1]))
 		}
-		log.FromContext(ctx).WithError(err).Errorf("Could not get Capture")
+		log.FromContext(ctxMetrics).WithError(err).Errorf("Could not get Capture")
 		return
 	}
 
