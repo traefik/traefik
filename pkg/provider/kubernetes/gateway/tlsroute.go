@@ -19,7 +19,8 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayList
 	logger := log.Ctx(ctx)
 	routes, err := client.ListTLSRoutes()
 	if err != nil {
-		logger.Error().Err(err).Msgf("Get TLSRoutes: %s", err)
+		logger.Error().Err(err).Msgf("Unable to list TLSRoute")
+		return
 	}
 
 	for _, route := range routes {
@@ -33,50 +34,43 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayList
 				Conditions: []metav1.Condition{
 					{
 						Type:               string(gatev1.RouteConditionAccepted),
-						Status:             metav1.ConditionTrue,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.RouteReasonAccepted),
-					},
-				},
-			}
-
-			var attachedListeners bool
-			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
-
-				if !allowRoute(listener, route.Namespace, kindTLSRoute) {
-					continue
-				}
-
-				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
-					continue
-				}
-
-				listener.Status.AttachedRoutes++
-				attachedListeners = true
-
-				resolveConditions := p.loadTLSRoute(client, listener, route, hostnames, conf)
-
-				// TODO: handle more accurately route conditions (in case of multiple listener matching).
-				for _, condition := range resolveConditions {
-					parentStatus.Conditions = appendCondition(parentStatus.Conditions, condition)
-				}
-			}
-
-			if !attachedListeners {
-				parentStatus.Conditions = []metav1.Condition{
-					{
-						Type:               string(gatev1.RouteConditionAccepted),
 						Status:             metav1.ConditionFalse,
 						ObservedGeneration: route.Generation,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(gatev1.RouteReasonNoMatchingParent),
 					},
+				},
+			}
+
+			for _, listener := range gatewayListeners {
+				if !matchListener(listener, route.Namespace, parentRef) {
+					continue
 				}
+
+				accepted := true
+				if !allowRoute(listener, route.Namespace, kindTLSRoute) {
+					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
+					accepted = false
+				}
+				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
+				if !ok {
+					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
+					accepted = false
+				}
+
+				if accepted {
+					listener.Status.AttachedRoutes++
+					// only consider the route attached if the listener is in an "attached" state.
+					if listener.Attached {
+						parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonAccepted))
+					}
+				}
+
+				routeConf, resolveRefCondition := p.loadTLSRoute(client, listener, route, hostnames)
+				if accepted && listener.Attached {
+					mergeTCPConfiguration(routeConf, conf)
+				}
+				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
 			parentStatuses = append(parentStatuses, *parentStatus)
@@ -95,15 +89,22 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayList
 	}
 }
 
-func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *gatev1alpha2.TLSRoute, hostnames []gatev1.Hostname, conf *dynamic.Configuration) []metav1.Condition {
-	routeConditions := []metav1.Condition{
-		{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteConditionResolvedRefs),
+func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *gatev1alpha2.TLSRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+	routeConf := &dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
+	}
+
+	routeCondition := metav1.Condition{
+		Type:               string(gatev1.RouteConditionResolvedRefs),
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: route.Generation,
+		LastTransitionTime: metav1.Now(),
+		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
 	router := dynamic.TCPRouter{
@@ -111,7 +112,7 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 		Rule:        hostSNIRule(hostnames),
 		EntryPoints: []string{listener.EPName},
 		TLS: &dynamic.RouterTCPTLSConfig{
-			Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
+			Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
 		},
 	}
 
@@ -130,32 +131,32 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 		wrrService, subServices, err := loadTCPServices(client, route.Namespace, routeRule.BackendRefs)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidBackendRefs" reason
-			routeConditions = appendCondition(routeConditions, metav1.Condition{
+			routeCondition = metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.RouteReasonBackendNotFound),
 				Message:            fmt.Sprintf("Cannot load TLSRoute service %s/%s: %v", route.Namespace, route.Name, err),
-			})
+			}
 			continue
 		}
 
 		for svcName, svc := range subServices {
-			conf.TCP.Services[svcName] = svc
+			routeConf.TCP.Services[svcName] = svc
 		}
 
 		serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
-		conf.TCP.Services[serviceName] = wrrService
+		routeConf.TCP.Services[serviceName] = wrrService
 
 		ruleServiceNames = append(ruleServiceNames, serviceName)
 	}
 
 	if len(ruleServiceNames) == 1 {
 		router.Service = ruleServiceNames[0]
-		conf.TCP.Routers[routerKey] = &router
+		routeConf.TCP.Routers[routerKey] = &router
 
-		return routeConditions
+		return routeConf, routeCondition
 	}
 
 	routeServiceKey := routerKey + "-wrr"
@@ -168,12 +169,12 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 		routeService.Weighted.Services = append(routeService.Weighted.Services, service)
 	}
 
-	conf.TCP.Services[routeServiceKey] = routeService
+	routeConf.TCP.Services[routeServiceKey] = routeService
 
 	router.Service = routeServiceKey
-	conf.TCP.Routers[routerKey] = &router
+	routeConf.TCP.Routers[routerKey] = &router
 
-	return routeConditions
+	return routeConf, routeCondition
 }
 
 func hostSNIRule(hostnames []gatev1.Hostname) string {

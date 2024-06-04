@@ -37,7 +37,8 @@ const (
 	providerName   = "kubernetesgateway"
 	controllerName = "traefik.io/gateway-controller"
 
-	groupCore = "core"
+	groupCore    = "core"
+	groupGateway = "gateway.networking.k8s.io"
 
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
@@ -564,35 +565,17 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, client Client, gate
 					certificateNamespace = string(*certificateRef.Namespace)
 				}
 
-				if certificateNamespace != gateway.Namespace {
-					referenceGrants, err := client.ListReferenceGrants(certificateNamespace)
-					if err != nil {
-						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
-							Type:               string(gatev1.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: gateway.Generation,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
-							Message:            fmt.Sprintf("Cannot find any ReferenceGrant: %v", err),
-						})
+				if err := isReferenceGranted(client, groupGateway, kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: gateway.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+						Message:            fmt.Sprintf("Cannot load CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
+					})
 
-						continue
-					}
-
-					referenceGrants = filterReferenceGrantsFrom(referenceGrants, "gateway.networking.k8s.io", "Gateway", gateway.Namespace)
-					referenceGrants = filterReferenceGrantsTo(referenceGrants, groupCore, "Secret", string(certificateRef.Name))
-					if len(referenceGrants) == 0 {
-						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
-							Type:               string(gatev1.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: gateway.Generation,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
-							Message:            "Required ReferenceGrant for cross namespace secret reference is missing",
-						})
-
-						continue
-					}
+					continue
 				}
 
 				configKey := certificateNamespace + "/" + string(certificateRef.Name)
@@ -1006,8 +989,8 @@ func makeID(namespace, name string) string {
 	return namespace + "-" + name
 }
 
-func getTLS(k8sClient Client, secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
-	secret, exists, err := k8sClient.GetSecret(namespace, string(secretName))
+func getTLS(client Client, secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
+	secret, exists, err := client.GetSecret(namespace, string(secretName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
 	}
@@ -1131,6 +1114,25 @@ func makeListenerKey(l gatev1.Listener) string {
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
 }
 
+func isReferenceGranted(client Client, fromGroup, fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
+	if toNamespace == fromNamespace {
+		return nil
+	}
+
+	refGrants, err := client.ListReferenceGrants(toNamespace)
+	if err != nil {
+		return fmt.Errorf("listing ReferenceGrant: %w", err)
+	}
+
+	refGrants = filterReferenceGrantsFrom(refGrants, fromGroup, fromKind, fromNamespace)
+	refGrants = filterReferenceGrantsTo(refGrants, toGroup, toKind, toName)
+	if len(refGrants) == 0 {
+		return errors.New("missing ReferenceGrant")
+	}
+
+	return nil
+}
+
 func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
 	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
@@ -1193,13 +1195,38 @@ func kindToString(p *gatev1.Kind) string {
 	return string(*p)
 }
 
-func appendCondition(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
-	res := []metav1.Condition{condition}
+func updateRouteConditionAccepted(conditions []metav1.Condition, reason string) []metav1.Condition {
+	var conds []metav1.Condition
 	for _, c := range conditions {
-		if c.Type != condition.Type {
-			res = append(res, c)
+		if c.Type == string(gatev1.RouteConditionAccepted) && c.Status != metav1.ConditionTrue {
+			c.Reason = reason
+			c.LastTransitionTime = metav1.Now()
+
+			if reason == string(gatev1.RouteReasonAccepted) {
+				c.Status = metav1.ConditionTrue
+			}
 		}
+
+		conds = append(conds, c)
 	}
 
-	return res
+	return conds
+}
+
+func upsertRouteConditionResolvedRefs(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
+	var (
+		curr  *metav1.Condition
+		conds []metav1.Condition
+	)
+	for _, c := range conditions {
+		if c.Type == string(gatev1.RouteConditionResolvedRefs) {
+			curr = &c
+			continue
+		}
+		conds = append(conds, c)
+	}
+	if curr != nil && curr.Status == metav1.ConditionFalse && condition.Status == metav1.ConditionTrue {
+		return append(conds, *curr)
+	}
+	return append(conds, condition)
 }
