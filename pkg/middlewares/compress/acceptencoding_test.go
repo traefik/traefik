@@ -24,7 +24,7 @@ func Test_getCompressionType(t *testing.T) {
 			expected: gzipName,
 		},
 		{
-			desc:     "unknown compression types, use default (no weight)",
+			desc:     "unknown compression type (no weight), no encoding",
 			values:   []string{"compress, rar"},
 			expected: identityName,
 		},
