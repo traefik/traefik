@@ -41,64 +41,45 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, client Client, gatewayLis
 				Conditions: []metav1.Condition{
 					{
 						Type:               string(gatev1.RouteConditionAccepted),
-						Status:             metav1.ConditionTrue,
+						Status:             metav1.ConditionFalse,
 						ObservedGeneration: route.Generation,
 						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.RouteReasonAccepted),
+						Reason:             string(gatev1.RouteReasonNoMatchingParent),
 					},
 				},
 			}
 
-			var attachedListeners bool
-			notAcceptedReason := gatev1.RouteReasonNoMatchingParent
 			for _, listener := range gatewayListeners {
 				if !matchListener(listener, route.Namespace, parentRef) {
 					continue
 				}
 
+				accepted := true
 				if !allowRoute(listener, route.Namespace, kindHTTPRoute) {
-					notAcceptedReason = gatev1.RouteReasonNotAllowedByListeners
-					continue
+					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
+					accepted = false
 				}
-
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
 				if !ok {
-					notAcceptedReason = gatev1.RouteReasonNoMatchingListenerHostname
-					continue
+					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
+					accepted = false
 				}
 
-				listener.Status.AttachedRoutes++
-
-				// TODO should we build the conf if the listener is not attached
-				// only consider the route attached if the listener is in an "attached" state.
-				if listener.Attached {
-					attachedListeners = true
+				if accepted {
+					// Gateway listener should have AttachedRoutes set even when Gateway has unresolved refs.
+					listener.Status.AttachedRoutes++
+					// Only consider the route attached if the listener is in an "attached" state.
+					if listener.Attached {
+						parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonAccepted))
+					}
 				}
-				resolveConditions := p.loadHTTPRoute(logger.WithContext(ctx), client, listener, route, hostnames, conf)
 
-				// TODO: handle more accurately route conditions (in case of multiple listener matching).
-				for _, condition := range resolveConditions {
-					parentStatus.Conditions = appendCondition(parentStatus.Conditions, condition)
+				routeConf, resolveRefCondition := p.loadHTTPRoute(logger.WithContext(ctx), client, listener, route, hostnames)
+				if accepted && listener.Attached {
+					mergeHTTPConfiguration(routeConf, conf)
 				}
-			}
 
-			if !attachedListeners {
-				parentStatus.Conditions = []metav1.Condition{
-					{
-						Type:               string(gatev1.RouteConditionAccepted),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(notAcceptedReason),
-					},
-					{
-						Type:               string(gatev1.RouteConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.RouteReasonRefNotPermitted),
-					},
-				}
+				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
 			parentStatuses = append(parentStatuses, *parentStatus)
@@ -117,15 +98,22 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, client Client, gatewayLis
 	}
 }
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, conf *dynamic.Configuration) []metav1.Condition {
-	routeConditions := []metav1.Condition{
-		{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteConditionResolvedRefs),
+func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+	routeConf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
+	}
+
+	routeCondition := metav1.Condition{
+		Type:               string(gatev1.RouteConditionResolvedRefs),
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: route.Generation,
+		LastTransitionTime: metav1.Now(),
+		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
 	for _, routeRule := range route.Spec.Rules {
@@ -159,14 +147,14 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 				Weight: ptr.To(1),
 			})
 
-			conf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
+			routeConf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
 			router.Service = wrrName
 		} else {
 			for name, middleware := range middlewares {
 				// If the middleware config is nil in the return of the loadMiddlewares function,
 				// it means that we just need a reference to that middleware.
 				if middleware != nil {
-					conf.HTTP.Middlewares[name] = middleware
+					routeConf.HTTP.Middlewares[name] = middleware
 				}
 
 				router.Middlewares = append(router.Middlewares, name)
@@ -180,7 +168,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 					name, svc, errCondition := p.loadHTTPService(client, route, backendRef)
 					weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 					if errCondition != nil {
-						routeConditions = appendCondition(routeConditions, *errCondition)
+						routeCondition = *errCondition
 						wrr.Services = append(wrr.Services, dynamic.WRRService{
 							Name:   name,
 							Status: ptr.To(500),
@@ -190,7 +178,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 					}
 
 					if svc != nil {
-						conf.HTTP.Services[name] = svc
+						routeConf.HTTP.Services[name] = svc
 					}
 
 					wrr.Services = append(wrr.Services, dynamic.WRRService{
@@ -199,7 +187,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 					})
 				}
 
-				conf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
+				routeConf.HTTP.Services[wrrName] = &dynamic.Service{Weighted: &wrr}
 				router.Service = wrrName
 			}
 		}
@@ -208,39 +196,42 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 		p.applyRouterTransform(ctx, rt, route)
 
 		routerKey = provider.Normalize(routerKey)
-		conf.HTTP.Routers[routerKey] = rt
+		routeConf.HTTP.Routers[routerKey] = rt
 	}
 
-	return routeConditions
+	return routeConf, routeCondition
 }
 
 // loadHTTPService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
 func (p *Provider) loadHTTPService(client Client, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+	kind := ptr.Deref(backendRef.Kind, "Service")
+
 	group := groupCore
 	if backendRef.Group != nil && *backendRef.Group != "" {
 		group = string(*backendRef.Group)
 	}
 
-	kind := ptr.Deref(backendRef.Kind, "Service")
-	namespace := ptr.Deref(backendRef.Namespace, gatev1.Namespace(route.Namespace))
-	namespaceStr := string(namespace)
-	serviceName := provider.Normalize(makeID(namespaceStr, string(backendRef.Name)))
+	namespace := route.Namespace
+	if backendRef.Namespace != nil && *backendRef.Namespace != "" {
+		namespace = string(*backendRef.Namespace)
+	}
 
-	// TODO support cross namespace through ReferenceGrant.
-	if namespaceStr != route.Namespace {
+	serviceName := provider.Normalize(makeID(namespace, string(backendRef.Name)))
+
+	if err := isReferenceGranted(client, groupGateway, kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.RouteReasonRefNotPermitted),
-			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s namespace not allowed", group, kind, namespace, backendRef.Name),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
 		}
 	}
 
 	if group != groupCore || kind != "Service" {
-		name, service, err := p.loadHTTPBackendRef(namespaceStr, backendRef)
+		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
 		if err != nil {
 			return serviceName, nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -270,7 +261,7 @@ func (p *Provider) loadHTTPService(client Client, route *gatev1.HTTPRoute, backe
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, err := loadHTTPServers(client, namespaceStr, backendRef)
+	lb, err := loadHTTPServers(client, namespace, backendRef)
 	if err != nil {
 		return serviceName, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -614,4 +605,36 @@ func getProtocol(portSpec corev1.ServicePort) string {
 	}
 
 	return protocol
+}
+
+func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
+	if from == nil || from.HTTP == nil || to == nil {
+		return
+	}
+
+	if to.HTTP == nil {
+		to.HTTP = from.HTTP
+		return
+	}
+
+	if to.HTTP.Routers == nil {
+		to.HTTP.Routers = map[string]*dynamic.Router{}
+	}
+	for routerName, router := range from.HTTP.Routers {
+		to.HTTP.Routers[routerName] = router
+	}
+
+	if to.HTTP.Middlewares == nil {
+		to.HTTP.Middlewares = map[string]*dynamic.Middleware{}
+	}
+	for middlewareName, middleware := range from.HTTP.Middlewares {
+		to.HTTP.Middlewares[middlewareName] = middleware
+	}
+
+	if to.HTTP.Services == nil {
+		to.HTTP.Services = map[string]*dynamic.Service{}
+	}
+	for serviceName, service := range from.HTTP.Services {
+		to.HTTP.Services[serviceName] = service
+	}
 }

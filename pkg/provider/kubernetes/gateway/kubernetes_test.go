@@ -5422,7 +5422,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Empty because ReferenceGrant spec.from does not match",
+			desc:  "Empty because ReferenceGrant spec.from does not match secret",
 			paths: []string{"services.yml", "referencegrant/for_secret_not_matching_from.yml"},
 			entryPoints: map[string]Entrypoint{
 				"tls": {Address: ":9000"},
@@ -5448,7 +5448,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Empty because ReferenceGrant spec.to does not match",
+			desc:  "Empty because ReferenceGrant spec.to does not match secret",
 			paths: []string{"services.yml", "referencegrant/for_secret_not_matching_to.yml"},
 			entryPoints: map[string]Entrypoint{
 				"tls": {Address: ":9000"},
@@ -5536,6 +5536,130 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant for Service is missing",
+			paths: []string{"services.yml", "referencegrant/for_secret_missing.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant spec.from does not match service",
+			paths: []string{"services.yml", "referencegrant/for_service_not_matching_from.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant spec.to does not match service",
+			paths: []string{"services.yml", "referencegrant/for_service_not_matching_to.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "For Service",
+			paths: []string{"services.yml", "referencegrant/for_service.yml"},
+			entryPoints: map[string]Entrypoint{
+				"http": {Address: ":80"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-http-f381ad97110137b4d42c": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`foo.example.com`)",
+							Service:     "default-http-app-1-my-gateway-http-f381ad97110137b4d42c-wrr",
+							RuleSyntax:  "v3",
+							Priority:    15,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-http-f381ad97110137b4d42c-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-bar-80",
+										Weight: ptr.To(1),
+										Status: ptr.To(500),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 	}
@@ -6429,6 +6553,136 @@ func Test_gatewayAddresses(t *testing.T) {
 			test.wantErr(t, err)
 
 			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func Test_upsertRouteConditionResolvedRefs(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		conditions     []metav1.Condition
+		condition      metav1.Condition
+		wantConditions []metav1.Condition
+	}{
+		{
+			desc: "True to False",
+			conditions: []metav1.Condition{
+				{
+					Type:    "foo",
+					Status:  "bar",
+					Reason:  "baz",
+					Message: "foobarbaz",
+				},
+				{
+					Type:    string(gatev1.RouteConditionResolvedRefs),
+					Status:  metav1.ConditionTrue,
+					Reason:  "foo",
+					Message: "foo",
+				},
+			},
+			condition: metav1.Condition{
+				Type:    string(gatev1.RouteConditionResolvedRefs),
+				Status:  metav1.ConditionFalse,
+				Reason:  "bar",
+				Message: "bar",
+			},
+			wantConditions: []metav1.Condition{
+				{
+					Type:    "foo",
+					Status:  "bar",
+					Reason:  "baz",
+					Message: "foobarbaz",
+				},
+				{
+					Type:    string(gatev1.RouteConditionResolvedRefs),
+					Status:  metav1.ConditionFalse,
+					Reason:  "bar",
+					Message: "bar",
+				},
+			},
+		},
+		{
+			desc: "False to False",
+			conditions: []metav1.Condition{
+				{
+					Type:    "foo",
+					Status:  "bar",
+					Reason:  "baz",
+					Message: "foobarbaz",
+				},
+				{
+					Type:    string(gatev1.RouteConditionResolvedRefs),
+					Status:  metav1.ConditionFalse,
+					Reason:  "foo",
+					Message: "foo",
+				},
+			},
+			condition: metav1.Condition{
+				Type:    string(gatev1.RouteConditionResolvedRefs),
+				Status:  metav1.ConditionFalse,
+				Reason:  "bar",
+				Message: "bar",
+			},
+			wantConditions: []metav1.Condition{
+				{
+					Type:    "foo",
+					Status:  "bar",
+					Reason:  "baz",
+					Message: "foobarbaz",
+				},
+				{
+					Type:    string(gatev1.RouteConditionResolvedRefs),
+					Status:  metav1.ConditionFalse,
+					Reason:  "bar",
+					Message: "bar",
+				},
+			},
+		},
+		{
+			desc: "False to True: no upsert",
+			conditions: []metav1.Condition{
+				{
+					Type:    "foo",
+					Status:  "bar",
+					Reason:  "baz",
+					Message: "foobarbaz",
+				},
+				{
+					Type:    string(gatev1.RouteConditionResolvedRefs),
+					Status:  metav1.ConditionFalse,
+					Reason:  "foo",
+					Message: "foo",
+				},
+			},
+			condition: metav1.Condition{
+				Type:    string(gatev1.RouteConditionResolvedRefs),
+				Status:  metav1.ConditionTrue,
+				Reason:  "bar",
+				Message: "bar",
+			},
+			wantConditions: []metav1.Condition{
+				{
+					Type:    "foo",
+					Status:  "bar",
+					Reason:  "baz",
+					Message: "foobarbaz",
+				},
+				{
+					Type:    string(gatev1.RouteConditionResolvedRefs),
+					Status:  metav1.ConditionFalse,
+					Reason:  "foo",
+					Message: "foo",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := upsertRouteConditionResolvedRefs(test.conditions, test.condition)
+			assert.Equal(t, test.wantConditions, got)
 		})
 	}
 }
