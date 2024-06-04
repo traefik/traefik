@@ -7,7 +7,6 @@ on:
 
 env:
   GO_VERSION: '1.22'
-  NODE_VERSION: '20.11.x'
 
 jobs:
 
@@ -43,9 +42,11 @@ jobs:
       - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: webui/.nvmrc
           cache: 'yarn'
           cache-dependency-path: webui/yarn.lock
 
       - name: UI unit tests
-        run: make test-ui-unit
+        run: |
+          yarn --cwd webui install
+          yarn --cwd webui test:unit:ci

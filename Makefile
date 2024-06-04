@@ -103,8 +103,9 @@ test-integration: binary
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui
 test-ui-unit:
-	yarn --cwd webui install
-	yarn --cwd webui test:unit:ci
+	$(MAKE) build-webui-image
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn --cwd webui install
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn --cwd webui test:unit:ci
 
 .PHONY: pull-images
 #? pull-images: Pull all Docker images to avoid timeout during integration tests
