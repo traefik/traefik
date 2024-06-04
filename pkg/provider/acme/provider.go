@@ -35,13 +35,14 @@ const resolverSuffix = ".acme"
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
-	Email                string `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
-	CAServer             string `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
-	PreferredChain       string `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
-	Storage              string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
-	KeyType              string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
-	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	CertificatesDuration int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	Email                string        `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	CAServer             string        `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	PreferredChain       string        `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
+	Storage              string        `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
+	KeyType              string        `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	EAB                  *EAB          `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
+	CertificatesDuration int           `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	DeadPeriod           time.Duration `description:"Period before considering a certificate as dead." json:"deadPeriod,omitempty" toml:"deadPeriod,omitempty" yaml:"deadPeriod,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -213,14 +214,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger.Debug().Msgf("Attempt to renew certificates %q before expiry and check every %q",
 		renewPeriod, renewInterval)
 
-	p.renewCertificates(ctx, renewPeriod)
+	p.renewCertificates(ctx, renewPeriod, p.DeadPeriod)
 
 	ticker := time.NewTicker(renewInterval)
 	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case <-ticker.C:
-				p.renewCertificates(ctx, renewPeriod)
+				p.renewCertificates(ctx, renewPeriod, p.DeadPeriod)
 			case <-ctxPool.Done():
 				ticker.Stop()
 				return
@@ -687,6 +688,23 @@ func (p *Provider) addCertificateForDomain(domain types.Domain, crt *certificate
 	return p.Store.SaveCertificates(p.ResolverName, p.certificates)
 }
 
+func (p *Provider) removeCertificates(certsToRemove []*CertAndStore) error {
+	p.certificatesMu.Lock()
+	defer p.certificatesMu.Unlock()
+
+	for i, cert := range p.certificates {
+		for _, toRemove := range certsToRemove {
+			if reflect.DeepEqual(toRemove.Domain, cert.Domain) {
+				p.certificates = append(p.certificates[:i], p.certificates[i+1:]...)
+			}
+		}
+	}
+
+	p.configurationChan <- p.buildMessage()
+
+	return p.Store.SaveCertificates(p.ResolverName, p.certificates)
+}
+
 // getCertificateRenewDurations returns renew durations calculated from the given certificatesDuration in hours.
 // The first (RenewPeriod) is the period before the end of the certificate duration, during which the certificate should be renewed.
 // The second (RenewInterval) is the interval between renew attempts.
@@ -789,25 +807,92 @@ func (p *Provider) buildMessage() dynamic.Message {
 	return conf
 }
 
-func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration) {
+func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration, deadPeriod time.Duration) {
 	logger := log.Ctx(ctx)
-
 	logger.Info().Msg("Testing certificate renew...")
 
 	p.certificatesMu.RLock()
 
-	var certificates []*CertAndStore
+	// err -> dead -> 1/3 -> revoked -> ok
+
+	// deadPeriod must be < to renewPeriod
+	if deadPeriod >= renewPeriod {
+		deadPeriod = 0
+	}
+
+	var toRenew []*CertAndStore
+	var toRemove []*CertAndStore
+	var toCheck []*CertAndStore
+
 	for _, cert := range p.certificates {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
+
+		switch {
 		// If there's an error, we assume the cert is broken, and needs update
-		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
-			certificates = append(certificates, cert)
+		case err != nil || crt == nil:
+			toRenew = append(toRenew, cert)
+
+		// The certificate should be considered as no more used.
+		case crt.NotAfter.Before(time.Now().Add(deadPeriod)):
+			toRemove = append(toRemove, cert)
+
+		// In the renewal period.
+		case crt.NotAfter.Before(time.Now().Add(renewPeriod)):
+			toRenew = append(toRenew, cert)
+
+		// Need to check the revocation.
+		default:
+			if len(crt.OCSPServer) == 0 || crt.OCSPServer[0] == "" {
+				toCheck = append(toCheck, cert)
+			}
 		}
 	}
 
 	p.certificatesMu.RUnlock()
 
-	for _, cert := range certificates {
+	if len(toCheck) > 0 {
+		numWorkers := 100
+
+		resultsChan := make(chan *CertAndStore)
+		crtChan := make(chan *CertAndStore, numWorkers)
+
+		go func() {
+			wg := sync.WaitGroup{}
+			wg.Add(numWorkers)
+
+			for i := 0; i < numWorkers; i++ {
+				go func() {
+					worker(ctx, crtChan, resultsChan)
+					wg.Done()
+				}()
+			}
+
+			wg.Wait()
+			close(resultsChan)
+		}()
+
+		go func() {
+			for _, cert := range toCheck {
+				crtChan <- cert
+			}
+			close(crtChan)
+		}()
+
+		for cert := range resultsChan {
+			if cert != nil {
+				toRenew = append(toRenew, cert)
+			}
+		}
+	}
+
+	if len(toRemove) > 0 {
+		err := p.removeCertificates(toRemove)
+		if err != nil {
+			logger.Info().Err(err).Msgf("Error removing ACME certificates: %+v", toRemove)
+		}
+	}
+
+	for _, cert := range toRenew {
 		client, err := p.getClient()
 		if err != nil {
 			logger.Info().Err(err).Msgf("Error renewing certificate from LE : %+v", cert.Domain)
@@ -816,18 +901,18 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
 
-		res := certificate.Resource{
+		certRes := certificate.Resource{
 			Domain:      cert.Domain.Main,
 			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
 		}
 
-		opts := &certificate.RenewOptions{
+		renewOptions := &certificate.RenewOptions{
 			Bundle:         true,
 			PreferredChain: p.PreferredChain,
 		}
 
-		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
+		renewedCert, err := client.Certificate.RenewWithOptions(certRes, renewOptions)
 		if err != nil {
 			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
 			continue
@@ -843,6 +928,38 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			logger.Error().Err(err).Msg("Error adding certificate for domain")
 		}
 	}
+}
+
+func worker(ctx context.Context, crtChan chan *CertAndStore, resultsChan chan *CertAndStore) {
+	o := NewOCSP(nil)
+
+	for cert := range crtChan {
+		crt, err := getX509Certificate(ctx, &cert.Certificate)
+		if err != nil || crt == nil {
+			resultsChan <- cert
+			continue
+		}
+
+		_, response, err := o.Call(ctx, []*x509.Certificate{crt})
+		if err != nil || response == nil {
+			resultsChan <- cert
+			continue
+		}
+
+		if response.RevokedAt.IsZero() {
+			continue
+		}
+
+		if response.RevokedAt.Before(time.Now()) {
+			resultsChan <- cert
+			continue
+		}
+	}
+}
+
+type Checker struct {
+	numWorkers int
+	client     *OCSP
 }
 
 // Get provided certificate which check a domains list (Main and SANs)
