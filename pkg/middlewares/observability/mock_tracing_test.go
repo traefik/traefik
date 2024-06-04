@@ -58,6 +58,7 @@ func (s *mockSpan) SetAttributes(kv ...attribute.KeyValue) {
 func (s *mockSpan) End(...trace.SpanEndOption)                  {}
 func (s *mockSpan) RecordError(_ error, _ ...trace.EventOption) {}
 func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
+func (s *mockSpan) AddLink(_ trace.Link)                        {}
 
 func (s *mockSpan) SetName(name string) { s.name = name }
 
