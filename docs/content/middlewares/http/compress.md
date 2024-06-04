@@ -219,7 +219,7 @@ http:
 
 _Optional, Default=""_
 
-`defaultEncoding` specify the default encoding to use if the header `Accept-Encoding` is not present or a wildcard (`*`).
+`defaultEncoding` specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
 
 There is no fallback on the `defaultEncoding` when the header value is empty or unsupported.
 
@@ -253,5 +253,5 @@ http:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-compress.compress]
-  defaultEncoding = "gzip"
+    defaultEncoding = "gzip"
 ```

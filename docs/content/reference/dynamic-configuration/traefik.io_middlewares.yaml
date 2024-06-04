@@ -184,9 +184,9 @@ spec:
                   More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/compress/
                 properties:
                   defaultEncoding:
-                    description: DefaultEncoding specify the default encoding to use
-                      if the header `Accept-Encoding` is not present or a wildcard
-                      (`*`).
+                    description: DefaultEncoding specifies the default encoding if
+                      the `Accept-Encoding` header is not in the request or contains
+                      a wildcard (`*`).
                     type: string
                   excludedContentTypes:
                     description: |-
