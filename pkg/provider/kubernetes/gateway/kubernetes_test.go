@@ -1669,39 +1669,16 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-http-app-1-my-gateway-web-fa136e10345bd0e7248d-requestredirect-0": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       "^[a-z]+:\\/\\/(?P<userInfo>.+@)?(?P<hostname>\\[[\\w:\\.]+\\]|[\\w\\._-]+)(?P<port>:\\d+)?\\/(?P<path>.*)",
-								Replacement: "https://${userinfo}${hostname}${port}/${path}",
+							RequestRedirect: &dynamic.RequestRedirect{
+								Regex:       "^(?P<scheme>[a-z]+):\\/\\/(?P<userinfo>.+@)?(?P<hostname>\\[[\\w:\\.]+\\]|[\\w\\._-]+)(?P<port>:\\d+)?\\/(?P<path>.*)",
+								Replacement: "https://${userinfo}${hostname}/${path}",
 								Permanent:   true,
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"default-http-app-1-my-gateway-web-fa136e10345bd0e7248d-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
-									},
-								},
-							},
-						},
-						"default-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								PassHostHeader: ptr.To(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
+							Weighted: &dynamic.WeightedRoundRobin{},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
@@ -1739,38 +1716,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-http-app-1-my-gateway-web-fa136e10345bd0e7248d-requestredirect-0": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       "^[a-z]+:\\/\\/(?P<userInfo>.+@)?(?P<hostname>\\[[\\w:\\.]+\\]|[\\w\\._-]+)(?P<port>:\\d+)?\\/(?P<path>.*)",
-								Replacement: "http://${userinfo}example.com:443/${path}",
+							RequestRedirect: &dynamic.RequestRedirect{
+								Regex:       "^(?P<scheme>[a-z]+):\\/\\/(?P<userinfo>.+@)?(?P<hostname>\\[[\\w:\\.]+\\]|[\\w\\._-]+)(?P<port>:\\d+)?\\/(?P<path>.*)",
+								Replacement: "${scheme}://${userinfo}example.com:443/${path}",
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"default-http-app-1-my-gateway-web-fa136e10345bd0e7248d-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
-									},
-								},
-							},
-						},
-						"default-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								PassHostHeader: ptr.To(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
+							Weighted: &dynamic.WeightedRoundRobin{},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
