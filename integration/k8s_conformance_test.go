@@ -166,7 +166,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	k3sContainerIP, err := s.k3sContainer.ContainerIP(context.Background())
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://"+k3sContainerIP+":8080/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
+	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
 	opts := ksuite.Options{
@@ -195,23 +195,32 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			LatestObservedGenerationSet:       5 * time.Second,
 			RequiredConsecutiveSuccesses:      0,
 		},
-		SupportedFeatures: sets.New(ksuite.SupportGateway, ksuite.SupportHTTPRoute).
-			Union(ksuite.HTTPRouteExtendedFeatures),
+		SupportedFeatures: sets.New(ksuite.SupportGateway,
+			ksuite.SupportGatewayPort8080,
+			ksuite.SupportHTTPRoute,
+			ksuite.SupportHTTPRouteQueryParamMatching,
+			ksuite.SupportHTTPRouteMethodMatching,
+			ksuite.SupportHTTPRoutePortRedirect,
+			ksuite.SupportHTTPRouteSchemeRedirect,
+			ksuite.SupportHTTPRouteHostRewrite,
+			ksuite.SupportHTTPRoutePathRewrite,
+		),
+		ExemptFeatures: sets.New(
+			ksuite.SupportHTTPRouteRequestTimeout,
+			ksuite.SupportHTTPRouteBackendTimeout,
+			ksuite.SupportHTTPRouteResponseHeaderModification,
+			ksuite.SupportHTTPRoutePathRedirect,
+			ksuite.SupportHTTPRouteRequestMirror,
+			ksuite.SupportHTTPRouteRequestMultipleMirrors,
+		),
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *k8sConformanceRunTest,
 		// Until the feature are all supported, following tests are skipped.
 		SkipTests: []string{
 			tests.HTTPRouteMethodMatching.ShortName,
 			tests.HTTPRouteQueryParamMatching.ShortName,
-			tests.HTTPRouteRedirectPath.ShortName,
-			tests.HTTPRouteRedirectPortAndScheme.ShortName,
-			tests.HTTPRouteRequestMirror.ShortName,
-			tests.HTTPRouteRequestMultipleMirrors.ShortName,
-			tests.HTTPRouteResponseHeaderModifier.ShortName,
 			tests.HTTPRouteRewriteHost.ShortName,
 			tests.HTTPRouteRewritePath.ShortName,
-			tests.HTTPRouteTimeoutBackendRequest.ShortName,
-			tests.HTTPRouteTimeoutRequest.ShortName,
 		},
 	}
 
