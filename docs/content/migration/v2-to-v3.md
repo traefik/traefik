@@ -8,13 +8,21 @@ description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary c
 How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
-This guide shows you how to progressively migrate from Traefik v2 to v3.
+This guide shares 4 steps to progressively migrate from Traefik v2 to v3:
 
-## Step 1: Identify Changes in Static Configuration and Test v3
+1. [Identify changes in static configurations and operations](#step-1-identify-changes-in-static-configuration-and-operations)
+1. [Modify static configuration and test v3](#step-2-modify-static-configuration-and-test-v3)
+1. [Migrate production instances to Traefik v3](#step-3-migrate-production-instances-to-traefik-v3)
+1. [Progressively migrate dynamic configuration](#step-4-progressively-migrate-dynamic-configuration)
 
-Check the following changes in static configuration brought by Traefik v3.
+## Step 1: Identify Changes in Static Configuration and Operations
 
-### SwarmMode
+Check the following changes in [static configurations](#static-configuration-changes) and [operations](#operations-changes) brought by Traefik v3.
+Modify your configurations accordingly.
+
+### Static Configuration Changes
+
+#### SwarmMode
 
 In v3, the provider Docker has been split into 2 providers:
 
@@ -40,7 +48,7 @@ In v3, the provider Docker has been split into 2 providers:
 
 This configuration is now unsupported and would prevent Traefik to start.
 
-#### Remediation
+##### Remediation
 
 In v3, the `swarmMode` should not be used with the Docker provider, and, to use Swarm, the Swarm provider should be used instead.
 
@@ -61,7 +69,7 @@ In v3, the `swarmMode` should not be used with the Docker provider, and, to use 
     --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-#### TLS.CAOptional
+##### TLS.CAOptional
 
 Docker provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -83,17 +91,17 @@ Docker provider `tls.CAOptional` option has been removed in v3, as TLS client au
     --providers.docker.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `tls.caOptional` option should be removed from the Docker provider static configuration.
 
-### Kubernetes Gateway API
+#### Kubernetes Gateway API
 
-#### Experimental Channel Resources (TLSRoute and TCPRoute)
+##### Experimental Channel Resources (TLSRoute and TCPRoute)
 
 In v3, the Kubernetes Gateway API provider does not enable support for the experimental channel API resources by default.
 
-##### Remediation
+###### Remediation
 
 The `experimentalChannel` option should be used to enable the support for the experimental channel API resources.
 
@@ -115,9 +123,9 @@ The `experimentalChannel` option should be used to enable the support for the ex
     --providers.kubernetesgateway.experimentalchannel=true
     ```
 
-### Experimental Configuration
+#### Experimental Configuration
 
-#### HTTP3
+##### HTTP3
 
 In v3, HTTP/3 is no longer an experimental feature.
 It can be enabled on entry points without the associated `experimental.http3` option, which is now removed.
@@ -139,14 +147,14 @@ It is now unsupported and would prevent Traefik to start.
     --experimental.http3=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `http3` option should be removed from the static configuration experimental section.
 To configure `http3`, please checkout the [entrypoint configuration documentation](https://doc.traefik.io/traefik/v3.0/routing/entrypoints/#http3_1).
 
-### Consul provider
+#### Consul provider
 
-#### namespace
+##### namespace
 
 The Consul provider `namespace` option was deprecated in v2 and is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
@@ -167,7 +175,7 @@ It is now unsupported and would prevent Traefik to start.
     --consul.namespace=foobar
     ```
 
-##### Remediation
+###### Remediation
 
 In v3, the `namespaces` option should be used instead of the `namespace` option.
 
@@ -188,7 +196,7 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
     --consul.namespaces=foobar
     ```
 
-#### TLS.CAOptional
+##### TLS.CAOptional
 
 Consul provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -210,13 +218,13 @@ Consul provider `tls.CAOptional` option has been removed in v3, as TLS client au
     --providers.consul.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `tls.caOptional` option should be removed from the Consul provider static configuration.
 
-### ConsulCatalog provider
+#### ConsulCatalog provider
 
-#### namespace
+##### namespace
 
 The ConsulCatalog provider `namespace` option was deprecated in v2 and is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
@@ -237,7 +245,7 @@ It is now unsupported and would prevent Traefik to start.
     --consulCatalog.namespace=foobar
     ```
 
-##### Remediation
+###### Remediation
 
 In v3, the `namespaces` option should be used instead of the `namespace` option.
 
@@ -258,7 +266,7 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
     --consulCatalog.namespaces=foobar
     ```
 
-#### Endpoint.TLS.CAOptional
+##### Endpoint.TLS.CAOptional
 
 ConsulCatalog provider `endpoint.tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -281,13 +289,13 @@ ConsulCatalog provider `endpoint.tls.CAOptional` option has been removed in v3, 
     --providers.consulCatalog.endpoint.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `endpoint.tls.caOptional` option should be removed from the ConsulCatalog provider static configuration.
 
-### Nomad provider
+#### Nomad provider
 
-#### namespace
+##### namespace
 
 The Nomad provider `namespace` option was deprecated in v2 and is now removed in v3.
 It is now unsupported and would prevent Traefik to start.
@@ -308,7 +316,7 @@ It is now unsupported and would prevent Traefik to start.
     --nomad.namespace=foobar
     ```
 
-##### Remediation
+###### Remediation
 
 In v3, the `namespaces` option should be used instead of the `namespace` option.
 
@@ -329,7 +337,7 @@ In v3, the `namespaces` option should be used instead of the `namespace` option.
     --nomad.namespaces=foobar
     ```
 
-#### Endpoint.TLS.CAOptional
+##### Endpoint.TLS.CAOptional
 
 Nomad provider `endpoint.tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -352,11 +360,11 @@ Nomad provider `endpoint.tls.CAOptional` option has been removed in v3, as TLS c
     --providers.nomad.endpoint.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `endpoint.tls.caOptional` option should be removed from the Nomad provider static configuration.
 
-### Rancher v1 Provider
+#### Rancher v1 Provider
 
 In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/),
 and Rancher v2 is supported as a standard Kubernetes provider.
@@ -378,14 +386,14 @@ and Rancher v2 is supported as a standard Kubernetes provider.
 
 This configuration is now unsupported and would prevent Traefik to start.
 
-#### Remediation
+##### Remediation
 
 Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
 As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../providers/kubernetes-crd.md) directly.
 
 Also, all Rancher provider related configuration should be removed from the static configuration.
 
-### Marathon provider
+#### Marathon provider
 
 Marathon maintenance [ended on October 31, 2021](https://github.com/mesosphere/marathon/blob/master/README.md).
 In v3, the Marathon provider has been removed.
@@ -407,13 +415,13 @@ In v3, the Marathon provider has been removed.
 
 This configuration is now unsupported and would prevent Traefik to start.
 
-#### Remediation
+##### Remediation
 
 All Marathon provider related configuration should be removed from the static configuration.
 
-### HTTP Provider
+#### HTTP Provider
 
-#### TLS.CAOptional
+##### TLS.CAOptional
 
 HTTP provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -435,13 +443,13 @@ HTTP provider `tls.CAOptional` option has been removed in v3, as TLS client auth
     --providers.http.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `tls.caOptional` option should be removed from the HTTP provider static configuration.
 
-### ETCD Provider
+#### ETCD Provider
 
-#### TLS.CAOptional
+##### TLS.CAOptional
 
 ETCD provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -463,13 +471,13 @@ ETCD provider `tls.CAOptional` option has been removed in v3, as TLS client auth
     --providers.etcd.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `tls.caOptional` option should be removed from the ETCD provider static configuration.
 
-### Redis Provider
+#### Redis Provider
 
-#### TLS.CAOptional
+##### TLS.CAOptional
 
 Redis provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://pkg.go.dev/crypto/tls#ClientAuthType).
 
@@ -491,11 +499,11 @@ Redis provider `tls.CAOptional` option has been removed in v3, as TLS client aut
     --providers.redis.tls.caOptional=true
     ```
 
-##### Remediation
+###### Remediation
 
 The `tls.caOptional` option should be removed from the Redis provider static configuration.
 
-### InfluxDB v1
+#### InfluxDB v1
 
 InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
 In v3, the InfluxDB v1 metrics provider has been removed.
@@ -517,11 +525,11 @@ In v3, the InfluxDB v1 metrics provider has been removed.
 
 This configuration is now unsupported and would prevent Traefik to start.
 
-#### Remediation
+##### Remediation
 
 All InfluxDB v1 metrics provider related configuration should be removed from the static configuration.
 
-### Pilot
+#### Pilot
 
 Traefik Pilot is no longer available since October 4th, 2022.
 
@@ -544,13 +552,70 @@ Traefik Pilot is no longer available since October 4th, 2022.
 In v2, Pilot configuration was deprecated and ineffective,
 it is now unsupported and would prevent Traefik to start.
 
-#### Remediation
+##### Remediation
 
 All Pilot related configuration should be removed from the static configuration.
 
 ---
 
-Once you have prepared your static configuration, add the following snippet to it:
+### Operations Changes
+
+#### Traefik RBAC Update
+
+In v3, the support of `TCPServersTransport` has been introduced.
+When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
+
+#### Content-Type Auto-Detection
+
+In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
+One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
+
+#### Observability
+
+##### gRPC Metrics
+
+In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.
+
+##### Tracing
+
+In v3, the tracing feature has been revamped and is now powered exclusively by [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel") (OTel).
+!!! warning "Important"
+    Traefik v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
+    Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
+
+Here are two possible transition strategies:
+
+1. OTLP Ingestion Endpoints:
+
+    Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
+    You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
+
+2. Legacy Stack Compatibility:
+
+    For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
+    using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
+    This allows continued compatibility with the existing infrastructure.
+
+Please check the [OpenTelemetry Tracing provider documention](../observability/tracing/opentelemetry.md) for more information.
+
+##### Internal Resources Observability
+
+In v3, observability for internal routers or services (e.g.: `ping@internal`) is disabled by default.
+To enable it one should use the new `addInternals` option for AccessLogs, Metrics or Tracing.
+Please take a look at the observability documentation for more information:
+
+- [AccessLogs](../observability/access-logs.md#addinternals)
+- [Metrics](../observability/metrics/overview.md#addinternals)
+- [Tracing](../observability/tracing/overview.md#addinternals)
+
+[Switch each router to the v3 syntax](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#configure-the-syntax-per-router "Link to configuring the syntax per router") progressively.
+Test and update each Ingress resource and ensure that ingress traffic is not impacted.
+
+---
+
+## Step 2: Modify Static Configuration and Test v3
+
+Once you have prepared the static configuration, add the following snippet to it:
 
 ```yaml
 # static configuration
@@ -562,34 +627,35 @@ The snippet makes static configuration use the default [v2 syntax](https://doc.t
 
 Start Traefik v3 with this new configuration to test it.
 
-!!! info
-    If you don’t get any error logs while testing, you are good to go!
-    Otherwise, follow the remaining migration options highlighted in the logs.
+If you don’t get any error logs while testing, you are good to go!
+Otherwise, follow the remaining migration options highlighted in the logs.
 
 Once your Traefik test instances are starting and routing to your applications, proceed to the next step.
 
-## Step 2: Migrate Production Instances to Traefik v3
+## Step 3: Migrate Production Instances to Traefik v3
 
-Use progressive migration strategy  ([Kubernetes rolling update mechanism](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/ "Link to the Kubernetes rolling update documentation"), for example) to migrate your production instances to v3.
+We strongly advise you to follow a progressive migration strategy ([Kubernetes rolling update mechanism](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/ "Link to the Kubernetes rolling update documentation"), for example) to migrate your production instances to v3.
 
 !!! Warning
     Ensure you have a [real-time monitoring solution](https://traefik.io/blog/capture-traefik-metrics-for-apps-on-kubernetes-with-prometheus/ "Link to the blog on capturing Traefik metrics with Prometheus") for your ingress traffic to detect issues instantly.
 
 During the progressive migration, monitor your ingress traffic for any errors. Be prepared to rollback to a working state in case of any issues.
 
-!!! Info
-    If you encounter any issues, leverage debug and access logs provided by Traefik to understand what went wrong and how to fix it.
+If you encounter any issues, leverage debug and access logs provided by Traefik to understand what went wrong and how to fix it.
 
 Once every Traefik instance is updated, you will be on Traefik v3!
 
-## Step 3: Progressively Migrate Dynamic Configuration
+## Step 4: Progressively Migrate Dynamic Configuration
 
 !!! info
-    You can do this later, as Traefik v3 is compatible with the v2 format for [dynamic configuration](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#dynamic-configuration "Link to dynamic configuration changes").
+    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [dynamic configuration](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#dynamic-configuration "Link to dynamic configuration changes").
+    Enable Traefik logs to get some help if any deprecated option is in use.
 
 Check the following changes in dynamic configuration.
 
-### Router Rule Matchers
+### Dynamic Configuration Changes
+
+#### Router Rule Matchers
 
 In v3, a new rule matchers syntax has been introduced for HTTP and TCP routers.
 The default rule matchers syntax is now the v3 one, but for backward compatibility this can be configured.
@@ -598,7 +664,7 @@ For this reason, we encourage migrating to the new syntax.
 
 By default, the `defaultRuleSyntax` static option is automatically set to `v3`, meaning that the default rule is the new one.
 
-#### New V3 Syntax Notable Changes
+##### New V3 Syntax Notable Changes
 
 The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
 
@@ -615,9 +681,9 @@ and should be explicitly combined using logical operators to mimic previous beha
 
 `HostHeader` has been removed, use `Host` instead.
 
-#### Remediation
+##### Remediation
 
-##### Configure the Default Syntax In Static Configuration
+###### Configure the Default Syntax In Static Configuration
 
 The default rule matchers syntax is the expected syntax for any router that is not self opt-out from this default value.
 It can be configured in the static configuration.
@@ -641,7 +707,7 @@ It can be configured in the static configuration.
     --core.defaultRuleSyntax=v2
     ```
 
-##### Configure the Syntax Per Router
+###### Configure the Syntax Per Router
 
 The rule syntax can also be configured on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
@@ -684,11 +750,11 @@ http:
     ruleSyntax = "v2"
 ```
 
-### IPWhiteList
+#### IPWhiteList
 
 In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
 
-### Deprecated Options Removal
+#### Deprecated Options Removal
 
 - The `tracing.datadog.globaltag` option has been removed.
 - The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
@@ -696,87 +762,34 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 - The `forceSlash` option of the StripPrefix middleware has been removed.
 - The `preferServerCipherSuites` option has been removed.
 
-### TCP LoadBalancer `terminationDelay` option
+#### TCP LoadBalancer `terminationDelay` option
 
 The TCP LoadBalancer `terminationDelay` option has been removed.
 This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
 
-### Kubernetes CRDs API Group `traefik.containo.us`
+#### Kubernetes CRDs API Group `traefik.containo.us`
 
 In v3, the Kubernetes CRDs API Group `traefik.containo.us` has been removed. 
 Please use the API Group `traefik.io` instead.
 
-### Kubernetes Ingress API Group `networking.k8s.io/v1beta1`
+#### Kubernetes Ingress API Group `networking.k8s.io/v1beta1`
 
 In v3, the Kubernetes Ingress API Group `networking.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#ingress-v122)) support has been removed.
 
 Please use the API Group `networking.k8s.io/v1` instead.
 
-### Traefik CRD API Version `apiextensions.k8s.io/v1beta1`
+#### Traefik CRD API Version `apiextensions.k8s.io/v1beta1`
 
 In v3, the Traefik CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
 
 Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` instead.
 
-## Operations
-
-### Traefik RBAC Update
-
-In v3, the support of `TCPServersTransport` has been introduced.
-When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
-
-### Content-Type Auto-Detection
-
-In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
-One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
-
-### Observability
-
-#### gRPC Metrics
-
-In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.
-
-#### Tracing
-
-In v3, the tracing feature has been revamped and is now powered exclusively by [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel") (OTel).
-!!! warning "Important"
-    Traefik v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
-    Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
-
-Here are two possible transition strategies:
-
-1. OTLP Ingestion Endpoints:
-
-    Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
-    You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
-
-2. Legacy Stack Compatibility:
-
-    For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
-    using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
-    This allows continued compatibility with the existing infrastructure.
-
-Please check the [OpenTelemetry Tracing provider documention](../observability/tracing/opentelemetry.md) for more information.
-
-#### Internal Resources Observability
-
-In v3, observability for internal routers or services (e.g.: `ping@internal`) is disabled by default.
-To enable it one should use the new `addInternals` option for AccessLogs, Metrics or Tracing.
-Please take a look at the observability documentation for more information:
-
-- [AccessLogs](../observability/access-logs.md#addinternals)
-- [Metrics](../observability/metrics/overview.md#addinternals)
-- [Tracing](../observability/tracing/overview.md#addinternals)
-
-[Switch each router to the v3 syntax](https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#configure-the-syntax-per-router "Link to configuring the syntax per router") progressively.
-Test and update each Ingress resource and ensure that ingress traffic is not impacted.
-
 ---
 
 Once a v3 Ingress resource migration is validated, deploy the resource and delete the v2 Ingress resource.
-Repeat until all Ingress resources are migrated.
+Repeat it until all Ingress resources are migrated.
 
-Remove the following snippet added to the static configuration in Step 1:
+Remove the following snippet added to the static configuration in Step 3:
 
 ```yaml
 # static configuration
