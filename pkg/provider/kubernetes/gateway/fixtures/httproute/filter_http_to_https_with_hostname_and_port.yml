@@ -39,13 +39,7 @@ spec:
   hostnames:
     - "example.org"
   rules:
-    - backendRefs:
-        - name: whoami
-          port: 80
-          weight: 1
-          kind: Service
-          group: ""
-      filters:
+    - filters:
         - type: RequestRedirect
           requestRedirect:
             hostname: example.com

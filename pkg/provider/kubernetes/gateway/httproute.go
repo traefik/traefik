@@ -135,7 +135,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, client Client, listener ga
 		var wrr dynamic.WeightedRoundRobin
 		wrrName := provider.Normalize(routerKey + "-wrr")
 
-		middlewares, err := p.loadMiddlewares(listener.Protocol, route.Namespace, routerKey, routeRule.Filters)
+		middlewares, err := p.loadMiddlewares(route.Namespace, routerKey, routeRule.Filters)
 		if err != nil {
 			log.Ctx(ctx).Error().
 				Err(err).
@@ -294,14 +294,14 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	return backendFunc(string(backendRef.Name), namespace)
 }
 
-func (p *Provider) loadMiddlewares(listenerProtocol gatev1.ProtocolType, namespace, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+func (p *Provider) loadMiddlewares(namespace, prefix string, filters []gatev1.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
 	middlewares := make(map[string]*dynamic.Middleware)
 
 	for i, filter := range filters {
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
-			middlewares[middlewareName] = createRedirectRegexMiddleware(listenerProtocol, filter.RequestRedirect)
+			middlewares[middlewareName] = createRedirectMiddleware(filter.RequestRedirect)
 
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
 			middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
@@ -573,16 +573,18 @@ func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middl
 	}
 }
 
-func createRedirectRegexMiddleware(listenerProtocol gatev1.ProtocolType, filter *gatev1.HTTPRequestRedirectFilter) *dynamic.Middleware {
-	// The spec allows for an empty string in which case we should use the
-	// scheme of the request which in this case is the listener scheme.
-	filterScheme := ptr.Deref(filter.Scheme, strings.ToLower(string(listenerProtocol)))
-	statusCode := ptr.Deref(filter.StatusCode, http.StatusFound)
+func createRedirectMiddleware(filter *gatev1.HTTPRequestRedirectFilter) *dynamic.Middleware {
+	filterScheme := ptr.Deref(filter.Scheme, "${scheme}")
 
 	port := "${port}"
+	if filterScheme == "http" || filterScheme == "https" {
+		port = ""
+	}
 	if filter.Port != nil {
 		port = fmt.Sprintf(":%d", *filter.Port)
 	}
+
+	statusCode := ptr.Deref(filter.StatusCode, http.StatusFound)
 
 	hostname := "${hostname}"
 	if filter.Hostname != nil && *filter.Hostname != "" {
@@ -590,8 +592,8 @@ func createRedirectRegexMiddleware(listenerProtocol gatev1.ProtocolType, filter 
 	}
 
 	return &dynamic.Middleware{
-		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `^[a-z]+:\/\/(?P<userInfo>.+@)?(?P<hostname>\[[\w:\.]+\]|[\w\._-]+)(?P<port>:\d+)?\/(?P<path>.*)`,
+		RequestRedirect: &dynamic.RequestRedirect{
+			Regex:       `^(?P<scheme>[a-z]+):\/\/(?P<userinfo>.+@)?(?P<hostname>\[[\w:\.]+\]|[\w\._-]+)(?P<port>:\d+)?\/(?P<path>.*)`,
 			Replacement: fmt.Sprintf("%s://${userinfo}%s%s/${path}", filterScheme, hostname, port),
 			Permanent:   statusCode == http.StatusMovedPermanently,
 		},

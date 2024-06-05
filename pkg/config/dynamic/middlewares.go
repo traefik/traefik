@@ -42,6 +42,7 @@ type Middleware struct {
 
 	// Gateway API HTTPRoute filters middlewares.
 	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestRedirect       *RequestRedirect       `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -684,4 +685,13 @@ type RequestHeaderModifier struct {
 	Set    map[string]string `json:"set,omitempty"`
 	Add    map[string]string `json:"add,omitempty"`
 	Remove []string          `json:"remove,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RequestRedirect holds the request redirect middleware configuration.
+type RequestRedirect struct {
+	Regex       string `json:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty"`
+	Permanent   bool   `json:"permanent,omitempty"`
 }
