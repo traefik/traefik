@@ -68,6 +68,7 @@ type Provider struct {
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
+	client          *clientWrapper
 }
 
 // Entrypoint defines the available entry points.
@@ -194,6 +195,14 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+
+	var err error
+	p.client, err = p.newK8sClient(logger.WithContext(context.Background()))
+	if err != nil {
+		return fmt.Errorf("creating k8s client: %w", err)
+	}
+
 	return nil
 }
 
@@ -202,14 +211,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
-	k8sClient, err := p.newK8sClient(ctxLog)
-	if err != nil {
-		return err
-	}
-
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			eventsChan, err := p.client.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
@@ -235,7 +239,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					conf := p.loadConfigurationFromGateways(ctxLog, k8sClient)
+					conf := p.loadConfigurationFromGateways(ctxLog)
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
@@ -272,7 +276,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 // TODO Handle errors and update resources statuses (gatewayClass, gateway).
-func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Client) *dynamic.Configuration {
+func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.Configuration {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           map[string]*dynamic.Router{},
@@ -293,13 +297,13 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Cli
 		TLS: &dynamic.TLSConfiguration{},
 	}
 
-	addresses, err := p.gatewayAddresses(client)
+	addresses, err := p.gatewayAddresses()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to get Gateway status addresses")
 		return nil
 	}
 
-	gatewayClasses, err := client.ListGatewayClasses()
+	gatewayClasses, err := p.client.ListGatewayClasses()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GatewayClasses")
 		return nil
@@ -313,7 +317,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Cli
 
 		gatewayClassNames[gatewayClass.Name] = struct{}{}
 
-		err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
+		err := p.client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
 			Type:               string(gatev1.GatewayClassConditionStatusAccepted),
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gatewayClass.Generation,
@@ -330,7 +334,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Cli
 		}
 	}
 
-	gateways := client.ListGateways()
+	gateways := p.client.ListGateways()
 
 	var gatewayListeners []gatewayListener
 	for _, gateway := range gateways {
@@ -343,14 +347,14 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Cli
 			continue
 		}
 
-		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), client, gateway, conf)...)
+		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
 	}
 
-	p.loadHTTPRoutes(ctx, client, gatewayListeners, conf)
+	p.loadHTTPRoutes(ctx, gatewayListeners, conf)
 
 	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, client, gatewayListeners, conf)
-		p.loadTLSRoutes(ctx, client, gatewayListeners, conf)
+		p.loadTCPRoutes(ctx, gatewayListeners, conf)
+		p.loadTLSRoutes(ctx, gatewayListeners, conf)
 	}
 
 	for _, gateway := range gateways {
@@ -367,7 +371,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Cli
 		}
 
 		gatewayStatus, errG := p.makeGatewayStatus(gateway, listeners, addresses)
-		if err = client.UpdateGatewayStatus(gateway, gatewayStatus); err != nil {
+		if err = p.client.UpdateGatewayStatus(gateway, gatewayStatus); err != nil {
 			logger.Error().
 				Err(err).
 				Msg("Unable to update Gateway status")
@@ -382,7 +386,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context, client Cli
 	return conf
 }
 
-func (p *Provider) loadGatewayListeners(ctx context.Context, client Client, gateway *gatev1.Gateway, conf *dynamic.Configuration) []gatewayListener {
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) []gatewayListener {
 	tlsConfigs := make(map[string]*tls.CertAndStores)
 	allocatedListeners := make(map[string]struct{})
 	gatewayListeners := make([]gatewayListener, len(gateway.Spec.Listeners))
@@ -420,7 +424,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, client Client, gate
 		gatewayListeners[i].EPName = ep
 
 		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: ptr.To(gatev1.NamespacesFromSame)}})
-		gatewayListeners[i].AllowedNamespaces, err = allowedNamespaces(client, gateway.Namespace, allowedRoutes.Namespaces)
+		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(gateway.Namespace, allowedRoutes.Namespaces)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -565,7 +569,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, client Client, gate
 					certificateNamespace = string(*certificateRef.Namespace)
 				}
 
-				if err := isReferenceGranted(client, groupGateway, kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+				if err := p.isReferenceGranted(groupGateway, kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -580,7 +584,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, client Client, gate
 
 				configKey := certificateNamespace + "/" + string(certificateRef.Name)
 				if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
-					tlsConf, err := getTLS(client, certificateRef.Name, certificateNamespace)
+					tlsConf, err := p.getTLS(certificateRef.Name, certificateNamespace)
 					if err != nil {
 						// update "ResolvedRefs" status false with "InvalidCertificateRef" reason
 						// update "Programmed" status false with "Invalid" reason
@@ -703,7 +707,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	return gatewayStatus, nil
 }
 
-func (p *Provider) gatewayAddresses(client Client) ([]gatev1.GatewayStatusAddress, error) {
+func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 	if p.StatusAddress == nil {
 		return nil, nil
 	}
@@ -724,7 +728,7 @@ func (p *Provider) gatewayAddresses(client Client) ([]gatev1.GatewayStatusAddres
 
 	svcRef := p.StatusAddress.Service
 	if svcRef.Name != "" && svcRef.Namespace != "" {
-		svc, exists, err := client.GetService(svcRef.Namespace, svcRef.Name)
+		svc, exists, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get service: %w", err)
 		}
@@ -770,6 +774,71 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	}
 
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
+}
+
+func (p *Provider) isReferenceGranted(fromGroup, fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
+	if toNamespace == fromNamespace {
+		return nil
+	}
+
+	refGrants, err := p.client.ListReferenceGrants(toNamespace)
+	if err != nil {
+		return fmt.Errorf("listing ReferenceGrant: %w", err)
+	}
+
+	refGrants = filterReferenceGrantsFrom(refGrants, fromGroup, fromKind, fromNamespace)
+	refGrants = filterReferenceGrantsTo(refGrants, toGroup, toKind, toName)
+	if len(refGrants) == 0 {
+		return errors.New("missing ReferenceGrant")
+	}
+
+	return nil
+}
+
+func (p *Provider) getTLS(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
+	secret, exists, err := p.client.GetSecret(namespace, string(secretName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
+	}
+	if !exists {
+		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
+	}
+
+	cert, key, err := getCertificateBlocks(secret, namespace, string(secretName))
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.CertAndStores{
+		Certificate: tls.Certificate{
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
+		},
+	}, nil
+}
+
+func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
+	if routeNamespaces == nil || routeNamespaces.From == nil {
+		return []string{gatewayNamespace}, nil
+	}
+
+	switch *routeNamespaces.From {
+	case gatev1.NamespacesFromAll:
+		return []string{metav1.NamespaceAll}, nil
+
+	case gatev1.NamespacesFromSame:
+		return []string{gatewayNamespace}, nil
+
+	case gatev1.NamespacesFromSelector:
+		selector, err := metav1.LabelSelectorAsSelector(routeNamespaces.Selector)
+		if err != nil {
+			return nil, fmt.Errorf("malformed selector: %w", err)
+		}
+
+		return p.client.ListNamespaces(selector)
+	}
+
+	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
 }
 
 func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
@@ -854,30 +923,6 @@ func allowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, suppor
 	}
 
 	return routeKinds, conditions
-}
-
-func allowedNamespaces(client Client, gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
-	if routeNamespaces == nil || routeNamespaces.From == nil {
-		return []string{gatewayNamespace}, nil
-	}
-
-	switch *routeNamespaces.From {
-	case gatev1.NamespacesFromAll:
-		return []string{metav1.NamespaceAll}, nil
-
-	case gatev1.NamespacesFromSame:
-		return []string{gatewayNamespace}, nil
-
-	case gatev1.NamespacesFromSelector:
-		selector, err := metav1.LabelSelectorAsSelector(routeNamespaces.Selector)
-		if err != nil {
-			return nil, fmt.Errorf("malformed selector: %w", err)
-		}
-
-		return client.ListNamespaces(selector)
-	}
-
-	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
 }
 
 func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []gatev1.Hostname) ([]gatev1.Hostname, bool) {
@@ -971,7 +1016,7 @@ func matchListener(listener gatewayListener, routeNamespace string, parentRef ga
 	return true
 }
 
-func makeRouterKey(rule, name string) string {
+func makeRouterName(rule, name string) string {
 	h := sha256.New()
 
 	// As explained in https://pkg.go.dev/hash#Hash,
@@ -979,36 +1024,6 @@ func makeRouterKey(rule, name string) string {
 	h.Write([]byte(rule))
 
 	return fmt.Sprintf("%s-%.10x", name, h.Sum(nil))
-}
-
-func makeID(namespace, name string) string {
-	if namespace == "" {
-		return name
-	}
-
-	return namespace + "-" + name
-}
-
-func getTLS(client Client, secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
-	secret, exists, err := client.GetSecret(namespace, string(secretName))
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
-	}
-	if !exists {
-		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
-	}
-
-	cert, key, err := getCertificateBlocks(secret, namespace, string(secretName))
-	if err != nil {
-		return nil, err
-	}
-
-	return &tls.CertAndStores{
-		Certificate: tls.Certificate{
-			CertFile: types.FileOrContent(cert),
-			KeyFile:  types.FileOrContent(key),
-		},
-	}, nil
 }
 
 func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
@@ -1112,25 +1127,6 @@ func makeListenerKey(l gatev1.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
-}
-
-func isReferenceGranted(client Client, fromGroup, fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
-	if toNamespace == fromNamespace {
-		return nil
-	}
-
-	refGrants, err := client.ListReferenceGrants(toNamespace)
-	if err != nil {
-		return fmt.Errorf("listing ReferenceGrant: %w", err)
-	}
-
-	refGrants = filterReferenceGrantsFrom(refGrants, fromGroup, fromKind, fromNamespace)
-	refGrants = filterReferenceGrantsTo(refGrants, toGroup, toKind, toName)
-	if len(refGrants) == 0 {
-		return errors.New("missing ReferenceGrant")
-	}
-
-	return nil
 }
 
 func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
