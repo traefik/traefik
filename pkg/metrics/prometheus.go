@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
+
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -149,23 +150,23 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: entryPointReqsTotalName,
 			Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
 		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
-		entryPointReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
+		entryPointReqsTLS := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.",
-		}, []string{"tls_version", "tls_cipher", "entrypoint"})
-		entryPointReqDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+		}, config.HeaderLabels, []string{"tls_version", "tls_cipher", "entrypoint"})
+		entryPointReqDurations := newHistogramWithHeadersFrom(stdprometheus.HistogramOpts{
 			Name:    entryPointReqDurationName,
 			Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
-		}, []string{"code", "method", "protocol", "entrypoint"})
-		entryPointReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
+		entryPointReqsBytesTotal := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsBytesTotalName,
 			Help: "The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "entrypoint"})
-		entryPointRespsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
+		entryPointRespsBytesTotal := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: entryPointRespsBytesTotalName,
 			Help: "The total size of responses in bytes handled by an entrypoint, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "entrypoint"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
 
 		promState.vectors = append(promState.vectors,
 			entryPointReqs.cv,
@@ -177,7 +178,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 
 		reg.entryPointReqsCounter = entryPointReqs
 		reg.entryPointReqsTLSCounter = entryPointReqsTLS
-		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
+		reg.entryPointReqDurationHistogram, _ = NewScalableHistogramWithHeaders(entryPointReqDurations, time.Second)
 		reg.entryPointReqsBytesCounter = entryPointReqsBytesTotal
 		reg.entryPointRespsBytesCounter = entryPointRespsBytesTotal
 	}
@@ -187,23 +188,23 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: routerReqsTotalName,
 			Help: "How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.",
 		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
-		routerReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
+		routerReqsTLS := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
-		}, []string{"tls_version", "tls_cipher", "router", "service"})
-		routerReqDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+		}, config.HeaderLabels, []string{"tls_version", "tls_cipher", "router", "service"})
+		routerReqDurations := newHistogramWithHeadersFrom(stdprometheus.HistogramOpts{
 			Name:    routerReqDurationName,
 			Help:    "How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			Buckets: buckets,
-		}, []string{"code", "method", "protocol", "router", "service"})
-		routerReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
+		routerReqsBytesTotal := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: routerReqsBytesTotalName,
 			Help: "The total size of requests in bytes handled by a router, partitioned by service, status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "router", "service"})
-		routerRespsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
+		routerRespsBytesTotal := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: routerRespsBytesTotalName,
 			Help: "The total size of responses in bytes handled by a router, partitioned by service, status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "router", "service"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
 
 		promState.vectors = append(promState.vectors,
 			routerReqs.cv,
@@ -214,7 +215,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		)
 		reg.routerReqsCounter = routerReqs
 		reg.routerReqsTLSCounter = routerReqsTLS
-		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(routerReqDurations, time.Second)
+		reg.routerReqDurationHistogram, _ = NewScalableHistogramWithHeaders(routerReqDurations, time.Second)
 		reg.routerReqsBytesCounter = routerReqsBytesTotal
 		reg.routerRespsBytesCounter = routerRespsBytesTotal
 	}
@@ -224,15 +225,15 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: serviceReqsTotalName,
 			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
 		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
-		serviceReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
+		serviceReqsTLS := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.",
-		}, []string{"tls_version", "tls_cipher", "service"})
-		serviceReqDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+		}, config.HeaderLabels, []string{"tls_version", "tls_cipher", "service"})
+		serviceReqDurations := newHistogramWithHeadersFrom(stdprometheus.HistogramOpts{
 			Name:    serviceReqDurationName,
 			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
-		}, []string{"code", "method", "protocol", "service"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
 		serviceRetries := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceRetriesTotalName,
 			Help: "How many request retries happened on a service.",
@@ -241,14 +242,14 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: serviceServerUpName,
 			Help: "service server is up, described by gauge value of 0 or 1.",
 		}, []string{"service", "url"})
-		serviceReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
+		serviceReqsBytesTotal := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsBytesTotalName,
 			Help: "The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
-		serviceRespsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
+		serviceRespsBytesTotal := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: serviceRespsBytesTotalName,
 			Help: "The total size of responses in bytes returned by a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
 
 		promState.vectors = append(promState.vectors,
 			serviceReqs.cv,
@@ -262,7 +263,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 
 		reg.serviceReqsCounter = serviceReqs
 		reg.serviceReqsTLSCounter = serviceReqsTLS
-		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
+		reg.serviceReqDurationHistogram, _ = NewScalableHistogramWithHeaders(serviceReqDurations, time.Second)
 		reg.serviceRetriesCounter = serviceRetries
 		reg.serviceServerUpGauge = serviceServerUp
 		reg.serviceReqsBytesCounter = serviceReqsBytesTotal
@@ -608,6 +609,46 @@ func (g *gauge) Set(value float64) {
 
 func (g *gauge) Describe(ch chan<- *stdprometheus.Desc) {
 	g.gv.Describe(ch)
+}
+
+func newHistogramWithHeadersFrom(opts stdprometheus.HistogramOpts, headers map[string]string, labelNames []string) *histogramWithHeaders {
+	var headerLabels []string
+	for k := range headers {
+		headerLabels = append(headerLabels, k)
+	}
+
+	hv := stdprometheus.NewHistogramVec(opts, append(labelNames, headerLabels...))
+	return &histogramWithHeaders{
+		name:    opts.Name,
+		headers: headers,
+		hv:      hv,
+	}
+}
+
+type histogramWithHeaders struct {
+	name             string
+	hv               *stdprometheus.HistogramVec
+	labelNamesValues labelNamesValues
+	headers          map[string]string
+	collector        stdprometheus.Observer
+}
+
+func (h *histogramWithHeaders) With(headers http.Header, labelValues ...string) HistogramWithHeaders {
+	for headerLabel, headerKey := range h.headers {
+		labelValues = append(labelValues, headerLabel, headers.Get(headerKey))
+	}
+	lnv := h.labelNamesValues.With(labelValues...)
+	return &histogramWithHeaders{
+		name:             h.name,
+		hv:               h.hv,
+		headers:          h.headers,
+		labelNamesValues: lnv,
+		collector:        h.hv.With(lnv.ToLabels()),
+	}
+}
+
+func (h *histogramWithHeaders) Observe(value float64) {
+	h.collector.Observe(value)
 }
 
 func newHistogramFrom(opts stdprometheus.HistogramOpts, labelNames []string) *histogram {
