@@ -12,7 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
-func TestRedirectRegexHandler(t *testing.T) {
+func TestRequestRedirectHandler(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		config         dynamic.RequestRedirect
