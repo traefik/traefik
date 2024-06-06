@@ -19,6 +19,11 @@ func Test_getCompressionType(t *testing.T) {
 			expected: brotliName,
 		},
 		{
+			desc:     "zstd > br > gzip (no weight)",
+			values:   []string{"zstd, gzip, br"},
+			expected: zstdName,
+		},
+		{
 			desc:     "known compression type (no weight)",
 			values:   []string{"compress, gzip"},
 			expected: gzipName,
