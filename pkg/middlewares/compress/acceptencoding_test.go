@@ -77,7 +77,7 @@ func Test_getCompressionType(t *testing.T) {
 	}
 }
 
-func Test_parseEncodingAccepts(t *testing.T) {
+func Test_parseAcceptEncoding(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		values       []string
