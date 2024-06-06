@@ -68,6 +68,26 @@ func TestNegotiation(t *testing.T) {
 			acceptEncHeader: "gzip, br",
 			expEncoding:     "br",
 		},
+		{
+			desc:            "zstd accept header",
+			acceptEncHeader: "zstd",
+			expEncoding:     "zstd",
+		},
+		{
+			desc:            "multi accept header, prefer zstd",
+			acceptEncHeader: "zstd;q=0.9, br;q=0.8, gzip;q=0.6",
+			expEncoding:     "zstd",
+		},
+		{
+			desc:            "multi accept header, prefer gzip",
+			acceptEncHeader: "gzip;q=1.0, br;q=0.8, zstd;q=0.7",
+			expEncoding:     "gzip",
+		},
+		{
+			desc:            "multi accept header list, prefer zstd",
+			acceptEncHeader: "gzip, br, zstd",
+			expEncoding:     "zstd",
+		},
 	}
 
 	for _, test := range testCases {
