@@ -43,6 +43,7 @@ type Middleware struct {
 
 	// Gateway API HTTPRoute filters middlewares.
 	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestRedirect       *RequestRedirect       `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -175,6 +176,8 @@ type Compress struct {
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
+	// DefaultEncoding specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
+	DefaultEncoding string `json:"defaultEncoding,omitempty" toml:"defaultEncoding,omitempty" yaml:"defaultEncoding,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -704,4 +707,13 @@ type RequestHeaderModifier struct {
 	Set    map[string]string `json:"set,omitempty"`
 	Add    map[string]string `json:"add,omitempty"`
 	Remove []string          `json:"remove,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RequestRedirect holds the request redirect middleware configuration.
+type RequestRedirect struct {
+	Regex       string `json:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty"`
+	Permanent   bool   `json:"permanent,omitempty"`
 }
