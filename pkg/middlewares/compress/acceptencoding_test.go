@@ -55,6 +55,11 @@ func Test_getCompressionType(t *testing.T) {
 			expected: gzipName,
 		},
 		{
+			desc:     "fallback on non-zero compression type",
+			values:   []string{"compress;q=1.0, gzip, identity;q=0"},
+			expected: gzipName,
+		},
+		{
 			desc:     "not acceptable (identity)",
 			values:   []string{"compress;q=1.0, identity;q=0"},
 			expected: notAcceptable,
@@ -91,9 +96,10 @@ func Test_parseAcceptEncoding(t *testing.T) {
 	}{
 		{
 			desc:   "weight",
-			values: []string{"br;q=1.0, gzip;q=0.8, *;q=0.1"},
+			values: []string{"br;q=1.0, zstd;q=0.9, gzip;q=0.8, *;q=0.1"},
 			expected: []Encoding{
 				{Type: brotliName, Weight: ptr[float64](1)},
+				{Type: zstdName, Weight: ptr(0.9)},
 				{Type: gzipName, Weight: ptr(0.8)},
 				{Type: wildcardName, Weight: ptr(0.1)},
 			},
@@ -101,9 +107,10 @@ func Test_parseAcceptEncoding(t *testing.T) {
 		},
 		{
 			desc:   "mixed",
-			values: []string{"gzip, br;q=1.0, *;q=0"},
+			values: []string{"zstd,gzip, br;q=1.0, *;q=0"},
 			expected: []Encoding{
 				{Type: brotliName, Weight: ptr[float64](1)},
+				{Type: zstdName},
 				{Type: gzipName},
 				{Type: wildcardName, Weight: ptr[float64](0)},
 			},
@@ -111,8 +118,9 @@ func Test_parseAcceptEncoding(t *testing.T) {
 		},
 		{
 			desc:   "no weight",
-			values: []string{"gzip, br, *"},
+			values: []string{"zstd, gzip, br, *"},
 			expected: []Encoding{
+				{Type: zstdName},
 				{Type: gzipName},
 				{Type: brotliName},
 				{Type: wildcardName},
