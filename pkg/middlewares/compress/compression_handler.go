@@ -23,11 +23,6 @@ const (
 	contentType     = "Content-Type"
 )
 
-const (
-	Brotli    = "br"
-	Zstandard = "zstd"
-)
-
 type compression interface {
 	// Write data to the encoder.
 	// Input data will be buffered and as the buffer fills up
@@ -69,10 +64,10 @@ type CompressionWriter struct {
 
 func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error) {
 	switch algo {
-	case Brotli:
+	case brotliName:
 		return &CompressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
 
-	case Zstandard:
+	case zstdName:
 		writer, err := zstd.NewWriter(in)
 		if err != nil {
 			return nil, err

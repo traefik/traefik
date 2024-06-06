@@ -162,7 +162,7 @@ func Test_NoBody(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			h := mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: Zstandard}, next)
+			h := mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: zstdName}, next)
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.Header.Set(acceptEncoding, "zstd")
@@ -182,7 +182,7 @@ func Test_NoBody(t *testing.T) {
 func Test_MinSize(t *testing.T) {
 	cfg := Config{
 		MinSize:   128,
-		Algorithm: Zstandard,
+		Algorithm: zstdName,
 	}
 
 	var bodySize int
@@ -224,7 +224,7 @@ func Test_MultipleWriteHeader(t *testing.T) {
 		rw.WriteHeader(http.StatusNotFound)
 	})
 
-	h := mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: Zstandard}, next)
+	h := mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: zstdName}, next)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set(acceptEncoding, "zstd")
@@ -244,7 +244,7 @@ func Test_FlushBeforeWrite(t *testing.T) {
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -252,7 +252,7 @@ func Test_FlushBeforeWrite(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -307,7 +307,7 @@ func Test_FlushAfterWrite(t *testing.T) {
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -315,7 +315,7 @@ func Test_FlushAfterWrite(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -373,7 +373,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -381,7 +381,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -435,7 +435,7 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -443,7 +443,7 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -556,7 +556,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -667,7 +667,7 @@ func Test_IncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -778,7 +778,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -903,7 +903,7 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            Zstandard,
+				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -981,7 +981,7 @@ func newTestBrotliHandler(t *testing.T, body []byte) http.Handler {
 		require.NoError(t, err)
 	})
 
-	return mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: Brotli, MiddlewareName: "Compress"}, next)
+	return mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Compress"}, next)
 }
 
 func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
@@ -997,7 +997,7 @@ func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
 		require.NoError(t, err)
 	})
 
-	return mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: Zstandard, MiddlewareName: "Compress"}, next)
+	return mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Compress"}, next)
 }
 
 func Test_ParseContentType_equals(t *testing.T) {
