@@ -214,3 +214,44 @@ http:
   [http.middlewares.test-compress.compress]
     minResponseBodyBytes = 1200
 ```
+
+### `defaultEncoding`
+
+_Optional, Default=""_
+
+`defaultEncoding` specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
+
+There is no fallback on the `defaultEncoding` when the header value is empty or unsupported.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.defaultEncoding=gzip"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    defaultEncoding: gzip
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.defaultEncoding=gzip"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        defaultEncoding: gzip
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    defaultEncoding = "gzip"
+```

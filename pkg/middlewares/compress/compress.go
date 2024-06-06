@@ -7,7 +7,6 @@ import (
 	"mime"
 	"net/http"
 	"slices"
-	"strings"
 
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -24,11 +23,12 @@ const DefaultMinSize = 1024
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
-	next     http.Handler
-	name     string
-	excludes []string
-	includes []string
-	minSize  int
+	next            http.Handler
+	name            string
+	excludes        []string
+	includes        []string
+	minSize         int
+	defaultEncoding string
 
 	brotliHandler http.Handler
 	gzipHandler   http.Handler
@@ -68,11 +68,12 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	}
 
 	c := &compress{
-		next:     next,
-		name:     name,
-		excludes: excludes,
-		includes: includes,
-		minSize:  minSize,
+		next:            next,
+		name:            name,
+		excludes:        excludes,
+		includes:        includes,
+		minSize:         minSize,
+		defaultEncoding: conf.DefaultEncoding,
 	}
 
 	var err error
@@ -109,25 +110,33 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Client doesn't specify a preferred encoding, for compatibility don't encode the request
-	// See https://github.com/traefik/traefik/issues/9734
-	acceptEncoding, ok := req.Header["Accept-Encoding"]
+	acceptEncoding, ok := req.Header[acceptEncodingHeader]
 	if !ok {
+		if c.defaultEncoding != "" {
+			// RFC says: "If no Accept-Encoding header field is in the request, any content coding is considered acceptable by the user agent."
+			// https://www.rfc-editor.org/rfc/rfc9110#field.accept-encoding
+			c.chooseHandler(c.defaultEncoding, rw, req)
+			return
+		}
+
+		// Client doesn't specify a preferred encoding, for compatibility don't encode the request
+		// See https://github.com/traefik/traefik/issues/9734
 		c.next.ServeHTTP(rw, req)
 		return
 	}
 
-	if encodingAccepts(acceptEncoding, "br") {
+	c.chooseHandler(getCompressionType(acceptEncoding, c.defaultEncoding), rw, req)
+}
+
+func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {
+	switch typ {
+	case brotliName:
 		c.brotliHandler.ServeHTTP(rw, req)
-		return
-	}
-
-	if encodingAccepts(acceptEncoding, "gzip") {
+	case gzipName:
 		c.gzipHandler.ServeHTTP(rw, req)
-		return
+	default:
+		c.next.ServeHTTP(rw, req)
 	}
-
-	c.next.ServeHTTP(rw, req)
 }
 
 func (c *compress) GetTracingInformation() (string, string, trace.SpanKind) {
@@ -171,20 +180,4 @@ func (c *compress) newBrotliHandler() (http.Handler, error) {
 	}
 
 	return wrapper(c.next), nil
-}
-
-func encodingAccepts(acceptEncoding []string, typ string) bool {
-	for _, ae := range acceptEncoding {
-		for _, e := range strings.Split(ae, ",") {
-			parsed := strings.Split(strings.TrimSpace(e), ";")
-			if len(parsed) == 0 {
-				continue
-			}
-			if parsed[0] == typ || parsed[0] == "*" {
-				return true
-			}
-		}
-	}
-
-	return false
 }
