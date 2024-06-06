@@ -41,32 +41,52 @@ func TestNegotiation(t *testing.T) {
 		{
 			desc:            "accept any header",
 			acceptEncHeader: "*",
-			expEncoding:     "br",
+			expEncoding:     brotliName,
 		},
 		{
 			desc:            "gzip accept header",
 			acceptEncHeader: "gzip",
-			expEncoding:     "gzip",
+			expEncoding:     gzipName,
 		},
 		{
 			desc:            "br accept header",
 			acceptEncHeader: "br",
-			expEncoding:     "br",
+			expEncoding:     brotliName,
 		},
 		{
 			desc:            "multi accept header, prefer br",
 			acceptEncHeader: "br;q=0.8, gzip;q=0.6",
-			expEncoding:     "br",
+			expEncoding:     brotliName,
 		},
 		{
 			desc:            "multi accept header, prefer gzip",
 			acceptEncHeader: "gzip;q=1.0, br;q=0.8",
-			expEncoding:     "gzip",
+			expEncoding:     gzipName,
 		},
 		{
 			desc:            "multi accept header list, prefer br",
 			acceptEncHeader: "gzip, br",
-			expEncoding:     "br",
+			expEncoding:     brotliName,
+		},
+		{
+			desc:            "zstd accept header",
+			acceptEncHeader: "zstd",
+			expEncoding:     zstdName,
+		},
+		{
+			desc:            "multi accept header, prefer zstd",
+			acceptEncHeader: "zstd;q=0.9, br;q=0.8, gzip;q=0.6",
+			expEncoding:     zstdName,
+		},
+		{
+			desc:            "multi accept header, prefer gzip",
+			acceptEncHeader: "gzip;q=1.0, br;q=0.8, zstd;q=0.7",
+			expEncoding:     gzipName,
+		},
+		{
+			desc:            "multi accept header list, prefer zstd",
+			acceptEncHeader: "gzip, br, zstd",
+			expEncoding:     zstdName,
 		},
 	}
 
