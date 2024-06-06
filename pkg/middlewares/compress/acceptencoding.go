@@ -27,7 +27,7 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 		defaultType = brotliName
 	}
 
-	encodings, hasWeight := parseAcceptsEncoding(acceptEncoding)
+	encodings, hasWeight := parseAcceptEncoding(acceptEncoding)
 
 	if hasWeight {
 		if len(encodings) == 0 {
@@ -64,7 +64,7 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 	return identityName
 }
 
-func parseAcceptsEncoding(acceptEncoding []string) ([]Encoding, bool) {
+func parseAcceptEncoding(acceptEncoding []string) ([]Encoding, bool) {
 	var encodings []Encoding
 	var hasWeight bool
 
