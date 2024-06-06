@@ -121,7 +121,7 @@ func Test_MinSize(t *testing.T) {
 	var bodySize int
 	h := mustNewWrapper(t, cfg)(http.HandlerFunc(
 		func(rw http.ResponseWriter, req *http.Request) {
-			for i := 0; i < bodySize; i++ {
+			for range bodySize {
 				// We make sure to Write at least once less than minSize so that both
 				// cases below go through the same algo: i.e. they start buffering
 				// because they haven't reached minSize.
@@ -356,7 +356,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 
-				rw.WriteHeader(http.StatusOK)
+				rw.WriteHeader(http.StatusAccepted)
 
 				_, err := rw.Write(bigTestBody)
 				require.NoError(t, err)
@@ -368,7 +368,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
 
-			assert.Equal(t, http.StatusOK, rw.Code)
+			assert.Equal(t, http.StatusAccepted, rw.Code)
 
 			if test.expCompression {
 				assert.Equal(t, "br", rw.Header().Get(contentEncoding))
@@ -460,7 +460,7 @@ func Test_IncludedContentTypes(t *testing.T) {
 			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 
-				rw.WriteHeader(http.StatusOK)
+				rw.WriteHeader(http.StatusAccepted)
 
 				_, err := rw.Write(bigTestBody)
 				require.NoError(t, err)
@@ -472,7 +472,7 @@ func Test_IncludedContentTypes(t *testing.T) {
 			rw := httptest.NewRecorder()
 			h.ServeHTTP(rw, req)
 
-			assert.Equal(t, http.StatusOK, rw.Code)
+			assert.Equal(t, http.StatusAccepted, rw.Code)
 
 			if test.expCompression {
 				assert.Equal(t, "br", rw.Header().Get(contentEncoding))

@@ -152,6 +152,7 @@ http:
           - foobar
           - foobar
         minResponseBodyBytes: 42
+        defaultEncoding: foobar
     Middleware07:
       contentType:
         autoDetect: true
