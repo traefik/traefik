@@ -8,7 +8,9 @@ description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary c
 How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
-This guide shares 4 steps to progressively migrate from Traefik v2 to v3:
+With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made on specific options on the static configuration, and we are ensuring backward compatibility with v2 syntax on the dynamic configuration. This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc. to the new format.
+
+Here are the steps to progressively migrate from Traefik v2 to v3:
 
 1. [Identify changes in static configurations and operations](#step-1-identify-changes-in-static-configuration-and-operations)
 1. [Modify static configuration and test v3](#step-2-modify-static-configuration-and-test-v3)
