@@ -155,23 +155,16 @@ linters-settings:
     checks:
       - all
       - -SA1019
+  errcheck:
+    exclude-functions:
+      - fmt.Fprintln
 linters:
   enable-all: true
   disable:
-    - deadcode # deprecated
-    - exhaustivestruct # deprecated
-    - golint # deprecated
-    - ifshort # deprecated
-    - interfacer # deprecated
-    - maligned # deprecated
-    - nosnakecase # deprecated
-    - scopelint # deprecated
-    - scopelint # deprecated
-    - structcheck # deprecated
-    - varcheck # deprecated
+    - execinquery # deprecated
+    - gomnd # deprecated
     - sqlclosecheck # not relevant (SQL)
     - rowserrcheck # not relevant (SQL)
-    - execinquery # not relevant (SQL)
     - cyclop # duplicate of gocyclo
     - lll # Not relevant
     - gocyclo # FIXME must be fixed
@@ -185,14 +178,14 @@ linters:
     - gochecknoglobals
     - wsl # Too strict
     - nlreturn # Not relevant
-    - gomnd # Too strict
+    - mnd # Too strict
     - stylecheck # skip because report issues related to some generated files.
     - testpackage # Too strict
     - tparallel # Not relevant
     - paralleltest # Not relevant
     - exhaustive # Not relevant
     - exhaustruct # Not relevant
-    - goerr113 # Too strict
+    - err113 # Too strict
     - wrapcheck # Too strict
     - noctx # Too strict
     - bodyclose # too many false-positive
@@ -208,7 +201,6 @@ linters:
     - gosmopolitan  # not relevant
     - exportloopref # Useless with go1.22
     - musttag
-    - intrange # bug (fixed in golangci-lint v1.58)
 
 issues:
   exclude-use-default: false
@@ -226,6 +218,8 @@ issues:
         - goconst
         - funlen
         - godot
+        - canonicalheader
+        - fatcontext
     - path: '(.+)_test.go'
       text: ' always receives '
       linters:

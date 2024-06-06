@@ -162,7 +162,7 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 		return reflect.StructField{}, false
 	}
 
-	for i := 0; i < rType.NumField(); i++ {
+	for i := range rType.NumField() {
 		cField := rType.Field(i)
 
 		// ignore unexported fields.

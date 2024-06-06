@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1.2
-FROM alpine:3.19
+FROM alpine:3.20
 
-RUN apk --no-cache --no-progress add ca-certificates tzdata \
-    && rm -rf /var/cache/apk/*
+RUN apk add --no-cache --no-progress ca-certificates tzdata
 
 ARG TARGETPLATFORM
 COPY ./dist/$TARGETPLATFORM/traefik /

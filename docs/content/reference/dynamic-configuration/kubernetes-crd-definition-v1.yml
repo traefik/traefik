@@ -907,6 +907,11 @@ spec:
                   This middleware compresses responses before sending them to the client, using gzip compression.
                   More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/compress/
                 properties:
+                  defaultEncoding:
+                    description: DefaultEncoding specifies the default encoding if
+                      the `Accept-Encoding` header is not in the request or contains
+                      a wildcard (`*`).
+                    type: string
                   excludedContentTypes:
                     description: |-
                       ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.

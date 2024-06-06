@@ -359,6 +359,8 @@ http:
 
 Name of the header used to group incoming requests.
 
+!!! important "If the header is not present, rate limiting will still be applied, but all requests without the specified header will be grouped together."
+
 ```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
