@@ -48,6 +48,8 @@ spec:
             - --api.insecure
             - --entrypoints.web.address=:80
             - --entrypoints.websecure.address=:443
+            - --entrypoints.web8080.address=:8080
+            - --entrypoints.traefik.address=:9000
             - --experimental.kubernetesgateway
             - --providers.kubernetesgateway.experimentalChannel
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
@@ -55,10 +57,12 @@ spec:
           ports:
             - name: web
               containerPort: 80
-            - name: admin
-              containerPort: 8080
             - name: websecure
               containerPort: 443
+            - name: web8080
+              containerPort: 8080
+            - name: traefik
+              containerPort: 9000
 
 ---
 apiVersion: v1
@@ -78,5 +82,8 @@ spec:
       name: websecure
       targetPort: websecure
     - port: 8080
-      name: admin
-      targetPort: admin
+      name: web8080
+      targetPort: web8080
+    - port: 9000
+      name: traefik
+      targetPort: traefik
