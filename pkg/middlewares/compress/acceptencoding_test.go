@@ -130,7 +130,7 @@ func Test_parseAcceptEncoding(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			aes, hasWeight := parseAcceptsEncoding(test.values)
+			aes, hasWeight := parseAcceptEncoding(test.values)
 
 			assert.Equal(t, test.expected, aes)
 			test.assertWeight(t, hasWeight)
