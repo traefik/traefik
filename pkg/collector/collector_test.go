@@ -5,13 +5,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/collector/hydratation"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 )
 
 func Test_createBody(t *testing.T) {
 	var staticConfiguration static.Configuration
 
-	err := hydrate(&staticConfiguration)
+	err := hydratation.Hydrate(&staticConfiguration)
 	require.NoError(t, err)
 
 	buffer, err := createBody(&staticConfiguration)

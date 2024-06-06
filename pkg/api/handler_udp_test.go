@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
@@ -188,6 +189,24 @@ func TestHandler_UDP(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				jsonFile:   "testdata/udprouter-bar.json",
+			},
+		},
+		{
+			desc: "one UDP router by id containing slash",
+			path: "/api/udp/routers/" + url.PathEscape("foo / bar@myprovider"),
+			conf: runtime.Configuration{
+				UDPRouters: map[string]*runtime.UDPRouterInfo{
+					"foo / bar@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+						},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/udprouter-foo-slash-bar.json",
 			},
 		},
 		{
@@ -454,6 +473,30 @@ func TestHandler_UDP(t *testing.T) {
 			},
 		},
 		{
+			desc: "one udp service by id containing slash",
+			path: "/api/udp/services/" + url.PathEscape("foo / bar@myprovider"),
+			conf: runtime.Configuration{
+				UDPServices: map[string]*runtime.UDPServiceInfo{
+					"foo / bar@myprovider": {
+						UDPService: &dynamic.UDPService{
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/udpservice-foo-slash-bar.json",
+			},
+		},
+		{
 			desc: "one udp service by id, that does not exist",
 			path: "/api/udp/services/nono@myprovider",
 			conf: runtime.Configuration{
@@ -487,7 +530,6 @@ func TestHandler_UDP(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

@@ -9,7 +9,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-// More info: https://doc.traefik.io/traefik/v2.10/middlewares/overview/
+// More info: https://doc.traefik.io/traefik/v2.11/middlewares/overview/
 type MiddlewareTCP struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -26,7 +26,14 @@ type MiddlewareTCPSpec struct {
 	// InFlightConn defines the InFlightConn middleware configuration.
 	InFlightConn *dynamic.TCPInFlightConn `json:"inFlightConn,omitempty"`
 	// IPWhiteList defines the IPWhiteList middleware configuration.
+	// This middleware accepts/refuses connections based on the client IP.
+	// Deprecated: please use IPAllowList instead.
+	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipwhitelist/
 	IPWhiteList *dynamic.TCPIPWhiteList `json:"ipWhiteList,omitempty"`
+	// IPAllowList defines the IPAllowList middleware configuration.
+	// This middleware accepts/refuses connections based on the client IP.
+	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipallowlist/
+	IPAllowList *dynamic.TCPIPAllowList `json:"ipAllowList,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

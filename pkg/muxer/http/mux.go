@@ -324,11 +324,7 @@ func addRuleOnRoute(route *mux.Route, rule *rules.Tree) error {
 
 // IsASCII checks if the given string contains only ASCII characters.
 func IsASCII(s string) bool {
-	for i := 0; i < len(s); i++ {
-		if s[i] >= utf8.RuneSelf {
-			return false
-		}
-	}
-
-	return true
+	return !strings.ContainsFunc(s, func(r rune) bool {
+		return r >= utf8.RuneSelf
+	})
 }

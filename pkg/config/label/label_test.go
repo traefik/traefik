@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -205,6 +206,10 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.udp.routers.Router1.service":                    "foobar",
 		"traefik.udp.services.Service0.loadbalancer.server.Port": "42",
 		"traefik.udp.services.Service1.loadbalancer.server.Port": "42",
+
+		"traefik.tls.stores.default.defaultgeneratedcert.resolver":    "foobar",
+		"traefik.tls.stores.default.defaultgeneratedcert.domain.main": "foobar",
+		"traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foobar, fiibar",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
@@ -693,6 +698,19 @@ func TestDecodeConfiguration(t *testing.T) {
 						PassHostHeader: func(v bool) *bool { return &v }(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
+						},
+					},
+				},
+			},
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Stores: map[string]tls.Store{
+				"default": {
+					DefaultGeneratedCert: &tls.GeneratedCert{
+						Resolver: "foobar",
+						Domain: &types.Domain{
+							Main: "foobar",
+							SANs: []string{"foobar", "fiibar"},
 						},
 					},
 				},
@@ -1187,6 +1205,19 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 			},
 		},
+		TLS: &dynamic.TLSConfiguration{
+			Stores: map[string]tls.Store{
+				"default": {
+					DefaultGeneratedCert: &tls.GeneratedCert{
+						Resolver: "foobar",
+						Domain: &types.Domain{
+							Main: "foobar",
+							SANs: []string{"foobar", "fiibar"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	labels, err := EncodeConfiguration(configuration)
@@ -1374,6 +1405,10 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.TCP.Services.Service0.LoadBalancer.TerminationDelay": "42",
 		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
 		"traefik.TCP.Services.Service1.LoadBalancer.TerminationDelay": "42",
+
+		"traefik.TLS.Stores.default.DefaultGeneratedCert.Resolver":    "foobar",
+		"traefik.TLS.Stores.default.DefaultGeneratedCert.Domain.Main": "foobar",
+		"traefik.TLS.Stores.default.DefaultGeneratedCert.Domain.SANs": "foobar, fiibar",
 
 		"traefik.UDP.Routers.Router0.EntryPoints":                "foobar, fiibar",
 		"traefik.UDP.Routers.Router0.Service":                    "foobar",

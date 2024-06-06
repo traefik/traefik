@@ -11,8 +11,3 @@ services:
     image: traefik/whoami
     labels:
       traefik.enable: false
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

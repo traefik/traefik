@@ -502,8 +502,6 @@ func Test_addTCPRoute(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -614,7 +612,6 @@ func TestParseHostSNI(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
 
@@ -659,8 +656,6 @@ func Test_HostSNICatchAll(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -761,8 +756,6 @@ func Test_HostSNI(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -876,8 +869,6 @@ func Test_HostSNIRegexp(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -969,8 +960,6 @@ func Test_ClientIP(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1038,8 +1027,6 @@ func Test_ALPN(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1107,8 +1094,6 @@ func Test_Priority(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1117,7 +1102,6 @@ func Test_Priority(t *testing.T) {
 
 			matchedRule := ""
 			for rule, priority := range test.rules {
-				rule := rule
 				err := muxer.AddRoute(rule, priority, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 					matchedRule = rule
 				}))

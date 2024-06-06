@@ -16,12 +16,12 @@ You can install Traefik with the following flavors:
 
 Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with one sample configuration file:
 
-* [YAML](https://raw.githubusercontent.com/traefik/traefik/v2.10/traefik.sample.yml)
-* [TOML](https://raw.githubusercontent.com/traefik/traefik/v2.10/traefik.sample.toml)
+* [YAML](https://raw.githubusercontent.com/traefik/traefik/v2.11/traefik.sample.yml)
+* [TOML](https://raw.githubusercontent.com/traefik/traefik/v2.11/traefik.sample.toml)
 
-```bash
+```shell
 docker run -d -p 8080:8080 -p 80:80 \
-    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v2.10
+    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v2.11
 ```
 
 For more details, go to the [Docker provider documentation](../providers/docker.md)
@@ -29,16 +29,11 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 !!! tip
 
     * Prefer a fixed version than the latest that could be an unexpected version.
-    ex: `traefik:v2.10`
+    ex: `traefik:v2.11`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
     * Any orchestrator using docker images can fetch the official Traefik docker image.
 
 ## Use the Helm Chart
-
-!!! warning
-
-    The Traefik Chart from
-    [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://doc.traefik.io/traefik/v1.7).
 
 Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/traefik/traefik-helm-chart>.
 
@@ -59,7 +54,7 @@ You can update the chart repository by running:
 helm repo update
 ```
 
-And install it with the `helm` command line:
+And install it with the Helm command line:
 
 ```bash
 helm install traefik traefik/traefik
@@ -69,7 +64,7 @@ helm install traefik traefik/traefik
 
     All [Helm features](https://helm.sh/docs/intro/using_helm/) are supported.
 
-    Examples are provided [here](https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md). 
+    Examples are provided [here](https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md).
 
     For instance, installing the chart in a dedicated namespace:
 
@@ -106,7 +101,7 @@ helm install traefik traefik/traefik
 
 ### Exposing the Traefik dashboard
 
-This HelmChart does not expose the Traefik dashboard by default, for security concerns.
+This Helm chart does not expose the Traefik dashboard by default, for security concerns.
 Thus, there are multiple ways to expose the dashboard.
 For instance, the dashboard access could be achieved through a port-forward:
 

@@ -118,7 +118,6 @@ func TestProvider_SetDefaults_Endpoint(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			for k, v := range test.envs {
 				t.Setenv(k, v)

@@ -233,7 +233,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
             - headers:                          # [11]
                 name: foo                       # [12]
                 value: bar                      # [13]
-        - backendRefs:                          # [14]
+          backendRefs:                          # [14]
             - name: whoamitcp                   # [15]
               weight: 1                         # [16]
               port: 8080                        # [17]
@@ -252,7 +252,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
 | [6]  | `rules`       | A list of HTTP matchers, filters and actions.                                                                                                                               |
 | [7]  | `matches`     | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
 | [8]  | `path`        | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
-| [9]  | `type`        | Type of match against the path Value (supported types: `Exact`, `Prefix`).                                                                                                  |
+| [9]  | `type`        | Type of match against the path Value (supported types: `Exact`, `PathPrefix`).                                                                                              |
 | [10] | `value`       | The value of the HTTP path to match against.                                                                                                                                |
 | [11] | `headers`     | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
 | [12] | `type`        | Type of match for the HTTP request header match against the `values` (supported types: `Exact`).                                                                            |

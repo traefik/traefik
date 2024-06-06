@@ -8,7 +8,11 @@ description: "Learn how to use IPWhiteList in TCP middleware for limiting client
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-IPWhitelist accepts / refuses connections based on the client IP.
+IPWhiteList accepts / refuses connections based on the client IP.
+
+!!! warning
+
+    This middleware is deprecated, please use the [IPAllowList](./ipallowlist.md) middleware instead.
 
 ## Configuration Examples
 

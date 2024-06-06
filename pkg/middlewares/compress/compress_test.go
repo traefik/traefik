@@ -124,7 +124,6 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -326,8 +325,6 @@ func TestMinResponseBodyBytes(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -499,7 +496,7 @@ func BenchmarkCompress(b *testing.B) {
 			}
 
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				runBenchmark(b, req, handler)
 			}
 		})
@@ -520,7 +517,7 @@ func runBenchmark(b *testing.B, req *http.Request, handler http.Handler) {
 
 func generateBytes(length int) []byte {
 	var value []byte
-	for i := 0; i < length; i++ {
+	for i := range length {
 		value = append(value, 0x61+byte(i))
 	}
 	return value

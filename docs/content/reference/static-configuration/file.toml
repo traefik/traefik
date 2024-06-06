@@ -1,3 +1,5 @@
+## CODE GENERATED AUTOMATICALLY
+## THIS FILE MUST NOT BE EDITED BY HAND
 [global]
   checkNewVersion = true
   sendAnonymousUsage = true
@@ -15,6 +17,8 @@
   [entryPoints.EntryPoint0]
     address = "foobar"
     [entryPoints.EntryPoint0.transport]
+      keepAliveMaxTime = "42s"
+      keepAliveMaxRequests = 42
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = "42s"
         graceTimeOut = "42s"
@@ -181,10 +185,10 @@
     constraints = "foobar"
     prefix = "foobar"
     stale = true
-    namespace = "foobar"
-    namespaces = ["foobar", "foobar"]
     exposedByDefault = true
     refreshInterval = "42s"
+    namespace = "foobar"
+    namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"
       region = "foobar"
@@ -203,10 +207,10 @@
     defaultRule = "foobar"
     clusters = ["foobar", "foobar"]
     autoDiscoverClusters = true
+    ecsAnywhere = true
     region = "foobar"
     accessKeyID = "foobar"
     secretAccessKey = "foobar"
-    ecsAnywhere = true
   [providers.consul]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
@@ -247,6 +251,14 @@
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
+    [providers.redis.sentinel]
+      masterName = "foobar"
+      username = "foobar"
+      password = "foobar"
+      latencyStrategy = true
+      randomStrategy = true
+      replicaStrategy = true
+      useDisconnectedReplicas = true
   [providers.http]
     endpoint = "foobar"
     pollInterval = "42s"
@@ -258,14 +270,18 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.plugin]
-    [providers.plugin.Descriptor0]
-    [providers.plugin.Descriptor1]
+    [providers.plugin.PluginConf0]
+      name0 = "foobar"
+      name1 = "foobar"
+    [providers.plugin.PluginConf1]
+      name0 = "foobar"
+      name1 = "foobar"
 
 [api]
   insecure = true
   dashboard = true
   debug = true
-  disabledashboardad = false
+  disableDashboardAd = true
 
 [metrics]
   [metrics.prometheus]
@@ -276,8 +292,8 @@
     entryPoint = "foobar"
     manualRouting = true
     [metrics.prometheus.headerLabels]
-      label1 = "foobar"
-      label2 = "foobar"
+      name0 = "foobar"
+      name1 = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "42s"
@@ -373,15 +389,15 @@
     localAgentHostPort = "foobar"
     localAgentSocket = "foobar"
     globalTag = "foobar"
-    [tracing.datadog.globalTags]
-      tag1 = "foobar"
-      tag2 = "foobar"
     debug = true
     prioritySampling = true
     traceIDHeaderName = "foobar"
     parentIDHeaderName = "foobar"
     samplingPriorityHeaderName = "foobar"
     bagagePrefixHeaderName = "foobar"
+    [tracing.datadog.globalTags]
+      name0 = "foobar"
+      name1 = "foobar"
   [tracing.instana]
     localAgentHost = "foobar"
     localAgentPort = 42
@@ -445,6 +461,10 @@
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
 
+[pilot]
+  token = "foobar"
+  dashboard = true
+
 [experimental]
   kubernetesGateway = true
   http3 = true
@@ -456,7 +476,7 @@
       moduleName = "foobar"
       version = "foobar"
   [experimental.localPlugins]
-    [experimental.localPlugins.Descriptor0]
+    [experimental.localPlugins.LocalDescriptor0]
       moduleName = "foobar"
-    [experimental.localPlugins.Descriptor1]
+    [experimental.localPlugins.LocalDescriptor1]
       moduleName = "foobar"

@@ -48,14 +48,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.10
+              image: traefik:v2.11
               args:
                 - --log.level=DEBUG
                 - --api
                 - --api.insecure
-                - --entrypoints.web.address=:80
-                - --entrypoints.tcpep.address=:8000
-                - --entrypoints.udpep.address=:9000/udp
+                - --entryPoints.web.address=:80
+                - --entryPoints.tcpep.address=:8000
+                - --entryPoints.udpep.address=:9000/udp
                 - --providers.kubernetescrd
               ports:
                 - name: web
@@ -371,7 +371,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [4]  | `routes[n].priority`           | Defines the [priority](../routers/index.md#priority) to disambiguate rules of the same length, for route matching                                                                                                                                                                            |
 | [5]  | `routes[n].middlewares`        | List of reference to [Middleware](#kind-middleware)                                                                                                                                                                                                                                          |
 | [6]  | `middlewares[n].name`          | Defines the [Middleware](#kind-middleware) name                                                                                                                                                                                                                                              |
-| [7]  | `middlewares[n].namespace`     | Defines the [Middleware](#kind-middleware) namespace                                                                                                                                                                                                                                         |
+| [7]  | `middlewares[n].namespace`     | Defines the [Middleware](#kind-middleware) namespace. It can be omitted when the Middleware is in the IngressRoute namespace.                                                                                                                                                                    |
 | [8]  | `routes[n].services`           | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup)                                                                     |
 | [9]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       |
 | [10] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
@@ -897,15 +897,15 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     spec:
       mirroring:
-        name: svc1
+        name: svc1                      # svc1 receives 100% of the traffic
         port: 80
         mirrors:
-          - name: svc2
+          - name: svc2                  # svc2 receives a copy of 20% of this traffic
             port: 80
             percent: 20
-          - name: svc3
+          - name: svc3                  # svc3 receives a copy of 15% of this traffic
             kind: TraefikService
-            percent: 20
+            percent: 15
     ```
     
     ```yaml tab="Mirroring Traefik Service"
@@ -918,15 +918,15 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     spec:
       mirroring:
-        name: wrr1
+        name: wrr1                      # wrr1 receives 100% of the traffic
         kind: TraefikService
-         mirrors:
-           - name: svc2
-             port: 80
-             percent: 20
-           - name: svc3
-             kind: TraefikService
-             percent: 20
+        mirrors:
+          - name: svc2                  # svc2 receives a copy of 20% of this traffic
+            port: 80
+            percent: 20
+          - name: svc3                  # svc3 receives a copy of 10% of this traffic
+            kind: TraefikService
+            percent: 10
     ```
 
     ```yaml tab="K8s Service"

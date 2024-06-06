@@ -25,6 +25,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+const delta float64 = 1e-10
+
 var (
 	logFileNameSuffix       = "/traefik/logger/test.log"
 	testContent             = "Hello, World"
@@ -72,7 +74,7 @@ func TestLogRotation(t *testing.T) {
 	halfDone := make(chan bool)
 	writeDone := make(chan bool)
 	go func() {
-		for i := 0; i < iterations; i++ {
+		for i := range iterations {
 			handler.ServeHTTP(recorder, req)
 			if i == iterations/2 {
 				halfDone <- true
@@ -176,7 +178,6 @@ func TestLoggerHeaderFields(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			logFile, err := os.CreateTemp(t.TempDir(), "*.log")
 			require.NoError(t, err)
@@ -278,7 +279,7 @@ func assertFloat64(exp float64) func(t *testing.T, actual interface{}) {
 	return func(t *testing.T, actual interface{}) {
 		t.Helper()
 
-		assert.Equal(t, exp, actual)
+		assert.InDelta(t, exp, actual, delta)
 	}
 }
 
@@ -464,7 +465,6 @@ func TestLoggerJSON(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -682,7 +682,6 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			// NOTE: It is not possible to run these cases in parallel because we capture Stdout
 

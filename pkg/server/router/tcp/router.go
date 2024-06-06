@@ -8,8 +8,10 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"slices"
 	"time"
 
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
@@ -98,6 +100,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// If there is a handler matching the connection metadata,
 		// we let it handle the connection.
 		if handler != nil {
+			// Remove read/write deadline and delegate this to underlying TCP server.
+			if err := conn.SetDeadline(time.Time{}); err != nil {
+				log.WithoutContext().Errorf("Error while setting deadline: %v", err)
+			}
+
 			handler.ServeTCP(conn)
 			return
 		}
@@ -115,15 +122,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
-	err = conn.SetReadDeadline(time.Time{})
-	if err != nil {
-		log.WithoutContext().Errorf("Error while setting read deadline: %v", err)
-	}
-
-	err = conn.SetWriteDeadline(time.Time{})
-	if err != nil {
-		log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
+	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		log.WithoutContext().Errorf("Error while setting deadline: %v", err)
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
@@ -143,6 +144,12 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		default:
 			conn.Close()
 		}
+		return
+	}
+
+	// Handling ACME-TLS/1 challenges.
+	if slices.Contains(hello.protos, tlsalpn01.ACMETLS1Protocol) {
+		r.acmeTLSALPNHandler().ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
 
@@ -188,6 +195,17 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	conn.Close()
+}
+
+// acmeTLSALPNHandler returns a special handler to solve ACME-TLS/1 challenges.
+func (r *Router) acmeTLSALPNHandler() tcp.Handler {
+	if r.httpsTLSConfig == nil {
+		return &brokenTLSRouter{}
+	}
+
+	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+		_ = tls.Server(conn, r.httpsTLSConfig).Handshake()
+	})
 }
 
 // AddRoute defines a handler for the given rule.

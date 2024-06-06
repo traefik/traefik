@@ -1,6 +1,7 @@
 package static
 
 import (
+	"errors"
 	"fmt"
 	stdlog "log"
 	"strings"
@@ -49,6 +50,9 @@ const (
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 
+	// DefaultReadTimeout defines the default maximum duration for reading the entire request, including the body.
+	DefaultReadTimeout = 60 * time.Second
+
 	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 
@@ -91,7 +95,7 @@ type CertificateResolver struct {
 // Global holds the global configuration.
 type Global struct {
 	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -126,6 +130,7 @@ type RespondingTimeouts struct {
 
 // SetDefaults sets the default values.
 func (a *RespondingTimeouts) SetDefaults() {
+	a.ReadTimeout = ptypes.Duration(DefaultReadTimeout)
 	a.IdleTimeout = ptypes.Duration(DefaultIdleTimeout)
 }
 
@@ -304,15 +309,15 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	if c.Providers.ConsulCatalog != nil && c.Providers.ConsulCatalog.Namespace != "" && len(c.Providers.ConsulCatalog.Namespaces) > 0 {
-		return fmt.Errorf("Consul Catalog provider cannot have both namespace and namespaces options configured")
+		return errors.New("Consul Catalog provider cannot have both namespace and namespaces options configured")
 	}
 
 	if c.Providers.Consul != nil && c.Providers.Consul.Namespace != "" && len(c.Providers.Consul.Namespaces) > 0 {
-		return fmt.Errorf("Consul provider cannot have both namespace and namespaces options configured")
+		return errors.New("Consul provider cannot have both namespace and namespaces options configured")
 	}
 
 	if c.Providers.Nomad != nil && c.Providers.Nomad.Namespace != "" && len(c.Providers.Nomad.Namespaces) > 0 {
-		return fmt.Errorf("Nomad provider cannot have both namespace and namespaces options configured")
+		return errors.New("Nomad provider cannot have both namespace and namespaces options configured")
 	}
 
 	return nil

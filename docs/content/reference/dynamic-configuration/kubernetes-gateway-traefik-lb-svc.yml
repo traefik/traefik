@@ -25,10 +25,10 @@ spec:
       serviceAccountName: traefik-controller
       containers:
         - name: traefik
-          image: traefik:v2.10
+          image: traefik:v2.11
           args:
-            - --entrypoints.web.address=:80
-            - --entrypoints.websecure.address=:443
+            - --entryPoints.web.address=:80
+            - --entryPoints.websecure.address=:443
             - --experimental.kubernetesgateway
             - --providers.kubernetesgateway
 

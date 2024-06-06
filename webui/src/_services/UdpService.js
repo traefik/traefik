@@ -14,7 +14,7 @@ function getAllRouters (params) {
 }
 
 function getRouterByName (name) {
-  return APP.api.get(`${apiBase}/routers/${name}`)
+  return APP.api.get(`${apiBase}/routers/${encodeURIComponent(name)}`)
     .then(body => {
       console.log('Success -> UdpService -> getRouterByName', body.data)
       return body.data
@@ -32,7 +32,7 @@ function getAllServices (params) {
 }
 
 function getServiceByName (name) {
-  return APP.api.get(`${apiBase}/services/${name}`)
+  return APP.api.get(`${apiBase}/services/${encodeURIComponent(name)}`)
     .then(body => {
       console.log('Success -> UdpService -> getServiceByName', body.data)
       return body.data

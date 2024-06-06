@@ -121,8 +121,7 @@ func readinessCheckResult(taskID string, ready bool) func(*marathon.Application)
 func withTasks(tasks ...marathon.Task) func(*marathon.Application) {
 	return func(application *marathon.Application) {
 		for _, task := range tasks {
-			tu := task
-			application.Tasks = append(application.Tasks, &tu)
+			application.Tasks = append(application.Tasks, &task)
 		}
 	}
 }

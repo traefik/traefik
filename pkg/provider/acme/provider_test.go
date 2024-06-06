@@ -166,7 +166,6 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -241,7 +240,6 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -423,7 +421,6 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -497,7 +494,6 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -573,7 +569,6 @@ func TestInitAccount(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -632,7 +627,6 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

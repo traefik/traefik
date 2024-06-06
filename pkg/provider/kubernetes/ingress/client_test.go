@@ -2,7 +2,7 @@ package ingress
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -40,14 +40,13 @@ func TestTranslateNotFoundError(t *testing.T) {
 		},
 		{
 			desc:           "not a kubernetes not found error",
-			err:            fmt.Errorf("bar error"),
+			err:            errors.New("bar error"),
 			expectedExists: false,
-			expectedError:  fmt.Errorf("bar error"),
+			expectedError:  errors.New("bar error"),
 		},
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -125,7 +124,6 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

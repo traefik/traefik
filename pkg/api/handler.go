@@ -76,7 +76,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 
 // createRouter creates API routes and router.
 func (h Handler) createRouter() *mux.Router {
-	router := mux.NewRouter()
+	router := mux.NewRouter().UseEncodedPath()
 
 	if h.staticConfig.API.Debug {
 		DebugHandler{}.Append(router)
@@ -149,7 +149,7 @@ func getProviderName(id string) string {
 
 func extractType(element interface{}) string {
 	v := reflect.ValueOf(element).Elem()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 
 		if field.Kind() == reflect.Map && field.Type().Elem() == reflect.TypeOf(dynamic.PluginConf{}) {

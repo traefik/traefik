@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -301,7 +302,6 @@ func TestRouterManager_Get(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -700,6 +700,32 @@ func TestRuntimeConfiguration(t *testing.T) {
 			expectedError: 2,
 		},
 		{
+			desc: "Router priority exceeding max user-defined priority",
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*dynamic.Middleware{},
+			routerConfig: map[string]*dynamic.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    math.MaxInt,
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			tlsOptions:    map[string]tls.Options{},
+			expectedError: 1,
+		},
+		{
 			desc: "Router with broken tlsOption",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
@@ -765,7 +791,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -945,7 +970,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	reqHost := requestdecorator.New(nil)
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
 	}
 }
@@ -980,7 +1005,7 @@ func BenchmarkService(b *testing.B) {
 
 	handler, _ := serviceManager.BuildHTTP(context.Background(), "foo-service")
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		handler.ServeHTTP(w, req)
 	}
 }

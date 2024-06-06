@@ -127,7 +127,7 @@ Default middlewares for the routers linked to the entry point.
 Applies a permanent redirection. (Default: ```true```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.priority`:  
-Priority of the generated router. (Default: ```2147483646```)
+Priority of the generated router. (Default: ```9223372036854775806```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
 Scheme used for the redirection. (Default: ```https```)
@@ -171,6 +171,12 @@ Trust all. (Default: ```false```)
 `--entrypoints.<name>.proxyprotocol.trustedips`:  
 Trust only selected IPs.
 
+`--entrypoints.<name>.transport.keepalivemaxrequests`:  
+Maximum number of requests before closing a keep-alive connection. (Default: ```0```)
+
+`--entrypoints.<name>.transport.keepalivemaxtime`:  
+Maximum duration before closing a keep-alive connection. (Default: ```0```)
+
 `--entrypoints.<name>.transport.lifecycle.gracetimeout`:  
 Duration to give active requests a chance to finish before Traefik stops. (Default: ```10```)
 
@@ -181,7 +187,7 @@ Duration to keep accepting requests before Traefik initiates the graceful shutdo
 IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set. (Default: ```180```)
 
 `--entrypoints.<name>.transport.respondingtimeouts.readtimeout`:  
-ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```0```)
+ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set. (Default: ```60```)
 
 `--entrypoints.<name>.transport.respondingtimeouts.writetimeout`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
@@ -211,7 +217,7 @@ plugin's version.
 Periodically check if a new version has been released. (Default: ```true```)
 
 `--global.sendanonymoususage`:  
-Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
+Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default. (Default: ```false```)
 
 `--hostresolver`:  
 Enable CNAME Flattening. (Default: ```false```)
@@ -905,6 +911,27 @@ Password for authentication.
 
 `--providers.redis.rootkey`:  
 Root key used for KV store. (Default: ```traefik```)
+
+`--providers.redis.sentinel.latencystrategy`:  
+Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.mastername`:  
+Name of the master.
+
+`--providers.redis.sentinel.password`:  
+Password for Sentinel authentication.
+
+`--providers.redis.sentinel.randomstrategy`:  
+Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.replicastrategy`:  
+Defines whether to route all commands to replica nodes (mutually exclusive with LatencyStrategy and RandomStrategy). (Default: ```false```)
+
+`--providers.redis.sentinel.usedisconnectedreplicas`:  
+Use replicas disconnected with master when cannot get connected replicas. (Default: ```false```)
+
+`--providers.redis.sentinel.username`:  
+Username for Sentinel authentication.
 
 `--providers.redis.tls.ca`:  
 TLS CA

@@ -5,8 +5,3 @@ services:
     environment:
       PROTO: http
       PORT: 9000
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

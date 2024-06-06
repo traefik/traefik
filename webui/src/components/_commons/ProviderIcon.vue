@@ -5,29 +5,33 @@
 </template>
 
 <script>
-export default {
-  props: ['name'],
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  props: {
+    name: String
+  },
   computed: {
     getLogoPath () {
       const name = this.name.toLowerCase()
 
       if (name.startsWith('plugin-')) {
-        return 'statics/providers/plugin.svg'
+        return 'providers/plugin.svg'
       }
       if (name.startsWith('consul-')) {
-        return `statics/providers/consul.svg`
+        return 'providers/consul.svg'
       }
       if (name.startsWith('consulcatalog-')) {
-        return `statics/providers/consulcatalog.svg`
+        return 'providers/consulcatalog.svg'
       }
       if (name.startsWith('nomad-')) {
-        return `statics/providers/nomad.svg`
+        return 'providers/nomad.svg'
       }
 
-      return `statics/providers/${name}.svg`
+      return `providers/${name}.svg`
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">

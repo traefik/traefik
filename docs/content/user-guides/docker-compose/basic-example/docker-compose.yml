@@ -3,14 +3,14 @@ version: "3.3"
 services:
 
   traefik:
-    image: "traefik:v2.10"
+    image: "traefik:v2.11"
     container_name: "traefik"
     command:
       #- "--log.level=DEBUG"
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - "--entryPoints.web.address=:80"
     ports:
       - "80:80"
       - "8080:8080"

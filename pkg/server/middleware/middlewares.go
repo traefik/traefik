@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v2/pkg/middlewares/auth"
 	"github.com/traefik/traefik/v2/pkg/middlewares/buffering"
@@ -19,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v2/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v2/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v2/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v2/pkg/middlewares/passtlsclientcert"
 	"github.com/traefik/traefik/v2/pkg/middlewares/ratelimiter"
@@ -95,7 +98,7 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 	if !ok {
 		currentStack = []string{}
 	}
-	if inSlice(middlewareName, currentStack) {
+	if slices.Contains(currentStack, middlewareName) {
 		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
 	}
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
@@ -231,11 +234,23 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 	// IPWhiteList
 	if config.IPWhiteList != nil {
+		log.FromContext(ctx).Warn("IPWhiteList is deprecated, please use IPAllowList instead.")
+
 		if middleware != nil {
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+		}
+	}
+
+	// IPAllowList
+	if config.IPAllowList != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ipallowlist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}
 	}
 
@@ -366,13 +381,4 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	return tracing.Wrap(ctx, middleware), nil
-}
-
-func inSlice(element string, stack []string) bool {
-	for _, value := range stack {
-		if value == element {
-			return true
-		}
-	}
-	return false
 }

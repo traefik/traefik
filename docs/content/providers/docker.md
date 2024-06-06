@@ -21,7 +21,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker & Deploying / Exposing one Service"
 
     Enabling the docker provider
 
@@ -49,7 +49,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
           - traefik.http.routers.my-container.rule=Host(`example.com`)
     ```
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
 
     Enabling the docker provider (Swarm Mode)
 
@@ -80,7 +80,9 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
     --providers.docker.swarmMode=true
     ```
 
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+    Attach labels to a single service (not to containers) while in Swarm mode (in your docker compose file)
+    When there is only one service and the router does not specify any service,
+    then that service is automatically assigned to the router.
 
     ```yaml
     version: "3"
@@ -267,7 +269,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.10 # The official v2 Traefik docker image
+         image: traefik:v2.11 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -296,9 +298,9 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
 ??? example "Using SSH"
 
-    Using Docker 18.09+ you can connect Traefik to daemon using SSH
+    Using Docker 18.09+ you can connect Traefik to daemon using SSH.
     We specify the SSH host and user in Traefik's configuration file.
-    Note that is server requires public keys for authentication you must have those accessible for user who runs Traefik.
+    Note that if the server requires public keys for authentication, you must have them accessible for the user running Traefik.
 
     ```yaml tab="File (YAML)"
     providers:

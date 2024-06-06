@@ -146,9 +146,9 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ??? example "Listens to Specific EntryPoints"
@@ -204,9 +204,9 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ### Rule
@@ -292,6 +292,14 @@ The table below lists all the available matchers:
 To avoid path overlap, routes are sorted, by default, in descending order using rules length. The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+
+??? warning "Maximum Value"
+  
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
 
 ??? info "How default priorities are computed"
 
@@ -667,7 +675,8 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
+For non-TLS connections, if HTTP and TCP routers listen on the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+For TLS connections, if HTTPS and TCP-TLS routers listen on the same EntryPoint, the HTTPS routers will apply *before* the TCP-TLS routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
@@ -747,9 +756,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ??? example "Listens to Specific Entry Points"
@@ -811,9 +820,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ### Rule
@@ -895,6 +904,14 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+
+??? warning "Maximum Value"
+
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
 
 ??? info "How default priorities are computed"
 
@@ -1263,9 +1280,9 @@ If one wants to limit the router scope to a set of entry points, one should set 
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.other.address=":9090/udp"
-    --entrypoints.streaming.address=":9191/udp"
+    --entryPoints.web.address=":80"
+    --entryPoints.other.address=":9090/udp"
+    --entryPoints.streaming.address=":9191/udp"
     ```
 
 ??? example "Listens to Specific Entry Points"
@@ -1320,9 +1337,9 @@ If one wants to limit the router scope to a set of entry points, one should set 
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.other.address=":9090/udp"
-    --entrypoints.streaming.address=":9191/udp"
+    --entryPoints.web.address=":80"
+    --entryPoints.other.address=":9090/udp"
+    --entryPoints.streaming.address=":9191/udp"
     ```
 
 ### Services

@@ -1,8 +1,5 @@
 run:
   timeout: 10m
-  skip-files: []
-  skip-dirs:
-    - pkg/provider/kubernetes/crd/generated/
 
 linters-settings:
   govet:
@@ -146,42 +143,26 @@ linters-settings:
   gomoddirectives:
     replace-allow-list:
       - github.com/abbot/go-http-auth
-      - github.com/go-check/check
       - github.com/gorilla/mux
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
+      - github.com/cucumber/godog
   testifylint:
-    enable:
-      - bool-compare
-      - compares
-      - empty
-      - error-is-as
-      - error-nil
-      - expected-actual
-      - float-compare
-      - len
+    disable:
       - suite-dont-use-pkg
-      - suite-extra-assert-call
-      - suite-thelper
-
+      - require-error
+      - go-require
+  errcheck:
+    exclude-functions:
+      - fmt.Fprintln
 linters:
   enable-all: true
   disable:
-    - deadcode # deprecated
-    - exhaustivestruct # deprecated
-    - golint # deprecated
-    - ifshort # deprecated
-    - interfacer # deprecated
-    - maligned # deprecated
-    - nosnakecase # deprecated
-    - scopelint # deprecated
-    - scopelint # deprecated
-    - structcheck # deprecated
-    - varcheck # deprecated
+    - execinquery # deprecated
+    - gomnd # deprecated
     - sqlclosecheck # not relevant (SQL)
     - rowserrcheck # not relevant (SQL)
-    - execinquery # not relevant (SQL)
     - cyclop # duplicate of gocyclo
     - lll # Not relevant
     - gocyclo # FIXME must be fixed
@@ -195,14 +176,14 @@ linters:
     - gochecknoglobals
     - wsl # Too strict
     - nlreturn # Not relevant
-    - gomnd # Too strict
+    - mnd # Too strict
     - stylecheck # skip because report issues related to some generated files.
     - testpackage # Too strict
     - tparallel # Not relevant
     - paralleltest # Not relevant
     - exhaustive # Not relevant
     - exhaustruct # Not relevant
-    - goerr113 # Too strict
+    - err113 # Too strict
     - wrapcheck # Too strict
     - noctx # Too strict
     - bodyclose # too many false-positive
@@ -216,11 +197,15 @@ linters:
     - maintidx # kind of duplicate of gocyclo
     - nonamedreturns # Too strict
     - gosmopolitan  # not relevant
+    - exportloopref # Useless with go1.22
+    - musttag
 
 issues:
   exclude-use-default: false
-  max-per-linter: 0
+  max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-dirs:
+    - pkg/provider/kubernetes/crd/generated/
   exclude:
     - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
     - "should have a package comment, unless it's in another file for this package"
@@ -233,12 +218,15 @@ issues:
     - 'SA1019: c.Providers.ConsulCatalog.Namespace is deprecated'
     - 'SA1019: c.Providers.Consul.Namespace is deprecated'
     - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
+    - 'fmt.Sprintf can be replaced with string'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:
         - goconst
         - funlen
         - godot
+        - canonicalheader
+        - fatcontext
     - path: '(.+)_test.go'
       text: ' always receives '
       linters:

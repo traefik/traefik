@@ -161,7 +161,6 @@ func TestManager_Get(t *testing.T) {
 	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -301,7 +300,6 @@ func TestClientAuth(t *testing.T) {
 	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -333,10 +331,6 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 	assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
 	assert.Equal(t, []string{"h2", "http/1.1", "acme-tls/1"}, config.NextProtos)
 	assert.Equal(t, []uint16{
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
 		tls.TLS_AES_128_GCM_SHA256,
 		tls.TLS_AES_256_GCM_SHA384,
 		tls.TLS_CHACHA20_POLY1305_SHA256,
