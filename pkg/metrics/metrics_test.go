@@ -39,12 +39,12 @@ func TestNewMultiRegistry(t *testing.T) {
 	registry := NewMultiRegistry(registries)
 
 	registry.ServiceReqsCounter().With(nil, "key", "requests").Add(1)
-	registry.ServiceReqDurationHistogram().With("key", "durations").Observe(float64(2))
+	registry.ServiceReqDurationHistogram().With(nil, "key", "durations").Observe(float64(2))
 	registry.ServiceRetriesCounter().With("key", "retries").Add(3)
 
 	for _, collectingRegistry := range registries {
 		cReqsCounter := collectingRegistry.ServiceReqsCounter().(*counterWithHeadersMock)
-		cReqDurationHistogram := collectingRegistry.ServiceReqDurationHistogram().(*histogramMock)
+		cReqDurationHistogram := collectingRegistry.ServiceReqDurationHistogram().(*histogramWithHeadersMock)
 		cRetriesCounter := collectingRegistry.ServiceRetriesCounter().(*counterMock)
 
 		wantCounterValue := float64(1)
@@ -69,7 +69,7 @@ func TestNewMultiRegistry(t *testing.T) {
 func newCollectingRetryMetrics() Registry {
 	return &standardRegistry{
 		serviceReqsCounter:          &counterWithHeadersMock{},
-		serviceReqDurationHistogram: &histogramMock{},
+		serviceReqDurationHistogram: &histogramWithHeadersMock{},
 		serviceRetriesCounter:       &counterMock{},
 	}
 }
@@ -102,20 +102,20 @@ func (c *counterWithHeadersMock) Add(delta float64) {
 	c.counterValue += delta
 }
 
-type histogramMock struct {
+type histogramWithHeadersMock struct {
 	lastHistogramValue float64
 	lastLabelValues    []string
 }
 
-func (c *histogramMock) With(labelValues ...string) ScalableHistogram {
+func (c *histogramWithHeadersMock) With(_ http.Header, labelValues ...string) ScalableHistogramWithHeaders {
 	c.lastLabelValues = labelValues
 	return c
 }
 
-func (c *histogramMock) Start() {}
+func (c *histogramWithHeadersMock) Start() {}
 
-func (c *histogramMock) ObserveFromStart(t time.Time) {}
+func (c *histogramWithHeadersMock) ObserveFromStart(t time.Time) {}
 
-func (c *histogramMock) Observe(v float64) {
+func (c *histogramWithHeadersMock) Observe(v float64) {
 	c.lastHistogramValue = v
 }

@@ -72,30 +72,30 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddEntryPointReqsName, 1.0))
-		registry.entryPointReqsTLSCounter = datadogClient.NewCounter(ddEntryPointReqsTLSName, 1.0)
-		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0), time.Second)
-		registry.entryPointReqsBytesCounter = datadogClient.NewCounter(ddEntryPointReqsBytesName, 1.0)
-		registry.entryPointRespsBytesCounter = datadogClient.NewCounter(ddEntryPointRespsBytesName, 1.0)
+		registry.entryPointReqsTLSCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddEntryPointReqsTLSName, 1.0))
+		registry.entryPointReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0), time.Second)
+		registry.entryPointReqsBytesCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddEntryPointReqsBytesName, 1.0))
+		registry.entryPointRespsBytesCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddEntryPointRespsBytesName, 1.0))
 	}
 
 	if config.AddRoutersLabels {
 		registry.routerEnabled = config.AddRoutersLabels
 		registry.routerReqsCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddRouterReqsName, 1.0))
-		registry.routerReqsTLSCounter = datadogClient.NewCounter(ddRouterReqsTLSName, 1.0)
-		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
-		registry.routerReqsBytesCounter = datadogClient.NewCounter(ddRouterReqsBytesName, 1.0)
-		registry.routerRespsBytesCounter = datadogClient.NewCounter(ddRouterRespsBytesName, 1.0)
+		registry.routerReqsTLSCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddRouterReqsTLSName, 1.0))
+		registry.routerReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
+		registry.routerReqsBytesCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddRouterReqsBytesName, 1.0))
+		registry.routerRespsBytesCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddRouterRespsBytesName, 1.0))
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddServiceReqsName, 1.0))
-		registry.serviceReqsTLSCounter = datadogClient.NewCounter(ddServiceReqsTLSName, 1.0)
-		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddServiceReqsDurationName, 1.0), time.Second)
+		registry.serviceReqsTLSCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddServiceReqsTLSName, 1.0))
+		registry.serviceReqDurationHistogram, _ = NewScalableHistogramWithNoopHeaders(datadogClient.NewHistogram(ddServiceReqsDurationName, 1.0), time.Second)
 		registry.serviceRetriesCounter = datadogClient.NewCounter(ddServiceRetriesName, 1.0)
 		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServiceServerUpName)
-		registry.serviceReqsBytesCounter = datadogClient.NewCounter(ddServiceReqsBytesName, 1.0)
-		registry.serviceRespsBytesCounter = datadogClient.NewCounter(ddServiceRespsBytesName, 1.0)
+		registry.serviceReqsBytesCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddServiceReqsBytesName, 1.0))
+		registry.serviceRespsBytesCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddServiceRespsBytesName, 1.0))
 	}
 
 	return registry
