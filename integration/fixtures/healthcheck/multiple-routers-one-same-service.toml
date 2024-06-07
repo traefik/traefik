@@ -37,5 +37,6 @@
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
+      recheck = "0.5s"
     [[http.services.service1.loadBalancer.servers]]
       url = "http://{{.Server1}}:80"

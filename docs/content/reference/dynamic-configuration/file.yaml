@@ -77,6 +77,7 @@ http:
           port: 42
           interval: 42s
           timeout: 42s
+          recheck: 42s
           hostname: foobar
           followRedirects: true
           headers:

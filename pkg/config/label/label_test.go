@@ -163,6 +163,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.mode":                 "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.timeout":              "1s",
+		"traefik.http.services.Service0.loadbalancer.healthcheck.recheck":              "1s",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "1s",
@@ -182,6 +183,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.mode":                 "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.timeout":              "1s",
+		"traefik.http.services.Service1.loadbalancer.healthcheck.recheck":              "1s",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "1s",
@@ -680,6 +682,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							Port:     42,
 							Interval: ptypes.Duration(time.Second),
 							Timeout:  ptypes.Duration(time.Second),
+							Recheck:  ptypes.Duration(time.Second),
 							Hostname: "foobar",
 							Headers: map[string]string{
 								"name0": "foobar",
@@ -711,6 +714,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							Port:     42,
 							Interval: ptypes.Duration(time.Second),
 							Timeout:  ptypes.Duration(time.Second),
+							Recheck:  ptypes.Duration(time.Second),
 							Hostname: "foobar",
 							Headers: map[string]string{
 								"name0": "foobar",
@@ -1194,6 +1198,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Port:     42,
 							Interval: ptypes.Duration(time.Second),
 							Timeout:  ptypes.Duration(time.Second),
+							Recheck:  ptypes.Duration(time.Second),
 							Hostname: "foobar",
 							Headers: map[string]string{
 								"name0": "foobar",
@@ -1223,6 +1228,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Port:     42,
 							Interval: ptypes.Duration(time.Second),
 							Timeout:  ptypes.Duration(time.Second),
+							Recheck:  ptypes.Duration(time.Second),
 							Hostname: "foobar",
 							Headers: map[string]string{
 								"name0": "foobar",
@@ -1403,6 +1409,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Port":                 "42",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Scheme":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Timeout":              "1000000000",
+		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Recheck":              "1000000000",
 		"traefik.HTTP.Services.Service0.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
@@ -1422,6 +1429,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Port":                 "42",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Scheme":               "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Timeout":              "1000000000",
+		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Recheck":              "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",

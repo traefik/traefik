@@ -116,6 +116,16 @@ func (b *Balancer) Pop() interface{} {
 	return h
 }
 
+func (b *Balancer) GetStatus(ctx context.Context, childName string) bool {
+	b.handlersMu.RLock()
+	defer b.handlersMu.RUnlock()
+	// acquire read lock before reading value from status
+
+	_, ok := b.status[childName]
+	// service exists if key exists with childName on b.status
+	return ok
+}
+
 // SetStatus sets on the balancer that its given child is now of the given
 // status. balancerName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {

@@ -14,6 +14,8 @@ const (
 	DefaultHealthCheckInterval = ptypes.Duration(30 * time.Second)
 	// DefaultHealthCheckTimeout is the default value for the ServerHealthCheck timeout.
 	DefaultHealthCheckTimeout = ptypes.Duration(5 * time.Second)
+	// DefaultHealthCheckRecheck is the default value for the ServerHealthCheck recheck.
+	DefaultHealthCheckRecheck = ptypes.Duration(10 * time.Second)
 
 	// DefaultPassHostHeader is the default value for the ServersLoadBalancer passHostHeader.
 	DefaultPassHostHeader = true
@@ -253,6 +255,7 @@ type ServerHealthCheck struct {
 	Port            int               `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
 	Interval        ptypes.Duration   `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	Timeout         ptypes.Duration   `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Recheck         ptypes.Duration   `json:"recheck,omitempty" toml:"recheck,omitempty" yaml:"recheck,omitempty" export:"true"`
 	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	FollowRedirects *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers         map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
@@ -265,6 +268,7 @@ func (h *ServerHealthCheck) SetDefaults() {
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
+	h.Recheck = DefaultHealthCheckRecheck
 }
 
 // +k8s:deepcopy-gen=true
