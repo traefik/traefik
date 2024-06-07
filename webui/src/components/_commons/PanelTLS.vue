@@ -77,12 +77,12 @@
                 {{ domain.main }}
               </q-chip>
               <q-chip
-                v-for="(domain, key) in domain.sans"
-                :key="key"
+                v-for="(sanDomain, sanKey) in domain.sans"
+                :key="sanKey"
                 dense
                 class="app-chip app-chip-entry-points"
               >
-                {{ domain }}
+                {{ sanDomain }}
               </q-chip>
             </div>
           </div>
@@ -130,8 +130,8 @@ export default defineComponent({
     BooleanState
   },
   props: {
-    data: Object,
-    protocol: String
+    data: { type: Object, default: undefined, required: false },
+    protocol: { type: String, default: undefined, required: false }
   }
 })
 </script>

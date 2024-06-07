@@ -113,8 +113,8 @@ export default defineComponent({
   },
   mixins: [GetTablePropsMixin],
   props: {
-    name: String,
-    type: String
+    name: { type: String, default: undefined, required: false },
+    type: { type: String, default: undefined, required: false }
   },
   data () {
     return {

@@ -28,7 +28,10 @@
 <script>
 export default {
   name: 'PanelFeature',
-  props: ['featureKey', 'featureVal'],
+  props: {
+    featureKey: { type: String, default: undefined, required: false },
+    featureVal: { type: [String, Boolean], default: undefined, required: false }
+  },
   computed: {
     isString () {
       return typeof this.featureVal === 'string'
