@@ -88,7 +88,7 @@ crossbinary-default: generate generate-webui
 
 .PHONY: test
 #? test: Run the unit and integration tests
-test: test-unit test-integration test-ui-unit
+test: test-ui-unit test-unit test-integration
 
 .PHONY: test-unit
 #? test-unit: Run the unit tests
