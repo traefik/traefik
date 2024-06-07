@@ -102,24 +102,6 @@ func (c *counterWithHeadersMock) Add(delta float64) {
 	c.counterValue += delta
 }
 
-type histogramMock struct {
-	lastHistogramValue float64
-	lastLabelValues    []string
-}
-
-func (c *histogramMock) With(labelValues ...string) ScalableHistogram {
-	c.lastLabelValues = labelValues
-	return c
-}
-
-func (c *histogramMock) Start() {}
-
-func (c *histogramMock) ObserveFromStart(t time.Time) {}
-
-func (c *histogramMock) Observe(v float64) {
-	c.lastHistogramValue = v
-}
-
 type histogramWithHeadersMock struct {
 	lastHistogramValue float64
 	lastLabelValues    []string

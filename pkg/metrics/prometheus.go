@@ -651,39 +651,6 @@ func (h *histogramWithHeaders) Observe(value float64) {
 	h.collector.Observe(value)
 }
 
-func newHistogramFrom(opts stdprometheus.HistogramOpts, labelNames []string) *histogram {
-	hv := stdprometheus.NewHistogramVec(opts, labelNames)
-	return &histogram{
-		name: opts.Name,
-		hv:   hv,
-	}
-}
-
-type histogram struct {
-	name             string
-	hv               *stdprometheus.HistogramVec
-	labelNamesValues labelNamesValues
-	collector        stdprometheus.Observer
-}
-
-func (h *histogram) With(labelValues ...string) metrics.Histogram {
-	lnv := h.labelNamesValues.With(labelValues...)
-	return &histogram{
-		name:             h.name,
-		hv:               h.hv,
-		labelNamesValues: lnv,
-		collector:        h.hv.With(lnv.ToLabels()),
-	}
-}
-
-func (h *histogram) Observe(value float64) {
-	h.collector.Observe(value)
-}
-
-func (h *histogram) Describe(ch chan<- *stdprometheus.Desc) {
-	h.hv.Describe(ch)
-}
-
 // labelNamesValues is a type alias that provides validation on its With method.
 // Metrics may include it as a member to help them satisfy With semantics and
 // save some code duplication.
