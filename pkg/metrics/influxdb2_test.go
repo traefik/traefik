@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 

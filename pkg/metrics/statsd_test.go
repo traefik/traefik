@@ -9,7 +9,6 @@ import (
 
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
-
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
