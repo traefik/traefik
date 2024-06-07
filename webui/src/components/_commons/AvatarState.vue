@@ -24,7 +24,7 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'AvatarState',
   props: {
-    state: { type: String, default: '', required: false }
+    state: { type: String, default: undefined, required: false }
   }
 })
 </script>

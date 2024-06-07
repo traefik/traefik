@@ -42,9 +42,10 @@ import Helps from '../../_helpers/Helps'
 export default defineComponent({
   name: 'ToolBarTable',
   props: {
-    status: { type: String, default: '', required: false },
-    filter: { type: String, default: '', required: false }
+    status: { type: String, default: undefined, required: false },
+    filter: { type: String, default: undefined, required: false }
   },
+  emits: ['update:status', 'update:filter'],
   computed: {
     getStatus: {
       get () {

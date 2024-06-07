@@ -131,8 +131,8 @@ export default defineComponent({
     AvatarState
   },
   props: {
-    data: Object,
-    protocol: { type: String, default: '', required: false }
+    data: { type: Object, default: undefined, required: false },
+    protocol: { type: String, default: undefined, required: false }
   },
   computed: {
     getProviderLogoPath () {
