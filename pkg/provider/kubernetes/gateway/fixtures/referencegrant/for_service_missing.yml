@@ -1,14 +1,14 @@
 ---
-kind: GatewayClass
 apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
 metadata:
   name: my-gateway-class
 spec:
   controllerName: traefik.io/gateway-controller
 
 ---
-kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
 metadata:
   name: my-gateway
   namespace: default
@@ -18,6 +18,7 @@ spec:
     - name: http
       protocol: HTTP
       port: 80
+      hostname: foo.example.com
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
@@ -26,8 +27,8 @@ spec:
           from: Same
 
 ---
-kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: http-app-1
   namespace: default
@@ -36,11 +37,10 @@ spec:
     - name: my-gateway
       kind: Gateway
       group: gateway.networking.k8s.io
-  hostnames:
-    - "example.org"
   rules:
-    - filters:
-        - type: RequestRedirect
-          requestRedirect:
-            hostname: example.com
-            port: 443
+    - backendRefs:
+        - name: whoami-bar
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
