@@ -63,7 +63,7 @@ func (m *MockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 						if len(v) != 4 {
 							break
 						}
-						for i := 0; i < len(v); i++ {
+						for i := range v {
 							table.Append(lua.LString(v[i]))
 						}
 					default:
