@@ -55,6 +55,7 @@
 - "traefik.http.middlewares.middleware12.headers.allowedhosts=foobar, foobar"
 - "traefik.http.middlewares.middleware12.headers.browserxssfilter=true"
 - "traefik.http.middlewares.middleware12.headers.contentsecuritypolicy=foobar"
+- "traefik.http.middlewares.middleware12.headers.contentsecuritypolicyreportonly=foobar"
 - "traefik.http.middlewares.middleware12.headers.contenttypenosniff=true"
 - "traefik.http.middlewares.middleware12.headers.custombrowserxssvalue=foobar"
 - "traefik.http.middlewares.middleware12.headers.customframeoptionsvalue=foobar"

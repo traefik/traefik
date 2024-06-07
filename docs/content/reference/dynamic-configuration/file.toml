@@ -198,6 +198,7 @@
         browserXssFilter = true
         customBrowserXSSValue = "foobar"
         contentSecurityPolicy = "foobar"
+        contentSecurityPolicyReportOnly = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
         permissionsPolicy = "foobar"

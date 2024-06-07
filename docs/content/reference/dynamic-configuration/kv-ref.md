@@ -71,6 +71,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware12/headers/allowedHosts/1` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/browserXssFilter` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/contentSecurityPolicy` | `foobar` |
+| `traefik/http/middlewares/Middleware12/headers/contentSecurityPolicyReportOnly` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/contentTypeNosniff` | `true` |
 | `traefik/http/middlewares/Middleware12/headers/customBrowserXSSValue` | `foobar` |
 | `traefik/http/middlewares/Middleware12/headers/customFrameOptionsValue` | `foobar` |

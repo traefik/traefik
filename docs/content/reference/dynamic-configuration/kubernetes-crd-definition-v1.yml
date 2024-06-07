@@ -1309,6 +1309,10 @@ spec:
                     description: ContentSecurityPolicy defines the Content-Security-Policy
                       header value.
                     type: string
+                  contentSecurityPolicyReportOnly:
+                    description: ContentSecurityPolicyReportOnly defines the Content-Security-Policy-Report-Only
+                      header value.
+                    type: string
                   contentTypeNosniff:
                     description: ContentTypeNosniff defines whether to add the X-Content-Type-Options
                       header with the nosniff value.
