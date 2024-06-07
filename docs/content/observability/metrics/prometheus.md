@@ -170,7 +170,7 @@ metrics:
 
 _Optional_
 
-Defines the extra labels for the `requests_total` metrics, and for each of them, the request header containing the value for this label.
+Defines the extra labels for all metrics, and for each of them, the request header containing the value for this label.
 Please note that if the header is not present in the request it will be added nonetheless with an empty value.
 In addition, the label should be a valid label name for Prometheus metrics, 
 otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
@@ -236,3 +236,13 @@ traefik_entrypoint_requests_total{code="200",entrypoint="web",method="GET",proto
     // Request.Host field and removed from the Header map.
 
     As a workaround, to obtain the Host of a request as a label, one should use instead the `X-Forwarded-Host` header.
+
+!!! warning "High Cardinality Issue with `headerLabels`"
+
+    Please use `headerLabels` with caution, as it may lead to high cardinality and performance issues. 
+    High cardinality occurs when a label has a large or unique set of values across different requests. 
+    For instance, using a header that changes with each request can significantly increase the number 
+    of label combinations, adversely affecting performance of Prometheus.
+
+    It is recommended to use `headerLabels` only when the number of unique values is predictably low.
+    Ensure that the labels used do not vary significantly between requests to avoid high cardinality issues.
