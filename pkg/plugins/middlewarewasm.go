@@ -43,12 +43,12 @@ func toWasmConfig(i any) ([]handler.Option, bool, error) {
 		return nil, false, fmt.Errorf("unmarshaling config: %w", err)
 	}
 
-	if wc.Runtime == nil && wc.Config == nil {
+	if wc.Runtime == nil && wc.GuestConfig == nil {
 		return nil, false, nil
 	}
 
 	return []handler.Option{
-		handler.GuestConfig(wc.Config),
+		handler.GuestConfig(wc.GuestConfig),
 		handler.ModuleConfig(
 			wazero.NewModuleConfig().
 				WithSysWalltime().
@@ -78,7 +78,7 @@ type wasmConfig struct {
 	Runtime *struct {
 		RootFS string `json:"rootFS"`
 	} `json:"runtime"`
-	Config json.RawMessage `json:"config"`
+	GuestConfig json.RawMessage `json:"guestConfig"`
 }
 
 func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
