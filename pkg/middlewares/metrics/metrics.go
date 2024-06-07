@@ -37,10 +37,10 @@ const (
 type metricsMiddleware struct {
 	next                 http.Handler
 	reqsCounter          metrics.CounterWithHeaders
-	reqsTLSCounter       gokitmetrics.Counter
-	reqDurationHistogram metrics.ScalableHistogram
-	reqsBytesCounter     gokitmetrics.Counter
-	respsBytesCounter    gokitmetrics.Counter
+	reqsTLSCounter       metrics.CounterWithHeaders
+	reqDurationHistogram metrics.ScalableHistogramWithHeaders
+	reqsBytesCounter     metrics.CounterWithHeaders
+	respsBytesCounter    metrics.CounterWithHeaders
 	baseLabels           []string
 	name                 string
 }
@@ -132,7 +132,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		tlsLabels = append(tlsLabels, m.baseLabels...)
 		tlsLabels = append(tlsLabels, "tls_version", traefiktls.GetVersion(req.TLS), "tls_cipher", traefiktls.GetCipherName(req.TLS))
 
-		m.reqsTLSCounter.With(tlsLabels...).Add(1)
+		m.reqsTLSCounter.With(req.Header, tlsLabels...).Add(1)
 	}
 
 	ctx := req.Context()
@@ -163,10 +163,10 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	labels = append(labels, "code", strconv.Itoa(code))
-	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
+	m.reqDurationHistogram.With(req.Header, labels...).ObserveFromStart(start)
 	m.reqsCounter.With(req.Header, labels...).Add(1)
-	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
-	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
+	m.respsBytesCounter.With(req.Header, labels...).Add(float64(capt.ResponseSize()))
+	m.reqsBytesCounter.With(req.Header, labels...).Add(float64(capt.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
