@@ -32,6 +32,55 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, midd
 	}, nil
 }
 
+func toWasmConfig(i any) ([]handler.Option, bool, error) {
+	b, err := json.Marshal(i)
+	if err != nil {
+		return nil, false, fmt.Errorf("marshaling config: %w", err)
+	}
+
+	var wc wasmConfig
+	if err := json.Unmarshal(b, &wc); err != nil {
+		return nil, false, fmt.Errorf("unmarshaling config: %w", err)
+	}
+
+	if wc.Runtime == nil && wc.GuestConfig == nil {
+		return nil, false, nil
+	}
+
+	return []handler.Option{
+		handler.GuestConfig(wc.GuestConfig),
+		handler.ModuleConfig(
+			wazero.NewModuleConfig().
+				WithSysWalltime().
+				WithFSConfig(wazero.NewFSConfig().WithReadOnlyDirMount(wc.Runtime.RootFS, "/")),
+		),
+	}, true, nil
+}
+
+func toConfig(i any) ([]handler.Option, error) {
+	im, ok := i.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("could not type assert config: %T", i)
+	}
+
+	data, err := json.Marshal(im)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling config: %w", err)
+	}
+
+	return []handler.Option{
+		handler.GuestConfig(data),
+		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
+	}, nil
+}
+
+type wasmConfig struct {
+	Runtime *struct {
+		RootFS string `json:"rootFS"`
+	} `json:"runtime"`
+	GuestConfig json.RawMessage `json:"guestConfig"`
+}
+
 func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	code, err := os.ReadFile(b.path)
 	if err != nil {
@@ -41,23 +90,27 @@ func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 
 	opts := []handler.Option{
-		handler.ModuleConfig(wazero.NewModuleConfig().WithSysWalltime()),
 		handler.Logger(logs.NewWasmLogger(logger)),
 	}
 
 	i := cfg.Interface()
 	if i != nil {
-		config, ok := i.(map[string]interface{})
+		var (
+			cOpts []handler.Option
+			ok    bool
+			err   error
+		)
+
+		cOpts, ok, err = toWasmConfig(i)
 		if !ok {
-			return nil, fmt.Errorf("could not type assert config: %T", i)
+			cOpts, err = toConfig(i)
 		}
 
-		data, err := json.Marshal(config)
 		if err != nil {
-			return nil, fmt.Errorf("marshaling config: %w", err)
+			return nil, err
 		}
 
-		opts = append(opts, handler.GuestConfig(data))
+		opts = append(opts, cOpts...)
 	}
 
 	mw, err := wasm.NewMiddleware(context.Background(), code, opts...)
