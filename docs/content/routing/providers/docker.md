@@ -81,8 +81,8 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
     --providers.docker.swarmMode=true
     ```
 
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
-    When there is only one service and the router does not specify any service,
+    Attach labels to services (not containers) while in Swarm mode (in your Docker compose file).
+    When there is only one service, and the router does not specify a service,
     then that service is automatically assigned to the router.
 
     ```yaml

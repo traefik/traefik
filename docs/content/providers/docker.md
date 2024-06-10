@@ -80,8 +80,8 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
     --providers.docker.swarmMode=true
     ```
 
-    Attach labels to a single service (not to containers) while in Swarm mode (in your docker compose file)
-    When there is only one service and the router does not specify any service,
+    Attach labels to a single service (not containers) while in Swarm mode (in your Docker compose file).
+    When there is only one service, and the router does not specify a service,
     then that service is automatically assigned to the router.
 
     ```yaml
