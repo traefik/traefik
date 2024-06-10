@@ -1,3 +1,20 @@
+## [v3.0.2](https://github.com/traefik/traefik/tree/v3.0.2) (2024-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.1...v3.0.2)
+
+**Bug fixes:**
+- **[logs]** Bump OTel dependencies ([#10763](https://github.com/traefik/traefik/pull/10763) by [DrFaust92](https://github.com/DrFaust92))
+- **[logs]** Append to log file if it exists ([#10756](https://github.com/traefik/traefik/pull/10756) by [lbenguigui](https://github.com/lbenguigui))
+- **[metrics]** Fix service name label_replace in Grafana ([#10758](https://github.com/traefik/traefik/pull/10758) by [xdavidwu](https://github.com/xdavidwu))
+- **[middleware]** Forward the correct status code when compression is disabled within the Brotli handler ([#10780](https://github.com/traefik/traefik/pull/10780) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Support Accept-Encoding header weights with Compress middleware ([#10777](https://github.com/traefik/traefik/pull/10777) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Update v2 &gt; v3 migration guide ([#10728](https://github.com/traefik/traefik/pull/10728) by [0anas01](https://github.com/0anas01))
+
+**Misc:**
+- Merge current v2.11 into v3.0 ([#10796](https://github.com/traefik/traefik/pull/10796) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.11 into v3.0 ([#10781](https://github.com/traefik/traefik/pull/10781) by [ldez](https://github.com/ldez))
+
 ## [v2.11.4](https://github.com/traefik/traefik/tree/v2.11.4) (2024-06-10)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.3...v2.11.4)
 
