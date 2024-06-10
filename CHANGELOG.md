@@ -1,3 +1,15 @@
+## [v2.11.4](https://github.com/traefik/traefik/tree/v2.11.4) (2024-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.3...v2.11.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.17.3 ([#10768](https://github.com/traefik/traefik/pull/10768) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Fix .com and .org domain examples  ([#10635](https://github.com/traefik/traefik/pull/10635) by [rptaylor](https://github.com/rptaylor))
+- **[middleware]** Add a note about the Ratelimit middleware&#39;s behavior when the sourceCriterion header is missing ([#10752](https://github.com/traefik/traefik/pull/10752) by [dgutzmann](https://github.com/dgutzmann))
+- Add user guides link to getting started ([#10785](https://github.com/traefik/traefik/pull/10785) by [norlinhenrik](https://github.com/norlinhenrik))
+- Remove helm default repo warning as repo has been long deprecated ([#10772](https://github.com/traefik/traefik/pull/10772) by [corneliusroemer](https://github.com/corneliusroemer))
+
 ## [v3.0.1](https://github.com/traefik/traefik/tree/v3.0.1) (2024-05-22)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.0...v3.0.1)
 

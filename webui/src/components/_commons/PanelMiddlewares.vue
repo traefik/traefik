@@ -75,8 +75,8 @@
                   ERRORS
                 </div>
                 <q-chip
-                  v-for="(errorMsg, index) in middleware.error"
-                  :key="index"
+                  v-for="(errorMsg, errorIndex) in middleware.error"
+                  :key="errorIndex"
                   class="app-chip app-chip-error"
                 >
                   {{ errorMsg }}
