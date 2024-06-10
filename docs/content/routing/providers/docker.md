@@ -168,7 +168,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
     ```yaml
     labels:
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
-      # No link specified, and yet myproxy router is linked to myservice
+      # service myservice gets automatically assigned to router myproxy
       - "traefik.http.services.myservice.loadbalancer.server.port=80"
     ```
 
