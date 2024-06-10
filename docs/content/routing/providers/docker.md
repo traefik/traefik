@@ -73,8 +73,8 @@ Attach labels to your containers and let Traefik do the rest!
     --providers.docker.swarmMode=true
     ```
 
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
-    When there is only one service and the router does not specify any service,
+    Attach labels to services (not containers) while in Swarm mode (in your Docker compose file).
+    When there is only one service, and the router does not specify a service,
     then that service is automatically assigned to the router.
 
     ```yaml
