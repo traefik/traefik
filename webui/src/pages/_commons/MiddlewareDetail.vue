@@ -116,12 +116,14 @@ export default defineComponent({
   mixins: [GetTablePropsMixin],
   props: {
     name: {
+      type: String,
       default: '',
-      type: String
+      required: false
     },
     type: {
+      type: String,
       default: '',
-      type: String
+      required: false
     }
   },
   data () {

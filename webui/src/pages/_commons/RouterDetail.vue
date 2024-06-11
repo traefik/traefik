@@ -282,12 +282,14 @@ export default defineComponent({
   },
   props: {
     name: {
+      type: String,
       default: '',
-      type: String
+      required: false
     },
     type: {
+      type: String,
       default: '',
-      type: String
+      required: false
     }
   },
   data () {
