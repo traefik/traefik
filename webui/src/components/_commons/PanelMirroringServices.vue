@@ -70,7 +70,7 @@
 export default {
   name: 'PanelMirroringServices',
   props: {
-    data: Object,
+    data: { type: Object, default: undefined, required: false },
     dense: Boolean
   },
   computed: {
