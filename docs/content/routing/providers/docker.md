@@ -174,9 +174,9 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
     ```
 
-??? example "Explicit definition with multiple Services"
+??? example "Explicit definition with one Service"
 
-    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+    With labels in a compose file
 
     ```yaml
     version: "3"
