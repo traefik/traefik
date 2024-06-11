@@ -383,7 +383,8 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Errorf("No service name for the router: %s, see https://doc.traefik.io/traefik/routing/providers/docker/#service-definition", routerName)
+					Errorf("Router %s cannot be linked automatically with multiples Services : %q",
+						routerName, reflect.ValueOf(configuration.Services).MapKeys())
 				continue
 			}
 
@@ -405,7 +406,8 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
 			loggerRouter.
-				Errorf("No service name for the router: %s, see https://doc.traefik.io/traefik/routing/providers/docker/#service-definition", routerName)
+				Errorf("Router %s cannot be linked automatically with multiples Services : %q",
+					routerName, reflect.ValueOf(configuration.Services).MapKeys())
 			continue
 		}
 
@@ -452,7 +454,8 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Errorf("No service name for the router: %s, https://doc.traefik.io/traefik/routing/providers/docker/#service-definition", routerName)
+					Errorf("Router %s cannot be linked automatically with multiples Services : %q",
+						routerName, reflect.ValueOf(configuration.Services).MapKeys())
 				continue
 			}
 
