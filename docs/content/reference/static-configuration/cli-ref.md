@@ -63,9 +63,6 @@ CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
-`--certificatesresolvers.<name>.acme.deadperiod`:  
-Period before considering a certificate as dead. (Default: ```0s```)
-
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -89,6 +86,9 @@ Key identifier from External CA.
 
 `--certificatesresolvers.<name>.acme.email`:  
 Email address used for registration.
+
+`--certificatesresolvers.<name>.acme.gracefulperiod`:  
+Time before considering deleting a certificate. (Default: ```0s```)
 
 `--certificatesresolvers.<name>.acme.httpchallenge`:  
 Activate HTTP-01 Challenge. (Default: ```false```)

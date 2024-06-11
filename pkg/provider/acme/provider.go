@@ -42,7 +42,7 @@ type Configuration struct {
 	KeyType              string        `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB          `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int           `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
-	DeadPeriod           time.Duration `description:"Period before considering a certificate as dead." json:"deadPeriod,omitempty" toml:"deadPeriod,omitempty" yaml:"deadPeriod,omitempty" export:"true"`
+	GracefulPeriod       time.Duration `description:"Time before considering deleting a certificate." json:"gracefulPeriod,omitempty" toml:"gracefulPeriod,omitempty" yaml:"gracefulPeriod,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -214,14 +214,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger.Debug().Msgf("Attempt to renew certificates %q before expiry and check every %q",
 		renewPeriod, renewInterval)
 
-	p.renewCertificates(ctx, renewPeriod, p.DeadPeriod)
+	p.renewCertificates(ctx, renewPeriod, p.GracefulPeriod)
 
 	ticker := time.NewTicker(renewInterval)
 	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case <-ticker.C:
-				p.renewCertificates(ctx, renewPeriod, p.DeadPeriod)
+				p.renewCertificates(ctx, renewPeriod, p.GracefulPeriod)
 			case <-ctxPool.Done():
 				ticker.Stop()
 				return
@@ -807,7 +807,7 @@ func (p *Provider) buildMessage() dynamic.Message {
 	return conf
 }
 
-func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration, deadPeriod time.Duration) {
+func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration, gracefulPeriod time.Duration) {
 	logger := log.Ctx(ctx)
 	logger.Info().Msg("Testing certificate renew...")
 
@@ -815,9 +815,9 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 	// err -> dead -> 1/3 -> revoked -> ok
 
-	// deadPeriod must be < to renewPeriod
-	if deadPeriod >= renewPeriod {
-		deadPeriod = 0
+	// gracefulPeriod must be < to renewPeriod
+	if gracefulPeriod >= renewPeriod {
+		gracefulPeriod = 0
 	}
 
 	var toRenew []*CertAndStore
@@ -833,7 +833,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			toRenew = append(toRenew, cert)
 
 		// The certificate should be considered as no more used.
-		case crt.NotAfter.Before(time.Now().Add(deadPeriod)):
+		case crt.NotAfter.Before(time.Now().Add(gracefulPeriod)):
 			toRemove = append(toRemove, cert)
 
 		// In the renewal period.
