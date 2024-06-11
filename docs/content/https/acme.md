@@ -654,27 +654,27 @@ certificatesResolvers:
 
 _Optional, Default=0_
 
-Period before considering a certificate as dead.
+Time before considering deleting a certificate.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
     acme:
       # ...
-      deadPeriod: 2d
+      gracefulPeriod: 2d
       # ...
 ```
 
 ```toml tab="File (TOML)"
 [certificatesResolvers.myresolver.acme]
   # ...
-  deadPeriod="2d"
+  gracefulPeriod = "2d"
   # ...
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.deadPeriod=2d
+--certificatesresolvers.myresolver.acme.gracefulPeriod=2d
 # ...
 ```
 
