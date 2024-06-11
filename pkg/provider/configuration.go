@@ -383,7 +383,8 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
+					Errorf("Router %s cannot be linked automatically with multiples Services : %q",
+						routerName, reflect.ValueOf(configuration.Services).MapKeys())
 				continue
 			}
 
@@ -405,7 +406,8 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
 			loggerRouter.
-				Error("Could not define the service name for the router: too many services")
+				Errorf("Router %s cannot be linked automatically with multiples Services : %q",
+					routerName, reflect.ValueOf(configuration.Services).MapKeys())
 			continue
 		}
 
@@ -452,7 +454,8 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
+					Errorf("Router %s cannot be linked automatically with multiples Services : %q",
+						routerName, reflect.ValueOf(configuration.Services).MapKeys())
 				continue
 			}
 
