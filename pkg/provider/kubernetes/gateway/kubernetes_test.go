@@ -1753,91 +1753,24 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7": {
+						"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr",
-							Rule:        "Host(`example.com`) && PathPrefix(`/foo`)",
+							Service:     "default-http-app-1-my-gateway-web-0-wrr",
+							Rule:        "Host(`example.com`) && (Path(`/foo`) || PathPrefix(`/foo/`))",
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-path-0"},
+							Priority:    10412,
+							Middlewares: []string{"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8-urlrewrite-0"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-path-0": {
-							ReplacePath: &dynamic.ReplacePath{
-								Path: "/bar",
+						"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8-urlrewrite-0": {
+							URLRewrite: &dynamic.URLRewrite{
+								Path: ptr.To("/bar"),
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
-									},
-								},
-							},
-						},
-						"default-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								PassHostHeader: ptr.To(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:  "Simple HTTPRoute URL rewrite PathRegEx",
-			paths: []string{"services.yml", "httproute/filter_url_rewrite_regex.yml"},
-			entryPoints: map[string]Entrypoint{"web": {
-				Address: ":80",
-			}},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Middlewares:       map[string]*dynamic.TCPMiddleware{},
-					Services:          map[string]*dynamic.TCPService{},
-					ServersTransports: map[string]*dynamic.TCPServersTransport{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7": {
-							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr",
-							Rule:        "Host(`example.com`) && PathPrefix(`/foo`)",
-							RuleSyntax:  "v3",
-							Middlewares: []string{"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-path-0"},
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-path-0": {
-							ReplacePathRegex: &dynamic.ReplacePathRegex{
-								Regex:       "^/foo",
-								Replacement: "/xyz",
-							},
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr": {
+						"default-http-app-1-my-gateway-web-0-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -1888,56 +1821,24 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7": {
+						"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr",
-							Rule:        "Host(`example.com`) && PathPrefix(`/foo`)",
+							Service:     "default-http-app-1-my-gateway-web-0-wrr",
+							Rule:        "Host(`example.com`) && (Path(`/foo`) || PathPrefix(`/foo/`))",
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-host-0"},
+							Priority:    10412,
+							Middlewares: []string{"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8-urlrewrite-0"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-host-0": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"Host": "www.foo.bar",
-								},
-								CustomResponseHeaders:             nil,
-								AccessControlAllowCredentials:     false,
-								AccessControlAllowHeaders:         nil,
-								AccessControlAllowMethods:         nil,
-								AccessControlAllowOriginList:      nil,
-								AccessControlAllowOriginListRegex: nil,
-								AccessControlExposeHeaders:        nil,
-								AccessControlMaxAge:               0,
-								AddVaryHeader:                     false,
-								AllowedHosts:                      nil,
-								HostsProxyHeaders:                 nil,
-								SSLProxyHeaders:                   nil,
-								STSSeconds:                        0,
-								STSIncludeSubdomains:              false,
-								STSPreload:                        false,
-								ForceSTSHeader:                    false,
-								FrameDeny:                         false,
-								CustomFrameOptionsValue:           "",
-								ContentTypeNosniff:                false,
-								BrowserXSSFilter:                  false,
-								CustomBrowserXSSValue:             "",
-								ContentSecurityPolicy:             "",
-								PublicKey:                         "",
-								ReferrerPolicy:                    "",
-								PermissionsPolicy:                 "",
-								IsDevelopment:                     false,
-								FeaturePolicy:                     nil,
-								SSLRedirect:                       nil,
-								SSLTemporaryRedirect:              nil,
-								SSLHost:                           nil,
-								SSLForceHost:                      nil,
+						"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8-urlrewrite-0": {
+							URLRewrite: &dynamic.URLRewrite{
+								Hostname: ptr.To("www.foo.bar"),
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr": {
+						"default-http-app-1-my-gateway-web-0-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -1988,62 +1889,26 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7": {
+						"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr",
-							Rule:        "Host(`example.com`) && PathPrefix(`/foo`)",
+							Service:     "default-http-app-1-my-gateway-web-0-wrr",
+							Rule:        "Host(`example.com`) && (Path(`/foo`) || PathPrefix(`/foo/`))",
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-host-0", "default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-path-0"},
+							Priority:    10412,
+							Middlewares: []string{"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8-urlrewrite-0"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-path-0": {
-							ReplacePathRegex: &dynamic.ReplacePathRegex{
-								Regex:       "^/foo",
-								Replacement: "/xyz",
-							},
-						},
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-urlrewrite-host-0": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"Host": "www.foo.bar",
-								},
-								CustomResponseHeaders:             nil,
-								AccessControlAllowCredentials:     false,
-								AccessControlAllowHeaders:         nil,
-								AccessControlAllowMethods:         nil,
-								AccessControlAllowOriginList:      nil,
-								AccessControlAllowOriginListRegex: nil,
-								AccessControlExposeHeaders:        nil,
-								AccessControlMaxAge:               0,
-								AddVaryHeader:                     false,
-								AllowedHosts:                      nil,
-								HostsProxyHeaders:                 nil,
-								SSLProxyHeaders:                   nil,
-								STSSeconds:                        0,
-								STSIncludeSubdomains:              false,
-								STSPreload:                        false,
-								ForceSTSHeader:                    false,
-								FrameDeny:                         false,
-								CustomFrameOptionsValue:           "",
-								ContentTypeNosniff:                false,
-								BrowserXSSFilter:                  false,
-								CustomBrowserXSSValue:             "",
-								ContentSecurityPolicy:             "",
-								PublicKey:                         "",
-								ReferrerPolicy:                    "",
-								PermissionsPolicy:                 "",
-								IsDevelopment:                     false,
-								FeaturePolicy:                     nil,
-								SSLRedirect:                       nil,
-								SSLTemporaryRedirect:              nil,
-								SSLHost:                           nil,
-								SSLForceHost:                      nil,
+						"default-http-app-1-my-gateway-web-0-7f90cf546b15efadf2f8-urlrewrite-0": {
+							URLRewrite: &dynamic.URLRewrite{
+								Hostname:   ptr.To("www.foo.bar"),
+								Path:       ptr.To("/xyz"),
+								PathPrefix: ptr.To("/foo"),
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-76f78beeda6e3d06c2b7-wrr": {
+						"default-http-app-1-my-gateway-web-0-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{

@@ -54,4 +54,4 @@ spec:
           urlRewrite:
             path:
               type: ReplaceFullPath
-              replacePrefixMatch: /bar
+              replaceFullPath: /bar
