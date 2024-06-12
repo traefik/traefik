@@ -128,13 +128,14 @@ export default defineComponent({
     QPageScroller
   },
   props: {
-    data: Object,
+    data: { type: Object, default: undefined, required: false },
     columns: Array[Object],
     loading: Boolean,
-    onLoadMore: Function,
+    onLoadMore: { type: Function, default: undefined, required: false },
     endReached: Boolean,
-    onRowClick: Function
+    onRowClick: { type: Function, default: undefined, required: false }
   },
+  emits: ['update:currentSort', 'update:currentSortDir'],
   data () {
     return {
       currentSort: 'name',
