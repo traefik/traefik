@@ -23,24 +23,6 @@ const (
 	contentType     = "Content-Type"
 )
 
-type compression interface {
-	// Write data to the encoder.
-	// Input data will be buffered and as the buffer fills up
-	// content will be compressed and written to the output.
-	// When done writing, use Close to flush the remaining output
-	// and write CRC if requested.
-	Write(p []byte) (n int, err error)
-	// Flush will send the currently written data to output
-	// and block until everything has been written.
-	// This should only be used on rare occasions where pushing the currently queued data is critical.
-	Flush() error
-	// Close closes the underlying writers if/when appropriate.
-	// Note that the compressed writer should not be closed if we never used it,
-	// as it would otherwise send some extra "end of compression" bytes.
-	// Close also makes sure to flush whatever was left to write from the buffer.
-	Close() error
-}
-
 // Config is the Brotli handler configuration.
 type Config struct {
 	// ExcludedContentTypes is the list of content types for which we should not compress.
@@ -55,32 +37,6 @@ type Config struct {
 	Algorithm string
 	// MiddlewareName use for logging purposes
 	MiddlewareName string
-}
-
-type CompressionWriter struct {
-	compression
-	alg string
-}
-
-func NewCompressionWriter(algo string, in io.Writer) (*CompressionWriter, error) {
-	switch algo {
-	case brotliName:
-		return &CompressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
-
-	case zstdName:
-		writer, err := zstd.NewWriter(in)
-		if err != nil {
-			return nil, err
-		}
-		return &CompressionWriter{compression: writer, alg: algo}, nil
-
-	default:
-		return nil, fmt.Errorf("unknown compression algo: %s", algo)
-	}
-}
-
-func (c *CompressionWriter) ContentEncoding() string {
-	return c.alg
 }
 
 // CompressionHandler handles Brolti and Zstd compression.
@@ -136,7 +92,7 @@ func NewCompressionHandler(cfg Config, next http.Handler) (http.Handler, error) 
 func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add(vary, acceptEncoding)
 
-	compressionWriter, err := NewCompressionWriter(c.cfg.Algorithm, rw)
+	compressionWriter, err := newCompressionWriter(c.cfg.Algorithm, rw)
 	if err != nil {
 		logger := middlewares.GetLogger(r.Context(), c.cfg.MiddlewareName, typeName)
 		logMessage := fmt.Sprintf("create compression handler: %v", err)
@@ -159,11 +115,55 @@ func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 	c.next.ServeHTTP(responseWriter, r)
 }
 
+type compression interface {
+	// Write data to the encoder.
+	// Input data will be buffered and as the buffer fills up
+	// content will be compressed and written to the output.
+	// When done writing, use Close to flush the remaining output
+	// and write CRC if requested.
+	Write(p []byte) (n int, err error)
+	// Flush will send the currently written data to output
+	// and block until everything has been written.
+	// This should only be used on rare occasions where pushing the currently queued data is critical.
+	Flush() error
+	// Close closes the underlying writers if/when appropriate.
+	// Note that the compressed writer should not be closed if we never used it,
+	// as it would otherwise send some extra "end of compression" bytes.
+	// Close also makes sure to flush whatever was left to write from the buffer.
+	Close() error
+}
+
+type compressionWriter struct {
+	compression
+	alg string
+}
+
+func newCompressionWriter(algo string, in io.Writer) (*compressionWriter, error) {
+	switch algo {
+	case brotliName:
+		return &compressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
+
+	case zstdName:
+		writer, err := zstd.NewWriter(in)
+		if err != nil {
+			return nil, fmt.Errorf("creating zstd writer: %w", err)
+		}
+		return &compressionWriter{compression: writer, alg: algo}, nil
+
+	default:
+		return nil, fmt.Errorf("unknown compression algo: %s", algo)
+	}
+}
+
+func (c *compressionWriter) ContentEncoding() string {
+	return c.alg
+}
+
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
 	rw                http.ResponseWriter
-	compressionWriter *CompressionWriter
+	compressionWriter *compressionWriter
 
 	minSize              int
 	excludedContentTypes []parsedContentType
