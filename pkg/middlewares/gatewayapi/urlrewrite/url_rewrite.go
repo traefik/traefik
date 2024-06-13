@@ -16,15 +16,16 @@ const (
 )
 
 type urlRewrite struct {
-	name       string
-	next       http.Handler
+	name string
+	next http.Handler
+
 	hostname   *string
 	path       *string
 	pathPrefix *string
 }
 
 // NewURLRewrite creates a URL rewrite middleware.
-func NewURLRewrite(ctx context.Context, next http.Handler, conf dynamic.URLRewrite, name string) (http.Handler, error) {
+func NewURLRewrite(ctx context.Context, next http.Handler, conf dynamic.URLRewrite, name string) http.Handler {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
 
@@ -34,7 +35,7 @@ func NewURLRewrite(ctx context.Context, next http.Handler, conf dynamic.URLRewri
 		hostname:   conf.Hostname,
 		path:       conf.Path,
 		pathPrefix: conf.PathPrefix,
-	}, nil
+	}
 }
 
 func (u urlRewrite) GetTracingInformation() (string, string, trace.SpanKind) {
@@ -43,11 +44,9 @@ func (u urlRewrite) GetTracingInformation() (string, string, trace.SpanKind) {
 
 func (u urlRewrite) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	newPath := req.URL.Path
-
 	if u.path != nil && u.pathPrefix == nil {
 		newPath = *u.path
 	}
-
 	if u.path != nil && u.pathPrefix != nil {
 		newPath = path.Join(*u.path, strings.TrimPrefix(req.URL.Path, *u.pathPrefix))
 

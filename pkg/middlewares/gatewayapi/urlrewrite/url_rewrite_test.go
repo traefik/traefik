@@ -7,53 +7,53 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"k8s.io/utils/ptr"
 )
 
 func TestURLRewriteHandler(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		config        dynamic.URLRewrite
-		method        string
-		url           string
-		headers       map[string]string
-		expectedURL   string
-		expectedHost  string
-		errorExpected bool
+		desc     string
+		config   dynamic.URLRewrite
+		url      string
+		wantURL  string
+		wantHost string
 	}{
 		{
 			desc: "replace path",
 			config: dynamic.URLRewrite{
 				Path: ptr.To("/baz"),
 			},
-			url:         "http://foo.com:80/foo/bar",
-			expectedURL: "http://foo.com:80/baz",
+			url:      "http://foo.com/foo/bar",
+			wantURL:  "http://foo.com/baz",
+			wantHost: "foo.com",
 		},
 		{
 			desc: "replace path without trailing slash",
 			config: dynamic.URLRewrite{
 				Path: ptr.To("/baz"),
 			},
-			url:         "http://foo.com:80/foo/bar/",
-			expectedURL: "http://foo.com:80/baz",
+			url:      "http://foo.com/foo/bar/",
+			wantURL:  "http://foo.com/baz",
+			wantHost: "foo.com",
 		},
 		{
 			desc: "replace path with trailing slash",
 			config: dynamic.URLRewrite{
 				Path: ptr.To("/baz/"),
 			},
-			url:         "http://foo.com:80/foo/bar",
-			expectedURL: "http://foo.com:80/baz/",
+			url:      "http://foo.com/foo/bar",
+			wantURL:  "http://foo.com/baz/",
+			wantHost: "foo.com",
 		},
 		{
 			desc: "only host",
 			config: dynamic.URLRewrite{
 				Hostname: ptr.To("bar.com"),
 			},
-			url:          "http://foo.com:8080/foo/",
-			expectedHost: "bar.com",
+			url:      "http://foo.com/foo/",
+			wantURL:  "http://foo.com/foo/",
+			wantHost: "bar.com",
 		},
 		{
 			desc: "host and path",
@@ -61,9 +61,9 @@ func TestURLRewriteHandler(t *testing.T) {
 				Hostname: ptr.To("bar.com"),
 				Path:     ptr.To("/baz/"),
 			},
-			url:          "http://foo.com:8080/foo/",
-			expectedURL:  "http://foo.com:8080/baz/",
-			expectedHost: "bar.com",
+			url:      "http://foo.com/foo/",
+			wantURL:  "http://foo.com/baz/",
+			wantHost: "bar.com",
 		},
 		{
 			desc: "replace prefix path",
@@ -71,8 +71,9 @@ func TestURLRewriteHandler(t *testing.T) {
 				Path:       ptr.To("/baz"),
 				PathPrefix: ptr.To("/foo"),
 			},
-			url:         "http://foo.com:80/foo/bar",
-			expectedURL: "http://foo.com:80/baz/bar",
+			url:      "http://foo.com/foo/bar",
+			wantURL:  "http://foo.com/baz/bar",
+			wantHost: "foo.com",
 		},
 		{
 			desc: "replace prefix path with trailing slash",
@@ -80,8 +81,9 @@ func TestURLRewriteHandler(t *testing.T) {
 				Path:       ptr.To("/baz"),
 				PathPrefix: ptr.To("/foo"),
 			},
-			url:         "http://foo.com:80/foo/bar/",
-			expectedURL: "http://foo.com:80/baz/bar/",
+			url:      "http://foo.com/foo/bar/",
+			wantURL:  "http://foo.com/baz/bar/",
+			wantHost: "foo.com",
 		},
 		{
 			desc: "replace prefix path without slash prefix",
@@ -89,8 +91,9 @@ func TestURLRewriteHandler(t *testing.T) {
 				Path:       ptr.To("baz"),
 				PathPrefix: ptr.To("/foo"),
 			},
-			url:         "http://foo.com:80/foo/bar",
-			expectedURL: "http://foo.com:80/baz/bar",
+			url:      "http://foo.com/foo/bar",
+			wantURL:  "http://foo.com/baz/bar",
+			wantHost: "foo.com",
 		},
 		{
 			desc: "replace prefix path without slash prefix",
@@ -98,8 +101,9 @@ func TestURLRewriteHandler(t *testing.T) {
 				Path:       ptr.To("/baz"),
 				PathPrefix: ptr.To("/foo/"),
 			},
-			url:         "http://foo.com:80/foo/bar",
-			expectedURL: "http://foo.com:80/baz/bar",
+			url:      "http://foo.com/foo/bar",
+			wantURL:  "http://foo.com/baz/bar",
+			wantHost: "foo.com",
 		},
 	}
 
@@ -107,39 +111,16 @@ func TestURLRewriteHandler(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if test.expectedURL != "" {
-					assert.Equal(t, test.expectedURL, r.URL.String())
-				}
-				if test.expectedHost != "" {
-					assert.Equal(t, test.expectedHost, r.Host)
-				}
-			})
-			handler, err := NewURLRewrite(context.Background(), next, test.config, "traefikTest")
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			if test.errorExpected {
-				require.Error(t, err)
-				require.Nil(t, handler)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, handler)
+			handler := NewURLRewrite(context.Background(), next, test.config, "traefikTest")
 
-				recorder := httptest.NewRecorder()
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, test.url, nil)
+			handler.ServeHTTP(recorder, req)
 
-				method := http.MethodGet
-				if test.method != "" {
-					method = test.method
-				}
-
-				req := httptest.NewRequest(method, test.url, nil)
-
-				for k, v := range test.headers {
-					req.Header.Set(k, v)
-				}
-
-				req.Header.Set("X-Foo", "bar")
-				handler.ServeHTTP(recorder, req)
-			}
+			assert.Equal(t, test.wantURL, req.URL.String())
+			assert.Equal(t, test.wantHost, req.Host)
 		})
 	}
 }

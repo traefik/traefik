@@ -393,7 +393,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return headermodifier.NewRequestHeaderModifier(ctx, next, *config.RequestHeaderModifier, middlewareName)
+			return headermodifier.NewRequestHeaderModifier(ctx, next, *config.RequestHeaderModifier, middlewareName), nil
 		}
 	}
 
@@ -411,7 +411,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName)
+			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
 		}
 	}
 

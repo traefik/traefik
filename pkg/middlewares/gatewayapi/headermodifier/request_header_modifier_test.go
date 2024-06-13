@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
@@ -104,8 +103,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 				gotHeaders = r.Header
 			})
 
-			handler, err := NewRequestHeaderModifier(context.Background(), next, test.config, "foo-request-header-modifier")
-			require.NoError(t, err)
+			handler := NewRequestHeaderModifier(context.Background(), next, test.config, "foo-request-header-modifier")
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 			if test.requestHeaders != nil {
