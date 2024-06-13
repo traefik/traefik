@@ -18,8 +18,9 @@ const (
 )
 
 type redirect struct {
-	name       string
-	next       http.Handler
+	name string
+	next http.Handler
+
 	scheme     *string
 	hostname   *string
 	port       *string
