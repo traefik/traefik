@@ -11,6 +11,7 @@ const acceptEncodingHeader = "Accept-Encoding"
 const (
 	brotliName    = "br"
 	gzipName      = "gzip"
+	zstdName      = "zstd"
 	identityName  = "identity"
 	wildcardName  = "*"
 	notAcceptable = "not_acceptable"
@@ -51,7 +52,7 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 		return encoding.Type
 	}
 
-	for _, dt := range []string{brotliName, gzipName} {
+	for _, dt := range []string{zstdName, brotliName, gzipName} {
 		if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}
@@ -76,7 +77,7 @@ func parseAcceptEncoding(acceptEncoding []string) ([]Encoding, bool) {
 			}
 
 			switch parsed[0] {
-			case brotliName, gzipName, identityName, wildcardName:
+			case zstdName, brotliName, gzipName, identityName, wildcardName:
 				// supported encoding
 			default:
 				continue

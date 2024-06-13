@@ -8,7 +8,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func TestStatusEquals(t *testing.T) {
+func Test_gatewayStatusEquals(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		statusA  gatev1.GatewayStatus
@@ -230,13 +230,45 @@ func TestStatusEquals(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			desc: "Gateway listeners with same conditions but different number of attached routes",
+			statusA: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
+					{
+						Name:           "foo",
+						AttachedRoutes: 1,
+						Conditions: []metav1.Condition{
+							{
+								Type:   "foobar",
+								Reason: "foobar",
+							},
+						},
+					},
+				},
+			},
+			statusB: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{
+					{
+						Name:           "foo",
+						AttachedRoutes: 2,
+						Conditions: []metav1.Condition{
+							{
+								Type:   "foobar",
+								Reason: "foobar",
+							},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := statusEquals(test.statusA, test.statusB)
+			result := gatewayStatusEquals(test.statusA, test.statusB)
 
 			assert.Equal(t, test.expected, result)
 		})

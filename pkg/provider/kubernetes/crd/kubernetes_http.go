@@ -306,6 +306,36 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb.SetDefaults()
 	lb.Servers = servers
 
+	if svc.HealthCheck != nil {
+		lb.HealthCheck = &dynamic.ServerHealthCheck{
+			Scheme:   svc.HealthCheck.Scheme,
+			Path:     svc.HealthCheck.Path,
+			Method:   svc.HealthCheck.Method,
+			Status:   svc.HealthCheck.Status,
+			Port:     svc.HealthCheck.Port,
+			Hostname: svc.HealthCheck.Hostname,
+			Headers:  svc.HealthCheck.Headers,
+		}
+		lb.HealthCheck.SetDefaults()
+
+		if svc.HealthCheck.FollowRedirects != nil {
+			lb.HealthCheck.FollowRedirects = svc.HealthCheck.FollowRedirects
+		}
+		if svc.HealthCheck.Mode != "http" {
+			lb.HealthCheck.Mode = svc.HealthCheck.Mode
+		}
+		if svc.HealthCheck.Interval != nil {
+			if err := lb.HealthCheck.Interval.Set(svc.HealthCheck.Interval.String()); err != nil {
+				return nil, err
+			}
+		}
+		if svc.HealthCheck.Timeout != nil {
+			if err := lb.HealthCheck.Timeout.Set(svc.HealthCheck.Timeout.String()); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
 	if lb.PassHostHeader == nil {
@@ -380,6 +410,10 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	}
 
 	var servers []dynamic.Server
+	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
+		return nil, fmt.Errorf("HealthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
+	}
+
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
 			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, sanitizedName)
@@ -413,6 +447,39 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		nodes, nodesExists, nodesErr := c.client.GetNodes()
+		if nodesErr != nil {
+			return nil, nodesErr
+		}
+		if !nodesExists || len(nodes) == 0 {
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", namespace, sanitizedName)
+		}
+
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, node := range nodes {
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == corev1.NodeInternalIP {
+					hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort)))
+
+					servers = append(servers, dynamic.Server{
+						URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+					})
+				}
+			}
+		}
+
+		if len(servers) == 0 {
+			return nil, fmt.Errorf("no servers were generated for service %s in namespace", sanitizedName)
+		}
+
+		return servers, nil
 	}
 
 	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)

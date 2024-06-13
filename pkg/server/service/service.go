@@ -222,6 +222,14 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 
 	balancer := wrr.New(config.Sticky, config.HealthCheck != nil)
 	for _, service := range shuffle(config.Services, m.rand) {
+		if service.Status != nil {
+			serviceHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				writer.WriteHeader(*service.Status)
+			})
+			balancer.Add(service.Name, serviceHandler, service.Weight)
+			continue
+		}
+
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
 			return nil, err
