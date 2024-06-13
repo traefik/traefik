@@ -15,9 +15,9 @@ import (
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
-func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayListeners []gatewayListener, conf *dynamic.Configuration) {
+func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration) {
 	logger := log.Ctx(ctx)
-	routes, err := client.ListTLSRoutes()
+	routes, err := p.client.ListTLSRoutes()
 	if err != nil {
 		logger.Error().Err(err).Msgf("Unable to list TLSRoute")
 		return
@@ -66,7 +66,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayList
 					}
 				}
 
-				routeConf, resolveRefCondition := p.loadTLSRoute(client, listener, route, hostnames)
+				routeConf, resolveRefCondition := p.loadTLSRoute(listener, route, hostnames)
 				if accepted && listener.Attached {
 					mergeTCPConfiguration(routeConf, conf)
 				}
@@ -81,7 +81,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayList
 				Parents: parentStatuses,
 			},
 		}
-		if err := client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
+		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
 			logger.Error().
 				Err(err).
 				Msg("Unable to update TLSRoute status")
@@ -89,8 +89,8 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, client Client, gatewayList
 	}
 }
 
-func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *gatev1alpha2.TLSRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
-	routeConf := &dynamic.Configuration{
+func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1alpha2.TLSRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+	conf := &dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
 			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
@@ -99,7 +99,7 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 		},
 	}
 
-	routeCondition := metav1.Condition{
+	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
 		Status:             metav1.ConditionTrue,
 		ObservedGeneration: route.Generation,
@@ -117,8 +117,8 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 	}
 
 	// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-	routerName := route.Name + "-" + listener.GWName + "-" + listener.EPName
-	routerKey := provider.Normalize(makeRouterKey(router.Rule, makeID(route.Namespace, routerName)))
+	routeKey := provider.Normalize(route.Namespace + "-" + route.Name + "-" + listener.GWName + "-" + listener.EPName)
+	routerName := makeRouterName(router.Rule, routeKey)
 
 	var ruleServiceNames []string
 	for i, routeRule := range route.Spec.Rules {
@@ -128,10 +128,10 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 			continue
 		}
 
-		wrrService, subServices, err := loadTCPServices(client, route.Namespace, routeRule.BackendRefs)
+		wrrService, subServices, err := p.loadTCPServices(route.Namespace, routeRule.BackendRefs)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidBackendRefs" reason
-			routeCondition = metav1.Condition{
+			condition = metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -143,23 +143,23 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 		}
 
 		for svcName, svc := range subServices {
-			routeConf.TCP.Services[svcName] = svc
+			conf.TCP.Services[svcName] = svc
 		}
 
-		serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
-		routeConf.TCP.Services[serviceName] = wrrService
+		serviceName := fmt.Sprintf("%s-wrr-%d", routerName, i)
+		conf.TCP.Services[serviceName] = wrrService
 
 		ruleServiceNames = append(ruleServiceNames, serviceName)
 	}
 
 	if len(ruleServiceNames) == 1 {
 		router.Service = ruleServiceNames[0]
-		routeConf.TCP.Routers[routerKey] = &router
+		conf.TCP.Routers[routerName] = &router
 
-		return routeConf, routeCondition
+		return conf, condition
 	}
 
-	routeServiceKey := routerKey + "-wrr"
+	routeServiceKey := routerName + "-wrr"
 	routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
 
 	for _, name := range ruleServiceNames {
@@ -169,12 +169,12 @@ func (p *Provider) loadTLSRoute(client Client, listener gatewayListener, route *
 		routeService.Weighted.Services = append(routeService.Weighted.Services, service)
 	}
 
-	routeConf.TCP.Services[routeServiceKey] = routeService
+	conf.TCP.Services[routeServiceKey] = routeService
 
 	router.Service = routeServiceKey
-	routeConf.TCP.Routers[routerKey] = &router
+	conf.TCP.Routers[routerName] = &router
 
-	return routeConf, routeCondition
+	return conf, condition
 }
 
 func hostSNIRule(hostnames []gatev1.Hostname) string {
