@@ -716,7 +716,10 @@ type RequestHeaderModifier struct {
 
 // RequestRedirect holds the request redirect middleware configuration.
 type RequestRedirect struct {
-	Regex       string `json:"regex,omitempty"`
-	Replacement string `json:"replacement,omitempty"`
-	Permanent   bool   `json:"permanent,omitempty"`
+	Scheme     *string `json:"scheme,omitempty"`
+	Hostname   *string `json:"hostname,omitempty"`
+	Port       *string `json:"port,omitempty"`
+	Path       *string `json:"path,omitempty"`
+	PathPrefix *string `json:"pathPrefix,omitempty"`
+	StatusCode int     `json:"statusCode,omitempty"`
 }

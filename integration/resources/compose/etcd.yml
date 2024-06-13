@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   etcd:
-    image: quay.io/coreos/etcd:v3.3.18
+    image: quay.io/coreos/etcd:v3.5.14
     command:
       - etcd
       - --listen-client-urls
