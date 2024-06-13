@@ -219,8 +219,6 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 		SkipTests: []string{
 			tests.HTTPRouteMethodMatching.ShortName,
 			tests.HTTPRouteQueryParamMatching.ShortName,
-			tests.HTTPRouteRewriteHost.ShortName,
-			tests.HTTPRouteRewritePath.ShortName,
 		},
 	}
 

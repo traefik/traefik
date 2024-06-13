@@ -22,7 +22,7 @@ type requestHeaderModifier struct {
 }
 
 // NewRequestHeaderModifier creates a new request header modifier middleware.
-func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dynamic.RequestHeaderModifier, name string) (http.Handler, error) {
+func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dynamic.RequestHeaderModifier, name string) http.Handler {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
 
@@ -32,7 +32,7 @@ func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dyn
 		set:    config.Set,
 		add:    config.Add,
 		remove: config.Remove,
-	}, nil
+	}
 }
 
 func (r *requestHeaderModifier) GetTracingInformation() (string, string, trace.SpanKind) {
