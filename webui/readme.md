@@ -20,7 +20,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 20.11+](https://nodejs.org) [Yarn 1.22.19](https://yarnpkg.com/)
+- prerequisite: [Node 20.14+](https://nodejs.org) [Yarn 1.22.22](https://yarnpkg.com/)
 
 - Go to the `webui/` directory
 

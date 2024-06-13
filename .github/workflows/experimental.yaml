@@ -25,9 +25,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: webui/.nvmrc
+          cache: yarn
+          cache-dependency-path: webui/yarn.lock
+
       - name: Build webui
+        working-directory: ./webui
         run: |
-          make clean-webui generate-webui
+          yarn install
+          yarn build
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5

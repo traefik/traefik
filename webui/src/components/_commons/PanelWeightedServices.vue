@@ -66,7 +66,7 @@ export default defineComponent({
   name: 'PanelWeightedServices',
   components: {},
   props: {
-    data: Object,
+    data: { type: Object, default: undefined, required: false },
     dense: Boolean
   },
   computed: {
