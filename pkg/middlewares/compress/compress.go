@@ -11,7 +11,6 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/compress/brotli"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -32,6 +31,7 @@ type compress struct {
 
 	brotliHandler http.Handler
 	gzipHandler   http.Handler
+	zstdHandler   http.Handler
 }
 
 // New creates a new compress middleware.
@@ -77,7 +77,13 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	}
 
 	var err error
-	c.brotliHandler, err = c.newBrotliHandler()
+
+	c.zstdHandler, err = c.newCompressionHandler(zstdName, name)
+	if err != nil {
+		return nil, err
+	}
+
+	c.brotliHandler, err = c.newCompressionHandler(brotliName, name)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +136,8 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {
 	switch typ {
+	case zstdName:
+		c.zstdHandler.ServeHTTP(rw, req)
 	case brotliName:
 		c.brotliHandler.ServeHTTP(rw, req)
 	case gzipName:
@@ -166,18 +174,13 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 	return wrapper(c.next), nil
 }
 
-func (c *compress) newBrotliHandler() (http.Handler, error) {
-	cfg := brotli.Config{MinSize: c.minSize}
+func (c *compress) newCompressionHandler(algo string, middlewareName string) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, Algorithm: algo, MiddlewareName: middlewareName}
 	if len(c.includes) > 0 {
 		cfg.IncludedContentTypes = c.includes
 	} else {
 		cfg.ExcludedContentTypes = c.excludes
 	}
 
-	wrapper, err := brotli.NewWrapper(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("new brotli wrapper: %w", err)
-	}
-
-	return wrapper(c.next), nil
+	return NewCompressionHandler(cfg, c.next)
 }
