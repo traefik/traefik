@@ -93,7 +93,7 @@ func (ip *Checker) ContainsIP(addr net.IP) bool {
 	return false
 }
 
-// removeInterfaceName from IPv6 addresses (eg. 2001::64:48fe%eth0 to 2001::64:48fe)
+// removeInterfaceName from IPv6 addresses (eg. 2001::64:48fe%eth0 to 2001::64:48fe).
 func removeInterfaceName(addr string) string {
 	index := strings.Index(addr, "%")
 	if index == -1 {
