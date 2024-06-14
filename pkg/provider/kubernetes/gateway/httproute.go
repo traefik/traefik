@@ -301,15 +301,19 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 }
 
 func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, routerName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
+	pm := ptr.Deref(pathMatch, gatev1.HTTPPathMatch{
+		Type:  ptr.To(gatev1.PathMatchPathPrefix),
+		Value: ptr.To("/"),
+	})
+
 	middlewares := make(map[string]*dynamic.Middleware)
 	for i, filter := range filters {
+		name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
-			name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
-			middlewares[name] = createRequestRedirect(filter.RequestRedirect, pathMatch)
+			middlewares[name] = createRequestRedirect(filter.RequestRedirect, pm)
 
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
-			name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
 			middlewares[name] = createRequestHeaderModifier(filter.RequestHeaderModifier)
 
 		case gatev1.HTTPRouteFilterExtensionRef:
@@ -318,6 +322,14 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, route
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
 
+			middlewares[name] = middleware
+
+		case gatev1.HTTPRouteFilterURLRewrite:
+			var err error
+			middleware, err := createURLRewrite(filter.URLRewrite, pm)
+			if err != nil {
+				return nil, fmt.Errorf("invalid filter %s: %w", filter.Type, err)
+			}
 			middlewares[name] = middleware
 
 		default:
@@ -560,7 +572,7 @@ func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middl
 	}
 }
 
-func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch *gatev1.HTTPPathMatch) *dynamic.Middleware {
+func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch gatev1.HTTPPathMatch) *dynamic.Middleware {
 	var hostname *string
 	if filter.Hostname != nil {
 		hostname = ptr.To(string(*filter.Hostname))
@@ -597,6 +609,37 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch *
 			StatusCode: ptr.Deref(filter.StatusCode, http.StatusFound),
 		},
 	}
+}
+
+func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTPPathMatch) (*dynamic.Middleware, error) {
+	if filter.Path == nil && filter.Hostname == nil {
+		return nil, errors.New("empty configuration")
+	}
+
+	var host *string
+	if filter.Hostname != nil {
+		host = ptr.To(string(*filter.Hostname))
+	}
+
+	var path *string
+	var pathPrefix *string
+	if filter.Path != nil {
+		switch filter.Path.Type {
+		case gatev1.FullPathHTTPPathModifier:
+			path = filter.Path.ReplaceFullPath
+		case gatev1.PrefixMatchHTTPPathModifier:
+			path = filter.Path.ReplacePrefixMatch
+			pathPrefix = pathMatch.Value
+		}
+	}
+
+	return &dynamic.Middleware{
+		URLRewrite: &dynamic.URLRewrite{
+			Hostname:   host,
+			Path:       path,
+			PathPrefix: pathPrefix,
+		},
+	}, nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
