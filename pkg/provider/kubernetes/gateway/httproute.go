@@ -469,11 +469,11 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 // The current priority computing is rather naive but aims to fulfill Conformance tests suite requirement.
 // The priority is computed to match the following precedence order:
 //
-// * "Exact" path match. (+100000)
-// * "Prefix" path match with largest number of characters. (+10000) PathRegex (+1000)
-// * Method match. (not implemented)
-// * Largest number of header matches. (+100 each) or with PathRegex (+10 each)
-// * Largest number of query param matches. (not implemented)
+// * "Exact" path match (+100000).
+// * "Prefix" path match with largest number of characters (+10000 + nb_characters*100).
+// * Method match (+1000).
+// * Largest number of header matches (+100 each).
+// * Largest number of query param matches (+10 each).
 //
 // In case of multiple matches for a route, the maximum priority among all matches is retain.
 func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (string, int) {
@@ -489,9 +489,18 @@ func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (s
 	matchRules = append(matchRules, pathRule)
 	priority += pathPriority
 
+	if match.Method != nil {
+		matchRules = append(matchRules, fmt.Sprintf("Method(`%s`)", *match.Method))
+		priority += 1000
+	}
+
 	headerRules, headersPriority := buildHeaderRules(match.Headers)
 	matchRules = append(matchRules, headerRules...)
 	priority += headersPriority
+
+	queryParamRules, queryParamsPriority := buildQueryParamRules(match.QueryParams)
+	matchRules = append(matchRules, queryParamRules...)
+	priority += queryParamsPriority
 
 	matchRulesStr := strings.Join(matchRules, " && ")
 
@@ -525,7 +534,7 @@ func buildPathRule(pathMatch gatev1.HTTPPathMatch) (string, int) {
 		return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", pv), 10000 + len(pathValue)*100
 
 	case gatev1.PathMatchRegularExpression:
-		return fmt.Sprintf("PathRegexp(`%s`)", pathValue), 1000 + len(pathValue)*100
+		return fmt.Sprintf("PathRegexp(`%s`)", pathValue), 10000 + len(pathValue)*100
 
 	default:
 		return "PathPrefix(`/`)", 1
@@ -533,18 +542,38 @@ func buildPathRule(pathMatch gatev1.HTTPPathMatch) (string, int) {
 }
 
 func buildHeaderRules(headers []gatev1.HTTPHeaderMatch) ([]string, int) {
-	var rules []string
-	var priority int
+	var (
+		rules    []string
+		priority int
+	)
 	for _, header := range headers {
 		typ := ptr.Deref(header.Type, gatev1.HeaderMatchExact)
 		switch typ {
 		case gatev1.HeaderMatchExact:
 			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
-			priority += 100
 		case gatev1.HeaderMatchRegularExpression:
 			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
-			priority += 10
 		}
+		priority += 100
+	}
+
+	return rules, priority
+}
+
+func buildQueryParamRules(queryParams []gatev1.HTTPQueryParamMatch) ([]string, int) {
+	var (
+		rules    []string
+		priority int
+	)
+	for _, qp := range queryParams {
+		typ := ptr.Deref(qp.Type, gatev1.QueryParamMatchExact)
+		switch typ {
+		case gatev1.QueryParamMatchExact:
+			rules = append(rules, fmt.Sprintf("Query(`%s`,`%s`)", qp.Name, qp.Value))
+		case gatev1.QueryParamMatchRegularExpression:
+			rules = append(rules, fmt.Sprintf("QueryRegexp(`%s`,`%s`)", qp.Name, qp.Value))
+		}
+		priority += 10
 	}
 
 	return rules, priority
