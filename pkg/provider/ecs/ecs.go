@@ -119,7 +119,6 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	}
 
 	cfg := aws.NewConfig().
-		WithCredentialsChainVerboseErrors(true).
 		WithCredentials(credentials.NewChainCredentials([]credentials.Provider{
 			&credentials.StaticProvider{
 				Value: credentials.Value{
