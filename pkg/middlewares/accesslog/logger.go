@@ -184,16 +184,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
-	defer func() {
-		if h.config.BufferingSize > 0 {
-			h.logHandlerChan <- handlerParams{
-				logDataTable: logDataTable,
-			}
-			return
-		}
-		h.logTheRoundTrip(logDataTable)
-	}()
-
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
 	core[RequestCount] = nextRequestCount()
@@ -237,6 +227,25 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		log.Ctx(ctx).Error().Err(err).Str(logs.MiddlewareType, "AccessLogs").Msg("Could not get Capture")
 		return
 	}
+
+	defer func(capt capture.Capture, rw http.ResponseWriter) {
+		if h.config.BufferingSize > 0 {
+			h.logHandlerChan <- handlerParams{
+				logDataTable: logDataTable,
+			}
+			return
+		}
+
+		logDataTable.DownstreamResponse = downstreamResponse{
+			headers: rw.Header().Clone(),
+		}
+
+		logDataTable.DownstreamResponse.status = capt.StatusCode()
+		logDataTable.DownstreamResponse.size = capt.ResponseSize()
+		logDataTable.Request.size = capt.RequestSize()
+
+		h.logTheRoundTrip(logDataTable)
+	}(capt, rw)
 
 	next.ServeHTTP(rw, reqWithDataTable)
 
