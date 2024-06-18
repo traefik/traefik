@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"io"
 	"math"
 	"net/http"
@@ -660,6 +661,29 @@ func TestRuntimeConfiguration(t *testing.T) {
 					ClientAuth: tls.ClientAuth{
 						ClientAuthType: "foobar",
 					},
+				},
+			},
+			expectedError: 1,
+		},
+		{
+			desc: "Router with conflicting configuration",
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: "http://127.0.0.1:8085",
+							},
+						},
+					},
+				},
+			},
+			routerConfig: map[string]*dynamic.Router{
+				"foo": {
+					EntryPoints:        []string{"web"},
+					Service:            "foo-service",
+					Rule:               "Host(`bar.foo`)",
+					ConfigurationError: errors.New("any error is an error"),
 				},
 			},
 			expectedError: 1,
