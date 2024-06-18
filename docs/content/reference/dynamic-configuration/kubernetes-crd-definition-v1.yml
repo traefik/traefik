@@ -98,6 +98,67 @@ spec:
                         description: Service defines an upstream HTTP service to proxy
                           traffic to.
                         properties:
+                          healthCheck:
+                            description: Healthcheck defines health checks for ExternalName
+                              services.
+                            properties:
+                              followRedirects:
+                                description: |-
+                                  FollowRedirects defines whether redirects should be followed during the health check calls.
+                                  Default: true
+                                type: boolean
+                              headers:
+                                additionalProperties:
+                                  type: string
+                                description: Headers defines custom headers to be
+                                  sent to the health check endpoint.
+                                type: object
+                              hostname:
+                                description: Hostname defines the value of hostname
+                                  in the Host header of the health check request.
+                                type: string
+                              interval:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: |-
+                                  Interval defines the frequency of the health check calls.
+                                  Default: 30s
+                                x-kubernetes-int-or-string: true
+                              method:
+                                description: Method defines the healthcheck method.
+                                type: string
+                              mode:
+                                description: |-
+                                  Mode defines the health check mode.
+                                  If defined to grpc, will use the gRPC health check protocol to probe the server.
+                                  Default: http
+                                type: string
+                              path:
+                                description: Path defines the server URL path for
+                                  the health check endpoint.
+                                type: string
+                              port:
+                                description: Port defines the server URL port for
+                                  the health check endpoint.
+                                type: integer
+                              scheme:
+                                description: Scheme replaces the server URL scheme
+                                  for the health check endpoint.
+                                type: string
+                              status:
+                                description: Status defines the expected HTTP status
+                                  code of the response to the health check request.
+                                type: integer
+                              timeout:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: |-
+                                  Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                                  Default: 5s
+                                x-kubernetes-int-or-string: true
+                            type: object
                           kind:
                             description: Kind defines the kind of the Service.
                             enum:
@@ -119,6 +180,13 @@ spec:
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            type: boolean
+                          nodePortLB:
+                            description: |-
+                              NodePortLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                              It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                              By default, NodePortLB is false.
                             type: boolean
                           passHostHeader:
                             description: |-
@@ -401,6 +469,13 @@ spec:
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
                             type: boolean
+                          nodePortLB:
+                            description: |-
+                              NodePortLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                              It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                              By default, NodePortLB is false.
+                            type: boolean
                           port:
                             anyOf:
                             - type: integer
@@ -611,6 +686,13 @@ spec:
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            type: boolean
+                          nodePortLB:
+                            description: |-
+                              NodePortLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                              It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                              By default, NodePortLB is false.
                             type: boolean
                           port:
                             anyOf:
@@ -903,6 +985,67 @@ spec:
                       Service defines the reference to a Kubernetes Service that will serve the error page.
                       More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/#service
                     properties:
+                      healthCheck:
+                        description: Healthcheck defines health checks for ExternalName
+                          services.
+                        properties:
+                          followRedirects:
+                            description: |-
+                              FollowRedirects defines whether redirects should be followed during the health check calls.
+                              Default: true
+                            type: boolean
+                          headers:
+                            additionalProperties:
+                              type: string
+                            description: Headers defines custom headers to be sent
+                              to the health check endpoint.
+                            type: object
+                          hostname:
+                            description: Hostname defines the value of hostname in
+                              the Host header of the health check request.
+                            type: string
+                          interval:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              Interval defines the frequency of the health check calls.
+                              Default: 30s
+                            x-kubernetes-int-or-string: true
+                          method:
+                            description: Method defines the healthcheck method.
+                            type: string
+                          mode:
+                            description: |-
+                              Mode defines the health check mode.
+                              If defined to grpc, will use the gRPC health check protocol to probe the server.
+                              Default: http
+                            type: string
+                          path:
+                            description: Path defines the server URL path for the
+                              health check endpoint.
+                            type: string
+                          port:
+                            description: Port defines the server URL port for the
+                              health check endpoint.
+                            type: integer
+                          scheme:
+                            description: Scheme replaces the server URL scheme for
+                              the health check endpoint.
+                            type: string
+                          status:
+                            description: Status defines the expected HTTP status code
+                              of the response to the health check request.
+                            type: integer
+                          timeout:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                              Default: 5s
+                            x-kubernetes-int-or-string: true
+                        type: object
                       kind:
                         description: Kind defines the kind of the Service.
                         enum:
@@ -924,6 +1067,13 @@ spec:
                           whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                           The Kubernetes Service itself does load-balance to the pods.
                           By default, NativeLB is false.
+                        type: boolean
+                      nodePortLB:
+                        description: |-
+                          NodePortLB controls, when creating the load-balancer,
+                          whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                          It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                          By default, NodePortLB is false.
                         type: boolean
                       passHostHeader:
                         description: |-
@@ -1157,6 +1307,10 @@ spec:
                     type: boolean
                   contentSecurityPolicy:
                     description: ContentSecurityPolicy defines the Content-Security-Policy
+                      header value.
+                    type: string
+                  contentSecurityPolicyReportOnly:
+                    description: ContentSecurityPolicyReportOnly defines the Content-Security-Policy-Report-Only
                       header value.
                     type: string
                   contentTypeNosniff:
@@ -2272,6 +2426,67 @@ spec:
               mirroring:
                 description: Mirroring defines the Mirroring service configuration.
                 properties:
+                  healthCheck:
+                    description: Healthcheck defines health checks for ExternalName
+                      services.
+                    properties:
+                      followRedirects:
+                        description: |-
+                          FollowRedirects defines whether redirects should be followed during the health check calls.
+                          Default: true
+                        type: boolean
+                      headers:
+                        additionalProperties:
+                          type: string
+                        description: Headers defines custom headers to be sent to
+                          the health check endpoint.
+                        type: object
+                      hostname:
+                        description: Hostname defines the value of hostname in the
+                          Host header of the health check request.
+                        type: string
+                      interval:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          Interval defines the frequency of the health check calls.
+                          Default: 30s
+                        x-kubernetes-int-or-string: true
+                      method:
+                        description: Method defines the healthcheck method.
+                        type: string
+                      mode:
+                        description: |-
+                          Mode defines the health check mode.
+                          If defined to grpc, will use the gRPC health check protocol to probe the server.
+                          Default: http
+                        type: string
+                      path:
+                        description: Path defines the server URL path for the health
+                          check endpoint.
+                        type: string
+                      port:
+                        description: Port defines the server URL port for the health
+                          check endpoint.
+                        type: integer
+                      scheme:
+                        description: Scheme replaces the server URL scheme for the
+                          health check endpoint.
+                        type: string
+                      status:
+                        description: Status defines the expected HTTP status code
+                          of the response to the health check request.
+                        type: integer
+                      timeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                          Default: 5s
+                        x-kubernetes-int-or-string: true
+                    type: object
                   kind:
                     description: Kind defines the kind of the Service.
                     enum:
@@ -2291,6 +2506,67 @@ spec:
                     items:
                       description: MirrorService holds the mirror configuration.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for ExternalName
+                            services.
+                          properties:
+                            followRedirects:
+                              description: |-
+                                FollowRedirects defines whether redirects should be followed during the health check calls.
+                                Default: true
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              description: Headers defines custom headers to be sent
+                                to the health check endpoint.
+                              type: object
+                            hostname:
+                              description: Hostname defines the value of hostname
+                                in the Host header of the health check request.
+                              type: string
+                            interval:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Interval defines the frequency of the health check calls.
+                                Default: 30s
+                              x-kubernetes-int-or-string: true
+                            method:
+                              description: Method defines the healthcheck method.
+                              type: string
+                            mode:
+                              description: |-
+                                Mode defines the health check mode.
+                                If defined to grpc, will use the gRPC health check protocol to probe the server.
+                                Default: http
+                              type: string
+                            path:
+                              description: Path defines the server URL path for the
+                                health check endpoint.
+                              type: string
+                            port:
+                              description: Port defines the server URL port for the
+                                health check endpoint.
+                              type: integer
+                            scheme:
+                              description: Scheme replaces the server URL scheme for
+                                the health check endpoint.
+                              type: string
+                            status:
+                              description: Status defines the expected HTTP status
+                                code of the response to the health check request.
+                              type: integer
+                            timeout:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                                Default: 5s
+                              x-kubernetes-int-or-string: true
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -2312,6 +2588,13 @@ spec:
                             whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the pods.
                             By default, NativeLB is false.
+                          type: boolean
+                        nodePortLB:
+                          description: |-
+                            NodePortLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                            It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                            By default, NodePortLB is false.
                           type: boolean
                         passHostHeader:
                           description: |-
@@ -2419,6 +2702,13 @@ spec:
                       The Kubernetes Service itself does load-balance to the pods.
                       By default, NativeLB is false.
                     type: boolean
+                  nodePortLB:
+                    description: |-
+                      NodePortLB controls, when creating the load-balancer,
+                      whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                      It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                      By default, NodePortLB is false.
+                    type: boolean
                   passHostHeader:
                     description: |-
                       PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
@@ -2511,6 +2801,67 @@ spec:
                       description: Service defines an upstream HTTP service to proxy
                         traffic to.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for ExternalName
+                            services.
+                          properties:
+                            followRedirects:
+                              description: |-
+                                FollowRedirects defines whether redirects should be followed during the health check calls.
+                                Default: true
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              description: Headers defines custom headers to be sent
+                                to the health check endpoint.
+                              type: object
+                            hostname:
+                              description: Hostname defines the value of hostname
+                                in the Host header of the health check request.
+                              type: string
+                            interval:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Interval defines the frequency of the health check calls.
+                                Default: 30s
+                              x-kubernetes-int-or-string: true
+                            method:
+                              description: Method defines the healthcheck method.
+                              type: string
+                            mode:
+                              description: |-
+                                Mode defines the health check mode.
+                                If defined to grpc, will use the gRPC health check protocol to probe the server.
+                                Default: http
+                              type: string
+                            path:
+                              description: Path defines the server URL path for the
+                                health check endpoint.
+                              type: string
+                            port:
+                              description: Port defines the server URL port for the
+                                health check endpoint.
+                              type: integer
+                            scheme:
+                              description: Scheme replaces the server URL scheme for
+                                the health check endpoint.
+                              type: string
+                            status:
+                              description: Status defines the expected HTTP status
+                                code of the response to the health check request.
+                              type: integer
+                            timeout:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                                Default: 5s
+                              x-kubernetes-int-or-string: true
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -2532,6 +2883,13 @@ spec:
                             whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the pods.
                             By default, NativeLB is false.
+                          type: boolean
+                        nodePortLB:
+                          description: |-
+                            NodePortLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                            It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                            By default, NodePortLB is false.
                           type: boolean
                         passHostHeader:
                           description: |-
