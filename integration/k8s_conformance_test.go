@@ -215,11 +215,6 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 		),
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *k8sConformanceRunTest,
-		// Until the feature are all supported, following tests are skipped.
-		SkipTests: []string{
-			tests.HTTPRouteMethodMatching.ShortName,
-			tests.HTTPRouteQueryParamMatching.ShortName,
-		},
 	}
 
 	cSuite, err := ksuite.NewExperimentalConformanceTestSuite(ksuite.ExperimentalConformanceOptions{
