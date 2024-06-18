@@ -113,7 +113,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	stats(staticConfiguration)
 
-	svr, err := setupServer(staticConfiguration)
+	srv, err := setupServer(staticConfiguration)
 	if err != nil {
 		return err
 	}
@@ -124,8 +124,8 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
 
-	svr.Start(ctx)
-	defer svr.Close()
+	srv.Start(ctx)
+	defer srv.Close()
 
 	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
@@ -158,7 +158,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		})
 	}
 
-	svr.Wait()
+	srv.Wait()
 	log.Info().Msg("Shutting down")
 	return nil
 }
