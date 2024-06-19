@@ -739,7 +739,7 @@ entryPoints:
   name:
     address: ":8888"
     transport:
-      keepAliveMaxTime: 42s
+      keepAliveMaxTime: 42
 ```
 
 ```toml tab="File (TOML)"
@@ -748,13 +748,13 @@ entryPoints:
   [entryPoints.name]
     address = ":8888"
     [entryPoints.name.transport]
-      keepAliveMaxTime = 42s
+      keepAliveMaxTime = 42
 ```
 
 ```bash tab="CLI"
 ## Static configuration
 --entryPoints.name.address=:8888
---entryPoints.name.transport.keepAliveMaxTime=42s
+--entryPoints.name.transport.keepAliveMaxTime=42
 ```
 
 ### ProxyProtocol
