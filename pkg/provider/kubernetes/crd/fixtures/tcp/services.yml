@@ -13,19 +13,24 @@ spec:
     task: whoamitcp
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp
+  name: whoamitcp-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp
 
-subsets:
+addressType: IPv4
+ports:
+  - name: myapp
+    port: 8000
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: myapp
-        port: 8000
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -43,19 +48,24 @@ spec:
     task: whoamitcp2
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp2
+  name: whoamitcp2-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp2
 
-subsets:
+addressType: IPv4
+ports:
+  - name: myapp2
+    port: 8080
+endpoints:
   - addresses:
-      - ip: 10.10.0.3
-      - ip: 10.10.0.4
-    ports:
-      - name: myapp2
-        port: 8080
+      - 10.10.0.3
+      - 10.10.0.4
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -73,19 +83,24 @@ spec:
     task: whoamitcptls2
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcptls
+  name: whoamitcptls-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcptls
 
-subsets:
+addressType: IPv4
+ports:
+  - name: websecure
+    port: 443
+endpoints:
   - addresses:
-      - ip: 10.10.0.5
-      - ip: 10.10.0.6
-    ports:
-      - name: websecure
-        port: 443
+      - 10.10.0.5
+      - 10.10.0.6
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -103,34 +118,44 @@ spec:
     task: whoamitcp3
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp3
+  name: whoamitcp3-abc
   namespace: ns3
+  labels:
+    kubernetes.io/service-name: whoamitcp3
 
-subsets:
+addressType: IPv4
+ports:
+  - name: myapp3
+    port: 8083
+endpoints:
   - addresses:
-      - ip: 10.10.0.7
-      - ip: 10.10.0.8
-    ports:
-      - name: myapp3
-        port: 8083
+      - 10.10.0.7
+      - 10.10.0.8
+    conditions:
+      ready: true
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp3
+  name: whoamitcp3-abc
   namespace: ns4
+  labels:
+    kubernetes.io/service-name: whoamitcp3
 
-subsets:
+addressType: IPv4
+ports:
+  - name: myapp4
+    port: 8084
+endpoints:
   - addresses:
-      - ip: 10.10.0.9
-      - ip: 10.10.0.10
-    ports:
-      - name: myapp4
-        port: 8084
+      - 10.10.0.9
+      - 10.10.0.10
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -148,19 +173,24 @@ spec:
     task: whoamitcp-ipv6
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp-ipv6
+  name: whoamitcp-ipv6-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-ipv6
 
-subsets:
+addressType: IPv6
+ports:
+  - name: myapp-ipv6
+    port: 8080
+endpoints:
   - addresses:
-      - ip: "fd00:10:244:0:1::3"
-      - ip: "2001:db8:85a3:8d3:1319:8a2e:370:7348"
-    ports:
-      - name: myapp-ipv6
-        port: 8080
+      - "fd00:10:244:0:1::3"
+      - "2001:db8:85a3:8d3:1319:8a2e:370:7348"
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -212,25 +242,30 @@ spec:
     task: whoamitcp
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp-cross-ns
+  name: whoamitcp-cross-ns-abc
   namespace: cross-ns
+  labels:
+    kubernetes.io/service-name: whoamitcp-cross-ns
 
-subsets:
+addressType: IPv4
+ports:
+  - name: myapp
+    port: 8000
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: myapp
-        port: 8000
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: whoamitcp-without-endpoints-subsets
+  name: whoamitcp-without-endpointslice-endpoints
   namespace: default
 
 spec:
@@ -243,11 +278,16 @@ spec:
     task: whoamitcp
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitcp-without-endpoints-subsets
+  name: whoamitcp-without-endpointslice-endpoints-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-without-endpointslice-endpoints
+
+addressType: IPv4
+endpoints: []
 
 ---
 apiVersion: v1

@@ -122,7 +122,6 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 	}
 
 	var servers []dynamic.UDPServer
-
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
@@ -168,38 +167,47 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 			return []dynamic.UDPServer{{Address: address}}, nil
 		}
 
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
-		if endpointsErr != nil {
-			return nil, endpointsErr
+		endpointSlices, endpointSlicesExists, endpointSlicesErr := client.GetEndpointSlicesForService(namespace, svc.Name)
+		if endpointSlicesErr != nil {
+			return nil, endpointSlicesErr
+		}
+		if !endpointSlicesExists {
+			return nil, fmt.Errorf("endpointslices not found for %s/%s", namespace, svc.Name)
 		}
 
-		if !endpointsExists {
-			return nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 && !p.AllowEmptyServices {
-			return nil, errors.New("subset not found")
-		}
-
-		var port int32
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if svcPort.Name == p.Name {
-					port = p.Port
+		addresses := map[string]bool{}
+		for _, endpointSlice := range endpointSlices {
+			var port int32
+			for _, p := range endpointSlice.Ports {
+				if svcPort.Name == *p.Name {
+					port = *p.Port
 					break
 				}
 			}
 
 			if port == 0 {
-				return nil, errors.New("cannot define a port")
+				continue
 			}
 
-			for _, addr := range subset.Addresses {
-				servers = append(servers, dynamic.UDPServer{
-					Address: net.JoinHostPort(addr.IP, strconv.Itoa(int(port))),
-				})
+			for _, endpoint := range endpointSlice.Endpoints {
+				if !(*endpoint.Conditions.Ready) {
+					continue
+				}
+
+				for _, endpointAdress := range endpoint.Addresses {
+					if _, exists := addresses[endpointAdress]; !exists {
+						addresses[endpointAdress] = true
+						servers = append(servers, dynamic.UDPServer{
+							Address: net.JoinHostPort(endpointAdress, strconv.Itoa(int(port))),
+						})
+					}
+				}
 			}
 		}
+	}
+
+	if len(servers) == 0 && !p.AllowEmptyServices {
+		return nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
 	}
 
 	return servers, nil
