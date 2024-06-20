@@ -4620,60 +4620,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:               "IngressRoute, service with multiple endpointslices",
-			allowEmptyServices: true,
-			paths:              []string{"services.yml", "with_multiple_endpointslices.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Middlewares:       map[string]*dynamic.TCPMiddleware{},
-					Services:          map[string]*dynamic.TCPService{},
-					ServersTransports: map[string]*dynamic.TCPServersTransport{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
-							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
-							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
-							Priority:    12,
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.3:8080",
-									},
-									{
-										URL: "http://10.10.0.4:8080",
-									},
-									{
-										URL: "http://10.10.0.5:8080",
-									},
-									{
-										URL: "http://10.10.0.6:8080",
-									},
-								},
-								PassHostHeader: Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
 			desc:               "IngressRoute, service with multiple endpoint addresses on endpointslice",
 			allowEmptyServices: true,
 			paths:              []string{"services.yml", "with_multiple_endpointaddresses.yml"},
@@ -4911,6 +4857,87 @@ func TestLoadIngressRoutes(t *testing.T) {
 			assert.Equal(t, test.expected, conf)
 		})
 	}
+}
+
+func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
+	wantConf := &dynamic.Configuration{
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+		},
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
+				"default-test-route-6b204d94623b3df4370c": {
+					EntryPoints: []string{"foo"},
+					Service:     "default-test-route-6b204d94623b3df4370c",
+					Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+					Priority:    12,
+				},
+			},
+			Middlewares: map[string]*dynamic.Middleware{},
+			Services: map[string]*dynamic.Service{
+				"default-test-route-6b204d94623b3df4370c": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						PassHostHeader: Bool(true),
+						ResponseForwarding: &dynamic.ResponseForwarding{
+							FlushInterval: ptypes.Duration(100 * time.Millisecond),
+						},
+					},
+				},
+			},
+			ServersTransports: map[string]*dynamic.ServersTransport{},
+		},
+		TLS: &dynamic.TLSConfiguration{},
+	}
+	wantServers := []dynamic.Server{
+		{
+			URL: "http://10.10.0.3:8080",
+		},
+		{
+			URL: "http://10.10.0.4:8080",
+		},
+		{
+			URL: "http://10.10.0.5:8080",
+		},
+		{
+			URL: "http://10.10.0.6:8080",
+		},
+	}
+
+	k8sObjects, crdObjects := readResources(t, []string{"services.yml", "with_multiple_endpointslices.yml"})
+
+	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+	client := newClientImpl(kubeClient, crdClient)
+
+	stopCh := make(chan struct{})
+
+	eventCh, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	if k8sObjects != nil || crdObjects != nil {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	p := Provider{}
+	conf := p.loadConfigurationFromCRD(context.Background(), client)
+
+	service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
+	require.True(t, ok)
+	require.NotNil(t, service)
+	require.NotNil(t, service.LoadBalancer)
+	assert.ElementsMatch(t, wantServers, service.LoadBalancer.Servers)
+
+	service.LoadBalancer.Servers = nil
+	assert.Equal(t, wantConf, conf)
 }
 
 func TestLoadIngressRouteUDPs(t *testing.T) {

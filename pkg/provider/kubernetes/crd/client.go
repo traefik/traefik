@@ -48,7 +48,7 @@ type Client interface {
 	GetTLSStores() []*traefikv1alpha1.TLSStore
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error)
+	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetNodes() ([]*corev1.Node, bool, error)
 }
 
@@ -447,20 +447,20 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 }
 
 // GetEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
-func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {
+func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
 	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to create service label selector requirement: %w", err)
+		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
 	}
 	serviceSelector := labels.NewSelector()
 	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
 
 	endpointSlices, err := c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
-	return endpointSlices, len(endpointSlices) > 0, err
+	return endpointSlices, err
 }
 
 // GetSecret returns the named secret from the given namespace.
