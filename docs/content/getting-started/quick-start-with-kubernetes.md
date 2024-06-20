@@ -45,7 +45,6 @@ rules:
     resources:
       - endpointslices
     verbs:
-      - get
       - list
       - watch
   - apiGroups:

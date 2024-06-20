@@ -39,7 +39,6 @@ which in turn will create the resulting routers, services, handlers, etc.
         resources:
           - endpointslices
         verbs:
-          - get
           - list
           - watch
       - apiGroups:
