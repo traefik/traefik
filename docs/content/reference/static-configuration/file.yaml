@@ -512,14 +512,42 @@ experimental:
     Descriptor0:
       moduleName: foobar
       version: foobar
+      settings:
+        envs:
+          - foobar
+          - foobar
+        mounts:
+          - foobar
+          - foobar
     Descriptor1:
       moduleName: foobar
       version: foobar
+      settings:
+        envs:
+          - foobar
+          - foobar
+        mounts:
+          - foobar
+          - foobar
   localPlugins:
     LocalDescriptor0:
       moduleName: foobar
+      settings:
+        envs:
+          - foobar
+          - foobar
+        mounts:
+          - foobar
+          - foobar
     LocalDescriptor1:
       moduleName: foobar
+      settings:
+        envs:
+          - foobar
+          - foobar
+        mounts:
+          - foobar
+          - foobar
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar
