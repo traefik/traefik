@@ -410,7 +410,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	}
 
 	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-		return nil, fmt.Errorf("HealthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
+		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -480,15 +480,15 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return servers, nil
 	}
 
-	endpointSlices, endpointSlicesExists, endpointSlicesErr := c.client.GetEndpointSlicesForService(namespace, sanitizedName)
-	if endpointSlicesErr != nil {
-		return nil, endpointSlicesErr
+	endpointSlices, err := c.client.GetEndpointSlicesForService(namespace, sanitizedName)
+	if err != nil {
+		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
-	if !endpointSlicesExists {
+	if len(endpointSlices) == 0 {
 		return nil, fmt.Errorf("endpointslices not found for %s/%s", namespace, sanitizedName)
 	}
 
-	addresses := map[string]bool{}
+	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
@@ -497,7 +497,6 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 				break
 			}
 		}
-
 		if port == 0 {
 			continue
 		}
@@ -508,19 +507,19 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !(*endpoint.Conditions.Ready) {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
 				continue
 			}
 
-			for _, endpointAdress := range endpoint.Addresses {
-				if _, exists := addresses[endpointAdress]; !exists {
-					addresses[endpointAdress] = true
-					hostPort := net.JoinHostPort(endpointAdress, strconv.Itoa(int(port)))
-
-					servers = append(servers, dynamic.Server{
-						URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-					})
+			for _, address := range endpoint.Addresses {
+				if _, ok := addresses[address]; ok {
+					continue
 				}
+
+				addresses[address] = struct{}{}
+				servers = append(servers, dynamic.Server{
+					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+				})
 			}
 		}
 	}
