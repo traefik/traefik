@@ -393,12 +393,12 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 		return nil, fmt.Errorf("service port %d not found", int32(*backendRef.Port))
 	}
 
-	endpointSlices, exists, err := p.client.GetEndpointSlicesForService(namespace, string(backendRef.Name))
+	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
 	if err != nil {
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
-	if !exists {
-		return nil, errors.New("endpoint slices not found")
+	if len(endpointSlices) == 0 {
+		return nil, errors.New("endpointslices not found")
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}

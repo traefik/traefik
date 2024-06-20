@@ -241,7 +241,6 @@ metadata:
     kubernetes.io/service-name: whoamiudp-without-endpointslice-endpoints
 
 addressType: IPv4
-ports: null
 endpoints: []
 
 ---

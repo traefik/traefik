@@ -63,9 +63,9 @@ type Client interface {
 	ListTLSRoutes() ([]*gatev1alpha2.TLSRoute, error)
 	ListNamespaces(selector labels.Selector) ([]string, error)
 	ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error)
+	ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error)
 }
 
 type clientWrapper struct {
@@ -545,20 +545,21 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	return service, exist, err
 }
 
-// GetEndpointSlicesForService returns the endpointslices for service of provided name from the given namespace.
-func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {
+// ListEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
+func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
 	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
 	if err != nil {
-		fmt.Print("failed to create service label selector requirement", err)
+		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
 	}
 	serviceSelector := labels.NewSelector()
 	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
+
 	endpointSlices, err := c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
-	return endpointSlices, len(endpointSlices) > 0, err
+	return endpointSlices, err
 }
 
 // GetSecret returns the named secret from the given namespace.

@@ -229,12 +229,12 @@ func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.Backen
 			return nil, nil, errors.New("service port %s not found")
 		}
 
-		endpointSlices, exists, err := p.client.GetEndpointSlicesForService(namespace, string(backendRef.Name))
+		endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
 		if err != nil {
 			return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
-		if !exists {
-			return nil, nil, errors.New("endpoint slices not found")
+		if len(endpointSlices) == 0 {
+			return nil, nil, errors.New("endpointslices not found")
 		}
 
 		svc := dynamic.TCPService{LoadBalancer: &dynamic.TCPServersLoadBalancer{}}

@@ -114,7 +114,6 @@ spec:
   ports:
     - name: websecure2
       port: 8443
-      scheme: https
   selector:
     app: traefiklabs
     task: whoami3
@@ -286,7 +285,6 @@ metadata:
     kubernetes.io/service-name: whoami-without-endpointslice-endpoints
 
 addressType: IPv4
-ports: null
 endpoints: []
 
 ---

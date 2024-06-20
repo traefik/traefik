@@ -287,7 +287,6 @@ metadata:
     kubernetes.io/service-name: whoamitcp-without-endpointslice-endpoints
 
 addressType: IPv4
-ports: null
 endpoints: []
 
 ---

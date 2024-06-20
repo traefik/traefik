@@ -342,7 +342,7 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	return service, exist, err
 }
 
-// GetEndpointSlicesForService returns the endpointslices for service of provided name from the given namespace.
+// GetEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
 func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
@@ -350,10 +350,11 @@ func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName strin
 
 	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
 	if err != nil {
-		fmt.Print("failed to create service label selector requirement", err)
+		return nil, false, fmt.Errorf("failed to create service label selector requirement: %w", err)
 	}
 	serviceSelector := labels.NewSelector()
 	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
+
 	endpointSlices, err := c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
 	return endpointSlices, len(endpointSlices) > 0, err
 }
