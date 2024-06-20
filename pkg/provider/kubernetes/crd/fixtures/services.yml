@@ -13,19 +13,24 @@ spec:
     task: whoami
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami
+  name: whoami-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami
 
-subsets:
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: web
-        port: 80
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -43,19 +48,24 @@ spec:
     task: whoami2
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami2
+  name: whoami2-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami2
 
-subsets:
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
   - addresses:
-      - ip: 10.10.0.3
-      - ip: 10.10.0.4
-    ports:
-      - name: web
-        port: 8080
+      - 10.10.0.3
+      - 10.10.0.4
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -74,19 +84,24 @@ spec:
     task: whoami2
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoamitls
+  name: whoamitls-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitls
 
-subsets:
+addressType: IPv4
+ports:
+  - name: websecure
+    port: 8443
+endpoints:
   - addresses:
-      - ip: 10.10.0.5
-      - ip: 10.10.0.6
-    ports:
-      - name: websecure
-        port: 8443
+      - 10.10.0.5
+      - 10.10.0.6
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -99,25 +114,29 @@ spec:
   ports:
     - name: websecure2
       port: 8443
-      scheme: https
   selector:
     app: traefiklabs
     task: whoami3
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami3
+  name: whoami3-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami3
 
-subsets:
+addressType: IPv4
+ports:
+  - name: websecure2
+    port: 8443
+endpoints:
   - addresses:
-      - ip: 10.10.0.7
-      - ip: 10.10.0.8
-    ports:
-      - name: websecure2
-        port: 8443
+      - 10.10.0.7
+      - 10.10.0.8
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -135,18 +154,23 @@ spec:
     task: whoami-ipv6
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami-ipv6
+  name: whoami-ipv6-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-ipv6
 
-subsets:
+addressType: IPv6
+ports:
+  - name: web
+    port: 8080
+endpoints:
   - addresses:
-      - ip: "2001:db8:85a3:8d3:1319:8a2e:370:7348"
-    ports:
-      - name: web
-        port: 8080
+      - "2001:db8:85a3:8d3:1319:8a2e:370:7348"
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
@@ -216,25 +240,30 @@ spec:
     task: whoami
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami-svc
+  name: whoami-svc-abc
   namespace: cross-ns
+  labels:
+    kubernetes.io/service-name: whoami-svc
 
-subsets:
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: web
-        port: 80
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: whoami-without-endpoints-subsets
+  name: whoami-without-endpointslice-endpoints
   namespace: default
 
 spec:
@@ -247,11 +276,16 @@ spec:
     task: whoami
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami-without-endpoints-subsets
+  name: whoami-without-endpointslice-endpoints-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-without-endpointslice-endpoints
+
+addressType: IPv4
+endpoints: []
 
 ---
 apiVersion: v1
