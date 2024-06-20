@@ -74,6 +74,8 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, err
 	}
 
+	mod.ExportedFunctions()
+
 	applyCtx, err := Instantiate(ctx, runtime, mod, b.settings)
 	if err != nil {
 		return nil, nil, err
