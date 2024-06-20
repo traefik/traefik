@@ -1,8 +1,6 @@
 package k8s
 
 import (
-	"reflect"
-
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -56,10 +54,58 @@ func objChanged(oldObj, newObj interface{}) bool {
 	return true
 }
 
+// In some Kubernetes versions leader election is done by updating an endpoint annotation every second,
+// if there are no changes to the endpoints addresses, ports there are no addresses defined for an endpoint
+// the event can safely be ignored and won't cause unnecessary config reloads.
+// TODO: check if Kubernetes is using EndpointSlice for leader election, which seems to not be the case anymore.
 func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
-	if len(a.Endpoints) != len(b.Endpoints) || len(a.Ports) != len(b.Ports) {
+	if len(a.Ports) != len(b.Ports) {
 		return true
 	}
 
-	return !(reflect.DeepEqual(a.Endpoints, b.Endpoints) && reflect.DeepEqual(a.Ports, b.Ports))
+	for i, aport := range a.Ports {
+		bport := b.Ports[i]
+		if aport.Name != bport.Name {
+			return true
+		}
+		if aport.Port != bport.Port {
+			return true
+		}
+
+		if aport.Protocol != bport.Protocol {
+			return true
+		}
+	}
+
+	if len(a.Endpoints) != len(b.Endpoints) {
+		return true
+	}
+
+	for i, ea := range a.Endpoints {
+		eb := b.Endpoints[i]
+		if endpointChanged(ea, eb) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func endpointChanged(a, b discoveryv1.Endpoint) bool {
+	if a.Hostname != b.Hostname {
+		return true
+	}
+
+	if len(a.Addresses) != len(b.Addresses) {
+		return true
+	}
+
+	for i, aaddr := range a.Addresses {
+		baddr := b.Addresses[i]
+		if aaddr != baddr {
+			return true
+		}
+	}
+
+	return false
 }
