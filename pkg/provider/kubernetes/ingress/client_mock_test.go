@@ -77,20 +77,19 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 	return nil, false, c.apiServiceError
 }
 
-func (c clientMock) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, bool, error) {
+func (c clientMock) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if c.apiEndpointSlicesError != nil {
-		return nil, false, c.apiEndpointSlicesError
+		return nil, c.apiEndpointSlicesError
 	}
 
-	result := []*discoveryv1.EndpointSlice{}
-
+	var result []*discoveryv1.EndpointSlice
 	for _, endpointSlice := range c.endpointSlices {
 		if endpointSlice.Namespace == namespace && endpointSlice.Labels[discoveryv1.LabelServiceName] == serviceName {
 			result = append(result, endpointSlice)
 		}
 	}
 
-	return result, len(result) > 0, nil
+	return result, nil
 }
 
 func (c clientMock) GetNodes() ([]*corev1.Node, bool, error) {

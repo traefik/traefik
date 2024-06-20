@@ -484,9 +484,6 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	if err != nil {
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
-	if len(endpointSlices) == 0 {
-		return nil, fmt.Errorf("endpointslices not found for %s/%s", namespace, sanitizedName)
-	}
 
 	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
