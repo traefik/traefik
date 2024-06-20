@@ -473,14 +473,26 @@
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"
       version = "foobar"
+      [experimental.plugins.Descriptor0.settings]
+        envs = ["foobar", "foobar"]
+        mounts = ["foobar", "foobar"]
     [experimental.plugins.Descriptor1]
       moduleName = "foobar"
       version = "foobar"
+      [experimental.plugins.Descriptor1.settings]
+        envs = ["foobar", "foobar"]
+        mounts = ["foobar", "foobar"]
   [experimental.localPlugins]
     [experimental.localPlugins.LocalDescriptor0]
       moduleName = "foobar"
+      [experimental.localPlugins.LocalDescriptor0.settings]
+        envs = ["foobar", "foobar"]
+        mounts = ["foobar", "foobar"]
     [experimental.localPlugins.LocalDescriptor1]
       moduleName = "foobar"
+      [experimental.localPlugins.LocalDescriptor1.settings]
+        envs = ["foobar", "foobar"]
+        mounts = ["foobar", "foobar"]
 
 [core]
   defaultRuleSyntax = "foobar"
