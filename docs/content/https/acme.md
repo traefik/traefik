@@ -713,8 +713,6 @@ certificatesResolvers:
 
 _Optional, Default=[]_
 
-It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
-
 Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
 ```yaml tab="File (YAML)"
@@ -741,11 +739,14 @@ certificatesResolvers:
 # ...
 ```
 
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
 ### `caUseSystemCertPool`
 
 _Optional, Default=false_
-
-It can be defined globally by using the environment variable `LEGO_CA_SYSTEM_CERT_POOL`.
 
 Define if the certificates pool must use a copy of the system cert pool.
 
@@ -771,11 +772,15 @@ certificatesResolvers:
 # ...
 ```
 
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SYSTEM_CERT_POOL`.
+    `LEGO_CA_SYSTEM_CERT_POOL` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
 ### `caTlsServerName`
 
 _Optional, Default=""_
-
-It can be defined globally by using the environment variable `LEGO_CA_SERVER_NAME`.
 
 Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
@@ -800,6 +805,12 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.caTlsServerName="my-server"
 # ...
 ```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SERVER_NAME`.
+    `LEGO_CA_SERVER_NAME` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
 
 ## Fallback
 
