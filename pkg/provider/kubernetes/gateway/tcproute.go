@@ -218,15 +218,15 @@ func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.Backen
 			return nil, nil, errors.New("service not found")
 		}
 
-		var portSpec *corev1.ServicePort
+		var svcPort *corev1.ServicePort
 		for _, p := range service.Spec.Ports {
 			if p.Port == int32(*backendRef.Port) {
-				portSpec = &p
+				svcPort = &p
 				break
 			}
 		}
-		if portSpec == nil {
-			return nil, nil, errors.New("service port %s not found")
+		if svcPort == nil {
+			return nil, nil, fmt.Errorf("service port %d not found", *backendRef.Port)
 		}
 
 		endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
@@ -243,7 +243,7 @@ func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.Backen
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			for _, p := range endpointSlice.Ports {
-				if portSpec.Name == *p.Name {
+				if svcPort.Name == *p.Name {
 					port = *p.Port
 					break
 				}
@@ -253,7 +253,7 @@ func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.Backen
 			}
 
 			for _, endpoint := range endpointSlice.Endpoints {
-				if !(*endpoint.Conditions.Ready) {
+				if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
 					continue
 				}
 
@@ -270,7 +270,7 @@ func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.Backen
 			}
 		}
 
-		serviceName := provider.Normalize(service.Namespace + "-" + service.Name + "-" + strconv.Itoa(int(portSpec.Port)))
+		serviceName := provider.Normalize(service.Namespace + "-" + service.Name + "-" + strconv.Itoa(int(svcPort.Port)))
 		services[serviceName] = &svc
 
 		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
