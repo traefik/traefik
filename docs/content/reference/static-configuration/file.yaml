@@ -474,6 +474,11 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      caCertificates:
+        - foobar
+        - foobar
+      caUseSystemCertPool: true
+      caTlsServerName: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
@@ -496,6 +501,11 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      caCertificates:
+        - foobar
+        - foobar
+      caUseSystemCertPool: true
+      caTlsServerName: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
