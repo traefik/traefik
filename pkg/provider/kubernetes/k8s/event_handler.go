@@ -55,9 +55,9 @@ func objChanged(oldObj, newObj interface{}) bool {
 }
 
 // In some Kubernetes versions leader election is done by updating an endpoint annotation every second,
-// if there are no changes to the endpoints addresses, ports there are no addresses defined for an endpoint
+// if there are no changes to the endpoints addresses, ports, and there are no addresses defined for an endpoint
 // the event can safely be ignored and won't cause unnecessary config reloads.
-// TODO: check if Kubernetes is using EndpointSlice for leader election, which seems to not be the case anymore.
+// TODO: check if Kubernetes is still using EndpointSlice for leader election, which seems to not be the case anymore.
 func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
 	if len(a.Ports) != len(b.Ports) {
 		return true
@@ -69,10 +69,6 @@ func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
 			return true
 		}
 		if aport.Port != bport.Port {
-			return true
-		}
-
-		if aport.Protocol != bport.Protocol {
 			return true
 		}
 	}
@@ -92,10 +88,6 @@ func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
 }
 
 func endpointChanged(a, b discoveryv1.Endpoint) bool {
-	if a.Hostname != b.Hostname {
-		return true
-	}
-
 	if len(a.Addresses) != len(b.Addresses) {
 		return true
 	}

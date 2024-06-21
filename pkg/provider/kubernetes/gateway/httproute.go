@@ -382,15 +382,15 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 		return nil, errors.New("service not found")
 	}
 
-	var portSpec *corev1.ServicePort
+	var svcPort *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
 		if p.Port == int32(*backendRef.Port) {
-			portSpec = &p
+			svcPort = &p
 			break
 		}
 	}
-	if portSpec == nil {
-		return nil, fmt.Errorf("service port %d not found", int32(*backendRef.Port))
+	if svcPort == nil {
+		return nil, fmt.Errorf("service port %d not found", *backendRef.Port)
 	}
 
 	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
@@ -404,13 +404,13 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	protocol := getProtocol(*portSpec)
+	protocol := getProtocol(*svcPort)
 
 	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if portSpec.Name == *p.Name {
+			if svcPort.Name == *p.Name {
 				port = *p.Port
 				break
 			}
@@ -420,7 +420,7 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !(*endpoint.Conditions.Ready) {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
 				continue
 			}
 

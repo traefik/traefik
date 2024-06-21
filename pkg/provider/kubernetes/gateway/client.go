@@ -558,8 +558,7 @@ func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName stri
 	serviceSelector := labels.NewSelector()
 	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
 
-	endpointSlices, err := c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
-	return endpointSlices, err
+	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
 }
 
 // GetSecret returns the named secret from the given namespace.

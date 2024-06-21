@@ -287,9 +287,6 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 		if err != nil {
 			return nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
-		if len(endpointSlices) == 0 {
-			return nil, fmt.Errorf("endpointslices not found for %s/%s", namespace, svc.Name)
-		}
 
 		addresses := map[string]struct{}{}
 		for _, endpointSlice := range endpointSlices {
