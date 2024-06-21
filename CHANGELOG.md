@@ -1,3 +1,19 @@
+## [v3.0.3](https://github.com/traefik/traefik/tree/v3.0.3) (2024-06-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.2...v3.0.3)
+
+**Misc:**
+- Merge v2.11 into v3.0 ([#10823](https://github.com/traefik/traefik/pull/10823) by [kevinpollet](https://github.com/kevinpollet))
+- Merge v2.11 into v3.0 ([#10810](https://github.com/traefik/traefik/pull/10810) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.5](https://github.com/traefik/traefik/tree/v2.11.5) (2024-06-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.4...v2.11.5)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.17.4 ([#10803](https://github.com/traefik/traefik/pull/10803) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Update the supported versions table ([#10798](https://github.com/traefik/traefik/pull/10798) by [nmengin](https://github.com/nmengin))
+
 ## [v3.0.2](https://github.com/traefik/traefik/tree/v3.0.2) (2024-06-10)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.1...v3.0.2)
 
