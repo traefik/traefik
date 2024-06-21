@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"io"
 	"net"
 	"net/http"
@@ -51,6 +52,7 @@ type forwardAuth struct {
 	trustForwardHeader       bool
 	authRequestHeaders       []string
 	addAuthCookiesToResponse map[string]struct{}
+	logUserHeader            string
 }
 
 // NewForward creates a forward auth middleware.
@@ -71,6 +73,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		trustForwardHeader:       config.TrustForwardHeader,
 		authRequestHeaders:       config.AuthRequestHeaders,
 		addAuthCookiesToResponse: addAuthCookiesToResponse,
+		logUserHeader:            config.LogUserHeader,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -172,6 +175,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// If any errors happen earlier, this span will be close by the defer instruction.
 	if forwardSpan != nil {
 		forwardSpan.End()
+	}
+
+	if fa.logUserHeader != "" {
+		if elems := forwardResponse.Header[http.CanonicalHeaderKey(fa.logUserHeader)]; len(elems) > 0 {
+			logData := accesslog.GetLogData(req)
+			if logData != nil {
+				logData.Core[accesslog.ClientUsername] = elems[0]
+			}
+		}
 	}
 
 	// Pass the forward response's body and selected headers if it
