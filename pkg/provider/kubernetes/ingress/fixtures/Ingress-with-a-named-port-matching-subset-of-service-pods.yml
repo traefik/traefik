@@ -33,23 +33,42 @@ spec:
   clusterIP: 10.0.0.1
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: service1
+  name: service1-abc
   namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
 
-subsets:
+addressType: IPv4
+ports:
+  - name: tchouk
+    port: 8089
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: tchouk
-        port: 8089
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-def
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - name: carotte
+    port: 8090
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-      - ip: 10.10.0.3
-    ports:
-      - name: carotte
-        port: 8090
+      - 10.10.0.1
+      - 10.10.0.2
+      - 10.10.0.3
+    conditions:
+      ready: true
