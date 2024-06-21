@@ -651,36 +651,41 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return svc, nil
 	}
 
-	endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.Service.Name)
-	if endpointsErr != nil {
-		return nil, endpointsErr
+	endpointSlices, err := client.GetEndpointSlicesForService(namespace, backend.Service.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
-	if !endpointsExists {
-		return nil, errors.New("endpoints not found")
-	}
-
-	for _, subset := range endpoints.Subsets {
+	addresses := map[string]struct{}{}
+	for _, endpointSlice := range endpointSlices {
 		var port int32
-		for _, p := range subset.Ports {
-			if portName == p.Name {
-				port = p.Port
+		for _, p := range endpointSlice.Ports {
+			if portName == *p.Name {
+				port = *p.Port
 				break
 			}
 		}
-
 		if port == 0 {
 			continue
 		}
 
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
-		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+		for _, endpoint := range endpointSlice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				continue
+			}
 
-			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-			})
+			for _, address := range endpoint.Addresses {
+				if _, ok := addresses[address]; ok {
+					continue
+				}
+
+				addresses[address] = struct{}{}
+				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+				})
+			}
 		}
 	}
 
