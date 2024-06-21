@@ -6,6 +6,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 )
 
@@ -15,15 +16,15 @@ type clientMock struct {
 	ingresses      []*netv1.Ingress
 	services       []*corev1.Service
 	secrets        []*corev1.Secret
-	endpoints      []*corev1.Endpoints
+	endpointSlices []*discoveryv1.EndpointSlice
 	nodes          []*corev1.Node
 	ingressClasses []*netv1.IngressClass
 
-	apiServiceError       error
-	apiSecretError        error
-	apiEndpointsError     error
-	apiNodesError         error
-	apiIngressStatusError error
+	apiServiceError        error
+	apiSecretError         error
+	apiEndpointSlicesError error
+	apiNodesError          error
+	apiIngressStatusError  error
 
 	watchChan chan interface{}
 }
@@ -43,8 +44,8 @@ func newClientMock(path string) clientMock {
 			c.services = append(c.services, o)
 		case *corev1.Secret:
 			c.secrets = append(c.secrets, o)
-		case *corev1.Endpoints:
-			c.endpoints = append(c.endpoints, o)
+		case *discoveryv1.EndpointSlice:
+			c.endpointSlices = append(c.endpointSlices, o)
 		case *corev1.Node:
 			c.nodes = append(c.nodes, o)
 		case *netv1.Ingress:
@@ -76,18 +77,19 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 	return nil, false, c.apiServiceError
 }
 
-func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	if c.apiEndpointsError != nil {
-		return nil, false, c.apiEndpointsError
+func (c clientMock) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
+	if c.apiEndpointSlicesError != nil {
+		return nil, c.apiEndpointSlicesError
 	}
 
-	for _, endpoints := range c.endpoints {
-		if endpoints.Namespace == namespace && endpoints.Name == name {
-			return endpoints, true, nil
+	var result []*discoveryv1.EndpointSlice
+	for _, endpointSlice := range c.endpointSlices {
+		if endpointSlice.Namespace == namespace && endpointSlice.Labels[discoveryv1.LabelServiceName] == serviceName {
+			result = append(result, endpointSlice)
 		}
 	}
 
-	return &corev1.Endpoints{}, false, nil
+	return result, nil
 }
 
 func (c clientMock) GetNodes() ([]*corev1.Node, bool, error) {

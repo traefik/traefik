@@ -12,7 +12,7 @@ import (
 
 // MustParseYaml parses a YAML to objects.
 func MustParseYaml(content []byte) []runtime.Object {
-	acceptedK8sTypes := regexp.MustCompile(`^(Namespace|Deployment|Endpoints|Node|Service|Ingress|IngressRoute|IngressRouteTCP|IngressRouteUDP|Middleware|MiddlewareTCP|Secret|TLSOption|TLSStore|TraefikService|IngressClass|ServersTransport|ServersTransportTCP|GatewayClass|Gateway|HTTPRoute|TCPRoute|TLSRoute|ReferenceGrant)$`)
+	acceptedK8sTypes := regexp.MustCompile(`^(Namespace|Deployment|EndpointSlice|Node|Service|Ingress|IngressRoute|IngressRouteTCP|IngressRouteUDP|Middleware|MiddlewareTCP|Secret|TLSOption|TLSStore|TraefikService|IngressClass|ServersTransport|ServersTransportTCP|GatewayClass|Gateway|HTTPRoute|TCPRoute|TLSRoute|ReferenceGrant)$`)
 
 	files := strings.Split(string(content), "---\n")
 	retVal := make([]runtime.Object, 0, len(files))

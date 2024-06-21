@@ -172,6 +172,7 @@ nav:
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Migration':
+      - 'Traefik v3 minor migrations': 'migration/v3.md'
       - 'Traefik v2 to v3':
         - 'Migration guide': 'migration/v2-to-v3.md'
         - 'Configuration changes for v3': 'migration/v2-to-v3-details.md'

@@ -409,9 +409,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return nil, err
 	}
 
-	var servers []dynamic.Server
 	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-		return nil, fmt.Errorf("HealthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
+		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -426,9 +425,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port)))
 
-		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-		}), nil
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, nil
 	}
 
 	nativeLB := c.NativeLBByDefault
@@ -449,6 +446,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
 	}
 
+	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		nodes, nodesExists, nodesErr := c.client.GetNodes()
 		if nodesErr != nil {
@@ -482,27 +480,20 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return servers, nil
 	}
 
-	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
-	if endpointsErr != nil {
-		return nil, endpointsErr
-	}
-	if !endpointsExists {
-		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
+	endpointSlices, err := c.client.GetEndpointSlicesForService(namespace, sanitizedName)
+	if err != nil {
+		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
-	if len(endpoints.Subsets) == 0 && !c.allowEmptyServices {
-		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
-	}
-
-	for _, subset := range endpoints.Subsets {
+	addresses := map[string]struct{}{}
+	for _, endpointSlice := range endpointSlices {
 		var port int32
-		for _, p := range subset.Ports {
-			if svcPort.Name == p.Name {
-				port = p.Port
+		for _, p := range endpointSlice.Ports {
+			if svcPort.Name == *p.Name {
+				port = *p.Port
 				break
 			}
 		}
-
 		if port == 0 {
 			continue
 		}
@@ -512,13 +503,26 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			return nil, err
 		}
 
-		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+		for _, endpoint := range endpointSlice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				continue
+			}
 
-			servers = append(servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-			})
+			for _, address := range endpoint.Addresses {
+				if _, ok := addresses[address]; ok {
+					continue
+				}
+
+				addresses[address] = struct{}{}
+				servers = append(servers, dynamic.Server{
+					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+				})
+			}
 		}
+	}
+
+	if len(servers) == 0 && !c.allowEmptyServices {
+		return nil, fmt.Errorf("no servers found for %s/%s", namespace, sanitizedName)
 	}
 
 	return servers, nil
