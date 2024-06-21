@@ -458,7 +458,8 @@ func (h *http) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type experimental struct {
-	HTTP3 *bool `json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty"`
+	HTTP3             *bool `json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty"`
+	KubernetesGateway *bool `json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty"`
 }
 
 func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
@@ -472,6 +473,12 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#http3-experimental-configuration")
 
 		return true
+	}
+
+	if e.KubernetesGateway != nil {
+		logger.Error().Msg("KubernetesGateway provider is not an experimental feature starting with v3.1." +
+			"Please remove its usage from the static configuration." +
+			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.0/migration/v2-to-v3/#http3-experimental-configuration")
 	}
 
 	return false

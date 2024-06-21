@@ -211,7 +211,7 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
 `--experimental.kubernetesgateway`:  
-Allow the Kubernetes gateway api provider usage. (Default: ```false```)
+(Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
 `--experimental.localplugins.<name>`:  
 Local plugins configuration. (Default: ```false```)
