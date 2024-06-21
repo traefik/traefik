@@ -206,82 +206,71 @@ func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.Backen
 			return nil, nil, fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 		}
 
-		svc := dynamic.TCPService{
-			LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+		if backendRef.Port == nil {
+			return nil, nil, errors.New("port is required for Kubernetes Service reference")
 		}
 
 		service, exists, err := p.client.GetService(namespace, string(backendRef.Name))
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("getting service: %w", err)
 		}
-
 		if !exists {
 			return nil, nil, errors.New("service not found")
 		}
 
-		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
-			// If the port is unspecified and the backend is a Service
-			// object consisting of multiple port definitions, the route
-			// must be dropped from the Gateway. The controller should
-			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason. The gateway status for this route
-			// should be updated with a condition that describes the error
-			// more specifically.
-			log.Error().Msg("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
-			continue
-		}
-
-		var portSpec corev1.ServicePort
-		var match bool
-
+		var svcPort *corev1.ServicePort
 		for _, p := range service.Spec.Ports {
-			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
-				portSpec = p
-				match = true
+			if p.Port == int32(*backendRef.Port) {
+				svcPort = &p
 				break
 			}
 		}
-
-		if !match {
-			return nil, nil, errors.New("service port not found")
+		if svcPort == nil {
+			return nil, nil, fmt.Errorf("service port %d not found", *backendRef.Port)
 		}
 
-		endpoints, endpointsExists, endpointsErr := p.client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
+		endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
+		if err != nil {
+			return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
+		}
+		if len(endpointSlices) == 0 {
+			return nil, nil, errors.New("endpointslices not found")
 		}
 
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
-		}
+		svc := dynamic.TCPService{LoadBalancer: &dynamic.TCPServersLoadBalancer{}}
 
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
+		addresses := map[string]struct{}{}
+		for _, endpointSlice := range endpointSlices {
+			var port int32
+			for _, p := range endpointSlice.Ports {
+				if svcPort.Name == *p.Name {
+					port = *p.Port
 					break
 				}
 			}
-
 			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
+				continue
 			}
 
-			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
-					Address: net.JoinHostPort(addr.IP, portStr),
-				})
+			for _, endpoint := range endpointSlice.Endpoints {
+				if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+					continue
+				}
+
+				for _, address := range endpoint.Addresses {
+					if _, ok := addresses[address]; ok {
+						continue
+					}
+
+					addresses[address] = struct{}{}
+					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
+						Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
+					})
+				}
 			}
 		}
 
-		serviceName := provider.Normalize(service.Namespace + "-" + service.Name + "-" + portStr)
+		serviceName := provider.Normalize(service.Namespace + "-" + service.Name + "-" + strconv.Itoa(int(svcPort.Port)))
 		services[serviceName] = &svc
 
 		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
