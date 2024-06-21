@@ -239,6 +239,8 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
+	// LogUserHeader defines the header copy from authentication server which corresponds to user, which will be print to accesslog
+	LogUserHeader string `json:"logUserHeader,omitempty" toml:"logUserHeader,omitempty" yaml:"logUserHeader,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
