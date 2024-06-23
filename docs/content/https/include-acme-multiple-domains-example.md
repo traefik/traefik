@@ -5,20 +5,8 @@ labels:
   - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
   - traefik.http.routers.blog.tls.certresolver=myresolver
-  - traefik.http.routers.blog.tls.domains[0].main=example.org
+  - traefik.http.routers.blog.tls.domains[0].main=example.com
   - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
-```
-
-```yaml tab="Docker (Swarm)"
-## Dynamic configuration
-deploy:
-  labels:
-    - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
-    - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
-    - traefik.http.routers.blog.tls=true
-    - traefik.http.routers.blog.tls.certresolver=myresolver
-    - traefik.http.routers.blog.tls.domains[0].main=example.org
-    - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
 ```
 
 ```yaml tab="Kubernetes"
@@ -38,7 +26,7 @@ spec:
   tls:
     certResolver: myresolver
     domains:
-    - main: example.org
+    - main: example.com
       sans:
       - '*.example.org'
 ```
@@ -52,7 +40,7 @@ http:
       tls:
         certResolver: myresolver
         domains:
-          - main: "example.org"
+          - main: "example.com"
             sans:
               - "*.example.org"
 ```
@@ -65,6 +53,6 @@ http:
     [http.routers.blog.tls]
       certResolver = "myresolver" # From static configuration
       [[http.routers.blog.tls.domains]]
-        main = "example.org"
+        main = "example.com"
         sans = ["*.example.org"]
 ```

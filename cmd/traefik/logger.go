@@ -49,7 +49,7 @@ func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
 	var w io.Writer = os.Stderr
 
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
-		_, _ = os.Create(staticConfiguration.Log.FilePath)
+		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 		w = &lumberjack.Logger{
 			Filename:   staticConfiguration.Log.FilePath,
 			MaxSize:    staticConfiguration.Log.MaxSize,

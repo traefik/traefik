@@ -29,3 +29,24 @@ jobs:
 
       - name: Tests
         run: make test-unit
+
+  test-ui-unit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: webui/.nvmrc
+          cache: 'yarn'
+          cache-dependency-path: webui/yarn.lock
+
+      - name: UI unit tests
+        run: |
+          yarn --cwd webui install
+          yarn --cwd webui test:unit:ci

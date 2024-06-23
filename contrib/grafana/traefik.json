@@ -1382,104 +1382,6 @@
           "gridPos": {
             "h": 8,
             "w": 12,
-            "x": 0,
-            "y": 39
-          },
-          "id": 2,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "max"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Max",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "editorMode": "code",
-              "expr": "label_replace(\n    sum(traefik_service_open_connections{service=~\"$service.*\"}) by (service),\n    \"service\", \"$1\", \"service\", \"([^-]+-[^-]+).*\")",
-              "legendFormat": "{{service}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Connections per Service",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
             "x": 12,
             "y": 39
           },
@@ -1508,7 +1410,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "sum(traefik_entrypoint_open_connections{entrypoint=~\"$entrypoint\"}) by (entrypoint)\n",
+              "expr": "sum(traefik_open_connections{entrypoint=~\"$entrypoint\"}) by (entrypoint)\n",
               "legendFormat": "{{entrypoint}}",
               "range": true,
               "refId": "A"
@@ -1552,14 +1454,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(traefik_entrypoint_open_connections, entrypoint)",
+        "definition": "label_values(traefik_open_connections, entrypoint)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
         "name": "entrypoint",
         "options": [],
         "query": {
-          "query": "label_values(traefik_entrypoint_open_connections, entrypoint)",
+          "query": "label_values(traefik_open_connections, entrypoint)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -1574,14 +1476,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(traefik_service_open_connections, service)",
+        "definition": "label_values(traefik_service_requests_total, service)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(traefik_service_open_connections, service)",
+          "query": "label_values(traefik_service_requests_total, service)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -1600,6 +1502,6 @@
   "timezone": "",
   "title": "Traefik Official Standalone Dashboard",
   "uid": "n5bu_kv45",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }

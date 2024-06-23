@@ -118,9 +118,9 @@ export default defineComponent({
     AvatarState
   },
   props: {
-    name: String,
-    data: Object,
-    type: String
+    name: { type: String, default: undefined, required: false },
+    data: { type: Object, default: undefined, required: false },
+    type: { type: String, default: undefined, required: false }
   },
   data () {
     return {

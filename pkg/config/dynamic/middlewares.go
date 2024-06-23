@@ -42,6 +42,8 @@ type Middleware struct {
 
 	// Gateway API HTTPRoute filters middlewares.
 	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestRedirect       *RequestRedirect       `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	URLRewrite            *URLRewrite            `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -174,6 +176,8 @@ type Compress struct {
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
+	// DefaultEncoding specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
+	DefaultEncoding string `json:"defaultEncoding,omitempty" toml:"defaultEncoding,omitempty" yaml:"defaultEncoding,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -310,6 +314,8 @@ type Headers struct {
 	CustomBrowserXSSValue string `json:"customBrowserXSSValue,omitempty" toml:"customBrowserXSSValue,omitempty" yaml:"customBrowserXSSValue,omitempty"`
 	// ContentSecurityPolicy defines the Content-Security-Policy header value.
 	ContentSecurityPolicy string `json:"contentSecurityPolicy,omitempty" toml:"contentSecurityPolicy,omitempty" yaml:"contentSecurityPolicy,omitempty"`
+	// ContentSecurityPolicyReportOnly defines the Content-Security-Policy-Report-Only header value.
+	ContentSecurityPolicyReportOnly string `json:"contentSecurityPolicyReportOnly,omitempty" toml:"contentSecurityPolicyReportOnly,omitempty" yaml:"contentSecurityPolicyReportOnly,omitempty"`
 	// PublicKey is the public key that implements HPKP to prevent MITM attacks with forged certificates.
 	PublicKey string `json:"publicKey,omitempty" toml:"publicKey,omitempty" yaml:"publicKey,omitempty"`
 	// ReferrerPolicy defines the Referrer-Policy header value.
@@ -373,6 +379,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.BrowserXSSFilter ||
 		h.CustomBrowserXSSValue != "" ||
 		h.ContentSecurityPolicy != "" ||
+		h.ContentSecurityPolicyReportOnly != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
 		(h.FeaturePolicy != nil && *h.FeaturePolicy != "") ||
@@ -684,4 +691,25 @@ type RequestHeaderModifier struct {
 	Set    map[string]string `json:"set,omitempty"`
 	Add    map[string]string `json:"add,omitempty"`
 	Remove []string          `json:"remove,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RequestRedirect holds the request redirect middleware configuration.
+type RequestRedirect struct {
+	Scheme     *string `json:"scheme,omitempty"`
+	Hostname   *string `json:"hostname,omitempty"`
+	Port       *string `json:"port,omitempty"`
+	Path       *string `json:"path,omitempty"`
+	PathPrefix *string `json:"pathPrefix,omitempty"`
+	StatusCode int     `json:"statusCode,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// URLRewrite holds the URL rewrite middleware configuration.
+type URLRewrite struct {
+	Hostname   *string `json:"hostname,omitempty"`
+	Path       *string `json:"path,omitempty"`
+	PathPrefix *string `json:"pathPrefix,omitempty"`
 }

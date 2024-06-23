@@ -345,7 +345,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	// To load 5 new configs it would require 150ms (5 configs * 30ms).
 	// In 100ms, we should only have time to load 3 configs.
 	assert.LessOrEqual(t, publishedConfigCount, 3, "config was applied too many times")
-	assert.Greater(t, publishedConfigCount, 0, "config was not applied at least once")
+	assert.Positive(t, publishedConfigCount, "config was not applied at least once")
 }
 
 func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
