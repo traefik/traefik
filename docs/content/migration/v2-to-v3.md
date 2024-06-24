@@ -29,7 +29,7 @@ core:
   defaultRuleSyntax: v2
 ```
 
-This snippet in the static configuration makes the [v2 format](../migration/v2-to-v3/#configure-the-default-syntax-in-static-configuration "Link to configure default syntax in static config") the default rule matchers syntax.
+This snippet in the static configuration makes the [v2 format](../migration/v2-to-v3-details.md#configure-the-default-syntax-in-static-configuration "Link to configure default syntax in static config") the default rule matchers syntax.
 
 Start Traefik v3 with this new configuration to test it.
 
