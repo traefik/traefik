@@ -907,34 +907,22 @@ func TestDo_staticConfiguration(t *testing.T) {
 			"Descriptor0": {
 				ModuleName: "foobar",
 				Version:    "foobar",
-				Settings: plugins.Settings{
-					Envs:   nil,
-					Mounts: nil,
-				},
+				Settings:   plugins.Settings{},
 			},
 			"Descriptor1": {
 				ModuleName: "foobar",
 				Version:    "foobar",
-				Settings: plugins.Settings{
-					Envs:   nil,
-					Mounts: nil,
-				},
+				Settings:   plugins.Settings{},
 			},
 		},
 		LocalPlugins: map[string]plugins.LocalDescriptor{
 			"Descriptor0": {
 				ModuleName: "foobar",
-				Settings: plugins.Settings{
-					Envs:   nil,
-					Mounts: nil,
-				},
+				Settings:   plugins.Settings{},
 			},
 			"Descriptor1": {
 				ModuleName: "foobar",
-				Settings: plugins.Settings{
-					Envs:   nil,
-					Mounts: nil,
-				},
+				Settings:   plugins.Settings{},
 			},
 		},
 	}
