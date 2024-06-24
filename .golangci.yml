@@ -146,6 +146,7 @@ linters-settings:
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
       - github.com/cucumber/godog
+      - github.com/http-wasm/http-wasm-host-go
   testifylint:
     disable:
       - suite-dont-use-pkg
