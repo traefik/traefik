@@ -220,7 +220,7 @@ Local plugins configuration. (Default: ```false```)
 Plugin's module name.
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS`:  
-Plugin's settings.
+Plugin's settings (works only for wasm plugins).
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_ENVS`:  
 Environment variables to forward to the wasm guest.
