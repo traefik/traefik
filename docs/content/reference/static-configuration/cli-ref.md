@@ -219,8 +219,26 @@ Local plugins configuration. (Default: ```false```)
 `--experimental.localplugins.<name>.modulename`:  
 plugin's module name.
 
+`--experimental.localplugins.<name>.settings`:  
+plugin's settings.
+
+`--experimental.localplugins.<name>.settings.envs`:  
+Environment variables to forward to the wasm guest
+
+`--experimental.localplugins.<name>.settings.mounts`:  
+Directory to mount to the wasm guest
+
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
+
+`--experimental.plugins.<name>.settings`:  
+plugin's settings (works only for wasm plugins).
+
+`--experimental.plugins.<name>.settings.envs`:  
+Environment variables to forward to the wasm guest
+
+`--experimental.plugins.<name>.settings.mounts`:  
+Directory to mount to the wasm guest
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.
