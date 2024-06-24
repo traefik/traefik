@@ -29,15 +29,15 @@ func newWasmMiddlewareBuilder(goPath, moduleName, wasmPath string, settings Sett
 	path := filepath.Join(goPath, "src", moduleName, wasmPath)
 	cache := wazero.NewCompilationCache()
 
-	rt := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(cache))
 	code, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("loading Wasm binary: %w", err)
 	}
 
+	rt := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(cache))
 	_, err = rt.CompileModule(ctx, code)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("compiling Wasm binary: %w", err)
 	}
 	return &wasmMiddlewareBuilder{path: path, cache: cache, settings: settings}, nil
 }
@@ -53,7 +53,7 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, midd
 func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	h, applyCtx, err := b.buildMiddleware(ctx, next, cfg, middlewareName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("building middleware: %w", err)
 	}
 
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -67,16 +67,15 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, fmt.Errorf("loading Wasm binary: %w", err)
 	}
 
-	runtime := host.NewRuntime(wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(b.cache)))
-
-	mod, err := runtime.CompileModule(ctx, code)
+	rt := host.NewRuntime(wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(b.cache)))
+	mod, err := rt.CompileModule(ctx, code)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("compiling module: %w", err)
 	}
 
 	applyCtx, err := Instantiate(ctx, runtime, mod, b.settings)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("instantiating module: %w", err)
 	}
 
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")

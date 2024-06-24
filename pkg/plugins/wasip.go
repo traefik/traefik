@@ -17,13 +17,13 @@ import (
 type ContextApplier func(ctx context.Context) context.Context
 
 func Instantiate(ctx context.Context, runtime wazero.Runtime, mod wazero.CompiledModule, settings Settings) (ContextApplier, error) {
-	extension := imports.DetectSocketsExtension(mod)
-	if extension != nil {
-		hostModule := wazergo_wasip1.NewHostModule(*extension)
+	socketsExtension := imports.DetectSocketsExtension(mod)
+	if socketsExtension != nil {
+		hostModule := wazergo_wasip1.NewHostModule(*socketsExtension)
 
 		builder := imports.NewBuilder().WithSocketsExtension("auto", mod)
 
-		envs := []string{}
+		var envs []string
 		for _, env := range settings.Envs {
 			envs = append(envs, fmt.Sprintf("%s=%s", env, os.Getenv(env)))
 		}
@@ -42,7 +42,7 @@ func Instantiate(ctx context.Context, runtime wazero.Runtime, mod wazero.Compile
 
 		inst, err := wazergo.Instantiate(ctx, runtime, hostModule, wazergo_wasip1.WithWASI(sys))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("wazergo instantiation: %w", err)
 		}
 
 		return func(ctx context.Context) context.Context {
@@ -52,7 +52,7 @@ func Instantiate(ctx context.Context, runtime wazero.Runtime, mod wazero.Compile
 
 	_, err := wazero_wasip1.Instantiate(ctx, runtime)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("wazero instantiation: %w", err)
 	}
 	return func(ctx context.Context) context.Context {
 		return ctx
