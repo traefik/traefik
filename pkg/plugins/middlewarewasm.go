@@ -73,7 +73,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, fmt.Errorf("compiling module: %w", err)
 	}
 
-	applyCtx, err := Instantiate(ctx, runtime, mod, b.settings)
+	applyCtx, err := Instantiate(ctx, rt, mod, b.settings)
 	if err != nil {
 		return nil, nil, fmt.Errorf("instantiating module: %w", err)
 	}
@@ -128,7 +128,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 	}
 
 	opts = append(opts, handler.Runtime(func(ctx context.Context) (wazero.Runtime, error) {
-		return runtime, nil
+		return rt, nil
 	}))
 
 	mw, err := wasm.NewMiddleware(applyCtx(ctx), code, opts...)
