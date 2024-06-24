@@ -123,6 +123,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			routerConfig.Priority = httpmuxer.GetRulePriority(routerConfig.Rule)
 		}
 
+		// The routing configuration was invalid (e.g. conflicting configuration). We add it (in a disabled state) so
+		// that we can expose the error in the API for visibility.
+		if routerConfig.ConfigurationError != nil {
+			routerConfig.AddError(fmt.Errorf("configuration invalid: %w", routerConfig.ConfigurationError), true)
+			logger.Error().Err(routerConfig.ConfigurationError).Send()
+		}
+
 		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
 			err = fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
 			routerConfig.AddError(err, true)

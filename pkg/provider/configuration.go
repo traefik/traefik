@@ -3,6 +3,8 @@ package provider
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
@@ -15,6 +17,40 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
+
+// ErrConfigurationConflict indicates multiple conflicting configurations exist for a single Name. This is common with
+// "tag-based" configurations that may be handling input from multiple independent sources.
+type ErrConfigurationConflict struct {
+	Name          string
+	Configuration []string
+}
+
+func (e *ErrConfigurationConflict) Error() string {
+	return fmt.Sprintf("conflicting dynamic configuration found")
+}
+
+type ErrRouterNameConflict struct {
+	*ErrConfigurationConflict
+}
+
+func NewErrRouterNameConflict(name string, configuration []string) error {
+	return &ErrRouterNameConflict{&ErrConfigurationConflict{Name: name, Configuration: configuration}}
+}
+type ErrRouterNameConflict struct {
+	*ErrConfigurationConflict
+}
+
+func NewErrServiceConfigurationConflict(name string, configuration []string) error {
+	return &ErrServiceNameConflict{&ErrConfigurationConflict{Name: name, Configuration: configuration}}
+}
+
+type ErrMiddlewareNameConflict struct {
+	*ErrConfigurationConflict
+}
+
+func NewErrMiddlewareConfigurationConflict(name string, configuration []string) error {
+	return &ErrMiddlewareNameConflict{&ErrConfigurationConflict{Name: name, Configuration: configuration}}
+}
 
 // Merge merges multiple configurations.
 func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration) *dynamic.Configuration {
@@ -169,10 +205,12 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 	}
 
 	for routerName := range routersToDelete {
-		logger.Error().Str(logs.RouterName, routerName).
+		logger.Warn().Str(logs.RouterName, routerName).
 			Interface("configuration", routers[routerName]).
 			Msg("Router defined multiple times with different configurations")
-		delete(configuration.HTTP.Routers, routerName)
+		err := NewErrRouterNameConflict(routerName, routers[routerName])
+		r := configuration.HTTP.Routers[routerName]
+		configuration.HTTP.Routers[routerName].ConfigurationError = errors.Join(r.ConfigurationError, err)
 	}
 
 	for transportName := range transportsToDelete {
