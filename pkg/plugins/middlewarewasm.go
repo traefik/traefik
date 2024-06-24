@@ -98,7 +98,6 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 			switch {
 			case len(parts) == 1:
 				withDir(parts[0], parts[0])
-			case len(parts) == 2 && parts[0] == parts[1]:
 			case len(parts) == 2:
 				withDir(parts[0], parts[1])
 			default:
