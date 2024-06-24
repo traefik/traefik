@@ -23,14 +23,14 @@ type Descriptor struct {
 	// Version (required)
 	Version string `description:"plugin's version." json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
 
-	Settings Settings `description:"plugin's settings (works only for wasm plugins)." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
+	Settings Settings `description:"Plugin's settings (works only for wasm plugins)." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
 }
 
 // LocalDescriptor The static part of a local plugin configuration.
 type LocalDescriptor struct {
 	// ModuleName (required)
-	ModuleName string   `description:"plugin's module name." json:"moduleName,omitempty" toml:"moduleName,omitempty" yaml:"moduleName,omitempty" export:"true"`
-	Settings   Settings `description:"plugin's settings." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
+	ModuleName string   `description:"Plugin's module name." json:"moduleName,omitempty" toml:"moduleName,omitempty" yaml:"moduleName,omitempty" export:"true"`
+	Settings   Settings `description:"Plugin's settings." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
 }
 
 // Manifest The plugin manifest.
