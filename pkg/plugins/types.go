@@ -11,8 +11,8 @@ const (
 )
 
 type Settings struct {
-	Envs   []string `description:"Environment variables to forward to the wasm guest" json:"envs" toml:"envs" yaml:"envs" export:"true"`
-	Mounts []string `description:"Directory to mount to the wasm guest" json:"mounts" toml:"mounts" yaml:"mounts" export:"true"`
+	Envs   []string `description:"Environment variables to forward to the wasm guest." json:"envs,omitempty" toml:"envs,omitempty" yaml:"envs,omitempty"`
+	Mounts []string `description:"Directory to mount to the wasm guest." json:"mounts,omitempty" toml:"mounts,omitempty" yaml:"mounts,omitempty"`
 }
 
 // Descriptor The static part of a plugin configuration.
