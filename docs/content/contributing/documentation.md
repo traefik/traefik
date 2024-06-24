@@ -15,7 +15,7 @@ Let's see how.
 
 ### General
 
-This [documentation](https://doc.traefik.io/traefik/ "Link to the official Traefik documentation") is built with [MkDocs](https://mkdocs.org/ "Link to website of MkDocs").
+This [documentation](../../ "Link to the official Traefik documentation") is built with [MkDocs](https://mkdocs.org/ "Link to website of MkDocs").
 
 ### Method 1: `Docker` and `make`
 
