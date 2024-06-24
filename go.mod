@@ -32,6 +32,7 @@ require (
 	github.com/http-wasm/http-wasm-host-go v0.6.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
+	github.com/juliens/wasm-goexport v0.0.6
 	github.com/klauspost/compress v1.17.2
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.2
@@ -53,12 +54,14 @@ require (
 	github.com/rs/zerolog v1.29.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spiffe/go-spiffe/v2 v2.1.1
+	github.com/stealthrocket/wasi-go v0.8.0
+	github.com/stealthrocket/wazergo v0.19.1
 	github.com/stretchr/testify v1.9.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tailscale/tscert v0.0.0-20230806124524-28a91b69a046
 	github.com/testcontainers/testcontainers-go v0.30.0
 	github.com/testcontainers/testcontainers-go/modules/k3s v0.30.0
-	github.com/tetratelabs/wazero v1.5.0
+	github.com/tetratelabs/wazero v1.7.2
 	github.com/tidwall/gjson v1.17.0
 	github.com/traefik/grpc-web v0.16.0
 	github.com/traefik/paerser v0.2.0
@@ -371,3 +374,5 @@ exclude github.com/tencentcloud/tencentcloud-sdk-go v3.0.83+incompatible
 
 // https://github.com/docker/compose/blob/v2.19.0/go.mod#L12
 replace github.com/cucumber/godog => github.com/cucumber/godog v0.13.0
+
+replace github.com/http-wasm/http-wasm-host-go => github.com/traefik/http-wasm-host-go v0.0.0-20240618100324-3c53dcaa1a70
