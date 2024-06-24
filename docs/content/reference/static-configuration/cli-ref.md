@@ -220,7 +220,7 @@ Local plugins configuration. (Default: ```false```)
 Plugin's module name.
 
 `--experimental.localplugins.<name>.settings`:  
-Plugin's settings.
+Plugin's settings (works only for wasm plugins).
 
 `--experimental.localplugins.<name>.settings.envs`:  
 Environment variables to forward to the wasm guest.

@@ -16,17 +16,15 @@ import (
 
 type ContextApplier func(ctx context.Context) context.Context
 
-func Instantiate(ctx context.Context, runtime wazero.Runtime, mod wazero.CompiledModule, settings Settings) (ContextApplier, error) {
-	socketsExtension := imports.DetectSocketsExtension(mod)
-	if socketsExtension != nil {
-		hostModule := wazergo_wasip1.NewHostModule(*socketsExtension)
-
-		builder := imports.NewBuilder().WithSocketsExtension("auto", mod)
-
-		var envs []string
+// InstantiateHost instantiates the Host module according to the guest requirements (for now only SocketExtensions).
+func InstantiateHost(ctx context.Context, runtime wazero.Runtime, mod wazero.CompiledModule, settings Settings) (ContextApplier, error) {
+	if extension := imports.DetectSocketsExtension(mod); extension != nil {
+		envs := []string{}
 		for _, env := range settings.Envs {
 			envs = append(envs, fmt.Sprintf("%s=%s", env, os.Getenv(env)))
 		}
+
+		builder := imports.NewBuilder().WithSocketsExtension("auto", mod)
 		if len(envs) > 0 {
 			builder.WithEnv(envs...)
 		}
@@ -40,7 +38,7 @@ func Instantiate(ctx context.Context, runtime wazero.Runtime, mod wazero.Compile
 			return nil, err
 		}
 
-		inst, err := wazergo.Instantiate(ctx, runtime, hostModule, wazergo_wasip1.WithWASI(sys))
+		inst, err := wazergo.Instantiate(ctx, runtime, wazergo_wasip1.NewHostModule(*extension), wazergo_wasip1.WithWASI(sys))
 		if err != nil {
 			return nil, fmt.Errorf("wazergo instantiation: %w", err)
 		}
@@ -54,6 +52,7 @@ func Instantiate(ctx context.Context, runtime wazero.Runtime, mod wazero.Compile
 	if err != nil {
 		return nil, fmt.Errorf("wazero instantiation: %w", err)
 	}
+
 	return func(ctx context.Context) context.Context {
 		return ctx
 	}, nil
