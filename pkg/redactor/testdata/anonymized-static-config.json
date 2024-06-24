@@ -388,19 +388,23 @@
     "plugins": {
       "Descriptor0": {
         "moduleName": "foobar",
-        "version": "foobar"
+        "version": "foobar",
+        "settings": {}
       },
       "Descriptor1": {
         "moduleName": "foobar",
-        "version": "foobar"
+        "version": "foobar",
+        "settings": {}
       }
     },
     "localPlugins": {
       "Descriptor0": {
-        "moduleName": "foobar"
+        "moduleName": "foobar",
+        "settings": {}
       },
       "Descriptor1": {
-        "moduleName": "foobar"
+        "moduleName": "foobar",
+        "settings": {}
       }
     }
   }
