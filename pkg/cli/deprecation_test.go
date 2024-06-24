@@ -289,7 +289,7 @@ func TestDeprecationNotice(t *testing.T) {
 
 			logger := log.With().Logger().Hook(testHook)
 
-			assert.Equal(t, test.config.deprecationNotice(logger), !test.wantCompatible)
+			assert.Equal(t, !test.wantCompatible, test.config.deprecationNotice(logger))
 			assert.True(t, gotLog)
 			assert.Equal(t, zerolog.ErrorLevel, gotLevel)
 		})
