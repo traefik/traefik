@@ -48,8 +48,14 @@ const (
 var (
 	clientConnectionStates   = map[string]*connState{}
 	clientConnectionStatesMu = sync.RWMutex{}
-	listeners                map[string]net.Listener
+
+	socketActivationListeners map[string]net.Listener
 )
+
+func init() {
+	// Populates pre-defined socketActivationListeners by socket activation.
+	populateSocketActivationListeners()
+}
 
 type connState struct {
 	State            string
@@ -97,9 +103,6 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			return clientConnectionStates
 		}))
 	}
-
-	// populate pre-defined listeners by socket activation
-	populateSocketActivationListeners()
 
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
@@ -174,10 +177,10 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, entryPointName string, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
+func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker(openConnectionsGauge)
 
-	listener, err := buildListener(ctx, entryPointName, configuration)
+	listener, err := buildListener(ctx, name, config)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
@@ -186,19 +189,19 @@ func NewTCPEntryPoint(ctx context.Context, entryPointName string, configuration 
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator)
+	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
+	httpsServer, err := createHTTPServer(ctx, listener, config, false, reqDecorator)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3Server, err := newHTTP3Server(ctx, configuration, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, config, httpsServer)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
@@ -211,7 +214,7 @@ func NewTCPEntryPoint(ctx context.Context, entryPointName string, configuration 
 	return &TCPEntryPoint{
 		listener:               listener,
 		switcher:               tcpSwitcher,
-		transportConfiguration: configuration.Transport,
+		transportConfiguration: config.Transport,
 		tracker:                tracker,
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
@@ -465,20 +468,20 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
-func buildListener(ctx context.Context, entryPointName string, entryPoint *static.EntryPoint) (net.Listener, error) {
+func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
 	var listener net.Listener
 	var err error
 
 	// if we have predefined listener from socket activation
-	if ln, ok := listeners[entryPointName]; ok {
+	if ln, ok := socketActivationListeners[name]; ok {
 		listener = ln
 	} else {
-		if len(listeners) > 0 {
-			log.Warn().Interface("listeners", listeners).Str("entryPointName", entryPointName).Msgf("Unable to find socket activation for entryPoint")
+		if len(socketActivationListeners) > 0 {
+			log.Warn().Str("name", name).Msg("Unable to find socket activation listener for entryPoint")
 		}
 
-		listenConfig := newListenConfig(entryPoint)
-		listener, err = listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
+		listenConfig := newListenConfig(config)
+		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("error opening listener: %w", err)
 		}
@@ -486,8 +489,8 @@ func buildListener(ctx context.Context, entryPointName string, entryPoint *stati
 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
-	if entryPoint.ProxyProtocol != nil {
-		listener, err = buildProxyProtocolListener(ctx, entryPoint, listener)
+	if config.ProxyProtocol != nil {
+		listener, err = buildProxyProtocolListener(ctx, config, listener)
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
