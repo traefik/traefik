@@ -5,7 +5,7 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 
 # Traefik & Kubernetes with Gateway API
 
-The Kubernetes Gateway API, The New Way.
+The Kubernetes Gateway API Controller.
 {: .subtitle }
 
 Gateway API is the evolution of Kubernetes APIs that relate to `Services`, such as `Ingress`.
