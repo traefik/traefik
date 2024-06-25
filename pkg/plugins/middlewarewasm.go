@@ -133,7 +133,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	mw, err := wasm.NewMiddleware(applyCtx(ctx), code, opts...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("creating middleware: %w", err)
 	}
 
 	return mw.NewHandler(ctx, next), applyCtx, nil
