@@ -94,7 +94,7 @@ func (ip *Checker) ContainsIP(addr net.IP) bool {
 func parseIP(addr string) (net.IP, error) {
 	parsedAddr, err := netip.ParseAddr(addr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't parse IP from address %s", addr)
 	}
 
 	ip := parsedAddr.As16()
