@@ -128,6 +128,10 @@ type WeightedRoundRobin struct {
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+
+	// Status defines an HTTP status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific HTTP status to be returned.
+	Status *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // SetDefaults Default values for a WRRService.
@@ -250,7 +254,7 @@ type ServerHealthCheck struct {
 	Interval        ptypes.Duration   `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	Timeout         ptypes.Duration   `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	FollowRedirects *bool             `json:"followRedirects" toml:"followRedirects" yaml:"followRedirects" export:"true"`
+	FollowRedirects *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers         map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 }
 

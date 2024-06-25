@@ -273,7 +273,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
 | [6]  | `rules`                 | A list of HTTP matchers, filters and actions.                                                                                                                               |
 | [7]  | `matches`               | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
 | [8]  | `path`                  | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
-| [9]  | `type`                  | Type of match against the path Value (supported types: `Exact`, `PathPrefix`).                                                                                              |
+| [9]  | `type`                  | Type of match against the path Value (supported types: `Exact`, `PathPrefix`, and `RegularExpression`).                                                                     |
 | [10] | `value`                 | The value of the HTTP path to match against.                                                                                                                                |
 | [11] | `headers`               | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
 | [12] | `name`                  | Name of the HTTP header to be matched.                                                                                                                                      |

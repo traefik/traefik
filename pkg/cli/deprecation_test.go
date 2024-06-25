@@ -17,8 +17,9 @@ func ptr[T any](t T) *T {
 
 func TestDeprecationNotice(t *testing.T) {
 	tests := []struct {
-		desc   string
-		config configuration
+		desc           string
+		config         configuration
+		wantCompatible bool
 	}{
 		{
 			desc: "Docker provider swarmMode option is incompatible",
@@ -197,6 +198,15 @@ func TestDeprecationNotice(t *testing.T) {
 			},
 		},
 		{
+			desc: "Experimental KubernetesGateway enablement configuration is compatible",
+			config: configuration{
+				Experimental: &experimental{
+					KubernetesGateway: ptr(true),
+				},
+			},
+			wantCompatible: true,
+		},
+		{
 			desc: "Tracing SpanNameLimit option is incompatible",
 			config: configuration{
 				Tracing: &tracing{
@@ -278,7 +288,8 @@ func TestDeprecationNotice(t *testing.T) {
 			})
 
 			logger := log.With().Logger().Hook(testHook)
-			assert.True(t, test.config.deprecationNotice(logger))
+
+			assert.Equal(t, !test.wantCompatible, test.config.deprecationNotice(logger))
 			assert.True(t, gotLog)
 			assert.Equal(t, zerolog.ErrorLevel, gotLevel)
 		})

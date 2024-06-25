@@ -68,3 +68,14 @@ spec:
           weight: 1
           kind: Service
           group: ""
+
+    - matches:
+        - path:
+            type: RegularExpression
+            value: "^/buzz/[0-9]+$"
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""

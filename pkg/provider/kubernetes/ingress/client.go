@@ -16,10 +16,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	traefikversion "github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -40,12 +42,14 @@ type Client interface {
 	GetIngressClasses() ([]*netv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	GetNodes() ([]*corev1.Node, bool, error)
+	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	UpdateIngressStatus(ing *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error
 }
 
 type clientWrapper struct {
 	clientset                   kclientset.Interface
+	factoryClusterScope         kinformers.SharedInformerFactory
 	factoriesKube               map[string]kinformers.SharedInformerFactory
 	factoriesSecret             map[string]kinformers.SharedInformerFactory
 	factoriesIngress            map[string]kinformers.SharedInformerFactory
@@ -183,7 +187,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -197,11 +201,18 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesSecret[ns] = factorySecret
 	}
 
+	c.factoryClusterScope = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
+	_, err = c.factoryClusterScope.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ns := range namespaces {
 		c.factoriesIngress[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
 	}
+	c.factoryClusterScope.Start(stopCh)
 
 	for _, ns := range namespaces {
 		for typ, ok := range c.factoriesIngress[ns].WaitForCacheSync(stopCh) {
@@ -220,6 +231,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
 			}
+		}
+	}
+
+	for t, ok := range c.factoryClusterScope.WaitForCacheSync(stopCh) {
+		if !ok {
+			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
 		}
 	}
 
@@ -325,15 +342,20 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	return service, exist, err
 }
 
-// GetEndpoints returns the named endpoints from the given namespace.
-func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
+// GetEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
+func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	endpoint, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return endpoint, exist, err
+	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
+	}
+	serviceSelector := labels.NewSelector()
+	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
+
+	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
 }
 
 // GetSecret returns the named secret from the given namespace.
@@ -345,6 +367,12 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
+}
+
+func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
+	nodes, err := c.factoryClusterScope.Core().V1().Nodes().Lister().List(labels.Everything())
+	exist, err := translateNotFoundError(err)
+	return nodes, exist, err
 }
 
 func (c *clientWrapper) GetIngressClasses() ([]*netv1.IngressClass, error) {

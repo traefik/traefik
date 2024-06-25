@@ -214,6 +214,7 @@ func init() {
 					BrowserXSSFilter:                  true,
 					CustomBrowserXSSValue:             "foo",
 					ContentSecurityPolicy:             "foo",
+					ContentSecurityPolicyReportOnly:   "foo",
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
 					PermissionsPolicy:                 "foo",

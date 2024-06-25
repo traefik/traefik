@@ -20,8 +20,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress"
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
+	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
+	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
+	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
-	"github.com/traefik/traefik/v3/pkg/middlewares/headermodifier"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
@@ -391,7 +393,25 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return headermodifier.NewRequestHeaderModifier(ctx, next, *config.RequestHeaderModifier, middlewareName)
+			return headermodifier.NewRequestHeaderModifier(ctx, next, *config.RequestHeaderModifier, middlewareName), nil
+		}
+	}
+
+	if config.RequestRedirect != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return gapiredirect.NewRequestRedirect(ctx, next, *config.RequestRedirect, middlewareName)
+		}
+	}
+
+	if config.URLRewrite != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
 		}
 	}
 
