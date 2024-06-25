@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"netip"
 )
 
 // Checker allows to check that addresses are in a trusted IPs.
@@ -22,8 +23,6 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 	checker := &Checker{}
 
 	for _, ipMask := range trustedIPs {
-		ipMask := removeInterfaceName(ipMask)
-
 		if ipAddr := net.ParseIP(ipMask); ipAddr != nil {
 			checker.authorizedIPs = append(checker.authorizedIPs, &ipAddr)
 			continue
@@ -47,7 +46,6 @@ func (ip *Checker) IsAuthorized(addr string) error {
 	if err != nil {
 		host = addr
 	}
-	host = removeInterfaceName(host)
 
 	ok, err := ip.Contains(host)
 	if err != nil {
@@ -93,20 +91,12 @@ func (ip *Checker) ContainsIP(addr net.IP) bool {
 	return false
 }
 
-// removeInterfaceName from IPv6 addresses (eg. 2001::64:48fe%eth0 to 2001::64:48fe).
-func removeInterfaceName(addr string) string {
-	index := strings.Index(addr, "%")
-	if index == -1 {
-		return addr
-	}
-	return addr[:index]
-}
-
 func parseIP(addr string) (net.IP, error) {
-	userIP := net.ParseIP(addr)
-	if userIP == nil {
-		return nil, fmt.Errorf("can't parse IP from address %s", addr)
+	parsedAddr, err := netip.ParseAddr(addr)
+	if err != nil {
+		return nil, err
 	}
 
-	return userIP, nil
+	ip := parsedAddr.As16()
+	return ip[:], nil
 }
