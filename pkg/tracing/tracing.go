@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -17,7 +18,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -153,37 +154,37 @@ func (t *Tracer) Start(ctx context.Context, spanName string, opts ...trace.SpanS
 }
 
 // CaptureClientRequest used to add span attributes from the request as a Client.
-// TODO: need to update the semconv package as it does not implement fully Semantic Convention v1.23.0.
 func (t *Tracer) CaptureClientRequest(span trace.Span, r *http.Request) {
 	if t == nil || span == nil || r == nil {
 		return
 	}
 
-	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
+	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#common-attributes
 	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 
-	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-client
-	span.SetAttributes(semconv.URLFull(r.URL.String()))
-	span.SetAttributes(semconv.URLScheme(r.URL.Scheme))
+	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#http-client
+	sURL := safeURL(r.URL)
+	span.SetAttributes(semconv.URLFull(sURL.String()))
+	span.SetAttributes(semconv.URLScheme(sURL.Scheme))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 
-	host, port, err := net.SplitHostPort(r.URL.Host)
+	host, port, err := net.SplitHostPort(sURL.Host)
 	if err != nil {
-		span.SetAttributes(attribute.String("network.peer.address", host))
-		span.SetAttributes(semconv.ServerAddress(r.URL.Host))
-		switch r.URL.Scheme {
+		span.SetAttributes(semconv.NetworkPeerAddress(host))
+		span.SetAttributes(semconv.ServerAddress(sURL.Host))
+		switch sURL.Scheme {
 		case "http":
-			span.SetAttributes(attribute.String("network.peer.port", "80"))
+			span.SetAttributes(semconv.NetworkPeerPort(80))
 			span.SetAttributes(semconv.ServerPort(80))
 		case "https":
-			span.SetAttributes(attribute.String("network.peer.port", "443"))
+			span.SetAttributes(semconv.NetworkPeerPort(443))
 			span.SetAttributes(semconv.ServerPort(443))
 		}
 	} else {
-		span.SetAttributes(attribute.String("network.peer.address", host))
-		span.SetAttributes(attribute.String("network.peer.port", port))
+		span.SetAttributes(semconv.NetworkPeerAddress(host))
 		intPort, _ := strconv.Atoi(port)
+		span.SetAttributes(semconv.NetworkPeerPort(intPort))
 		span.SetAttributes(semconv.ServerAddress(host))
 		span.SetAttributes(semconv.ServerPort(intPort))
 	}
@@ -201,20 +202,20 @@ func (t *Tracer) CaptureClientRequest(span trace.Span, r *http.Request) {
 }
 
 // CaptureServerRequest used to add span attributes from the request as a Server.
-// TODO: need to update the semconv package as it does not implement fully Semantic Convention v1.23.0.
 func (t *Tracer) CaptureServerRequest(span trace.Span, r *http.Request) {
 	if t == nil || span == nil || r == nil {
 		return
 	}
 
-	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
+	// Common attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#common-attributes
 	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 
-	// Server attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#http-server-semantic-conventions
+	sURL := safeURL(r.URL)
+	// Server attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#http-server-semantic-conventions
 	span.SetAttributes(semconv.HTTPRequestBodySize(int(r.ContentLength)))
-	span.SetAttributes(semconv.URLPath(r.URL.Path))
-	span.SetAttributes(semconv.URLQuery(r.URL.RawQuery))
+	span.SetAttributes(semconv.URLPath(sURL.Path))
+	span.SetAttributes(semconv.URLQuery(sURL.RawQuery))
 	span.SetAttributes(semconv.URLScheme(r.Header.Get("X-Forwarded-Proto")))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 	span.SetAttributes(semconv.ServerAddress(r.Host))
@@ -222,16 +223,16 @@ func (t *Tracer) CaptureServerRequest(span trace.Span, r *http.Request) {
 	host, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		span.SetAttributes(semconv.ClientAddress(r.RemoteAddr))
-		span.SetAttributes(attribute.String("network.peer.address", r.RemoteAddr))
+		span.SetAttributes(semconv.NetworkPeerAddress(r.Host))
 	} else {
-		span.SetAttributes(attribute.String("network.peer.address", host))
-		span.SetAttributes(attribute.String("network.peer.port", port))
+		span.SetAttributes(semconv.NetworkPeerAddress(host))
 		span.SetAttributes(semconv.ClientAddress(host))
 		intPort, _ := strconv.Atoi(port)
 		span.SetAttributes(semconv.ClientPort(intPort))
+		span.SetAttributes(semconv.NetworkPeerPort(intPort))
 	}
 
-	span.SetAttributes(semconv.ClientSocketAddress(r.Header.Get("X-Forwarded-For")))
+	span.SetAttributes(semconv.ClientAddress(r.Header.Get("X-Forwarded-For")))
 
 	for _, header := range t.capturedRequestHeaders {
 		// User-agent is already part of the semantic convention as a recommended attribute.
@@ -324,4 +325,42 @@ func defaultStatus(code int) (codes.Code, string) {
 		return codes.Error, ""
 	}
 	return codes.Unset, ""
+}
+
+func safeURL(originalURL *url.URL) *url.URL {
+	if originalURL == nil {
+		return nil
+	}
+
+	redactedURL := *originalURL
+
+	// Redact password if exists.
+	if redactedURL.User != nil {
+		username := redactedURL.User.Username()
+		redactedURL.User = url.UserPassword(username, "REDACTED")
+	}
+
+	// Redact query parameters.
+	query := redactedURL.Query()
+	sensitiveParams := []string{"password", "token", "api_key", "secret", "access_token"}
+	for _, param := range sensitiveParams {
+		if query.Get(param) != "" {
+			query.Set(param, "REDACTED")
+		}
+	}
+	redactedURL.RawQuery = query.Encode()
+
+	// Redact sensitive data in the path.
+	pathParts := strings.Split(redactedURL.Path, "/")
+	for i, part := range pathParts {
+		for _, sensitive := range sensitiveParams {
+			if strings.Contains(strings.ToLower(part), sensitive) {
+				pathParts[i] = "REDACTED"
+				break
+			}
+		}
+	}
+	redactedURL.Path = strings.Join(pathParts, "/")
+
+	return &redactedURL
 }
