@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"netip"
 )
 
 // Checker allows to check that addresses are in a trusted IPs.
@@ -91,10 +92,11 @@ func (ip *Checker) ContainsIP(addr net.IP) bool {
 }
 
 func parseIP(addr string) (net.IP, error) {
-	userIP := net.ParseIP(addr)
-	if userIP == nil {
+	parsedAddr, err := netip.ParseAddr(addr)
+	if err != nil {
 		return nil, fmt.Errorf("can't parse IP from address %s", addr)
 	}
 
-	return userIP, nil
+	ip := parsedAddr.As16()
+	return ip[:], nil
 }
