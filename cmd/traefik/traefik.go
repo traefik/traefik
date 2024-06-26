@@ -232,7 +232,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
 
 		pluginLogger = pluginLogger.With().Strs("plugins", pluginsList).Logger()
-		pluginLogger.Info().Msg("Loading plugins.")
+		pluginLogger.Info().Msg("Loading plugins...")
 	}
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
