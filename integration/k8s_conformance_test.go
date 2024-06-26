@@ -18,7 +18,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"gopkg.in/yaml.v3"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -35,6 +34,7 @@ import (
 	"sigs.k8s.io/gateway-api/conformance/utils/config"
 	ksuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
 	"sigs.k8s.io/gateway-api/pkg/features"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -230,7 +230,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	s.T().Logf("Conformance report:\n%s", string(rawReport))
 
 	require.NoError(s.T(), os.MkdirAll("./conformance-reports", 0o755))
-	outFile := filepath.Join("conformance-reports", fmt.Sprintf("traefik-traefik-%d.yaml", time.Now().UnixNano()))
+	outFile := filepath.Join("conformance-reports", fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
 	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
 	s.T().Logf("Report written to: %s", outFile)
 }
