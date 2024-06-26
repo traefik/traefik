@@ -225,16 +225,20 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	// Plugins
-	pluginsList := maps.Keys(staticConfiguration.Experimental.Plugins)
-	pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
+	pluginLogger := log.Ctx(ctx).With().Logger()
+	hasPlugins := staticConfiguration.Experimental != nil && (staticConfiguration.Experimental.Plugins != nil || staticConfiguration.Experimental.LocalPlugins != nil)
+	if hasPlugins {
+		pluginsList := maps.Keys(staticConfiguration.Experimental.Plugins)
+		pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
 
-	pluginLogger := log.Ctx(ctx).With().Strs("plugins", pluginsList).Logger()
-	pluginLogger.Info().Msg("Loading plugins.")
+		pluginLogger = pluginLogger.With().Strs("plugins", pluginsList).Logger()
+		pluginLogger.Info().Msg("Loading plugins.")
+	}
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
 		pluginLogger.Err(err).Msg("Plugins are disabled because an error has occurred.")
-	} else {
+	} else if hasPlugins {
 		pluginLogger.Info().Msg("Plugins loaded.")
 	}
 
