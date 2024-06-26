@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/maps"
 	"io"
 	stdlog "log"
 	"net/http"
@@ -47,6 +46,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"golang.org/x/exp/maps"
 )
 
 func main() {
@@ -225,10 +225,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	// Plugins
-	pluginsLst := maps.Keys(staticConfiguration.Experimental.Plugins)
-	pluginsLst = append(pluginsLst, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
+	pluginsList := maps.Keys(staticConfiguration.Experimental.Plugins)
+	pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
 
-	pluginLogger := log.Ctx(ctx).With().Strs("plugins", pluginsLst).Logger()
+	pluginLogger := log.Ctx(ctx).With().Strs("plugins", pluginsList).Logger()
 	pluginLogger.Info().Msg("Loading plugins")
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
