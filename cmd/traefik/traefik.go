@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/exp/maps"
 	"io"
 	stdlog "log"
 	"net/http"
@@ -224,10 +225,17 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	// Plugins
+	pluginsLst := maps.Keys(staticConfiguration.Experimental.Plugins)
+	pluginsLst = append(pluginsLst, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
+
+	pluginLogger := log.Ctx(ctx).With().Strs("plugins", pluginsLst).Logger()
+	pluginLogger.Info().Msg("Loading plugins")
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
-		log.Error().Err(err).Msg("Plugins are disabled because an error has occurred.")
+		pluginLogger.Err(err).Msg("Plugins are disabled because an error has occurred.")
+	} else {
+		pluginLogger.Info().Msg("Plugins loaded")
 	}
 
 	// Providers plugins
