@@ -229,13 +229,13 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
 
 	pluginLogger := log.Ctx(ctx).With().Strs("plugins", pluginsList).Logger()
-	pluginLogger.Info().Msg("Loading plugins")
+	pluginLogger.Info().Msg("Loading plugins.")
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
 		pluginLogger.Err(err).Msg("Plugins are disabled because an error has occurred.")
 	} else {
-		pluginLogger.Info().Msg("Plugins loaded")
+		pluginLogger.Info().Msg("Plugins loaded.")
 	}
 
 	// Providers plugins
