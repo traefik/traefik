@@ -573,7 +573,7 @@ func (s *TracingSuite) TestOpentelemetrySafeURL() {
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
-			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.full\").value.stringValue":               fmt.Sprintf("http://test@%s/auth?api_key=REDACTED", net.JoinHostPort(s.whoamiIP, "80")),
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.full\").value.stringValue":               fmt.Sprintf("http://REDACTED:REDACTED@%s/auth?api_key=REDACTED", net.JoinHostPort(s.whoamiIP, "80")),
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"network.peer.address\").value.stringValue":   s.whoamiIP,
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"network.peer.port\").value.intValue":         "80",

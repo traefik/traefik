@@ -434,7 +434,7 @@ tracing:
   capturedResponseHeaders:
     - foobar
     - foobar
-  unRedactedQueryParams:
+  safeQueryParams:
     - foobar
     - foobar
   sampleRate: 42

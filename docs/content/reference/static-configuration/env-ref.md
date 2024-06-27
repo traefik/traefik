@@ -1125,11 +1125,11 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_TRACING_OTLP_HTTP_TLS_KEY`:  
 TLS key
 
+`TRAEFIK_TRACING_SAFEQUERYPARAMS`:  
+Query params to not redact.
+
 `TRAEFIK_TRACING_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
-
-`TRAEFIK_TRACING_UNREDACTEDQUERYPARAMS`:  
-Query params to un-redact.

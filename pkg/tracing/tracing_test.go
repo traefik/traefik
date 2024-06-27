@@ -9,10 +9,10 @@ import (
 
 func Test_safeFullURL(t *testing.T) {
 	testCases := []struct {
-		desc                  string
-		unRedactedQueryParams []string
-		originalURL           *url.URL
-		expectedURL           *url.URL
+		desc            string
+		safeQueryParams []string
+		originalURL     *url.URL
+		expectedURL     *url.URL
 	}{
 		{
 			desc:        "Nil URL",
@@ -30,10 +30,16 @@ func Test_safeFullURL(t *testing.T) {
 			expectedURL: &url.URL{Scheme: "https", Host: "example.com", RawQuery: "baz=REDACTED&foo=REDACTED"},
 		},
 		{
-			desc:                  "Some query parameters unredacted",
-			unRedactedQueryParams: []string{"foo"},
-			originalURL:           &url.URL{Scheme: "https", Host: "example.com", RawQuery: "foo=bar&baz=qux"},
-			expectedURL:           &url.URL{Scheme: "https", Host: "example.com", RawQuery: "baz=REDACTED&foo=bar"},
+			desc:            "Some query parameters unredacted",
+			safeQueryParams: []string{"foo"},
+			originalURL:     &url.URL{Scheme: "https", Host: "example.com", RawQuery: "foo=bar&baz=qux"},
+			expectedURL:     &url.URL{Scheme: "https", Host: "example.com", RawQuery: "baz=REDACTED&foo=bar"},
+		},
+		{
+			desc:            "User info and some query parameters redacted",
+			safeQueryParams: []string{"foo"},
+			originalURL:     &url.URL{Scheme: "https", Host: "example.com", User: url.UserPassword("username", "password"), RawQuery: "foo=bar&baz=qux"},
+			expectedURL:     &url.URL{Scheme: "https", Host: "example.com", User: url.UserPassword("REDACTED", "REDACTED"), RawQuery: "baz=REDACTED&foo=bar"},
 		},
 	}
 
@@ -41,7 +47,7 @@ func Test_safeFullURL(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tr := NewTracer(nil, nil, nil, test.unRedactedQueryParams)
+			tr := NewTracer(nil, nil, nil, test.safeQueryParams)
 
 			gotURL := tr.safeURL(test.originalURL)
 

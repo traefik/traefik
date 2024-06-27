@@ -49,7 +49,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 		return nil, nil, err
 	}
 
-	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders, conf.UnRedactedQueryParams), closer, nil
+	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders, conf.SafeQueryParams), closer, nil
 }
 
 // TracerFromContext extracts the trace.Tracer from the given context.
@@ -124,16 +124,16 @@ func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace
 type Tracer struct {
 	trace.Tracer
 
-	unRedactedQueryParams   []string
+	safeQueryParams         []string
 	capturedRequestHeaders  []string
 	capturedResponseHeaders []string
 }
 
 // NewTracer builds and configures a new Tracer.
-func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders, unRedactedQueryParams []string) *Tracer {
+func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders, safeQueryParams []string) *Tracer {
 	return &Tracer{
 		Tracer:                  tracer,
-		unRedactedQueryParams:   unRedactedQueryParams,
+		safeQueryParams:         safeQueryParams,
 		capturedRequestHeaders:  capturedRequestHeaders,
 		capturedResponseHeaders: capturedResponseHeaders,
 	}
@@ -282,10 +282,15 @@ func (t *Tracer) safeURL(originalURL *url.URL) *url.URL {
 
 	redactedURL := *originalURL
 
+	// Redact password if exists.
+	if redactedURL.User != nil {
+		redactedURL.User = url.UserPassword("REDACTED", "REDACTED")
+	}
+
 	// Redact query parameters.
 	query := redactedURL.Query()
 	for k := range query {
-		if slices.Contains(t.unRedactedQueryParams, k) {
+		if slices.Contains(t.safeQueryParams, k) {
 			continue
 		}
 
