@@ -392,6 +392,7 @@
   serviceName = "foobar"
   capturedRequestHeaders = ["foobar", "foobar"]
   capturedResponseHeaders = ["foobar", "foobar"]
+  safeQueryParams = ["foobar", "foobar"]
   sampleRate = 42.0
   addInternals = true
   [tracing.globalAttributes]

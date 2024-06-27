@@ -434,6 +434,9 @@ tracing:
   capturedResponseHeaders:
     - foobar
     - foobar
+  safeQueryParams:
+    - foobar
+    - foobar
   sampleRate: 42
   addInternals: true
   otlp:

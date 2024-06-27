@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -58,16 +58,16 @@ func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConv
 	meter := otel.Meter("github.com/traefik/traefik",
 		metric.WithInstrumentationVersion(version.Version))
 
-	httpServerRequestDuration, err := meter.Float64Histogram("http.server.request.duration",
-		metric.WithDescription("Duration of HTTP server requests."),
+	httpServerRequestDuration, err := meter.Float64Histogram(semconv.HTTPServerRequestDurationName,
+		metric.WithDescription(semconv.HTTPServerRequestDurationDescription),
 		metric.WithUnit("s"),
 		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
 	if err != nil {
 		return nil, fmt.Errorf("can't build httpServerRequestDuration histogram: %w", err)
 	}
 
-	httpClientRequestDuration, err := meter.Float64Histogram("http.client.request.duration",
-		metric.WithDescription("Duration of HTTP client requests."),
+	httpClientRequestDuration, err := meter.Float64Histogram(semconv.HTTPClientRequestDurationName,
+		metric.WithDescription(semconv.HTTPClientRequestDurationDescription),
 		metric.WithUnit("s"),
 		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
 	if err != nil {

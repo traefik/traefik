@@ -160,3 +160,28 @@ tracing:
 ```bash tab="CLI"
 --tracing.capturedResponseHeaders[0]=X-CustomHeader
 ```
+
+#### `safeQueryParams`
+
+_Optional, Default={}_
+
+By default, all query parameters are redacted.
+Defines the list of query parameters to not redact.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    safeQueryParams:
+      - bar
+      - buz
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp]
+    safeQueryParams = ["bar", "buz"]
+```
+
+```bash tab="CLI"
+--tracing.otlp.safeQueryParams=bar,buz
+```
