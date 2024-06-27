@@ -546,7 +546,7 @@ func TestForwardAuthTracing(t *testing.T) {
 			otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
 			mockTracer := &mockTracer{}
-			tracer := tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"})
+			tracer := tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"})
 			initialCtx, initialSpan := tracer.Start(req.Context(), "initial")
 			defer initialSpan.End()
 			req = req.WithContext(initialCtx)

@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -48,7 +49,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 		return nil, nil, err
 	}
 
-	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders), closer, nil
+	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders, conf.UnRedactedQueryParams), closer, nil
 }
 
 // TracerFromContext extracts the trace.Tracer from the given context.
@@ -123,14 +124,16 @@ func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace
 type Tracer struct {
 	trace.Tracer
 
+	unRedactedQueryParams   []string
 	capturedRequestHeaders  []string
 	capturedResponseHeaders []string
 }
 
 // NewTracer builds and configures a new Tracer.
-func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders []string) *Tracer {
+func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders, unRedactedQueryParams []string) *Tracer {
 	return &Tracer{
 		Tracer:                  tracer,
+		unRedactedQueryParams:   unRedactedQueryParams,
 		capturedRequestHeaders:  capturedRequestHeaders,
 		capturedResponseHeaders: capturedResponseHeaders,
 	}
@@ -164,8 +167,8 @@ func (t *Tracer) CaptureClientRequest(span trace.Span, r *http.Request) {
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 
 	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#http-client
-	sURL := safeURL(r.URL)
-	span.SetAttributes(semconv.URLFull(sURL.String()))
+	sURL := t.safeURL(r.URL)
+	span.SetAttributes(semconv.URLFull(sURL.Redacted()))
 	span.SetAttributes(semconv.URLScheme(sURL.Scheme))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 
@@ -211,7 +214,7 @@ func (t *Tracer) CaptureServerRequest(span trace.Span, r *http.Request) {
 	span.SetAttributes(semconv.HTTPRequestMethodKey.String(r.Method))
 	span.SetAttributes(semconv.NetworkProtocolVersion(proto(r.Proto)))
 
-	sURL := safeURL(r.URL)
+	sURL := t.safeURL(r.URL)
 	// Server attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#http-server-semantic-conventions
 	span.SetAttributes(semconv.HTTPRequestBodySize(int(r.ContentLength)))
 	span.SetAttributes(semconv.URLPath(sURL.Path))
@@ -231,8 +234,6 @@ func (t *Tracer) CaptureServerRequest(span trace.Span, r *http.Request) {
 		span.SetAttributes(semconv.ClientPort(intPort))
 		span.SetAttributes(semconv.NetworkPeerPort(intPort))
 	}
-
-	span.SetAttributes(semconv.ClientAddress(r.Header.Get("X-Forwarded-For")))
 
 	for _, header := range t.capturedRequestHeaders {
 		// User-agent is already part of the semantic convention as a recommended attribute.
@@ -272,6 +273,27 @@ func (t *Tracer) CaptureResponse(span trace.Span, responseHeaders http.Header, c
 			span.SetAttributes(attribute.StringSlice(fmt.Sprintf("http.response.header.%s", strings.ToLower(header)), value))
 		}
 	}
+}
+
+func (t *Tracer) safeURL(originalURL *url.URL) *url.URL {
+	if originalURL == nil {
+		return nil
+	}
+
+	redactedURL := *originalURL
+
+	// Redact query parameters.
+	query := redactedURL.Query()
+	for k := range query {
+		if slices.Contains(t.unRedactedQueryParams, k) {
+			continue
+		}
+
+		query.Set(k, "REDACTED")
+	}
+	redactedURL.RawQuery = query.Encode()
+
+	return &redactedURL
 }
 
 func proto(proto string) string {
@@ -325,42 +347,4 @@ func defaultStatus(code int) (codes.Code, string) {
 		return codes.Error, ""
 	}
 	return codes.Unset, ""
-}
-
-func safeURL(originalURL *url.URL) *url.URL {
-	if originalURL == nil {
-		return nil
-	}
-
-	redactedURL := *originalURL
-
-	// Redact password if exists.
-	if redactedURL.User != nil {
-		username := redactedURL.User.Username()
-		redactedURL.User = url.UserPassword(username, "REDACTED")
-	}
-
-	// Redact query parameters.
-	query := redactedURL.Query()
-	sensitiveParams := []string{"password", "token", "api_key", "secret", "access_token"}
-	for _, param := range sensitiveParams {
-		if query.Get(param) != "" {
-			query.Set(param, "REDACTED")
-		}
-	}
-	redactedURL.RawQuery = query.Encode()
-
-	// Redact sensitive data in the path.
-	pathParts := strings.Split(redactedURL.Path, "/")
-	for i, part := range pathParts {
-		for _, sensitive := range sensitiveParams {
-			if strings.Contains(strings.ToLower(part), sensitive) {
-				pathParts[i] = "REDACTED"
-				break
-			}
-		}
-	}
-	redactedURL.Path = strings.Join(pathParts, "/")
-
-	return &redactedURL
 }

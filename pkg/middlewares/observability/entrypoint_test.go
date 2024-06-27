@@ -50,7 +50,6 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 					attribute.String("client.address", "10.0.0.1"),
 					attribute.Int64("client.port", int64(1234)),
 					attribute.Int64("network.peer.port", int64(1234)),
-					attribute.String("client.address", ""),
 					attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
 					attribute.Int64("http.response.status_code", int64(404)),
 					attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
@@ -77,7 +76,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 
 			tracer := &mockTracer{}
 
-			handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}), nil, test.entryPoint, next)
+			handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"}), nil, test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
 			for _, span := range tracer.spans {
