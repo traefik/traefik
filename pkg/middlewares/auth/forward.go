@@ -52,7 +52,7 @@ type forwardAuth struct {
 	trustForwardHeader       bool
 	authRequestHeaders       []string
 	addAuthCookiesToResponse map[string]struct{}
-	logUserHeader            string
+	headerField              string
 }
 
 // NewForward creates a forward auth middleware.
@@ -73,7 +73,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		trustForwardHeader:       config.TrustForwardHeader,
 		authRequestHeaders:       config.AuthRequestHeaders,
 		addAuthCookiesToResponse: addAuthCookiesToResponse,
-		logUserHeader:            config.LogUserHeader,
+		headerField:              config.HeaderField,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -177,8 +177,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		forwardSpan.End()
 	}
 
-	if fa.logUserHeader != "" {
-		if elems := forwardResponse.Header[http.CanonicalHeaderKey(fa.logUserHeader)]; len(elems) > 0 {
+	if fa.headerField != "" {
+		if elems := forwardResponse.Header[http.CanonicalHeaderKey(fa.headerField)]; len(elems) > 0 {
 			logData := accesslog.GetLogData(req)
 			if logData != nil {
 				logData.Core[accesslog.ClientUsername] = elems[0]
