@@ -168,7 +168,7 @@ func (t *Tracer) CaptureClientRequest(span trace.Span, r *http.Request) {
 
 	// Client attributes https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md#http-client
 	sURL := t.safeURL(r.URL)
-	span.SetAttributes(semconv.URLFull(sURL.Redacted()))
+	span.SetAttributes(semconv.URLFull(sURL.String()))
 	span.SetAttributes(semconv.URLScheme(sURL.Scheme))
 	span.SetAttributes(semconv.UserAgentOriginal(r.UserAgent()))
 
