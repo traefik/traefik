@@ -1125,6 +1125,9 @@ TLS insecure skip verify (Default: ```false```)
 `--tracing.otlp.http.tls.key`:  
 TLS key
 
+`--tracing.safequeryparams`:  
+Query params to not redact.
+
 `--tracing.samplerate`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
