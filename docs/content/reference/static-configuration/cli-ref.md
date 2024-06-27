@@ -1130,3 +1130,6 @@ Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
+
+`--tracing.unredactedqueryparams`:  
+Query params to un-redact.

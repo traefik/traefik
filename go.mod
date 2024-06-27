@@ -70,18 +70,18 @@ require (
 	github.com/unrolled/secure v1.0.9
 	github.com/vulcand/oxy/v2 v2.0.0-20230427132221-be5cf38f3c1c
 	github.com/vulcand/predicate v1.2.0
-	go.opentelemetry.io/collector/pdata v1.2.0
+	go.opentelemetry.io/collector/pdata v1.10.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.52.0
-	go.opentelemetry.io/otel v1.27.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.27.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.27.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.27.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.27.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.27.0
-	go.opentelemetry.io/otel/metric v1.27.0
-	go.opentelemetry.io/otel/sdk v1.27.0
-	go.opentelemetry.io/otel/sdk/metric v1.27.0
-	go.opentelemetry.io/otel/trace v1.27.0
+	go.opentelemetry.io/otel v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/metric v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/sdk v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/sdk/metric v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
+	go.opentelemetry.io/otel/trace v1.27.1-0.20240624175855-921eb701b175 // For security reason we need to follow semconv v1.26.0 and we can't wait for opentelemetry-go-sdk v1.28.0.
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
 	golang.org/x/mod v0.18.0
 	golang.org/x/net v0.26.0
@@ -180,7 +180,7 @@ require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -329,7 +329,7 @@ require (
 	go.opentelemetry.io/contrib/propagators/b3 v1.27.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.27.0 // indirect
 	go.opentelemetry.io/contrib/propagators/ot v1.27.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.2.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
@@ -342,9 +342,9 @@ require (
 	golang.org/x/term v0.21.0 // indirect
 	google.golang.org/api v0.172.0 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240520151616-dc85e6b867a5 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240515191416-fc5f0ca64291 // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240624140628-dc46fd24d27d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240624140628-dc46fd24d27d // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.16 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
