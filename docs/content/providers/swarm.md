@@ -209,7 +209,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     services:
       traefik:
-         image: traefik:v3.0 # The official v3 Traefik docker image
+         image: traefik:v3.1 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
