@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 	"net/netip"
+	"strings"
 )
 
 // Checker allows to check that addresses are in a trusted IPs.
