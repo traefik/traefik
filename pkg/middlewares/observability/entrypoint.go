@@ -35,7 +35,7 @@ type entryPointTracing struct {
 func WrapEntryPointHandler(ctx context.Context, tracer *tracing.Tracer, semConvMetricRegistry *metrics.SemConvMetricsRegistry, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if tracer == nil {
-			tracer = tracing.NewTracer(noop.Tracer{}, nil, nil)
+			tracer = tracing.NewTracer(noop.Tracer{}, nil, nil, nil)
 		}
 
 		return newEntryPoint(ctx, tracer, semConvMetricRegistry, entryPointName, next), nil
@@ -47,7 +47,7 @@ func newEntryPoint(ctx context.Context, tracer *tracing.Tracer, semConvMetricReg
 	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
 	if tracer == nil {
-		tracer = tracing.NewTracer(noop.Tracer{}, nil, nil)
+		tracer = tracing.NewTracer(noop.Tracer{}, nil, nil, nil)
 	}
 
 	return &entryPointTracing{
