@@ -161,17 +161,17 @@ tracing:
 --tracing.capturedResponseHeaders[0]=X-CustomHeader
 ```
 
-#### `unRedactedQueryParams`
+#### `safeQueryParams`
 
 _Optional, Default={}_
 
 By default, all query parameters are redacted.
-Defines the list of query parameters to un-redact.
+Defines the list of query parameters to not redact.
 
 ```yaml tab="File (YAML)"
 tracing:
   otlp:
-    unRedactedQueryParams:
+    safeQueryParams:
       - bar
       - buz
 ```
@@ -179,9 +179,9 @@ tracing:
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.otlp]
-    unRedactedQueryParams = ["bar", "buz"]
+    safeQueryParams = ["bar", "buz"]
 ```
 
 ```bash tab="CLI"
---tracing.otlp.unRedactedQueryParams=bar,buz
+--tracing.otlp.safeQueryParams=bar,buz
 ```
