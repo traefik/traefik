@@ -513,7 +513,7 @@ func TestForwardAuthTracing(t *testing.T) {
 						attribute.String("url.scheme", "http"),
 						attribute.String("user_agent.original", ""),
 						attribute.String("network.peer.address", "127.0.0.1"),
-						attribute.String("network.peer.port", serverPort),
+						attribute.Int64("network.peer.port", int64(serverPortInt)),
 						attribute.String("server.address", "127.0.0.1"),
 						attribute.Int64("server.port", int64(serverPortInt)),
 						attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
@@ -546,7 +546,7 @@ func TestForwardAuthTracing(t *testing.T) {
 			otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
 			mockTracer := &mockTracer{}
-			tracer := tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"})
+			tracer := tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"})
 			initialCtx, initialSpan := tracer.Start(req.Context(), "initial")
 			defer initialSpan.End()
 			req = req.WithContext(initialCtx)
