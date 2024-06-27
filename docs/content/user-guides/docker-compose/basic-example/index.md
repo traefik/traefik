@@ -31,7 +31,7 @@ Create a `docker-compose.yml` file with the following content:
     services:
 
       traefik:
-        image: "traefik:v3.0"
+        image: "traefik:v3.1"
         ...
         networks:
           - traefiknet
