@@ -43,7 +43,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.1/routing/entrypoints/
                   Default: all.
                 items:
                   type: string
@@ -63,12 +63,12 @@ spec:
                     match:
                       description: |-
                         Match defines the router's rule.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rule
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#rule
                       type: string
                     middlewares:
                       description: |-
                         Middlewares defines the list of references to Middleware resources.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-middleware
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-middleware
                       items:
                         description: MiddlewareRef is a reference to a Middleware
                           resource.
@@ -88,7 +88,7 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#priority
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#priority
                       type: integer
                     services:
                       description: |-
@@ -229,7 +229,7 @@ spec:
                           sticky:
                             description: |-
                               Sticky defines the sticky sessions configuration.
-                              More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                              More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                             properties:
                               cookie:
                                 description: Cookie defines the sticky cookie configuration.
@@ -277,7 +277,7 @@ spec:
                     syntax:
                       description: |-
                         Syntax defines the router's rule syntax.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#rulesyntax
                       type: string
                   required:
                   - kind
@@ -287,18 +287,18 @@ spec:
               tls:
                 description: |-
                   TLS defines the TLS configuration.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#tls
+                  More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#tls
                 properties:
                   certResolver:
                     description: |-
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/https/acme/#certificate-resolvers
+                      More info: https://doc.traefik.io/traefik/v3.1/https/acme/#certificate-resolvers
                     type: string
                   domains:
                     description: |-
                       Domains defines the list of domains that will be used to issue certificates.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#domains
+                      More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#domains
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -317,17 +317,17 @@ spec:
                     description: |-
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
-                      More info: https://doc.traefik.io/traefik/v3.0/https/tls/#tls-options
+                      More info: https://doc.traefik.io/traefik/v3.1/https/tls/#tls-options
                     properties:
                       name:
                         description: |-
                           Name defines the name of the referenced TLSOption.
-                          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-tlsoption
+                          More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-tlsoption
                         type: string
                       namespace:
                         description: |-
                           Namespace defines the namespace of the referenced TLSOption.
-                          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-tlsoption
+                          More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-tlsoption
                         type: string
                     required:
                     - name
@@ -344,12 +344,12 @@ spec:
                       name:
                         description: |-
                           Name defines the name of the referenced TLSStore.
-                          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-tlsstore
+                          More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-tlsstore
                         type: string
                       namespace:
                         description: |-
                           Namespace defines the namespace of the referenced TLSStore.
-                          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-tlsstore
+                          More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-tlsstore
                         type: string
                     required:
                     - name
@@ -409,7 +409,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.1/routing/entrypoints/
                   Default: all.
                 items:
                   type: string
@@ -422,7 +422,7 @@ spec:
                     match:
                       description: |-
                         Match defines the router's rule.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rule_1
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#rule_1
                       type: string
                     middlewares:
                       description: Middlewares defines the list of references to MiddlewareTCP
@@ -446,7 +446,7 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#priority_1
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#priority_1
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -487,7 +487,7 @@ spec:
                           proxyProtocol:
                             description: |-
                               ProxyProtocol defines the PROXY protocol configuration.
-                              More info: https://doc.traefik.io/traefik/v3.0/routing/services/#proxy-protocol
+                              More info: https://doc.traefik.io/traefik/v3.1/routing/services/#proxy-protocol
                             properties:
                               version:
                                 description: Version defines the PROXY Protocol version
@@ -525,7 +525,7 @@ spec:
                     syntax:
                       description: |-
                         Syntax defines the router's rule syntax.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax_1
+                        More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#rulesyntax_1
                       type: string
                   required:
                   - match
@@ -534,18 +534,18 @@ spec:
               tls:
                 description: |-
                   TLS defines the TLS configuration on a layer 4 / TCP Route.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#tls_1
+                  More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#tls_1
                 properties:
                   certResolver:
                     description: |-
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/https/acme/#certificate-resolvers
+                      More info: https://doc.traefik.io/traefik/v3.1/https/acme/#certificate-resolvers
                     type: string
                   domains:
                     description: |-
                       Domains defines the list of domains that will be used to issue certificates.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#domains
+                      More info: https://doc.traefik.io/traefik/v3.1/routing/routers/#domains
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -564,7 +564,7 @@ spec:
                     description: |-
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
-                      More info: https://doc.traefik.io/traefik/v3.0/https/tls/#tls-options
+                      More info: https://doc.traefik.io/traefik/v3.1/https/tls/#tls-options
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik
@@ -656,7 +656,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.1/routing/entrypoints/
                   Default: all.
                 items:
                   type: string
@@ -743,7 +743,7 @@ spec:
       openAPIV3Schema:
         description: |-
           Middleware is the CRD implementation of a Traefik Middleware.
-          More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/overview/
+          More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/overview/
         properties:
           apiVersion:
             description: |-
@@ -769,7 +769,7 @@ spec:
                 description: |-
                   AddPrefix holds the add prefix middleware configuration.
                   This middleware updates the path of a request before forwarding it.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/addprefix/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/addprefix/
                 properties:
                   prefix:
                     description: |-
@@ -781,12 +781,12 @@ spec:
                 description: |-
                   BasicAuth holds the basic auth middleware configuration.
                   This middleware restricts access to your services to known users.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/basicauth/
                 properties:
                   headerField:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/basicauth/#headerfield
                     type: string
                   realm:
                     description: |-
@@ -807,7 +807,7 @@ spec:
                 description: |-
                   Buffering holds the buffering middleware configuration.
                   This middleware retries or limits the size of requests that can be forwarded to backends.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#maxrequestbodybytes
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/buffering/#maxrequestbodybytes
                 properties:
                   maxRequestBodyBytes:
                     description: |-
@@ -839,14 +839,14 @@ spec:
                     description: |-
                       RetryExpression defines the retry conditions.
                       It is a logical combination of functions with operators AND (&&) and OR (||).
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/buffering/#retryexpression
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/buffering/#retryexpression
                     type: string
                 type: object
               chain:
                 description: |-
                   Chain holds the configuration of the chain middleware.
                   This middleware enables to define reusable combinations of other pieces of middleware.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/chain/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/chain/
                 properties:
                   middlewares:
                     description: Middlewares is the list of MiddlewareRef which composes
@@ -905,7 +905,7 @@ spec:
                 description: |-
                   Compress holds the compress middleware configuration.
                   This middleware compresses responses before sending them to the client, using gzip compression.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/compress/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/compress/
                 properties:
                   defaultEncoding:
                     description: DefaultEncoding specifies the default encoding if
@@ -948,12 +948,12 @@ spec:
                 description: |-
                   DigestAuth holds the digest auth middleware configuration.
                   This middleware restricts access to your services to known users.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/digestauth/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/digestauth/
                 properties:
                   headerField:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/basicauth/#headerfield
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/basicauth/#headerfield
                     type: string
                   realm:
                     description: |-
@@ -973,7 +973,7 @@ spec:
                 description: |-
                   ErrorPage holds the custom error middleware configuration.
                   This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/errorpages/
                 properties:
                   query:
                     description: |-
@@ -983,7 +983,7 @@ spec:
                   service:
                     description: |-
                       Service defines the reference to a Kubernetes Service that will serve the error page.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/#service
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/errorpages/#service
                     properties:
                       healthCheck:
                         description: Healthcheck defines health checks for ExternalName
@@ -1116,7 +1116,7 @@ spec:
                       sticky:
                         description: |-
                           Sticky defines the sticky sessions configuration.
-                          More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                          More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                         properties:
                           cookie:
                             description: Cookie defines the sticky cookie configuration.
@@ -1174,7 +1174,7 @@ spec:
                 description: |-
                   ForwardAuth holds the forward auth middleware configuration.
                   This middleware delegates the request authentication to a Service.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/forwardauth/
                 properties:
                   addAuthCookiesToResponse:
                     description: AddAuthCookiesToResponse defines the list of cookies
@@ -1202,7 +1202,7 @@ spec:
                   authResponseHeadersRegex:
                     description: |-
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#authresponseheadersregex
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/forwardauth/#authresponseheadersregex
                     type: string
                   tls:
                     description: TLS defines the configuration used to secure the
@@ -1249,7 +1249,7 @@ spec:
                 description: |-
                   Headers holds the headers middleware configuration.
                   This middleware manages the requests and responses headers.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/headers/#customrequestheaders
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/headers/#customrequestheaders
                 properties:
                   accessControlAllowCredentials:
                     description: AccessControlAllowCredentials defines whether the
@@ -1420,7 +1420,7 @@ spec:
                 description: |-
                   InFlightReq holds the in-flight request middleware configuration.
                   This middleware limits the number of requests being processed and served concurrently.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/inflightreq/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/inflightreq/
                 properties:
                   amount:
                     description: |-
@@ -1433,12 +1433,12 @@ spec:
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
                       If several strategies are defined at the same time, an error will be raised.
                       If none are set, the default is to use the requestHost.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/inflightreq/#sourcecriterion
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/inflightreq/#sourcecriterion
                     properties:
                       ipStrategy:
                         description: |-
                           IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                          More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
+                          More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/ipallowlist/#ipstrategy
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1467,12 +1467,12 @@ spec:
                 description: |-
                   IPAllowList holds the IP allowlist middleware configuration.
                   This middleware limits allowed requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/ipallowlist/
                 properties:
                   ipStrategy:
                     description: |-
                       IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/ipallowlist/#ipstrategy
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -1504,7 +1504,7 @@ spec:
                   ipStrategy:
                     description: |-
                       IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
+                      More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/ipallowlist/#ipstrategy
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -1529,7 +1529,7 @@ spec:
                 description: |-
                   PassTLSClientCert holds the pass TLS client cert middleware configuration.
                   This middleware adds the selected data from the passed client TLS certificate to a header.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/passtlsclientcert/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/passtlsclientcert/
                 properties:
                   info:
                     description: Info selects the specific client certificate details
@@ -1638,7 +1638,7 @@ spec:
                 description: |-
                   RateLimit holds the rate limit configuration.
                   This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ratelimit/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/ratelimit/
                 properties:
                   average:
                     description: |-
@@ -1671,7 +1671,7 @@ spec:
                       ipStrategy:
                         description: |-
                           IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-                          More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipallowlist/#ipstrategy
+                          More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/ipallowlist/#ipstrategy
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1700,7 +1700,7 @@ spec:
                 description: |-
                   RedirectRegex holds the redirect regex middleware configuration.
                   This middleware redirects a request using regex matching and replacement.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/redirectregex/#regex
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/redirectregex/#regex
                 properties:
                   permanent:
                     description: Permanent defines whether the redirection is permanent
@@ -1719,7 +1719,7 @@ spec:
                 description: |-
                   RedirectScheme holds the redirect scheme middleware configuration.
                   This middleware redirects requests from a scheme/port to another.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/redirectscheme/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/redirectscheme/
                 properties:
                   permanent:
                     description: Permanent defines whether the redirection is permanent
@@ -1736,7 +1736,7 @@ spec:
                 description: |-
                   ReplacePath holds the replace path middleware configuration.
                   This middleware replaces the path of the request URL and store the original path in an X-Replaced-Path header.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/replacepath/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/replacepath/
                 properties:
                   path:
                     description: Path defines the path to use as replacement in the
@@ -1747,7 +1747,7 @@ spec:
                 description: |-
                   ReplacePathRegex holds the replace path regex middleware configuration.
                   This middleware replaces the path of a URL using regex matching and replacement.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/replacepathregex/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/replacepathregex/
                 properties:
                   regex:
                     description: Regex defines the regular expression used to match
@@ -1763,7 +1763,7 @@ spec:
                   Retry holds the retry middleware configuration.
                   This middleware reissues requests a given number of times to a backend server if that server does not reply.
                   As soon as the server answers, the middleware stops retrying, regardless of the response status.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/retry/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/retry/
                 properties:
                   attempts:
                     description: Attempts defines how many times the request should
@@ -1785,7 +1785,7 @@ spec:
                 description: |-
                   StripPrefix holds the strip prefix middleware configuration.
                   This middleware removes the specified prefixes from the URL path.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/stripprefix/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/stripprefix/
                 properties:
                   forceSlash:
                     description: |-
@@ -1804,7 +1804,7 @@ spec:
                 description: |-
                   StripPrefixRegex holds the strip prefix regex middleware configuration.
                   This middleware removes the matching prefixes from the URL path.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/stripprefixregex/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/stripprefixregex/
                 properties:
                   regex:
                     description: Regex defines the regular expression to match the
@@ -1841,7 +1841,7 @@ spec:
       openAPIV3Schema:
         description: |-
           MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-          More info: https://doc.traefik.io/traefik/v3.0/middlewares/overview/
+          More info: https://doc.traefik.io/traefik/v3.1/middlewares/overview/
         properties:
           apiVersion:
             description: |-
@@ -1877,7 +1877,7 @@ spec:
                 description: |-
                   IPAllowList defines the IPAllowList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/tcp/ipallowlist/
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -1891,7 +1891,7 @@ spec:
                   IPWhiteList defines the IPWhiteList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
                   Deprecated: please use IPAllowList instead.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipwhitelist/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/tcp/ipwhitelist/
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -1930,7 +1930,7 @@ spec:
           ServersTransport is the CRD implementation of a ServersTransport.
           If no serversTransport is specified, the default@internal will be used.
           The default@internal serversTransport is created from the static configuration.
-          More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_1
+          More info: https://doc.traefik.io/traefik/v3.1/routing/services/#serverstransport_1
         properties:
           apiVersion:
             description: |-
@@ -2069,7 +2069,7 @@ spec:
           ServersTransportTCP is the CRD implementation of a TCPServersTransport.
           If no tcpServersTransport is specified, a default one named default@internal will be used.
           The default@internal tcpServersTransport can be configured in the static configuration.
-          More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_3
+          More info: https://doc.traefik.io/traefik/v3.1/routing/services/#serverstransport_3
         properties:
           apiVersion:
             description: |-
@@ -2187,7 +2187,7 @@ spec:
       openAPIV3Schema:
         description: |-
           TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
-          More info: https://doc.traefik.io/traefik/v3.0/https/tls/#tls-options
+          More info: https://doc.traefik.io/traefik/v3.1/https/tls/#tls-options
         properties:
           apiVersion:
             description: |-
@@ -2212,14 +2212,14 @@ spec:
               alpnProtocols:
                 description: |-
                   ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
-                  More info: https://doc.traefik.io/traefik/v3.0/https/tls/#alpn-protocols
+                  More info: https://doc.traefik.io/traefik/v3.1/https/tls/#alpn-protocols
                 items:
                   type: string
                 type: array
               cipherSuites:
                 description: |-
                   CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
-                  More info: https://doc.traefik.io/traefik/v3.0/https/tls/#cipher-suites
+                  More info: https://doc.traefik.io/traefik/v3.1/https/tls/#cipher-suites
                 items:
                   type: string
                 type: array
@@ -2247,7 +2247,7 @@ spec:
               curvePreferences:
                 description: |-
                   CurvePreferences defines the preferred elliptic curves in a specific order.
-                  More info: https://doc.traefik.io/traefik/v3.0/https/tls/#curve-preferences
+                  More info: https://doc.traefik.io/traefik/v3.1/https/tls/#curve-preferences
                 items:
                   type: string
                 type: array
@@ -2303,7 +2303,7 @@ spec:
           TLSStore is the CRD implementation of a Traefik TLS Store.
           For the time being, only the TLSStore named default is supported.
           This means that you cannot have two stores that are named default in different Kubernetes namespaces.
-          More info: https://doc.traefik.io/traefik/v3.0/https/tls/#certificates-stores
+          More info: https://doc.traefik.io/traefik/v3.1/https/tls/#certificates-stores
         properties:
           apiVersion:
             description: |-
@@ -2401,7 +2401,7 @@ spec:
           TraefikService object allows to:
           - Apply weight to Services on load-balancing
           - Mirror traffic on services
-          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-traefikservice
+          More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-traefikservice
         properties:
           apiVersion:
             description: |-
@@ -2642,7 +2642,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -2749,7 +2749,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                      More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -2932,7 +2932,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -2979,7 +2979,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+                      More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
