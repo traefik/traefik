@@ -700,6 +700,21 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 	}
 }
 
+func TestLoggingAfterStreamAbortedFromClient(t *testing.T) {
+	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
+	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
+	doLoggingWithAbortedStream(t, config)
+
+	// wait a bit for the buffer to be written in the file.
+	time.Sleep(50 * time.Millisecond)
+
+	logData, err := os.ReadFile(logFilePath)
+	require.NoError(t, err)
+
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
+	assertValidLogData(t, expectedLog, logData)
+}
+
 func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	t.Helper()
 
@@ -796,6 +811,54 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	require.NoError(t, err)
 
 	handler.ServeHTTP(httptest.NewRecorder(), req)
+}
+
+func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
+  t.Helper()
+
+  logger, err := NewHandler(config)
+  require.NoError(t, err)
+  t.Cleanup(func() {
+    err := logger.Close()
+    require.NoError(t, err)
+  })
+
+  if config.FilePath != "" {
+    _, err = os.Stat(config.FilePath)
+    require.NoError(t, err, fmt.Sprintf("logger should create %s", config.FilePath))
+  }
+
+  req := &http.Request{
+    Header: map[string][]string{
+      "User-Agent": {testUserAgent},
+      "Referer":    {testReferer},
+    },
+    Proto:      testProto,
+    Host:       testHostname,
+    Method:     testMethod,
+    RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
+    URL: &url.URL{
+      User: url.UserPassword(testUsername, ""),
+    },
+    Body: io.NopCloser(bytes.NewReader([]byte("bar"))),
+  }
+
+  chain := alice.New()
+  chain = chain.Append(capture.Wrap)
+  chain = chain.Append(WrapHandler(logger))
+  handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
+  require.NoError(t, err)
+
+  go handler.ServeHTTP(httptest.NewRecorder(), req)
+
+  // Wait for the stream to start...
+  time.Sleep(100 * time.Millisecond)
+
+  // Abort the stream
+  req.Body.Close()
+
+  // Wait for the stream to be aborted
+  time.Sleep(100 * time.Millisecond)
 }
 
 func doLoggingTLS(t *testing.T, config *types.AccessLog) {
