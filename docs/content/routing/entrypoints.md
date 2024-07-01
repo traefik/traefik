@@ -641,7 +641,7 @@ entryPoints:
   [entryPoints.name]
     address = ":8888"
     [entryPoints.name.transport]
-      keepAliveMaxTime = 42s
+      keepAliveMaxTime = "42s"
 ```
 
 ```bash tab="CLI"
