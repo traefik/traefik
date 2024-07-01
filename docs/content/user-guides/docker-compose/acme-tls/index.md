@@ -5,7 +5,7 @@ description: "Learn how to create a certificate with the Let's Encrypt TLS chall
 
 # Docker-compose with Let's Encrypt: TLS Challenge
 
-This guide aim to demonstrate how to create a certificate with the Let's Encrypt TLS challenge to use https on a simple service exposed with Traefik.  
+This guide aims to demonstrate how to create a certificate with the Let's Encrypt TLS challenge to use https on a simple service exposed with Traefik.  
 Please also read the [basic example](../basic-example) for details on how to expose such a service.  
 
 ## Prerequisite
