@@ -237,9 +237,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		logDataTable.DownstreamResponse.size = capt.ResponseSize()
 		logDataTable.Request.size = capt.RequestSize()
 
-    if _, ok := core[ClientUsername]; !ok {
-      core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
-    }
+		if _, ok := core[ClientUsername]; !ok {
+			core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
+		}
 
 		if h.config.BufferingSize > 0 {
 			h.logHandlerChan <- handlerParams{
