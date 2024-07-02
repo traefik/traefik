@@ -51,7 +51,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		Port:      configuration.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
 		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
-		QuicConfig: &quic.Config{
+		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},
 	}

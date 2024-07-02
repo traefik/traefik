@@ -108,8 +108,11 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
-	go entryPoint.Start(context.Background())
+	ctx := context.Background()
+	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
+
+	defer entryPoint.Shutdown(ctx)
 
 	conn, err := tls.Dial("tcp", "127.0.0.1:8090", &tls.Config{
 		InsecureSkipVerify: true,
@@ -166,8 +169,11 @@ func TestHTTP30RTT(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
-	go entryPoint.Start(context.Background())
+	ctx := context.Background()
+	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
+
+	defer entryPoint.Shutdown(ctx)
 
 	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
 	time.Sleep(time.Second)
