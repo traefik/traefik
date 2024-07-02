@@ -1,3 +1,12 @@
+## [v3.1.0-rc3](https://github.com/traefik/traefik/tree/v3.1.0-rc3) (2024-07-02)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.0-rc2...v3.1.0-rc3)
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Do not disable Gateway API provider if not enabled in experimental ([#10862](https://github.com/traefik/traefik/pull/10862) by [kevinpollet](https://github.com/kevinpollet))
+
+**Misc:**
+- Merge current v3.0 into v3.1 ([#10871](https://github.com/traefik/traefik/pull/10871) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.0.4](https://github.com/traefik/traefik/tree/v3.0.4) (2024-07-02)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.3...v3.0.4)
 
