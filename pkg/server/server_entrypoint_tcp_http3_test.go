@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"github.com/quic-go/quic-go"
 	"net/http"
 	"testing"
 	"time"
@@ -128,4 +130,105 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 
 	assert.NotContains(t, r.Header.Get("Alt-Svc"), ":8090")
 	assert.Contains(t, r.Header.Get("Alt-Svc"), ":8080")
+}
+
+func TestHTTP30RTT(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+		Address:          "127.0.0.1:8090",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3: &static.HTTP3Config{
+			AdvertisedPort: 8080,
+		},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	})
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	go entryPoint.Start(context.Background())
+	entryPoint.SwitchRouter(router)
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	tlsConf := &tls.Config{
+		RootCAs:    certPool,
+		ServerName: "example.com",
+		NextProtos: []string{"h3"},
+	}
+
+	// Define custom cache.
+	gets := make(chan string, 100)
+	puts := make(chan string, 100)
+	cache := newClientSessionCache(tls.NewLRUClientSessionCache(10), gets, puts)
+	tlsConf.ClientSessionCache = cache
+
+	earlyConnection, err := quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
+	require.NoError(t, err)
+
+	// wait for the handshake complete.
+	<-earlyConnection.HandshakeComplete()
+
+	// 0RTT need to be false.
+	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
+
+	earlyConnection, err = quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
+	require.NoError(t, err)
+
+	<-earlyConnection.HandshakeComplete()
+
+	// 0RTT need to be false.
+	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
+}
+
+type clientSessionCache struct {
+	cache tls.ClientSessionCache
+
+	gets chan<- string
+	puts chan<- string
+}
+
+func newClientSessionCache(cache tls.ClientSessionCache, gets, puts chan<- string) *clientSessionCache {
+	return &clientSessionCache{
+		cache: cache,
+		gets:  gets,
+		puts:  puts,
+	}
+}
+
+var _ tls.ClientSessionCache = &clientSessionCache{}
+
+func (c *clientSessionCache) Get(sessionKey string) (*tls.ClientSessionState, bool) {
+	session, ok := c.cache.Get(sessionKey)
+	c.gets <- sessionKey
+	return session, ok
+}
+
+func (c *clientSessionCache) Put(sessionKey string, cs *tls.ClientSessionState) {
+	c.cache.Put(sessionKey, cs)
+	c.puts <- sessionKey
 }

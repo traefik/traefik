@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/quic-go/quic-go"
 	"net"
 	"net/http"
 	"sync"
@@ -50,6 +51,9 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		Port:      configuration.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
 		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
+		QuicConfig: &quic.Config{
+			Allow0RTT: false,
+		},
 	}
 
 	previousHandler := httpsServer.Server.(*http.Server).Handler
