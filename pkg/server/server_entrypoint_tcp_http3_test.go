@@ -156,9 +156,7 @@ func TestHTTP30RTT(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-		HTTP3: &static.HTTP3Config{
-			AdvertisedPort: 8080,
-		},
+		HTTP3:            &static.HTTP3Config{},
 	}, nil)
 	require.NoError(t, err)
 
@@ -175,9 +173,6 @@ func TestHTTP30RTT(t *testing.T) {
 	ctx := context.Background()
 	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
-
-	t.Cleanup(func() {
-	})
 
 	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
 	time.Sleep(time.Second)
@@ -197,6 +192,7 @@ func TestHTTP30RTT(t *testing.T) {
 	cache := newClientSessionCache(tls.NewLRUClientSessionCache(10), gets, puts)
 	tlsConf.ClientSessionCache = cache
 
+	// This first DialAddrEarly connection is here to populate the cache.
 	earlyConnection, err := quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
 	require.NoError(t, err)
 
@@ -208,8 +204,8 @@ func TestHTTP30RTT(t *testing.T) {
 	// wait for the handshake complete.
 	<-earlyConnection.HandshakeComplete()
 
-	// 0RTT need to be false.
-	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
+	// 0RTT is always false on the first connection.
+	require.False(t, earlyConnection.ConnectionState().Used0RTT)
 
 	earlyConnection, err = quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
 	require.NoError(t, err)
