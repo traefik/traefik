@@ -5,11 +5,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/quic-go/quic-go"
 	"net"
 	"net/http"
 	"sync"
 
+	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -51,7 +51,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		Port:      configuration.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
 		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
-		QuicConfig: &quic.Config{
+		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},
 	}
@@ -59,7 +59,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	previousHandler := httpsServer.Server.(*http.Server).Handler
 
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if err := h3.Server.SetQuicHeaders(rw.Header()); err != nil {
+		if err := h3.Server.SetQUICHeaders(rw.Header()); err != nil {
 			log.FromContext(ctx).Errorf("Failed to set HTTP3 headers: %v", err)
 		}
 

@@ -5,11 +5,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/quic-go/quic-go"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/quic-go/quic-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -88,7 +88,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	epConfig.SetDefaults()
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
-		Address:          "127.0.0.1:8090",
+		Address:          "127.0.0.1:0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
@@ -108,13 +108,19 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
-	go entryPoint.Start(context.Background())
+	ctx := context.Background()
+	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
 
-	conn, err := tls.Dial("tcp", "127.0.0.1:8090", &tls.Config{
+	conn, err := tls.Dial("tcp", entryPoint.listener.Addr().String(), &tls.Config{
 		InsecureSkipVerify: true,
 	})
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = conn.Close()
+		entryPoint.Shutdown(ctx)
+	})
 
 	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint
 	time.Sleep(time.Second)
@@ -153,7 +159,7 @@ func TestHTTP30RTT(t *testing.T) {
 		HTTP3: &static.HTTP3Config{
 			AdvertisedPort: 8080,
 		},
-	}, nil, nil)
+	}, nil)
 	require.NoError(t, err)
 
 	router, err := tcprouter.NewRouter()
@@ -166,8 +172,12 @@ func TestHTTP30RTT(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
-	go entryPoint.Start(context.Background())
+	ctx := context.Background()
+	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() {
+	})
 
 	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
 	time.Sleep(time.Second)
@@ -189,6 +199,11 @@ func TestHTTP30RTT(t *testing.T) {
 
 	earlyConnection, err := quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = earlyConnection.CloseWithError(0, "")
+		entryPoint.Shutdown(ctx)
+	})
 
 	// wait for the handshake complete.
 	<-earlyConnection.HandshakeComplete()
