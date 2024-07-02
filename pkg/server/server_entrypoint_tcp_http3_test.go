@@ -156,9 +156,7 @@ func TestHTTP30RTT(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-		HTTP3: &static.HTTP3Config{
-			AdvertisedPort: 8080,
-		},
+		HTTP3:            &static.HTTP3Config{},
 	}, nil)
 	require.NoError(t, err)
 
