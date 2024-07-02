@@ -3,18 +3,21 @@ package ecs
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog"
@@ -119,20 +122,24 @@ func (p *Provider) createClient(logger zerolog.Logger) (*awsClient, error) {
 		p.Region = identity.Region
 	}
 
-	cfg := &aws.Config{
-		Credentials: credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.StaticProvider{
-					Value: credentials.Value{
-						AccessKeyID:     p.AccessKeyID,
-						SecretAccessKey: p.SecretAccessKey,
-					},
+	cfg := aws.NewConfig().
+		WithCredentials(credentials.NewChainCredentials([]credentials.Provider{
+			&credentials.StaticProvider{
+				Value: credentials.Value{
+					AccessKeyID:     p.AccessKeyID,
+					SecretAccessKey: p.SecretAccessKey,
 				},
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{},
-				defaults.RemoteCredProvider(*(defaults.Config()), defaults.Handlers()),
-			}),
-	}
+			},
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{},
+			defaults.RemoteCredProvider(*(defaults.Config()), defaults.Handlers()),
+			stscreds.NewWebIdentityRoleProviderWithOptions(
+				sts.New(sess),
+				os.Getenv("AWS_ROLE_ARN"),
+				"",
+				stscreds.FetchTokenPath(os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")),
+			),
+		}))
 
 	// Set the region if it is defined by the user or resolved from the EC2 metadata.
 	if p.Region != "" {
