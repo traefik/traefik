@@ -1,3 +1,18 @@
+## [v2.11.6](https://github.com/traefik/traefik/tree/v2.11.6) (2024-07-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.5...v2.11.6)
+
+**Bug fixes:**
+- **[ecs]** Fix ECS config for OIDC + IRSA ([#10814](https://github.com/traefik/traefik/pull/10814) by [mmatur](https://github.com/mmatur))
+- **[http3]** Disable QUIC 0-RTT ([#10867](https://github.com/traefik/traefik/pull/10867) by [mmatur](https://github.com/mmatur))
+- **[middleware,server]** Remove interface names from IPv6 ([#10813](https://github.com/traefik/traefik/pull/10813) by [JeroenED](https://github.com/JeroenED))
+
+**Documentation:**
+- **[docker,acme]** Fix a typo in the ACME docker-compose docs ([#10866](https://github.com/traefik/traefik/pull/10866) by [ciacon](https://github.com/ciacon))
+- Update Advanced Capabilities Callout ([#10846](https://github.com/traefik/traefik/pull/10846) by [tomatokoolaid](https://github.com/tomatokoolaid))
+- Update maintainers ([#10834](https://github.com/traefik/traefik/pull/10834) by [emilevauge](https://github.com/emilevauge))
+- Fix readme badge for Semaphore CI ([#10830](https://github.com/traefik/traefik/pull/10830) by [mmatur](https://github.com/mmatur))
+- Fix typo in keepAliveMaxTime docs ([#10825](https://github.com/traefik/traefik/pull/10825) by [shochdoerfer](https://github.com/shochdoerfer))
+
 ## [v2.11.5](https://github.com/traefik/traefik/tree/v2.11.5) (2024-06-18)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.4...v2.11.5)
 
