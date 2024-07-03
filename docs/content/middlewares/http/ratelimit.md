@@ -260,6 +260,10 @@ The `sourceCriterion` option defines what criterion is used to group requests as
 If several strategies are defined at the same time, an error will be raised.
 If none are set, the default is to use the request's remote address field (as an `ipStrategy`).
 
+!!! important PROXY Protocol
+
+    In case of a PROXY Protocol connection, the request's remote address is the PROXY Protocol header `sourceAddr` value.
+
 #### `sourceCriterion.ipStrategy`
 
 The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
