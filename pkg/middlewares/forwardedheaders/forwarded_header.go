@@ -186,10 +186,9 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	remoteAddr := r.RemoteAddr
-
 	// In case of a ProxyProtocol connection the http.Request#RemoteAddr is the Client one.
 	// To check if Forwarded headers are trusted we have to use the peer socket address.
+	remoteAddr := r.RemoteAddr
 	if peerSocketAddr, ok := r.Context().Value(PeerSocketAddrKey).(string); ok {
 		remoteAddr = peerSocketAddr
 	}
