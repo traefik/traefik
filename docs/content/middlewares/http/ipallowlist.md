@@ -80,6 +80,11 @@ If no strategy is set, the default behavior is to match `sourceRange` against th
 
 !!! important "As a middleware, whitelisting happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through whitelisting. Therefore, during whitelisting, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be matched against `sourceRange`."
 
+!!! important PROXY Protocol
+
+    If no strategy is set, the default is to use the request's remote address field (as an ipStrategy).
+    In case of a PROXY Protocol connection, the request's remote address is the PROXY Protocol header `sourceAddr` value.
+
 #### `ipStrategy.depth`
 
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
