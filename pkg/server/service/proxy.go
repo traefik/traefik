@@ -58,15 +58,19 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 				req.Out.Host = req.In.URL.Host
 			}
 
-			// Set X-Forwarded-For header.
+			// Add back removed Forwarded headers
+			req.Out.Header["Forwarded"] = req.In.Header["Forwarded"]
+			req.Out.Header["X-Forwarded-For"] = req.In.Header["X-Forwarded-For"]
+			req.Out.Header["X-Forwarded-Host"] = req.In.Header["X-Forwarded-Host"]
+			req.Out.Header["X-Forwarded-Proto"] = req.In.Header["X-Forwarded-Proto"]
+
 			// In case of a ProxyProtocol connection the http.Request#RemoteAddr is the Client one.
 			// To check if Forwarded headers are trusted we have to use the peer socket address.
+			// Adapted from httputil.ReverseProxy
 			remoteAddr := req.In.RemoteAddr
 			if peerSocketAddr, ok := req.In.Context().Value(forwardedheaders.PeerSocketAddrKey).(string); ok {
 				remoteAddr = peerSocketAddr
 			}
-
-			// Adapted from httputil.ReverseProxy
 			if clientIP, _, err := net.SplitHostPort(remoteAddr); err == nil {
 				// If we aren't the first proxy retain prior
 				// X-Forwarded-For information as a comma+space
