@@ -47,11 +47,11 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted() {
 
 	content, err := proxyProtoRequest("127.0.0.1:8000", 1)
 	require.NoError(s.T(), err)
-	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 1.2.3.4")
+	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 127.0.0.1")
 
 	content, err = proxyProtoRequest("127.0.0.1:8000", 2)
 	require.NoError(s.T(), err)
-	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 1.2.3.4")
+	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 127.0.0.1")
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted() {
