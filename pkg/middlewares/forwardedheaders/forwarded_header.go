@@ -37,6 +37,11 @@ var xHeaders = []string{
 	xRealIP,
 }
 
+type key string
+
+// PeerSocketAddrKey is the peer socket address which only exists in case of a proxy proto connection.
+const PeerSocketAddrKey key = "peerSocketAddr"
+
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
 // and other relevant headers for a reverse-proxy.
 // Unless insecure is set,
@@ -181,7 +186,15 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+	remoteAddr := r.RemoteAddr
+
+	// In case of a ProxyProtocol connection the http.Request#RemoteAddr is the Client one.
+	// To check if Forwarded headers are trusted we have to use the peer socket address.
+	if peerSocketAddr, ok := r.Context().Value(PeerSocketAddrKey).(string); ok {
+		remoteAddr = peerSocketAddr
+	}
+
+	if !x.insecure && !x.isTrustedIP(remoteAddr) {
 		for _, h := range xHeaders {
 			unsafeHeader(r.Header).Del(h)
 		}
