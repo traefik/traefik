@@ -66,12 +66,19 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 				remoteAddr = peerSocketAddr
 			}
 
+			// Adapted from httputil.ReverseProxy
 			if clientIP, _, err := net.SplitHostPort(remoteAddr); err == nil {
-				prior := req.In.Header["X-Forwarded-For"]
+				// If we aren't the first proxy retain prior
+				// X-Forwarded-For information as a comma+space
+				// separated list and fold multiple headers into one.
+				prior, ok := req.In.Header["X-Forwarded-For"]
+				omit := ok && prior == nil // nil means don't populate the header.
 				if len(prior) > 0 {
 					clientIP = strings.Join(prior, ", ") + ", " + clientIP
 				}
-				req.Out.Header.Set("X-Forwarded-For", clientIP)
+				if !omit {
+					req.Out.Header.Set("X-Forwarded-For", clientIP)
+				}
 			}
 
 			// Even if the websocket RFC says that headers should be case-insensitive,
