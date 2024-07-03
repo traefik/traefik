@@ -363,15 +363,20 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 	}
 }
 
-// writeCloserWrapper wraps together a connection, and the concrete underlying
+// proxyProtoConn wraps together a connection, and the concrete underlying
 // connection type that was found to satisfy WriteCloser.
-type writeCloserWrapper struct {
-	net.Conn
-	writeCloser tcp.WriteCloser
+type proxyProtoConn struct {
+	*net.TCPConn
+	remoteAddr proxyProtoAddr
 }
 
-func (c *writeCloserWrapper) CloseWrite() error {
-	return c.writeCloser.CloseWrite()
+type proxyProtoAddr struct {
+	net.Addr
+	peerSocketAddr string
+}
+
+func (p *proxyProtoConn) RemoteAddr() net.Addr {
+	return p.remoteAddr
 }
 
 // writeCloser returns the given connection, augmented with the WriteCloser
@@ -383,7 +388,14 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 		if !ok {
 			return nil, errors.New("underlying connection is not a tcp connection")
 		}
-		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
+
+		return &proxyProtoConn{
+			TCPConn: underlying,
+			remoteAddr: proxyProtoAddr{
+				Addr:           typedConn.RemoteAddr(),
+				peerSocketAddr: typedConn.Raw().RemoteAddr().String(),
+			},
+		}, nil
 	case *net.TCPConn:
 		return typedConn, nil
 	default:
@@ -558,11 +570,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
-	proxyProtocolEnabled := configuration.ProxyProtocol != nil
 	var handler http.Handler
 	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
-		proxyProtocolEnabled,
 		configuration.ForwardedHeaders.TrustedIPs,
 		next)
 	if err != nil {
@@ -618,27 +628,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	prevConnContext := serverHTTP.ConnContext
 	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-		// This adds the remote address of the server making the connection if the PROXY Protocol is enabled
-		getProxyIP := func(c net.Conn) string {
-			for {
-				switch conn := c.(type) {
-				case *tcprouter.Conn:
-					c = conn.WriteCloser
-				case *trackedConnection:
-					c = conn.WriteCloser
-				case *writeCloserWrapper:
-					c = conn.writeCloser
-				case *net.TCPConn:
-					return c.RemoteAddr().String()
-				default:
-					return conn.RemoteAddr().String()
-				}
-			}
-		}
-
-		if proxyProtocolEnabled {
-			proxyIP := getProxyIP(c)
-			ctx = context.WithValue(ctx, forwardedheaders.ProxyAddrKey, proxyIP)
+		if proxyProtoAddr, ok := c.RemoteAddr().(*proxyProtoAddr); ok {
+			ctx = context.WithValue(ctx, forwardedheaders.PeerSocketAddrKey, proxyProtoAddr.peerSocketAddr)
 		}
 
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
