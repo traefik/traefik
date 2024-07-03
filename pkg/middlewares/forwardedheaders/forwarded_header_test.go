@@ -1,6 +1,7 @@
 package forwardedheaders
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
@@ -21,6 +22,7 @@ func TestServeHTTP(t *testing.T) {
 		tls             bool
 		websocket       bool
 		host            string
+		peerSocketAddr  string
 	}{
 		{
 			desc:            "all Empty",
@@ -269,6 +271,48 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedServer: "foo.com:8080",
 			},
 		},
+		{
+			desc:           "insecure false with incoming X-Forwarded headers and valid Trusted IP with PeerSocketAddr in context",
+			insecure:       false,
+			trustedIps:     []string{"10.0.1.100"},
+			remoteAddr:     "10.0.1.101:80",
+			peerSocketAddr: "10.0.1.100:80",
+			incomingHeaders: map[string][]string{
+				xForwardedFor:               {"10.0.1.0, 10.0.1.12"},
+				xForwardedURI:               {"/bar"},
+				xForwardedMethod:            {"GET"},
+				xForwardedTLSClientCert:     {"Cert"},
+				xForwardedTLSClientCertInfo: {"CertInfo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedFor:               "10.0.1.0, 10.0.1.12",
+				xForwardedURI:               "/bar",
+				xForwardedMethod:            "GET",
+				xForwardedTLSClientCert:     "Cert",
+				xForwardedTLSClientCertInfo: "CertInfo",
+			},
+		},
+		{
+			desc:           "insecure false with incoming X-Forwarded headers and invalid Trusted IP with PeerSocketAddr in context",
+			insecure:       false,
+			trustedIps:     []string{"10.0.1.100"},
+			remoteAddr:     "10.0.1.100:80",
+			peerSocketAddr: "10.0.1.101:80",
+			incomingHeaders: map[string][]string{
+				xForwardedFor:               {"10.0.1.0, 10.0.1.12"},
+				xForwardedURI:               {"/bar"},
+				xForwardedMethod:            {"GET"},
+				xForwardedTLSClientCert:     {"Cert"},
+				xForwardedTLSClientCertInfo: {"CertInfo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedFor:               "",
+				xForwardedURI:               "",
+				xForwardedMethod:            "",
+				xForwardedTLSClientCert:     "",
+				xForwardedTLSClientCertInfo: "",
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -279,6 +323,10 @@ func TestServeHTTP(t *testing.T) {
 			require.NoError(t, err)
 
 			req.RemoteAddr = test.remoteAddr
+
+			if test.peerSocketAddr != "" {
+				req = req.WithContext(context.WithValue(req.Context(), PeerSocketAddrKey, test.peerSocketAddr))
+			}
 
 			if test.tls {
 				req.TLS = &tls.ConnectionState{}
