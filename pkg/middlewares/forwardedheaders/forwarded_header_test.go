@@ -296,7 +296,7 @@ func TestServeHTTP(t *testing.T) {
 		{
 			desc:           "insecure false with incoming X-Forwarded headers and invalid Trusted IP with PeerSocketAddr in context",
 			insecure:       false,
-			trustedIps:     []string{"10.0.1.100"},
+			trustedIps:     []string{"10.0.1.102"},
 			remoteAddr:     "10.0.1.100:80",
 			peerSocketAddr: "10.0.1.101:80",
 			incomingHeaders: map[string][]string{

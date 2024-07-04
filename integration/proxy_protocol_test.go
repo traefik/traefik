@@ -54,6 +54,25 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted() {
 	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 127.0.0.1")
 }
 
+func (s *ProxyProtocolSuite) TestProxyProtocolPROXYForwardedHeadersTrusted() {
+	file := s.adaptFile("fixtures/proxy-protocol/proxy-protocol.toml", struct{ WhoamiIP string }{
+		WhoamiIP: s.whoamiIP,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8001/whoami", 10*time.Second)
+	require.NoError(s.T(), err)
+
+	content, err := proxyProtoRequest("127.0.0.1:8001", 1)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 1.2.3.4")
+
+	content, err = proxyProtoRequest("127.0.0.1:8001", 2)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), content, "X-Forwarded-For: 5.6.7.8, 1.2.3.4")
+}
+
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted() {
 	file := s.adaptFile("fixtures/proxy-protocol/proxy-protocol.toml", struct{ WhoamiIP string }{
 		WhoamiIP: s.whoamiIP,
