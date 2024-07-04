@@ -4,9 +4,9 @@ on:
   pull_request:
     branches:
       - '*'
-  paths-ignore:
-    - 'docs/**'
-    - '**.md'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
 
 env:
   GO_VERSION: '1.22'

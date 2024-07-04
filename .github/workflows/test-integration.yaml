@@ -4,15 +4,16 @@ on:
   pull_request:
     branches:
       - '*'
-  paths-ignore:
-    - 'docs/**'
-    - '**.md'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
   push:
     branches:
       - 'gh-actions'
-  paths-ignore:
-    - 'docs/**'
-    - '**.md'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'script/gcg/**'
 
 env:
   GO_VERSION: '1.22'
