@@ -70,7 +70,7 @@ jobs:
 
       - name: Generate go test Slice
         id: test_split
-        uses: hashicorp-forge/go-test-split-action@v2
+        uses: hashicorp-forge/go-test-split-action@720a77701f0d1b2973126510492a6aad11ed0d5a # v2
         with:
           packages: ./integration
           total: ${{ matrix.parallel }}
