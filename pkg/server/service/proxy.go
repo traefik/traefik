@@ -68,8 +68,8 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			// To populate the X-Forwarded-For header we have to use the peer socket address.
 			// Adapted from httputil.ReverseProxy
 			remoteAddr := req.In.RemoteAddr
-			if peerSocketAddr, ok := req.In.Context().Value(forwardedheaders.PeerSocketAddrKey).(string); ok {
-				remoteAddr = peerSocketAddr
+			if xForwardedForAddr, ok := req.In.Context().Value(forwardedheaders.XForwardedForAddr).(string); ok {
+				remoteAddr = xForwardedForAddr
 			}
 			if clientIP, _, err := net.SplitHostPort(remoteAddr); err == nil {
 				// If we aren't the first proxy retain prior
