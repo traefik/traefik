@@ -5,7 +5,7 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 
 # Traefik & Kubernetes with Gateway API
 
-The Kubernetes Gateway API, The Experimental Way.
+The Kubernetes Gateway API Controller.
 {: .subtitle }
 
 Gateway API is the evolution of Kubernetes APIs that relate to `Services`, such as `Ingress`.
@@ -14,32 +14,7 @@ The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports Gateway API [v1.0.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.0.0) specification.
-
-!!! warning "Enabling The Experimental Kubernetes Gateway Provider"
-
-    Since this provider is still experimental, it needs to be activated in the experimental section of the static configuration.
-
-    ```yaml tab="File (YAML)"
-    experimental:
-      kubernetesGateway: true
-
-    providers:
-      kubernetesGateway: {}
-      #...
-    ```
-
-    ```toml tab="File (TOML)"
-    [experimental]
-      kubernetesGateway = true
-
-    [providers.kubernetesGateway]
-    #...
-    ```
-
-    ```bash tab="CLI"
-    --experimental.kubernetesgateway=true --providers.kubernetesgateway=true #...
-    ```
+This provider supports Gateway API [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) specification.
 
 ## Requirements
 

@@ -1175,3 +1175,25 @@ entryPoints:
 ```
 
 {!traefik-for-business-applications.md!}
+
+## Systemd Socket Activation
+
+Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
+
+When a socket activation file descriptor name matches an EntryPoint name, the corresponding file descriptor will be used as the TCP listener for the matching EntryPoint.
+
+```bash
+systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypoints.web --entrypoints.websecure
+```
+
+!!! warning "EntryPoint Address"
+
+    When a socket activation file descriptor name matches an EntryPoint name its address configuration is ignored.     
+
+!!! warning "TCP Only"
+
+    Socket activation is not yet supported with UDP entryPoints.
+
+!!! warning "Docker Support"
+
+    Socket activation is not supported by Docker but works with Podman containers.

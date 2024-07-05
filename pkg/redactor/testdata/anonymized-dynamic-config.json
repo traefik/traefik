@@ -170,6 +170,7 @@
           "browserXssFilter": true,
           "customBrowserXSSValue": "xxxx",
           "contentSecurityPolicy": "xxxx",
+          "contentSecurityPolicyReportOnly": "xxxx",
           "publicKey": "xxxx",
           "referrerPolicy": "foo",
           "permissionsPolicy": "foo",

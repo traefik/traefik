@@ -152,6 +152,7 @@ http:
           - foobar
           - foobar
         minResponseBodyBytes: 42
+        defaultEncoding: foobar
     Middleware07:
       contentType:
         autoDetect: true
@@ -241,6 +242,7 @@ http:
         browserXssFilter: true
         customBrowserXSSValue: foobar
         contentSecurityPolicy: foobar
+        contentSecurityPolicyReportOnly: foobar
         publicKey: foobar
         referrerPolicy: foobar
         permissionsPolicy: foobar

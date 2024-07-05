@@ -219,7 +219,7 @@ func varGroupName(idx int) string {
 func braceIndices(s string) ([]int, error) {
 	var level, idx int
 	var idxs []int
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		switch s[i] {
 		case '{':
 			if level++; level == 1 {

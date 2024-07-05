@@ -9,7 +9,7 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   props: {
-    name: String
+    name: { type: String, default: undefined, required: false }
   },
   computed: {
     getLogoPath () {
