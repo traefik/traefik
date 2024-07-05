@@ -80,7 +80,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 			},
 		}
 		if err := p.client.UpdateTCPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
-			logger.Error().
+			logger.Warn().
 				Err(err).
 				Msg("Unable to update TCPRoute status")
 		}

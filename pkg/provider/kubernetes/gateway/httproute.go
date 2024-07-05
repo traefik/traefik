@@ -91,7 +91,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 			},
 		}
 		if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, status); err != nil {
-			logger.Error().
+			logger.Warn().
 				Err(err).
 				Msg("Unable to update HTTPRoute status")
 		}
