@@ -365,9 +365,9 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
 
 ??? warning "`forwardedHeaders.trustedIPs` with PROXY Protocol"
-    
-    Configured IPs are checked against the peer socket address,
-    and also against the PROXY Protocol header's `sourceAddr` value (if any).
+
+    Configured IPs are checked against the PROXY Protocol header's `sourceAddr` value (if any),
+    and also against the peer socket address.
 
 ??? info "`forwardedHeaders.insecure`"
 
