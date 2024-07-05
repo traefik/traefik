@@ -10,9 +10,21 @@
     address = ":8000"
     [entryPoints.trust.proxyProtocol]
       trustedIPs = ["127.0.0.1"]
+    [entryPoints.trust.forwardedHeaders]
+      trustedIPs = ["127.0.0.1"]
+
+  [entryPoints.trustPROXY]
+    address = ":8001"
+    [entryPoints.trustPROXY.proxyProtocol]
+      trustedIPs = ["127.0.0.1"]
+    [entryPoints.trustPROXY.forwardedHeaders]
+      trustedIPs = ["1.2.3.4"]
+
   [entryPoints.nottrust]
       address = ":9000"
       [entryPoints.nottrust.proxyProtocol]
+        trustedIPs = ["1.2.3.4"]
+      [entryPoints.nottrust.forwardedHeaders]
         trustedIPs = ["1.2.3.4"]
 
 [api]
