@@ -257,25 +257,28 @@ providers:
 _Optional, Default=""_
 
 If your socket has proxy and need HTTP BasicAuth, then you need config basicAuth.  
-When setting `basicAuth="username:password"`, you tell Traefik to use BasicAuth to connect Docker.  
+When setting `username` and `password`, tell Traefik to use BasicAuth to connect Docker.  
 
 Traefik will use base64 encode `username:password` and add it to Headers `Authorization`.  
 
 ```yaml tab="File (YAML)"
 providers:
   docker:
-    basicAuth: "username:password"
+    username: "traefik"
+    password: "traefik"
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.docker]
-  basicAuth = "username:password"
+  username= "traefik"
+  password= "traefik"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.basicAuth="username:password"
+--providers.docker.username="traefik"
+--providers.docker.password="traefik"
 # ...
 ```
 
