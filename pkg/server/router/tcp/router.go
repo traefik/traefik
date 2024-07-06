@@ -116,7 +116,23 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
+
+	// TODO: There should probably be a better way to handle multiple different protocols,
+	// Because this will become a bit of a mess if we have to add a new if statement for every new protocol
+	mysql, err := isMysql(br)
+
+	if err != nil {
+		conn.Close()
+		return
+	}
+
+	if mysql {
+		r.serveMysql(r.GetConn(conn, getPeeked(br)))
+		return
+	}
+
 	postgres, err := isPostgres(br)
+
 	if err != nil {
 		conn.Close()
 		return
@@ -131,6 +147,8 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		r.servePostgres(r.GetConn(conn, getPeeked(br)))
 		return
 	}
+
+
 
 	hello, err := clientHelloInfo(br)
 	if err != nil {
