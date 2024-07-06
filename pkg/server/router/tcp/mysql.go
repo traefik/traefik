@@ -6,6 +6,9 @@ import (
 	"encoding/binary"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/tcp"
+	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"sync"
+	"errors"
 )
 
 // isMysql determines whether the buffer contains the MySQL STARTTLS message.
@@ -76,4 +79,96 @@ func (r *Router) serveMysql(conn tcp.WriteCloser) {
 	log.Info().Msg("MySQL client sent a TLS Client Hello, success !")
 	log.Info().Msgf("Server Name: %s", hello.serverName)
 	log.Info().Msgf("Protocols: %v", hello.protos)
+
+	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
+	if err != nil {
+		log.Error().Err(err).Msg("Error while reading TCP connection data")
+		conn.Close()
+		return
+	}
+
+	// Contains also TCP TLS passthrough routes.
+	handlerTCPTLS, _ := r.muxerTCPTLS.Match(connData)
+	if handlerTCPTLS == nil {
+		conn.Close()
+		return
+	}
+
+	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough.
+	proxiedConn := r.GetConn(conn, hello.peeked)
+	if _, ok := handlerTCPTLS.(*tcp.TLSHandler); !ok {
+		log.Info().Msg("Passthrough mode")
+		proxiedConn = &mysqlConn{WriteCloser: proxiedConn}
+	}
+
+	handlerTCPTLS.ServeTCP(proxiedConn)
+}
+
+type mysqlConn struct {
+	tcp.WriteCloser
+
+	starttlsMsgSent       bool // whether we have already sent the STARTTLS handshake to the backend.
+	starttlsReplyReceived bool // whether we have already received the STARTTLS handshake reply from the backend.
+
+	// errChan makes sure that an error is returned if the first operation to ever
+	// happen on a mysqlConn is a Write (because it should instead be a Read).
+	errChanMu sync.Mutex
+	errChan   chan error
+}
+
+// Read reads bytes from the underlying connection (tcp.WriteCloser).
+// On first call, it actually only injects the PostgresStartTLSMsg,
+// in order to behave as a Postgres TLS client that initiates a STARTTLS handshake.
+// Read does not support concurrent calls.
+func (c *mysqlConn) Read(p []byte) (n int, err error) {
+	if c.starttlsMsgSent {
+		if err := <-c.errChan; err != nil {
+			return 0, err
+		}
+
+		return c.WriteCloser.Read(p)
+	}
+
+	defer func() {
+		c.starttlsMsgSent = true
+		c.errChanMu.Lock()
+		c.errChan = make(chan error)
+		c.errChanMu.Unlock()
+	}()
+
+	//copy(p, PostgresStartTLSMsg)
+	return 0, nil
+}
+
+// Write writes bytes to the underlying connection (tcp.WriteCloser).
+// On first call, it checks that the bytes to write (the ones provided by the backend)
+// match the PostgresStartTLSReply, and if yes it drops them (as the STARTTLS
+// handshake between the client and traefik has already taken place). Otherwise, an
+// error is transmitted through c.errChan, so that the second Read call gets it and
+// returns it up the stack.
+// Write does not support concurrent calls.
+func (c *mysqlConn) Write(p []byte) (n int, err error) {
+	if c.starttlsReplyReceived {
+		return c.WriteCloser.Write(p)
+	}
+
+	c.errChanMu.Lock()
+	if c.errChan == nil {
+		c.errChanMu.Unlock()
+		return 0, errors.New("initial read never happened")
+	}
+	c.errChanMu.Unlock()
+
+	defer func() {
+		c.starttlsReplyReceived = true
+	}()
+
+	//if len(p) != 1 || p[0] != PostgresStartTLSReply[0] {
+	//	c.errChan <- errors.New("invalid response from Postgres server")
+	//	return len(p), nil
+	//}
+
+	close(c.errChan)
+
+	return 0, nil
 }
