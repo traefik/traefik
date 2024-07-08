@@ -46,6 +46,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeadersRegex` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/cert` | `foobar` |

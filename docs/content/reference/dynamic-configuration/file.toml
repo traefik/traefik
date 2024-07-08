@@ -167,6 +167,7 @@
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
+        headerField = "foobar"
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
