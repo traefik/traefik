@@ -12,6 +12,14 @@ A Story of Labels, Services & Containers
 
 Attach labels to your services and let Traefik do the rest!
 
+One of the best feature of Traefik is to delegate the routing configuration to the application level.
+With Rancher, Traefik can leverage labels attached to a service to generate routing rules.
+
+!!! warning "Labels & sensitive data"
+
+    We recommend to *not* use labels to store sensitive data (certificates, credentials, etc).
+    Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
+
 !!! important "This provider is specific to Rancher 1.x."
     
     Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
