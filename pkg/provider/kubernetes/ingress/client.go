@@ -164,16 +164,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.watchedNamespaces = namespaces
 
-	notOwnedByHelm := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = "owner!=helm"
-	}
-
-	matchesLabelSelector := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = c.ingressLabelSelector
-	}
-
 	for _, ns := range namespaces {
-		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector))
+		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(k8s.TweakListOptionWithLabelSelector(c.ingressLabelSelector)))
 
 		_, err = factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -193,7 +185,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 		c.factoriesKube[ns] = factoryKube
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(k8s.TweakListOptionNotOwnedByHelm()))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
