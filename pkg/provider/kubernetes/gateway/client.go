@@ -84,6 +84,7 @@ type clientWrapper struct {
 
 	labelSelector       string
 	experimentalChannel bool
+	secretListOptions   *metav1.ListOptions
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -226,7 +227,17 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(k8s.TweakListOptionNotOwnedByHelm()))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			kinformers.WithNamespace(ns),
+			kinformers.WithTweakListOptions(
+				k8s.TweakListOptions(
+					k8s.TweakListOptionNotOwnedByHelm(),
+					k8s.TweakListMergeOptions(c.secretListOptions),
+				),
+			),
+		)
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
