@@ -29,6 +29,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -53,6 +54,7 @@ type Provider struct {
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	DisableIngressClassLookup bool                `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	NativeLBByDefault         bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	SecretListOptions         *metav1.ListOptions `description:"Secret list options to limit which secrets are available." json:"secretListOptions,omitempty" toml:"secretListOptions,omitempty" yaml:"secretListOptions,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -115,6 +117,8 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 	cl.ingressLabelSelector = p.LabelSelector
 	cl.disableIngressClassInformer = p.DisableIngressClassLookup
+	cl.secretListOptions = p.SecretListOptions
+
 	return cl, nil
 }
 
