@@ -59,6 +59,7 @@ type clientWrapper struct {
 	disableIngressClassInformer bool
 	watchedNamespaces           []string
 	serverVersion               *version.Version
+	secretListOptions           *metav1.ListOptions
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -164,16 +165,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.watchedNamespaces = namespaces
 
-	notOwnedByHelm := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = "owner!=helm"
-	}
-
-	matchesLabelSelector := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = c.ingressLabelSelector
-	}
-
 	for _, ns := range namespaces {
-		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector))
+		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(k8s.TweakListOptionWithLabelSelector(c.ingressLabelSelector)))
 
 		_, err = factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -193,7 +186,17 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 		c.factoriesKube[ns] = factoryKube
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(
+			c.clientset,
+			resyncPeriod,
+			kinformers.WithNamespace(ns),
+			kinformers.WithTweakListOptions(
+				k8s.TweakListOptions(
+					k8s.TweakListOptionNotOwnedByHelm(),
+					k8s.TweakListMergeOptions(c.secretListOptions),
+				),
+			),
+		)
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err

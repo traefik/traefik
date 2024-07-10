@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	traefikclientset "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	traefikinformers "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -62,7 +63,8 @@ type clientWrapper struct {
 	factoriesKube       map[string]kinformers.SharedInformerFactory
 	factoriesSecret     map[string]kinformers.SharedInformerFactory
 
-	labelSelector string
+	labelSelector     string
+	secretListOptions *metav1.ListOptions
 
 	isNamespaceAll    bool
 	watchedNamespaces []string
@@ -165,16 +167,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.watchedNamespaces = namespaces
 
-	notOwnedByHelm := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = "owner!=helm"
-	}
-
-	matchesLabelSelector := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = c.labelSelector
-	}
-
 	for _, ns := range namespaces {
-		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(matchesLabelSelector))
+		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(internalinterfaces.TweakListOptionsFunc(k8s.TweakListOptionWithLabelSelector(c.labelSelector))))
 		_, err := factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -226,7 +220,17 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			kinformers.WithNamespace(ns),
+			kinformers.WithTweakListOptions(
+				k8s.TweakListOptions(
+					k8s.TweakListOptionNotOwnedByHelm(),
+					k8s.TweakListMergeOptions(c.secretListOptions),
+				),
+			),
+		)
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err

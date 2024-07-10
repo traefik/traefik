@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -83,6 +84,7 @@ type clientWrapper struct {
 
 	labelSelector       string
 	experimentalChannel bool
+	secretListOptions   *metav1.ListOptions
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -173,10 +175,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.watchedNamespaces = namespaces
 
-	notOwnedByHelm := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = "owner!=helm"
-	}
-
 	labelSelectorOptions := func(options *metav1.ListOptions) {
 		options.LabelSelector = c.labelSelector
 	}
@@ -229,7 +227,17 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			kinformers.WithNamespace(ns),
+			kinformers.WithTweakListOptions(
+				k8s.TweakListOptions(
+					k8s.TweakListOptionNotOwnedByHelm(),
+					k8s.TweakListMergeOptions(c.secretListOptions),
+				),
+			),
+		)
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
