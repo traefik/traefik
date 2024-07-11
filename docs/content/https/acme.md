@@ -705,6 +705,109 @@ certificatesResolvers:
 # ...
 ```
 
+### `caCertificates`
+
+_Optional, Default=[]_
+
+Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caCertificates:
+        - path/certificates1.pem
+        - path/certificates2.pem
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caCertificates = [ "path/certificates1.pem", "path/certificates2.pem" ]
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caCertificates="path/certificates1.pem,path/certificates2.pem"
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
+### `caUseSystemCertPool`
+
+_Optional, Default=false_
+
+Define if the certificates pool must use a copy of the system cert pool.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caUseSystemCertPool: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caUseSystemCertPool = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caUseSystemCertPool=true
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SYSTEM_CERT_POOL`.
+    `LEGO_CA_SYSTEM_CERT_POOL` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
+### `caTlsServerName`
+
+_Optional, Default=""_
+
+Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caTlsServerName: "my-server"
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caTlsServerName = "my-server"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caTlsServerName="my-server"
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SERVER_NAME`.
+    `LEGO_CA_SERVER_NAME` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
 ## Fallback
 
 If Let's Encrypt is not reachable, the following certificates will apply:
