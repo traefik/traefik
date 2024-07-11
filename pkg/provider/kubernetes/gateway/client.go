@@ -52,7 +52,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, gatewayStatus gatev1.GatewayStatus) error
+	UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error
 	UpdateGatewayClassStatus(ctx context.Context, name string, condition metav1.Condition) error
 	UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error
 	UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TCPRouteStatus) error
@@ -420,7 +420,7 @@ func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name strin
 	return nil
 }
 
-func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, gatewayStatus gatev1.GatewayStatus) error {
+func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error {
 	if !c.isWatchedNamespace(gateway.Namespace) {
 		return fmt.Errorf("cannot update Gateway status %s/%s: namespace is not within watched namespaces", gateway.Namespace, gateway.Name)
 	}
@@ -433,12 +433,12 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 			return err
 		}
 
-		if gatewayStatusEquals(currentGateway.Status, gatewayStatus) {
+		if gatewayStatusEquals(currentGateway.Status, status) {
 			return nil
 		}
 
 		currentGateway = currentGateway.DeepCopy()
-		currentGateway.Status = gatewayStatus
+		currentGateway.Status = status
 
 		if _, err = c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, currentGateway, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
@@ -463,6 +463,8 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().HTTPRoutes().Lister().HTTPRoutes(route.Namespace).Get(route.Name)
 		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
@@ -485,6 +487,8 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 		}
 
 		if _, err = c.csGateway.GatewayV1().HTTPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
@@ -505,6 +509,8 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
 		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
@@ -527,6 +533,8 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 		}
 
 		if _, err = c.csGateway.GatewayV1alpha2().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
@@ -547,6 +555,8 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TLSRoutes().Lister().TLSRoutes(route.Namespace).Get(route.Name)
 		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
@@ -569,6 +579,8 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 		}
 
 		if _, err = c.csGateway.GatewayV1alpha2().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
