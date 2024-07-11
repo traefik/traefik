@@ -82,7 +82,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			},
 		}
 		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
-			logger.Error().
+			logger.Warn().
 				Err(err).
 				Msg("Unable to update TLSRoute status")
 		}

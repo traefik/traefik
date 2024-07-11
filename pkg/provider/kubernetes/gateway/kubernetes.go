@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -317,7 +318,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 		gatewayClassNames[gatewayClass.Name] = struct{}{}
 
-		err := p.client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
+		err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, metav1.Condition{
 			Type:               string(gatev1.GatewayClassConditionStatusAccepted),
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gatewayClass.Generation,
@@ -327,7 +328,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		})
 		if err != nil {
 			log.Ctx(ctx).
-				Error().
+				Warn().
 				Err(err).
 				Str("gateway_class", gatewayClass.Name).
 				Msg("Unable to update GatewayClass status")
@@ -370,16 +371,17 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			}
 		}
 
-		gatewayStatus, errG := p.makeGatewayStatus(gateway, listeners, addresses)
-		if err = p.client.UpdateGatewayStatus(gateway, gatewayStatus); err != nil {
+		gatewayStatus, err := p.makeGatewayStatus(gateway, listeners, addresses)
+		if err != nil {
 			logger.Error().
 				Err(err).
-				Msg("Unable to update Gateway status")
-		}
-		if errG != nil {
-			logger.Error().
-				Err(errG).
 				Msg("Unable to create Gateway status")
+		}
+
+		if err = p.client.UpdateGatewayStatus(ctx, ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus); err != nil {
+			logger.Warn().
+				Err(err).
+				Msg("Unable to update Gateway status")
 		}
 	}
 
