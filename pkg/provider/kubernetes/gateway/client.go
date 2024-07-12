@@ -11,9 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -61,9 +63,9 @@ type Client interface {
 	ListTLSRoutes() ([]*gatev1alpha2.TLSRoute, error)
 	ListNamespaces(selector labels.Selector) ([]string, error)
 	ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error)
+	ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 }
 
 type clientWrapper struct {
@@ -222,7 +224,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -543,16 +545,20 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	return service, exist, err
 }
 
-// GetEndpoints returns the named endpoints from the given namespace.
-func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
+// ListEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
+func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	endpoint, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
+	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
+	}
+	serviceSelector := labels.NewSelector()
+	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
 
-	return endpoint, exist, err
+	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
 }
 
 // GetSecret returns the named secret from the given namespace.

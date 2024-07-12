@@ -79,7 +79,7 @@ traefik --help
 # or
 
 docker run traefik[:version] --help
-# ex: docker run traefik:v3.0 --help
+# ex: docker run traefik:v3.1 --help
 ```
 
 Check the [CLI reference](../reference/static-configuration/cli.md "Link to CLI reference overview") for an overview about all available arguments.

@@ -211,16 +211,34 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
-Allow the Kubernetes gateway api provider usage. (Default: ```false```)
+(Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>`:  
 Local plugins configuration. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_MODULENAME`:  
-plugin's module name.
+Plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS`:  
+Plugin's settings (works only for wasm plugins).
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_ENVS`:  
+Environment variables to forward to the wasm guest.
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_MOUNTS`:  
+Directory to mount to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS`:  
+Plugin's settings (works only for wasm plugins).
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_ENVS`:  
+Environment variables to forward to the wasm guest.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_MOUNTS`:  
+Directory to mount to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.
@@ -1106,6 +1124,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_TRACING_OTLP_HTTP_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_TRACING_SAFEQUERYPARAMS`:  
+Query params to not redact.
 
 `TRAEFIK_TRACING_SAMPLERATE`:  
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

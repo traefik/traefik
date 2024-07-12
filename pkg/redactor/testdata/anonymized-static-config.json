@@ -388,19 +388,59 @@
     "plugins": {
       "Descriptor0": {
         "moduleName": "foobar",
-        "version": "foobar"
+        "version": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       },
       "Descriptor1": {
         "moduleName": "foobar",
-        "version": "foobar"
+        "version": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       }
     },
     "localPlugins": {
       "Descriptor0": {
-        "moduleName": "foobar"
+        "moduleName": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       },
       "Descriptor1": {
-        "moduleName": "foobar"
+        "moduleName": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       }
     }
   }

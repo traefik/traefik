@@ -3,7 +3,7 @@ version: "3.3"
 services:
 
   traefik:
-    image: "traefik:v3.0"
+    image: "traefik:v3.1"
     container_name: "traefik"
     command:
       #- "--log.level=DEBUG"

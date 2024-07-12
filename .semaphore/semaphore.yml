@@ -46,7 +46,7 @@ blocks:
         - name: GH_VERSION
           value: 2.32.1
         - name: CODENAME
-          value: "beaufort"
+          value: "comte"
       prologue:
         commands:
           - export VERSION=${SEMAPHORE_GIT_TAG_NAME}

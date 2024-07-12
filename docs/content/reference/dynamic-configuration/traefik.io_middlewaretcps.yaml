@@ -19,7 +19,7 @@ spec:
       openAPIV3Schema:
         description: |-
           MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-          More info: https://doc.traefik.io/traefik/v3.0/middlewares/overview/
+          More info: https://doc.traefik.io/traefik/v3.1/middlewares/overview/
         properties:
           apiVersion:
             description: |-
@@ -55,7 +55,7 @@ spec:
                 description: |-
                   IPAllowList defines the IPAllowList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/tcp/ipallowlist/
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -69,7 +69,7 @@ spec:
                   IPWhiteList defines the IPWhiteList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
                   Deprecated: please use IPAllowList instead.
-                  More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipwhitelist/
+                  More info: https://doc.traefik.io/traefik/v3.1/middlewares/tcp/ipwhitelist/
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of

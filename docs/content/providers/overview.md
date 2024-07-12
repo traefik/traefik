@@ -150,8 +150,8 @@ Below is the list of the currently supported providers in Traefik.
 
 !!! info "More Providers"
 
-    The current version of Traefik does not yet support every provider that Traefik v1.7 did.
-    See the [previous version (v1.7)](https://doc.traefik.io/traefik/v1.7/) for more providers.
+    The current version of Traefik does not yet support every provider that Traefik v2.11 did.
+    See the [previous version (v2.11)](https://doc.traefik.io/traefik/v2.11/) for more information.
 
 ### Configuration Reload Frequency
 
