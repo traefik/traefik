@@ -18,6 +18,11 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 {!kubernetes-requirements.md!}
 
+!!! info "Helm Chart"
+
+    When using the Traefik [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you. 
+    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L130).
+
 1. Install/update the Kubernetes Gateway API CRDs.
 
     ```bash
@@ -32,9 +37,8 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
-3. Use the [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart) or a custom Traefik Deployment, 
-   and enable the `kubernetesGateway` provider by adding the following configuration flag to the static configuration.
-    
+3. Deploy Traefik and enable the `kubernetesGateway` provider in the static configuration as detailed below:
+       
        ```yaml tab="File (YAML)"
        providers:
          kubernetesGateway: {}
