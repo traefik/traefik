@@ -457,9 +457,13 @@ IP: fe80::d873:20ff:fef5:be86
 
 ## Using Traefik middleware as HTTPRoute filter
 
-The Gateway API specification provides an extension point that Traefik uses to support its HTTP middlewares through its [Middleware CRD](../providers/kubernetes-crd.md#kind-middleware), enabling their use as `HTTPRoute` filters.
+An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
 
-An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the Traefik routing infrastructure.
+There are three types of filters:
+
+- **Core:** Mandatory filters for every Gateway controller, such as `RequestHeaderModifier` and `RequestRedirect`.
+- **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
+- **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](https://doc.traefik.io/traefik/middlewares/http/overview/) supported through the [Middleware CRD](../providers/kubernetes-crd.md#kind-middleware).
 
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
