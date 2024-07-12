@@ -35,10 +35,16 @@ rules:
       - ""
     resources:
       - services
-      - endpoints
       - secrets
     verbs:
       - get
+      - list
+      - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
       - list
       - watch
   - apiGroups:
@@ -130,7 +136,7 @@ spec:
       serviceAccountName: traefik-account
       containers:
         - name: traefik
-          image: traefik:v3.0
+          image: traefik:v3.1
           args:
             - --api.insecure
             - --providers.kubernetesingress

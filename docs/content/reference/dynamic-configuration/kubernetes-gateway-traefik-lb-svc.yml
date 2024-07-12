@@ -25,7 +25,7 @@ spec:
       serviceAccountName: traefik-controller
       containers:
         - name: traefik
-          image: traefik:v3.0
+          image: traefik:v3.1
           args:
             - --entryPoints.web.address=:80
             - --entryPoints.websecure.address=:443

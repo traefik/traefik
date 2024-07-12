@@ -125,7 +125,7 @@ func Test_parseServiceConfig(t *testing.T) {
 					ServersScheme:    "protocol",
 					ServersTransport: "foobar@file",
 					PassHostHeader:   Bool(true),
-					NativeLB:         true,
+					NativeLB:         Bool(true),
 				},
 			},
 		},

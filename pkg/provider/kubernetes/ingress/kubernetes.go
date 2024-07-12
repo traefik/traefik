@@ -52,6 +52,7 @@ type Provider struct {
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	DisableIngressClassLookup bool                `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
+	NativeLBByDefault         bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -134,7 +135,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.AllowExternalNameServices {
-		logger.Warn().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+		logger.Info().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -234,7 +235,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
-		ctx = logger.WithContext(ctx)
+		ctxIngress := logger.WithContext(ctx)
 
 		if !p.shouldProcessIngress(ingress, ingressClasses) {
 			continue
@@ -246,7 +247,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
-		err = getCertificates(ctx, ingress, client, certConfigs)
+		err = getCertificates(ctxIngress, ingress, client, certConfigs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error configuring TLS")
 		}
@@ -276,9 +277,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule:     "PathPrefix(`/`)",
-				Priority: math.MinInt32,
-				Service:  "default-backend",
+				Rule:       "PathPrefix(`/`)",
+				RuleSyntax: "v3",
+				Priority:   math.MinInt32,
+				Service:    "default-backend",
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
@@ -287,7 +289,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.TLS = rtConfig.Router.TLS
 			}
 
-			p.applyRouterTransform(ctx, rt, ingress)
+			p.applyRouterTransform(ctxIngress, rt, ingress)
 
 			conf.HTTP.Routers["default-router"] = rt
 			conf.HTTP.Services["default-backend"] = service
@@ -334,7 +336,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				rt := loadRouter(rule, pa, rtConfig, serviceName)
 
-				p.applyRouterTransform(ctx, rt, ingress)
+				p.applyRouterTransform(ctxIngress, rt, ingress)
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host+pa.Path), "-")
 
@@ -571,6 +573,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return nil, err
 	}
 
+	nativeLB := p.NativeLBByDefault
+
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
 
@@ -582,19 +586,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
 
-		if svcConfig.Service.NativeLB {
-			address, err := getNativeServiceAddress(*service, portSpec)
-			if err != nil {
-				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
-			}
-
-			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
-
-			svc.LoadBalancer.Servers = []dynamic.Server{
-				{URL: fmt.Sprintf("%s://%s", protocol, address)},
-			}
-
-			return svc, nil
+		if svcConfig.Service.NativeLB != nil {
+			nativeLB = *svcConfig.Service.NativeLB
 		}
 
 		if svcConfig.Service.NodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
@@ -644,36 +637,55 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return svc, nil
 	}
 
-	endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.Service.Name)
-	if endpointsErr != nil {
-		return nil, endpointsErr
+	if nativeLB {
+		address, err := getNativeServiceAddress(*service, portSpec)
+		if err != nil {
+			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+		}
+
+		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+		svc.LoadBalancer.Servers = []dynamic.Server{
+			{URL: fmt.Sprintf("%s://%s", protocol, address)},
+		}
+
+		return svc, nil
 	}
 
-	if !endpointsExists {
-		return nil, errors.New("endpoints not found")
+	endpointSlices, err := client.GetEndpointSlicesForService(namespace, backend.Service.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
-	for _, subset := range endpoints.Subsets {
+	addresses := map[string]struct{}{}
+	for _, endpointSlice := range endpointSlices {
 		var port int32
-		for _, p := range subset.Ports {
-			if portName == p.Name {
-				port = p.Port
+		for _, p := range endpointSlice.Ports {
+			if portName == *p.Name {
+				port = *p.Port
 				break
 			}
 		}
-
 		if port == 0 {
 			continue
 		}
 
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
-		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+		for _, endpoint := range endpointSlice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				continue
+			}
 
-			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-			})
+			for _, address := range endpoint.Addresses {
+				if _, ok := addresses[address]; ok {
+					continue
+				}
+
+				addresses[address] = struct{}{}
+				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+				})
+			}
 		}
 	}
 

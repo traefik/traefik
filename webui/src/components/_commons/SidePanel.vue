@@ -23,6 +23,7 @@ export default defineComponent({
   props: {
     isOpen: Boolean
   },
+  emits: ['onClose'],
   methods: {
     close () {
       this.$emit('onClose')

@@ -2433,6 +2433,182 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "with one external service and health check",
+			paths: []string{"services.yml", "with_one_external_service_and_health_check.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:            "/health",
+									Timeout:         5000000000,
+									Interval:        15000000000,
+									FollowRedirects: Bool(true),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "with two external services and health check",
+			paths: []string{"services.yml", "with_two_external_services_and_health_check.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-external-svc-443",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-external-svc-with-https-443",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-external-svc-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:            "/health1",
+									Timeout:         5000000000,
+									Interval:        15000000000,
+									FollowRedirects: Bool(true),
+								},
+							},
+						},
+						"default-external-svc-with-https-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:            "/health2",
+									Timeout:         5000000000,
+									Interval:        20000000000,
+									FollowRedirects: Bool(true),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "with one external service and one regular service and health check",
+			paths: []string{"services.yml", "with_one_external_svc_and_regular_svc_health_check.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-external-svc-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:            "/health1",
+									Timeout:         5000000000,
+									Interval:        15000000000,
+									FollowRedirects: Bool(true),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                "services lb, servers lb, and mirror service, all in a wrr with different namespaces",
 			allowCrossNamespace: true,
 			paths:               []string{"with_namespaces.yml"},
@@ -4444,9 +4620,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:               "IngressRoute, service with multiple subsets",
+			desc:               "IngressRoute, service with multiple endpoint addresses on endpointslice",
 			allowEmptyServices: true,
-			paths:              []string{"services.yml", "with_multiple_subsets.yml"},
+			paths:              []string{"services.yml", "with_multiple_endpointaddresses.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4472,6 +4648,66 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test-route-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+									{
+										URL: "http://10.10.0.5:80",
+									},
+									{
+										URL: "http://10.10.0.6:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:               "IngressRoute, service with duplicated endpointaddresses",
+			allowEmptyServices: true,
+			paths:              []string{"services.yml", "with_duplicated_endpointaddresses.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
 									{
 										URL: "http://10.10.0.3:8080",
 									},
@@ -4550,7 +4786,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-without-endpoints-subsets-80",
+										Name:   "default-whoami-without-endpointslice-endpoints-80",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
@@ -4558,10 +4794,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-test-mirror": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami-without-endpoints-subsets-80",
+								Service: "default-whoami-without-endpointslice-endpoints-80",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name: "default-whoami-without-endpoints-subsets-80",
+										Name: "default-whoami-without-endpointslice-endpoints-80",
 									},
 									{
 										Name: "default-test-weighted",
@@ -4569,7 +4805,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-without-endpoints-subsets-80": {
+						"default-whoami-without-endpointslice-endpoints-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
@@ -4621,6 +4857,87 @@ func TestLoadIngressRoutes(t *testing.T) {
 			assert.Equal(t, test.expected, conf)
 		})
 	}
+}
+
+func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
+	wantConf := &dynamic.Configuration{
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+		},
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
+				"default-test-route-6b204d94623b3df4370c": {
+					EntryPoints: []string{"foo"},
+					Service:     "default-test-route-6b204d94623b3df4370c",
+					Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+					Priority:    12,
+				},
+			},
+			Middlewares: map[string]*dynamic.Middleware{},
+			Services: map[string]*dynamic.Service{
+				"default-test-route-6b204d94623b3df4370c": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						PassHostHeader: Bool(true),
+						ResponseForwarding: &dynamic.ResponseForwarding{
+							FlushInterval: ptypes.Duration(100 * time.Millisecond),
+						},
+					},
+				},
+			},
+			ServersTransports: map[string]*dynamic.ServersTransport{},
+		},
+		TLS: &dynamic.TLSConfiguration{},
+	}
+	wantServers := []dynamic.Server{
+		{
+			URL: "http://10.10.0.3:8080",
+		},
+		{
+			URL: "http://10.10.0.4:8080",
+		},
+		{
+			URL: "http://10.10.0.5:8080",
+		},
+		{
+			URL: "http://10.10.0.6:8080",
+		},
+	}
+
+	k8sObjects, crdObjects := readResources(t, []string{"services.yml", "with_multiple_endpointslices.yml"})
+
+	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+	client := newClientImpl(kubeClient, crdClient)
+
+	stopCh := make(chan struct{})
+
+	eventCh, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	if k8sObjects != nil || crdObjects != nil {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	p := Provider{}
+	conf := p.loadConfigurationFromCRD(context.Background(), client)
+
+	service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
+	require.True(t, ok)
+	require.NotNil(t, service)
+	require.NotNil(t, service.LoadBalancer)
+	assert.ElementsMatch(t, wantServers, service.LoadBalancer.Servers)
+
+	service.LoadBalancer.Servers = nil
+	assert.Equal(t, wantConf, conf)
 }
 
 func TestLoadIngressRouteUDPs(t *testing.T) {
@@ -7360,4 +7677,340 @@ func (p *extensionBuilderRegistryMock) RegisterBackendFuncs(group, kind string, 
 	}
 
 	p.groupKindBackendFuncs[group][kind] = builderFunc
+}
+
+func TestGlobalNativeLB(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		ingressClass      string
+		paths             []string
+		NativeLBByDefault bool
+		expected          *dynamic.Configuration
+	}{
+		{
+			desc: "Empty",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:              "HTTP with global native Service LB",
+			paths:             []string{"services.yml", "with_global_native_service_lb.yml"},
+			NativeLBByDefault: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers: map[string]*dynamic.Router{
+						"default-global-native-lb-6f97418635c7e18853da": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-global-native-lb-6f97418635c7e18853da",
+							Rule:        "Host(`foo.com`)",
+							Priority:    0,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-global-native-lb-6f97418635c7e18853da": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTP with native Service LB in ingressroute",
+			paths: []string{"services.yml", "with_native_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6f97418635c7e18853da": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6f97418635c7e18853da",
+							Rule:        "Host(`foo.com`)",
+							Priority:    0,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6f97418635c7e18853da": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:              "TCP with global native Service LB",
+			paths:             []string{"tcp/services.yml", "tcp/with_global_native_service_lb.yml"},
+			NativeLBByDefault: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-global-native-lb-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-global-native-lb-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-global-native-lb-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "TCP with native Service LB in ingressroute",
+			paths: []string{"tcp/services.yml", "tcp/with_native_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDP with native Service LB in ingressroute",
+			paths: []string{"udp/services.yml", "udp/with_native_service_lb.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:              "UDP with global native Service LB",
+			paths:             []string{"udp/services.yml", "udp/with_global_native_service_lb.yml"},
+			NativeLBByDefault: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-global-native-lb-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-global-native-lb-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-global-native-lb-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var k8sObjects []runtime.Object
+			var crdObjects []runtime.Object
+			for _, path := range test.paths {
+				yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
+				if err != nil {
+					panic(err)
+				}
+
+				objects := k8s.MustParseYaml(yamlContent)
+				for _, obj := range objects {
+					switch o := obj.(type) {
+					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
+						k8sObjects = append(k8sObjects, o)
+					case *traefikv1alpha1.IngressRoute:
+						crdObjects = append(crdObjects, o)
+					case *traefikv1alpha1.IngressRouteTCP:
+						crdObjects = append(crdObjects, o)
+					case *traefikv1alpha1.IngressRouteUDP:
+						crdObjects = append(crdObjects, o)
+					case *traefikv1alpha1.Middleware:
+						crdObjects = append(crdObjects, o)
+					case *traefikv1alpha1.TraefikService:
+						crdObjects = append(crdObjects, o)
+					case *traefikv1alpha1.TLSOption:
+						crdObjects = append(crdObjects, o)
+					case *traefikv1alpha1.TLSStore:
+						crdObjects = append(crdObjects, o)
+					default:
+					}
+				}
+			}
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll([]string{"default", "cross-ns"}, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{NativeLBByDefault: test.NativeLBByDefault}
+
+			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			assert.Equal(t, test.expected, conf)
+		})
+	}
 }

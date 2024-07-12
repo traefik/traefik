@@ -3878,7 +3878,7 @@ func TestFilterHealthStatuses(t *testing.T) {
 			err := p.Init()
 			require.NoError(t, err)
 
-			for i := 0; i < len(test.items); i++ {
+			for i := range len(test.items) {
 				var err error
 				test.items[i].ExtraConf, err = p.getExtraConf(test.items[i].Labels)
 				require.NoError(t, err)

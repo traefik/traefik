@@ -28,11 +28,11 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'PanelEntry',
   props: {
-    address: String,
-    name: String,
-    type: String,
+    address: { type: String, default: undefined, required: false },
+    name: { type: String, default: undefined, required: false },
+    type: { type: String, default: undefined, required: false },
     focus: Boolean,
-    exSize: Number
+    exSize: { type: Number, default: undefined, required: false }
   }
 })
 </script>

@@ -29,10 +29,16 @@ which in turn will create the resulting routers, services, handlers, etc.
           - ""
         resources:
           - services
-          - endpoints
           - secrets
         verbs:
           - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
+        verbs:
           - list
           - watch
       - apiGroups:
@@ -124,7 +130,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.0
+              image: traefik:v3.1
               args:
                 - --entryPoints.web.address=:80
                 - --providers.kubernetesingress
@@ -427,8 +433,15 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
@@ -522,7 +535,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.0
+              image: traefik:v3.1
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls
@@ -612,8 +625,15 @@ For more options, please refer to the available [annotations](#on-ingress).
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
@@ -708,7 +728,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.0
+              image: traefik:v3.1
               args:
                 - --entryPoints.websecure.address=:443
                 - --providers.kubernetesingress
@@ -832,7 +852,7 @@ TLS certificates can be managed in Secrets objects.
     whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
 
     One alternative is to use an `ExternalName` service to forward requests to the Kubernetes service through DNS.
-    To do so, one must [allow external name services](https://doc.traefik.io/traefik/providers/kubernetes-ingress/#allowexternalnameservices "Link to docs about allowing external name services").
+    To do so, one must [allow external name services](../providers/kubernetes-ingress/#allowexternalnameservices "Link to docs about allowing external name services").
 
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.
 Although Traefik will connect directly to the endpoints (pods),

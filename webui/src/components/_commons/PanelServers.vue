@@ -102,7 +102,7 @@ export default defineComponent({
     AvatarState
   },
   props: {
-    data: Object,
+    data: { type: Object, default: undefined, required: false },
     dense: Boolean,
     hasStatus: Boolean
   },

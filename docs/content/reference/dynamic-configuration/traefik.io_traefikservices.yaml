@@ -22,7 +22,7 @@ spec:
           TraefikService object allows to:
           - Apply weight to Services on load-balancing
           - Mirror traffic on services
-          More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#kind-traefikservice
+          More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#kind-traefikservice
         properties:
           apiVersion:
             description: |-
@@ -47,6 +47,67 @@ spec:
               mirroring:
                 description: Mirroring defines the Mirroring service configuration.
                 properties:
+                  healthCheck:
+                    description: Healthcheck defines health checks for ExternalName
+                      services.
+                    properties:
+                      followRedirects:
+                        description: |-
+                          FollowRedirects defines whether redirects should be followed during the health check calls.
+                          Default: true
+                        type: boolean
+                      headers:
+                        additionalProperties:
+                          type: string
+                        description: Headers defines custom headers to be sent to
+                          the health check endpoint.
+                        type: object
+                      hostname:
+                        description: Hostname defines the value of hostname in the
+                          Host header of the health check request.
+                        type: string
+                      interval:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          Interval defines the frequency of the health check calls.
+                          Default: 30s
+                        x-kubernetes-int-or-string: true
+                      method:
+                        description: Method defines the healthcheck method.
+                        type: string
+                      mode:
+                        description: |-
+                          Mode defines the health check mode.
+                          If defined to grpc, will use the gRPC health check protocol to probe the server.
+                          Default: http
+                        type: string
+                      path:
+                        description: Path defines the server URL path for the health
+                          check endpoint.
+                        type: string
+                      port:
+                        description: Port defines the server URL port for the health
+                          check endpoint.
+                        type: integer
+                      scheme:
+                        description: Scheme replaces the server URL scheme for the
+                          health check endpoint.
+                        type: string
+                      status:
+                        description: Status defines the expected HTTP status code
+                          of the response to the health check request.
+                        type: integer
+                      timeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                          Default: 5s
+                        x-kubernetes-int-or-string: true
+                    type: object
                   kind:
                     description: Kind defines the kind of the Service.
                     enum:
@@ -66,6 +127,67 @@ spec:
                     items:
                       description: MirrorService holds the mirror configuration.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for ExternalName
+                            services.
+                          properties:
+                            followRedirects:
+                              description: |-
+                                FollowRedirects defines whether redirects should be followed during the health check calls.
+                                Default: true
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              description: Headers defines custom headers to be sent
+                                to the health check endpoint.
+                              type: object
+                            hostname:
+                              description: Hostname defines the value of hostname
+                                in the Host header of the health check request.
+                              type: string
+                            interval:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Interval defines the frequency of the health check calls.
+                                Default: 30s
+                              x-kubernetes-int-or-string: true
+                            method:
+                              description: Method defines the healthcheck method.
+                              type: string
+                            mode:
+                              description: |-
+                                Mode defines the health check mode.
+                                If defined to grpc, will use the gRPC health check protocol to probe the server.
+                                Default: http
+                              type: string
+                            path:
+                              description: Path defines the server URL path for the
+                                health check endpoint.
+                              type: string
+                            port:
+                              description: Port defines the server URL port for the
+                                health check endpoint.
+                              type: integer
+                            scheme:
+                              description: Scheme replaces the server URL scheme for
+                                the health check endpoint.
+                              type: string
+                            status:
+                              description: Status defines the expected HTTP status
+                                code of the response to the health check request.
+                              type: integer
+                            timeout:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                                Default: 5s
+                              x-kubernetes-int-or-string: true
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -141,7 +263,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -248,7 +370,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                      More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -300,6 +422,67 @@ spec:
                       description: Service defines an upstream HTTP service to proxy
                         traffic to.
                       properties:
+                        healthCheck:
+                          description: Healthcheck defines health checks for ExternalName
+                            services.
+                          properties:
+                            followRedirects:
+                              description: |-
+                                FollowRedirects defines whether redirects should be followed during the health check calls.
+                                Default: true
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              description: Headers defines custom headers to be sent
+                                to the health check endpoint.
+                              type: object
+                            hostname:
+                              description: Hostname defines the value of hostname
+                                in the Host header of the health check request.
+                              type: string
+                            interval:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Interval defines the frequency of the health check calls.
+                                Default: 30s
+                              x-kubernetes-int-or-string: true
+                            method:
+                              description: Method defines the healthcheck method.
+                              type: string
+                            mode:
+                              description: |-
+                                Mode defines the health check mode.
+                                If defined to grpc, will use the gRPC health check protocol to probe the server.
+                                Default: http
+                              type: string
+                            path:
+                              description: Path defines the server URL path for the
+                                health check endpoint.
+                              type: string
+                            port:
+                              description: Port defines the server URL port for the
+                                health check endpoint.
+                              type: integer
+                            scheme:
+                              description: Scheme replaces the server URL scheme for
+                                the health check endpoint.
+                              type: string
+                            status:
+                              description: Status defines the expected HTTP status
+                                code of the response to the health check request.
+                              type: integer
+                            timeout:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+                                Default: 5s
+                              x-kubernetes-int-or-string: true
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -370,7 +553,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.0/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.1/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -417,7 +600,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+                      More info: https://doc.traefik.io/traefik/v3.1/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.

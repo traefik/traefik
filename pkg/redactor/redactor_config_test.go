@@ -214,6 +214,7 @@ func init() {
 					BrowserXSSFilter:                  true,
 					CustomBrowserXSSValue:             "foo",
 					ContentSecurityPolicy:             "foo",
+					ContentSecurityPolicyReportOnly:   "foo",
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
 					PermissionsPolicy:                 "foo",
@@ -906,18 +907,34 @@ func TestDo_staticConfiguration(t *testing.T) {
 			"Descriptor0": {
 				ModuleName: "foobar",
 				Version:    "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 			"Descriptor1": {
 				ModuleName: "foobar",
 				Version:    "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 		},
 		LocalPlugins: map[string]plugins.LocalDescriptor{
 			"Descriptor0": {
 				ModuleName: "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 			"Descriptor1": {
 				ModuleName: "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 		},
 	}

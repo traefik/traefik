@@ -106,6 +106,7 @@ func (i *Provider) acme(cfg *dynamic.Configuration) {
 	if len(eps) > 0 {
 		rt := &dynamic.Router{
 			Rule:        "PathPrefix(`/.well-known/acme-challenge/`)",
+			RuleSyntax:  "v3",
 			EntryPoints: eps,
 			Service:     "acme-http@internal",
 			Priority:    math.MaxInt,
@@ -141,6 +142,7 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 
 		rt := &dynamic.Router{
 			Rule:        "HostRegexp(`^.+$`)",
+			RuleSyntax:  "v3",
 			EntryPoints: []string{name},
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
@@ -241,6 +243,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 			Service:     "api@internal",
 			Priority:    math.MaxInt - 1,
 			Rule:        "PathPrefix(`/api`)",
+			RuleSyntax:  "v3",
 		}
 
 		if i.staticCfg.API.Dashboard {
@@ -249,6 +252,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 				Service:     "dashboard@internal",
 				Priority:    math.MaxInt - 2,
 				Rule:        "PathPrefix(`/`)",
+				RuleSyntax:  "v3",
 				Middlewares: []string{"dashboard_redirect@internal", "dashboard_stripprefix@internal"},
 			}
 
@@ -270,6 +274,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 				Service:     "api@internal",
 				Priority:    math.MaxInt - 1,
 				Rule:        "PathPrefix(`/debug`)",
+				RuleSyntax:  "v3",
 			}
 		}
 	}
@@ -292,6 +297,7 @@ func (i *Provider) pingConfiguration(cfg *dynamic.Configuration) {
 			Service:     "ping@internal",
 			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/ping`)",
+			RuleSyntax:  "v3",
 		}
 	}
 
@@ -309,6 +315,7 @@ func (i *Provider) restConfiguration(cfg *dynamic.Configuration) {
 			Service:     "rest@internal",
 			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/api/providers`)",
+			RuleSyntax:  "v3",
 		}
 	}
 
@@ -326,6 +333,7 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 			Service:     "prometheus@internal",
 			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/metrics`)",
+			RuleSyntax:  "v3",
 		}
 	}
 

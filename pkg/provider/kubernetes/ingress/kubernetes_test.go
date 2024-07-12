@@ -528,9 +528,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"default-router": {
-							Rule:     "PathPrefix(`/`)",
-							Service:  "default-backend",
-							Priority: math.MinInt32,
+							Rule:       "PathPrefix(`/`)",
+							RuleSyntax: "v3",
+							Service:    "default-backend",
+							Priority:   math.MinInt32,
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -993,9 +994,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"default-router": {
-							Rule:     "PathPrefix(`/`)",
-							Service:  "default-backend",
-							Priority: math.MinInt32,
+							Rule:       "PathPrefix(`/`)",
+							RuleSyntax: "v3",
+							Service:    "default-backend",
+							Priority:   math.MinInt32,
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1469,9 +1471,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"default-router": {
-							Rule:     "PathPrefix(`/`)",
-							Priority: math.MinInt32,
-							Service:  "default-backend",
+							Rule:       "PathPrefix(`/`)",
+							RuleSyntax: "v3",
+							Priority:   math.MinInt32,
+							Service:    "default-backend",
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1911,6 +1914,87 @@ func TestGetCertificates(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, test.result, tlsConfigs)
 			}
+		})
+	}
+}
+
+func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		ingressClass string
+		expected     *dynamic.Configuration
+	}{
+		{
+			desc: "Ingress with native service lb",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with native lb by default",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-global-native-lb-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "default-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			clientMock := newClientMock(generateTestFilename(test.desc))
+
+			p := Provider{
+				IngressClass:      test.ingressClass,
+				NativeLBByDefault: true,
+			}
+			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+
+			assert.Equal(t, test.expected, conf)
 		})
 	}
 }

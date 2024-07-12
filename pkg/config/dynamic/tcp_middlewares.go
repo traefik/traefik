@@ -15,7 +15,7 @@ type TCPMiddleware struct {
 // TCPInFlightConn holds the TCP InFlightConn middleware configuration.
 // This middleware prevents services from being overwhelmed with high load,
 // by limiting the number of allowed simultaneous connections for one IP.
-// More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/inflightconn/
+// More info: https://doc.traefik.io/traefik/v3.1/middlewares/tcp/inflightconn/
 type TCPInFlightConn struct {
 	// Amount defines the maximum amount of allowed simultaneous connections.
 	// The middleware closes the connection if there are already amount connections opened.
@@ -35,7 +35,7 @@ type TCPIPWhiteList struct {
 
 // TCPIPAllowList holds the TCP IPAllowList middleware configuration.
 // This middleware limits allowed requests based on the client IP.
-// More info: https://doc.traefik.io/traefik/v3.0/middlewares/tcp/ipallowlist/
+// More info: https://doc.traefik.io/traefik/v3.1/middlewares/tcp/ipallowlist/
 type TCPIPAllowList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`

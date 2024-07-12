@@ -31,10 +31,10 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
     ```bash
     # Install Traefik Resource Definitions:
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
     
     # Install RBAC for Traefik:
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
     ```
 
 ## Resource Configuration
@@ -58,7 +58,7 @@ For this reason, users can run multiple instances of Traefik at the same time to
 
 When using a single instance of Traefik with Let's Encrypt, you should encounter no issues. However, this could be a single point of failure.
 Unfortunately, it is not possible to run multiple instances of Traefik Proxy 2.0 with Let's Encrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request and subsequent responses.
-Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance that feature was dropped in 2.0.
+Early versions (v1.x) of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance that feature was dropped in 2.0.
 
 If you need Let's Encrypt with HA in a Kubernetes environment, we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/), which includes distributed Let's Encrypt as a supported feature.
 
@@ -183,7 +183,7 @@ _Optional, Default: ""_
 
 A label selector can be defined to filter on specific resource objects only,
 this applies only to Traefik [Custom Resources](../routing/providers/kubernetes-crd.md#custom-resource-definition-crd)
-and has no effect on Kubernetes `Secrets`, `Endpoints` and `Services`.
+and has no effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.
 If left empty, Traefik processes all resource objects in the configured namespaces.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
@@ -335,6 +335,30 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetescrd.allowexternalnameservices=true
+```
+
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the IngressRoute `nativeLB` option [documentation](../routing/providers/kubernetes-crd.md#load-balancing).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.nativeLBByDefault=true
 ```
 
 ## Full Example

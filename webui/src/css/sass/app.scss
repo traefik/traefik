@@ -121,6 +121,14 @@ body {
   border-radius: 8px;
 }
 
+.app-card-as-chip {
+  box-shadow: none;
+
+  .q-card__section {
+    padding: 5px !important;
+  }
+}
+
 // Chips
 .app-chip {
   border-radius: 8px;

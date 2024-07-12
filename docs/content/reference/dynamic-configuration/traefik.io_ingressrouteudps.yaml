@@ -43,7 +43,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.1/routing/entrypoints/
                   Default: all.
                 items:
                   type: string

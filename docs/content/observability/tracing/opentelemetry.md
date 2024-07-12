@@ -5,6 +5,8 @@ description: "Traefik supports several tracing backends, including OpenTelemetry
 
 # OpenTelemetry
 
+Traefik Proxy follows [official OpenTelemetry semantic conventions v1.26.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md).
+
 To enable the OpenTelemetry tracer:
 
 ```yaml tab="File (YAML)"

@@ -16,12 +16,12 @@ You can install Traefik with the following flavors:
 
 Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with one sample configuration file:
 
-* [YAML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.yml)
-* [TOML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.toml)
+* [YAML](https://raw.githubusercontent.com/traefik/traefik/v3.1/traefik.sample.yml)
+* [TOML](https://raw.githubusercontent.com/traefik/traefik/v3.1/traefik.sample.toml)
 
 ```shell
 docker run -d -p 8080:8080 -p 80:80 \
-    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v3.0
+    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v3.1
 ```
 
 For more details, go to the [Docker provider documentation](../providers/docker.md)
@@ -29,22 +29,17 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 !!! tip
 
     * Prefer a fixed version than the latest that could be an unexpected version.
-    ex: `traefik:v3.0`
+    ex: `traefik:v3.1`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
     * Any orchestrator using docker images can fetch the official Traefik docker image.
 
 ## Use the Helm Chart
 
-!!! warning
-
-    The Traefik Chart from
-    [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://doc.traefik.io/traefik/v1.7).
-
 Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/traefik/traefik-helm-chart>.
 
 Ensure that the following requirements are met:
 
-* Kubernetes 1.16+
+* Kubernetes 1.22+
 * Helm version 3.9+ is [installed](https://helm.sh/docs/intro/install/)
 
 Add Traefik Labs chart repository to Helm:

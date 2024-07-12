@@ -237,17 +237,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 		return nil, err
 	}
 
-	if svc.NativeLB {
-		address, err := getNativeServiceAddress(*service, *svcPort)
-		if err != nil {
-			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
-		}
-
-		return []dynamic.TCPServer{{Address: address}}, nil
-	}
-
 	var servers []dynamic.TCPServer
-
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
@@ -280,38 +270,58 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
-		if endpointsErr != nil {
-			return nil, endpointsErr
+		nativeLB := p.NativeLBByDefault
+		if svc.NativeLB != nil {
+			nativeLB = *svc.NativeLB
+		}
+		if nativeLB {
+			address, err := getNativeServiceAddress(*service, *svcPort)
+			if err != nil {
+				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			}
+
+			return []dynamic.TCPServer{{Address: address}}, nil
 		}
 
-		if !endpointsExists {
-			return nil, errors.New("endpoints not found")
+		endpointSlices, err := client.GetEndpointSlicesForService(namespace, svc.Name)
+		if err != nil {
+			return nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
 
-		if len(endpoints.Subsets) == 0 && !p.AllowEmptyServices {
-			return nil, errors.New("subset not found")
-		}
-
-		var port int32
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if svcPort.Name == p.Name {
-					port = p.Port
+		addresses := map[string]struct{}{}
+		for _, endpointSlice := range endpointSlices {
+			var port int32
+			for _, p := range endpointSlice.Ports {
+				if svcPort.Name == *p.Name {
+					port = *p.Port
 					break
 				}
 			}
-
 			if port == 0 {
-				return nil, errors.New("cannot define a port")
+				continue
 			}
 
-			for _, addr := range subset.Addresses {
-				servers = append(servers, dynamic.TCPServer{
-					Address: net.JoinHostPort(addr.IP, strconv.Itoa(int(port))),
-				})
+			for _, endpoint := range endpointSlice.Endpoints {
+				if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+					continue
+				}
+
+				for _, address := range endpoint.Addresses {
+					if _, ok := addresses[address]; ok {
+						continue
+					}
+
+					addresses[address] = struct{}{}
+					servers = append(servers, dynamic.TCPServer{
+						Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
+					})
+				}
 			}
 		}
+	}
+
+	if len(servers) == 0 && !p.AllowEmptyServices {
+		return nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
 	}
 
 	return servers, nil
