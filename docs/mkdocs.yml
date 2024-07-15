@@ -199,7 +199,6 @@ nav:
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Swarm': 'reference/dynamic-configuration/swarm.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
-        - 'Kubernetes Gateway API': 'reference/dynamic-configuration/kubernetes-gateway.md'
         - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
         - 'Nomad': "reference/dynamic-configuration/nomad.md"
         - 'ECS': 'reference/dynamic-configuration/ecs.md'
