@@ -465,6 +465,10 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](https://doc.traefik.io/traefik/middlewares/http/overview/) supported through the [Middleware CRD](../providers/kubernetes-crd.md#kind-middleware).
 
+!!! info "ExtensionRef Filters"
+
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../providers/kubernetes-crd.md). 
+
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
 
