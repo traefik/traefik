@@ -102,7 +102,7 @@ func CheckNewVersion() {
 		}
 
 		if releaseVersion.GreaterThan(currentVersion) {
-			logger.Warnf("A new release has been found: %s. Please consider updating.", releaseVersion.String())
+			logger.Warnf("A new release of Traefik has been found: %s. Please consider updating.", releaseVersion.String())
 			return
 		}
 	}
