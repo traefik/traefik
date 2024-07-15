@@ -54,9 +54,10 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Keep "allows edit from maintainer" checked.
     * Use semantic line breaks for documentation.
     * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
+    * Ensure that the dependencies in the `go.mod` file reference a tag. If referencing a tag is not possible, add a comment explaining why.
 * Pass the validation check.
 * Pass all tests.
-* Receive 3 approving reviews from maintainers.
+* Receive 2 approving reviews from maintainers.
 
 ## Pull Request Review Cycle
 
@@ -89,6 +90,7 @@ in short, it looks like this:
 You must run these local verifications before you submit your pull request to predict the pass or failure of continuous integration.
 Your PR will not be reviewed until these are green on the CI.
 
+* `make generate`
 * `make validate`
 * `make pull-images`
 * `make test`
@@ -112,7 +114,7 @@ In such a situation, solve the conflicts/CI/... and then remove the label `bot/n
 
 To prevent the bot from automatically merging a PR, add the label `bot/no-merge`.
 
-The label `bot/light-review` decreases the number of required LGTM from 3 to 1.
+The label `bot/light-review` decreases the number of required LGTM from 2 to 1.
 
 This label can be used when:
 
