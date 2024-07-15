@@ -12,6 +12,14 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
+One of the best feature of Traefik is to delegate the routing configuration to the application level.
+With Docker, Traefik can leverage labels attached to a container to generate routing rules.
+
+!!! warning "Labels & sensitive data"
+
+    We recommend to *not* use labels to store sensitive data (certificates, credentials, etc).
+    Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
+
 ## Configuration Examples
 
 ??? example "Configuring Docker & Deploying / Exposing Services"
