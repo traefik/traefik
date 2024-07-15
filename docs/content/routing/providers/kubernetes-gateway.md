@@ -454,7 +454,6 @@ IP: 10.42.2.4
 IP: fe80::d873:20ff:fef5:be86
 ```
 
-
 ## Using Traefik middleware as HTTPRoute filter
 
 An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
