@@ -33,7 +33,7 @@
 - **[middleware,metrics,tracing]** Upgrade to OpenTelemetry Semantic Conventions v1.26.0 ([#10850](https://github.com/traefik/traefik/pull/10850) by [mmatur](https://github.com/mmatur))
 
 **Documentation:**
-- **[k8s,k8s/gatewayapi]** Fix the Kubernetes GatewayAPI documentation ([#10844](https://github.com/traefik/traefik/pull/10844) by [nmengin](https://github.com/nmengin))
+- **[k8s,k8s/gatewayapi]** Fix the Kubernetes Gateway API documentation ([#10844](https://github.com/traefik/traefik/pull/10844) by [nmengin](https://github.com/nmengin))
 - **[k8s,k8s/gatewayapi]** Rework Kubernetes Gateway API documentation ([#10897](https://github.com/traefik/traefik/pull/10897) by [kevinpollet](https://github.com/kevinpollet))
 - Prepare release v3.1.0-rc3 ([#10872](https://github.com/traefik/traefik/pull/10872) by [rtribotte](https://github.com/rtribotte))
 - Prepare release v3.1.0-rc2 ([#10860](https://github.com/traefik/traefik/pull/10860) by [kevinpollet](https://github.com/kevinpollet))
