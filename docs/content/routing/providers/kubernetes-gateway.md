@@ -10,7 +10,7 @@ For detailed information on the Gateway API concepts and resources, refer to the
 
 The Kubernetes Gateway API provider supports version [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) of the specification.
 
-It fully supports all HTTP core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
 For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.1.0/traefik-traefik).
 
