@@ -3,389 +3,572 @@ title: "Traefik Kubernetes Gateway"
 description: "The Kubernetes Gateway API can be used as a provider for routing and load balancing in Traefik Proxy. View examples in the technical documentation."
 ---
 
-# Traefik & Kubernetes
+# Traefik & Kubernetes with Gateway API
 
-The Kubernetes Gateway API Controller.
-{: .subtitle }
+When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
+For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-## Configuration Examples
+The Kubernetes Gateway API provider supports version [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) of the specification.
 
-??? example "Configuring Kubernetes Gateway provider and Deploying/Exposing Services"
+It fully supports all `HTTPRoute` core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
-    ```yaml tab="Gateway API"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-simple-https.yml"
-    ```
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.1.0/traefik-traefik).
 
-    ```yaml tab="Whoami Service"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-whoami-svc.yml"
-    ```
+## Deploying a Gateway
 
-    ```yaml tab="Traefik Service"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-traefik-lb-svc.yml"
-    ```
+A `Gateway` is a core resource in the Gateway API specification that defines the entry point for traffic into a Kubernetes cluster. 
+It is linked to a `GatewayClass`, which specifies the controller responsible for managing and handling the traffic, ensuring that it is directed to the appropriate Kubernetes backend services.
 
-    ```yaml tab="RBAC"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml"
-    ```
+The `GatewayClass` is a cluster-scoped resource typically defined by the infrastructure provider.
+The following `GatewayClass` defines that gateways attached to it must be managed by the Traefik controller.
 
-## Routing Configuration
+```yaml tab="GatewayClass"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: traefik
+spec:
+  controllerName: traefik.io/gateway-controller
+```
 
-### Custom Resource Definition (CRD)
+Next, the following `Gateway` manifest configures the running Traefik controller to handle the incoming traffic.
 
-* You can find an exhaustive list, of the custom resources and their attributes in
-  [the reference page](../../reference/dynamic-configuration/kubernetes-gateway.md) or in the Kubernetes
-  Sigs `Gateway API` [repository](https://github.com/kubernetes-sigs/gateway-api).
-* Validate that [the prerequisites](../../providers/kubernetes-gateway.md#requirements) are fulfilled
-  before using the Traefik Kubernetes Gateway Provider.
+!!! info "Listener ports"
 
-You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:
+    Please note that `Gateway` listener ports must match the configured [EntryPoint ports](../entrypoints.md) of the Traefik deployment. 
+    In case they do not match, an `ERROR` message is logged, and the resource status is updated accordingly.
 
-| Kind                               | Purpose                                                                   | Concept Behind                                                         |
-|------------------------------------|---------------------------------------------------------------------------|------------------------------------------------------------------------|
-| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/api-types/gatewayclass) |
-| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/api-types/gateway)           |
-| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/api-types/httproute)           |
-| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/guides/tcp/)                   |
-| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/guides/tls/)                   |
+```yaml tab="Gateway"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  
+  # Only Routes from the same namespace are allowed.
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same 
 
-### Kind: `GatewayClass`
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+            namespace: default
 
-`GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of
-Gateways that can be instantiated. More details on the
-GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/).
+      allowedRoutes:
+        namespaces:
+          from: Same
 
-The `GatewayClass` should be declared by the infrastructure provider, otherwise please register the `GatewayClass`
-[definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before
-creating `GatewayClass` objects.
+    - name: tcp
+      protocol: TCP
+      port: 3000
+      allowedRoutes:
+        namespaces:
+          from: Same
 
-!!! info "Declaring GatewayClass"
+    - name: tls
+      protocol: TLS
+      port: 3443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+            namespace: default
+            
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
 
-    ```yaml
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: GatewayClass
+```yaml tab="Secret"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-tls
+  namespace: default
+type: kubernetes.io/tls
+data:
+  # Self-signed certificate for the whoami.localhost domain.
+  tls.crt: |
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZWakNDQXo2Z0F3SUJBZ0lVZUUrZG94aTUrMTBMVi9DaUdTMkt2Q1dJR1dZd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1JERUxNQWtHQTFVRUJoTUNSbEl4RFRBTEJnTlZCQWNNQkV4NWIyNHhGVEFUQmdOVkJBb01ERlJ5WVdWbQphV3NnVEdGaWN6RVBNQTBHQTFVRUF3d0dWMmh2WVcxcE1DQVhEVEkwTURjeE1ERTFNRGt3TjFvWUR6SXhNalF3Ck5qRTJNVFV3T1RBM1dqQkVNUXN3Q1FZRFZRUUdFd0pHVWpFTk1Bc0dBMVVFQnd3RVRIbHZiakVWTUJNR0ExVUUKQ2d3TVZISmhaV1pwYXlCTVlXSnpNUTh3RFFZRFZRUUREQVpYYUc5aGJXa3dnZ0lpTUEwR0NTcUdTSWIzRFFFQgpBUVVBQTRJQ0R3QXdnZ0lLQW9JQ0FRQ1pNNm1WNUJkV2V0QzZtdnp0YVBobFNjZ0ljbnd6Z3NsOEFxendEMk05ClJWVkZwRUxBbTh2OTNlRWtMZEY2ZnNkY0FhUXQxWlFDSFdYby9mTHBRNVVrUHh1djZNUCt2NG1KMHY4ZEtGWjcKUjcwaTVud1lCMkVlVkw2RUNZaWlxNmZ6VEtsa3F6U0QvNW93elN3L3pqa0dUYTBJdy92SDlhc0g3NEhqM1d0QQo3RythenZjaVlhQTZxK1dWYlZxNlBIanF6em9obEFuMkh1ano2aERqYWllc3ZMbHdBL0IvcmhEc0FLaCtpMHI4CkFKUTFqM0JiTGJuYkJyWmZqYnBJUjNhYVh5amkwK3RQWENnVTkzQmU5dm1LZTZTY0dSNy82T25tYmtTc0xjZFcKaFpVNzcrL2c4WllsZGhwS01nczc4ekJYUlh4bHlzSThHRUtqU1hud3k5WmZNT2RJNEpBTWNtT0lOaVlBY21abgpJTUJIa0xacFl3aUl0eFdseXVJcWxoZFpkSHNrTFdNSjBSTHUxRmhTMnBFV0NOZTM3VDBiOWhtNFg0OXJ1QWJ6Ckl1M01xSmczcXFIdGRMNGRkZ1JZRHNjMXd0cDJrR2dBZGxDaXJIclF6K1l4MEJNT1ZsZEczaG1SUUh5ZHEySHIKWW0xeEFDNWpMZ3FvaVZhY09wd0xKY21PcGsrZWVNQkNZNVo0ekNYN1hXeXdhVmNtMnN2aGlPMThCZFIraDloWQpiMkRNZDFCendDbE95endQcUlvQy9uNGRURG96Ry9GT3NySzgvNEZ4dzY2Q1ZmM3E4MzBNUHdSd2xDSzFDQjdGCjNQK3lKWkpPelRuK05QZ2dGQW9NaGZUYXBQWTFhUGlWajBzVG9vQjBaOGNFV1RkTnJxQU5tUGs5aDNoQjJwbjgKSndJREFRQUJvejR3UERBYkJnTlZIUkVFRkRBU2doQjNhRzloYldrdWJHOWpZV3hvYjNOME1CMEdBMVVkRGdRVwpCQlNGSjF4N01xdG9zQ3UwQmFWbEs1U054K2djampBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQWdFQVdCOVc1eWkzClRpTWpmSThhSCtMZW1wZjc4clhyeWJ6UXJvSXdEazhqQXhnc3Nrc2V2ZEtIaXJIZGJMZ0RoS2krbkJLeEQ5S2QKNWM4RS9VL1VHWUhxaUowTVUzYkpoeTVNM3oyaklKd1hFa3FuVVhRd0dBNzVyU0QxWVBkOTlWeVpuNEJVRlEwdwpCT3loOU5DS3Z3ZTgycUVlOWZmeU5iem5JUEMrNS9pekhaYlNQMEpwRzdtNFQ5TXljdHV1OTlsaVhmSVlCMU1PCkRFRUdpamxhZ3JvdTliVlpsNmovR2xCaVZpU0JVQXhaRlNqdFErV2RFODJaZlFRUFVWdXQrUEY0SEl0N1dmYlgKaUpZbjRsMytJSVczNStvbUZ5QjR5WUJNdU9SVWRsZ3V5N1ZieEU5OTdPdHYzTnpDOGJYcGtaQVM0TkVzQVVFdwpJZ3lOcTFCdExsb3dZdjZXY05HbkJ5RE1NRUMzdUYzNEcxQkJCTzFDRHUrYXBVdW5NbVhUWmU5WlkrbXh4U2Z2CnBZclhHTHBoT2t4ZitQalpMbEpqQVFlcTNxblMvWWtLQmtYQi9zb282ZVVLTTlybyt5RTVMbnFrV20wZXpQWmwKc2Z5NGpqZ0lJUHlUMHhhZ0YyWExzUSs0M3N4aDRYTEhmc3Z3Zis2QnJVK2trTnoydmc2M3duLzJDQUNVVms3bgphSDdwZzZyZGt4T2pOTDJjUGd6ZzhWaExXbkVYYjhhUVJlVjY1WnlRc0xta21oOXBlSFRpYXBUb2xWa0d6TDIwCm9pdExZc3ZUcnhUR2NRd3Jpd3FaT1I3WjEvVEJLVnVoYnp0emxlRjFHRk9LdE52UmNSREVBeWVlbnJDRzRRMmgKMnFNNFh1RFFKcjJrR095OEV0dnlYTitENkNZUkg0ck5vZUk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+
+  tls.key: |
+    LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRUUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQ1Nzd2dna25BZ0VBQW9JQ0FRQ1pNNm1WNUJkV2V0QzYKbXZ6dGFQaGxTY2dJY253emdzbDhBcXp3RDJNOVJWVkZwRUxBbTh2OTNlRWtMZEY2ZnNkY0FhUXQxWlFDSFdYbwovZkxwUTVVa1B4dXY2TVArdjRtSjB2OGRLRlo3UjcwaTVud1lCMkVlVkw2RUNZaWlxNmZ6VEtsa3F6U0QvNW93CnpTdy96amtHVGEwSXcvdkg5YXNINzRIajNXdEE3RythenZjaVlhQTZxK1dWYlZxNlBIanF6em9obEFuMkh1anoKNmhEamFpZXN2TGx3QS9CL3JoRHNBS2graTByOEFKUTFqM0JiTGJuYkJyWmZqYnBJUjNhYVh5amkwK3RQWENnVQo5M0JlOXZtS2U2U2NHUjcvNk9ubWJrU3NMY2RXaFpVNzcrL2c4WllsZGhwS01nczc4ekJYUlh4bHlzSThHRUtqClNYbnd5OVpmTU9kSTRKQU1jbU9JTmlZQWNtWm5JTUJIa0xacFl3aUl0eFdseXVJcWxoZFpkSHNrTFdNSjBSTHUKMUZoUzJwRVdDTmUzN1QwYjlobTRYNDlydUFiekl1M01xSmczcXFIdGRMNGRkZ1JZRHNjMXd0cDJrR2dBZGxDaQpySHJReitZeDBCTU9WbGRHM2htUlFIeWRxMkhyWW0xeEFDNWpMZ3FvaVZhY09wd0xKY21PcGsrZWVNQkNZNVo0CnpDWDdYV3l3YVZjbTJzdmhpTzE4QmRSK2g5aFliMkRNZDFCendDbE95endQcUlvQy9uNGRURG96Ry9GT3NySzgKLzRGeHc2NkNWZjNxODMwTVB3UndsQ0sxQ0I3RjNQK3lKWkpPelRuK05QZ2dGQW9NaGZUYXBQWTFhUGlWajBzVApvb0IwWjhjRVdUZE5ycUFObVBrOWgzaEIycG44SndJREFRQUJBb0lDQUVCa2dKRXA3ODAvamVBQktQSTR2cjhFCkJmblc5UEZKdFpwVUhaQkJSM3NIVzFJTU9xcHVVWTJBNXhLbjEzWmZOemdxMEhFYlpqeUZVc0pkaXU0VW8razYKUlU3b3pRaVVSU0VTK0h1dTZycWlhcEx5d1pIditCZ2hrbm80NzU4Lyt6VytNU3pJOFNmU0ZXTVJ1ZG1QdWxRMQo3ZGJUV1U2d3FaU0tUTlFUeXZMYzdnUHBuZUpybWtkTzNRNnppZ0RoVGdtVDFHRXNzZ3NxN3NzbXhMWnhkZithCnkyNlRtVkJ4UDFlUzV6OVpHTWxYRFBSK044RjdOTFVrMng3S21WT3NCZVBZdjN5bmlpNHZGQUhNQndWRFZadXAKWUlUajRpMjZIaVhtanlLM2t5T0F2anNWSElRMXh1QTBCZFROdC84WXRtYllJL005QitydVg0UDJiRFNUMktRKwo4TlN2Uk9wbVppcnBHZkY3bExMSGpJUjlTMFhCWDd6VDRoWnBRWnpqK3NEWnhDM2Y3TGIwRFlKYkp0TmlDYTQxCmNpTjhNUlNldzNneHZ0RVk0RzdnN3hjbkJNdjdNT3RwQTE3d2gvMHdLd0h0amYzSWh2TmIzdkZwT0k5d1FqSzYKSlRQMng4bENJV0tyalpObVN0UksreHJTN3hTOUZVdnBhSVlyclRLQkZWSmcyMURCYWI1L3hqRlBlQWxXejczSwpvVkhsa0hLdXNMSjZLczZzcXo0ZG9mbzg3dkFsUFJzTXRkZ1ZnZFIzNXhLTGtEWXNIbGxML3Z5dE9oSkNieXB5CkJqQm1TR0RMdzBDdWplaHVtU2czYjdSUGVTNk5rbHNqUEIrMVpzRjhpVGdCcjMyM1hvTmNha2dhWWVYQlg4NFAKaE1WZHUxWk1rbXJZMWhXTzEydnhBb0lCQVFEWU5Vb2xCMkhsdWlDcVFqdmU4UFNhV0YxRmhwNUlOMGJIZEppeApIdkhqMkplVHJ6V1pUZFlIdFNJR2RzalhTOTBESXo2bXJhMW9YZXFRYlgrODVlOUFQQkZnRTJmNU5uTzBCSVVJCk5hMXRiVGpIOUhjRGRzQmJKUkZwYnk1ODZUb3lhdFY3bS9zcjVpQUZlZFMyenFOTm1XUmZOdllZS2xselZoSEUKdUd4ZjZxMHJTWktVQUhja2s1bU5Yais3WFhZaTgyemErVEE3ZjBDVm5OamR3OXFpd3B2aTJKTFB2SnA0bWt6KwpyMEN1RW9yV2NhMUdTL2hTVWdXemw3NzhQdlRpZFI2RW4zMDB2ZlIyTE84aG1xRjhVL3Bpb2UrTDVjSllRNnNKCk1YMngrYThzWFFpZ3dwdG02aUNxQ2FuS3ExN3NUZS9RTmQ1czdwb3ZOaHVKOHd3dEFvSUJBUUMxWmM5ZktPUFgKVzZSN1VoaHRRcmhIc3htQnRIQ1BuNWRLbjN5MElNNWRBaEFSdFZDV1U0M0hOTHpCNW1LbjU2dnZrSVNFaXdBbAoxTGhuY2I3YXQ2cHpTSlZtMm5oTDhjeUZrdGQrNzVyL1FHNFlpNnZQbHNBODV5ZXZpZDhZcWswaHdaZXExY05xCmxETUN3NWsrV0drckM2VW5jZXNIc2FWbDJTUGdZV1c1L3I1NnVxUnBsaVFka1EyZmlEYWRyblVueU8ycHg3bFMKVG1HemZaNmtzTWh2MlZFR1NPRm05aUo0dWlPb0xyZVhoU1RQRmxTdjdZUTZSWWtSaGgwT0tqdXM5bXZacEIxWApjcytYN0UyVTNlM0RZelpCR0NFdmxxaFNWTFRScjdIN21pMWxUMEozR0RzbDdiUk9xOE50WVdQa3hhSlNCUnQ5Ck9TcTlkTm9CcGRvakFvSUJBQ2lQdnN3NW1WVW0yUS80QXhGdE5RWnJ3M3ZTcUlrMXpaS0h2a21rVzQ3NlNGMk4KaGttdmY1TE1tWWlLNmx6eHY1SGlIOVBYUzJ3RUNvaHo4bjMyeVM3TTFobW5LbDlucHNkRC9jMHZmTXpGcTl4ZgpjYUIxdTlxZGxxbW9FUm1nQzZuL3Z2TkVyUmRzUWQrbEhwSDVMRXZYbGl3Q3ZLS0Y5MmdhNHBSOFlPQ1J2MUVhCnFXUVl2a0ZmYTNSSkZUM0taK3BncnJCYUJZRnoreUxXWFIwbHJEUFN2TG9QRldQaHB6MHUvWGplV2cwT0wzdlIKc2NjNVkybldOM21jNDFpaFd3SE5KUitPYUVmbnh5QVFpQUJPNlRMUThtMWtvZk1sOUpMb2h3TGZoUXhKb21KNQpSYkFiTWxwWlhDMXFTSzliL1IvcDh5NmxuSWZsTDRuaDVjSzRsVFVDZ2dFQUpSSHVSQU1tTksrTXVJcjVaUEs2Cm1DUjR0UEg4QXMzWmJDMlZuWFlLMWlVQ3hhdXBFVjkzM05yaExEcjV0Rmg2NFpWR0Q1UWNicDYvSkp5eEpSOWQKblB1YlZJNlhBT1lrSnJQd2lBZE5SSmFWS1R6NTJvMXpNYjhIZEM4WHdZR2tDNTcxY0xzSW1YSTV6bm5NaWxvaworK0FBVzBSRGhLb0FKQVV3K0x6T3ZpamFJbGljR3R2TSs2SFdCK0VkVURJRHpTS1p0eFdTd01nMTNTbHh6elExCmNlNFdTZE9CQkxxT0p0L2JRNVp3ZkcyQUxUWGlEcVhhWE5JekJickRtMDUwTFkrYVVMcmlLQ25WVkxXODBReGQKZDQyQjIrR2pmb2NxVk5Ec3R1RlIzUm9QNXVGQXN2Zm50b09TVW5WMWxaZk9nMFVFUEFEQk1tRUpZL2hLU1FYcwp3d0tDQVFBNWQya2hFQ1c1V3QrMzRYWnl1b3NFTjZ4UDExbC96VDRBZjhGSWtQLzlkb0JXRnBhc28zbG1NcXZHCmhPeFErbnZBSjFhNzhZRjA4N3p1UC9DZkQ0UElOUTV4YzZHMDNQdG5JOVNVT0dpMDB4Zlg5MU5NMHBHYWJqb0QKZ0RqVzJxSkJDaVB5N0RIR1RlZkU5eUNUbkhrY1NBbWllVGc3aGFyeEZPOUREZTJKbzhKQXV2SHI1aGVxazVIcgpLYlgzTy9vNUMwcWVnYW1rWVRLcHZzV2VFdXhkY2l5LzFQd3NnV3BuV1JPWllQNENrSkJweEx1bDNVamVSY3dkCnRhcjBJYU52WlV2NFd4U0JZdWVHMDFyYUd2SDZtTTcyTEExR3MrMytwTnZwUVo3bGo2S09tcFlhQUlhemVxY2MKTjJjT2R5U1RqZmQ5OFlNVFAxbmIyK3N1Yy91VAotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+```
+
+## Exposing a Route
+
+Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
+and/or `TLSRoute` resources must be deployed to forward some traffic to Kubernetes backend [services](https://kubernetes.io/docs/concepts/services-networking/service/).
+
+!!! info "Attaching to Gateways"
+
+    As demonstrated in the following examples, a Route resource must be configured with `ParentRefs` that reference the parent `Gateway` it should be associated with.
+
+### HTTP/HTTPS
+
+The `HTTPRoute` is a core resource in the Gateway API specification, designed to define how HTTP traffic should be routed within a Kubernetes cluster. 
+It allows the specification of routing rules that direct HTTP requests to the appropriate Kubernetes backend services. 
+
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/httproute/).
+
+For example, the following manifests configure a whoami backend and its corresponding `HTTPRoute`, 
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address.
+
+```yaml tab="HTTPRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami-http
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: http
+      kind: Gateway
+
+  hostnames:
+    - whoami.localhost
+
+  rules:
+     - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+       backendRefs:
+        - name: whoami
+          namespace: default
+          port: 80
+```
+
+```yaml tab="Whoami deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: whoami
+
+  template:
     metadata:
-      name: my-gateway-class
+      labels:
+        app: whoami
     spec:
-      # Controller is a domain/path string that indicates
-      # the controller that is managing Gateways of this class.
-      controllerName: traefik.io/gateway-controller
-    ```
+      containers:
+        - name: whoami
+          image: traefik/whoami
 
-### Kind: `Gateway`
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  selector:
+    app: whoami
 
-A `Gateway` is 1:1 with the life cycle of the configuration of infrastructure. When a user creates a Gateway, some load
-balancing infrastructure is provisioned or configured by the GatewayClass controller. More details on the
-Gateway [official documentation](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway/).
+  ports:
+    - port: 80
+```
 
-Register the `Gateway` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
-Kubernetes cluster before creating `Gateway` objects.
+To secure the connection with HTTPS and redirect non-secure request to the secure endpoint,
+we will update the above `HTTPRoute` manifest to add a `RequestRedirect` filter,
+and add a new `HTTPRoute` which binds to the https `Listener` and forward the traffic to the whoami backend.
 
-Depending on the Listener Protocol, different modes and Route types are supported.
+```yaml tab="HTTRoute (HTTP)"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami-http
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: http
+      kind: Gateway
 
-| Listener Protocol | TLS Mode       | Route Type Supported                                   |
-|-------------------|----------------|--------------------------------------------------------|
-| TCP               | Not applicable | [TCPRoute](#kind-tcproute)                             |
-| TLS               | Passthrough    | [TLSRoute](#kind-tlsroute), [TCPRoute](#kind-tcproute) |
-| TLS               | Terminate      | [TLSRoute](#kind-tlsroute), [TCPRoute](#kind-tcproute) |
-| HTTP              | Not applicable | [HTTPRoute](#kind-httproute)                           |
-| HTTPS             | Terminate      | [HTTPRoute](#kind-httproute)                           |
+  hostnames:
+    - whoami.localhost
 
-!!! info "Declaring Gateway"
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+```
 
-    ```yaml tab="HTTP Listener"
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
+```yaml tab="HTTRoute (HTTPS)"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami-https
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: https
+      kind: Gateway
+
+  hostnames:
+    - whoami.localhost
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - name: whoami
+          namespace: default
+          port: 80
+```
+
+Once everything is deployed, sending a `GET` request to the HTTP and HTTPS endpoints should return the following responses:
+
+```shell
+$ curl -I http://whoami.localhost
+
+HTTP/1.1 302 Found
+Location: https://whoami.localhost/
+Date: Thu, 11 Jul 2024 15:11:31 GMT
+Content-Length: 5
+
+$ curl -k https://whoami.localhost
+ 
+Hostname: whoami-697f8c6cbc-2krl7
+IP: 127.0.0.1
+IP: ::1
+IP: 10.42.1.5
+IP: fe80::60ed:22ff:fe10:3ced
+RemoteAddr: 10.42.2.4:44682
+GET / HTTP/1.1
+Host: whoami.localhost
+User-Agent: curl/7.87.1-DEV
+Accept: */*
+Accept-Encoding: gzip
+X-Forwarded-For: 10.42.1.0
+X-Forwarded-Host: whoami.localhost
+X-Forwarded-Port: 443
+X-Forwarded-Proto: https
+X-Forwarded-Server: traefik-6b66d45748-ns8mt
+X-Real-Ip: 10.42.1.0
+```
+
+### TCP
+
+!!! info "Experimental Channel"
+
+    The `TCPRoute` resource described below is currently available only in the Experimental channel of the Gateway API specification. 
+    To use this resource, the [experimentalChannel](../../providers/kubernetes-gateway.md#experimentalchannel) option must be enabled in the Traefik deployment.
+
+The `TCPRoute` is a resource in the Gateway API specification designed to define how TCP traffic should be routed within a Kubernetes cluster. 
+
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TCPRoute).
+
+For example, the following manifests configure a whoami backend and its corresponding `TCPRoute`, 
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3000` address.
+
+```yaml tab="TCPRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: whoami-tcp
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: tcp
+      kind: Gateway
+
+  rules:
+     - backendRefs:
+        - name: whoamitcp
+          namespace: default
+          port: 3000
+```
+
+```yaml tab="Whoami deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoamitcp
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: whoamitcp
+
+  template:
     metadata:
-      name: my-http-gateway
-      namespace: default
+      labels:
+        app: whoamitcp
     spec:
-      gatewayClassName: my-gateway-class        # [1]
-      listeners:                                # [2]
-        - name: http                            # [3]
-          protocol: HTTP                        # [4]
-          port: 80                              # [5]
-          allowedRoutes:                        # [9]
-            kinds:
-              - kind: HTTPRoute                 # [10]
-            namespaces:
-              from: Selector                    # [11]
-              selector:                         # [12]
-                matchLabels:
-                  app: foo
-    ```
+      containers:
+        - name: whoami
+          image: traefik/whoamitcp
+          args:
+            - --port=:3000
 
-    ```yaml tab="HTTPS Listener"
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp
+  namespace: default
+spec:
+  selector:
+    app: whoamitcp
+  ports:
+    - port: 3000
+```
+
+Once everything is deployed, sending the WHO command should return the following response:
+
+```shell
+$ nc localhost 3000
+
+WHO
+Hostname: whoamitcp-85d644bfc-ktzv4
+IP: 127.0.0.1
+IP: ::1
+IP: 10.42.1.4
+IP: fe80::b89e:85ff:fec2:7d21
+```
+
+### TLS
+
+!!! info "Experimental Channel"
+
+    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
+    Therefore, to use this resource, the [experimentalChannel](../../providers/kubernetes-gateway.md#experimentalchannel) option must be enabled.
+
+The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
+It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.
+
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute).
+
+For example, the following manifests configure a whoami backend and its corresponding `TLSRoute`, 
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3443` address via a secure connection with the `whoami.localhost` SNI.
+
+```yaml tab="TLSRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: whoami-tls
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: tls
+      kind: Gateway
+
+  hostnames:
+    - whoami.localhost
+
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          namespace: default
+          port: 3000
+
+```
+
+```yaml tab="Whoami deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoamitcp
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: whoamitcp
+
+  template:
     metadata:
-      name: my-https-gateway
-      namespace: default
+      labels:
+        app: whoamitcp
     spec:
-      gatewayClassName: my-gateway-class        # [1]
-      listeners:                                # [2]
-        - name: https                           # [3]
-          protocol: HTTPS                       # [4]
-          port: 443                             # [5]
-          tls:                                  # [7]
-            certificateRefs:                    # [8]
-              - kind: "Secret"
-                name: "mysecret"
-          allowedRoutes:                        # [9]
-            kinds:
-              - kind: HTTPSRoute                # [10]
-            namespaces:
-              from: Selector                    # [11]
-              selector:                         # [12]
-                matchLabels:
-                  app: foo
-    ```
+      containers:
+        - name: whoami
+          image: traefik/whoamitcp
+          args:
+            - --port=:3000
 
-    ```yaml tab="TCP Listener"
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp
+  namespace: default
+spec:
+  selector:
+    app: whoamitcp
+  ports:
+    - port: 3000
+```
+
+Once everything is deployed, sending the WHO command should return the following response:
+
+```shell
+$ openssl s_client -quiet -connect localhost:3443 -servername whoami.localhost
+Connecting to ::1
+depth=0 C=FR, L=Lyon, O=Traefik Labs, CN=Whoami
+verify error:num=18:self-signed certificate
+verify return:1
+depth=0 C=FR, L=Lyon, O=Traefik Labs, CN=Whoami
+verify return:1
+
+WHO
+Hostname: whoamitcp-85d644bfc-hnmdz
+IP: 127.0.0.1
+IP: ::1
+IP: 10.42.2.4
+IP: fe80::d873:20ff:fef5:be86
+```
+
+## Using Traefik middleware as HTTPRoute filter
+
+An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
+
+There are three types of filters:
+
+- **Core:** Mandatory filters for every Gateway controller, such as `RequestHeaderModifier` and `RequestRedirect`.
+- **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
+- **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](https://doc.traefik.io/traefik/middlewares/http/overview/) supported through the [Middleware CRD](../providers/kubernetes-crd.md#kind-middleware).
+
+!!! info "ExtensionRef Filters"
+
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../providers/kubernetes-crd.md). 
+
+For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
+
+```yaml tab="HTTRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami-http
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: http
+      kind: Gateway
+
+  hostnames:
+    - whoami.localhost
+
+  rules:
+    - backendRefs:
+        - name: whoami
+          namespace: default
+          port: 80
+
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: add-prefix
+```
+
+```yaml tab="AddPrefix middleware"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: add-prefix
+  namespace: default
+spec:
+  addPrefix:
+    prefix: /prefix
+```
+
+```yaml tab="Whoami deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: whoami
+
+  template:
     metadata:
-      name: my-tcp-gateway
-      namespace: default
+      labels:
+        app: whoami
     spec:
-      gatewayClassName: my-gateway-class        # [1]
-      listeners:                                # [2]
-        - name: tcp                             # [3]
-          protocol: TCP                         # [4]
-          port: 8000                            # [5]
-          allowedRoutes:                        # [9]
-            kinds:
-              - kind: TCPRoute                  # [10]
-            namespaces:
-              from: Selector                    # [11]
-              selector:                         # [12]
-                matchLabels:
-                  app: footcp
-    ```
+      containers:
+        - name: whoami
+          image: traefik/whoami
 
-    ```yaml tab="TLS Listener"
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: Gateway
-    metadata:
-      name: my-tls-gateway
-      namespace: default
-    spec:
-      gatewayClassName: my-gateway-class        # [1]
-      listeners:                                # [2]
-        - name: tls                             # [3]
-          protocol: TLS                         # [4]
-          port: 443                             # [5]
-          hostname: foo.com                     # [6]
-          tls:                                  # [7]
-            certificateRefs:                    # [8]
-              - kind: "Secret"
-                name: "mysecret"
-          allowedRoutes:                        # [9]
-            kinds:
-              - kind: TLSRoute                  # [10]
-            namespaces:
-              from: Selector                    # [11]
-              selector:                         # [12]
-                matchLabels:
-                  app: footcp
-    ```
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  selector:
+    app: whoami
+  ports:
+    - port: 80
+```
 
-| Ref  | Attribute          | Description                                                                                                                                                 |
-|------|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `gatewayClassName` | GatewayClassName used for this Gateway. This is the name of a GatewayClass resource.                                                                        |
-| [2]  | `listeners`        | Logical endpoints that are bound on this Gateway's addresses. At least one Listener MUST be specified.                                                      |
-| [3]  | `name`             | Name of the Listener.                                                                                                                                       |
-| [4]  | `protocol`         | The network protocol this listener expects to receive (only HTTP and HTTPS are implemented).                                                                |
-| [5]  | `port`             | The network port.                                                                                                                                           |
-| [6]  | `hostname`         | Hostname specifies the virtual hostname to match for protocol types that define this concept. When unspecified, “”, or *, all hostnames are matched.        |
-| [7]  | `tls`              | TLS configuration for the Listener. This field is required if the Protocol field is "HTTPS" or "TLS" and ignored otherwise.                                 |
-| [8]  | `certificateRefs`  | The references to Kubernetes objects that contains TLS certificates and private keys (only one reference to a Kubernetes Secret is supported).              |
-| [9]  | `allowedRoutes`    | Defines the types of routes that MAY be attached to a Listener and the trusted namespaces where those Route resources MAY be present.                       |
-| [10] | `kind`             | The kind of the Route.                                                                                                                                      |
-| [11] | `from`             | From indicates in which namespaces the Routes will be selected for this Gateway. Possible values are `All`, `Same` and `Selector` (Defaults to `Same`).     |
-| [12] | `selector`         | Selector must be specified when From is set to `Selector`. In that case, only Routes in Namespaces matching this Selector will be selected by this Gateway. |
+Once everything is deployed, sending a `GET` request should return the following response:
 
-### Kind: `HTTPRoute`
-
-`HTTPRoute` defines HTTP rules for mapping requests from a `Gateway` to Kubernetes Services.
-
-Register the `HTTPRoute` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
-Kubernetes cluster before creating `HTTPRoute` objects.
-
-!!! info "Declaring HTTPRoute"
-
-    ```yaml
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: HTTPRoute
-    metadata:
-      name: http-app
-      namespace: default
-    spec:
-      parentRefs:                               # [1]
-        - name: my-tcp-gateway                  # [2]
-          namespace: default                    # [3]
-          sectionName: tcp                      # [4]
-      hostnames:                                # [5]
-        - whoami
-      rules:                                    # [6]
-        - matches:                              # [7]
-            - path:                             # [8]
-                type: Exact                     # [9]
-                value: /bar                     # [10]
-            - headers:                          # [11]
-                name: foo                       # [12]
-                value: bar                      # [13]
-          backendRefs:                          # [14]
-            - name: whoamitcp                   # [15]
-              weight: 1                         # [16]
-              port: 8080                        # [17]
-            - name: api@internal
-              group: traefik.io                 # [18]
-              kind: TraefikService              # [19]
-        - filters:                              # [20]
-          - type: ExtensionRef                  # [21]
-            extensionRef:                       # [22]
-              group: traefik.io                 # [23]
-              kind: Middleware                  # [24]
-              name: my-middleware               # [25]
-          - type: RequestRedirect               # [26]
-            requestRedirect:                    # [27]
-              scheme: https                     # [28]
-              statusCode: 301                   # [29]
-          - type: RequestHeaderModifier         # [30]
-            requestHeaderModifier:              # [31]
-              set:
-                - name: X-Foo
-                  value: Bar
-              add:
-                - name: X-Bar
-                  value: Foo
-              remove:
-                - X-Baz
-    ```
-
-| Ref  | Attribute               | Description                                                                                                                                                                 |
-|------|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `parentRefs`            | References the resources (usually Gateways) that a Route wants to be attached to.                                                                                           |
-| [2]  | `name`                  | Name of the referent.                                                                                                                                                       |
-| [3]  | `namespace`             | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.                                                             |
-| [4]  | `sectionName`           | Name of a section within the target resource (the Listener name).                                                                                                           |
-| [5]  | `hostnames`             | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                              |
-| [6]  | `rules`                 | A list of HTTP matchers, filters and actions.                                                                                                                               |
-| [7]  | `matches`               | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
-| [8]  | `path`                  | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
-| [9]  | `type`                  | Type of match against the path Value (supported types: `Exact`, `PathPrefix`, and `RegularExpression`).                                                                     |
-| [10] | `value`                 | The value of the HTTP path to match against.                                                                                                                                |
-| [11] | `headers`               | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
-| [12] | `name`                  | Name of the HTTP header to be matched.                                                                                                                                      |
-| [13] | `value`                 | Value of HTTP Header to be matched.                                                                                                                                         |
-| [14] | `backendRefs`           | Defines the backend(s) where matching requests should be sent.                                                                                                              |
-| [15] | `name`                  | The name of the referent service.                                                                                                                                           |
-| [16] | `weight`                | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                  |
-| [17] | `port`                  | The port of the referent service.                                                                                                                                           |
-| [18] | `group`                 | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.                                                                 |
-| [19] | `kind`                  | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                                                                                     |
-| [20] | `filters`               | Defines the filters (middlewares) applied to the route.                                                                                                                     |
-| [21] | `type`                  | Defines the type of filter; ExtensionRef is used for configuring custom HTTP filters.                                                                                       |
-| [22] | `extensionRef`          | Configuration of the custom HTTP filter.                                                                                                                                    |
-| [23] | `group`                 | Group of the kubernetes object to reference.                                                                                                                                |
-| [24] | `kind`                  | Kind of the kubernetes object to reference.                                                                                                                                 |
-| [25] | `name`                  | Name of the kubernetes object to reference.                                                                                                                                 |
-| [26] | `type`                  | Defines the type of filter; RequestRedirect redirects a request to another location.                                                                                        |
-| [27] | `requestRedirect`       | Configuration of redirect filter.                                                                                                                                           |
-| [28] | `scheme`                | Scheme is the scheme to be used in the value of the Location header in the response.                                                                                        |
-| [29] | `statusCode`            | StatusCode is the HTTP status code to be used in response.                                                                                                                  |
-| [30] | `type`                  | Defines the type of filter; RequestHeaderModifier modifies request headers.                                                                                                 |
-| [31] | `requestHeaderModifier` | Configuration of RequestHeaderModifier filter.                                                                                                                              |
-
-### Kind: `TCPRoute`
-
-`TCPRoute` allows mapping TCP requests from a `Gateway` to Kubernetes Services.
-
-Register the `TCPRoute` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
-Kubernetes cluster before creating `TCPRoute` objects.
-
-!!! info "Declaring TCPRoute"
-
-    ```yaml
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: TCPRoute
-    metadata:
-      name: tcp-app
-      namespace: default
-    spec:
-      parentRefs:                               # [1]
-        - name: my-tcp-gateway                  # [2]
-          namespace: default                    # [3]
-          sectionName: tcp                      # [4]
-      rules:                                    # [5]
-        - backendRefs:                          # [6]
-            - name: whoamitcp                   # [7]
-              weight: 1                         # [8]
-              port: 8080                        # [9]
-            - name: api@internal
-              group: traefik.io                 # [10]
-              kind: TraefikService              # [11]
-    ```
-
-| Ref  | Attribute     | Description                                                                                                     |
-|------|---------------|-----------------------------------------------------------------------------------------------------------------|
-| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                               |
-| [2]  | `name`        | Name of the referent.                                                                                           |
-| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route. |
-| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                               |
-| [5]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                   |
-| [6]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                  |
-| [7]  | `name`        | The name of the referent service.                                                                               |
-| [8]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).      |
-| [9]  | `port`        | The port of the referent service.                                                                               |
-| [10] | `group`       | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.     |
-| [11] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                         |
-
-### Kind: `TLSRoute`
-
-`TLSRoute` allows mapping TLS requests from a `Gateway` to Kubernetes Services.
-
-Register the `TLSRoute` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
-Kubernetes cluster before creating `TLSRoute` objects.
-
-!!! info "Declaring TLSRoute"
-
-    ```yaml
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: TLSRoute
-    metadata:
-      name: tls-app
-      namespace: default
-    spec:
-      parentRefs:                               # [1]
-        - name: my-tls-gateway                  # [2]
-          namespace: default                    # [3]
-          sectionName: tcp                      # [4]
-      hostnames:                                # [5]
-        - whoami
-      rules:                                    # [6]
-        - backendRefs:                          # [7]
-            - name: whoamitcp                   # [8]
-              weight: 1                         # [9]
-              port: 8080                        # [10]
-            - name: api@internal
-              group: traefik.io                 # [11]
-              kind: TraefikService              # [12]
-    ```
-
-| Ref  | Attribute     | Description                                                                                                         |
-|------|---------------|---------------------------------------------------------------------------------------------------------------------|
-| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                   |
-| [2]  | `name`        | Name of the referent.                                                                                               |
-| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.     |
-| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                   |
-| [5]  | `hostnames`   | Defines a set of SNI names that should match against the SNI attribute of TLS ClientHello message in TLS handshake. |
-| [6]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                       |
-| [7]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                      |
-| [8]  | `name`        | The name of the referent service.                                                                                   |
-| [9]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).          |
-| [10] | `port`        | The port of the referent service.                                                                                   |
-| [11] | `group`       | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.         |
-| [12] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                             |
+```shell
+$ curl http://whoami.localhost
+                                                                                                    
+Hostname: whoami-697f8c6cbc-kw954
+IP: 127.0.0.1
+IP: ::1
+IP: 10.42.2.6
+IP: fe80::a460:ecff:feb6:3a56
+RemoteAddr: 10.42.2.4:54758
+GET /prefix/ HTTP/1.1
+Host: whoami.localhost
+User-Agent: curl/7.87.1-DEV
+Accept: */*
+Accept-Encoding: gzip
+X-Forwarded-For: 10.42.2.1
+X-Forwarded-Host: whoami.localhost
+X-Forwarded-Port: 80
+X-Forwarded-Proto: http
+X-Forwarded-Server: traefik-6b66d45748-ns8mt
+X-Real-Ip: 10.42.2.1
+```
 
 {!traefik-for-business-applications.md!}
