@@ -56,7 +56,7 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
 * Pass the validation check.
 * Pass all tests.
-* Receive 3 approving reviews from maintainers.
+* Receive 2 approving reviews from maintainers.
 
 ## Pull Request Review Cycle
 
@@ -112,7 +112,7 @@ In such a situation, solve the conflicts/CI/... and then remove the label `bot/n
 
 To prevent the bot from automatically merging a PR, add the label `bot/no-merge`.
 
-The label `bot/light-review` decreases the number of required LGTM from 3 to 1.
+The label `bot/light-review` decreases the number of required LGTM from 2 to 1.
 
 This label can be used when:
 

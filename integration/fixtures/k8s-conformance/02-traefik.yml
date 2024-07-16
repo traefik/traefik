@@ -50,7 +50,6 @@ spec:
             - --entrypoints.websecure.address=:443
             - --entrypoints.web8080.address=:8080
             - --entrypoints.traefik.address=:9000
-            - --experimental.kubernetesgateway
             - --providers.kubernetesgateway.experimentalChannel
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
             - --providers.kubernetesgateway.statusaddress.service.name=traefik

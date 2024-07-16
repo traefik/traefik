@@ -280,14 +280,8 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	// Disable Gateway API provider if not enabled in experimental.
-	if c.Experimental == nil || !c.Experimental.KubernetesGateway {
-		c.Providers.KubernetesGateway = nil
-	}
-
 	// Configure Gateway API provider
 	if c.Providers.KubernetesGateway != nil {
-		log.Debug().Msg("Experimental Kubernetes Gateway provider has been activated")
 		entryPoints := make(map[string]gateway.Entrypoint)
 		for epName, entryPoint := range c.EntryPoints {
 			entryPoints[epName] = gateway.Entrypoint{Address: entryPoint.GetAddress(), HasHTTPTLSConf: entryPoint.HTTP.TLS != nil}
