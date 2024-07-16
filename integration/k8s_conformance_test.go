@@ -207,13 +207,6 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			features.SupportHTTPRoutePathRewrite,
 			features.SupportHTTPRoutePathRedirect,
 		),
-		ExemptFeatures: sets.New(
-			features.SupportHTTPRouteRequestTimeout,
-			features.SupportHTTPRouteBackendTimeout,
-			features.SupportHTTPRouteResponseHeaderModification,
-			features.SupportHTTPRouteRequestMirror,
-			features.SupportHTTPRouteRequestMultipleMirrors,
-		),
 	})
 	require.NoError(s.T(), err)
 

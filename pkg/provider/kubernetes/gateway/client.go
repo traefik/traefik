@@ -21,6 +21,7 @@ import (
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -51,8 +52,8 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	UpdateGatewayStatus(gateway *gatev1.Gateway, gatewayStatus gatev1.GatewayStatus) error
-	UpdateGatewayClassStatus(gatewayClass *gatev1.GatewayClass, condition metav1.Condition) error
+	UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error
+	UpdateGatewayClassStatus(ctx context.Context, name string, condition metav1.Condition) error
 	UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error
 	UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TCPRouteStatus) error
 	UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TLSRouteStatus) error
@@ -377,53 +378,76 @@ func (c *clientWrapper) ListGatewayClasses() ([]*gatev1.GatewayClass, error) {
 	return c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().List(labels.Everything())
 }
 
-func (c *clientWrapper) UpdateGatewayClassStatus(gatewayClass *gatev1.GatewayClass, condition metav1.Condition) error {
-	gc := gatewayClass.DeepCopy()
-
-	var newConditions []metav1.Condition
-	for _, cond := range gc.Status.Conditions {
-		// No update for identical condition.
-		if cond.Type == condition.Type && cond.Status == condition.Status && cond.ObservedGeneration == condition.ObservedGeneration {
-			return nil
+func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name string, condition metav1.Condition) error {
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentGatewayClass, err := c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().Get(name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
 		}
 
-		// Keep other condition types.
-		if cond.Type != condition.Type {
-			newConditions = append(newConditions, cond)
+		currentGatewayClass = currentGatewayClass.DeepCopy()
+		var newConditions []metav1.Condition
+		for _, cond := range currentGatewayClass.Status.Conditions {
+			// No update for identical condition.
+			if cond.Type == condition.Type && cond.Status == condition.Status && cond.ObservedGeneration == condition.ObservedGeneration {
+				return nil
+			}
+
+			// Keep other condition types.
+			if cond.Type != condition.Type {
+				newConditions = append(newConditions, cond)
+			}
 		}
-	}
 
-	// Append the condition to update.
-	newConditions = append(newConditions, condition)
-	gc.Status.Conditions = newConditions
+		// Append the condition to update.
+		newConditions = append(newConditions, condition)
+		currentGatewayClass.Status.Conditions = newConditions
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+		if _, err = c.csGateway.GatewayV1().GatewayClasses().UpdateStatus(ctx, currentGatewayClass, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
 
-	_, err := c.csGateway.GatewayV1().GatewayClasses().UpdateStatus(ctx, gc, metav1.UpdateOptions{})
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to update GatewayClass %q status: %w", gatewayClass.Name, err)
+		return fmt.Errorf("failed to update GatewayClass %q status: %w", name, err)
 	}
 
 	return nil
 }
 
-func (c *clientWrapper) UpdateGatewayStatus(gateway *gatev1.Gateway, gatewayStatus gatev1.GatewayStatus) error {
+func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error {
 	if !c.isWatchedNamespace(gateway.Namespace) {
 		return fmt.Errorf("cannot update Gateway status %s/%s: namespace is not within watched namespaces", gateway.Namespace, gateway.Name)
 	}
 
-	if gatewayStatusEquals(gateway.Status, gatewayStatus) {
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentGateway, err := c.factoriesGateway[c.lookupNamespace(gateway.Namespace)].Gateway().V1().Gateways().Lister().Gateways(gateway.Namespace).Get(gateway.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		if gatewayStatusEquals(currentGateway.Status, status) {
+			return nil
+		}
+
+		currentGateway = currentGateway.DeepCopy()
+		currentGateway.Status = status
+
+		if _, err = c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, currentGateway, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
 		return nil
-	}
-
-	g := gateway.DeepCopy()
-	g.Status = gatewayStatus
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, g, metav1.UpdateOptions{})
+	})
 	if err != nil {
 		return fmt.Errorf("failed to update Gateway %q status: %w", gateway.Name, err)
 	}
@@ -436,32 +460,44 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 		return fmt.Errorf("updating HTTPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
 
-	currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().HTTPRoutes().Lister().HTTPRoutes(route.Namespace).Get(route.Name)
-	if err != nil {
-		return fmt.Errorf("getting HTTPRoute %s/%s: %w", route.Namespace, route.Name, err)
-	}
-
-	// TODO: keep statuses for gateways managed by other Traefik instances.
-	var parentStatuses []gatev1.RouteParentStatus
-	for _, currentParentStatus := range currentRoute.Status.Parents {
-		if currentParentStatus.ControllerName != controllerName {
-			parentStatuses = append(parentStatuses, currentParentStatus)
-			continue
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().HTTPRoutes().Lister().HTTPRoutes(route.Namespace).Get(route.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
 		}
+
+		// TODO: keep statuses for gateways managed by other Traefik instances.
+		var parentStatuses []gatev1.RouteParentStatus
+		for _, currentParentStatus := range currentRoute.Status.Parents {
+			if currentParentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, currentParentStatus)
+				continue
+			}
+		}
+
+		parentStatuses = append(parentStatuses, status.Parents...)
+
+		currentRoute = currentRoute.DeepCopy()
+		currentRoute.Status = gatev1.HTTPRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
+				Parents: parentStatuses,
+			},
+		}
+
+		if _, err = c.csGateway.GatewayV1().HTTPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update HTTPRoute %q status: %w", route.Name, err)
 	}
 
-	parentStatuses = append(parentStatuses, status.Parents...)
-
-	currentRoute = currentRoute.DeepCopy()
-	currentRoute.Status = gatev1.HTTPRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
-	}
-
-	if _, err := c.csGateway.GatewayV1().HTTPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("updating HTTPRoute %s/%s status: %w", route.Namespace, route.Name, err)
-	}
 	return nil
 }
 
@@ -470,32 +506,44 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 		return fmt.Errorf("updating TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
 
-	currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
-	if err != nil {
-		return fmt.Errorf("getting TCPRoute %s/%s: %w", route.Namespace, route.Name, err)
-	}
-
-	// TODO: keep statuses for gateways managed by other Traefik instances.
-	var parentStatuses []gatev1alpha2.RouteParentStatus
-	for _, currentParentStatus := range currentRoute.Status.Parents {
-		if currentParentStatus.ControllerName != controllerName {
-			parentStatuses = append(parentStatuses, currentParentStatus)
-			continue
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
 		}
+
+		// TODO: keep statuses for gateways managed by other Traefik instances.
+		var parentStatuses []gatev1alpha2.RouteParentStatus
+		for _, currentParentStatus := range currentRoute.Status.Parents {
+			if currentParentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, currentParentStatus)
+				continue
+			}
+		}
+
+		parentStatuses = append(parentStatuses, status.Parents...)
+
+		currentRoute = currentRoute.DeepCopy()
+		currentRoute.Status = gatev1alpha2.TCPRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
+				Parents: parentStatuses,
+			},
+		}
+
+		if _, err = c.csGateway.GatewayV1alpha2().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update TCPRoute %q status: %w", route.Name, err)
 	}
 
-	parentStatuses = append(parentStatuses, status.Parents...)
-
-	currentRoute = currentRoute.DeepCopy()
-	currentRoute.Status = gatev1alpha2.TCPRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
-	}
-
-	if _, err := c.csGateway.GatewayV1alpha2().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("updating TCPRoute %s/%s status: %w", route.Namespace, route.Name, err)
-	}
 	return nil
 }
 
@@ -504,32 +552,44 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 		return fmt.Errorf("updating TLSRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
 
-	currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TLSRoutes().Lister().TLSRoutes(route.Namespace).Get(route.Name)
-	if err != nil {
-		return fmt.Errorf("getting TLSRoute %s/%s: %w", route.Namespace, route.Name, err)
-	}
-
-	// TODO: keep statuses for gateways managed by other Traefik instances.
-	var parentStatuses []gatev1alpha2.RouteParentStatus
-	for _, currentParentStatus := range currentRoute.Status.Parents {
-		if currentParentStatus.ControllerName != controllerName {
-			parentStatuses = append(parentStatuses, currentParentStatus)
-			continue
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TLSRoutes().Lister().TLSRoutes(route.Namespace).Get(route.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
 		}
+
+		// TODO: keep statuses for gateways managed by other Traefik instances.
+		var parentStatuses []gatev1alpha2.RouteParentStatus
+		for _, currentParentStatus := range currentRoute.Status.Parents {
+			if currentParentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, currentParentStatus)
+				continue
+			}
+		}
+
+		parentStatuses = append(parentStatuses, status.Parents...)
+
+		currentRoute = currentRoute.DeepCopy()
+		currentRoute.Status = gatev1alpha2.TLSRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
+				Parents: parentStatuses,
+			},
+		}
+
+		if _, err = c.csGateway.GatewayV1alpha2().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update TLSRoute %q status: %w", route.Name, err)
 	}
 
-	parentStatuses = append(parentStatuses, status.Parents...)
-
-	currentRoute = currentRoute.DeepCopy()
-	currentRoute.Status = gatev1alpha2.TLSRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
-	}
-
-	if _, err := c.csGateway.GatewayV1alpha2().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("updating TLSRoute %s/%s status: %w", route.Namespace, route.Name, err)
-	}
 	return nil
 }
 
