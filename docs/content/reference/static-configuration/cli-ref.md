@@ -231,6 +231,9 @@ Directory to mount to the wasm guest.
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
 
+`--experimental.plugins.<name>.required`:  
+Plugin's requirement to start traefik (Default: ```false```)
+
 `--experimental.plugins.<name>.settings`:  
 Plugin's settings (works only for wasm plugins).
 
