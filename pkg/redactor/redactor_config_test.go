@@ -915,6 +915,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 			"Descriptor1": {
 				ModuleName: "foobar",
 				Version:    "foobar",
+				Required:   true,
 				Settings: plugins.Settings{
 					Envs:   []string{"a", "b"},
 					Mounts: []string{"a", "b"},
