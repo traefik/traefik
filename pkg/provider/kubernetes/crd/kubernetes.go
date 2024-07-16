@@ -886,7 +886,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	var nsDefault []string
 
 	for _, tlsOptionsCRD := range tlsOptionsCRDs {
-		logger := log.FromContext(log.With(ctx, log.Str("tlsOptionsCRD", tlsOptionsCRD.Name), log.Str("namespace", tlsOptionsCRD.Namespace)))
+		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOptionsCRD.Name), log.Str("namespace", tlsOptionsCRD.Namespace)))
 		var clientCAs []tls.FileOrContent
 
 		for _, secretName := range tlsOptionsCRD.Spec.ClientAuth.SecretNames {
