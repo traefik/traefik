@@ -521,7 +521,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.EntryPoints = static.EntryPoints{
-		"foobar": {
+		"foobar": &static.EntryPoint{
 			Address: "foo Address",
 			Transport: &static.EntryPointsTransport{
 				LifeCycle: &static.LifeCycle{

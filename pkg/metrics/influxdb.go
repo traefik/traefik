@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"time"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
+	kitlog "github.com/go-kit/log"
 	influxdb "github.com/influxdata/influxdb1-client/v2"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/safe"
