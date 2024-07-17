@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/logs"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func init() {
