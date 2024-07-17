@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -103,7 +103,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.Watch {
 				f := filters.NewArgs()
 				f.Add("type", "container")
-				options := dockertypes.EventsOptions{
+				options := eventtypes.ListOptions{
 					Filters: f,
 				}
 
@@ -165,22 +165,22 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, dockertypes.ContainerListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	var inspectedContainers []dockerData
 	// get inspect containers
-	for _, container := range containerList {
-		dData := inspectContainers(ctx, dockerClient, container.ID)
+	for _, c := range containerList {
+		dData := inspectContainers(ctx, dockerClient, c.ID)
 		if len(dData.Name) == 0 {
 			continue
 		}
 
 		extraConf, err := p.extractLabels(dData)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msgf("Skip container %s", getServiceName(dData))
+			log.Ctx(ctx).Error().Err(err).Msgf("Skip c %s", getServiceName(dData))
 			continue
 		}
 
