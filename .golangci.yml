@@ -283,3 +283,7 @@ issues:
     - path: pkg/provider/acme/local_store.go
       linters:
         - musttag
+    - path: pkg/types/metrics.go
+      linters:
+        - goconst
+
