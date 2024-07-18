@@ -280,3 +280,7 @@ issues:
     - path: pkg/cli/loader_file.go
       linters:
         - goconst
+    - path: pkg/types/metrics.go
+      linters:
+        - goconst
+
