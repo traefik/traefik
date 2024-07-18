@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	dockerclient "github.com/docker/docker/client"
@@ -90,7 +89,7 @@ func TestListTasks(t *testing.T) {
 			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
 
 			if len(test.expectedTasks) != len(taskDockerData) {
-				t.Errorf("expected tasks %v, got %v", spew.Sdump(test.expectedTasks), spew.Sdump(taskDockerData))
+				t.Errorf("expected tasks %v, got %v", test.expectedTasks, taskDockerData)
 			}
 
 			for i, taskID := range test.expectedTasks {
