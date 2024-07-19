@@ -606,7 +606,7 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 _Optional, Default=2160_
 
-The `certificatesDuration` option defines the certificates' duration in hours.
+The `certificatesDuration` option defines how long the certificates issued by your certificate authority will last.
 It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
 
 !!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
