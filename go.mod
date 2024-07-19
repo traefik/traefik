@@ -4,22 +4,22 @@ go 1.22
 
 require (
 	github.com/BurntSushi/toml v1.4.0
-	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61
+	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61 // No tag on the repo.
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go v1.44.327
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
-	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/docker/cli v24.0.9+incompatible
 	github.com/docker/docker v24.0.9+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
+	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2 // No tag on the repo.
 	github.com/go-acme/lego/v4 v4.17.4
-	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
+	github.com/go-kit/kit v0.13.0
+	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.0
@@ -28,9 +28,9 @@ require (
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hashicorp/nomad/api v0.0.0-20231213195942-64e3dca9274b
+	github.com/hashicorp/nomad/api v0.0.0-20231213195942-64e3dca9274b // No tag on the repo.
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
-	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
+	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.17.2
 	github.com/kvtools/consul v1.0.2
@@ -38,24 +38,24 @@ require (
 	github.com/kvtools/redis v1.1.0
 	github.com/kvtools/valkeyrie v1.0.0
 	github.com/kvtools/zookeeper v1.0.2
-	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
+	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f // No tag on the repo.
 	github.com/miekg/dns v1.1.59
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b
+	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // No tag on the repo.
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
-	github.com/openzipkin/zipkin-go v0.2.2
+	github.com/openzipkin/zipkin-go v0.2.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pires/go-proxyproto v0.6.1
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // No tag on the repo.
 	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/client_model v0.5.0
 	github.com/quic-go/quic-go v0.45.1
-	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
+	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac // No tag on the repo.
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
-	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
+	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154 // No tag on the repo.
 	github.com/testcontainers/testcontainers-go v0.27.0
 	github.com/traefik/paerser v0.2.0
 	github.com/traefik/yaegi v0.16.1
@@ -63,7 +63,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
-	github.com/vulcand/oxy/v2 v2.0.0-20230427132221-be5cf38f3c1c
+	github.com/vulcand/oxy/v2 v2.0.0
 	github.com/vulcand/predicate v1.2.0
 	go.elastic.co/apm/module/apmot/v2 v2.4.8
 	go.elastic.co/apm/v2 v2.4.8
@@ -79,7 +79,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.26.3
 	k8s.io/apimachinery v0.26.3
 	k8s.io/client-go v0.26.3
-	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
+	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749 // No tag on the repo.
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/gateway-api v0.4.0
 )
@@ -148,9 +148,9 @@ require (
 	github.com/containerd/containerd v1.7.11 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
-	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deepmap/oapi-codegen v1.9.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
