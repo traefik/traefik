@@ -54,7 +54,7 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Keep "allows edit from maintainer" checked.
     * Use semantic line breaks for documentation.
     * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
-    * Ensure dependencies in the `go.mod` file reference a tag. If it is not possible to reference a tag, add a comment explaining why.
+    * Ensure that the dependencies in the `go.mod` file reference a tag. If referencing a tag is not possible, add a comment explaining why.
 * Pass the validation check.
 * Pass all tests.
 * Receive 2 approving reviews from maintainers.
