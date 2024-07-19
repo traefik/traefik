@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
+	kitlog "github.com/go-kit/log"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	influxdb2api "github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
