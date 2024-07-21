@@ -2,6 +2,7 @@ package observability
 
 import (
 	"context"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -180,4 +181,26 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 			metricdatatest.AssertEqual[metricdata.Metrics](t, expected, got.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp(), metricdatatest.IgnoreValue())
 		})
 	}
+}
+
+func TestEntryPointMiddleware_tracing_info_into_log(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://www.test.com/", nil)
+	req = req.WithContext(context.WithValue(
+		req.Context(),
+		accesslog.DataTableKey,
+		&accesslog.LogData{
+			Core: accesslog.CoreLogData{},
+		}))
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {})
+
+	tracer := &mockTracer{}
+
+	handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{}, []string{}, []string{}), nil, "test", next)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	expectedSpanCtx := tracer.spans[0].SpanContext()
+
+	logData := accesslog.GetLogData(req)
+	assert.Equal(t, expectedSpanCtx.TraceID(), logData.Core[traceId])
+	assert.Equal(t, expectedSpanCtx.SpanID(), logData.Core[spanId])
 }
