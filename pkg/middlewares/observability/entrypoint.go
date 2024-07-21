@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,6 +22,8 @@ import (
 
 const (
 	entryPointTypeName = "TracingEntryPoint"
+	traceId            = "TraceId"
+	spanId             = "SpanId"
 )
 
 type entryPointTracing struct {
@@ -68,6 +71,12 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
 	e.tracer.CaptureServerRequest(span, req)
+	logData := accesslog.GetLogData(req)
+	if logData != nil {
+		spanCtx := span.SpanContext()
+		logData.Core[traceId] = spanCtx.TraceID()
+		logData.Core[spanId] = spanCtx.SpanID()
+	}
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
