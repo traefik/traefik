@@ -18,7 +18,7 @@ In production, it should be at least secured by authentication and authorization
 
 !!! info
     It's recommended to NOT publicly exposing the API's port, keeping it restricted to internal networks
-    (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to  networks).
+    (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
 
 ## Configuration
 
