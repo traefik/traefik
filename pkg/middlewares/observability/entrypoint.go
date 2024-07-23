@@ -3,7 +3,6 @@ package observability
 import (
 	"context"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -22,8 +22,8 @@ import (
 
 const (
 	entryPointTypeName = "TracingEntryPoint"
-	traceId            = "TraceId"
-	spanId             = "SpanId"
+	traceID            = "TraceId"
+	spanID             = "SpanId"
 )
 
 type entryPointTracing struct {
@@ -74,8 +74,8 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	logData := accesslog.GetLogData(req)
 	if logData != nil {
 		spanCtx := span.SpanContext()
-		logData.Core[traceId] = spanCtx.TraceID()
-		logData.Core[spanId] = spanCtx.SpanID()
+		logData.Core[traceID] = spanCtx.TraceID()
+		logData.Core[spanID] = spanCtx.SpanID()
 	}
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
