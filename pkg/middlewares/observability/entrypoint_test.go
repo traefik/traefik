@@ -2,7 +2,6 @@ package observability
 
 import (
 	"context"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -201,6 +201,6 @@ func TestEntryPointMiddleware_tracing_info_into_log(t *testing.T) {
 	expectedSpanCtx := tracer.spans[0].SpanContext()
 
 	logData := accesslog.GetLogData(req)
-	assert.Equal(t, expectedSpanCtx.TraceID(), logData.Core[traceId])
-	assert.Equal(t, expectedSpanCtx.SpanID(), logData.Core[spanId])
+	assert.Equal(t, expectedSpanCtx.TraceID(), logData.Core[traceID])
+	assert.Equal(t, expectedSpanCtx.SpanID(), logData.Core[spanID])
 }
