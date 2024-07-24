@@ -56,11 +56,13 @@ type Client interface {
 	UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error
 	UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error
 	UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error
+	UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.GRPCRouteStatus) error
 	UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TCPRouteStatus) error
 	UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TLSRouteStatus) error
 	ListGatewayClasses() ([]*gatev1.GatewayClass, error)
 	ListGateways() []*gatev1.Gateway
 	ListHTTPRoutes() ([]*gatev1.HTTPRoute, error)
+	ListGRPCRoutes() ([]*gatev1.GRPCRoute, error)
 	ListTCPRoutes() ([]*gatev1alpha2.TCPRoute, error)
 	ListTLSRoutes() ([]*gatev1alpha2.TLSRoute, error)
 	ListNamespaces(selector labels.Selector) ([]string, error)
@@ -205,6 +207,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
+		_, err = factoryGateway.Gateway().V1().GRPCRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 		_, err = factoryGateway.Gateway().V1beta1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -315,6 +321,20 @@ func (c *clientWrapper) ListHTTPRoutes() ([]*gatev1.HTTPRoute, error) {
 	}
 
 	return httpRoutes, nil
+}
+
+func (c *clientWrapper) ListGRPCRoutes() ([]*gatev1.GRPCRoute, error) {
+	var grpcRoutes []*gatev1.GRPCRoute
+	for _, namespace := range c.watchedNamespaces {
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().GRPCRoutes().Lister().GRPCRoutes(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, fmt.Errorf("listing GRPC routes in namespace %s", namespace)
+		}
+
+		grpcRoutes = append(grpcRoutes, routes...)
+	}
+
+	return grpcRoutes, nil
 }
 
 func (c *clientWrapper) ListTCPRoutes() ([]*gatev1alpha2.TCPRoute, error) {
@@ -492,6 +512,58 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update HTTPRoute %q status: %w", route.Name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.GRPCRouteStatus) error {
+	if !c.isWatchedNamespace(route.Namespace) {
+		return fmt.Errorf("updating GRPCRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().GRPCRoutes().Lister().GRPCRoutes(route.Namespace).Get(route.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
+		copy(parentStatuses, status.Parents)
+
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		for _, parentStatus := range currentRoute.Status.Parents {
+			if parentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, parentStatus)
+				continue
+			}
+		}
+
+		// do not update status when nothing has changed.
+		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
+			return nil
+		}
+
+		currentRoute = currentRoute.DeepCopy()
+		currentRoute.Status = gatev1.GRPCRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
+				Parents: parentStatuses,
+			},
+		}
+
+		if _, err = c.csGateway.GatewayV1().GRPCRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update GRPCRoute %q status: %w", route.Name, err)
 	}
 
 	return nil

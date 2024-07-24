@@ -7,6 +7,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -132,12 +133,22 @@ type WRRService struct {
 	// Status defines an HTTP status code that should be returned when calling the service.
 	// This is required by the Gateway API implementation which expects specific HTTP status to be returned.
 	Status *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	// GRPCStatus defines a GRPC status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific GRPC status to be returned.
+	GRPCStatus *GRPCStatus `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // SetDefaults Default values for a WRRService.
 func (w *WRRService) SetDefaults() {
 	defaultWeight := 1
 	w.Weight = &defaultWeight
+}
+
+// +k8s:deepcopy-gen=true
+
+type GRPCStatus struct {
+	Code codes.Code `json:"code,omitempty" toml:"code,omitempty" yaml:"code,omitempty" export:"true"`
+	Msg  string     `json:"msg,omitempty" toml:"msg,omitempty" yaml:"msg,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
