@@ -44,6 +44,7 @@ const (
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
 	kindHTTPRoute      = "HTTPRoute"
+	kindGRPCRoute      = "GRPCRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 )
@@ -155,8 +156,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 		return
 	}
 
-	err := p.routerTransform.Apply(ctx, rt, route)
-	if err != nil {
+	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
 }
@@ -355,6 +355,8 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	}
 
 	p.loadHTTPRoutes(ctx, gatewayListeners, conf)
+
+	p.loadGRPCRoutes(ctx, gatewayListeners, conf)
 
 	if p.ExperimentalChannel {
 		p.loadTCPRoutes(ctx, gatewayListeners, conf)
@@ -864,7 +866,10 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 		}}
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
-		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
+		return []gatev1.RouteGroupKind{
+			{Kind: kindHTTPRoute, Group: &group},
+			{Kind: kindGRPCRoute, Group: &group},
+		}, nil
 
 	case gatev1.TLSProtocolType:
 		if experimentalChannel {
