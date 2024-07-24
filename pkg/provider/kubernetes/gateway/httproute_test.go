@@ -72,14 +72,14 @@ func Test_buildHostRule(t *testing.T) {
 func Test_buildMatchRule(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		routeMatch       gatev1.HTTPRouteMatch
+		match            gatev1.HTTPRouteMatch
 		hostnames        []gatev1.Hostname
 		expectedRule     string
 		expectedPriority int
 		expectedError    bool
 	}{
 		{
-			desc:             "Empty rule and matches ",
+			desc:             "Empty rule and matches",
 			expectedRule:     "PathPrefix(`/`)",
 			expectedPriority: 1,
 		},
@@ -91,7 +91,7 @@ func Test_buildMatchRule(t *testing.T) {
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: ptr.To(gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchPathPrefix),
 					Value: ptr.To("/"),
@@ -103,7 +103,7 @@ func Test_buildMatchRule(t *testing.T) {
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: ptr.To(gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchPathPrefix),
 					Value: ptr.To("/"),
@@ -117,13 +117,13 @@ func Test_buildMatchRule(t *testing.T) {
 		},
 		{
 			desc:             "One HTTPRouteMatch with nil HTTPPathMatch",
-			routeMatch:       gatev1.HTTPRouteMatch{Path: nil},
+			match:            gatev1.HTTPRouteMatch{Path: nil},
 			expectedRule:     "PathPrefix(`/`)",
 			expectedPriority: 1,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Type",
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  nil,
 					Value: ptr.To("/foo/"),
@@ -134,7 +134,7 @@ func Test_buildMatchRule(t *testing.T) {
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
 					Value: nil,
@@ -145,7 +145,7 @@ func Test_buildMatchRule(t *testing.T) {
 		},
 		{
 			desc: "One Path",
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
 					Value: ptr.To("/foo/"),
@@ -156,7 +156,7 @@ func Test_buildMatchRule(t *testing.T) {
 		},
 		{
 			desc: "Path && Header",
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
 					Value: ptr.To("/foo/"),
@@ -175,7 +175,7 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc:      "Host && Path && Header",
 			hostnames: []gatev1.Hostname{"foo.com"},
-			routeMatch: gatev1.HTTPRouteMatch{
+			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
 					Value: ptr.To("/foo/"),
@@ -197,7 +197,7 @@ func Test_buildMatchRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rule, priority := buildMatchRule(test.hostnames, test.routeMatch)
+			rule, priority := buildMatchRule(test.hostnames, test.match)
 			assert.Equal(t, test.expectedRule, rule)
 			assert.Equal(t, test.expectedPriority, priority)
 		})
