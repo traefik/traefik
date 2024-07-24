@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -30,6 +31,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
+	"google.golang.org/grpc/status"
 )
 
 const defaultMaxBodySize int64 = -1
@@ -222,15 +224,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 
 	balancer := wrr.New(config.Sticky, config.HealthCheck != nil)
 	for _, service := range shuffle(config.Services, m.rand) {
-		if service.Status != nil {
-			serviceHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				writer.WriteHeader(*service.Status)
-			})
-			balancer.Add(service.Name, serviceHandler, service.Weight)
-			continue
-		}
-
-		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
+		serviceHandler, err := m.getServiceHandler(ctx, service)
 		if err != nil {
 			return nil, err
 		}
@@ -258,6 +252,34 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 	}
 
 	return balancer, nil
+}
+
+func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRService) (http.Handler, error) {
+	switch {
+	case service.Status != nil:
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.WriteHeader(*service.Status)
+		}), nil
+
+	case service.GRPCStatus != nil:
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			st := status.New(service.GRPCStatus.Code, service.GRPCStatus.Msg)
+
+			body, err := json.Marshal(st.Proto())
+			if err != nil {
+				http.Error(rw, "Failed to marshal status to JSON", http.StatusInternalServerError)
+				return
+			}
+
+			rw.Header().Set("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusOK)
+
+			_, _ = rw.Write(body)
+		}), nil
+
+	default:
+		return m.BuildHTTP(ctx, service.Name)
+	}
 }
 
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
