@@ -26,34 +26,51 @@ func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
 
 	ctx := context.Background()
 
+	var unavailablePlugins []string
 	for pAlias, desc := range plugins {
 		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
 		hash, err := client.Download(ctx, desc.ModuleName, desc.Version)
 		if err != nil {
 			_ = client.ResetAll()
+			if !desc.Required {
+				log.Ctx(ctx).Warn().Msgf("Unable to download plugin %s: %s", desc.ModuleName, err)
+				unavailablePlugins = append(unavailablePlugins, pAlias)
+				continue
+			}
 			return fmt.Errorf("unable to download plugin %s: %w", desc.ModuleName, err)
 		}
 
 		err = client.Check(ctx, desc.ModuleName, desc.Version, hash)
 		if err != nil {
 			_ = client.ResetAll()
+			if !desc.Required {
+				log.Ctx(ctx).Warn().Msgf("Unable to check archive integrity of the plugin %s: %s", desc.ModuleName, err)
+				unavailablePlugins = append(unavailablePlugins, pAlias)
+				continue
+			}
 			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", desc.ModuleName, err)
 		}
+
+		err = client.Unzip(desc.ModuleName, desc.Version)
+		if err != nil {
+			_ = client.ResetAll()
+			if !desc.Required {
+				log.Ctx(ctx).Warn().Msgf("Unable to unzip archive: %s", err)
+				unavailablePlugins = append(unavailablePlugins, pAlias)
+				continue
+			}
+			return fmt.Errorf("unable to unzip archive: %w", err)
+		}
+	}
+	for _, pAlias := range unavailablePlugins {
+		delete(plugins, pAlias)
 	}
 
 	err = client.WriteState(plugins)
 	if err != nil {
 		_ = client.ResetAll()
 		return fmt.Errorf("unable to write plugins state: %w", err)
-	}
-
-	for _, desc := range plugins {
-		err = client.Unzip(desc.ModuleName, desc.Version)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to unzip archive: %w", err)
-		}
 	}
 
 	return nil
