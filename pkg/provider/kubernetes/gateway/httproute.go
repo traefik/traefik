@@ -116,16 +116,6 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
-	errWrr := dynamic.WeightedRoundRobin{
-		Services: []dynamic.WRRService{
-			{
-				Name:   "invalid-httproute-filter",
-				Status: ptr.To(500),
-				Weight: ptr.To(1),
-			},
-		},
-	}
-
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
 		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
@@ -150,7 +140,17 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
 
 				errWrrName := routerName + "-err-wrr"
-				conf.HTTP.Services[errWrrName] = &dynamic.Service{Weighted: &errWrr}
+				conf.HTTP.Services[errWrrName] = &dynamic.Service{
+					Weighted: &dynamic.WeightedRoundRobin{
+						Services: []dynamic.WRRService{
+							{
+								Name:   "invalid-httproute-filter",
+								Status: ptr.To(500),
+								Weight: ptr.To(1),
+							},
+						},
+					},
+				}
 				router.Service = errWrrName
 
 			case len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef):
