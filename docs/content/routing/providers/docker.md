@@ -66,7 +66,8 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
     ```
 
     !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
-        By default, Traefik uses the first exposed port of a container.
+        By default, Traefik uses the lowest exposed port of a container.
+        E.g. if `80` and `8080` are exposed, Traefik will use `80`.
 
         Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
         overrides that behavior.
