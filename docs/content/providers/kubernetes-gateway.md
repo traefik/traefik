@@ -34,7 +34,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
     ```bash
     # Install Traefik RBACs.
-    kubectl apply -f kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
 3. Deploy Traefik and enable the `kubernetesGateway` provider in the static configuration as detailed below:
