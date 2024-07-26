@@ -318,15 +318,18 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 		gatewayClassNames[gatewayClass.Name] = struct{}{}
 
-		err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, metav1.Condition{
-			Type:               string(gatev1.GatewayClassConditionStatusAccepted),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: gatewayClass.Generation,
-			Reason:             "Handled",
-			Message:            "Handled by Traefik controller",
-			LastTransitionTime: metav1.Now(),
-		})
-		if err != nil {
+		status := gatev1.GatewayClassStatus{
+			Conditions: upsertGatewayClassConditionAccepted(gatewayClass.Status.Conditions, metav1.Condition{
+				Type:               string(gatev1.GatewayClassConditionStatusAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: gatewayClass.Generation,
+				Reason:             "Handled",
+				Message:            "Handled by Traefik controller",
+				LastTransitionTime: metav1.Now(),
+			}),
+		}
+
+		if err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, status); err != nil {
 			log.Ctx(ctx).
 				Warn().
 				Err(err).
@@ -1225,6 +1228,17 @@ func upsertRouteConditionResolvedRefs(conditions []metav1.Condition, condition m
 	}
 	if curr != nil && curr.Status == metav1.ConditionFalse && condition.Status == metav1.ConditionTrue {
 		return append(conds, *curr)
+	}
+	return append(conds, condition)
+}
+
+func upsertGatewayClassConditionAccepted(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
+	var conds []metav1.Condition
+	for _, c := range conditions {
+		if c.Type == string(gatev1.GatewayClassConditionStatusAccepted) {
+			continue
+		}
+		conds = append(conds, c)
 	}
 	return append(conds, condition)
 }

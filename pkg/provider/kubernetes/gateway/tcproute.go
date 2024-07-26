@@ -27,7 +27,10 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 
 	for _, route := range routes {
-		logger := log.Ctx(ctx).With().Str("tcproute", route.Name).Str("namespace", route.Namespace).Logger()
+		logger := log.Ctx(ctx).With().
+			Str("tcp_route", route.Name).
+			Str("namespace", route.Namespace).
+			Logger()
 
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
