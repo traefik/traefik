@@ -514,24 +514,31 @@ type connectionTracker struct {
 
 // AddConnection add a connection in the tracked connections list.
 func (c *connectionTracker) AddConnection(conn net.Conn) {
+	defer c.syncOpenConnectionGauge()
+
 	c.connsMu.Lock()
 	c.conns[conn] = struct{}{}
 	c.connsMu.Unlock()
-
-	if c.openConnectionsGauge != nil {
-		c.openConnectionsGauge.Add(1)
-	}
 }
 
 // RemoveConnection remove a connection from the tracked connections list.
 func (c *connectionTracker) RemoveConnection(conn net.Conn) {
+	defer c.syncOpenConnectionGauge()
+
 	c.connsMu.Lock()
 	delete(c.conns, conn)
 	c.connsMu.Unlock()
+}
 
-	if c.openConnectionsGauge != nil {
-		c.openConnectionsGauge.Add(-1)
+// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
+func (c *connectionTracker) syncOpenConnectionGauge() {
+	if c.openConnectionsGauge == nil {
+		return
 	}
+
+	c.connsMu.RLock()
+	c.openConnectionsGauge.Set(float64(len(c.conns)))
+	c.connsMu.RUnlock()
 }
 
 func (c *connectionTracker) isEmpty() bool {
