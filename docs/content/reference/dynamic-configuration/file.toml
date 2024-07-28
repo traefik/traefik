@@ -143,6 +143,7 @@
         excludedContentTypes = ["foobar", "foobar"]
         includedContentTypes = ["foobar", "foobar"]
         minResponseBodyBytes = 42
+        encodings = ["foobar", "foobar"]
         defaultEncoding = "foobar"
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]
