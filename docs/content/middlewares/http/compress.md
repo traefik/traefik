@@ -255,3 +255,185 @@ http:
   [http.middlewares.test-compress.compress]
     defaultEncoding = "gzip"
 ```
+
+### `defaultEncoding`
+
+_Optional, Default=""_
+
+`defaultEncoding` specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
+
+There is no fallback on the `defaultEncoding` when the header value is empty or unsupported.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.defaultEncoding=gzip"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    defaultEncoding: gzip
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.defaultEncoding=gzip"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        defaultEncoding: gzip
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    defaultEncoding = "gzip"
+```
+
+### `includedContentTypes`
+
+_Optional, Default=""_
+
+`includedContentTypes` specifies a list of content types to compare the `Content-Type` header of the responses before compressing.
+
+The responses with content types defined in `includedContentTypes` are compressed.
+
+Content types are compared in a case-insensitive, whitespace-ignored manner.
+
+!!! info
+
+    The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.includedcontenttypes=application/json,text/html,text/plain"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    includedContentTypes:
+      - application/json
+      - text/html
+      - text/plain
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.includedcontenttypes=application/json,text/html,text/plain"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        includedContentTypes:
+          - application/json
+          - text/html
+          - text/plain
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    includedContentTypes = ["application/json","text/html","text/plain"]
+```
+
+### `minResponseBodyBytes`
+
+_Optional, Default=1024_
+
+`minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
+
+Responses smaller than the specified values will not be compressed.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    minResponseBodyBytes: 1200
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        minResponseBodyBytes: 1200
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    minResponseBodyBytes = 1200
+```
+
+### `encodings`
+
+_Optional, Default="zstd, br, gzip"_
+
+`encodings` specifies a list of the allowed compression encodings. Valid entries are `zstd` (Zstandard), `br`(Brotli), and `gzip` (Gzip).
+
+The order of the list also sets the priority. The top entry has the highest priority.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.encodings=zstd,br,gzip"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    encodings:
+      - zstd
+      - br
+      - gzip
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.encodings=zstd,br,gzip"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        encodings:
+          - zstd
+          - br
+          - gzip
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    encodings = ["zstd","br","gzip"]
+```
