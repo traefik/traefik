@@ -22,6 +22,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware05/circuitBreaker/recoveryDuration` | `42s` |
 | `traefik/http/middlewares/Middleware05/circuitBreaker/responseCode` | `42` |
 | `traefik/http/middlewares/Middleware06/compress/defaultEncoding` | `foobar` |
+| `traefik/http/middlewares/Middleware06/compress/encodings/0` | `foobar` |
+| `traefik/http/middlewares/Middleware06/compress/encodings/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/excludedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/excludedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/includedContentTypes/0` | `foobar` |
