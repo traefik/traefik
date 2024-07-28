@@ -17,15 +17,21 @@ const (
 	notAcceptable = "not_acceptable"
 )
 
+var anyEncoding = []string{zstdName, brotliName, gzipName} // default value if `encodings` config list is empty
+
 type Encoding struct {
 	Type   string
 	Weight *float64
 }
 
-func getCompressionType(acceptEncoding []string, defaultType string) string {
+func getCompressionType(acceptEncoding []string, defaultType string, allowedEncodings []string) string {
 	if defaultType == "" {
-		// Keeps the pre-existing default inside Traefik.
-		defaultType = brotliName
+		// Keeps the pre-existing default inside Traefik if brotli is an allowed encoding.
+		if slices.Contains(allowedEncodings, brotliName) {
+			defaultType = brotliName
+		} else { // otherwise use the first allowed encoding
+			defaultType = allowedEncodings[0]
+		}
 	}
 
 	encodings, hasWeight := parseAcceptEncoding(acceptEncoding)
@@ -35,24 +41,28 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 			return identityName
 		}
 
-		encoding := encodings[0]
+		for _, encoding := range encodings {
 
-		if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
-			return notAcceptable
+			if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
+				return notAcceptable
+			}
+
+			if encoding.Type == wildcardName && encoding.Weight != nil && *encoding.Weight == 0 {
+				return notAcceptable
+			}
+
+			if encoding.Type == wildcardName {
+				return defaultType
+			}
+
+			if slices.Contains(allowedEncodings, encoding.Type) {
+				return encoding.Type
+			}
 		}
-
-		if encoding.Type == wildcardName && encoding.Weight != nil && *encoding.Weight == 0 {
-			return notAcceptable
-		}
-
-		if encoding.Type == wildcardName {
-			return defaultType
-		}
-
-		return encoding.Type
+		return notAcceptable
 	}
 
-	for _, dt := range []string{zstdName, brotliName, gzipName} {
+	for _, dt := range allowedEncodings {
 		if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}

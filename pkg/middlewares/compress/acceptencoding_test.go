@@ -8,71 +8,109 @@ import (
 
 func Test_getCompressionType(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		values      []string
-		defaultType string
-		expected    string
+		desc             string
+		values           []string
+		defaultType      string
+		allowedEncodings []string
+		expected         string
 	}{
 		{
-			desc:     "br > gzip (no weight)",
-			values:   []string{"gzip, br"},
-			expected: brotliName,
+			desc:             "br > gzip (no weight)",
+			values:           []string{"gzip, br"},
+			allowedEncodings: anyEncoding,
+			expected:         brotliName,
 		},
 		{
-			desc:     "zstd > br > gzip (no weight)",
-			values:   []string{"zstd, gzip, br"},
-			expected: zstdName,
+			desc:             "zstd > br > gzip (no weight)",
+			values:           []string{"zstd, gzip, br"},
+			allowedEncodings: anyEncoding,
+			expected:         zstdName,
 		},
 		{
-			desc:     "known compression type (no weight)",
-			values:   []string{"compress, gzip"},
-			expected: gzipName,
+			desc:             "known compression type (no weight)",
+			values:           []string{"compress, gzip"},
+			allowedEncodings: anyEncoding,
+			expected:         gzipName,
 		},
 		{
-			desc:     "unknown compression type (no weight), no encoding",
-			values:   []string{"compress, rar"},
-			expected: identityName,
+			desc:             "unknown compression type (no weight), no encoding",
+			values:           []string{"compress, rar"},
+			allowedEncodings: anyEncoding,
+			expected:         identityName,
 		},
 		{
-			desc:     "wildcard return the default compression type",
-			values:   []string{"*"},
-			expected: brotliName,
+			desc:             "wildcard return the default compression type",
+			values:           []string{"*"},
+			allowedEncodings: anyEncoding,
+			expected:         brotliName,
 		},
 		{
-			desc:        "wildcard return the custom default compression type",
-			values:      []string{"*"},
-			defaultType: "foo",
-			expected:    "foo",
+			desc:             "wildcard return the custom default compression type",
+			values:           []string{"*"},
+			defaultType:      "foo",
+			allowedEncodings: anyEncoding,
+			expected:         "foo",
 		},
 		{
-			desc:     "follows weight",
-			values:   []string{"br;q=0.8, gzip;q=1.0, *;q=0.1"},
-			expected: gzipName,
+			desc:             "follows weight",
+			values:           []string{"br;q=0.8, gzip;q=1.0, *;q=0.1"},
+			allowedEncodings: anyEncoding,
+			expected:         gzipName,
 		},
 		{
-			desc:     "ignore unknown compression type",
-			values:   []string{"compress;q=1.0, gzip;q=0.5"},
-			expected: gzipName,
+			desc:             "ignore unknown compression type",
+			values:           []string{"compress;q=1.0, gzip;q=0.5"},
+			allowedEncodings: anyEncoding,
+			expected:         gzipName,
 		},
 		{
-			desc:     "fallback on non-zero compression type",
-			values:   []string{"compress;q=1.0, gzip, identity;q=0"},
-			expected: gzipName,
+			desc:             "fallback on non-zero compression type",
+			values:           []string{"compress;q=1.0, gzip, identity;q=0"},
+			allowedEncodings: anyEncoding,
+			expected:         gzipName,
 		},
 		{
-			desc:     "not acceptable (identity)",
-			values:   []string{"compress;q=1.0, identity;q=0"},
-			expected: notAcceptable,
+			desc:             "not acceptable (identity)",
+			values:           []string{"compress;q=1.0, identity;q=0"},
+			allowedEncodings: anyEncoding,
+			expected:         notAcceptable,
 		},
 		{
-			desc:     "not acceptable (wildcard)",
-			values:   []string{"compress;q=1.0, *;q=0"},
-			expected: notAcceptable,
+			desc:             "not acceptable (wildcard)",
+			values:           []string{"compress;q=1.0, *;q=0"},
+			allowedEncodings: anyEncoding,
+			expected:         notAcceptable,
 		},
 		{
-			desc:     "non-zero is higher than 0",
-			values:   []string{"gzip, *;q=0"},
-			expected: gzipName,
+			desc:             "non-zero is higher than 0",
+			values:           []string{"gzip, *;q=0"},
+			allowedEncodings: anyEncoding,
+			expected:         gzipName,
+		},
+		{
+			desc:             "zstd forbidden, brotli first",
+			values:           []string{"zstd, gzip, br"},
+			allowedEncodings: []string{brotliName, gzipName},
+			expected:         brotliName,
+		},
+		{
+			desc:             "zstd forbidden, gzip first",
+			values:           []string{"zstd, gzip, br"},
+			allowedEncodings: []string{gzipName, brotliName},
+			expected:         gzipName,
+		},
+		{
+			desc:             "defaultType beats allowedEncodings order",
+			values:           []string{"*"},
+			defaultType:      "br",
+			allowedEncodings: []string{gzipName, brotliName},
+			expected:         brotliName,
+		},
+		{
+			desc:             "follows weight, ignores forbidden encoding",
+			values:           []string{"br;q=0.8, gzip;q=1.0, *;q=0.1"},
+			allowedEncodings: []string{zstdName, brotliName},
+			expected:         brotliName,
 		},
 	}
 
@@ -80,7 +118,7 @@ func Test_getCompressionType(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			encodingType := getCompressionType(test.values, test.defaultType)
+			encodingType := getCompressionType(test.values, test.defaultType, test.allowedEncodings)
 
 			assert.Equal(t, test.expected, encodingType)
 		})
