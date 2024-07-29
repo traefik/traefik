@@ -158,6 +158,11 @@ func (in *Compress) DeepCopyInto(out *Compress) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Encodings != nil {
+		in, out := &in.Encodings, &out.Encodings
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
