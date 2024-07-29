@@ -64,7 +64,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, http.DefaultTransport, nil)
+			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})
@@ -289,7 +289,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 		Interval:        dynamic.DefaultHealthCheckInterval,
 		Timeout:         dynamic.DefaultHealthCheckTimeout,
 	}
-	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil)
+	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil, "")
 
 	err := healthChecker.checkHealthHTTP(ctx, testhelpers.MustParseURL(server.URL))
 	require.NoError(t, err)
@@ -426,7 +426,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			gauge := &testhelpers.CollectingGauge{}
 			serviceInfo := &runtime.ServiceInfo{}
-			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL})
+			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
@@ -449,6 +449,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
 			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
+			assert.Equal(t, []string{"service", "foobar", "url", targetURL.String()}, gauge.LastLabelValues)
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
