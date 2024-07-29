@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"golang.org/x/exp/maps"
 )
 
 // Merge merges multiple configurations.
@@ -382,13 +383,8 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 		if router.Service == "" {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
-				services := make([]string, 0, len(configuration.Services))
-				for serviceName := range configuration.Services {
-					services = append(services, serviceName)
-				}
 				loggerRouter.
-					Errorf("Router %s cannot be linked automatically with multiples Services : %q",
-						routerName, services)
+					Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
 				continue
 			}
 
@@ -409,13 +405,8 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
-			services := make([]string, 0, len(configuration.Services))
-			for serviceName := range configuration.Services {
-				services = append(services, serviceName)
-			}
 			loggerRouter.
-				Errorf("Router %s cannot be linked automatically with multiples Services : %q",
-					routerName, services)
+				Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
 			continue
 		}
 
@@ -461,13 +452,8 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 		if router.Service == "" {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
-				services := make([]string, 0, len(configuration.Services))
-				for serviceName := range configuration.Services {
-					services = append(services, serviceName)
-				}
 				loggerRouter.
-					Errorf("Router %s cannot be linked automatically with multiples Services : %q",
-						routerName, services)
+					Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
 				continue
 			}
 
