@@ -255,3 +255,50 @@ http:
   [http.middlewares.test-compress.compress]
     defaultEncoding = "gzip"
 ```
+
+### `encodings`
+
+_Optional, Default="zstd, br, gzip"_
+
+`encodings` specifies a list of the allowed compression encodings. Valid entries are `zstd` (Zstandard), `br`(Brotli), and `gzip` (Gzip).
+
+The order of the list also sets the priority. The top entry has the highest priority.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.encodings=zstd,br,gzip"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    encodings:
+      - zstd
+      - br
+      - gzip
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.encodings=zstd,br,gzip"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        encodings:
+          - zstd
+          - br
+          - gzip
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    encodings = ["zstd","br","gzip"]
+```

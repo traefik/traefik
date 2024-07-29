@@ -7,6 +7,7 @@ import (
 	"mime"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -27,6 +28,7 @@ type compress struct {
 	excludes        []string
 	includes        []string
 	minSize         int
+	encodings       []string
 	defaultEncoding string
 
 	brotliHandler http.Handler
@@ -36,7 +38,8 @@ type compress struct {
 
 // New creates a new compress middleware.
 func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
 
 	if len(conf.ExcludedContentTypes) > 0 && len(conf.IncludedContentTypes) > 0 {
 		return nil, errors.New("excludedContentTypes and includedContentTypes options are mutually exclusive")
@@ -67,12 +70,32 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		minSize = conf.MinResponseBodyBytes
 	}
 
+	var encodings []string
+	if len(conf.Encodings) == 0 { // allow any encoding if "encodings" in config is not set
+		encodings = anyEncoding
+	} else {
+		for _, v := range conf.Encodings {
+			vl := strings.ToLower(v)
+			if slices.Contains(anyEncoding, vl) {
+				encodings = append(encodings, vl)
+			} else {
+				logger.Warn().Msg(fmt.Sprintf("Ignoring unknown compression encoding '%s'.", v))
+			}
+		}
+	}
+	logger.Debug().Msg(fmt.Sprint("Allowed encodings:", encodings))
+
+	if conf.DefaultEncoding != "" && !slices.Contains(encodings, strings.ToLower(conf.DefaultEncoding)) {
+		logger.Warn().Msg(fmt.Sprintf("defaultEncoding '%s' is not in the list of allowed encodings.", conf.DefaultEncoding))
+	}
+
 	c := &compress{
 		next:            next,
 		name:            name,
 		excludes:        excludes,
 		includes:        includes,
 		minSize:         minSize,
+		encodings:       encodings,
 		defaultEncoding: conf.DefaultEncoding,
 	}
 
@@ -131,7 +154,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	c.chooseHandler(getCompressionType(acceptEncoding, c.defaultEncoding), rw, req)
+	c.chooseHandler(getCompressionType(acceptEncoding, c.defaultEncoding, c.encodings), rw, req)
 }
 
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {
