@@ -359,6 +359,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			info,
 			roundTripper,
 			healthCheckTargets,
+			serviceName,
 		)
 	}
 
