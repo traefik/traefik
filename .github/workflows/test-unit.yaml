@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'script/gcg/**'
 
 env:
   GO_VERSION: '1.22'
