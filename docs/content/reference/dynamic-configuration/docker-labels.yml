@@ -37,6 +37,7 @@
 - "traefik.http.middlewares.middleware10.forwardauth.authrequestheaders=foobar, foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.authresponseheaders=foobar, foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.authresponseheadersregex=foobar"
+- "traefik.http.middlewares.middleware10.forwardauth.headerfield=foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.tls.ca=foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.tls.caoptional=true"
 - "traefik.http.middlewares.middleware10.forwardauth.tls.cert=foobar"
