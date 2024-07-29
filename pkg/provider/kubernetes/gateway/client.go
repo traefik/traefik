@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"slices"
 	"time"
 
@@ -53,7 +54,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error
-	UpdateGatewayClassStatus(ctx context.Context, name string, condition metav1.Condition) error
+	UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error
 	UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error
 	UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TCPRouteStatus) error
 	UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TLSRouteStatus) error
@@ -378,7 +379,7 @@ func (c *clientWrapper) ListGatewayClasses() ([]*gatev1.GatewayClass, error) {
 	return c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().List(labels.Everything())
 }
 
-func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name string, condition metav1.Condition) error {
+func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error {
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		currentGatewayClass, err := c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().Get(name)
 		if err != nil {
@@ -387,23 +388,12 @@ func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name strin
 			return err
 		}
 
-		currentGatewayClass = currentGatewayClass.DeepCopy()
-		var newConditions []metav1.Condition
-		for _, cond := range currentGatewayClass.Status.Conditions {
-			// No update for identical condition.
-			if cond.Type == condition.Type && cond.Status == condition.Status && cond.ObservedGeneration == condition.ObservedGeneration {
-				return nil
-			}
-
-			// Keep other condition types.
-			if cond.Type != condition.Type {
-				newConditions = append(newConditions, cond)
-			}
+		if conditionsEqual(currentGatewayClass.Status.Conditions, status.Conditions) {
+			return nil
 		}
 
-		// Append the condition to update.
-		newConditions = append(newConditions, condition)
-		currentGatewayClass.Status.Conditions = newConditions
+		currentGatewayClass = currentGatewayClass.DeepCopy()
+		currentGatewayClass.Status = status
 
 		if _, err = c.csGateway.GatewayV1().GatewayClasses().UpdateStatus(ctx, currentGatewayClass, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
@@ -433,7 +423,7 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 			return err
 		}
 
-		if gatewayStatusEquals(currentGateway.Status, status) {
+		if gatewayStatusEqual(currentGateway.Status, status) {
 			return nil
 		}
 
@@ -468,16 +458,22 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		// TODO: keep statuses for gateways managed by other Traefik instances.
-		var parentStatuses []gatev1.RouteParentStatus
-		for _, currentParentStatus := range currentRoute.Status.Parents {
-			if currentParentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, currentParentStatus)
+		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
+		copy(parentStatuses, status.Parents)
+
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		for _, parentStatus := range currentRoute.Status.Parents {
+			if parentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, parentStatus)
 				continue
 			}
 		}
 
-		parentStatuses = append(parentStatuses, status.Parents...)
+		// do not update status when nothing has changed.
+		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
+			return nil
+		}
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.HTTPRouteStatus{
@@ -514,16 +510,22 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		// TODO: keep statuses for gateways managed by other Traefik instances.
-		var parentStatuses []gatev1alpha2.RouteParentStatus
-		for _, currentParentStatus := range currentRoute.Status.Parents {
-			if currentParentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, currentParentStatus)
+		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
+		copy(parentStatuses, status.Parents)
+
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		for _, parentStatus := range currentRoute.Status.Parents {
+			if parentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, parentStatus)
 				continue
 			}
 		}
 
-		parentStatuses = append(parentStatuses, status.Parents...)
+		// do not update status when nothing has changed.
+		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
+			return nil
+		}
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1alpha2.TCPRouteStatus{
@@ -560,16 +562,22 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		// TODO: keep statuses for gateways managed by other Traefik instances.
-		var parentStatuses []gatev1alpha2.RouteParentStatus
-		for _, currentParentStatus := range currentRoute.Status.Parents {
-			if currentParentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, currentParentStatus)
+		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
+		copy(parentStatuses, status.Parents)
+
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		for _, parentStatus := range currentRoute.Status.Parents {
+			if parentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, parentStatus)
 				continue
 			}
 		}
 
-		parentStatuses = append(parentStatuses, status.Parents...)
+		// do not update status when nothing has changed.
+		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
+			return nil
+		}
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1alpha2.TLSRouteStatus{
@@ -675,12 +683,12 @@ func translateNotFoundError(err error) (bool, error) {
 	return err == nil, err
 }
 
-func gatewayStatusEquals(statusA, statusB gatev1.GatewayStatus) bool {
+func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
 	if len(statusA.Listeners) != len(statusB.Listeners) {
 		return false
 	}
 
-	if !conditionsEquals(statusA.Conditions, statusB.Conditions) {
+	if !conditionsEqual(statusA.Conditions, statusB.Conditions) {
 		return false
 	}
 
@@ -688,7 +696,7 @@ func gatewayStatusEquals(statusA, statusB gatev1.GatewayStatus) bool {
 	for _, newListener := range statusB.Listeners {
 		for _, oldListener := range statusA.Listeners {
 			if newListener.Name == oldListener.Name {
-				if !conditionsEquals(newListener.Conditions, oldListener.Conditions) {
+				if !conditionsEqual(newListener.Conditions, oldListener.Conditions) {
 					return false
 				}
 
@@ -704,22 +712,48 @@ func gatewayStatusEquals(statusA, statusB gatev1.GatewayStatus) bool {
 	return listenerMatches == len(statusA.Listeners)
 }
 
-func conditionsEquals(conditionsA, conditionsB []metav1.Condition) bool {
-	if len(conditionsA) != len(conditionsB) {
+func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev1alpha2.RouteParentStatus) bool {
+	if len(routeParentStatusesA) != len(routeParentStatusesB) {
 		return false
 	}
 
-	conditionMatches := 0
-	for _, conditionA := range conditionsA {
-		for _, conditionB := range conditionsB {
-			if conditionA.Type == conditionB.Type {
-				if conditionA.Reason != conditionB.Reason || conditionA.Status != conditionB.Status || conditionA.Message != conditionB.Message || conditionA.ObservedGeneration != conditionB.ObservedGeneration {
-					return false
-				}
-				conditionMatches++
-			}
+	for _, sA := range routeParentStatusesA {
+		if !slices.ContainsFunc(routeParentStatusesB, func(sB gatev1alpha2.RouteParentStatus) bool {
+			return routeParentStatusEqual(sB, sA)
+		}) {
+			return false
 		}
 	}
 
-	return conditionMatches == len(conditionsA)
+	for _, sB := range routeParentStatusesB {
+		if !slices.ContainsFunc(routeParentStatusesA, func(sA gatev1alpha2.RouteParentStatus) bool {
+			return routeParentStatusEqual(sA, sB)
+		}) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func routeParentStatusEqual(sA, sB gatev1alpha2.RouteParentStatus) bool {
+	if !reflect.DeepEqual(sA.ParentRef, sB.ParentRef) {
+		return false
+	}
+
+	if sA.ControllerName != sB.ControllerName {
+		return false
+	}
+
+	return conditionsEqual(sA.Conditions, sB.Conditions)
+}
+
+func conditionsEqual(conditionsA, conditionsB []metav1.Condition) bool {
+	return slices.EqualFunc(conditionsA, conditionsB, func(cA metav1.Condition, cB metav1.Condition) bool {
+		return cA.Type == cB.Type &&
+			cA.Reason == cB.Reason &&
+			cA.Status == cB.Status &&
+			cA.Message == cB.Message &&
+			cA.ObservedGeneration == cB.ObservedGeneration
+	})
 }
