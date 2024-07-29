@@ -192,6 +192,7 @@ http:
         addAuthCookiesToResponse:
           - foobar
           - foobar
+        headerField: foobar
     Middleware11:
       grpcWeb:
         allowOrigins:
