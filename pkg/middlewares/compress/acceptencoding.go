@@ -42,7 +42,6 @@ func getCompressionType(acceptEncoding []string, defaultType string, allowedEnco
 		}
 
 		for _, encoding := range encodings {
-
 			if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
 				return notAcceptable
 			}
