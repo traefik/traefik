@@ -458,11 +458,11 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
 		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
 		copy(parentStatuses, status.Parents)
 
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
@@ -510,11 +510,11 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
 		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
 		copy(parentStatuses, status.Parents)
 
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
@@ -562,11 +562,11 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
 		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
 		copy(parentStatuses, status.Parents)
 
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
