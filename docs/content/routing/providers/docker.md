@@ -188,16 +188,12 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
     With labels in a compose file
 
     ```yaml
-    version: "3"
-    services:
-      my-container:
-        # ...
-        labels:
-          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
-          # Explicit link between the router and the service
-          - traefik.http.routers.www-router.service=www-service
-          - traefik.http.services.www-service.loadbalancer.server.port=8000
-
+    labels:
+      - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+      # Explicit link between the router and the service
+      - traefik.http.routers.www-router.service=www-service
+      - traefik.http.services.www-service.loadbalancer.server.port=8000
+    ```
 
 ### Routers
 
