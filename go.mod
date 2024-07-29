@@ -67,6 +67,7 @@ require (
 	github.com/vulcand/predicate v1.2.0
 	go.elastic.co/apm/module/apmot/v2 v2.4.8
 	go.elastic.co/apm/v2 v2.4.8
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // No tag on the repo.
 	golang.org/x/mod v0.18.0
 	golang.org/x/net v0.26.0
 	golang.org/x/text v0.16.0
@@ -326,7 +327,6 @@ require (
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
