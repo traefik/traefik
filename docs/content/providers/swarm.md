@@ -20,7 +20,7 @@ This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swar
 
 ## Configuration Examples
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
 
     Enabling the Swarm provider
 
@@ -48,7 +48,9 @@ This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swar
     --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+    Attach labels to a single service (not containers) while in Swarm mode (in your Docker compose file).
+    When there is only one service, and the router does not specify a service,
+    then that service is automatically assigned to the router.
 
     ```yaml
     version: "3"

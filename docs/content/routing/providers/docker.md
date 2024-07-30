@@ -22,7 +22,7 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker & Deploying / Exposing one Service"
 
     Enabling the docker provider
 
@@ -109,7 +109,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 
 --8<-- "content/routing/providers/service-by-label.md"
 
-??? example "Automatic service assignment with labels"
+??? example "Automatic assignment with one Service"
 
     With labels in a compose file
 
@@ -120,7 +120,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
       - "traefik.http.services.myservice.loadbalancer.server.port=80"
     ```
 
-??? example "Automatic service creation and assignment with labels"
+??? example "Automatic service creation with one Router"
 
     With labels in a compose file
 
@@ -129,6 +129,18 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
       # no service specified or defined and yet one gets automatically created
       # and assigned to router myproxy.
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
+    ```
+
+??? example "Explicit definition with one Service"
+
+    With labels in a compose file
+
+    ```yaml
+    labels:
+      - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+      # Explicit link between the router and the service
+      - traefik.http.routers.www-router.service=www-service
+      - traefik.http.services.www-service.loadbalancer.server.port=8000
     ```
 
 ### Routers
@@ -433,7 +445,7 @@ More information about available middlewares in the dedicated [middlewares secti
 
 You can declare TCP Routers and/or Services using labels.
 
-??? example "Declaring TCP Routers and Services"
+??? example "Declaring TCP Routers with one Service"
 
     ```yaml
        services:
@@ -571,7 +583,7 @@ You can declare TCP Routers and/or Services using labels.
 
 You can declare UDP Routers and/or Services using labels.
 
-??? example "Declaring UDP Routers and Services"
+??? example "Declaring UDP Routers with one Service"
 
     ```yaml
        services:
