@@ -196,7 +196,7 @@ spec:
     - targetPort: web
       port: 80
   selector:
-    app: traefik
+    app: whoami
 ```
 
 !!! warning "It is possible to expose a service in different ways."
