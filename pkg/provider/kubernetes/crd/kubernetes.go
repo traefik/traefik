@@ -978,65 +978,69 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *traefik
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
-	tlsOptionsCRD := client.GetTLSOptions()
+	tlsOptionsCRDs := client.GetTLSOptions()
 	var tlsOptions map[string]tls.Options
 
-	if len(tlsOptionsCRD) == 0 {
+	if len(tlsOptionsCRDs) == 0 {
 		return tlsOptions
 	}
 	tlsOptions = make(map[string]tls.Options)
 	var nsDefault []string
 
-	for _, tlsOption := range tlsOptionsCRD {
-		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOption.Name).Str("namespace", tlsOption.Namespace).Logger()
+	for _, tlsOptionsCRD := range tlsOptionsCRDs {
+		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOptionsCRD.Name).Str("namespace", tlsOptionsCRD.Namespace).Logger()
 		var clientCAs []types.FileOrContent
 
-		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
-			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
+		for _, secretName := range tlsOptionsCRD.Spec.ClientAuth.SecretNames {
+			secret, exists, err := client.GetSecret(tlsOptionsCRD.Namespace, secretName)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", tlsOption.Namespace, secretName)
+				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", tlsOptionsCRD.Namespace, secretName)
 				continue
 			}
 
 			if !exists {
-				logger.Warn().Msgf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
+				logger.Warn().Msgf("Secret %s/%s does not exist", tlsOptionsCRD.Namespace, secretName)
 				continue
 			}
 
-			cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
+			cert, err := getCABlocks(secret, tlsOptionsCRD.Namespace, secretName)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Failed to extract CA from secret %s/%s", tlsOption.Namespace, secretName)
+				logger.Error().Err(err).Msgf("Failed to extract CA from secret %s/%s", tlsOptionsCRD.Namespace, secretName)
 				continue
 			}
 
 			clientCAs = append(clientCAs, types.FileOrContent(cert))
 		}
 
-		id := makeID(tlsOption.Namespace, tlsOption.Name)
+		id := makeID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		// If the name is default, we override the default config.
-		if tlsOption.Name == tls.DefaultTLSConfigName {
-			id = tlsOption.Name
-			nsDefault = append(nsDefault, tlsOption.Namespace)
+		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName {
+			id = tlsOptionsCRD.Name
+			nsDefault = append(nsDefault, tlsOptionsCRD.Namespace)
 		}
 
-		alpnProtocols := tls.DefaultTLSOptions.ALPNProtocols
-		if len(tlsOption.Spec.ALPNProtocols) > 0 {
-			alpnProtocols = tlsOption.Spec.ALPNProtocols
+		tlsOption := tls.Options{}
+		tlsOption.SetDefaults()
+
+		tlsOption.MinVersion = tlsOptionsCRD.Spec.MinVersion
+		tlsOption.MaxVersion = tlsOptionsCRD.Spec.MaxVersion
+
+		if tlsOptionsCRD.Spec.CipherSuites != nil {
+			tlsOption.CipherSuites = tlsOptionsCRD.Spec.CipherSuites
 		}
 
-		tlsOptions[id] = tls.Options{
-			MinVersion:       tlsOption.Spec.MinVersion,
-			MaxVersion:       tlsOption.Spec.MaxVersion,
-			CipherSuites:     tlsOption.Spec.CipherSuites,
-			CurvePreferences: tlsOption.Spec.CurvePreferences,
-			ClientAuth: tls.ClientAuth{
-				CAFiles:        clientCAs,
-				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
-			},
-			SniStrict:                tlsOption.Spec.SniStrict,
-			ALPNProtocols:            alpnProtocols,
-			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
+		tlsOption.CurvePreferences = tlsOptionsCRD.Spec.CurvePreferences
+		tlsOption.ClientAuth = tls.ClientAuth{
+			CAFiles:        clientCAs,
+			ClientAuthType: tlsOptionsCRD.Spec.ClientAuth.ClientAuthType,
 		}
+		tlsOption.SniStrict = tlsOptionsCRD.Spec.SniStrict
+
+		if tlsOptionsCRD.Spec.ALPNProtocols != nil {
+			tlsOption.ALPNProtocols = tlsOptionsCRD.Spec.ALPNProtocols
+		}
+
+		tlsOptions[id] = tlsOption
 	}
 
 	if len(nsDefault) > 1 {
