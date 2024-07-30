@@ -1,3 +1,19 @@
+## [v3.1.1](https://github.com/traefik/traefik/tree/v3.1.1) (2024-07-30)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.0...v3.1.1)
+
+**Bug fixes:**
+- **[grpc]** Bump google.golang.org/grpc to v1.64.1 ([#10938](https://github.com/traefik/traefik/pull/10938) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/gatewayapi]** Do not update route status when nothing changed ([#10940](https://github.com/traefik/traefik/pull/10940) by [kevinpollet](https://github.com/kevinpollet))
+- **[metrics]** Fix grafana dashboard to work with scrape interval greater than 15s ([#10936](https://github.com/traefik/traefik/pull/10936) by [davhdavh](https://github.com/davhdavh))
+- **[metrics]** Update open connections gauge with connections count ([#10905](https://github.com/traefik/traefik/pull/10905) by [rtribotte](https://github.com/rtribotte))
+- **[metrics]** Use ServiceName in traefik_service_server_up metric ([#10838](https://github.com/traefik/traefik/pull/10838) by [KrishnaSindhur](https://github.com/KrishnaSindhur))
+
+**Documentation:**
+- **[k8s]** Remove duplicated kubectl apply in Kubernetes Gateway documentation ([#10931](https://github.com/traefik/traefik/pull/10931) by [battery-staple](https://github.com/battery-staple))
+
+**Misc:**
+- Merge v2.11 into v3.1 ([#10925](https://github.com/traefik/traefik/pull/10925) by [mmatur](https://github.com/mmatur))
+
 ## [v2.11.7](https://github.com/traefik/traefik/tree/v2.11.7) (2024-07-30)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.6...v2.11.7)
 
