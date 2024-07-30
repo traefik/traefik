@@ -606,8 +606,20 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 _Optional, Default=2160_
 
-The `certificatesDuration` option defines the certificates' duration in hours.
+`certificatesDuration` is used to calculate two durations:
+
+- `Renew Period`: the period before the end of the certificate duration, during which the certificate should be renewed.
+- `Renew Interval`: the interval between renew attempts.
+
 It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
+
+| Certificate Duration | Renew Period      | Renew Interval          |
+|----------------------|-------------------|-------------------------|
+| >= 1 year            | 4 months          | 1 week                  |
+| >= 90 days           | 30 days           | 1 day                   |
+| >= 7 days            | 1 day             | 1 hour                  |
+| >= 24 hours          | 6 hours           | 10 min                  |
+| < 24 hours           | 20 min            | 1 min                   |
 
 !!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
 
@@ -632,19 +644,6 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.certificatesduration=72
 # ...
 ```
-
-`certificatesDuration` is used to calculate two durations:
-
-- `Renew Period`: the period before the end of the certificate duration, during which the certificate should be renewed.
-- `Renew Interval`: the interval between renew attempts.
-
-| Certificate Duration | Renew Period      | Renew Interval          |
-|----------------------|-------------------|-------------------------|
-| >= 1 year            | 4 months          | 1 week                  |
-| >= 90 days           | 30 days           | 1 day                   |
-| >= 7 days            | 1 day             | 1 hour                  |
-| >= 24 hours          | 6 hours           | 10 min                  |
-| < 24 hours           | 20 min            | 1 min                   |
 
 ### `preferredChain`
 

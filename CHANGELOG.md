@@ -1,3 +1,35 @@
+## [v3.1.1](https://github.com/traefik/traefik/tree/v3.1.1) (2024-07-30)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.0...v3.1.1)
+
+**Bug fixes:**
+- **[grpc]** Bump google.golang.org/grpc to v1.64.1 ([#10938](https://github.com/traefik/traefik/pull/10938) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/gatewayapi]** Do not update route status when nothing changed ([#10940](https://github.com/traefik/traefik/pull/10940) by [kevinpollet](https://github.com/kevinpollet))
+- **[metrics]** Fix grafana dashboard to work with scrape interval greater than 15s ([#10936](https://github.com/traefik/traefik/pull/10936) by [davhdavh](https://github.com/davhdavh))
+- **[metrics]** Update open connections gauge with connections count ([#10905](https://github.com/traefik/traefik/pull/10905) by [rtribotte](https://github.com/rtribotte))
+- **[metrics]** Use ServiceName in traefik_service_server_up metric ([#10838](https://github.com/traefik/traefik/pull/10838) by [KrishnaSindhur](https://github.com/KrishnaSindhur))
+
+**Documentation:**
+- **[k8s]** Remove duplicated kubectl apply in Kubernetes Gateway documentation ([#10931](https://github.com/traefik/traefik/pull/10931) by [battery-staple](https://github.com/battery-staple))
+
+**Misc:**
+- Merge v2.11 into v3.1 ([#10925](https://github.com/traefik/traefik/pull/10925) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.7](https://github.com/traefik/traefik/tree/v2.11.7) (2024-07-30)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.6...v2.11.7)
+
+**Bug fixes:**
+- **[logs]** Make the log about new version more accurate ([#10903](https://github.com/traefik/traefik/pull/10903) by [jmcbri](https://github.com/jmcbri))
+- **[tls,k8s/crd,k8s]** Enforce default cipher suites list ([#10907](https://github.com/traefik/traefik/pull/10907) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[acme]** Modify certificatesDuration documentation ([#10920](https://github.com/traefik/traefik/pull/10920) by [peacewalker122](https://github.com/peacewalker122))
+- **[api]** Improve explanation on API exposition ([#10926](https://github.com/traefik/traefik/pull/10926) by [mloiseleur](https://github.com/mloiseleur))
+- **[docker,consul,rancher,ecs]** Improve doc on sensitive data stored into labels/tags ([#10873](https://github.com/traefik/traefik/pull/10873) by [emilevauge](https://github.com/emilevauge))
+- **[docker,logs]** Improve error and documentation on the needed link between router and service ([#10262](https://github.com/traefik/traefik/pull/10262) by [mloiseleur](https://github.com/mloiseleur))
+- **[docker]** Document Docker port selection on multiple exposed ports ([#10935](https://github.com/traefik/traefik/pull/10935) by [mbrodala](https://github.com/mbrodala))
+- Update the supported versions table for v3.1 release ([#10933](https://github.com/traefik/traefik/pull/10933) by [jnoordsij](https://github.com/jnoordsij))
+- Update PR approval process ([#10887](https://github.com/traefik/traefik/pull/10887) by [emilevauge](https://github.com/emilevauge))
+
 ## [v3.1.0](https://github.com/traefik/traefik/tree/v3.1.0) (2024-07-15)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.0-rc1...v3.1.0)
 
