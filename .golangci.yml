@@ -219,6 +219,7 @@ issues:
     - 'SA1019: c.Providers.Consul.Namespace is deprecated'
     - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
     - 'fmt.Sprintf can be replaced with string'
+    - 'SA1019: dockertypes.ContainerNode is deprecated'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:
