@@ -55,7 +55,7 @@ type clientWrapper struct {
 	factoriesIngress            map[string]kinformers.SharedInformerFactory
 	ingressLabelSelector        string
 	isNamespaceAll              bool
-	disableIngressClassInformer bool
+	disableIngressClassInformer bool // Deprecated.
 	disableClusterScopeInformer bool
 	watchedNamespaces           []string
 	serverVersion               *version.Version
