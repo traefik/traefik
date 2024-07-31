@@ -593,7 +593,7 @@ Please take a look at the observability documentation for more information:
 
 #### Access logs
 
-In v3, the `ServiceUrl` field is not an object anymore but a string representation.
+In v3, the `ServiceURL` field is not an object anymore but a string representation.
 An update may be required if you index access logs.
 
 ## Dynamic Configuration Changes
