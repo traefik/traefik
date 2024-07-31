@@ -7,6 +7,7 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestListTasks(t *testing.T) {
 		tasks         []swarm.Task
 		isGlobalSVC   bool
 		expectedTasks []string
-		networks      map[string]*dockertypes.NetworkResource
+		networks      map[string]*network.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -69,7 +70,7 @@ func TestListTasks(t *testing.T) {
 				"container.1",
 				"container.4",
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -104,7 +105,7 @@ func TestListTasks(t *testing.T) {
 type fakeServicesClient struct {
 	dockerclient.APIClient
 	dockerVersion string
-	networks      []dockertypes.NetworkResource
+	networks      []network.Summary
 	services      []swarm.Service
 	tasks         []swarm.Task
 	err           error
@@ -118,7 +119,7 @@ func (c *fakeServicesClient) ServerVersion(ctx context.Context) (dockertypes.Ver
 	return dockertypes.Version{APIVersion: c.dockerVersion}, c.err
 }
 
-func (c *fakeServicesClient) NetworkList(ctx context.Context, options dockertypes.NetworkListOptions) ([]dockertypes.NetworkResource, error) {
+func (c *fakeServicesClient) NetworkList(ctx context.Context, options network.ListOptions) ([]network.Summary, error) {
 	return c.networks, c.err
 }
 
@@ -132,7 +133,7 @@ func TestListServices(t *testing.T) {
 		services         []swarm.Service
 		tasks            []swarm.Task
 		dockerVersion    string
-		networks         []dockertypes.NetworkResource
+		networks         []network.Summary
 		expectedServices []string
 	}{
 		{
@@ -158,7 +159,7 @@ func TestListServices(t *testing.T) {
 					withEndpointSpec(modeDNSSR)),
 			},
 			dockerVersion:    "1.30",
-			networks:         []dockertypes.NetworkResource{},
+			networks:         []network.Summary{},
 			expectedServices: []string{},
 		},
 		{
@@ -184,7 +185,7 @@ func TestListServices(t *testing.T) {
 					withEndpointSpec(modeDNSSR)),
 			},
 			dockerVersion: "1.30",
-			networks: []dockertypes.NetworkResource{
+			networks: []network.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -239,7 +240,7 @@ func TestListServices(t *testing.T) {
 				),
 			},
 			dockerVersion: "1.30",
-			networks: []dockertypes.NetworkResource{
+			networks: []network.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -296,7 +297,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 		tasks       []swarm.Task
 		isGlobalSVC bool
 		expected    map[string]dockerData
-		networks    map[string]*dockertypes.NetworkResource
+		networks    map[string]*network.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -317,7 +318,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					Name: "container.3",
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -342,7 +343,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					Name: "container.id3",
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -380,7 +381,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					},
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "vlan",
 				},
