@@ -20,7 +20,9 @@ With Traefik, you spend time developing and deploying new features to your syste
 
 And if your needs change, you can add API gateway and API management capabilities seamlessly to your existing Traefik deployments. It takes less than a minute, there’s no rip-and-replace, and all your configurations are preserved. See how it works in this video:
 
-[![Watch the video](https://img.youtube.com/vi/zriUO5YPgFg.jpg)](https://www.youtube.com/watch?v=zriUO5YPgFg)
+<div style="text-align: center;">
+    <iframe src="https://www.youtube.com/embed/zriUO5YPgFg?autoplay=1&loop=1&rel=0&cc_load_policy=1&iv_load_policy=3&fs=0&color=white&controls=0&playlist=zriUO5YPgFg" width="560" height="315" title="Upgrade Traefik Proxy to API Gateway and API Management in Seconds // Traefik Labs" frameborder="0"></iframe>
+</div>
 
 Developing Traefik, our main goal is to make it effortless to use, and we're sure you'll enjoy it.
 
