@@ -7,6 +7,7 @@ import (
 	"time"
 
 	docker "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
@@ -3972,12 +3973,12 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
-		networks map[string]*docker.NetworkResource
+		networks map[string]*network.Summary
 	}{
 		{
 			service:  swarmService(withEndpointSpec(modeDNSSR)),
 			expected: "",
-			networks: map[string]*docker.NetworkResource{},
+			networks: map[string]*network.Summary{},
 		},
 		{
 			service: swarmService(
@@ -3985,7 +3986,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 				withEndpoint(virtualIP("1", "10.11.12.13/24")),
 			),
 			expected: "10.11.12.13",
-			networks: map[string]*docker.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -4003,7 +4004,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 				),
 			),
 			expected: "10.11.12.99",
-			networks: map[string]*docker.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foonet",
 				},
