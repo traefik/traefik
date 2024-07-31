@@ -18,6 +18,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
+// WasmSharedObjects allows to share data between instances. It prevents the DB connection from being reinitialized or compute a
+// heavy object only once and reuse it in other instances. This can reduce the latency during the WASM plugin instantiation.
+type WasmSharedObjects map[string]interface{}
+
 type wasmMiddlewareBuilder struct {
 	path     string
 	cache    wazero.CompilationCache
