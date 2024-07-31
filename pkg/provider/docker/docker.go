@@ -18,6 +18,7 @@ import (
 	dockercontainertypes "github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
+	networktypes "github.com/docker/docker/api/types/network"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
@@ -277,7 +278,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				} else {
 					f := filters.NewArgs()
 					f.Add("type", "container")
-					options := dockertypes.EventsOptions{
+					options := eventtypes.ListOptions{
 						Filters: f,
 					}
 
@@ -309,7 +310,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						case event := <-eventsc:
 							if event.Action == "start" ||
 								event.Action == "die" ||
-								strings.HasPrefix(event.Action, "health_status") {
+								strings.HasPrefix(string(event.Action), "health_status") {
 								startStopHandle(event)
 							}
 						case err := <-errc:
@@ -339,7 +340,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, dockertypes.ContainerListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, dockercontainertypes.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -448,13 +449,13 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 		networkListArgs.Add("driver", "overlay")
 	}
 
-	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
+	networkList, err := dockerClient.NetworkList(ctx, networktypes.ListOptions{Filters: networkListArgs})
 	if err != nil {
 		logger.Debugf("Failed to network inspect on client for docker, error: %s", err)
 		return nil, err
 	}
 
-	networkMap := make(map[string]*dockertypes.NetworkResource)
+	networkMap := make(map[string]*networktypes.Summary)
 	for _, network := range networkList {
 		networkMap[network.ID] = &network
 	}
@@ -486,7 +487,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	return dockerDataList, err
 }
 
-func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
+func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*networktypes.Summary) (dockerData, error) {
 	logger := log.FromContext(ctx)
 
 	dData := dockerData{
@@ -534,7 +535,7 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 }
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
-	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool,
+	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
 ) ([]dockerData, error) {
 	serviceIDFilter := filters.NewArgs()
 	serviceIDFilter.Add("service", serviceID)
@@ -559,7 +560,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 }
 
 func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
-	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool,
+	networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
 ) dockerData {
 	dData := dockerData{
 		ID:              task.ID,
