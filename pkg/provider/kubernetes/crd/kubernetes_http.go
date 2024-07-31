@@ -51,11 +51,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		}
 
 		cb := configBuilder{
-			client:                    client,
-			allowCrossNamespace:       p.AllowCrossNamespace,
-			allowExternalNameServices: p.AllowExternalNameServices,
-			allowEmptyServices:        p.AllowEmptyServices,
-			NativeLBByDefault:         p.NativeLBByDefault,
+			client:                       client,
+			allowCrossNamespace:          p.AllowCrossNamespace,
+			allowExternalNameServices:    p.AllowExternalNameServices,
+			allowEmptyServices:           p.AllowEmptyServices,
+			nativeLBByDefault:            p.NativeLBByDefault,
+			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
@@ -199,11 +200,12 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 }
 
 type configBuilder struct {
-	client                    Client
-	allowCrossNamespace       bool
-	allowExternalNameServices bool
-	allowEmptyServices        bool
-	NativeLBByDefault         bool
+	client                       Client
+	allowCrossNamespace          bool
+	allowExternalNameServices    bool
+	allowEmptyServices           bool
+	nativeLBByDefault            bool
+	disableClusterScopeResources bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -428,7 +430,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, nil
 	}
 
-	nativeLB := c.NativeLBByDefault
+	nativeLB := c.nativeLBByDefault
 	if svc.NativeLB != nil {
 		nativeLB = *svc.NativeLB
 	}
@@ -448,6 +450,10 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		if c.disableClusterScopeResources {
+			return nil, errors.New("nodes lookup is disabled")
+		}
+
 		nodes, nodesExists, nodesErr := c.client.GetNodes()
 		if nodesErr != nil {
 			return nil, nodesErr

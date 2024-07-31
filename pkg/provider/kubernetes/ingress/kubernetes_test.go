@@ -35,7 +35,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Empty ingresses",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -46,7 +45,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress one rule host only",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -57,7 +55,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with a basic rule on one path",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -90,7 +87,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with annotations",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -148,7 +144,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with two different rules with one path",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -185,7 +180,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with conflicting routers on host",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -222,7 +216,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with conflicting routers on path",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -259,7 +252,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress one rule with two paths",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -296,7 +288,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress one rule with one path and one host",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -329,7 +320,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with one host without path",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -359,7 +349,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress one rule with one host and two paths",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -396,7 +385,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress Two rules with one host and one path",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -433,7 +421,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with two services",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -487,7 +474,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:               "Ingress with one service without endpoints subset",
 			allowEmptyServices: true,
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -512,7 +498,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with one service without endpoint",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -523,7 +508,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Single Service Ingress (without any rules)",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -558,7 +542,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with port value in backend and no pod replica",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -591,7 +574,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with port name in backend and no pod replica",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -624,7 +606,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with port name in backend and 2 pod replica",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -657,7 +638,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with two paths using same service and different port name",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -710,7 +690,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with a named port matching subset of service pods",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -743,7 +722,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "2 ingresses in different namespace with same service name",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -796,7 +774,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with unknown service port name",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -807,7 +784,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with unknown service port",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -818,7 +794,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with port invalid for one service",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -848,7 +823,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "TLS support",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -889,7 +863,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with a basic rule on one path with https (port == 443)",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -922,7 +895,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with a basic rule on one path with https (portname == https)",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -955,7 +927,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with a basic rule on one path with https (portname starts with https)",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 
@@ -989,7 +960,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Double Single Service Ingress",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1024,7 +994,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with default traefik ingressClass",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1054,7 +1023,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress without provider traefik ingressClass and unknown annotation",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1066,7 +1034,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:         "Ingress with non matching provider traefik ingressClass and annotation",
 			ingressClass: "tchouk",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1078,7 +1045,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:         "Ingress with ingressClass without annotation",
 			ingressClass: "tchouk",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1090,7 +1056,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:         "Ingress with ingressClass without annotation",
 			ingressClass: "toto",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1101,7 +1066,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with wildcard host",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1133,7 +1097,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with multiple ingressClasses",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1168,7 +1131,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:         "Ingress with ingressClasses filter",
 			ingressClass: "traefik-lb2",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1198,7 +1160,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with prefix pathType",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1228,7 +1189,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with empty pathType",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1258,7 +1218,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with exact pathType",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1288,7 +1247,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with implementationSpecific pathType",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1318,7 +1276,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with ingress annotation",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1351,7 +1308,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:                      "Ingress with ingress annotation",
 			disableIngressClassLookup: true,
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1381,7 +1337,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with ingressClass",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1414,7 +1369,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:                      "Ingress with ingressClass",
 			disableIngressClassLookup: true,
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1425,7 +1379,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with named port",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1455,7 +1408,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with missing ingressClass",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1466,7 +1418,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Ingress with defaultbackend",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1524,7 +1475,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 		{
 			desc: "Ingress with service with externalName",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -1536,7 +1486,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 			desc:                      "Ingress with service with externalName enabled",
 			allowExternalNameServices: true,
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1566,7 +1515,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 		{
 			desc: "Ingress with IPv6 endpoints",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1597,7 +1545,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 			desc:                      "Ingress with IPv6 endpoints externalname enabled",
 			allowExternalNameServices: true,
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1650,7 +1597,6 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 		{
 			desc: "Ingress with native service lb",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1693,14 +1639,13 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 
 func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		expected     *dynamic.Configuration
+		desc                 string
+		clusterScopeDisabled bool
+		expected             *dynamic.Configuration
 	}{
 		{
 			desc: "Ingress with node port lb",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1725,6 +1670,17 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:                 "Ingress with node port lb cluster scope disabled",
+			clusterScopeDisabled: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1733,7 +1689,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{DisableClusterScopeResources: test.clusterScopeDisabled}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
@@ -1927,7 +1883,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 		{
 			desc: "Ingress with native service lb",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
@@ -1955,7 +1910,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 		{
 			desc: "Ingress with native lb by default",
 			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
