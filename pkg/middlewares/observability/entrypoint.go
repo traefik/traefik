@@ -11,6 +11,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -21,6 +22,8 @@ import (
 
 const (
 	entryPointTypeName = "TracingEntryPoint"
+	traceID            = "TraceId"
+	spanID             = "SpanId"
 )
 
 type entryPointTracing struct {
@@ -68,6 +71,12 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
 	e.tracer.CaptureServerRequest(span, req)
+	logData := accesslog.GetLogData(req)
+	if logData != nil {
+		spanCtx := span.SpanContext()
+		logData.Core[traceID] = spanCtx.TraceID()
+		logData.Core[spanID] = spanCtx.SpanID()
+	}
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
