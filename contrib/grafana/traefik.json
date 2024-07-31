@@ -922,7 +922,7 @@
               "refId": "A"
             }
           ],
-          "title": "2xx over 5 min",
+          "title": "2xx over $interval",
           "type": "timeseries"
         },
         {
@@ -1021,7 +1021,7 @@
               "refId": "A"
             }
           ],
-          "title": "5xx over 5 min",
+          "title": "5xx over $interval",
           "type": "timeseries"
         },
         {
@@ -1120,7 +1120,7 @@
               "refId": "A"
             }
           ],
-          "title": "Other codes over 5 min",
+          "title": "Other codes over $interval",
           "type": "timeseries"
         },
         {
