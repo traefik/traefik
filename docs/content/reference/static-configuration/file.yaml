@@ -96,6 +96,8 @@ providers:
     useBindPortIP: true
     watch: true
     defaultRule: foobar
+    username: foobar
+    password: foobar
     endpoint: foobar
     tls:
       ca: foobar
@@ -111,6 +113,8 @@ providers:
     useBindPortIP: true
     watch: true
     defaultRule: foobar
+    username: foobar
+    password: foobar
     endpoint: foobar
     tls:
       ca: foobar
