@@ -1028,7 +1028,7 @@
           "refId": "A"
         }
       ],
-      "title": "5xx over [$interval]",
+      "title": "5xx over $interval",
       "type": "timeseries"
     },
     {
@@ -1128,7 +1128,7 @@
           "refId": "A"
         }
       ],
-      "title": "Other codes over [$interval]",
+      "title": "Other codes over $interval",
       "type": "timeseries"
     },
     {
