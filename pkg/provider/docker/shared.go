@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"text/template"
@@ -101,6 +102,8 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 type ClientConfig struct {
 	apiVersion string
 
+	Username          string           `description:"Username for Basic HTTP authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
+	Password          string           `description:"Password for Basic HTTP authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
 	Endpoint          string           `description:"Docker server endpoint. Can be a TCP or a Unix socket endpoint." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	TLS               *types.ClientTLS `description:"Enable Docker TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	HTTPClientTimeout ptypes.Duration  `description:"Client timeout for HTTP connections." json:"httpClientTimeout,omitempty" toml:"httpClientTimeout,omitempty" yaml:"httpClientTimeout,omitempty" export:"true"`
@@ -114,6 +117,9 @@ func createClient(ctx context.Context, cfg ClientConfig) (*client.Client, error)
 
 	httpHeaders := map[string]string{
 		"User-Agent": "Traefik " + version.Version,
+	}
+	if cfg.Username != "" && cfg.Password != "" {
+		httpHeaders["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(cfg.Username+":"+cfg.Password))
 	}
 
 	opts = append(opts,
