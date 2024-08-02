@@ -85,6 +85,8 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    username = "foobar"
+    password = "foobar"
     endpoint = "foobar"
     httpClientTimeout = "42s"
     [providers.docker.tls]
@@ -100,6 +102,8 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    username = "foobar"
+    password = "foobar"
     endpoint = "foobar"
     httpClientTimeout = "42s"
     refreshSeconds = "42s"
