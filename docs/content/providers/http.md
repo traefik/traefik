@@ -84,8 +84,9 @@ Defines custom headers to be sent to the endpoint.
 
 ```yaml tab="File (YAML)"
 providers:
-  headers:
-    name: value
+  http:
+    headers:
+      name: value
 ```
 
 ```toml tab="File (TOML)"
@@ -95,6 +96,7 @@ providers:
 
 ```bash tab="CLI"
 --providers.http.headers.name=value
+```
 
 ### `tls`
 
