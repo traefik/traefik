@@ -96,6 +96,7 @@ providers:
 
 ```bash tab="CLI"
 --providers.http.headers.name=value
+```
 
 ### `tls`
 
