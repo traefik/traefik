@@ -591,6 +591,9 @@ Client timeout for HTTP connections. (Default: ```0```)
 `--providers.docker.network`:  
 Default Docker network used.
 
+`--providers.docker.password`:  
+Password for Basic HTTP authentication.
+
 `--providers.docker.tls.ca`:  
 TLS CA
 
@@ -605,6 +608,9 @@ TLS key
 
 `--providers.docker.usebindportip`:  
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`--providers.docker.username`:  
+Username for Basic HTTP authentication.
 
 `--providers.docker.watch`:  
 Watch Docker events. (Default: ```true```)
@@ -975,6 +981,9 @@ Client timeout for HTTP connections. (Default: ```0```)
 `--providers.swarm.network`:  
 Default Docker network used.
 
+`--providers.swarm.password`:  
+Password for Basic HTTP authentication.
+
 `--providers.swarm.refreshseconds`:  
 Polling interval for swarm mode. (Default: ```15```)
 
@@ -992,6 +1001,9 @@ TLS key
 
 `--providers.swarm.usebindportip`:  
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`--providers.swarm.username`:  
+Username for Basic HTTP authentication.
 
 `--providers.swarm.watch`:  
 Watch Docker events. (Default: ```true```)

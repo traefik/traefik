@@ -134,6 +134,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - Accounting at container level, by exposing the socket on a another container than Traefik's.
         - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
         - SSH public key authentication (SSH is supported with Docker > 18.09)
+        - Authentication using HTTP Basic authentication through an HTTP proxy that exposes the Docker daemon socket.
 
     ??? info "More Resources and Examples"
 
@@ -216,6 +217,50 @@ See the [Docker API Access](#docker-api-access) section for more information.
     # ...
     ```
 
+??? example "Using HTTP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using HTTP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "http://127.0.0.1:2375"
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "http://127.0.0.1:2375"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=http://127.0.0.1:2375
+    # ...
+    ```
+
+??? example "Using TCP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using TCP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "tcp://127.0.0.1:2375"
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "tcp://127.0.0.1:2375"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # ...
+    ```
+
 ```yaml tab="File (YAML)"
 providers:
   docker:
@@ -229,6 +274,56 @@ providers:
 
 ```bash tab="CLI"
 --providers.docker.endpoint=unix:///var/run/docker.sock
+```
+
+### `username`
+
+_Optional, Default=""_
+
+Defines the username for Basic HTTP authentication.
+This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    username: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  username = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.username="foo"
+# ...
+```
+
+### `password`
+
+_Optional, Default=""_
+
+Defines the password for Basic HTTP authentication.
+This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    password: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  password = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.password="foo"
+# ...
 ```
 
 ### `useBindPortIP`
