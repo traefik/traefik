@@ -684,32 +684,9 @@ func translateNotFoundError(err error) (bool, error) {
 }
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
-	if len(statusA.Listeners) != len(statusB.Listeners) {
-		return false
-	}
-
-	if !conditionsEqual(statusA.Conditions, statusB.Conditions) {
-		return false
-	}
-
-	listenerMatches := 0
-	for _, newListener := range statusB.Listeners {
-		for _, oldListener := range statusA.Listeners {
-			if newListener.Name == oldListener.Name {
-				if !conditionsEqual(newListener.Conditions, oldListener.Conditions) {
-					return false
-				}
-
-				if newListener.AttachedRoutes != oldListener.AttachedRoutes {
-					return false
-				}
-
-				listenerMatches++
-			}
-		}
-	}
-
-	return listenerMatches == len(statusA.Listeners)
+	return reflect.DeepEqual(statusA.Addresses, statusB.Addresses) &&
+		listenersStatusEqual(statusA.Listeners, statusB.Listeners) &&
+		conditionsEqual(statusA.Conditions, statusB.Conditions)
 }
 
 func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev1alpha2.RouteParentStatus) bool {
@@ -737,15 +714,17 @@ func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev
 }
 
 func routeParentStatusEqual(sA, sB gatev1alpha2.RouteParentStatus) bool {
-	if !reflect.DeepEqual(sA.ParentRef, sB.ParentRef) {
-		return false
-	}
+	return sA.ControllerName == sB.ControllerName &&
+		reflect.DeepEqual(sA.ParentRef, sB.ParentRef) &&
+		conditionsEqual(sA.Conditions, sB.Conditions)
+}
 
-	if sA.ControllerName != sB.ControllerName {
-		return false
-	}
-
-	return conditionsEqual(sA.Conditions, sB.Conditions)
+func listenersStatusEqual(listenerA, listenerB []gatev1.ListenerStatus) bool {
+	return slices.EqualFunc(listenerA, listenerB, func(lA gatev1.ListenerStatus, lB gatev1.ListenerStatus) bool {
+		return lA.Name == lB.Name &&
+			lA.AttachedRoutes == lB.AttachedRoutes &&
+			conditionsEqual(lA.Conditions, lB.Conditions)
+	})
 }
 
 func conditionsEqual(conditionsA, conditionsB []metav1.Condition) bool {
