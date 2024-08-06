@@ -1,3 +1,14 @@
+## [v2.11.8](https://github.com/traefik/traefik/tree/v2.11.8) (2024-08-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.7...v2.11.8)
+
+**Bug fixes:**
+- **[docker]** Update to github.com/docker/docker v27.1.1 ([#10955](https://github.com/traefik/traefik/pull/10955) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Upgrade webui dependencies ([#10961](https://github.com/traefik/traefik/pull/10961) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- Fix embedded youtube video ([#10958](https://github.com/traefik/traefik/pull/10958) by [mmatur](https://github.com/mmatur))
+- Updated index.md to include video ([#10944](https://github.com/traefik/traefik/pull/10944) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v2.11.7](https://github.com/traefik/traefik/tree/v2.11.7) (2024-07-30)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.6...v2.11.7)
 
