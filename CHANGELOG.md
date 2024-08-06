@@ -1,3 +1,33 @@
+## [v3.1.2](https://github.com/traefik/traefik/tree/v3.1.2) (2024-08-06)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.1...v3.1.2)
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Include status addresses when comparing Gateway statuses ([#10972](https://github.com/traefik/traefik/pull/10972) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/ingress,k8s/crd,k8s]** Allow to disable Kubernetes cluster scope resources discovery ([#10946](https://github.com/traefik/traefik/pull/10946) by [rtribotte](https://github.com/rtribotte))
+- **[logs]** Change logs output from stderr to stdout ([#10973](https://github.com/traefik/traefik/pull/10973) by [rtribotte](https://github.com/rtribotte))
+- Fix grafana dashboard to work with scrape interval greater than 15s ([#10954](https://github.com/traefik/traefik/pull/10954) by [swiffer](https://github.com/swiffer))
+
+**Documentation:**
+- **[accesslogs]** Add Access logs section to the migration guide ([#10947](https://github.com/traefik/traefik/pull/10947) by [lbenguigui](https://github.com/lbenguigui))
+- **[http]** Fix missing codeblock ending in HTTP discover documentation ([#10967](https://github.com/traefik/traefik/pull/10967) by [djcode](https://github.com/djcode))
+- **[http]** Fix yaml config example for HTTP provider headers ([#10966](https://github.com/traefik/traefik/pull/10966) by [djcode](https://github.com/djcode))
+- **[k8s,k8s/gatewayapi]** Use Standard channel by default with Gateway API ([#10974](https://github.com/traefik/traefik/pull/10974) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#10978](https://github.com/traefik/traefik/pull/10978) by [rtribotte](https://github.com/rtribotte))
+- Merge v2.11 into v3.1 ([#10956](https://github.com/traefik/traefik/pull/10956) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.8](https://github.com/traefik/traefik/tree/v2.11.8) (2024-08-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.7...v2.11.8)
+
+**Bug fixes:**
+- **[docker]** Update to github.com/docker/docker v27.1.1 ([#10955](https://github.com/traefik/traefik/pull/10955) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Upgrade webui dependencies ([#10961](https://github.com/traefik/traefik/pull/10961) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- Fix embedded youtube video ([#10958](https://github.com/traefik/traefik/pull/10958) by [mmatur](https://github.com/mmatur))
+- Updated index.md to include video ([#10944](https://github.com/traefik/traefik/pull/10944) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v3.1.1](https://github.com/traefik/traefik/tree/v3.1.1) (2024-07-30)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.0...v3.1.1)
 

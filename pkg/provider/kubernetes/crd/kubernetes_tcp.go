@@ -239,6 +239,10 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		if p.DisableClusterScopeResources {
+			return nil, errors.New("nodes lookup is disabled")
+		}
+
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
 			return nil, nodesErr
