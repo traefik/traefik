@@ -128,6 +128,7 @@
     allowEmptyServices = true
     allowExternalNameServices = true
     disableIngressClassLookup = true
+    disableClusterScopeResources = true
     nativeLBByDefault = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
@@ -145,6 +146,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     nativeLBByDefault = true
+    disableClusterScopeResources = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

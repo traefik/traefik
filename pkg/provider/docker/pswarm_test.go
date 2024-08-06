@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestListTasks(t *testing.T) {
 		tasks         []swarm.Task
 		isGlobalSVC   bool
 		expectedTasks []string
-		networks      map[string]*dockertypes.NetworkResource
+		networks      map[string]*network.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -53,7 +53,7 @@ func TestListTasks(t *testing.T) {
 				"container.1",
 				"container.4",
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -91,7 +91,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 		services         []swarm.Service
 		tasks            []swarm.Task
 		dockerVersion    string
-		networks         []dockertypes.NetworkResource
+		networks         []network.Summary
 		expectedServices []string
 	}{
 		{
@@ -117,7 +117,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					withEndpointSpec(modeDNSSR)),
 			},
 			dockerVersion:    "1.30",
-			networks:         []dockertypes.NetworkResource{},
+			networks:         []network.Summary{},
 			expectedServices: []string{},
 		},
 		{
@@ -143,7 +143,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					withEndpointSpec(modeDNSSR)),
 			},
 			dockerVersion: "1.30",
-			networks: []dockertypes.NetworkResource{
+			networks: []network.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -198,7 +198,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				),
 			},
 			dockerVersion: "1.30",
-			networks: []dockertypes.NetworkResource{
+			networks: []network.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -255,7 +255,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 		tasks       []swarm.Task
 		isGlobalSVC bool
 		expected    map[string]dockerData
-		networks    map[string]*dockertypes.NetworkResource
+		networks    map[string]*network.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -276,7 +276,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					Name: "container.3",
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -301,7 +301,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					Name: "container.id3",
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -339,7 +339,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					},
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "vlan",
 				},
