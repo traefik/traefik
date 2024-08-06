@@ -617,6 +617,7 @@ It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
 |----------------------|-------------------|-------------------------|
 | >= 1 year            | 4 months          | 1 week                  |
 | >= 90 days           | 30 days           | 1 day                   |
+| >= 30 days           | 10 days           | 12 hours                |
 | >= 7 days            | 1 day             | 1 hour                  |
 | >= 24 hours          | 6 hours           | 10 min                  |
 | < 24 hours           | 20 min            | 1 min                   |
