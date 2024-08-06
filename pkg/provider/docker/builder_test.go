@@ -1,22 +1,22 @@
 package docker
 
 import (
-	docker "github.com/docker/docker/api/types"
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 )
 
-func containerJSON(ops ...func(*docker.ContainerJSON)) docker.ContainerJSON {
-	c := &docker.ContainerJSON{
-		ContainerJSONBase: &docker.ContainerJSONBase{
+func containerJSON(ops ...func(*dockertypes.ContainerJSON)) dockertypes.ContainerJSON {
+	c := &dockertypes.ContainerJSON{
+		ContainerJSONBase: &dockertypes.ContainerJSONBase{
 			Name:       "fake",
 			HostConfig: &container.HostConfig{},
 		},
 		Config: &container.Config{},
-		NetworkSettings: &docker.NetworkSettings{
-			NetworkSettingsBase: docker.NetworkSettingsBase{},
+		NetworkSettings: &dockertypes.NetworkSettings{
+			NetworkSettingsBase: dockertypes.NetworkSettingsBase{},
 		},
 	}
 
@@ -27,34 +27,34 @@ func containerJSON(ops ...func(*docker.ContainerJSON)) docker.ContainerJSON {
 	return *c
 }
 
-func name(name string) func(*docker.ContainerJSON) {
-	return func(c *docker.ContainerJSON) {
+func name(name string) func(*dockertypes.ContainerJSON) {
+	return func(c *dockertypes.ContainerJSON) {
 		c.ContainerJSONBase.Name = name
 	}
 }
 
-func networkMode(mode string) func(*docker.ContainerJSON) {
-	return func(c *docker.ContainerJSON) {
+func networkMode(mode string) func(*dockertypes.ContainerJSON) {
+	return func(c *dockertypes.ContainerJSON) {
 		c.ContainerJSONBase.HostConfig.NetworkMode = container.NetworkMode(mode)
 	}
 }
 
-func nodeIP(ip string) func(*docker.ContainerJSON) {
-	return func(c *docker.ContainerJSON) {
-		c.ContainerJSONBase.Node = &docker.ContainerNode{
+func nodeIP(ip string) func(*dockertypes.ContainerJSON) {
+	return func(c *dockertypes.ContainerJSON) {
+		c.ContainerJSONBase.Node = &dockertypes.ContainerNode{
 			IPAddress: ip,
 		}
 	}
 }
 
-func ports(portMap nat.PortMap) func(*docker.ContainerJSON) {
-	return func(c *docker.ContainerJSON) {
+func ports(portMap nat.PortMap) func(*dockertypes.ContainerJSON) {
+	return func(c *dockertypes.ContainerJSON) {
 		c.NetworkSettings.NetworkSettingsBase.Ports = portMap
 	}
 }
 
-func withNetwork(name string, ops ...func(*network.EndpointSettings)) func(*docker.ContainerJSON) {
-	return func(c *docker.ContainerJSON) {
+func withNetwork(name string, ops ...func(*network.EndpointSettings)) func(*dockertypes.ContainerJSON) {
+	return func(c *dockertypes.ContainerJSON) {
 		if c.NetworkSettings.Networks == nil {
 			c.NetworkSettings.Networks = map[string]*network.EndpointSettings{}
 		}

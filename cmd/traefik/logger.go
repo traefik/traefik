@@ -46,7 +46,7 @@ func setupLogger(staticConfiguration *static.Configuration) {
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
-	var w io.Writer = os.Stderr
+	var w io.Writer = os.Stdout
 
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
 		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
