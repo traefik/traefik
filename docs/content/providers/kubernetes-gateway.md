@@ -8,7 +8,7 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/) 
 specification from the Kubernetes Special Interest Groups (SIGs).
 
-This provider supports version [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) of the Gateway API specification. 
+This provider supports Standard version [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) of the Gateway API specification. 
 
 It fully supports all HTTP core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
@@ -26,10 +26,10 @@ For more details, check out the conformance [report](https://github.com/kubernet
 1. Install/update the Kubernetes Gateway API CRDs.
 
     ```bash
-    # Install Gateway API CRDs from the Experimental channel.
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml
+    # Install Gateway API CRDs from the Standard channel.
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
     ```
-    
+
 2. Install/update the Traefik [RBAC](../reference/dynamic-configuration/kubernetes-gateway.md#rbac).
 
     ```bash
@@ -38,7 +38,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
     ```
 
 3. Deploy Traefik and enable the `kubernetesGateway` provider in the static configuration as detailed below:
-       
+
        ```yaml tab="File (YAML)"
        providers:
          kubernetesGateway: {}
@@ -268,6 +268,15 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesgateway.experimentalchannel=true
 ```
+
+!!! info "Experimental Channel"
+
+    When enabling experimental channel resources support, the experimental CRDs (Custom Resource Definitions) needs to be deployed too.
+
+    ```bash
+    # Install Gateway API CRDs from the Experimental channel.
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml
+    ```
 
 ### `labelselector`
 
