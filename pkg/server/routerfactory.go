@@ -29,8 +29,9 @@ type RouterFactory struct {
 
 	pluginBuilder middleware.PluginsBuilder
 
-	chainBuilder *middleware.ChainBuilder
-	tlsManager   *tls.Manager
+	chainBuilder        *middleware.ChainBuilder
+	tlsManager          *tls.Manager
+	handlesTLSChallenge bool
 }
 
 // NewRouterFactory creates a new RouterFactory.
@@ -52,14 +53,23 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		}
 	}
 
+	handlesTLSChallenge := false
+	for _, resolver := range staticConfiguration.CertificatesResolvers {
+		if resolver.ACME.TLSChallenge != nil {
+			handlesTLSChallenge = true
+			break
+		}
+	}
+
 	return &RouterFactory{
-		entryPointsTCP:  entryPointsTCP,
-		entryPointsUDP:  entryPointsUDP,
-		managerFactory:  managerFactory,
-		metricsRegistry: metricsRegistry,
-		tlsManager:      tlsManager,
-		chainBuilder:    chainBuilder,
-		pluginBuilder:   pluginBuilder,
+		entryPointsTCP:      entryPointsTCP,
+		entryPointsUDP:      entryPointsUDP,
+		managerFactory:      managerFactory,
+		metricsRegistry:     metricsRegistry,
+		tlsManager:          tlsManager,
+		chainBuilder:        chainBuilder,
+		pluginBuilder:       pluginBuilder,
+		handlesTLSChallenge: handlesTLSChallenge,
 	}
 }
 
@@ -86,6 +96,12 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager)
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
+
+	if !f.handlesTLSChallenge {
+		for _, r := range routersTCP {
+			r.EnableACMETLSPassthrough()
+		}
+	}
 
 	// UDP
 	svcUDPManager := udp.NewManager(rtConf)
