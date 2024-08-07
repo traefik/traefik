@@ -172,7 +172,10 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
-	rt := &tcprouter.Router{}
+	rt, err := tcprouter.NewRouter()
+	if err != nil {
+		return nil, fmt.Errorf("error preparing tcp router: %w", err)
+	}
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
