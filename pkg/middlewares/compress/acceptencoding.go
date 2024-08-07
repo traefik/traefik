@@ -17,64 +17,60 @@ const (
 	notAcceptable = "not_acceptable"
 )
 
-var anyEncoding = []string{zstdName, brotliName, gzipName} // default value if `encodings` config list is empty
-
 type Encoding struct {
 	Type   string
 	Weight *float64
 }
 
-func getCompressionType(acceptEncoding []string, defaultType string, allowedEncodings []string) string {
-	if defaultType == "" {
-		// Keeps the pre-existing default inside Traefik if brotli is an allowed encoding.
-		if slices.Contains(allowedEncodings, brotliName) {
-			defaultType = brotliName
-		} else { // otherwise use the first allowed encoding
-			defaultType = allowedEncodings[0]
+func getCompressionEncoding(acceptEncoding []string, defaultEncoding string, supportedEncodings []string) string {
+	if defaultEncoding == "" {
+		if slices.Contains(supportedEncodings, brotliName) {
+			// Keeps the pre-existing default inside Traefik if brotli is a supported encoding.
+			defaultEncoding = brotliName
+		} else if len(supportedEncodings) > 0 {
+			// Otherwise use the first supported encoding.
+			defaultEncoding = supportedEncodings[0]
 		}
 	}
 
-	encodings, hasWeight := parseAcceptEncoding(acceptEncoding)
+	encodings, hasWeight := parseAcceptEncoding(acceptEncoding, supportedEncodings)
 
 	if hasWeight {
 		if len(encodings) == 0 {
 			return identityName
 		}
 
-		for _, encoding := range encodings {
-			if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
-				return notAcceptable
-			}
+		encoding := encodings[0]
 
-			if encoding.Type == wildcardName && encoding.Weight != nil && *encoding.Weight == 0 {
-				return notAcceptable
-			}
-
-			if encoding.Type == wildcardName {
-				return defaultType
-			}
-
-			if slices.Contains(allowedEncodings, encoding.Type) {
-				return encoding.Type
-			}
+		if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
+			return notAcceptable
 		}
-		return notAcceptable
+
+		if encoding.Type == wildcardName && encoding.Weight != nil && *encoding.Weight == 0 {
+			return notAcceptable
+		}
+
+		if encoding.Type == wildcardName {
+			return defaultEncoding
+		}
+
+		return encoding.Type
 	}
 
-	for _, dt := range allowedEncodings {
+	for _, dt := range supportedEncodings {
 		if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}
 	}
 
 	if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == wildcardName }) {
-		return defaultType
+		return defaultEncoding
 	}
 
 	return identityName
 }
 
-func parseAcceptEncoding(acceptEncoding []string) ([]Encoding, bool) {
+func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encoding, bool) {
 	var encodings []Encoding
 	var hasWeight bool
 
@@ -85,10 +81,9 @@ func parseAcceptEncoding(acceptEncoding []string) ([]Encoding, bool) {
 				continue
 			}
 
-			switch parsed[0] {
-			case zstdName, brotliName, gzipName, identityName, wildcardName:
-				// supported encoding
-			default:
+			if !slices.Contains(supportedEncodings, parsed[0]) &&
+				parsed[0] != identityName &&
+				parsed[0] != wildcardName {
 				continue
 			}
 

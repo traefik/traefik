@@ -913,8 +913,8 @@ spec:
                       a wildcard (`*`).
                     type: string
                   encodings:
-                    description: Encodings defines a list of allowed comporession
-                      algorithms
+                    description: Encodings defines the list of supported compression
+                      algorithms.
                     items:
                       type: string
                     type: array

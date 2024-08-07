@@ -260,14 +260,13 @@ http:
 
 _Optional, Default="zstd, br, gzip"_
 
-`encodings` specifies a list of the allowed compression encodings. Valid entries are `zstd` (Zstandard), `br`(Brotli), and `gzip` (Gzip).
-
-The order of the list also sets the priority. The top entry has the highest priority.
-When provided empty, the applied list of allowed compression encodings is the default one.
+`encodings` specifies the list of supported compression encodings.
+At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip).
+The order of the list also sets the priority, the top entry has the highest priority.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-compress.compress.encodings=zstd,br,gzip"
+  - "traefik.http.middlewares.test-compress.compress.encodings=zstd,br"
 ```
 
 ```yaml tab="Kubernetes"
@@ -280,11 +279,10 @@ spec:
     encodings:
       - zstd
       - br
-      - gzip
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-compress.compress.encodings=zstd,br,gzip"
+- "traefik.http.middlewares.test-compress.compress.encodings=zstd,br"
 ```
 
 ```yaml tab="File (YAML)"
@@ -295,11 +293,10 @@ http:
         encodings:
           - zstd
           - br
-          - gzip
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-compress.compress]
-    encodings = ["zstd","br","gzip"]
+    encodings = ["zstd","br"]
 ```

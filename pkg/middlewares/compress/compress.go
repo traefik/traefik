@@ -7,7 +7,6 @@ import (
 	"mime"
 	"net/http"
 	"slices"
-	"strings"
 
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -17,9 +16,11 @@ import (
 
 const typeName = "Compress"
 
-// DefaultMinSize is the default minimum size (in bytes) required to enable compression.
+// defaultMinSize is the default minimum size (in bytes) required to enable compression.
 // See https://github.com/klauspost/compress/blob/9559b037e79ad673c71f6ef7c732c00949014cd2/gzhttp/compress.go#L47.
-const DefaultMinSize = 1024
+const defaultMinSize = 1024
+
+var supportedEncodings = []string{zstdName, brotliName, gzipName}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -38,8 +39,7 @@ type compress struct {
 
 // New creates a new compress middleware.
 func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
-	logger.Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	if len(conf.ExcludedContentTypes) > 0 && len(conf.IncludedContentTypes) > 0 {
 		return nil, errors.New("excludedContentTypes and includedContentTypes options are mutually exclusive")
@@ -65,28 +65,21 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		includes = append(includes, mediaType)
 	}
 
-	minSize := DefaultMinSize
+	minSize := defaultMinSize
 	if conf.MinResponseBodyBytes > 0 {
 		minSize = conf.MinResponseBodyBytes
 	}
 
-	var encodings []string
-	if len(conf.Encodings) == 0 { // allow any encoding if "encodings" in config is not set
-		encodings = anyEncoding
-	} else {
-		for _, v := range conf.Encodings {
-			vl := strings.ToLower(v)
-			if slices.Contains(anyEncoding, vl) {
-				encodings = append(encodings, vl)
-			} else {
-				logger.Warn().Msg(fmt.Sprintf("Ignoring unknown compression encoding '%s'.", v))
-			}
+	if len(conf.Encodings) == 0 {
+		return nil, errors.New("at least one encoding must be specified")
+	}
+	for _, encoding := range conf.Encodings {
+		if !slices.Contains(supportedEncodings, encoding) {
+			return nil, fmt.Errorf("unsupported encoding: %s", encoding)
 		}
 	}
-	logger.Debug().Msg(fmt.Sprint("Allowed encodings:", encodings))
-
-	if conf.DefaultEncoding != "" && !slices.Contains(encodings, strings.ToLower(conf.DefaultEncoding)) {
-		logger.Warn().Msg(fmt.Sprintf("defaultEncoding '%s' is not in the list of allowed encodings.", conf.DefaultEncoding))
+	if conf.DefaultEncoding != "" && !slices.Contains(conf.Encodings, conf.DefaultEncoding) {
+		return nil, fmt.Errorf("unsupported default encoding: %s", conf.DefaultEncoding)
 	}
 
 	c := &compress{
@@ -95,7 +88,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		excludes:        excludes,
 		includes:        includes,
 		minSize:         minSize,
-		encodings:       encodings,
+		encodings:       conf.Encodings,
 		defaultEncoding: conf.DefaultEncoding,
 	}
 
@@ -154,7 +147,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	c.chooseHandler(getCompressionType(acceptEncoding, c.defaultEncoding, c.encodings), rw, req)
+	c.chooseHandler(getCompressionEncoding(acceptEncoding, c.defaultEncoding, c.encodings), rw, req)
 }
 
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {
