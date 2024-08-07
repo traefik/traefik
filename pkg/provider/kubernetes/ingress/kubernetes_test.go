@@ -96,6 +96,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service:     "testing-service1-80",
 							Middlewares: []string{"md1", "md2"},
 							Priority:    42,
+							RuleSyntax:  "v2",
 							TLS: &dynamic.RouterTLSConfig{
 								CertResolver: "foobar",
 								Domains: []types.Domain{
