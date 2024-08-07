@@ -541,6 +541,19 @@ it is now unsupported and would prevent Traefik to start.
 
 All Pilot related configuration should be removed from the static configuration.
 
+### Kubernetes Ingress Path Matching
+
+In v3, the Kubernetes Ingress default path matching does not support regexes anymore.
+
+#### Remediation
+
+Two level of remediation are possible:
+
+- Interpret the default path matcher `PathPrefix` with v2 syntax.
+It can done globally (for all routers) with the [static configuration](#configure-the-default-syntax-in-static-configuration) or per router by using the specific annotation: [traefik.ingress.kubernetes.io/router.rulesyntax](../routing/providers/kubernetes-ingress.md#annotations)
+
+- Adapt the path regular expression to be compatible the go regex syntax and change the default path matcher for the `PathRegexp` matcher with the annotation `traefik.ingress.kubernetes.io/router.pathmatcher`.
+
 ## Operations Changes
 
 ### Traefik RBAC Update
