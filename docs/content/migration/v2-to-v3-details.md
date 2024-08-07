@@ -555,6 +555,16 @@ One should use the `ContentType` middleware to enable the `Content-Type` header 
 
 ### Observability
 
+#### Open Connections Metric
+
+In v3, the open connections metric has been replaced with a global one because it was erroneously at the HTTP level, and providing misleading information.
+While previously produced at the entryPoint, router, and service levels, it is now replaced with a global metric.
+The equivalent to `traefik_entrypoint_open_connections`, `traefik_router_open_connections` and `traefik_service_open_connections` is now `traefik_open_connections`.
+
+#### Configuration Reload Failures Metrics
+
+In v3, the `traefik_config_reloads_failure_total` and `traefik_config_last_reload_failure metrics` have been suppressed since they could not be implemented.
+
 #### gRPC Metrics
 
 In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.
