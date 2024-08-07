@@ -304,7 +304,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InFlightReq:       middleware.Spec.InFlightReq,
 			Buffering:         middleware.Spec.Buffering,
 			CircuitBreaker:    circuitBreaker,
-			Compress:          middleware.Spec.Compress,
+			Compress:          createCompressMiddleware(middleware.Spec.Compress),
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
@@ -655,13 +655,48 @@ func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreak
 	return cb, nil
 }
 
+func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compress {
+	if compress == nil {
+		return nil
+	}
+
+	c := &dynamic.Compress{}
+	c.SetDefaults()
+
+	if compress.ExcludedContentTypes != nil {
+		c.ExcludedContentTypes = compress.ExcludedContentTypes
+	}
+
+	if compress.IncludedContentTypes != nil {
+		c.IncludedContentTypes = compress.IncludedContentTypes
+	}
+
+	if compress.MinResponseBodyBytes != nil {
+		c.MinResponseBodyBytes = *compress.MinResponseBodyBytes
+	}
+
+	if compress.Encodings != nil {
+		c.Encodings = compress.Encodings
+	}
+
+	if compress.DefaultEncoding != nil {
+		c.DefaultEncoding = *compress.DefaultEncoding
+	}
+
+	return c
+}
+
 func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
 
-	rl := &dynamic.RateLimit{Average: rateLimit.Average}
+	rl := &dynamic.RateLimit{}
 	rl.SetDefaults()
+
+	if rateLimit.Average != nil {
+		rl.Average = *rateLimit.Average
+	}
 
 	if rateLimit.Burst != nil {
 		rl.Burst = *rateLimit.Burst

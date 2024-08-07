@@ -22,13 +22,18 @@ type Encoding struct {
 	Weight *float64
 }
 
-func getCompressionType(acceptEncoding []string, defaultType string) string {
-	if defaultType == "" {
-		// Keeps the pre-existing default inside Traefik.
-		defaultType = brotliName
+func getCompressionEncoding(acceptEncoding []string, defaultEncoding string, supportedEncodings []string) string {
+	if defaultEncoding == "" {
+		if slices.Contains(supportedEncodings, brotliName) {
+			// Keeps the pre-existing default inside Traefik if brotli is a supported encoding.
+			defaultEncoding = brotliName
+		} else if len(supportedEncodings) > 0 {
+			// Otherwise use the first supported encoding.
+			defaultEncoding = supportedEncodings[0]
+		}
 	}
 
-	encodings, hasWeight := parseAcceptEncoding(acceptEncoding)
+	encodings, hasWeight := parseAcceptEncoding(acceptEncoding, supportedEncodings)
 
 	if hasWeight {
 		if len(encodings) == 0 {
@@ -46,26 +51,26 @@ func getCompressionType(acceptEncoding []string, defaultType string) string {
 		}
 
 		if encoding.Type == wildcardName {
-			return defaultType
+			return defaultEncoding
 		}
 
 		return encoding.Type
 	}
 
-	for _, dt := range []string{zstdName, brotliName, gzipName} {
+	for _, dt := range supportedEncodings {
 		if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == dt }) {
 			return dt
 		}
 	}
 
 	if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == wildcardName }) {
-		return defaultType
+		return defaultEncoding
 	}
 
 	return identityName
 }
 
-func parseAcceptEncoding(acceptEncoding []string) ([]Encoding, bool) {
+func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encoding, bool) {
 	var encodings []Encoding
 	var hasWeight bool
 
@@ -76,10 +81,9 @@ func parseAcceptEncoding(acceptEncoding []string) ([]Encoding, bool) {
 				continue
 			}
 
-			switch parsed[0] {
-			case zstdName, brotliName, gzipName, identityName, wildcardName:
-				// supported encoding
-			default:
+			if !slices.Contains(supportedEncodings, parsed[0]) &&
+				parsed[0] != identityName &&
+				parsed[0] != wildcardName {
 				continue
 			}
 
