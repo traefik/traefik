@@ -563,7 +563,7 @@ The equivalent to `traefik_entrypoint_open_connections`, `traefik_router_open_co
 
 #### Configuration Reload Failures Metrics
 
-In v3, the `traefik_config_reloads_failure_total` and `traefik_config_last_reload_failure metrics` have been suppressed since they could not be implemented.
+In v3, the `traefik_config_reloads_failure_total` and `traefik_config_last_reload_failure` metrics have been suppressed since they could not be implemented.
 
 #### gRPC Metrics
 
