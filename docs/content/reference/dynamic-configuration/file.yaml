@@ -152,6 +152,9 @@ http:
           - foobar
           - foobar
         minResponseBodyBytes: 42
+        encodings:
+          - foobar
+          - foobar
         defaultEncoding: foobar
     Middleware07:
       contentType:
