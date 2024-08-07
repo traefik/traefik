@@ -157,7 +157,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -179,7 +179,7 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -206,7 +206,7 @@ func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -233,7 +233,7 @@ func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -255,7 +255,7 @@ func TestShouldNotCompressHeadRequest(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -278,6 +278,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Exclude Request Content-Type",
 			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
 				ExcludedContentTypes: []string{"text/event-stream"},
 			},
 			reqContentType: "text/event-stream",
@@ -285,6 +286,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Exclude Response Content-Type",
 			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
 				ExcludedContentTypes: []string{"text/event-stream"},
 			},
 			respContentType: "text/event-stream",
@@ -292,6 +294,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Include Response Content-Type",
 			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
 				IncludedContentTypes: []string{"text/plain"},
 			},
 			respContentType: "text/html",
@@ -299,6 +302,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Ignoring application/grpc with exclude option",
 			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
 				ExcludedContentTypes: []string{"application/json"},
 			},
 			reqContentType: "application/grpc",
@@ -306,13 +310,16 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Ignoring application/grpc with include option",
 			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
 				IncludedContentTypes: []string{"application/json"},
 			},
 			reqContentType: "application/grpc",
 		},
 		{
-			desc:           "Ignoring application/grpc with no option",
-			conf:           dynamic.Compress{},
+			desc: "Ignoring application/grpc with no option",
+			conf: dynamic.Compress{
+				Encodings: defaultSupportedEncodings,
+			},
 			reqContentType: "application/grpc",
 		},
 	}
@@ -434,7 +441,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			compress, err := New(context.Background(), test.handler, dynamic.Compress{}, "testing")
+			compress, err := New(context.Background(), test.handler, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(compress)
@@ -469,7 +476,7 @@ func TestShouldWriteHeaderWhenFlush(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(handler)
