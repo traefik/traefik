@@ -412,6 +412,7 @@ func Test_buildConfiguration(t *testing.T) {
 				"Middleware05": {
 					Compress: &dynamic.Compress{
 						MinResponseBodyBytes: 42,
+						Encodings:            []string{"zstd", "br", "gzip"},
 					},
 				},
 				"Middleware08": {
