@@ -104,7 +104,7 @@ func TestNegotiation(t *testing.T) {
 			})
 			cfg := dynamic.Compress{
 				MinResponseBodyBytes: 1,
-				Encodings:            supportedEncodings,
+				Encodings:            defaultSupportedEncodings,
 			}
 			handler, err := New(context.Background(), next, cfg, "testing")
 			require.NoError(t, err)
@@ -127,7 +127,7 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 		_, err := rw.Write(baseBody)
 		assert.NoError(t, err)
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: supportedEncodings}, "testing")
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -362,7 +362,7 @@ func TestShouldCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Include Response Content-Type",
 			conf: dynamic.Compress{
-				Encodings:            supportedEncodings,
+				Encodings:            defaultSupportedEncodings,
 				IncludedContentTypes: []string{"text/html"},
 			},
 			respContentType: "text/html",
@@ -520,7 +520,7 @@ func TestIntegrationShouldCompress(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			compress, err := New(context.Background(), test.handler, dynamic.Compress{Encodings: supportedEncodings}, "testing")
+			compress, err := New(context.Background(), test.handler, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(compress)
@@ -578,7 +578,7 @@ func TestMinResponseBodyBytes(t *testing.T) {
 			})
 			cfg := dynamic.Compress{
 				MinResponseBodyBytes: test.minResponseBodyBytes,
-				Encodings:            supportedEncodings,
+				Encodings:            defaultSupportedEncodings,
 			}
 			handler, err := New(context.Background(), next, cfg, "testing")
 			require.NoError(t, err)
@@ -617,7 +617,7 @@ func Test1xxResponses(t *testing.T) {
 	})
 	cfg := dynamic.Compress{
 		MinResponseBodyBytes: 1024,
-		Encodings:            supportedEncodings,
+		Encodings:            defaultSupportedEncodings,
 	}
 	compress, err := New(context.Background(), next, cfg, "testing")
 	require.NoError(t, err)

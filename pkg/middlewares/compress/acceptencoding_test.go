@@ -94,7 +94,7 @@ func Test_getCompressionEncoding(t *testing.T) {
 			t.Parallel()
 
 			if test.supportedEncodings == nil {
-				test.supportedEncodings = supportedEncodings
+				test.supportedEncodings = defaultSupportedEncodings
 			}
 
 			encoding := getCompressionEncoding(test.acceptEncoding, test.defaultEncoding, test.supportedEncodings)
@@ -203,7 +203,7 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			t.Parallel()
 
 			if test.supportedEncodings == nil {
-				test.supportedEncodings = supportedEncodings
+				test.supportedEncodings = defaultSupportedEncodings
 			}
 
 			aes, hasWeight := parseAcceptEncoding(test.values, test.supportedEncodings)

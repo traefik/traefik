@@ -20,7 +20,7 @@ const typeName = "Compress"
 // See https://github.com/klauspost/compress/blob/9559b037e79ad673c71f6ef7c732c00949014cd2/gzhttp/compress.go#L47.
 const defaultMinSize = 1024
 
-var supportedEncodings = []string{zstdName, brotliName, gzipName}
+var defaultSupportedEncodings = []string{zstdName, brotliName, gzipName}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -74,7 +74,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		return nil, errors.New("at least one encoding must be specified")
 	}
 	for _, encoding := range conf.Encodings {
-		if !slices.Contains(supportedEncodings, encoding) {
+		if !slices.Contains(defaultSupportedEncodings, encoding) {
 			return nil, fmt.Errorf("unsupported encoding: %s", encoding)
 		}
 	}
