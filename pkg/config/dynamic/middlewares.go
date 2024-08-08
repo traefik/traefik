@@ -165,8 +165,7 @@ func (c *CircuitBreaker) SetDefaults() {
 // +k8s:deepcopy-gen=true
 
 // Compress holds the compress middleware configuration.
-// This middleware compresses responses before sending them to the client, using gzip compression.
-// More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/compress/
+// This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
 type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
 	// `application/grpc` is always excluded.
@@ -176,8 +175,14 @@ type Compress struct {
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
+	// Encodings defines the list of supported compression algorithms.
+	Encodings []string `json:"encodings,omitempty" toml:"encodings,omitempty" yaml:"encodings,omitempty" export:"true"`
 	// DefaultEncoding specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
 	DefaultEncoding string `json:"defaultEncoding,omitempty" toml:"defaultEncoding,omitempty" yaml:"defaultEncoding,omitempty" export:"true"`
+}
+
+func (c *Compress) SetDefaults() {
+	c.Encodings = []string{"zstd", "br", "gzip"}
 }
 
 // +k8s:deepcopy-gen=true
