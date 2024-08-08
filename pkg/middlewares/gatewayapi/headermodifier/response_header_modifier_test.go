@@ -11,11 +11,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func TestRequestHeaderModifier(t *testing.T) {
+func TestResponseHeaderModifier(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		config          dynamic.HeaderModifier
-		requestHeaders  http.Header
+		responseHeaders http.Header
 		expectedHeaders http.Header
 	}{
 		{
@@ -35,7 +35,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 			config: dynamic.HeaderModifier{
 				Set: map[string]string{"Foo": "Bar"},
 			},
-			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
+			responseHeaders: map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
 			expectedHeaders: map[string][]string{"Foo": {"Bar"}, "Bar": {"Foo"}},
 		},
 		{
@@ -43,7 +43,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 			config: dynamic.HeaderModifier{
 				Set: map[string]string{"Foo": "Bar", "Bar": "Foo"},
 			},
-			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foobar"}},
+			responseHeaders: map[string][]string{"Foo": {"Baz"}, "Bar": {"Foobar"}},
 			expectedHeaders: map[string][]string{"Foo": {"Bar"}, "Bar": {"Foo"}},
 		},
 		{
@@ -58,7 +58,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 			config: dynamic.HeaderModifier{
 				Add: map[string]string{"Foo": "Bar"},
 			},
-			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
+			responseHeaders: map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
 			expectedHeaders: map[string][]string{"Foo": {"Baz", "Bar"}, "Bar": {"Foo"}},
 		},
 		{
@@ -66,7 +66,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 			config: dynamic.HeaderModifier{
 				Add: map[string]string{"Foo": "Bar", "Bar": "Foo"},
 			},
-			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foobar"}},
+			responseHeaders: map[string][]string{"Foo": {"Baz"}, "Bar": {"Foobar"}},
 			expectedHeaders: map[string][]string{"Foo": {"Baz", "Bar"}, "Bar": {"Foobar", "Foo"}},
 		},
 		{
@@ -81,7 +81,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 			config: dynamic.HeaderModifier{
 				Remove: []string{"Foo"},
 			},
-			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
+			responseHeaders: map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
 			expectedHeaders: map[string][]string{"Bar": {"Foo"}},
 		},
 		{
@@ -89,7 +89,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 			config: dynamic.HeaderModifier{
 				Remove: []string{"Foo", "Bar"},
 			},
-			requestHeaders:  map[string][]string{"Foo": {"Bar"}, "Bar": {"Foo"}, "Baz": {"Bar"}},
+			responseHeaders: map[string][]string{"Foo": {"Bar"}, "Bar": {"Foo"}, "Baz": {"Bar"}},
 			expectedHeaders: map[string][]string{"Baz": {"Bar"}},
 		},
 	}
@@ -98,22 +98,24 @@ func TestRequestHeaderModifier(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var gotHeaders http.Header
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				gotHeaders = r.Header
+			var nextCallCount int
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCallCount++
+				rw.WriteHeader(http.StatusOK)
 			})
 
-			handler := NewRequestHeaderModifier(context.Background(), next, test.config, "foo-request-header-modifier")
+			handler := NewResponseHeaderModifier(context.Background(), next, test.config, "foo-response-header-modifier")
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-			for h, v := range test.requestHeaders {
-				req.Header[h] = v
-			}
 			resp := httptest.NewRecorder()
+			for k, v := range test.responseHeaders {
+				resp.Header()[k] = v
+			}
 
 			handler.ServeHTTP(resp, req)
 
-			assert.Equal(t, test.expectedHeaders, gotHeaders)
+			assert.Equal(t, 1, nextCallCount)
+			assert.Equal(t, test.expectedHeaders, resp.Header())
 		})
 	}
 }
