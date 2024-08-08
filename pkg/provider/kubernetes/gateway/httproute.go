@@ -316,6 +316,9 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, route
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
 			middlewares[name] = createRequestHeaderModifier(filter.RequestHeaderModifier)
 
+		case gatev1.HTTPRouteFilterResponseHeaderModifier:
+			middlewares[name] = createResponseHeaderModifier(filter.ResponseHeaderModifier)
+
 		case gatev1.HTTPRouteFilterExtensionRef:
 			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
 			if err != nil {
@@ -599,7 +602,29 @@ func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middl
 	}
 
 	return &dynamic.Middleware{
-		RequestHeaderModifier: &dynamic.RequestHeaderModifier{
+		RequestHeaderModifier: &dynamic.HeaderModifier{
+			Set:    sets,
+			Add:    adds,
+			Remove: filter.Remove,
+		},
+	}
+}
+
+// createResponseHeaderModifier does not enforce/check the configuration,
+// as the spec indicates that either the webhook or CEL (since v1.0 GA Release) should enforce that.
+func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middleware {
+	sets := map[string]string{}
+	for _, header := range filter.Set {
+		sets[string(header.Name)] = header.Value
+	}
+
+	adds := map[string]string{}
+	for _, header := range filter.Add {
+		adds[string(header.Name)] = header.Value
+	}
+
+	return &dynamic.Middleware{
+		ResponseHeaderModifier: &dynamic.HeaderModifier{
 			Set:    sets,
 			Add:    adds,
 			Remove: filter.Remove,

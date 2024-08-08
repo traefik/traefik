@@ -86,8 +86,8 @@ func (s *K8sConformanceSuite) SetupSuite() {
 		s.T().Fatal("Traefik image is not present")
 	}
 
-	s.k3sContainer, err = k3s.RunContainer(ctx,
-		testcontainers.WithImage(k3sImage),
+	s.k3sContainer, err = k3s.Run(ctx,
+		k3sImage,
 		k3s.WithManifest("./fixtures/k8s-conformance/00-experimental-v1.1.0.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/02-traefik.yml"),
@@ -206,6 +206,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			features.SupportHTTPRouteHostRewrite,
 			features.SupportHTTPRoutePathRewrite,
 			features.SupportHTTPRoutePathRedirect,
+			features.SupportHTTPRouteResponseHeaderModification,
 		),
 	})
 	require.NoError(s.T(), err)
