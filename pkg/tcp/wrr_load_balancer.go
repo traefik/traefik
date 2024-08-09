@@ -7,6 +7,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
+var errNoServersInPool = errors.New("no servers in the pool")
+
 type server struct {
 	Handler
 	weight int
@@ -34,8 +36,10 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	b.lock.Unlock()
 
 	if err != nil {
-		log.WithoutContext().Errorf("Error during load balancing: %v", err)
-		conn.Close()
+		if !errors.Is(err, errNoServersInPool) {
+			log.WithoutContext().Errorf("Error during load balancing: %v", err)
+		}
+		_ = conn.Close()
 		return
 	}
 
@@ -91,7 +95,7 @@ func gcd(a, b int) int {
 
 func (b *WRRLoadBalancer) next() (Handler, error) {
 	if len(b.servers) == 0 {
-		return nil, errors.New("no servers in the pool")
+		return nil, errNoServersInPool
 	}
 
 	// The algo below may look messy, but is actually very simple
