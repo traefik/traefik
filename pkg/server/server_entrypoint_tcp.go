@@ -10,10 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
+	"unicode"
 
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
@@ -50,6 +52,8 @@ var (
 	clientConnectionStatesMu = sync.RWMutex{}
 
 	socketActivationListeners map[string]net.Listener
+
+	errInvalidMaxHeaderSize = errors.New("maxHeaderSize must be a positive integer with a unit of measurement such as K, KB M, MB, or B")
 )
 
 func init() {
@@ -632,12 +636,21 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	}
 
+	var maxHeaderBytes uint64
+	if configuration.HTTP.MaxHeaderSize != "" {
+		maxHeaderBytes, err = parseMaxHeaderSize(configuration.HTTP.MaxHeaderSize)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	serverHTTP := &http.Server{
-		Handler:      handler,
-		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		Handler:        handler,
+		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes: int(maxHeaderBytes),
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
@@ -696,6 +709,35 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		Forwarder: listener,
 		Switcher:  httpSwitcher,
 	}, nil
+}
+
+// parseMaxHeaderSize converts a human-readable string with data size units (K, M, B) into bytes.
+// Adapted from https://github.com/cloudfoundry/bytefmt/blob/a379845013d99b6b8d6a2dc18f5fe7cfa9d7bbac/bytes.go#L88-L122
+func parseMaxHeaderSize(size string) (uint64, error) {
+	size = strings.TrimSpace(size)
+	size = strings.ToUpper(size)
+
+	i := strings.IndexFunc(size, unicode.IsLetter)
+	if i == -1 {
+		return 0, errInvalidMaxHeaderSize
+	}
+
+	value, unit := size[:i], size[i:]
+	number, err := strconv.ParseFloat(value, 64)
+	if err != nil || number < 0 {
+		return 0, errInvalidMaxHeaderSize
+	}
+
+	switch unit {
+	case "M", "MB":
+		return uint64(number * 1024 * 1024), nil
+	case "K", "KB":
+		return uint64(number * 1024), nil
+	case "B":
+		return uint64(number), nil
+	default:
+		return 0, errInvalidMaxHeaderSize
+	}
 }
 
 func getConnKey(conn net.Conn) string {

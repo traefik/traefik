@@ -63,6 +63,7 @@ type HTTPConfig struct {
 	Middlewares           []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	TLS                   *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	EncodeQuerySemicolons bool          `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty"`
+	MaxHeaderSize         string        `description:"Maximum size of request headers. Supported size units are kilobytes (K, KB), megabytes (M, MB), and bytes (B). Units are not case-sensitive. The default maximum request header size is 1MB." json:"maxHeaderSize,omitempty" toml:"maxHeaderSize,omitempty" yaml:"maxHeaderSize,omitempty"`
 }
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
