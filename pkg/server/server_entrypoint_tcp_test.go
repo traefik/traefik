@@ -318,3 +318,109 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	err = resp.Body.Close()
 	require.NoError(t, err)
 }
+
+func TestParseMaxHeaderSize(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected uint64
+		err      error
+	}{
+		{
+			name:     "K",
+			input:    "500K",
+			expected: 500 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "k",
+			input:    "500k",
+			expected: 500 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "KB",
+			input:    "500KB",
+			expected: 500 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "kb",
+			input:    "500kb",
+			expected: 500 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "M",
+			input:    "2M",
+			expected: 2 * 1024 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "m",
+			input:    "2m",
+			expected: 2 * 1024 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "MB",
+			input:    "2MB",
+			expected: 2 * 1024 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "mb",
+			input:    "2mb",
+			expected: 2 * 1024 * 1024,
+			err:      nil,
+		},
+		{
+			name:     "B",
+			input:    "2097152B",
+			expected: 2097152,
+			err:      nil,
+		},
+		{
+			name:     "b",
+			input:    "2097152b",
+			expected: 2097152,
+			err:      nil,
+		},
+		{
+			name:     "empty unit",
+			input:    "100",
+			expected: 0,
+			err:      errInvalidMaxHeaderSize,
+		},
+		{
+			name:     "invalid unit",
+			input:    "10GB",
+			expected: 0,
+			err:      errInvalidMaxHeaderSize,
+		},
+		{
+			name:     "empty input",
+			input:    "",
+			expected: 0,
+			err:      errInvalidMaxHeaderSize,
+		},
+		{
+			name:     "negative number",
+			input:    "-10K",
+			expected: 0,
+			err:      errInvalidMaxHeaderSize,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			result, err := parseMaxHeaderSize(test.input)
+			if test.err == nil {
+				require.NoError(t, err)
+				require.Equal(t, test.expected, result)
+			}
+			require.Equal(t, test.err, err)
+		})
+	}
+}

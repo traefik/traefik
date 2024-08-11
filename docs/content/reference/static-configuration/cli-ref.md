@@ -132,6 +132,9 @@ HTTP configuration.
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
+`--entrypoints.<name>.http.maxheadersize`:  
+Maximum size of request headers. Supported size units are kilobytes (K, KB), megabytes (M, MB), and bytes (B). Units are not case-sensitive. The default maximum request header size is 1MB.
+
 `--entrypoints.<name>.http.middlewares`:  
 Default middlewares for the routers linked to the entry point.
 

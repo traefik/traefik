@@ -141,6 +141,9 @@ UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MAXHEADERSIZE`:  
+Maximum size of request headers. Supported size units are kilobytes (K, KB), megabytes (M, MB), and bytes (B). Units are not case-sensitive. The default maximum request header size is 1MB.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 
