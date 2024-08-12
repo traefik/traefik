@@ -24,6 +24,7 @@ func Test_parseRouterConfig(t *testing.T) {
 				"traefik.ingress.kubernetes.io/router.entrypoints":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.middlewares":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.priority":           "42",
+				"traefik.ingress.kubernetes.io/router.rulesyntax":         "foobar",
 				"traefik.ingress.kubernetes.io/router.tls":                "true",
 				"traefik.ingress.kubernetes.io/router.tls.certresolver":   "foobar",
 				"traefik.ingress.kubernetes.io/router.tls.domains.0.main": "foobar",
@@ -38,6 +39,7 @@ func Test_parseRouterConfig(t *testing.T) {
 					EntryPoints: []string{"foobar", "foobar"},
 					Middlewares: []string{"foobar", "foobar"},
 					Priority:    42,
+					RuleSyntax:  "foobar",
 					TLS: &dynamic.RouterTLSConfig{
 						CertResolver: "foobar",
 						Domains: []types.Domain{
@@ -180,6 +182,7 @@ func Test_convertAnnotations(t *testing.T) {
 				"traefik.ingress.kubernetes.io/router.entrypoints":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.middlewares":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.priority":           "42",
+				"traefik.ingress.kubernetes.io/router.rulesyntax":         "foobar",
 				"traefik.ingress.kubernetes.io/router.tls":                "true",
 				"traefik.ingress.kubernetes.io/router.tls.certresolver":   "foobar",
 				"traefik.ingress.kubernetes.io/router.tls.domains.0.main": "foobar",
@@ -194,6 +197,7 @@ func Test_convertAnnotations(t *testing.T) {
 				"traefik.router.entrypoints":         "foobar,foobar",
 				"traefik.router.middlewares":         "foobar,foobar",
 				"traefik.router.priority":            "42",
+				"traefik.router.rulesyntax":          "foobar",
 				"traefik.router.tls":                 "true",
 				"traefik.router.tls.certresolver":    "foobar",
 				"traefik.router.tls.domains[0].main": "foobar",
