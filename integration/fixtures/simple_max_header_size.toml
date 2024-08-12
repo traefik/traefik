@@ -1,0 +1,26 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+  [entryPoints.web.http]
+    maxHeaderSize = "1.25MB"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.test-router]
+    entryPoints = ["web"]
+    service = "test-service"
+    rule = "Host(`127.0.0.1`)"
+
+[http.services]
+  [http.services.test-service]
+    [http.services.test-service.loadBalancer]
+      [[http.services.test-service.loadBalancer.servers]]
+        url = "{{ .TestServer }}"
