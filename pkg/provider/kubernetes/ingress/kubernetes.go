@@ -760,6 +760,7 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {
+		rt.RuleSyntax = rtConfig.Router.RuleSyntax
 		rt.Priority = rtConfig.Router.Priority
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
