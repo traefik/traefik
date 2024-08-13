@@ -143,6 +143,7 @@
         excludedContentTypes = ["foobar", "foobar"]
         includedContentTypes = ["foobar", "foobar"]
         minResponseBodyBytes = 42
+        encodings = ["foobar", "foobar"]
         defaultEncoding = "foobar"
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]
@@ -167,6 +168,7 @@
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
+        headerField = "foobar"
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"

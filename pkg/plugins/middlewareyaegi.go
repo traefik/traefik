@@ -89,7 +89,7 @@ func (b yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (ref
 	}
 
 	cfg := &mapstructure.DecoderConfig{
-		DecodeHook:       mapstructure.StringToSliceHookFunc(","),
+		DecodeHook:       stringToSliceHookFunc,
 		WeaklyTypedInput: true,
 		Result:           vConfig.Interface(),
 	}
@@ -105,6 +105,33 @@ func (b yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (ref
 	}
 
 	return vConfig, nil
+}
+
+func stringToSliceHookFunc(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
+	if f != reflect.String || t != reflect.Slice {
+		return data, nil
+	}
+
+	raw := data.(string)
+	if raw == "" {
+		return []string{}, nil
+	}
+
+	if strings.Contains(raw, "║") {
+		values := strings.Split(raw, "║")
+
+		// Remove the first item, if raw starts with the separator
+		if strings.HasPrefix(raw, "║") {
+			values = values[1:]
+		}
+
+		// Remove the type info
+		values = values[1:]
+
+		return values, nil
+	}
+
+	return strings.Split(raw, ","), nil
 }
 
 // YaegiMiddleware is an HTTP handler plugin wrapper.
