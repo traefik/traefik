@@ -45,9 +45,12 @@ spec:
                   Entry points have to be configured in the static configuration.
                   More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
                   Default: all.
+                example:
+                - web
                 items:
                   type: string
                 type: array
+                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -59,16 +62,21 @@ spec:
                         Rule is the only supported kind.
                       enum:
                       - Rule
+                      example: Rule
                       type: string
                     match:
                       description: |-
                         Match defines the router's rule.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#rule
+                      example: Host(`foo`) && PathPrefix(`/bar`)
                       type: string
                     middlewares:
                       description: |-
                         Middlewares defines the list of references to Middleware resources.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/providers/kubernetes-crd/#kind-middleware
+                      example:
+                      - name: middleware1
+                        namespace: default
                       items:
                         description: MiddlewareRef is a reference to a Middleware
                           resource.
@@ -89,11 +97,17 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority
+                      example: 10
+                      minimum: 0
                       type: integer
                     services:
                       description: |-
                         Services defines the list of Service.
                         It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
+                      example:
+                      - kind: Service
+                        name: foo
+                        port: 80
                       items:
                         description: Service defines an upstream HTTP service to proxy
                           traffic to.
@@ -103,27 +117,34 @@ spec:
                             enum:
                             - Service
                             - TraefikService
+                            example: Service
                             type: string
                           name:
                             description: |-
                               Name defines the name of the referenced Kubernetes Service or TraefikService.
                               The differentiation between the two is specified in the Kind field.
+                            example: foo
                             type: string
                           namespace:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service or TraefikService.
+                            example: default
                             type: string
                           nativeLB:
+                            default: false
                             description: |-
                               NativeLB controls, when creating the load-balancer,
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            example: true
                             type: boolean
                           passHostHeader:
+                            default: true
                             description: |-
                               PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                               By default, passHostHeader is true.
+                            example: false
                             type: boolean
                           port:
                             anyOf:
@@ -132,6 +153,7 @@ spec:
                             description: |-
                               Port defines the port of a Kubernetes Service.
                               This can be a reference to a named port.
+                            example: 80
                             x-kubernetes-int-or-string: true
                           responseForwarding:
                             description: ResponseForwarding defines how Traefik forwards
@@ -139,24 +161,29 @@ spec:
                               the client.
                             properties:
                               flushInterval:
+                                default: 100ms
                                 description: |-
                                   FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                   A negative value means to flush immediately after each write to the client.
                                   This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                   for such responses, writes are flushed to the client immediately.
                                   Default: 100ms
+                                example: 1ms
                                 type: string
                             type: object
                           scheme:
                             description: |-
                               Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                               It defaults to https when Kubernetes Service port is 443, http otherwise.
+                            example: https
+                            pattern: (http|https|h2c)
                             type: string
                           serversTransport:
                             description: |-
                               ServersTransport defines the name of ServersTransport resource to use.
                               It allows to configure the transport between Traefik and your servers.
                               Can only be used on a Kubernetes Service.
+                            example: transport
                             type: string
                           sticky:
                             description: |-
@@ -167,22 +194,32 @@ spec:
                                 description: Cookie defines the sticky cookie configuration.
                                 properties:
                                   httpOnly:
+                                    default: false
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
                                       JavaScript.
+                                    example: true
                                     type: boolean
                                   name:
                                     description: Name defines the Cookie name.
+                                    example: cookie
                                     type: string
                                   sameSite:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
+                                    example: none
                                     type: string
                                   secure:
+                                    default: false
                                     description: Secure defines whether the cookie
                                       can only be transmitted over an encrypted connection
                                       (i.e. HTTPS).
+                                    example: true
                                     type: boolean
                                 type: object
                             type: object
@@ -190,12 +227,20 @@ spec:
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
                               RoundRobin is the only supported value at the moment.
+                            enum:
+                            - RoundRobin
+                            example: RoundRobin
                             type: string
                           weight:
                             description: |-
                               Weight defines the weight and should only be specified when Name references a TraefikService object
                               (and to be precise, one that embeds a Weighted Round Robin).
+                            example: 10
+                            minimum: 0
                             type: integer
+                            x-kubernetes-validations:
+                            - message: weight can only be used on TraefikService
+                              rule: self.kind == 'TraefikService'
                         required:
                         - name
                         type: object
@@ -215,6 +260,7 @@ spec:
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
                       More info: https://doc.traefik.io/traefik/v2.11/https/acme/#certificate-resolvers
+                    example: foo
                     type: string
                   domains:
                     description: |-
@@ -225,10 +271,14 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
                           type: array
@@ -239,6 +289,9 @@ spec:
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
                       More info: https://doc.traefik.io/traefik/v2.11/https/tls/#tls-options
+                    example:
+                      name: opt
+                      namespace: default
                     properties:
                       name:
                         description: |-
@@ -256,11 +309,16 @@ spec:
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes
                       Secret to specify the certificate details.
+                    example: supersecret
                     type: string
                   store:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
+                      Deprecated: there never is a need to actually reference it.
+                    example:
+                      name: default
+                      namespace: traefik
                     properties:
                       name:
                         description: |-
@@ -332,9 +390,12 @@ spec:
                   Entry points have to be configured in the static configuration.
                   More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
                   Default: all.
+                example:
+                - footcp
                 items:
                   type: string
                 type: array
+                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -344,10 +405,14 @@ spec:
                       description: |-
                         Match defines the router's rule.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#rule_1
+                      example: 'HostSNI(`*`) '
                       type: string
                     middlewares:
                       description: Middlewares defines the list of references to MiddlewareTCP
                         resources.
+                      example:
+                      - name: middleware1
+                        namespace: default
                       items:
                         description: ObjectReference is a generic reference to a Traefik
                           resource.
@@ -368,6 +433,8 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority_1
+                      example: 10
+                      minimum: 0
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -378,17 +445,21 @@ spec:
                           name:
                             description: Name defines the name of the referenced Kubernetes
                               Service.
+                            example: foo
                             type: string
                           namespace:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
+                            example: default
                             type: string
                           nativeLB:
+                            default: false
                             description: |-
                               NativeLB controls, when creating the load-balancer,
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            example: true
                             type: boolean
                           port:
                             anyOf:
@@ -397,6 +468,7 @@ spec:
                             description: |-
                               Port defines the port of a Kubernetes Service.
                               This can be a reference to a named port.
+                            example: 8080
                             x-kubernetes-int-or-string: true
                           proxyProtocol:
                             description: |-
@@ -404,8 +476,10 @@ spec:
                               More info: https://doc.traefik.io/traefik/v2.11/routing/services/#proxy-protocol
                             properties:
                               version:
+                                default: 2
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                example: 1
                                 type: integer
                             type: object
                           terminationDelay:
@@ -415,16 +489,20 @@ spec:
                               hence fully terminating the connection.
                               It is a duration in milliseconds, defaulting to 100.
                               A negative value means an infinite deadline (i.e. the reading capability is never closed).
+                            example: 400
                             type: integer
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            example: 10
+                            minimum: 0
                             type: integer
                         required:
                         - name
                         - port
                         type: object
                       type: array
+                      uniqueItems: true
                   required:
                   - match
                   type: object
@@ -439,6 +517,7 @@ spec:
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
                       More info: https://doc.traefik.io/traefik/v2.11/https/acme/#certificate-resolvers
+                    example: foo
                     type: string
                   domains:
                     description: |-
@@ -449,10 +528,14 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
                           type: array
@@ -463,6 +546,9 @@ spec:
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
                       More info: https://doc.traefik.io/traefik/v2.11/https/tls/#tls-options
+                    example:
+                      name: opt
+                      namespace: default
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik
@@ -476,17 +562,24 @@ spec:
                     - name
                     type: object
                   passthrough:
+                    default: false
                     description: Passthrough defines whether a TLS router will terminate
                       the TLS connection.
+                    example: true
                     type: boolean
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes
                       Secret to specify the certificate details.
+                    example: supersecret
                     type: string
                   store:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
+                      Deprecated: there never is a need to actually reference it.
+                    example:
+                      name: default
+                      namespace: traefik
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik
@@ -556,9 +649,12 @@ spec:
                   Entry points have to be configured in the static configuration.
                   More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
                   Default: all.
+                example:
+                - fooudp
                 items:
                   type: string
                 type: array
+                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -573,17 +669,21 @@ spec:
                           name:
                             description: Name defines the name of the referenced Kubernetes
                               Service.
+                            example: foo
                             type: string
                           namespace:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
+                            example: default
                             type: string
                           nativeLB:
+                            default: false
                             description: |-
                               NativeLB controls, when creating the load-balancer,
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            example: true
                             type: boolean
                           port:
                             anyOf:
@@ -592,10 +692,13 @@ spec:
                             description: |-
                               Port defines the port of a Kubernetes Service.
                               This can be a reference to a named port.
+                            example: 8080
                             x-kubernetes-int-or-string: true
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            example: 10
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -666,7 +769,12 @@ spec:
                     description: |-
                       Prefix is the string to add before the current path in the requested URL.
                       It should include a leading slash (/).
+                    example: /foo
+                    maxLength: 255
                     type: string
+                    x-kubernetes-validations:
+                    - message: must start with a '/'
+                      rule: self.startsWith('/')
                 type: object
               basicAuth:
                 description: |-
@@ -678,20 +786,26 @@ spec:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
                       More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+                    example: X-WebAuth-User
                     type: string
                   realm:
+                    default: traefik
                     description: |-
                       Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
                       Default: traefik.
+                    example: MyRealm
                     type: string
                   removeHeader:
+                    default: false
                     description: |-
                       RemoveHeader sets the removeHeader option to true to remove the authorization header before forwarding the request to your service.
                       Default: false.
+                    example: true
                     type: boolean
                   secret:
                     description: Secret is the name of the referenced Kubernetes Secret
                       containing user credentials.
+                    example: secretName
                     type: string
                 type: object
               buffering:
@@ -701,36 +815,46 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#maxrequestbodybytes
                 properties:
                   maxRequestBodyBytes:
+                    default: 0
                     description: |-
                       MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
                       If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
                       Default: 0 (no maximum).
+                    example: 2000000
                     format: int64
                     type: integer
                   maxResponseBodyBytes:
+                    default: 0
                     description: |-
                       MaxResponseBodyBytes defines the maximum allowed response size from the service (in bytes).
                       If the response exceeds the allowed size, it is not forwarded to the client. The client gets a 500 (Internal Server Error) response instead.
                       Default: 0 (no maximum).
+                    example: 2000000
                     format: int64
                     type: integer
                   memRequestBodyBytes:
+                    default: 1048576
                     description: |-
                       MemRequestBodyBytes defines the threshold (in bytes) from which the request will be buffered on disk instead of in memory.
                       Default: 1048576 (1Mi).
+                    example: 2000000
                     format: int64
                     type: integer
                   memResponseBodyBytes:
+                    default: 1048576
                     description: |-
                       MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
                       Default: 1048576 (1Mi).
+                    example: 2000000
                     format: int64
                     type: integer
                   retryExpression:
+                    default: ""
                     description: |-
                       RetryExpression defines the retry conditions.
                       It is a logical combination of functions with operators AND (&&) and OR (||).
                       More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#retryexpression
+                    example: IsNetworkError() && Attempts() < 2
                     type: string
                 type: object
               chain:
@@ -765,27 +889,34 @@ spec:
                     anyOf:
                     - type: integer
                     - type: string
+                    default: 100ms
                     description: CheckPeriod is the interval between successive checks
                       of the circuit breaker condition (when in standby state).
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   expression:
                     description: Expression is the condition that triggers the tripped
                       state.
+                    example: LatencyAtQuantileMS(50.0) > 100
                     type: string
                   fallbackDuration:
                     anyOf:
                     - type: integer
                     - type: string
+                    default: 10s
                     description: FallbackDuration is the duration for which the circuit
                       breaker will wait before trying to recover (from a tripped state).
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   recoveryDuration:
                     anyOf:
                     - type: integer
                     - type: string
+                    default: 10s
                     description: RecoveryDuration is the duration for which the circuit
                       breaker will try to recover (as soon as it is in recovering
                       state).
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               compress:
@@ -798,13 +929,19 @@ spec:
                     description: ExcludedContentTypes defines the list of content
                       types to compare the Content-Type header of the incoming requests
                       and responses before compressing.
+                    example:
+                    - text/event-stream
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   minResponseBodyBytes:
+                    default: 1024
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    example: 1200
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -813,12 +950,14 @@ spec:
                   This middleware exists to enable the correct behavior until at least the default one can be changed in a future version.
                 properties:
                   autoDetect:
+                    default: true
                     description: |-
                       AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
                       be automatically set to a value derived from the contents of the response.
                       As a proxy, the default behavior should be to leave the header alone, regardless of what the backend did with it.
                       However, the historic default was to always auto-detect and set the header if it was nil,
                       and it is going to be kept that way in order to support users currently relying on it.
+                    example: false
                     type: boolean
                 type: object
               digestAuth:
@@ -830,20 +969,26 @@ spec:
                   headerField:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
-                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+                      More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/digestauth/#headerfield
+                    example: X-WebAuth-User
                     type: string
                   realm:
+                    default: traefik
                     description: |-
                       Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
                       Default: traefik.
+                    example: MyRealm
                     type: string
                   removeHeader:
+                    default: false
                     description: RemoveHeader defines whether to remove the authorization
                       header before forwarding the request to the backend.
+                    example: true
                     type: boolean
                   secret:
                     description: Secret is the name of the referenced Kubernetes Secret
                       containing user credentials.
+                    example: userssecret
                     type: string
                 type: object
               errors:
@@ -856,38 +1001,52 @@ spec:
                     description: |-
                       Query defines the URL for the error page (hosted by service).
                       The {status} variable can be used in order to insert the status code in the URL.
+                    example: /{status}.html
                     type: string
+                    x-kubernetes-validations:
+                    - message: must be a valid URLs
+                      rule: isURL(self.Query)
                   service:
                     description: |-
                       Service defines the reference to a Kubernetes Service that will serve the error page.
                       More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/errorpages/#service
+                    example:
+                      name: whoami
+                      port: 80
                     properties:
                       kind:
                         description: Kind defines the kind of the Service.
                         enum:
                         - Service
                         - TraefikService
+                        example: Service
                         type: string
                       name:
                         description: |-
                           Name defines the name of the referenced Kubernetes Service or TraefikService.
                           The differentiation between the two is specified in the Kind field.
+                        example: foo
                         type: string
                       namespace:
                         description: Namespace defines the namespace of the referenced
                           Kubernetes Service or TraefikService.
+                        example: default
                         type: string
                       nativeLB:
+                        default: false
                         description: |-
                           NativeLB controls, when creating the load-balancer,
                           whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                           The Kubernetes Service itself does load-balance to the pods.
                           By default, NativeLB is false.
+                        example: true
                         type: boolean
                       passHostHeader:
+                        default: true
                         description: |-
                           PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                           By default, passHostHeader is true.
+                        example: false
                         type: boolean
                       port:
                         anyOf:
@@ -896,6 +1055,7 @@ spec:
                         description: |-
                           Port defines the port of a Kubernetes Service.
                           This can be a reference to a named port.
+                        example: 80
                         x-kubernetes-int-or-string: true
                       responseForwarding:
                         description: ResponseForwarding defines how Traefik forwards
@@ -903,24 +1063,29 @@ spec:
                           client.
                         properties:
                           flushInterval:
+                            default: 100ms
                             description: |-
                               FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                               A negative value means to flush immediately after each write to the client.
                               This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                               for such responses, writes are flushed to the client immediately.
                               Default: 100ms
+                            example: 1ms
                             type: string
                         type: object
                       scheme:
                         description: |-
                           Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                           It defaults to https when Kubernetes Service port is 443, http otherwise.
+                        example: https
+                        pattern: (http|https|h2c)
                         type: string
                       serversTransport:
                         description: |-
                           ServersTransport defines the name of ServersTransport resource to use.
                           It allows to configure the transport between Traefik and your servers.
                           Can only be used on a Kubernetes Service.
+                        example: transport
                         type: string
                       sticky:
                         description: |-
@@ -931,21 +1096,31 @@ spec:
                             description: Cookie defines the sticky cookie configuration.
                             properties:
                               httpOnly:
+                                default: false
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
+                                example: true
                                 type: boolean
                               name:
                                 description: Name defines the Cookie name.
+                                example: cookie
                                 type: string
                               sameSite:
                                 description: |-
                                   SameSite defines the same site policy.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                enum:
+                                - none
+                                - lax
+                                - strict
+                                example: none
                                 type: string
                               secure:
+                                default: false
                                 description: Secure defines whether the cookie can
                                   only be transmitted over an encrypted connection
                                   (i.e. HTTPS).
+                                example: true
                                 type: boolean
                             type: object
                         type: object
@@ -953,12 +1128,20 @@ spec:
                         description: |-
                           Strategy defines the load balancing strategy between the servers.
                           RoundRobin is the only supported value at the moment.
+                        enum:
+                        - RoundRobin
+                        example: RoundRobin
                         type: string
                       weight:
                         description: |-
                           Weight defines the weight and should only be specified when Name references a TraefikService object
                           (and to be precise, one that embeds a Weighted Round Robin).
+                        example: 10
+                        minimum: 0
                         type: integer
+                        x-kubernetes-validations:
+                        - message: weight can only be used on TraefikService
+                          rule: self.kind == 'TraefikService'
                     required:
                     - name
                     type: object
@@ -969,6 +1152,11 @@ spec:
                       as multiple comma-separated numbers (500,502),
                       as ranges by separating two codes with a dash (500-599),
                       or a combination of the two (404,418,500-599).
+                    example:
+                    - "500"
+                    - "501"
+                    - "503"
+                    - 505-599
                     items:
                       type: string
                     type: array
@@ -981,50 +1169,68 @@ spec:
                 properties:
                   address:
                     description: Address defines the authentication server address.
+                    example: https://example.com/auth
                     type: string
                   authRequestHeaders:
                     description: |-
                       AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
                       If not set or empty then all request headers are passed.
+                    example:
+                    - Accept
+                    - X-CustomHeader
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   authResponseHeaders:
                     description: AuthResponseHeaders defines the list of headers to
                       copy from the authentication server response and set on forwarded
                       request, replacing any existing conflicting headers.
+                    example:
+                    - X-Auth-User
+                    - X-Secret
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   authResponseHeadersRegex:
                     description: |-
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
                       More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/#authresponseheadersregex
+                    example: ^X-
                     type: string
                   tls:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
                     properties:
                       caOptional:
+                        default: false
+                        example: true
                         type: boolean
                       caSecret:
                         description: |-
                           CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
                           The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+                        example: mycasecret
                         type: string
                       certSecret:
                         description: |-
                           CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
                           The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+                        example: mytlscert
                         type: string
                       insecureSkipVerify:
+                        default: false
                         description: InsecureSkipVerify defines whether the server
                           certificates should be validated.
+                        example: true
                         type: boolean
                     type: object
                   trustForwardHeader:
+                    default: false
                     description: 'TrustForwardHeader defines whether to trust (ie:
                       forward) all X-Forwarded-* headers.'
+                    example: true
                     type: boolean
                 type: object
               headers:
@@ -1034,48 +1240,68 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/headers/#customrequestheaders
                 properties:
                   accessControlAllowCredentials:
+                    default: false
                     description: AccessControlAllowCredentials defines whether the
                       request can include user credentials.
+                    example: true
                     type: boolean
                   accessControlAllowHeaders:
                     description: AccessControlAllowHeaders defines the Access-Control-Request-Headers
                       values sent in preflight response.
+                    example:
+                    - '*'
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlAllowMethods:
                     description: AccessControlAllowMethods defines the Access-Control-Request-Method
                       values sent in preflight response.
+                    example:
+                    - GET
+                    - OPTIONS
+                    - PUT
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlAllowOriginList:
                     description: AccessControlAllowOriginList is a list of allowable
                       origins. Can also be a wildcard origin "*".
+                    example:
+                    - https://foo.bar.org
+                    - https://example.org
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlAllowOriginListRegex:
                     description: AccessControlAllowOriginListRegex is a list of allowable
                       origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
+                    example:
+                    - https://example\.org/(foo|bar)
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlExposeHeaders:
                     description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
                       values sent in preflight response.
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlMaxAge:
                     description: AccessControlMaxAge defines the time that a preflight
                       request may be cached.
                     format: int64
                     type: integer
                   addVaryHeader:
+                    default: false
                     description: AddVaryHeader defines whether the Vary header is
                       automatically added/updated when the AccessControlAllowOriginList
                       is set.
+                    example: true
                     type: boolean
                   allowedHosts:
                     description: AllowedHosts defines the fully qualified list of
@@ -1083,17 +1309,22 @@ spec:
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   browserXssFilter:
+                    default: false
                     description: BrowserXSSFilter defines whether to add the X-XSS-Protection
                       header with the value 1; mode=block.
+                    example: true
                     type: boolean
                   contentSecurityPolicy:
                     description: ContentSecurityPolicy defines the Content-Security-Policy
                       header value.
                     type: string
                   contentTypeNosniff:
+                    default: false
                     description: ContentTypeNosniff defines whether to add the X-Content-Type-Options
                       header with the nosniff value.
+                    example: true
                     type: boolean
                   customBrowserXSSValue:
                     description: |-
@@ -1110,23 +1341,31 @@ spec:
                       type: string
                     description: CustomRequestHeaders defines the header names and
                       values to apply to the request.
+                    example:
+                      X-Script-Name: test
                     type: object
                   customResponseHeaders:
                     additionalProperties:
                       type: string
                     description: CustomResponseHeaders defines the header names and
                       values to apply to the response.
+                    example:
+                      X-Custom-Response-Header: value
                     type: object
                   featurePolicy:
                     description: 'Deprecated: use PermissionsPolicy instead.'
                     type: string
                   forceSTSHeader:
+                    default: false
                     description: ForceSTSHeader defines whether to add the STS header
                       even when the connection is HTTP.
+                    example: true
                     type: boolean
                   frameDeny:
+                    default: false
                     description: FrameDeny defines whether to add the X-Frame-Options
                       header with the DENY value.
+                    example: true
                     type: boolean
                   hostsProxyHeaders:
                     description: HostsProxyHeaders defines the header keys that may
@@ -1134,12 +1373,15 @@ spec:
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   isDevelopment:
+                    default: false
                     description: |-
                       IsDevelopment defines whether to mitigate the unwanted effects of the AllowedHosts, SSL, and STS options when developing.
                       Usually testing takes place using HTTP, not HTTPS, and on localhost, not your production domain.
                       If you would like your development environment to mimic production with complete Host blocking, SSL redirects,
                       and STS headers, leave this as false.
+                    example: true
                     type: boolean
                   permissionsPolicy:
                     description: |-
@@ -1156,7 +1398,9 @@ spec:
                       This allows sites to control whether browsers forward the Referer header to other sites.
                     type: string
                   sslForceHost:
+                    default: false
                     description: 'Deprecated: use RedirectRegex instead.'
+                    example: true
                     type: boolean
                   sslHost:
                     description: 'Deprecated: use RedirectRegex instead.'
@@ -1167,28 +1411,41 @@ spec:
                     description: |-
                       SSLProxyHeaders defines the header keys with associated values that would indicate a valid HTTPS request.
                       It can be useful when using other proxies (example: "X-Forwarded-Proto": "https").
+                    example:
+                      X-Forwarded-Proto: https
                     type: object
                   sslRedirect:
+                    default: false
                     description: 'Deprecated: use EntryPoint redirection or RedirectScheme
                       instead.'
+                    example: true
                     type: boolean
                   sslTemporaryRedirect:
+                    default: false
                     description: 'Deprecated: use EntryPoint redirection or RedirectScheme
                       instead.'
+                    example: true
                     type: boolean
                   stsIncludeSubdomains:
+                    default: false
                     description: STSIncludeSubdomains defines whether the includeSubDomains
                       directive is appended to the Strict-Transport-Security header.
+                    example: true
                     type: boolean
                   stsPreload:
+                    default: false
                     description: STSPreload defines whether the preload flag is appended
                       to the Strict-Transport-Security header.
+                    example: true
                     type: boolean
                   stsSeconds:
+                    default: 0
                     description: |-
                       STSSeconds defines the max-age of the Strict-Transport-Security header.
                       If set to 0, the header is not set.
+                    example: 42
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               inFlightReq:
@@ -1201,7 +1458,9 @@ spec:
                     description: |-
                       Amount defines the maximum amount of allowed simultaneous in-flight request.
                       The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
+                    example: 10
                     format: int64
+                    minimum: 0
                     type: integer
                   sourceCriterion:
                     description: |-
@@ -1219,22 +1478,31 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            example: 2
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
                               X-Forwarded-For header and select the first IP not in
                               the list.
+                            example:
+                            - 12.0.0.1
+                            - 13.0.0.1
                             items:
                               type: string
                             type: array
+                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
                           used to group incoming requests.
+                        example: username
                         type: string
                       requestHost:
+                        default: false
                         description: RequestHost defines whether to consider the request
                           Host as the source.
+                        example: true
                         type: boolean
                     type: object
                 type: object
@@ -1253,20 +1521,30 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        example: 2
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
                           header and select the first IP not in the list.
+                        example:
+                        - 12.0.0.1
+                        - 13.0.0.1
                         items:
                           type: string
                         type: array
+                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -1284,20 +1562,30 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        example: 2
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
                           header and select the first IP not in the list.
+                        example:
+                        - 12.0.0.1
+                        - 13.0.0.1
                         items:
                           type: string
                         type: array
+                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation). Required.
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               passTLSClientCert:
                 description: |-
@@ -1314,91 +1602,131 @@ spec:
                           details to add to the X-Forwarded-Tls-Client-Cert-Info header.
                         properties:
                           commonName:
+                            default: false
                             description: CommonName defines whether to add the organizationalUnit
                               information into the issuer.
+                            example: true
                             type: boolean
                           country:
+                            default: false
                             description: Country defines whether to add the country
                               information into the issuer.
+                            example: true
                             type: boolean
                           domainComponent:
+                            default: false
                             description: DomainComponent defines whether to add the
                               domainComponent information into the issuer.
+                            example: true
                             type: boolean
                           locality:
+                            default: false
                             description: Locality defines whether to add the locality
                               information into the issuer.
+                            example: true
                             type: boolean
                           organization:
+                            default: false
                             description: Organization defines whether to add the organization
                               information into the issuer.
+                            example: true
                             type: boolean
                           province:
+                            default: false
                             description: Province defines whether to add the province
                               information into the issuer.
+                            example: true
                             type: boolean
                           serialNumber:
+                            default: false
                             description: SerialNumber defines whether to add the serialNumber
                               information into the issuer.
+                            example: true
                             type: boolean
                         type: object
                       notAfter:
+                        default: false
                         description: NotAfter defines whether to add the Not After
                           information from the Validity part.
+                        example: true
                         type: boolean
                       notBefore:
+                        default: false
                         description: NotBefore defines whether to add the Not Before
                           information from the Validity part.
+                        example: true
                         type: boolean
                       sans:
+                        default: false
                         description: Sans defines whether to add the Subject Alternative
                           Name information from the Subject Alternative Name part.
+                        example: true
                         type: boolean
                       serialNumber:
+                        default: false
                         description: SerialNumber defines whether to add the client
                           serialNumber information.
+                        example: true
                         type: boolean
                       subject:
                         description: Subject defines the client certificate subject
                           details to add to the X-Forwarded-Tls-Client-Cert-Info header.
                         properties:
                           commonName:
+                            default: false
                             description: CommonName defines whether to add the organizationalUnit
                               information into the subject.
+                            example: true
                             type: boolean
                           country:
+                            default: false
                             description: Country defines whether to add the country
                               information into the subject.
+                            example: true
                             type: boolean
                           domainComponent:
+                            default: false
                             description: DomainComponent defines whether to add the
                               domainComponent information into the subject.
+                            example: true
                             type: boolean
                           locality:
+                            default: false
                             description: Locality defines whether to add the locality
                               information into the subject.
+                            example: true
                             type: boolean
                           organization:
+                            default: false
                             description: Organization defines whether to add the organization
                               information into the subject.
+                            example: true
                             type: boolean
                           organizationalUnit:
+                            default: false
                             description: OrganizationalUnit defines whether to add
                               the organizationalUnit information into the subject.
+                            example: true
                             type: boolean
                           province:
+                            default: false
                             description: Province defines whether to add the province
                               information into the subject.
+                            example: true
                             type: boolean
                           serialNumber:
+                            default: false
                             description: SerialNumber defines whether to add the serialNumber
                               information into the subject.
+                            example: true
                             type: boolean
                         type: object
                     type: object
                   pem:
+                    default: false
                     description: PEM sets the X-Forwarded-Tls-Client-Cert header with
                       the certificate.
+                    example: true
                     type: boolean
                 type: object
               plugin:
@@ -1420,21 +1748,29 @@ spec:
                       It defaults to 0, which means no rate limiting.
                       The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
                       one needs to define a Period larger than a second.
+                    example: 100
                     format: int64
+                    minimum: 0
                     type: integer
                   burst:
+                    default: 1
                     description: |-
                       Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
                       It defaults to 1.
+                    example: 200
                     format: int64
+                    minimum: 0
                     type: integer
                   period:
                     anyOf:
                     - type: integer
                     - type: string
+                    default: 1s
                     description: |-
                       Period, in combination with Average, defines the actual maximum rate, such as:
                       r = Average / Period. It defaults to a second.
+                    example: 1m
+                    format: int
                     x-kubernetes-int-or-string: true
                   sourceCriterion:
                     description: |-
@@ -1451,22 +1787,31 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            example: 2
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
                               X-Forwarded-For header and select the first IP not in
                               the list.
+                            example:
+                            - 12.0.0.1
+                            - 13.0.0.1
                             items:
                               type: string
                             type: array
+                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
                           used to group incoming requests.
+                        example: username
                         type: string
                       requestHost:
+                        default: false
                         description: RequestHost defines whether to consider the request
                           Host as the source.
+                        example: true
                         type: boolean
                     type: object
                 type: object
@@ -1477,16 +1822,20 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectregex/#regex
                 properties:
                   permanent:
+                    default: false
                     description: Permanent defines whether the redirection is permanent
                       (301).
+                    example: true
                     type: boolean
                   regex:
                     description: Regex defines the regex used to match and capture
                       elements from the request URL.
+                    example: ^http://local\\.host/(.*)
                     type: string
                   replacement:
                     description: Replacement defines how to modify the URL to have
                       the new target URL.
+                    example: http://mydomain/${1}
                     type: string
                 type: object
               redirectScheme:
@@ -1496,14 +1845,19 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectscheme/
                 properties:
                   permanent:
+                    default: false
                     description: Permanent defines whether the redirection is permanent
                       (301).
+                    example: true
                     type: boolean
                   port:
                     description: Port defines the port of the new URL.
+                    example: "443"
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
+                    example: https
+                    pattern: (http|https|h2c)
                     type: string
                 type: object
               replacePath:
@@ -1515,6 +1869,7 @@ spec:
                   path:
                     description: Path defines the path to use as replacement in the
                       request URL.
+                    example: /foo
                     type: string
                 type: object
               replacePathRegex:
@@ -1526,10 +1881,12 @@ spec:
                   regex:
                     description: Regex defines the regular expression used to match
                       and capture the path from the request URL.
+                    example: ^/foo/(.*)
                     type: string
                   replacement:
                     description: Replacement defines the replacement path format,
                       which can include captured variables.
+                    example: /bar/$1
                     type: string
                 type: object
               retry:
@@ -1540,19 +1897,24 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/retry/
                 properties:
                   attempts:
+                    default: 0
                     description: Attempts defines how many times the request should
                       be retried.
+                    example: 3
                     type: integer
                   initialInterval:
                     anyOf:
                     - type: integer
                     - type: string
+                    default: 0
                     description: |-
                       InitialInterval defines the first wait time in the exponential backoff series.
                       The maximum interval is calculated as twice the initialInterval.
                       If unspecified, requests will be retried immediately.
                       The value of initialInterval should be provided in seconds or as a valid duration format,
                       see https://pkg.go.dev/time#ParseDuration.
+                    example: 100ms
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
@@ -1562,13 +1924,18 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/stripprefix/
                 properties:
                   forceSlash:
+                    default: true
                     description: |-
                       ForceSlash ensures that the resulting stripped path is not the empty string, by replacing it with / when necessary.
                       Default: true.
+                    example: false
                     type: boolean
                   prefixes:
                     description: Prefixes defines the prefixes to strip from the request
                       URL.
+                    example:
+                    - /foobar
+                    - /fiibar
                     items:
                       type: string
                     type: array
@@ -1582,6 +1949,7 @@ spec:
                   regex:
                     description: Regex defines the regular expression to match the
                       path prefix from the request URL.
+                    example: '{"/foo/[a-z0-9]+/[0-9]+/"}'
                     items:
                       type: string
                     type: array
@@ -1643,7 +2011,9 @@ spec:
                     description: |-
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
+                    example: 10
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:
@@ -1655,9 +2025,13 @@ spec:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
                       allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -1669,9 +2043,13 @@ spec:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
                       allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
             type: object
         required:
@@ -1728,12 +2106,16 @@ spec:
               certificatesSecrets:
                 description: CertificatesSecrets defines a list of secret storing
                   client certificates for mTLS.
+                example:
+                - certsecret
                 items:
                   type: string
                 type: array
               disableHTTP2:
+                default: false
                 description: DisableHTTP2 disables HTTP/2 for connections with backend
                   servers.
+                example: true
                 type: boolean
               forwardingTimeouts:
                 description: ForwardingTimeouts defines the timeouts for requests
@@ -1745,6 +2127,8 @@ spec:
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
                       connection to a backend server can be established.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -1753,6 +2137,8 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -1760,6 +2146,8 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -1768,6 +2156,8 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -1776,28 +2166,39 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
+                default: false
                 description: InsecureSkipVerify disables SSL certificate verification.
+                example: true
                 type: boolean
               maxIdleConnsPerHost:
+                default: 0
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
                   to keep per-host.
+                example: 1
+                minimum: 0
                 type: integer
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
+                example: foobar
                 type: string
               rootCAsSecrets:
                 description: RootCAsSecrets defines a list of CA secret used to validate
                   self-signed certificate.
+                example:
+                - casecret
                 items:
                   type: string
                 type: array
               serverName:
                 description: ServerName defines the server name used to contact the
                   server.
+                example: foobar
                 type: string
             type: object
         required:
@@ -1853,6 +2254,8 @@ spec:
                 description: |-
                   ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
                   More info: https://doc.traefik.io/traefik/v2.11/https/tls/#alpn-protocols
+                example:
+                - foobar
                 items:
                   type: string
                 type: array
@@ -1860,6 +2263,9 @@ spec:
                 description: |-
                   CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
                   More info: https://doc.traefik.io/traefik/v2.11/https/tls/#cipher-suites
+                example:
+                - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                - TLS_RSA_WITH_AES_256_GCM_SHA384
                 items:
                   type: string
                 type: array
@@ -1876,10 +2282,14 @@ spec:
                     - RequireAnyClientCert
                     - VerifyClientCertIfGiven
                     - RequireAndVerifyClientCert
+                    example: VerifyClientCertIfGiven
                     type: string
                   secretNames:
                     description: SecretNames defines the names of the referenced Kubernetes
                       Secret storing certificate details.
+                    example:
+                    - secret-ca1
+                    - secret-ca2
                     items:
                       type: string
                     type: array
@@ -1888,30 +2298,41 @@ spec:
                 description: |-
                   CurvePreferences defines the preferred elliptic curves in a specific order.
                   More info: https://doc.traefik.io/traefik/v2.11/https/tls/#curve-preferences
+                example:
+                - CurveP521
+                - CurveP384
                 items:
                   type: string
                 type: array
               maxVersion:
+                default: none
                 description: |-
                   MaxVersion defines the maximum TLS version that Traefik will accept.
                   Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
                   Default: None.
+                example: VersionTLS13
                 type: string
               minVersion:
+                default: VersionTLS10
                 description: |-
                   MinVersion defines the minimum TLS version that Traefik will accept.
                   Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
                   Default: VersionTLS10.
+                example: VersionTLS12
                 type: string
               preferServerCipherSuites:
+                default: false
                 description: |-
                   PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
                   It is enabled automatically when minVersion or maxVersion is set.
                   Deprecated: https://github.com/golang/go/issues/45430
+                example: true
                 type: boolean
               sniStrict:
+                default: false
                 description: SniStrict defines whether Traefik allows connections
                   from clients connections that do not specify a server_name extension.
+                example: true
                 type: boolean
             type: object
         required:
@@ -1974,6 +2395,7 @@ spec:
                     secretName:
                       description: SecretName is the name of the referenced Kubernetes
                         Secret to specify the certificate details.
+                      example: certsecret
                       type: string
                   required:
                   - secretName
@@ -1985,6 +2407,7 @@ spec:
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes
                       Secret to specify the certificate details.
+                    example: certsecret
                     type: string
                 required:
                 - secretName
@@ -1998,9 +2421,13 @@ spec:
                     properties:
                       main:
                         description: Main defines the main domain name.
+                        example: example.net
                         type: string
                       sans:
                         description: SANs defines the subject alternative domain names.
+                        example:
+                        - a.example.net
+                        - b.example.net
                         items:
                           type: string
                         type: array
@@ -2008,6 +2435,7 @@ spec:
                   resolver:
                     description: Resolver is the name of the resolver that will be
                       used to issue the DefaultCertificate.
+                    example: fooresolver
                     type: string
                 type: object
             type: object
@@ -2071,6 +2499,7 @@ spec:
                     enum:
                     - Service
                     - TraefikService
+                    example: Service
                     type: string
                   maxBodySize:
                     description: |-
@@ -2090,27 +2519,34 @@ spec:
                           enum:
                           - Service
                           - TraefikService
+                          example: Service
                           type: string
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
                             The differentiation between the two is specified in the Kind field.
+                          example: foo
                           type: string
                         namespace:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
+                          example: default
                           type: string
                         nativeLB:
+                          default: false
                           description: |-
                             NativeLB controls, when creating the load-balancer,
                             whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the pods.
                             By default, NativeLB is false.
+                          example: true
                           type: boolean
                         passHostHeader:
+                          default: true
                           description: |-
                             PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
+                          example: false
                           type: boolean
                         percent:
                           description: |-
@@ -2124,6 +2560,7 @@ spec:
                           description: |-
                             Port defines the port of a Kubernetes Service.
                             This can be a reference to a named port.
+                          example: 80
                           x-kubernetes-int-or-string: true
                         responseForwarding:
                           description: ResponseForwarding defines how Traefik forwards
@@ -2131,24 +2568,29 @@ spec:
                             client.
                           properties:
                             flushInterval:
+                              default: 100ms
                               description: |-
                                 FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                 A negative value means to flush immediately after each write to the client.
                                 This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                 for such responses, writes are flushed to the client immediately.
                                 Default: 100ms
+                              example: 1ms
                               type: string
                           type: object
                         scheme:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          example: https
+                          pattern: (http|https|h2c)
                           type: string
                         serversTransport:
                           description: |-
                             ServersTransport defines the name of ServersTransport resource to use.
                             It allows to configure the transport between Traefik and your servers.
                             Can only be used on a Kubernetes Service.
+                          example: transport
                           type: string
                         sticky:
                           description: |-
@@ -2159,21 +2601,31 @@ spec:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
                                 httpOnly:
+                                  default: false
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
+                                  example: true
                                   type: boolean
                                 name:
                                   description: Name defines the Cookie name.
+                                  example: cookie
                                   type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
+                                  example: none
                                   type: string
                                 secure:
+                                  default: false
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
+                                  example: true
                                   type: boolean
                               type: object
                           type: object
@@ -2181,12 +2633,20 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
+                          example: RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          example: 10
+                          minimum: 0
                           type: integer
+                          x-kubernetes-validations:
+                          - message: weight can only be used on TraefikService
+                            rule: self.kind == 'TraefikService'
                       required:
                       - name
                       type: object
@@ -2195,22 +2655,28 @@ spec:
                     description: |-
                       Name defines the name of the referenced Kubernetes Service or TraefikService.
                       The differentiation between the two is specified in the Kind field.
+                    example: foo
                     type: string
                   namespace:
                     description: Namespace defines the namespace of the referenced
                       Kubernetes Service or TraefikService.
+                    example: default
                     type: string
                   nativeLB:
+                    default: false
                     description: |-
                       NativeLB controls, when creating the load-balancer,
                       whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                       The Kubernetes Service itself does load-balance to the pods.
                       By default, NativeLB is false.
+                    example: true
                     type: boolean
                   passHostHeader:
+                    default: true
                     description: |-
                       PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                       By default, passHostHeader is true.
+                    example: false
                     type: boolean
                   port:
                     anyOf:
@@ -2219,30 +2685,36 @@ spec:
                     description: |-
                       Port defines the port of a Kubernetes Service.
                       This can be a reference to a named port.
+                    example: 80
                     x-kubernetes-int-or-string: true
                   responseForwarding:
                     description: ResponseForwarding defines how Traefik forwards the
                       response from the upstream Kubernetes Service to the client.
                     properties:
                       flushInterval:
+                        default: 100ms
                         description: |-
                           FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                           A negative value means to flush immediately after each write to the client.
                           This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                           for such responses, writes are flushed to the client immediately.
                           Default: 100ms
+                        example: 1ms
                         type: string
                     type: object
                   scheme:
                     description: |-
                       Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                       It defaults to https when Kubernetes Service port is 443, http otherwise.
+                    example: https
+                    pattern: (http|https|h2c)
                     type: string
                   serversTransport:
                     description: |-
                       ServersTransport defines the name of ServersTransport resource to use.
                       It allows to configure the transport between Traefik and your servers.
                       Can only be used on a Kubernetes Service.
+                    example: transport
                     type: string
                   sticky:
                     description: |-
@@ -2253,20 +2725,30 @@ spec:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
+                            default: false
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
+                            example: true
                             type: boolean
                           name:
                             description: Name defines the Cookie name.
+                            example: cookie
                             type: string
                           sameSite:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
+                            example: none
                             type: string
                           secure:
+                            default: false
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
+                            example: true
                             type: boolean
                         type: object
                     type: object
@@ -2274,12 +2756,20 @@ spec:
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
                       RoundRobin is the only supported value at the moment.
+                    enum:
+                    - RoundRobin
+                    example: RoundRobin
                     type: string
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object
                       (and to be precise, one that embeds a Weighted Round Robin).
+                    example: 10
+                    minimum: 0
                     type: integer
+                    x-kubernetes-validations:
+                    - message: weight can only be used on TraefikService
+                      rule: self.kind == 'TraefikService'
                 required:
                 - name
                 type: object
@@ -2298,27 +2788,34 @@ spec:
                           enum:
                           - Service
                           - TraefikService
+                          example: Service
                           type: string
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
                             The differentiation between the two is specified in the Kind field.
+                          example: foo
                           type: string
                         namespace:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
+                          example: default
                           type: string
                         nativeLB:
+                          default: false
                           description: |-
                             NativeLB controls, when creating the load-balancer,
                             whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the pods.
                             By default, NativeLB is false.
+                          example: true
                           type: boolean
                         passHostHeader:
+                          default: true
                           description: |-
                             PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
+                          example: false
                           type: boolean
                         port:
                           anyOf:
@@ -2327,6 +2824,7 @@ spec:
                           description: |-
                             Port defines the port of a Kubernetes Service.
                             This can be a reference to a named port.
+                          example: 80
                           x-kubernetes-int-or-string: true
                         responseForwarding:
                           description: ResponseForwarding defines how Traefik forwards
@@ -2334,24 +2832,29 @@ spec:
                             client.
                           properties:
                             flushInterval:
+                              default: 100ms
                               description: |-
                                 FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                 A negative value means to flush immediately after each write to the client.
                                 This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                 for such responses, writes are flushed to the client immediately.
                                 Default: 100ms
+                              example: 1ms
                               type: string
                           type: object
                         scheme:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          example: https
+                          pattern: (http|https|h2c)
                           type: string
                         serversTransport:
                           description: |-
                             ServersTransport defines the name of ServersTransport resource to use.
                             It allows to configure the transport between Traefik and your servers.
                             Can only be used on a Kubernetes Service.
+                          example: transport
                           type: string
                         sticky:
                           description: |-
@@ -2362,21 +2865,31 @@ spec:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
                                 httpOnly:
+                                  default: false
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
+                                  example: true
                                   type: boolean
                                 name:
                                   description: Name defines the Cookie name.
+                                  example: cookie
                                   type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
+                                  example: none
                                   type: string
                                 secure:
+                                  default: false
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
+                                  example: true
                                   type: boolean
                               type: object
                           type: object
@@ -2384,12 +2897,20 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
+                          example: RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          example: 10
+                          minimum: 0
                           type: integer
+                          x-kubernetes-validations:
+                          - message: weight can only be used on TraefikService
+                            rule: self.kind == 'TraefikService'
                       required:
                       - name
                       type: object
@@ -2403,20 +2924,30 @@ spec:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
+                            default: false
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
+                            example: true
                             type: boolean
                           name:
                             description: Name defines the Cookie name.
+                            example: cookie
                             type: string
                           sameSite:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
+                            example: none
                             type: string
                           secure:
+                            default: false
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
+                            example: true
                             type: boolean
                         type: object
                     type: object
@@ -2569,12 +3100,14 @@ spec:
                               the client.
                             properties:
                               flushInterval:
+                                default: 100ms
                                 description: |-
                                   FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                   A negative value means to flush immediately after each write to the client.
                                   This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                   for such responses, writes are flushed to the client immediately.
                                   Default: 100ms
+                                example: 1ms
                                 type: string
                             type: object
                           scheme:
@@ -2597,22 +3130,32 @@ spec:
                                 description: Cookie defines the sticky cookie configuration.
                                 properties:
                                   httpOnly:
+                                    default: false
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
                                       JavaScript.
+                                    example: true
                                     type: boolean
                                   name:
                                     description: Name defines the Cookie name.
+                                    example: cookie
                                     type: string
                                   sameSite:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
+                                    example: none
                                     type: string
                                   secure:
+                                    default: false
                                     description: Secure defines whether the cookie
                                       can only be transmitted over an encrypted connection
                                       (i.e. HTTPS).
+                                    example: true
                                     type: boolean
                                 type: object
                             type: object
@@ -2655,10 +3198,14 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
                           type: array
@@ -2834,8 +3381,10 @@ spec:
                               More info: https://doc.traefik.io/traefik/v2.11/routing/services/#proxy-protocol
                             properties:
                               version:
+                                default: 2
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                example: 1
                                 type: integer
                             type: object
                           terminationDelay:
@@ -2879,10 +3428,14 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
                           type: array
@@ -3096,7 +3649,12 @@ spec:
                     description: |-
                       Prefix is the string to add before the current path in the requested URL.
                       It should include a leading slash (/).
+                    example: /foo
+                    maxLength: 255
                     type: string
+                    x-kubernetes-validations:
+                    - message: must start with a '/'
+                      rule: self.startsWith('/')
                 type: object
               basicAuth:
                 description: |-
@@ -3131,36 +3689,46 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#maxrequestbodybytes
                 properties:
                   maxRequestBodyBytes:
+                    default: 0
                     description: |-
                       MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
                       If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
                       Default: 0 (no maximum).
+                    example: 2000000
                     format: int64
                     type: integer
                   maxResponseBodyBytes:
+                    default: 0
                     description: |-
                       MaxResponseBodyBytes defines the maximum allowed response size from the service (in bytes).
                       If the response exceeds the allowed size, it is not forwarded to the client. The client gets a 500 (Internal Server Error) response instead.
                       Default: 0 (no maximum).
+                    example: 2000000
                     format: int64
                     type: integer
                   memRequestBodyBytes:
+                    default: 1048576
                     description: |-
                       MemRequestBodyBytes defines the threshold (in bytes) from which the request will be buffered on disk instead of in memory.
                       Default: 1048576 (1Mi).
+                    example: 2000000
                     format: int64
                     type: integer
                   memResponseBodyBytes:
+                    default: 1048576
                     description: |-
                       MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
                       Default: 1048576 (1Mi).
+                    example: 2000000
                     format: int64
                     type: integer
                   retryExpression:
+                    default: ""
                     description: |-
                       RetryExpression defines the retry conditions.
                       It is a logical combination of functions with operators AND (&&) and OR (||).
                       More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#retryexpression
+                    example: IsNetworkError() && Attempts() < 2
                     type: string
                 type: object
               chain:
@@ -3228,13 +3796,19 @@ spec:
                     description: ExcludedContentTypes defines the list of content
                       types to compare the Content-Type header of the incoming requests
                       and responses before compressing.
+                    example:
+                    - text/event-stream
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   minResponseBodyBytes:
+                    default: 1024
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    example: 1200
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -3243,12 +3817,14 @@ spec:
                   This middleware exists to enable the correct behavior until at least the default one can be changed in a future version.
                 properties:
                   autoDetect:
+                    default: true
                     description: |-
                       AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
                       be automatically set to a value derived from the contents of the response.
                       As a proxy, the default behavior should be to leave the header alone, regardless of what the backend did with it.
                       However, the historic default was to always auto-detect and set the header if it was nil,
                       and it is going to be kept that way in order to support users currently relying on it.
+                    example: false
                     type: boolean
                 type: object
               digestAuth:
@@ -3333,12 +3909,14 @@ spec:
                           client.
                         properties:
                           flushInterval:
+                            default: 100ms
                             description: |-
                               FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                               A negative value means to flush immediately after each write to the client.
                               This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                               for such responses, writes are flushed to the client immediately.
                               Default: 100ms
+                            example: 1ms
                             type: string
                         type: object
                       scheme:
@@ -3361,21 +3939,31 @@ spec:
                             description: Cookie defines the sticky cookie configuration.
                             properties:
                               httpOnly:
+                                default: false
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
+                                example: true
                                 type: boolean
                               name:
                                 description: Name defines the Cookie name.
+                                example: cookie
                                 type: string
                               sameSite:
                                 description: |-
                                   SameSite defines the same site policy.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                enum:
+                                - none
+                                - lax
+                                - strict
+                                example: none
                                 type: string
                               secure:
+                                default: false
                                 description: Secure defines whether the cookie can
                                   only be transmitted over an encrypted connection
                                   (i.e. HTTPS).
+                                example: true
                                 type: boolean
                             type: object
                         type: object
@@ -3464,48 +4052,68 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/headers/#customrequestheaders
                 properties:
                   accessControlAllowCredentials:
+                    default: false
                     description: AccessControlAllowCredentials defines whether the
                       request can include user credentials.
+                    example: true
                     type: boolean
                   accessControlAllowHeaders:
                     description: AccessControlAllowHeaders defines the Access-Control-Request-Headers
                       values sent in preflight response.
+                    example:
+                    - '*'
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlAllowMethods:
                     description: AccessControlAllowMethods defines the Access-Control-Request-Method
                       values sent in preflight response.
+                    example:
+                    - GET
+                    - OPTIONS
+                    - PUT
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlAllowOriginList:
                     description: AccessControlAllowOriginList is a list of allowable
                       origins. Can also be a wildcard origin "*".
+                    example:
+                    - https://foo.bar.org
+                    - https://example.org
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlAllowOriginListRegex:
                     description: AccessControlAllowOriginListRegex is a list of allowable
                       origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
+                    example:
+                    - https://example\.org/(foo|bar)
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlExposeHeaders:
                     description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
                       values sent in preflight response.
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   accessControlMaxAge:
                     description: AccessControlMaxAge defines the time that a preflight
                       request may be cached.
                     format: int64
                     type: integer
                   addVaryHeader:
+                    default: false
                     description: AddVaryHeader defines whether the Vary header is
                       automatically added/updated when the AccessControlAllowOriginList
                       is set.
+                    example: true
                     type: boolean
                   allowedHosts:
                     description: AllowedHosts defines the fully qualified list of
@@ -3513,17 +4121,22 @@ spec:
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   browserXssFilter:
+                    default: false
                     description: BrowserXSSFilter defines whether to add the X-XSS-Protection
                       header with the value 1; mode=block.
+                    example: true
                     type: boolean
                   contentSecurityPolicy:
                     description: ContentSecurityPolicy defines the Content-Security-Policy
                       header value.
                     type: string
                   contentTypeNosniff:
+                    default: false
                     description: ContentTypeNosniff defines whether to add the X-Content-Type-Options
                       header with the nosniff value.
+                    example: true
                     type: boolean
                   customBrowserXSSValue:
                     description: |-
@@ -3540,23 +4153,31 @@ spec:
                       type: string
                     description: CustomRequestHeaders defines the header names and
                       values to apply to the request.
+                    example:
+                      X-Script-Name: test
                     type: object
                   customResponseHeaders:
                     additionalProperties:
                       type: string
                     description: CustomResponseHeaders defines the header names and
                       values to apply to the response.
+                    example:
+                      X-Custom-Response-Header: value
                     type: object
                   featurePolicy:
                     description: 'Deprecated: use PermissionsPolicy instead.'
                     type: string
                   forceSTSHeader:
+                    default: false
                     description: ForceSTSHeader defines whether to add the STS header
                       even when the connection is HTTP.
+                    example: true
                     type: boolean
                   frameDeny:
+                    default: false
                     description: FrameDeny defines whether to add the X-Frame-Options
                       header with the DENY value.
+                    example: true
                     type: boolean
                   hostsProxyHeaders:
                     description: HostsProxyHeaders defines the header keys that may
@@ -3564,12 +4185,15 @@ spec:
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                   isDevelopment:
+                    default: false
                     description: |-
                       IsDevelopment defines whether to mitigate the unwanted effects of the AllowedHosts, SSL, and STS options when developing.
                       Usually testing takes place using HTTP, not HTTPS, and on localhost, not your production domain.
                       If you would like your development environment to mimic production with complete Host blocking, SSL redirects,
                       and STS headers, leave this as false.
+                    example: true
                     type: boolean
                   permissionsPolicy:
                     description: |-
@@ -3586,7 +4210,9 @@ spec:
                       This allows sites to control whether browsers forward the Referer header to other sites.
                     type: string
                   sslForceHost:
+                    default: false
                     description: 'Deprecated: use RedirectRegex instead.'
+                    example: true
                     type: boolean
                   sslHost:
                     description: 'Deprecated: use RedirectRegex instead.'
@@ -3597,28 +4223,41 @@ spec:
                     description: |-
                       SSLProxyHeaders defines the header keys with associated values that would indicate a valid HTTPS request.
                       It can be useful when using other proxies (example: "X-Forwarded-Proto": "https").
+                    example:
+                      X-Forwarded-Proto: https
                     type: object
                   sslRedirect:
+                    default: false
                     description: 'Deprecated: use EntryPoint redirection or RedirectScheme
                       instead.'
+                    example: true
                     type: boolean
                   sslTemporaryRedirect:
+                    default: false
                     description: 'Deprecated: use EntryPoint redirection or RedirectScheme
                       instead.'
+                    example: true
                     type: boolean
                   stsIncludeSubdomains:
+                    default: false
                     description: STSIncludeSubdomains defines whether the includeSubDomains
                       directive is appended to the Strict-Transport-Security header.
+                    example: true
                     type: boolean
                   stsPreload:
+                    default: false
                     description: STSPreload defines whether the preload flag is appended
                       to the Strict-Transport-Security header.
+                    example: true
                     type: boolean
                   stsSeconds:
+                    default: 0
                     description: |-
                       STSSeconds defines the max-age of the Strict-Transport-Security header.
                       If set to 0, the header is not set.
+                    example: 42
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               inFlightReq:
@@ -3631,7 +4270,9 @@ spec:
                     description: |-
                       Amount defines the maximum amount of allowed simultaneous in-flight request.
                       The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
+                    example: 10
                     format: int64
+                    minimum: 0
                     type: integer
                   sourceCriterion:
                     description: |-
@@ -3649,22 +4290,31 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            example: 2
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
                               X-Forwarded-For header and select the first IP not in
                               the list.
+                            example:
+                            - 12.0.0.1
+                            - 13.0.0.1
                             items:
                               type: string
                             type: array
+                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
                           used to group incoming requests.
+                        example: username
                         type: string
                       requestHost:
+                        default: false
                         description: RequestHost defines whether to consider the request
                           Host as the source.
+                        example: true
                         type: boolean
                     type: object
                 type: object
@@ -3683,20 +4333,30 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        example: 2
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
                           header and select the first IP not in the list.
+                        example:
+                        - 12.0.0.1
+                        - 13.0.0.1
                         items:
                           type: string
                         type: array
+                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -3714,20 +4374,30 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        example: 2
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
                           header and select the first IP not in the list.
+                        example:
+                        - 12.0.0.1
+                        - 13.0.0.1
                         items:
                           type: string
                         type: array
+                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation). Required.
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               passTLSClientCert:
                 description: |-
@@ -3744,91 +4414,131 @@ spec:
                           details to add to the X-Forwarded-Tls-Client-Cert-Info header.
                         properties:
                           commonName:
+                            default: false
                             description: CommonName defines whether to add the organizationalUnit
                               information into the issuer.
+                            example: true
                             type: boolean
                           country:
+                            default: false
                             description: Country defines whether to add the country
                               information into the issuer.
+                            example: true
                             type: boolean
                           domainComponent:
+                            default: false
                             description: DomainComponent defines whether to add the
                               domainComponent information into the issuer.
+                            example: true
                             type: boolean
                           locality:
+                            default: false
                             description: Locality defines whether to add the locality
                               information into the issuer.
+                            example: true
                             type: boolean
                           organization:
+                            default: false
                             description: Organization defines whether to add the organization
                               information into the issuer.
+                            example: true
                             type: boolean
                           province:
+                            default: false
                             description: Province defines whether to add the province
                               information into the issuer.
+                            example: true
                             type: boolean
                           serialNumber:
+                            default: false
                             description: SerialNumber defines whether to add the serialNumber
                               information into the issuer.
+                            example: true
                             type: boolean
                         type: object
                       notAfter:
+                        default: false
                         description: NotAfter defines whether to add the Not After
                           information from the Validity part.
+                        example: true
                         type: boolean
                       notBefore:
+                        default: false
                         description: NotBefore defines whether to add the Not Before
                           information from the Validity part.
+                        example: true
                         type: boolean
                       sans:
+                        default: false
                         description: Sans defines whether to add the Subject Alternative
                           Name information from the Subject Alternative Name part.
+                        example: true
                         type: boolean
                       serialNumber:
+                        default: false
                         description: SerialNumber defines whether to add the client
                           serialNumber information.
+                        example: true
                         type: boolean
                       subject:
                         description: Subject defines the client certificate subject
                           details to add to the X-Forwarded-Tls-Client-Cert-Info header.
                         properties:
                           commonName:
+                            default: false
                             description: CommonName defines whether to add the organizationalUnit
                               information into the subject.
+                            example: true
                             type: boolean
                           country:
+                            default: false
                             description: Country defines whether to add the country
                               information into the subject.
+                            example: true
                             type: boolean
                           domainComponent:
+                            default: false
                             description: DomainComponent defines whether to add the
                               domainComponent information into the subject.
+                            example: true
                             type: boolean
                           locality:
+                            default: false
                             description: Locality defines whether to add the locality
                               information into the subject.
+                            example: true
                             type: boolean
                           organization:
+                            default: false
                             description: Organization defines whether to add the organization
                               information into the subject.
+                            example: true
                             type: boolean
                           organizationalUnit:
+                            default: false
                             description: OrganizationalUnit defines whether to add
                               the organizationalUnit information into the subject.
+                            example: true
                             type: boolean
                           province:
+                            default: false
                             description: Province defines whether to add the province
                               information into the subject.
+                            example: true
                             type: boolean
                           serialNumber:
+                            default: false
                             description: SerialNumber defines whether to add the serialNumber
                               information into the subject.
+                            example: true
                             type: boolean
                         type: object
                     type: object
                   pem:
+                    default: false
                     description: PEM sets the X-Forwarded-Tls-Client-Cert header with
                       the certificate.
+                    example: true
                     type: boolean
                 type: object
               plugin:
@@ -3881,22 +4591,31 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            example: 2
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
                               X-Forwarded-For header and select the first IP not in
                               the list.
+                            example:
+                            - 12.0.0.1
+                            - 13.0.0.1
                             items:
                               type: string
                             type: array
+                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
                           used to group incoming requests.
+                        example: username
                         type: string
                       requestHost:
+                        default: false
                         description: RequestHost defines whether to consider the request
                           Host as the source.
+                        example: true
                         type: boolean
                     type: object
                 type: object
@@ -3907,16 +4626,20 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectregex/#regex
                 properties:
                   permanent:
+                    default: false
                     description: Permanent defines whether the redirection is permanent
                       (301).
+                    example: true
                     type: boolean
                   regex:
                     description: Regex defines the regex used to match and capture
                       elements from the request URL.
+                    example: ^http://local\\.host/(.*)
                     type: string
                   replacement:
                     description: Replacement defines how to modify the URL to have
                       the new target URL.
+                    example: http://mydomain/${1}
                     type: string
                 type: object
               redirectScheme:
@@ -3926,14 +4649,19 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectscheme/
                 properties:
                   permanent:
+                    default: false
                     description: Permanent defines whether the redirection is permanent
                       (301).
+                    example: true
                     type: boolean
                   port:
                     description: Port defines the port of the new URL.
+                    example: "443"
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
+                    example: https
+                    pattern: (http|https|h2c)
                     type: string
                 type: object
               replacePath:
@@ -3945,6 +4673,7 @@ spec:
                   path:
                     description: Path defines the path to use as replacement in the
                       request URL.
+                    example: /foo
                     type: string
                 type: object
               replacePathRegex:
@@ -3956,10 +4685,12 @@ spec:
                   regex:
                     description: Regex defines the regular expression used to match
                       and capture the path from the request URL.
+                    example: ^/foo/(.*)
                     type: string
                   replacement:
                     description: Replacement defines the replacement path format,
                       which can include captured variables.
+                    example: /bar/$1
                     type: string
                 type: object
               retry:
@@ -3992,13 +4723,18 @@ spec:
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/stripprefix/
                 properties:
                   forceSlash:
+                    default: true
                     description: |-
                       ForceSlash ensures that the resulting stripped path is not the empty string, by replacing it with / when necessary.
                       Default: true.
+                    example: false
                     type: boolean
                   prefixes:
                     description: Prefixes defines the prefixes to strip from the request
                       URL.
+                    example:
+                    - /foobar
+                    - /fiibar
                     items:
                       type: string
                     type: array
@@ -4012,6 +4748,7 @@ spec:
                   regex:
                     description: Regex defines the regular expression to match the
                       path prefix from the request URL.
+                    example: '{"/foo/[a-z0-9]+/[0-9]+/"}'
                     items:
                       type: string
                     type: array
@@ -4073,7 +4810,9 @@ spec:
                     description: |-
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
+                    example: 10
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:
@@ -4085,9 +4824,13 @@ spec:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
                       allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -4099,9 +4842,13 @@ spec:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
                       allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
             type: object
         required:
@@ -4428,9 +5175,13 @@ spec:
                     properties:
                       main:
                         description: Main defines the main domain name.
+                        example: example.net
                         type: string
                       sans:
                         description: SANs defines the subject alternative domain names.
+                        example:
+                        - a.example.net
+                        - b.example.net
                         items:
                           type: string
                         type: array
@@ -4438,6 +5189,7 @@ spec:
                   resolver:
                     description: Resolver is the name of the resolver that will be
                       used to issue the DefaultCertificate.
+                    example: fooresolver
                     type: string
                 type: object
             type: object
@@ -4561,12 +5313,14 @@ spec:
                             client.
                           properties:
                             flushInterval:
+                              default: 100ms
                               description: |-
                                 FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                 A negative value means to flush immediately after each write to the client.
                                 This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                 for such responses, writes are flushed to the client immediately.
                                 Default: 100ms
+                              example: 1ms
                               type: string
                           type: object
                         scheme:
@@ -4589,21 +5343,31 @@ spec:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
                                 httpOnly:
+                                  default: false
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
+                                  example: true
                                   type: boolean
                                 name:
                                   description: Name defines the Cookie name.
+                                  example: cookie
                                   type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
+                                  example: none
                                   type: string
                                 secure:
+                                  default: false
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
+                                  example: true
                                   type: boolean
                               type: object
                           type: object
@@ -4655,12 +5419,14 @@ spec:
                       response from the upstream Kubernetes Service to the client.
                     properties:
                       flushInterval:
+                        default: 100ms
                         description: |-
                           FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                           A negative value means to flush immediately after each write to the client.
                           This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                           for such responses, writes are flushed to the client immediately.
                           Default: 100ms
+                        example: 1ms
                         type: string
                     type: object
                   scheme:
@@ -4683,20 +5449,30 @@ spec:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
+                            default: false
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
+                            example: true
                             type: boolean
                           name:
                             description: Name defines the Cookie name.
+                            example: cookie
                             type: string
                           sameSite:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
+                            example: none
                             type: string
                           secure:
+                            default: false
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
+                            example: true
                             type: boolean
                         type: object
                     type: object
@@ -4764,12 +5540,14 @@ spec:
                             client.
                           properties:
                             flushInterval:
+                              default: 100ms
                               description: |-
                                 FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                 A negative value means to flush immediately after each write to the client.
                                 This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                 for such responses, writes are flushed to the client immediately.
                                 Default: 100ms
+                              example: 1ms
                               type: string
                           type: object
                         scheme:
@@ -4792,21 +5570,31 @@ spec:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
                                 httpOnly:
+                                  default: false
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
+                                  example: true
                                   type: boolean
                                 name:
                                   description: Name defines the Cookie name.
+                                  example: cookie
                                   type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
+                                  example: none
                                   type: string
                                 secure:
+                                  default: false
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
+                                  example: true
                                   type: boolean
                               type: object
                           type: object
@@ -4833,20 +5621,30 @@ spec:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
+                            default: false
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
+                            example: true
                             type: boolean
                           name:
                             description: Name defines the Cookie name.
+                            example: cookie
                             type: string
                           sameSite:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
+                            example: none
                             type: string
                           secure:
+                            default: false
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
+                            example: true
                             type: boolean
                         type: object
                     type: object
