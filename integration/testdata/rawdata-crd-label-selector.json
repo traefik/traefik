@@ -50,7 +50,8 @@
 			"stripPrefix": {
 				"prefixes": [
 					"/tobestripped"
-				]
+				],
+				"forceSlash": true
 			},
 			"status": "enabled",
 			"usedBy": [
