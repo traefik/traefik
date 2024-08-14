@@ -36,6 +36,7 @@ rules:
     resources:
       - services
       - secrets
+      - nodes
     verbs:
       - get
       - list
@@ -64,6 +65,23 @@ rules:
       - ingresses/status
     verbs:
       - update
+  - apiGroups:
+      - traefik.io
+    resources:
+      - middlewares
+      - middlewaretcps
+      - ingressroutes
+      - traefikservices
+      - ingressroutetcps
+      - ingressrouteudps
+      - tlsoptions
+      - tlsstores
+      - serverstransports
+      - serverstransporttcps
+    verbs:
+      - get
+      - list
+      - watch
 ```
 
 !!! info "You can find the reference for this file [there](../../reference/dynamic-configuration/kubernetes-crd/#rbac)."
