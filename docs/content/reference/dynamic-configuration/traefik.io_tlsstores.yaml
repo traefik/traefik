@@ -52,6 +52,7 @@ spec:
                     secretName:
                       description: SecretName is the name of the referenced Kubernetes
                         Secret to specify the certificate details.
+                      example: certsecret
                       type: string
                   required:
                   - secretName
@@ -63,6 +64,7 @@ spec:
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes
                       Secret to specify the certificate details.
+                    example: certsecret
                     type: string
                 required:
                 - secretName
@@ -76,16 +78,22 @@ spec:
                     properties:
                       main:
                         description: Main defines the main domain name.
+                        example: example.net
                         type: string
                       sans:
                         description: SANs defines the subject alternative domain names.
+                        example:
+                        - a.example.net
+                        - b.example.net
                         items:
                           type: string
+                        maxItems: 100
                         type: array
                     type: object
                   resolver:
                     description: Resolver is the name of the resolver that will be
                       used to issue the DefaultCertificate.
+                    example: fooresolver
                     type: string
                 type: object
             type: object

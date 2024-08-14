@@ -134,13 +134,20 @@ type Sticky struct {
 // Cookie holds the sticky configuration based on cookie.
 type Cookie struct {
 	// Name defines the Cookie name.
+	// +kubebuilder:example="cookie"
 	Name string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	// Secure defines whether the cookie can only be transmitted over an encrypted connection (i.e. HTTPS).
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Secure bool `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty" export:"true"`
 	// HTTPOnly defines whether the cookie can be accessed by client-side APIs, such as JavaScript.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	HTTPOnly bool `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+	// +kubebuilder:validation:Enum=none;lax;strict
+	// +kubebuilder:example=none
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
 }
 
@@ -192,6 +199,8 @@ type ResponseForwarding struct {
 	// This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
 	// for such responses, writes are flushed to the client immediately.
 	// Default: 100ms
+	// +kubebuilder:default="100ms"
+	// +kubebuilder:example="1ms"
 	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty" export:"true"`
 }
 

@@ -45,8 +45,11 @@ spec:
                   Entry points have to be configured in the static configuration.
                   More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
                   Default: all.
+                example:
+                - fooudp
                 items:
                   type: string
+                maxItems: 100
                 type: array
               routes:
                 description: Routes defines the list of routes.
@@ -62,17 +65,21 @@ spec:
                           name:
                             description: Name defines the name of the referenced Kubernetes
                               Service.
+                            example: foo
                             type: string
                           namespace:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
+                            example: default
                             type: string
                           nativeLB:
+                            default: false
                             description: |-
                               NativeLB controls, when creating the load-balancer,
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            example: true
                             type: boolean
                           port:
                             anyOf:
@@ -81,10 +88,13 @@ spec:
                             description: |-
                               Port defines the port of a Kubernetes Service.
                               This can be a reference to a named port.
+                            example: 8080
                             x-kubernetes-int-or-string: true
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            example: 10
+                            minimum: 0
                             type: integer
                         required:
                         - name

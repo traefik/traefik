@@ -664,24 +664,14 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.AddPrefix)
 		**out = **in
 	}
-	if in.StripPrefix != nil {
-		in, out := &in.StripPrefix, &out.StripPrefix
-		*out = new(dynamic.StripPrefix)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.StripPrefixRegex != nil {
-		in, out := &in.StripPrefixRegex, &out.StripPrefixRegex
-		*out = new(dynamic.StripPrefixRegex)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.ReplacePath != nil {
-		in, out := &in.ReplacePath, &out.ReplacePath
-		*out = new(dynamic.ReplacePath)
+	if in.BasicAuth != nil {
+		in, out := &in.BasicAuth, &out.BasicAuth
+		*out = new(BasicAuth)
 		**out = **in
 	}
-	if in.ReplacePathRegex != nil {
-		in, out := &in.ReplacePathRegex, &out.ReplacePathRegex
-		*out = new(dynamic.ReplacePathRegex)
+	if in.Buffering != nil {
+		in, out := &in.Buffering, &out.Buffering
+		*out = new(dynamic.Buffering)
 		**out = **in
 	}
 	if in.Chain != nil {
@@ -689,14 +679,34 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(Chain)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.IPWhiteList != nil {
-		in, out := &in.IPWhiteList, &out.IPWhiteList
-		*out = new(dynamic.IPWhiteList)
+	if in.CircuitBreaker != nil {
+		in, out := &in.CircuitBreaker, &out.CircuitBreaker
+		*out = new(CircuitBreaker)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.IPAllowList != nil {
-		in, out := &in.IPAllowList, &out.IPAllowList
-		*out = new(dynamic.IPAllowList)
+	if in.Compress != nil {
+		in, out := &in.Compress, &out.Compress
+		*out = new(dynamic.Compress)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ContentType != nil {
+		in, out := &in.ContentType, &out.ContentType
+		*out = new(dynamic.ContentType)
+		**out = **in
+	}
+	if in.DigestAuth != nil {
+		in, out := &in.DigestAuth, &out.DigestAuth
+		*out = new(DigestAuth)
+		**out = **in
+	}
+	if in.Errors != nil {
+		in, out := &in.Errors, &out.Errors
+		*out = new(ErrorPage)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ForwardAuth != nil {
+		in, out := &in.ForwardAuth, &out.ForwardAuth
+		*out = new(ForwardAuth)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Headers != nil {
@@ -704,9 +714,24 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.Headers)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Errors != nil {
-		in, out := &in.Errors, &out.Errors
-		*out = new(ErrorPage)
+	if in.InFlightReq != nil {
+		in, out := &in.InFlightReq, &out.InFlightReq
+		*out = new(dynamic.InFlightReq)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.IPAllowList != nil {
+		in, out := &in.IPAllowList, &out.IPAllowList
+		*out = new(dynamic.IPAllowList)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.IPWhiteList != nil {
+		in, out := &in.IPWhiteList, &out.IPWhiteList
+		*out = new(dynamic.IPWhiteList)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.PassTLSClientCert != nil {
+		in, out := &in.PassTLSClientCert, &out.PassTLSClientCert
+		*out = new(dynamic.PassTLSClientCert)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.RateLimit != nil {
@@ -724,55 +749,30 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.RedirectScheme)
 		**out = **in
 	}
-	if in.BasicAuth != nil {
-		in, out := &in.BasicAuth, &out.BasicAuth
-		*out = new(BasicAuth)
+	if in.ReplacePath != nil {
+		in, out := &in.ReplacePath, &out.ReplacePath
+		*out = new(dynamic.ReplacePath)
 		**out = **in
 	}
-	if in.DigestAuth != nil {
-		in, out := &in.DigestAuth, &out.DigestAuth
-		*out = new(DigestAuth)
+	if in.ReplacePathRegex != nil {
+		in, out := &in.ReplacePathRegex, &out.ReplacePathRegex
+		*out = new(dynamic.ReplacePathRegex)
 		**out = **in
-	}
-	if in.ForwardAuth != nil {
-		in, out := &in.ForwardAuth, &out.ForwardAuth
-		*out = new(ForwardAuth)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.InFlightReq != nil {
-		in, out := &in.InFlightReq, &out.InFlightReq
-		*out = new(dynamic.InFlightReq)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.Buffering != nil {
-		in, out := &in.Buffering, &out.Buffering
-		*out = new(dynamic.Buffering)
-		**out = **in
-	}
-	if in.CircuitBreaker != nil {
-		in, out := &in.CircuitBreaker, &out.CircuitBreaker
-		*out = new(CircuitBreaker)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.Compress != nil {
-		in, out := &in.Compress, &out.Compress
-		*out = new(dynamic.Compress)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.PassTLSClientCert != nil {
-		in, out := &in.PassTLSClientCert, &out.PassTLSClientCert
-		*out = new(dynamic.PassTLSClientCert)
-		(*in).DeepCopyInto(*out)
 	}
 	if in.Retry != nil {
 		in, out := &in.Retry, &out.Retry
 		*out = new(Retry)
 		**out = **in
 	}
-	if in.ContentType != nil {
-		in, out := &in.ContentType, &out.ContentType
-		*out = new(dynamic.ContentType)
-		**out = **in
+	if in.StripPrefix != nil {
+		in, out := &in.StripPrefix, &out.StripPrefix
+		*out = new(dynamic.StripPrefix)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.StripPrefixRegex != nil {
+		in, out := &in.StripPrefixRegex, &out.StripPrefixRegex
+		*out = new(dynamic.StripPrefixRegex)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Plugin != nil {
 		in, out := &in.Plugin, &out.Plugin

@@ -9,8 +9,11 @@ import (
 // Domain holds a domain name with SANs.
 type Domain struct {
 	// Main defines the main domain name.
+	// +kubebuilder:example=example.net
 	Main string `description:"Default subject name." json:"main,omitempty" toml:"main,omitempty" yaml:"main,omitempty"`
 	// SANs defines the subject alternative domain names.
+	// +kubebuilder:example="a.example.net";"b.example.net"
+	// +kubebuilder:validation:MaxItems=100
 	SANs []string `description:"Subject alternative names." json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
 }
 
