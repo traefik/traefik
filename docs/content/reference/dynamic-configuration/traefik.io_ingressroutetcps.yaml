@@ -49,8 +49,8 @@ spec:
                 - footcp
                 items:
                   type: string
+                maxItems: 100
                 type: array
-                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -156,8 +156,8 @@ spec:
                         - name
                         - port
                         type: object
+                      maxItems: 100
                       type: array
-                      uniqueItems: true
                   required:
                   - match
                   type: object
@@ -193,6 +193,7 @@ spec:
                           - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array

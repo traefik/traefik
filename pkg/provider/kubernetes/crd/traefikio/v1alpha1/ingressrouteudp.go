@@ -13,7 +13,7 @@ type IngressRouteUDPSpec struct {
 	// Entry points have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
 	// Default: all.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example={"fooudp"}
 	EntryPoints []string `json:"entryPoints,omitempty"`
 }

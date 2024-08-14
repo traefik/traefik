@@ -49,8 +49,8 @@ spec:
                 - fooudp
                 items:
                   type: string
+                maxItems: 100
                 type: array
-                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:

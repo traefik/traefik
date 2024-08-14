@@ -67,8 +67,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -85,8 +85,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
             type: object
         required:

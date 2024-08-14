@@ -65,7 +65,7 @@ type ErrorPage struct {
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
-	// +kubebuilder:validation:items:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:validation:items:Pattern=`^[-0-9,]+$`
 	// +kubebuilder:example="500";"501";"503";"505-599"
 	Status []string `json:"status,omitempty"`
@@ -177,7 +177,7 @@ type ForwardAuth struct {
 	// +kubebuilder:example=true
 	TrustForwardHeader bool `json:"trustForwardHeader,omitempty"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example={"X-Auth-User","X-Secret"}
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
@@ -186,7 +186,7 @@ type ForwardAuth struct {
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example={"Accept","X-CustomHeader"}
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.

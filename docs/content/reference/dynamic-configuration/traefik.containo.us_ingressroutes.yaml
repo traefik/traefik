@@ -247,6 +247,7 @@ spec:
                           - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array

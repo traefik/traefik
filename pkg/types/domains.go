@@ -12,8 +12,8 @@ type Domain struct {
 	// +kubebuilder:example=example.net
 	Main string `description:"Default subject name." json:"main,omitempty" toml:"main,omitempty" yaml:"main,omitempty"`
 	// SANs defines the subject alternative domain names.
-	// +kubebuilder:validation:items:UniqueItems=true
 	// +kubebuilder:example="a.example.net";"b.example.net"
+	// +kubebuilder:validation:MaxItems=100
 	SANs []string `description:"Subject alternative names." json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
 }
 

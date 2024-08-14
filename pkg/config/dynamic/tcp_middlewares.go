@@ -31,7 +31,7 @@ type TCPInFlightConn struct {
 // Deprecated: please use IPAllowList instead.
 type TCPIPWhiteList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }
@@ -43,7 +43,7 @@ type TCPIPWhiteList struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipallowlist/
 type TCPIPAllowList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }

@@ -49,8 +49,8 @@ spec:
                 - web
                 items:
                   type: string
+                maxItems: 100
                 type: array
-                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -281,6 +281,7 @@ spec:
                           - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array
@@ -394,8 +395,8 @@ spec:
                 - footcp
                 items:
                   type: string
+                maxItems: 100
                 type: array
-                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -501,8 +502,8 @@ spec:
                         - name
                         - port
                         type: object
+                      maxItems: 100
                       type: array
-                      uniqueItems: true
                   required:
                   - match
                   type: object
@@ -538,6 +539,7 @@ spec:
                           - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array
@@ -653,8 +655,8 @@ spec:
                 - fooudp
                 items:
                   type: string
+                maxItems: 100
                 type: array
-                uniqueItems: true
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -933,8 +935,8 @@ spec:
                     - text/event-stream
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   minResponseBodyBytes:
                     default: 1024
                     description: |-
@@ -1159,6 +1161,7 @@ spec:
                     - 505-599
                     items:
                       type: string
+                    maxItems: 100
                     type: array
                 type: object
               forwardAuth:
@@ -1180,8 +1183,8 @@ spec:
                     - X-CustomHeader
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   authResponseHeaders:
                     description: AuthResponseHeaders defines the list of headers to
                       copy from the authentication server response and set on forwarded
@@ -1191,8 +1194,8 @@ spec:
                     - X-Secret
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   authResponseHeadersRegex:
                     description: |-
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
@@ -1252,8 +1255,8 @@ spec:
                     - '*'
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlAllowMethods:
                     description: AccessControlAllowMethods defines the Access-Control-Request-Method
                       values sent in preflight response.
@@ -1263,8 +1266,8 @@ spec:
                     - PUT
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlAllowOriginList:
                     description: AccessControlAllowOriginList is a list of allowable
                       origins. Can also be a wildcard origin "*".
@@ -1273,8 +1276,8 @@ spec:
                     - https://example.org
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlAllowOriginListRegex:
                     description: AccessControlAllowOriginListRegex is a list of allowable
                       origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
@@ -1282,15 +1285,15 @@ spec:
                     - https://example\.org/(foo|bar)
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlExposeHeaders:
                     description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
                       values sent in preflight response.
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlMaxAge:
                     description: AccessControlMaxAge defines the time that a preflight
                       request may be cached.
@@ -1308,8 +1311,8 @@ spec:
                       allowed domain names.
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   browserXssFilter:
                     default: false
                     description: BrowserXSSFilter defines whether to add the X-XSS-Protection
@@ -1372,8 +1375,8 @@ spec:
                       hold a proxied hostname value for the request.
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   isDevelopment:
                     default: false
                     description: |-
@@ -1490,8 +1493,8 @@ spec:
                             - 13.0.0.1
                             items:
                               type: string
+                            maxItems: 100
                             type: array
-                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
@@ -1532,8 +1535,8 @@ spec:
                         - 13.0.0.1
                         items:
                           type: string
+                        maxItems: 100
                         type: array
-                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
@@ -1543,8 +1546,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -1573,8 +1576,8 @@ spec:
                         - 13.0.0.1
                         items:
                           type: string
+                        maxItems: 100
                         type: array
-                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
@@ -1584,8 +1587,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               passTLSClientCert:
                 description: |-
@@ -1799,8 +1802,8 @@ spec:
                             - 13.0.0.1
                             items:
                               type: string
+                            maxItems: 100
                             type: array
-                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
@@ -2030,8 +2033,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -2048,8 +2051,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
             type: object
         required:
@@ -2430,6 +2433,7 @@ spec:
                         - b.example.net
                         items:
                           type: string
+                        maxItems: 100
                         type: array
                     type: object
                   resolver:
@@ -3208,6 +3212,7 @@ spec:
                           - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array
@@ -3438,6 +3443,7 @@ spec:
                           - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array
@@ -3800,8 +3806,8 @@ spec:
                     - text/event-stream
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   minResponseBodyBytes:
                     default: 1024
                     description: |-
@@ -4064,8 +4070,8 @@ spec:
                     - '*'
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlAllowMethods:
                     description: AccessControlAllowMethods defines the Access-Control-Request-Method
                       values sent in preflight response.
@@ -4075,8 +4081,8 @@ spec:
                     - PUT
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlAllowOriginList:
                     description: AccessControlAllowOriginList is a list of allowable
                       origins. Can also be a wildcard origin "*".
@@ -4085,8 +4091,8 @@ spec:
                     - https://example.org
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlAllowOriginListRegex:
                     description: AccessControlAllowOriginListRegex is a list of allowable
                       origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
@@ -4094,15 +4100,15 @@ spec:
                     - https://example\.org/(foo|bar)
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlExposeHeaders:
                     description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
                       values sent in preflight response.
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   accessControlMaxAge:
                     description: AccessControlMaxAge defines the time that a preflight
                       request may be cached.
@@ -4120,8 +4126,8 @@ spec:
                       allowed domain names.
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   browserXssFilter:
                     default: false
                     description: BrowserXSSFilter defines whether to add the X-XSS-Protection
@@ -4184,8 +4190,8 @@ spec:
                       hold a proxied hostname value for the request.
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                   isDevelopment:
                     default: false
                     description: |-
@@ -4302,8 +4308,8 @@ spec:
                             - 13.0.0.1
                             items:
                               type: string
+                            maxItems: 100
                             type: array
-                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
@@ -4344,8 +4350,8 @@ spec:
                         - 13.0.0.1
                         items:
                           type: string
+                        maxItems: 100
                         type: array
-                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
@@ -4355,8 +4361,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -4385,8 +4391,8 @@ spec:
                         - 13.0.0.1
                         items:
                           type: string
+                        maxItems: 100
                         type: array
-                        uniqueItems: true
                     type: object
                   sourceRange:
                     description: SourceRange defines the set of allowed IPs (or ranges
@@ -4396,8 +4402,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               passTLSClientCert:
                 description: |-
@@ -4603,8 +4609,8 @@ spec:
                             - 13.0.0.1
                             items:
                               type: string
+                            maxItems: 100
                             type: array
-                            uniqueItems: true
                         type: object
                       requestHeaderName:
                         description: RequestHeaderName defines the name of the header
@@ -4829,8 +4835,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -4847,8 +4853,8 @@ spec:
                     - 192.168.1.7
                     items:
                       type: string
+                    maxItems: 100
                     type: array
-                    uniqueItems: true
                 type: object
             type: object
         required:
@@ -5184,6 +5190,7 @@ spec:
                         - b.example.net
                         items:
                           type: string
+                        maxItems: 100
                         type: array
                     type: object
                   resolver:

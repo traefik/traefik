@@ -166,7 +166,7 @@ func (c *CircuitBreaker) SetDefaults() {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/compress/
 type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example={"text/event-stream"}
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
@@ -258,23 +258,23 @@ type Headers struct {
 	// +kubebuilder:example=true
 	AccessControlAllowCredentials bool `json:"accessControlAllowCredentials,omitempty" toml:"accessControlAllowCredentials,omitempty" yaml:"accessControlAllowCredentials,omitempty" export:"true"`
 	// AccessControlAllowHeaders defines the Access-Control-Request-Headers values sent in preflight response.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example={"*"}
 	AccessControlAllowHeaders []string `json:"accessControlAllowHeaders,omitempty" toml:"accessControlAllowHeaders,omitempty" yaml:"accessControlAllowHeaders,omitempty" export:"true"`
 	// AccessControlAllowMethods defines the Access-Control-Request-Method values sent in preflight response.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example=GET;OPTIONS;PUT
 	AccessControlAllowMethods []string `json:"accessControlAllowMethods,omitempty" toml:"accessControlAllowMethods,omitempty" yaml:"accessControlAllowMethods,omitempty" export:"true"`
 	// AccessControlAllowOriginList is a list of allowable origins. Can also be a wildcard origin "*".
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example="https://foo.bar.org";"https://example.org"
 	AccessControlAllowOriginList []string `json:"accessControlAllowOriginList,omitempty" toml:"accessControlAllowOriginList,omitempty" yaml:"accessControlAllowOriginList,omitempty"`
 	// AccessControlAllowOriginListRegex is a list of allowable origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example={"https://example\\.org/(foo|bar)"}
 	AccessControlAllowOriginListRegex []string `json:"accessControlAllowOriginListRegex,omitempty" toml:"accessControlAllowOriginListRegex,omitempty" yaml:"accessControlAllowOriginListRegex,omitempty"`
 	// AccessControlExposeHeaders defines the Access-Control-Expose-Headers values sent in preflight response.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty" export:"true"`
 	// AccessControlMaxAge defines the time that a preflight request may be cached.
 	AccessControlMaxAge int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
@@ -283,10 +283,10 @@ type Headers struct {
 	// +kubebuilder:example=true
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
 	// AllowedHosts defines the fully qualified list of allowed domain names.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	AllowedHosts []string `json:"allowedHosts,omitempty" toml:"allowedHosts,omitempty" yaml:"allowedHosts,omitempty"`
 	// HostsProxyHeaders defines the header keys that may hold a proxied hostname value for the request.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	HostsProxyHeaders []string `json:"hostsProxyHeaders,omitempty" toml:"hostsProxyHeaders,omitempty" yaml:"hostsProxyHeaders,omitempty" export:"true"`
 	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
 	// +kubebuilder:default=false
@@ -417,7 +417,7 @@ type IPStrategy struct {
 	// +kubebuilder:example=2
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example="12.0.0.1";"13.0.0.1"
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
@@ -459,7 +459,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
@@ -472,7 +472,7 @@ type IPWhiteList struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/
 type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`

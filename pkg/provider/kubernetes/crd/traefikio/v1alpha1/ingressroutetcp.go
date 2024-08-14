@@ -15,8 +15,8 @@ type IngressRouteTCPSpec struct {
 	// Entry points have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
 	// Default: all.
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:example={"footcp"}
+	// +kubebuilder:validation:MaxItems=100
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// TLS defines the TLS configuration on a layer 4 / TCP Route.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#tls_1
@@ -35,7 +35,7 @@ type RouteTCP struct {
 	// +kubebuilder:example=10
 	Priority int `json:"priority,omitempty"`
 	// Services defines the list of TCP services.
-	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:MaxItems=100
 	Services []ServiceTCP `json:"services,omitempty"`
 	// Middlewares defines the list of references to MiddlewareTCP resources.
 	// +kubebuilder:example={{"name": "middleware1", "namespace": "default"}}
