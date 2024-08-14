@@ -139,12 +139,14 @@ spec:
                               the client.
                             properties:
                               flushInterval:
+                                default: 100ms
                                 description: |-
                                   FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                   A negative value means to flush immediately after each write to the client.
                                   This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                   for such responses, writes are flushed to the client immediately.
                                   Default: 100ms
+                                example: 1ms
                                 type: string
                             type: object
                           scheme:
@@ -167,22 +169,32 @@ spec:
                                 description: Cookie defines the sticky cookie configuration.
                                 properties:
                                   httpOnly:
+                                    default: false
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
                                       JavaScript.
+                                    example: true
                                     type: boolean
                                   name:
                                     description: Name defines the Cookie name.
+                                    example: cookie
                                     type: string
                                   sameSite:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
+                                    example: none
                                     type: string
                                   secure:
+                                    default: false
                                     description: Secure defines whether the cookie
                                       can only be transmitted over an encrypted connection
                                       (i.e. HTTPS).
+                                    example: true
                                     type: boolean
                                 type: object
                             type: object
@@ -225,12 +237,17 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array

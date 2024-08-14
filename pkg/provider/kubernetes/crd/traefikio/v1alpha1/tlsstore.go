@@ -41,6 +41,7 @@ type TLSStoreSpec struct {
 // Certificate holds a secret name for the TLSStore resource.
 type Certificate struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	// +kubebuilder:example=certsecret
 	SecretName string `json:"secretName"`
 }
 

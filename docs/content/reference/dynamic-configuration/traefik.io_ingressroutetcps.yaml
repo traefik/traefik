@@ -45,8 +45,11 @@ spec:
                   Entry points have to be configured in the static configuration.
                   More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
                   Default: all.
+                example:
+                - footcp
                 items:
                   type: string
+                maxItems: 100
                 type: array
               routes:
                 description: Routes defines the list of routes.
@@ -57,10 +60,14 @@ spec:
                       description: |-
                         Match defines the router's rule.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#rule_1
+                      example: 'HostSNI(`*`) '
                       type: string
                     middlewares:
                       description: Middlewares defines the list of references to MiddlewareTCP
                         resources.
+                      example:
+                      - name: middleware1
+                        namespace: default
                       items:
                         description: ObjectReference is a generic reference to a Traefik
                           resource.
@@ -81,6 +88,8 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority_1
+                      example: 10
+                      minimum: 0
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -91,17 +100,21 @@ spec:
                           name:
                             description: Name defines the name of the referenced Kubernetes
                               Service.
+                            example: foo
                             type: string
                           namespace:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
+                            example: default
                             type: string
                           nativeLB:
+                            default: false
                             description: |-
                               NativeLB controls, when creating the load-balancer,
                               whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
+                            example: true
                             type: boolean
                           port:
                             anyOf:
@@ -110,6 +123,7 @@ spec:
                             description: |-
                               Port defines the port of a Kubernetes Service.
                               This can be a reference to a named port.
+                            example: 8080
                             x-kubernetes-int-or-string: true
                           proxyProtocol:
                             description: |-
@@ -117,8 +131,10 @@ spec:
                               More info: https://doc.traefik.io/traefik/v2.11/routing/services/#proxy-protocol
                             properties:
                               version:
+                                default: 2
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                example: 1
                                 type: integer
                             type: object
                           terminationDelay:
@@ -128,15 +144,19 @@ spec:
                               hence fully terminating the connection.
                               It is a duration in milliseconds, defaulting to 100.
                               A negative value means an infinite deadline (i.e. the reading capability is never closed).
+                            example: 400
                             type: integer
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            example: 10
+                            minimum: 0
                             type: integer
                         required:
                         - name
                         - port
                         type: object
+                      maxItems: 100
                       type: array
                   required:
                   - match
@@ -152,6 +172,7 @@ spec:
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
                       More info: https://doc.traefik.io/traefik/v2.11/https/acme/#certificate-resolvers
+                    example: foo
                     type: string
                   domains:
                     description: |-
@@ -162,12 +183,17 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array
@@ -176,6 +202,9 @@ spec:
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
                       More info: https://doc.traefik.io/traefik/v2.11/https/tls/#tls-options
+                    example:
+                      name: opt
+                      namespace: default
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik
@@ -189,17 +218,24 @@ spec:
                     - name
                     type: object
                   passthrough:
+                    default: false
                     description: Passthrough defines whether a TLS router will terminate
                       the TLS connection.
+                    example: true
                     type: boolean
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes
                       Secret to specify the certificate details.
+                    example: supersecret
                     type: string
                   store:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
+                      Deprecated: there never is a need to actually reference it.
+                    example:
+                      name: default
+                      namespace: traefik
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik

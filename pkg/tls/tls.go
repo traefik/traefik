@@ -48,6 +48,7 @@ type Store struct {
 // GeneratedCert defines the default generated certificate configuration.
 type GeneratedCert struct {
 	// Resolver is the name of the resolver that will be used to issue the DefaultCertificate.
+	// +kubebuilder:example=fooresolver
 	Resolver string `json:"resolver,omitempty" toml:"resolver,omitempty" yaml:"resolver,omitempty" export:"true"`
 	// Domain is the domain definition for the DefaultCertificate.
 	Domain *types.Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty" export:"true"`

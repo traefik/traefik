@@ -18,6 +18,8 @@ type TCPMiddleware struct {
 type TCPInFlightConn struct {
 	// Amount defines the maximum amount of allowed simultaneous connections.
 	// The middleware closes the connection if there are already amount connections opened.
+	// +kubebuilder:example=10
+	// +kubebuilder:validation:Minimum=0
 	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 }
 
@@ -29,6 +31,8 @@ type TCPInFlightConn struct {
 // Deprecated: please use IPAllowList instead.
 type TCPIPWhiteList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }
 
@@ -39,5 +43,7 @@ type TCPIPWhiteList struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipallowlist/
 type TCPIPAllowList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }

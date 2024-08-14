@@ -15,6 +15,8 @@ type IngressRouteSpec struct {
 	// Entry points have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
 	// Default: all.
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:example={"web"}
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// TLS defines the TLS configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#tls
@@ -25,19 +27,25 @@ type IngressRouteSpec struct {
 type Route struct {
 	// Match defines the router's rule.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#rule
+	// +kubebuilder:example="Host(`foo`) && PathPrefix(`/bar`)"
 	Match string `json:"match"`
 	// Kind defines the kind of the route.
 	// Rule is the only supported kind.
 	// +kubebuilder:validation:Enum=Rule
+	// +kubebuilder:example=Rule
 	Kind string `json:"kind"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=10
 	Priority int `json:"priority,omitempty"`
 	// Services defines the list of Service.
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
+	// +kubebuilder:example={{"kind": "Service", "name": "foo","port": 80}}
 	Services []Service `json:"services,omitempty"`
 	// Middlewares defines the list of references to Middleware resources.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/providers/kubernetes-crd/#kind-middleware
+	// +kubebuilder:example={{"name": "middleware1", "namespace": "default"}}
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 }
 
@@ -45,17 +53,22 @@ type Route struct {
 // More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#tls
 type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	// +kubebuilder:example=supersecret
 	SecretName string `json:"secretName,omitempty"`
 	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
 	// If not defined, the `default` TLSOption is used.
 	// More info: https://doc.traefik.io/traefik/v2.11/https/tls/#tls-options
+	// +kubebuilder:example={"name": "opt", "namespace": "default"}
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
+	// Deprecated: there never is a need to actually reference it.
+	// +kubebuilder:example={"name": "default", "namespace": "traefik"}
 	Store *TLSStoreRef `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/https/acme/#certificate-resolvers
+	// +kubebuilder:example=foo
 	CertResolver string `json:"certResolver,omitempty"`
 	// Domains defines the list of domains that will be used to issue certificates.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#domains
@@ -88,40 +101,57 @@ type TLSStoreRef struct {
 type LoadBalancerSpec struct {
 	// Name defines the name of the referenced Kubernetes Service or TraefikService.
 	// The differentiation between the two is specified in the Kind field.
+	// +kubebuilder:example="foo"
 	Name string `json:"name"`
 	// Kind defines the kind of the Service.
 	// +kubebuilder:validation:Enum=Service;TraefikService
+	// +kubebuilder:example="Service"
 	Kind string `json:"kind,omitempty"`
 	// Namespace defines the namespace of the referenced Kubernetes Service or TraefikService.
+	// +kubebuilder:example="default"
 	Namespace string `json:"namespace,omitempty"`
 	// Sticky defines the sticky sessions configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#sticky-sessions
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:example=80
+	// +kubebuilder:validation:XIntOrString
 	Port intstr.IntOrString `json:"port,omitempty"`
 	// Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
+	// +kubebuilder:validation:Pattern=(http|https|h2c)
+	// +kubebuilder:example=https
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
 	// RoundRobin is the only supported value at the moment.
+	// +kubebuilder:validation:Enum=RoundRobin
+	// +kubebuilder:example=RoundRobin
 	Strategy string `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
 	// By default, passHostHeader is true.
+	// +kubebuilder:default=true
+	// +kubebuilder:example=false
 	PassHostHeader *bool `json:"passHostHeader,omitempty"`
 	// ResponseForwarding defines how Traefik forwards the response from the upstream Kubernetes Service to the client.
 	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
 	// ServersTransport defines the name of ServersTransport resource to use.
 	// It allows to configure the transport between Traefik and your servers.
 	// Can only be used on a Kubernetes Service.
+	// +kubebuilder:example="transport"
 	ServersTransport string `json:"serversTransport,omitempty"`
 	// Weight defines the weight and should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).
+	// +kubebuilder:validation:XValidation:message="weight can only be used on TraefikService",rule="self.kind == 'TraefikService'"
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=10
 	Weight *int `json:"weight,omitempty"`
 	// NativeLB controls, when creating the load-balancer,
 	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
 	// The Kubernetes Service itself does load-balance to the pods.
 	// By default, NativeLB is false.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	NativeLB bool `json:"nativeLB,omitempty"`
 }
 

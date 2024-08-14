@@ -46,12 +46,16 @@ spec:
               certificatesSecrets:
                 description: CertificatesSecrets defines a list of secret storing
                   client certificates for mTLS.
+                example:
+                - certsecret
                 items:
                   type: string
                 type: array
               disableHTTP2:
+                default: false
                 description: DisableHTTP2 disables HTTP/2 for connections with backend
                   servers.
+                example: true
                 type: boolean
               forwardingTimeouts:
                 description: ForwardingTimeouts defines the timeouts for requests
@@ -63,6 +67,8 @@ spec:
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
                       connection to a backend server can be established.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -71,6 +77,8 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -78,6 +86,8 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -86,6 +96,8 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -94,28 +106,39 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    example: 42s
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
+                default: false
                 description: InsecureSkipVerify disables SSL certificate verification.
+                example: true
                 type: boolean
               maxIdleConnsPerHost:
+                default: 0
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
                   to keep per-host.
+                example: 1
+                minimum: 0
                 type: integer
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
+                example: foobar
                 type: string
               rootCAsSecrets:
                 description: RootCAsSecrets defines a list of CA secret used to validate
                   self-signed certificate.
+                example:
+                - casecret
                 items:
                   type: string
                 type: array
               serverName:
                 description: ServerName defines the server name used to contact the
                   server.
+                example: foobar
                 type: string
             type: object
         required:
