@@ -49,6 +49,8 @@ type ContentType struct {
 	// As a proxy, the default behavior should be to leave the header alone, regardless of what the backend did with it.
 	// However, the historic default was to always auto-detect and set the header if it was nil,
 	// and it is going to be kept that way in order to support users currently relying on it.
+	// +kubebuilder:default=true
+	// +kubebuilder:example=false
 	AutoDetect bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty" export:"true"`
 }
 
@@ -60,6 +62,9 @@ type ContentType struct {
 type AddPrefix struct {
 	// Prefix is the string to add before the current path in the requested URL.
 	// It should include a leading slash (/).
+	// +kubebuilder:example=/foo
+	// +kubebuilder:validation:MaxLength=255
+	// +kubebuilder:validation:XValidation:message="must start with a '/'",rule="self.startsWith('/')"
 	Prefix string `json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 }
 
@@ -95,20 +100,30 @@ type Buffering struct {
 	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
 	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
 	// Default: 0 (no maximum).
+	// +kubebuilder:default=0
+	// +kubebuilder:example=2000000
 	MaxRequestBodyBytes int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
 	// MemRequestBodyBytes defines the threshold (in bytes) from which the request will be buffered on disk instead of in memory.
 	// Default: 1048576 (1Mi).
+	// +kubebuilder:default=1048576
+	// +kubebuilder:example=2000000
 	MemRequestBodyBytes int64 `json:"memRequestBodyBytes,omitempty" toml:"memRequestBodyBytes,omitempty" yaml:"memRequestBodyBytes,omitempty" export:"true"`
 	// MaxResponseBodyBytes defines the maximum allowed response size from the service (in bytes).
 	// If the response exceeds the allowed size, it is not forwarded to the client. The client gets a 500 (Internal Server Error) response instead.
 	// Default: 0 (no maximum).
+	// +kubebuilder:default=0
+	// +kubebuilder:example=2000000
 	MaxResponseBodyBytes int64 `json:"maxResponseBodyBytes,omitempty" toml:"maxResponseBodyBytes,omitempty" yaml:"maxResponseBodyBytes,omitempty" export:"true"`
 	// MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
 	// Default: 1048576 (1Mi).
+	// +kubebuilder:default=1048576
+	// +kubebuilder:example=2000000
 	MemResponseBodyBytes int64 `json:"memResponseBodyBytes,omitempty" toml:"memResponseBodyBytes,omitempty" yaml:"memResponseBodyBytes,omitempty" export:"true"`
 	// RetryExpression defines the retry conditions.
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
 	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/buffering/#retryexpression
+	// +kubebuilder:default=""
+	// +kubebuilder:example="IsNetworkError() && Attempts() < 2"
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
 }
 
@@ -151,9 +166,14 @@ func (c *CircuitBreaker) SetDefaults() {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/compress/
 type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example={"text/event-stream"}
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
+	// +kubebuilder:default=1024
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=1200
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
 }
 
@@ -169,12 +189,14 @@ type DigestAuth struct {
 	// UsersFile is the path to an external file that contains the authorized users for the middleware.
 	UsersFile string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
 	// RemoveHeader defines whether to remove the authorization header before forwarding the request to the backend.
+	// +kubebuilder:default=false
 	RemoveHeader bool `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
 	// Default: traefik.
+	// +kubebuilder:default=traefik
 	Realm string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/digestauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
 }
 
@@ -225,58 +247,97 @@ type ForwardAuth struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/headers/#customrequestheaders
 type Headers struct {
 	// CustomRequestHeaders defines the header names and values to apply to the request.
+	// +kubebuilder:example={"X-Script-Name": "test"}
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
 	// CustomResponseHeaders defines the header names and values to apply to the response.
+	// +kubebuilder:example={"X-Custom-Response-Header": "value"}
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
 
 	// AccessControlAllowCredentials defines whether the request can include user credentials.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	AccessControlAllowCredentials bool `json:"accessControlAllowCredentials,omitempty" toml:"accessControlAllowCredentials,omitempty" yaml:"accessControlAllowCredentials,omitempty" export:"true"`
 	// AccessControlAllowHeaders defines the Access-Control-Request-Headers values sent in preflight response.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example={"*"}
 	AccessControlAllowHeaders []string `json:"accessControlAllowHeaders,omitempty" toml:"accessControlAllowHeaders,omitempty" yaml:"accessControlAllowHeaders,omitempty" export:"true"`
 	// AccessControlAllowMethods defines the Access-Control-Request-Method values sent in preflight response.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example=GET;OPTIONS;PUT
 	AccessControlAllowMethods []string `json:"accessControlAllowMethods,omitempty" toml:"accessControlAllowMethods,omitempty" yaml:"accessControlAllowMethods,omitempty" export:"true"`
 	// AccessControlAllowOriginList is a list of allowable origins. Can also be a wildcard origin "*".
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example="https://foo.bar.org";"https://example.org"
 	AccessControlAllowOriginList []string `json:"accessControlAllowOriginList,omitempty" toml:"accessControlAllowOriginList,omitempty" yaml:"accessControlAllowOriginList,omitempty"`
 	// AccessControlAllowOriginListRegex is a list of allowable origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example={"https://example\\.org/(foo|bar)"}
 	AccessControlAllowOriginListRegex []string `json:"accessControlAllowOriginListRegex,omitempty" toml:"accessControlAllowOriginListRegex,omitempty" yaml:"accessControlAllowOriginListRegex,omitempty"`
 	// AccessControlExposeHeaders defines the Access-Control-Expose-Headers values sent in preflight response.
+	// +kubebuilder:validation:UniqueItems=true
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty" export:"true"`
 	// AccessControlMaxAge defines the time that a preflight request may be cached.
 	AccessControlMaxAge int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
 	// AddVaryHeader defines whether the Vary header is automatically added/updated when the AccessControlAllowOriginList is set.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
 	// AllowedHosts defines the fully qualified list of allowed domain names.
+	// +kubebuilder:validation:UniqueItems=true
 	AllowedHosts []string `json:"allowedHosts,omitempty" toml:"allowedHosts,omitempty" yaml:"allowedHosts,omitempty"`
 	// HostsProxyHeaders defines the header keys that may hold a proxied hostname value for the request.
+	// +kubebuilder:validation:UniqueItems=true
 	HostsProxyHeaders []string `json:"hostsProxyHeaders,omitempty" toml:"hostsProxyHeaders,omitempty" yaml:"hostsProxyHeaders,omitempty" export:"true"`
 	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	SSLRedirect bool `json:"sslRedirect,omitempty" toml:"sslRedirect,omitempty" yaml:"sslRedirect,omitempty" export:"true"`
 	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	SSLTemporaryRedirect bool `json:"sslTemporaryRedirect,omitempty" toml:"sslTemporaryRedirect,omitempty" yaml:"sslTemporaryRedirect,omitempty" export:"true"`
 	// Deprecated: use RedirectRegex instead.
 	SSLHost string `json:"sslHost,omitempty" toml:"sslHost,omitempty" yaml:"sslHost,omitempty"`
 	// SSLProxyHeaders defines the header keys with associated values that would indicate a valid HTTPS request.
 	// It can be useful when using other proxies (example: "X-Forwarded-Proto": "https").
+	// +kubebuilder:example={"X-Forwarded-Proto": "https"}
 	SSLProxyHeaders map[string]string `json:"sslProxyHeaders,omitempty" toml:"sslProxyHeaders,omitempty" yaml:"sslProxyHeaders,omitempty"`
 	// Deprecated: use RedirectRegex instead.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	SSLForceHost bool `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:default=0
+	// +kubebuilder:example=42
 	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
 	// STSPreload defines whether the preload flag is appended to the Strict-Transport-Security header.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	STSPreload bool `json:"stsPreload,omitempty" toml:"stsPreload,omitempty" yaml:"stsPreload,omitempty" export:"true"`
 	// ForceSTSHeader defines whether to add the STS header even when the connection is HTTP.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	ForceSTSHeader bool `json:"forceSTSHeader,omitempty" toml:"forceSTSHeader,omitempty" yaml:"forceSTSHeader,omitempty" export:"true"`
 	// FrameDeny defines whether to add the X-Frame-Options header with the DENY value.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	FrameDeny bool `json:"frameDeny,omitempty" toml:"frameDeny,omitempty" yaml:"frameDeny,omitempty" export:"true"`
 	// CustomFrameOptionsValue defines the X-Frame-Options header value.
 	// This overrides the FrameDeny option.
 	CustomFrameOptionsValue string `json:"customFrameOptionsValue,omitempty" toml:"customFrameOptionsValue,omitempty" yaml:"customFrameOptionsValue,omitempty"`
 	// ContentTypeNosniff defines whether to add the X-Content-Type-Options header with the nosniff value.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	ContentTypeNosniff bool `json:"contentTypeNosniff,omitempty" toml:"contentTypeNosniff,omitempty" yaml:"contentTypeNosniff,omitempty" export:"true"`
 	// BrowserXSSFilter defines whether to add the X-XSS-Protection header with the value 1; mode=block.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	BrowserXSSFilter bool `json:"browserXssFilter,omitempty" toml:"browserXssFilter,omitempty" yaml:"browserXssFilter,omitempty" export:"true"`
 	// CustomBrowserXSSValue defines the X-XSS-Protection header value.
 	// This overrides the BrowserXssFilter option.
@@ -297,6 +358,8 @@ type Headers struct {
 	// Usually testing takes place using HTTP, not HTTPS, and on localhost, not your production domain.
 	// If you would like your development environment to mimic production with complete Host blocking, SSL redirects,
 	// and STS headers, leave this as false.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	IsDevelopment bool `json:"isDevelopment,omitempty" toml:"isDevelopment,omitempty" yaml:"isDevelopment,omitempty" export:"true"`
 }
 
@@ -350,8 +413,12 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
 	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=2
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example="12.0.0.1";"13.0.0.1"
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
@@ -392,6 +459,8 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
@@ -403,6 +472,8 @@ type IPWhiteList struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/
 type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example="127.0.0.1/32";"192.168.1.7"
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
@@ -415,6 +486,8 @@ type IPAllowList struct {
 type InFlightReq struct {
 	// Amount defines the maximum amount of allowed simultaneous in-flight request.
 	// The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=10
 	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
@@ -430,6 +503,8 @@ type InFlightReq struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/passtlsclientcert/
 type PassTLSClientCert struct {
 	// PEM sets the X-Forwarded-Tls-Client-Cert header with the certificate.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
@@ -443,8 +518,11 @@ type PassTLSClientCert struct {
 type SourceCriterion struct {
 	IPStrategy *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" export:"true"`
 	// RequestHeaderName defines the name of the header used to group incoming requests.
+	// +kubebuilder:example=username
 	RequestHeaderName string `json:"requestHeaderName,omitempty" toml:"requestHeaderName,omitempty" yaml:"requestHeaderName,omitempty" export:"true"`
 	// RequestHost defines whether to consider the request Host as the source.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	RequestHost bool `json:"requestHost,omitempty" toml:"requestHost,omitempty" yaml:"requestHost,omitempty" export:"true"`
 }
 
@@ -486,10 +564,14 @@ func (r *RateLimit) SetDefaults() {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectregex/#regex
 type RedirectRegex struct {
 	// Regex defines the regex used to match and capture elements from the request URL.
+	// +kubebuilder:example=`^http://local\\.host/(.*)`
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty"`
 	// Replacement defines how to modify the URL to have the new target URL.
+	// +kubebuilder:example=`http://mydomain/${1}`
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty"`
 	// Permanent defines whether the redirection is permanent (301).
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 }
 
@@ -500,10 +582,15 @@ type RedirectRegex struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectscheme/
 type RedirectScheme struct {
 	// Scheme defines the scheme of the new URL.
+	// +kubebuilder:example=https
+	// +kubebuilder:validation:Pattern=(http|https|h2c)
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
+	// +kubebuilder:example="443"
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
 	// Permanent defines whether the redirection is permanent (301).
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 }
 
@@ -514,6 +601,7 @@ type RedirectScheme struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/replacepath/
 type ReplacePath struct {
 	// Path defines the path to use as replacement in the request URL.
+	// +kubebuilder:example="/foo"
 	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 }
 
@@ -524,8 +612,10 @@ type ReplacePath struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/replacepathregex/
 type ReplacePathRegex struct {
 	// Regex defines the regular expression used to match and capture the path from the request URL.
+	// +kubebuilder:example=`^/foo/(.*)`
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
 	// Replacement defines the replacement path format, which can include captured variables.
+	// +kubebuilder:example=`/bar/$1`
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty" export:"true"`
 }
 
@@ -543,6 +633,7 @@ type Retry struct {
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
+
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
 }
 
@@ -553,9 +644,12 @@ type Retry struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/stripprefix/
 type StripPrefix struct {
 	// Prefixes defines the prefixes to strip from the request URL.
+	// +kubebuilder:example="/foobar";"/fiibar"
 	Prefixes []string `json:"prefixes,omitempty" toml:"prefixes,omitempty" yaml:"prefixes,omitempty" export:"true"`
 	// ForceSlash ensures that the resulting stripped path is not the empty string, by replacing it with / when necessary.
 	// Default: true.
+	// +kubebuilder:example=false
+	// +kubebuilder:default=true
 	ForceSlash bool `json:"forceSlash,omitempty" toml:"forceSlash,omitempty" yaml:"forceSlash,omitempty" export:"true"` // Deprecated
 }
 
@@ -571,6 +665,7 @@ func (s *StripPrefix) SetDefaults() {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/stripprefixregex/
 type StripPrefixRegex struct {
 	// Regex defines the regular expression to match the path prefix from the request URL.
+	// +kubebuilder:example=`{"/foo/[a-z0-9]+/[0-9]+/"}`
 	Regex []string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
 }
 
@@ -579,12 +674,20 @@ type StripPrefixRegex struct {
 // TLSClientCertificateInfo holds the client TLS certificate info configuration.
 type TLSClientCertificateInfo struct {
 	// NotAfter defines whether to add the Not After information from the Validity part.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	NotAfter bool `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty" export:"true"`
 	// NotBefore defines whether to add the Not Before information from the Validity part.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	NotBefore bool `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty" export:"true"`
 	// Sans defines whether to add the Subject Alternative Name information from the Subject Alternative Name part.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Sans bool `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty" export:"true"`
 	// SerialNumber defines whether to add the client serialNumber information.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	SerialNumber bool `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
 	// Subject defines the client certificate subject details to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Subject *TLSClientCertificateSubjectDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty" export:"true"`
@@ -598,18 +701,32 @@ type TLSClientCertificateInfo struct {
 // cf https://tools.ietf.org/html/rfc3739
 type TLSClientCertificateIssuerDNInfo struct {
 	// Country defines whether to add the country information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Country bool `json:"country,omitempty" toml:"country,omitempty" yaml:"country,omitempty" export:"true"`
 	// Province defines whether to add the province information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Province bool `json:"province,omitempty" toml:"province,omitempty" yaml:"province,omitempty" export:"true"`
 	// Locality defines whether to add the locality information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Locality bool `json:"locality,omitempty" toml:"locality,omitempty" yaml:"locality,omitempty" export:"true"`
 	// Organization defines whether to add the organization information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Organization bool `json:"organization,omitempty" toml:"organization,omitempty" yaml:"organization,omitempty" export:"true"`
 	// CommonName defines whether to add the organizationalUnit information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	CommonName bool `json:"commonName,omitempty" toml:"commonName,omitempty" yaml:"commonName,omitempty" export:"true"`
 	// SerialNumber defines whether to add the serialNumber information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	SerialNumber bool `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
 	// DomainComponent defines whether to add the domainComponent information into the issuer.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	DomainComponent bool `json:"domainComponent,omitempty" toml:"domainComponent,omitempty" yaml:"domainComponent,omitempty" export:"true"`
 }
 
@@ -619,20 +736,36 @@ type TLSClientCertificateIssuerDNInfo struct {
 // cf https://tools.ietf.org/html/rfc3739
 type TLSClientCertificateSubjectDNInfo struct {
 	// Country defines whether to add the country information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Country bool `json:"country,omitempty" toml:"country,omitempty" yaml:"country,omitempty" export:"true"`
 	// Province defines whether to add the province information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Province bool `json:"province,omitempty" toml:"province,omitempty" yaml:"province,omitempty" export:"true"`
 	// Locality defines whether to add the locality information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Locality bool `json:"locality,omitempty" toml:"locality,omitempty" yaml:"locality,omitempty" export:"true"`
 	// Organization defines whether to add the organization information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	Organization bool `json:"organization,omitempty" toml:"organization,omitempty" yaml:"organization,omitempty" export:"true"`
 	// OrganizationalUnit defines whether to add the organizationalUnit information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	OrganizationalUnit bool `json:"organizationalUnit,omitempty" toml:"organizationalUnit,omitempty" yaml:"organizationalUnit,omitempty" export:"true"`
 	// CommonName defines whether to add the organizationalUnit information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	CommonName bool `json:"commonName,omitempty" toml:"commonName,omitempty" yaml:"commonName,omitempty" export:"true"`
 	// SerialNumber defines whether to add the serialNumber information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	SerialNumber bool `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
 	// DomainComponent defines whether to add the domainComponent information into the subject.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	DomainComponent bool `json:"domainComponent,omitempty" toml:"domainComponent,omitempty" yaml:"domainComponent,omitempty" export:"true"`
 }
 
