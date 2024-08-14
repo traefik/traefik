@@ -13,6 +13,8 @@ type IngressRouteUDPSpec struct {
 	// Entry points have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/entrypoints/
 	// Default: all.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example={"fooudp"}
 	EntryPoints []string `json:"entryPoints,omitempty"`
 }
 
@@ -25,18 +27,26 @@ type RouteUDP struct {
 // ServiceUDP defines an upstream UDP service to proxy traffic to.
 type ServiceUDP struct {
 	// Name defines the name of the referenced Kubernetes Service.
+	// +kubebuilder:example=foo
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced Kubernetes Service.
+	// +kubebuilder:example=default
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:validation:XIntOrString
+	// +kubebuilder:example=8080
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=10
 	Weight *int `json:"weight,omitempty"`
 	// NativeLB controls, when creating the load-balancer,
 	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
 	// The Kubernetes Service itself does load-balance to the pods.
 	// By default, NativeLB is false.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	NativeLB bool `json:"nativeLB,omitempty"`
 }
 

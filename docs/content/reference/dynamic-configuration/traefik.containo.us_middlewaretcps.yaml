@@ -48,7 +48,9 @@ spec:
                     description: |-
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
+                    example: 10
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:
@@ -60,9 +62,13 @@ spec:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
                       allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
               ipWhiteList:
                 description: |-
@@ -74,9 +80,13 @@ spec:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
                       allowed IPs by using CIDR notation).
+                    example:
+                    - 127.0.0.1/32
+                    - 192.168.1.7
                     items:
                       type: string
                     type: array
+                    uniqueItems: true
                 type: object
             type: object
         required:

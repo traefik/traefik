@@ -117,6 +117,8 @@ type TCPServer struct {
 // More info: https://doc.traefik.io/traefik/v2.11/routing/services/#proxy-protocol
 type ProxyProtocol struct {
 	// Version defines the PROXY Protocol version to use.
+	// +kubebuilder:example=1
+	// +kubebuilder:default=2
 	Version int `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
 }
 

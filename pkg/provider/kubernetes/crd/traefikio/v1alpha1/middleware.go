@@ -27,28 +27,28 @@ type Middleware struct {
 // MiddlewareSpec defines the desired state of a Middleware.
 type MiddlewareSpec struct {
 	AddPrefix         *dynamic.AddPrefix         `json:"addPrefix,omitempty"`
-	StripPrefix       *dynamic.StripPrefix       `json:"stripPrefix,omitempty"`
-	StripPrefixRegex  *dynamic.StripPrefixRegex  `json:"stripPrefixRegex,omitempty"`
-	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
-	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
+	BasicAuth         *BasicAuth                 `json:"basicAuth,omitempty"`
+	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
 	Chain             *Chain                     `json:"chain,omitempty"`
-	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
-	IPAllowList       *dynamic.IPAllowList       `json:"ipAllowList,omitempty"`
-	Headers           *dynamic.Headers           `json:"headers,omitempty"`
+	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
+	Compress          *dynamic.Compress          `json:"compress,omitempty"`
+	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
+	DigestAuth        *DigestAuth                `json:"digestAuth,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
+	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
+	Headers           *dynamic.Headers           `json:"headers,omitempty"`
+	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
+	IPAllowList       *dynamic.IPAllowList       `json:"ipAllowList,omitempty"`
+	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
+	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`
 	RedirectRegex     *dynamic.RedirectRegex     `json:"redirectRegex,omitempty"`
 	RedirectScheme    *dynamic.RedirectScheme    `json:"redirectScheme,omitempty"`
-	BasicAuth         *BasicAuth                 `json:"basicAuth,omitempty"`
-	DigestAuth        *DigestAuth                `json:"digestAuth,omitempty"`
-	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
-	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
-	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
-	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
-	Compress          *dynamic.Compress          `json:"compress,omitempty"`
-	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
+	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
+	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
 	Retry             *Retry                     `json:"retry,omitempty"`
-	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
+	StripPrefix       *dynamic.StripPrefix       `json:"stripPrefix,omitempty"`
+	StripPrefixRegex  *dynamic.StripPrefixRegex  `json:"stripPrefixRegex,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/plugins/
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
@@ -65,12 +65,18 @@ type ErrorPage struct {
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
+	// +kubebuilder:validation:items:UniqueItems=true
+	// +kubebuilder:validation:items:Pattern=`^[-0-9,]+$`
+	// +kubebuilder:example="500";"501";"503";"505-599"
 	Status []string `json:"status,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
 	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/errorpages/#service
+	// +kubebuilder:example={name: "whoami", port: 80}
 	Service Service `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
+	// +kubebuilder:validation:XValidation:message="must be a valid URLs",rule="isURL(self.Query)"
+	// +kubebuilder:example="/{status}.html"
 	Query string `json:"query,omitempty"`
 }
 
@@ -79,12 +85,22 @@ type ErrorPage struct {
 // CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreaker struct {
 	// Expression is the condition that triggers the tripped state.
+	// +kubebuilder:example="LatencyAtQuantileMS(50.0) > 100"
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
 	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
+	// +kubebuilder:default="100ms"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
 	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
 	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
+	// +kubebuilder:default="10s"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+	// +kubebuilder:default="10s"
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 }
 
@@ -105,15 +121,21 @@ type Chain struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/
 type BasicAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
+	// +kubebuilder:example=secretName
 	Secret string `json:"secret,omitempty"`
 	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
 	// Default: traefik.
+	// +kubebuilder:default=traefik
+	// +kubebuilder:example=MyRealm
 	Realm string `json:"realm,omitempty"`
 	// RemoveHeader sets the removeHeader option to true to remove the authorization header before forwarding the request to your service.
 	// Default: false.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	RemoveHeader bool `json:"removeHeader,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+	// +kubebuilder:example=X-WebAuth-User
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -124,14 +146,20 @@ type BasicAuth struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/digestauth/
 type DigestAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
+	// +kubebuilder:example=userssecret
 	Secret string `json:"secret,omitempty"`
 	// RemoveHeader defines whether to remove the authorization header before forwarding the request to the backend.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	RemoveHeader bool `json:"removeHeader,omitempty"`
 	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
 	// Default: traefik.
+	// +kubebuilder:default=traefik
+	// +kubebuilder:example=MyRealm
 	Realm string `json:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/digestauth/#headerfield
+	// +kubebuilder:example=X-WebAuth-User
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -142,16 +170,24 @@ type DigestAuth struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
+	// +kubebuilder:example="https://example.com/auth"
 	Address string `json:"address,omitempty"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	TrustForwardHeader bool `json:"trustForwardHeader,omitempty"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example={"X-Auth-User","X-Secret"}
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
 	// More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/#authresponseheadersregex
+	// +kubebuilder:example=`^X-`
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:example={"Accept","X-CustomHeader"}
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty"`
@@ -161,13 +197,19 @@ type ForwardAuth struct {
 type ClientTLS struct {
 	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
 	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	// +kubebuilder:example=mycasecret
 	CASecret string `json:"caSecret,omitempty"`
 	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
 	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+	// +kubebuilder:example=mytlscert
 	CertSecret string `json:"certSecret,omitempty"`
 	// InsecureSkipVerify defines whether the server certificates should be validated.
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	CAOptional         bool `json:"caOptional,omitempty"`
+	// +kubebuilder:default=false
+	// +kubebuilder:example=true
+	CAOptional bool `json:"caOptional,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -180,12 +222,21 @@ type RateLimit struct {
 	// It defaults to 0, which means no rate limiting.
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
 	// one needs to define a Period larger than a second.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=100
 	Average int64 `json:"average,omitempty"`
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
+	// +kubebuilder:default="1s"
+	// +kubebuilder:validation:XIntOrString
+	// +kubebuilder:validation:Format=int
+	// +kubebuilder:example="1m"
 	Period *intstr.IntOrString `json:"period,omitempty"`
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
+	// +kubebuilder:default=1
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:example=200
 	Burst *int64 `json:"burst,omitempty"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
@@ -201,12 +252,18 @@ type RateLimit struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
+	// +kubebuilder:default=0
+	// +kubebuilder:example=3
 	Attempts int `json:"attempts,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:default=0
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
+	// +kubebuilder:example="100ms"
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
 }
 
