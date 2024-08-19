@@ -101,9 +101,17 @@ helm install traefik traefik/traefik
 
 ### Exposing the Traefik dashboard
 
-This Helm chart does not expose the Traefik dashboard by default, for security concerns.
-Thus, there are multiple ways to expose the dashboard.
-For instance, the dashboard access could be achieved through a port-forward:
+This Helm chart does not enable or expose the Traefik dashboard by default, for security concerns.
+
+Enabling the dashboard can be done through a custom values file:
+
+```yaml
+ingressRoute:
+  dashboard:
+    enabled: true
+```
+
+Once enabled, there are multiple ways to expose the dashboard web interface through its default association to the `traefik` [entrypoint](../routing/entrypoints.md). For instance, the dashboard access could be achieved through a port-forward:
 
 ```shell
 kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 9000:9000
