@@ -48,14 +48,7 @@ const (
 var (
 	clientConnectionStates   = map[string]*connState{}
 	clientConnectionStatesMu = sync.RWMutex{}
-
-	socketActivationListeners map[string]net.Listener
 )
-
-func init() {
-	// Populates pre-defined socketActivationListeners by socket activation.
-	populateSocketActivationListeners()
-}
 
 type connState struct {
 	State            string
