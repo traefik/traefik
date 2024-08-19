@@ -9,16 +9,39 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var (
+	socketActivationListeners   map[string]net.Listener
+	socketActivationPacketConns map[string]net.PacketConn
+)
+
+func init() {
+	// Populates pre-defined TCP and UDP listeners provided by systemd socket activation.
+	populateSocketActivationListeners()
+}
+
 func populateSocketActivationListeners() {
-	listenersWithName, _ := activation.ListenersWithNames()
-
+	// We use Files api due to activation not providing method for get PacketConn with names
+	files := activation.Files(true)
 	socketActivationListeners = make(map[string]net.Listener)
-	for name, lns := range listenersWithName {
-		if len(lns) != 1 {
-			log.Error().Str("listenersName", name).Msg("Socket activation listeners must have one and only one listener per name")
-			continue
-		}
+	socketActivationPacketConns = make(map[string]net.PacketConn)
 
-		socketActivationListeners[name] = lns[0]
+	for _, f := range files {
+		if listener, err := net.FileListener(f); err == nil {
+			_, ok := socketActivationListeners[f.Name()]
+			if !ok {
+				socketActivationListeners[f.Name()] = listener
+			} else {
+				log.Error().Str("listenersName", f.Name()).Msg("Socket activation TCP listeners must have one and only one listener per name")
+			}
+			f.Close()
+		} else if pc, err := net.FilePacketConn(f); err == nil {
+			_, ok := socketActivationPacketConns[f.Name()]
+			if !ok {
+				socketActivationPacketConns[f.Name()] = pc
+			} else {
+				log.Error().Str("listenersName", f.Name()).Msg("Socket activation UDP listeners must have one and only one listener per name")
+			}
+			f.Close()
+		}
 	}
 }
