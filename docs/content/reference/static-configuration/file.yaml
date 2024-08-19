@@ -528,6 +528,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+      required: true
     Descriptor1:
       moduleName: foobar
       version: foobar
@@ -538,6 +539,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+      required: true
   localPlugins:
     LocalDescriptor0:
       moduleName: foobar
