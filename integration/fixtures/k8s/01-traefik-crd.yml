@@ -14,7 +14,17 @@ spec:
     singular: ingressroute
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.entryPoints
+      name: EntryPoints
+      type: string
+    - jsonPath: .spec.routes[*].match
+      name: Rule
+      type: string
+    - jsonPath: .spec.routes[*].middlewares[*].name
+      name: Middlewares
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
@@ -238,9 +248,6 @@ spec:
                             example: 10
                             minimum: 0
                             type: integer
-                            x-kubernetes-validations:
-                            - message: weight can only be used on TraefikService
-                              rule: self.kind == 'TraefikService'
                         required:
                         - name
                         type: object
@@ -344,6 +351,7 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -360,7 +368,11 @@ spec:
     singular: ingressroutetcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.entryPoints
+      name: EntryPoints
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
@@ -604,6 +616,7 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -620,7 +633,11 @@ spec:
     singular: ingressrouteudp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.entryPoints
+      name: EntryPoints
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
@@ -718,6 +735,7 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -1141,9 +1159,6 @@ spec:
                         example: 10
                         minimum: 0
                         type: integer
-                        x-kubernetes-validations:
-                        - message: weight can only be used on TraefikService
-                          rule: self.kind == 'TraefikService'
                     required:
                     - name
                     type: object
@@ -2077,7 +2092,11 @@ spec:
     singular: serverstransport
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.serverName
+      name: ServerName
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: |-
@@ -2210,6 +2229,7 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -2226,7 +2246,14 @@ spec:
     singular: tlsoption
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.minVersion
+      name: MinVersion
+      type: string
+    - jsonPath: .spec.maxVersion
+      name: MaxVersion
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: |-
@@ -2344,6 +2371,7 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -2648,9 +2676,6 @@ spec:
                           example: 10
                           minimum: 0
                           type: integer
-                          x-kubernetes-validations:
-                          - message: weight can only be used on TraefikService
-                            rule: self.kind == 'TraefikService'
                       required:
                       - name
                       type: object
@@ -2771,9 +2796,6 @@ spec:
                     example: 10
                     minimum: 0
                     type: integer
-                    x-kubernetes-validations:
-                    - message: weight can only be used on TraefikService
-                      rule: self.kind == 'TraefikService'
                 required:
                 - name
                 type: object
@@ -2912,9 +2934,6 @@ spec:
                           example: 10
                           minimum: 0
                           type: integer
-                          x-kubernetes-validations:
-                          - message: weight can only be used on TraefikService
-                            rule: self.kind == 'TraefikService'
                       required:
                       - name
                       type: object

@@ -14,7 +14,17 @@ spec:
     singular: ingressroute
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.entryPoints
+      name: EntryPoints
+      type: string
+    - jsonPath: .spec.routes[*].match
+      name: Rule
+      type: string
+    - jsonPath: .spec.routes[*].middlewares[*].name
+      name: Middlewares
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
@@ -238,9 +248,6 @@ spec:
                             example: 10
                             minimum: 0
                             type: integer
-                            x-kubernetes-validations:
-                            - message: weight can only be used on TraefikService
-                              rule: self.kind == 'TraefikService'
                         required:
                         - name
                         type: object
@@ -344,3 +351,4 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}

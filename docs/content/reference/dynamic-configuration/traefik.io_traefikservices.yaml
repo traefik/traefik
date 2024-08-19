@@ -197,9 +197,6 @@ spec:
                           example: 10
                           minimum: 0
                           type: integer
-                          x-kubernetes-validations:
-                          - message: weight can only be used on TraefikService
-                            rule: self.kind == 'TraefikService'
                       required:
                       - name
                       type: object
@@ -320,9 +317,6 @@ spec:
                     example: 10
                     minimum: 0
                     type: integer
-                    x-kubernetes-validations:
-                    - message: weight can only be used on TraefikService
-                      rule: self.kind == 'TraefikService'
                 required:
                 - name
                 type: object
@@ -461,9 +455,6 @@ spec:
                           example: 10
                           minimum: 0
                           type: integer
-                          x-kubernetes-validations:
-                          - message: weight can only be used on TraefikService
-                            rule: self.kind == 'TraefikService'
                       required:
                       - name
                       type: object

@@ -53,6 +53,7 @@ type ServiceUDP struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="EntryPoints",type=string,JSONPath=`.spec.entryPoints`
 
 // IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
 type IngressRouteUDP struct {

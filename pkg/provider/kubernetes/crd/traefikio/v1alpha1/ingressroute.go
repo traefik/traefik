@@ -142,7 +142,6 @@ type LoadBalancerSpec struct {
 	ServersTransport string `json:"serversTransport,omitempty"`
 	// Weight defines the weight and should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).
-	// +kubebuilder:validation:XValidation:message="weight can only be used on TraefikService",rule="self.kind == 'TraefikService'"
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:example=10
 	Weight *int `json:"weight,omitempty"`
@@ -171,9 +170,14 @@ type MiddlewareRef struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="EntryPoints",type=string,JSONPath=`.spec.entryPoints`
+// +kubebuilder:printcolumn:name="Rule",type=string,JSONPath=`.spec.routes[*].match`
+// +kubebuilder:printcolumn:name="Middlewares",type=string,JSONPath=`.spec.routes[*].middlewares[*].name`
 
 // IngressRoute is the CRD implementation of a Traefik HTTP Router.
 type IngressRoute struct {
+	// +kubebuilder:printcolumn:name="EntryPoints",type=string,JSONPath=`.`
+
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
