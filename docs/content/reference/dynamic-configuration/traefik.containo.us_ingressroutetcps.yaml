@@ -117,8 +117,10 @@ spec:
                               More info: https://doc.traefik.io/traefik/v2.11/routing/services/#proxy-protocol
                             properties:
                               version:
+                                default: 2
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                example: 1
                                 type: integer
                             type: object
                           terminationDelay:
@@ -162,12 +164,17 @@ spec:
                       properties:
                         main:
                           description: Main defines the main domain name.
+                          example: example.net
                           type: string
                         sans:
                           description: SANs defines the subject alternative domain
                             names.
+                          example:
+                          - a.example.net
+                          - b.example.net
                           items:
                             type: string
+                          maxItems: 100
                           type: array
                       type: object
                     type: array

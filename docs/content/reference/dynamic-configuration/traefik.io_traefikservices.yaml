@@ -52,6 +52,7 @@ spec:
                     enum:
                     - Service
                     - TraefikService
+                    example: Service
                     type: string
                   maxBodySize:
                     description: |-
@@ -71,27 +72,34 @@ spec:
                           enum:
                           - Service
                           - TraefikService
+                          example: Service
                           type: string
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
                             The differentiation between the two is specified in the Kind field.
+                          example: foo
                           type: string
                         namespace:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
+                          example: default
                           type: string
                         nativeLB:
+                          default: false
                           description: |-
                             NativeLB controls, when creating the load-balancer,
                             whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the pods.
                             By default, NativeLB is false.
+                          example: true
                           type: boolean
                         passHostHeader:
+                          default: true
                           description: |-
                             PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
+                          example: false
                           type: boolean
                         percent:
                           description: |-
@@ -105,6 +113,7 @@ spec:
                           description: |-
                             Port defines the port of a Kubernetes Service.
                             This can be a reference to a named port.
+                          example: 80
                           x-kubernetes-int-or-string: true
                         responseForwarding:
                           description: ResponseForwarding defines how Traefik forwards
@@ -112,24 +121,29 @@ spec:
                             client.
                           properties:
                             flushInterval:
+                              default: 100ms
                               description: |-
                                 FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                 A negative value means to flush immediately after each write to the client.
                                 This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                 for such responses, writes are flushed to the client immediately.
                                 Default: 100ms
+                              example: 1ms
                               type: string
                           type: object
                         scheme:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          example: https
+                          pattern: (http|https|h2c)
                           type: string
                         serversTransport:
                           description: |-
                             ServersTransport defines the name of ServersTransport resource to use.
                             It allows to configure the transport between Traefik and your servers.
                             Can only be used on a Kubernetes Service.
+                          example: transport
                           type: string
                         sticky:
                           description: |-
@@ -140,21 +154,31 @@ spec:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
                                 httpOnly:
+                                  default: false
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
+                                  example: true
                                   type: boolean
                                 name:
                                   description: Name defines the Cookie name.
+                                  example: cookie
                                   type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
+                                  example: none
                                   type: string
                                 secure:
+                                  default: false
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
+                                  example: true
                                   type: boolean
                               type: object
                           type: object
@@ -162,11 +186,16 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
+                          example: RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          example: 10
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -176,22 +205,28 @@ spec:
                     description: |-
                       Name defines the name of the referenced Kubernetes Service or TraefikService.
                       The differentiation between the two is specified in the Kind field.
+                    example: foo
                     type: string
                   namespace:
                     description: Namespace defines the namespace of the referenced
                       Kubernetes Service or TraefikService.
+                    example: default
                     type: string
                   nativeLB:
+                    default: false
                     description: |-
                       NativeLB controls, when creating the load-balancer,
                       whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                       The Kubernetes Service itself does load-balance to the pods.
                       By default, NativeLB is false.
+                    example: true
                     type: boolean
                   passHostHeader:
+                    default: true
                     description: |-
                       PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                       By default, passHostHeader is true.
+                    example: false
                     type: boolean
                   port:
                     anyOf:
@@ -200,30 +235,36 @@ spec:
                     description: |-
                       Port defines the port of a Kubernetes Service.
                       This can be a reference to a named port.
+                    example: 80
                     x-kubernetes-int-or-string: true
                   responseForwarding:
                     description: ResponseForwarding defines how Traefik forwards the
                       response from the upstream Kubernetes Service to the client.
                     properties:
                       flushInterval:
+                        default: 100ms
                         description: |-
                           FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                           A negative value means to flush immediately after each write to the client.
                           This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                           for such responses, writes are flushed to the client immediately.
                           Default: 100ms
+                        example: 1ms
                         type: string
                     type: object
                   scheme:
                     description: |-
                       Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                       It defaults to https when Kubernetes Service port is 443, http otherwise.
+                    example: https
+                    pattern: (http|https|h2c)
                     type: string
                   serversTransport:
                     description: |-
                       ServersTransport defines the name of ServersTransport resource to use.
                       It allows to configure the transport between Traefik and your servers.
                       Can only be used on a Kubernetes Service.
+                    example: transport
                     type: string
                   sticky:
                     description: |-
@@ -234,20 +275,30 @@ spec:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
+                            default: false
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
+                            example: true
                             type: boolean
                           name:
                             description: Name defines the Cookie name.
+                            example: cookie
                             type: string
                           sameSite:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
+                            example: none
                             type: string
                           secure:
+                            default: false
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
+                            example: true
                             type: boolean
                         type: object
                     type: object
@@ -255,11 +306,16 @@ spec:
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
                       RoundRobin is the only supported value at the moment.
+                    enum:
+                    - RoundRobin
+                    example: RoundRobin
                     type: string
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object
                       (and to be precise, one that embeds a Weighted Round Robin).
+                    example: 10
+                    minimum: 0
                     type: integer
                 required:
                 - name
@@ -279,27 +335,34 @@ spec:
                           enum:
                           - Service
                           - TraefikService
+                          example: Service
                           type: string
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
                             The differentiation between the two is specified in the Kind field.
+                          example: foo
                           type: string
                         namespace:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
+                          example: default
                           type: string
                         nativeLB:
+                          default: false
                           description: |-
                             NativeLB controls, when creating the load-balancer,
                             whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
                             The Kubernetes Service itself does load-balance to the pods.
                             By default, NativeLB is false.
+                          example: true
                           type: boolean
                         passHostHeader:
+                          default: true
                           description: |-
                             PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
+                          example: false
                           type: boolean
                         port:
                           anyOf:
@@ -308,6 +371,7 @@ spec:
                           description: |-
                             Port defines the port of a Kubernetes Service.
                             This can be a reference to a named port.
+                          example: 80
                           x-kubernetes-int-or-string: true
                         responseForwarding:
                           description: ResponseForwarding defines how Traefik forwards
@@ -315,24 +379,29 @@ spec:
                             client.
                           properties:
                             flushInterval:
+                              default: 100ms
                               description: |-
                                 FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
                                 A negative value means to flush immediately after each write to the client.
                                 This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
                                 for such responses, writes are flushed to the client immediately.
                                 Default: 100ms
+                              example: 1ms
                               type: string
                           type: object
                         scheme:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          example: https
+                          pattern: (http|https|h2c)
                           type: string
                         serversTransport:
                           description: |-
                             ServersTransport defines the name of ServersTransport resource to use.
                             It allows to configure the transport between Traefik and your servers.
                             Can only be used on a Kubernetes Service.
+                          example: transport
                           type: string
                         sticky:
                           description: |-
@@ -343,21 +412,31 @@ spec:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
                                 httpOnly:
+                                  default: false
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
+                                  example: true
                                   type: boolean
                                 name:
                                   description: Name defines the Cookie name.
+                                  example: cookie
                                   type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
+                                  example: none
                                   type: string
                                 secure:
+                                  default: false
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
+                                  example: true
                                   type: boolean
                               type: object
                           type: object
@@ -365,11 +444,16 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
+                          example: RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          example: 10
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -384,20 +468,30 @@ spec:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
                           httpOnly:
+                            default: false
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
+                            example: true
                             type: boolean
                           name:
                             description: Name defines the Cookie name.
+                            example: cookie
                             type: string
                           sameSite:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
+                            example: none
                             type: string
                           secure:
+                            default: false
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
+                            example: true
                             type: boolean
                         type: object
                     type: object
