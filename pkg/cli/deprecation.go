@@ -214,7 +214,8 @@ type providers struct {
 	ETCD              *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Redis             *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	HTTP              *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	KubernetesIngress *ingress       `json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" file:"allowEmpty"`
+	KubernetesIngress *ingress       `json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	KubernetesCRD     *crd           `json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
@@ -245,6 +246,7 @@ func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
 	redisIncompatible := p.Redis.deprecationNotice(logger)
 	httpIncompatible := p.HTTP.deprecationNotice(logger)
 	p.KubernetesIngress.deprecationNotice(logger)
+	p.KubernetesCRD.deprecationNotice(logger)
 	return incompatible ||
 		dockerIncompatible ||
 		consulIncompatible ||
@@ -461,6 +463,7 @@ func (h *http) deprecationNotice(logger zerolog.Logger) bool {
 
 type ingress struct {
 	DisableIngressClassLookup *bool `json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty"`
+	AllowEmptyServices        *bool `json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty"`
 }
 
 func (i *ingress) deprecationNotice(logger zerolog.Logger) {
@@ -468,10 +471,28 @@ func (i *ingress) deprecationNotice(logger zerolog.Logger) {
 		return
 	}
 
+	if i.AllowEmptyServices == nil {
+		logger.Warn().Msg("Kubernetes Ingress provider `allowEmptyServices` option will be set to true by default in the next major version of Traefik.")
+	}
+
 	if i.DisableIngressClassLookup != nil {
 		logger.Error().Msg("Kubernetes Ingress provider `disableIngressClassLookup` option has been deprecated in v3.1, and will be removed in the next major version." +
 			"Please use the `disableClusterScopeResources` option instead." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.1/migration/v3/#ingressclasslookup")
+	}
+}
+
+type crd struct {
+	AllowEmptyServices *bool `json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty"`
+}
+
+func (c *crd) deprecationNotice(logger zerolog.Logger) {
+	if c == nil {
+		return
+	}
+
+	if c.AllowEmptyServices == nil {
+		logger.Warn().Msg("Kubernetes CRD provider `allowEmptyServices` option will be set to true by default in the next major version of Traefik.")
 	}
 }
 
