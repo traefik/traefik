@@ -13,11 +13,15 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatev1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 )
 
 func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration) {
@@ -158,7 +162,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadService(conf, routeKey, routeRule, route)
+				router.Service, serviceCondition = p.loadService(ctx, listener, conf, routeKey, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -173,7 +177,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 	return conf, condition
 }
 
-func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute) (string, *metav1.Condition) {
 	name := routeKey + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -182,7 +186,7 @@ func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, rou
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadHTTPService(route, backendRef)
+		svcName, errCondition := p.loadHTTPService(ctx, listener, conf, route, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -192,10 +196,6 @@ func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, rou
 				Weight: weight,
 			})
 			continue
-		}
-
-		if svc != nil {
-			conf.HTTP.Services[svcName] = svc
 		}
 
 		wrr.Services = append(wrr.Services, dynamic.WRRService{
@@ -210,7 +210,7 @@ func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, rou
 
 // loadHTTPService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadHTTPService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, "Service")
 
 	group := groupCore
@@ -226,7 +226,7 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
 
 	if err := p.isReferenceGranted(groupGateway, kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
-		return serviceName, nil, &metav1.Condition{
+		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -239,7 +239,7 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 	if group != groupCore || kind != "Service" {
 		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
 		if err != nil {
-			return serviceName, nil, &metav1.Condition{
+			return serviceName, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -249,12 +249,16 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 			}
 		}
 
-		return name, service, nil
+		if service != nil {
+			conf.HTTP.Services[name] = service
+		}
+
+		return name, nil
 	}
 
 	port := ptr.Deref(backendRef.Port, gatev1.PortNumber(0))
 	if port == 0 {
-		return serviceName, nil, &metav1.Condition{
+		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -267,9 +271,9 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, err := p.loadHTTPServers(namespace, backendRef)
+	svcPort, svcPortNames, err := p.loadServicePorts(namespace, backendRef)
 	if err != nil {
-		return serviceName, nil, &metav1.Condition{
+		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -279,7 +283,100 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 		}
 	}
 
-	return serviceName, &dynamic.Service{LoadBalancer: lb}, nil
+	lb, err := p.loadHTTPServers(namespace, backendRef, *svcPort)
+	if err != nil {
+		return serviceName, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+		}
+	}
+
+	if p.ExperimentalChannel {
+		servicePolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
+		if err != nil {
+			return serviceName, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonRefNotPermitted),
+				Message:            fmt.Sprintf("Cannot list BackendTLSPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+			}
+		}
+
+		var matchedPolicy *gatev1alpha3.BackendTLSPolicy
+		for _, policy := range servicePolicies {
+			matched := false
+			for _, targetRef := range policy.Spec.TargetRefs {
+				if targetRef.SectionName == nil || slices.Contains(svcPortNames, string(*targetRef.SectionName)) {
+					matchedPolicy = policy
+					matched = true
+					break
+				}
+			}
+
+			// If the policy targets the service, but doesn't match any port.
+			if !matched {
+				// update policy status
+				status := gatev1alpha2.PolicyStatus{
+					Ancestors: []gatev1alpha2.PolicyAncestorStatus{{
+						AncestorRef: gatev1alpha2.ParentReference{
+							Group:       ptr.To(gatev1.Group(groupGateway)),
+							Kind:        ptr.To(gatev1.Kind(kindGateway)),
+							Namespace:   ptr.To(gatev1.Namespace(namespace)),
+							Name:        gatev1.ObjectName(listener.GWName),
+							SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+						},
+						ControllerName: controllerName,
+						Conditions: []metav1.Condition{{
+							Type:               string(gatev1.RouteConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: route.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.RouteReasonBackendNotFound),
+							Message:            fmt.Sprintf("BackendTLSPolicy has no valid TargetRef for Service %s/%s", namespace, string(backendRef.Name)),
+						}},
+					}},
+				}
+
+				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+					logger := log.Ctx(ctx).With().
+						Str("http_route", route.Name).
+						Str("namespace", route.Namespace).Logger()
+					logger.Warn().
+						Err(err).
+						Msg("Unable to update TLSRoute status")
+				}
+			}
+		}
+
+		if matchedPolicy != nil {
+			st, err := p.loadServersTransport(namespace, *matchedPolicy)
+			if err != nil {
+				return serviceName, &metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteReasonRefNotPermitted),
+					Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+				}
+			}
+
+			if st != nil {
+				lb.ServersTransport = serviceName
+				conf.HTTP.ServersTransports[serviceName] = st
+			}
+		}
+	}
+
+	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb}
+
+	return serviceName, nil
 }
 
 func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
@@ -372,30 +469,39 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBackendRef) (*dynamic.ServersLoadBalancer, error) {
+func (p *Provider) loadServicePorts(namespace string, backendRef gatev1.HTTPBackendRef) (*corev1.ServicePort, []string, error) {
 	if backendRef.Port == nil {
-		return nil, errors.New("port is required for Kubernetes Service reference")
+		return nil, nil, errors.New("port is required for Kubernetes Service reference")
 	}
 
 	service, exists, err := p.client.GetService(namespace, string(backendRef.Name))
 	if err != nil {
-		return nil, fmt.Errorf("getting service: %w", err)
+		return nil, nil, fmt.Errorf("getting service: %w", err)
 	}
 	if !exists {
-		return nil, errors.New("service not found")
+		return nil, nil, errors.New("service not found")
 	}
 
-	var svcPort *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if p.Port == int32(*backendRef.Port) {
-			svcPort = &p
-			break
+	var port *corev1.ServicePort
+	var portNames []string
+	for _, svcPort := range service.Spec.Ports {
+		if svcPort.Name != "" {
+			portNames = append(portNames, svcPort.Name)
+		}
+
+		if svcPort.Port == int32(*backendRef.Port) {
+			port = &svcPort
 		}
 	}
-	if svcPort == nil {
-		return nil, fmt.Errorf("service port %d not found", *backendRef.Port)
+
+	if port == nil {
+		return nil, nil, fmt.Errorf("service port %d not found", *backendRef.Port)
 	}
 
+	return port, portNames, nil
+}
+
+func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBackendRef, svcPort corev1.ServicePort) (*dynamic.ServersLoadBalancer, error) {
 	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
 	if err != nil {
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
@@ -407,7 +513,7 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	protocol := getProtocol(*svcPort)
+	protocol := getProtocol(svcPort)
 
 	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
@@ -441,6 +547,41 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 	}
 
 	return lb, nil
+}
+
+func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.BackendTLSPolicy) (*dynamic.ServersTransport, error) {
+	st := &dynamic.ServersTransport{
+		ServerName: string(policy.Spec.Validation.Hostname),
+	}
+
+	if policy.Spec.Validation.CACertificateRefs != nil {
+		// Support: Core - An optional single reference to a Kubernetes ConfigMap,
+		// with the CA certificate in a key named `ca.crt`.
+		if len(policy.Spec.Validation.CACertificateRefs) > 1 {
+			return nil, errors.New("backendTLSPolicy has more than one CA certificate")
+		}
+
+		for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
+			if caCertRef.Group == groupCore && caCertRef.Kind == "ConfigMap" {
+				configMap, exists, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+				if err != nil {
+					return nil, fmt.Errorf("getting configmap: %w", err)
+				}
+				if !exists {
+					return nil, fmt.Errorf("configmap %s/%s not found", namespace, string(caCertRef.Name))
+				}
+
+				caCRT, ok := configMap.Data["ca.crt"]
+				if !ok {
+					return nil, fmt.Errorf("configmap %s/%s does not have ca.crt", namespace, string(caCertRef.Name))
+				}
+
+				st.RootCAs = append(st.RootCAs, types.FileOrContent(caCRT))
+			}
+		}
+	}
+
+	return st, nil
 }
 
 func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
@@ -740,5 +881,12 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 	}
 	for serviceName, service := range from.HTTP.Services {
 		to.HTTP.Services[serviceName] = service
+	}
+
+	if to.HTTP.ServersTransports == nil {
+		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
+	}
+	for name, serversTransport := range from.HTTP.ServersTransports {
+		to.HTTP.ServersTransports[name] = serversTransport
 	}
 }
