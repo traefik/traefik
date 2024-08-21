@@ -555,8 +555,10 @@ func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.Ba
 	}
 
 	if policy.Spec.Validation.CACertificateRefs != nil {
+		// Support: Core - An optional single reference to a Kubernetes ConfigMap,
+		// with the CA certificate in a key named `ca.crt`.
 		if len(policy.Spec.Validation.CACertificateRefs) > 1 {
-			return nil, fmt.Errorf("backendTLSPolicy has more than one CA certificate")
+			return nil, errors.New("backendTLSPolicy has more than one CA certificate")
 		}
 
 		for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
