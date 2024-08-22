@@ -34,6 +34,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const defaultMirrorBody = true
 const defaultMaxBodySize int64 = -1
 
 // RoundTripperGetter is a roundtripper getter interface.
@@ -197,11 +198,16 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
+	mirrorBody := defaultMirrorBody
+	if config.MirrorBody != nil {
+		mirrorBody = *config.MirrorBody
+	}
+
 	maxBodySize := defaultMaxBodySize
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
-	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize, config.HealthCheck)
+	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.HealthCheck)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
