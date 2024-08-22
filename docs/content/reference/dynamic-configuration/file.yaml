@@ -89,6 +89,7 @@ http:
     Service03:
       mirroring:
         service: foobar
+        mirrorBody: true
         maxBodySize: 42
         mirrors:
           - name: foobar

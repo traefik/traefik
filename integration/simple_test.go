@@ -1106,6 +1106,95 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	assert.Equal(s.T(), int32(0), val2)
 }
 
+func (s *SimpleSuite) TestMirrorWithoutBody() {
+	var count, countMirror1, countMirror2 int32
+
+	body := make([]byte, 20)
+	_, err := rand.Read(body)
+	require.NoError(s.T(), err)
+
+	verifyBody := func(req *http.Request, canBeEmpty bool) (forceOkResponse bool) {
+		b, _ := io.ReadAll(req.Body)
+		if canBeEmpty && req.Header.Get("EmptyBody") == "true" {
+			require.Empty(s.T(), b)
+			return true
+		}
+		require.Equal(s.T(), body, b)
+		return false
+	}
+
+	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		verifyBody(req, false)
+		atomic.AddInt32(&count, 1)
+	}))
+
+	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if verifyBody(req, true) {
+			rw.WriteHeader(http.StatusOK)
+		}
+		atomic.AddInt32(&countMirror1, 1)
+	}))
+
+	mirror2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if verifyBody(req, true) {
+			rw.WriteHeader(http.StatusOK)
+		}
+		atomic.AddInt32(&countMirror2, 1)
+	}))
+
+	mainServer := main.URL
+	mirror1Server := mirror1.URL
+	mirror2Server := mirror2.URL
+
+	file := s.adaptFile("fixtures/mirror.toml", struct {
+		MainServer    string
+		Mirror1Server string
+		Mirror2Server string
+	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	require.NoError(s.T(), err)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", bytes.NewBuffer(body))
+	require.NoError(s.T(), err)
+	for range 10 {
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+	}
+
+	countTotal := atomic.LoadInt32(&count)
+	val1 := atomic.LoadInt32(&countMirror1)
+	val2 := atomic.LoadInt32(&countMirror2)
+
+	assert.Equal(s.T(), int32(10), countTotal)
+	assert.Equal(s.T(), int32(1), val1)
+	assert.Equal(s.T(), int32(5), val2)
+
+	atomic.StoreInt32(&count, 0)
+	atomic.StoreInt32(&countMirror1, 0)
+	atomic.StoreInt32(&countMirror2, 0)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithoutBody", bytes.NewBuffer(body))
+	require.NoError(s.T(), err)
+	req.Header.Set("EmptyBody", "true")
+	for range 10 {
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+	}
+
+	countTotal = atomic.LoadInt32(&count)
+	val1 = atomic.LoadInt32(&countMirror1)
+	val2 = atomic.LoadInt32(&countMirror2)
+
+	assert.Equal(s.T(), int32(10), countTotal)
+	assert.Equal(s.T(), int32(1), val1)
+	assert.Equal(s.T(), int32(5), val2)
+}
+
 func (s *SimpleSuite) TestMirrorCanceled() {
 	var count, countMirror1, countMirror2 int32
 
