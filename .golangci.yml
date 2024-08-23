@@ -271,3 +271,6 @@ issues:
       text: 'unusedwrite: unused write to field'
       linters:
         - govet
+    - text: 'printf: non-constant format string in call to github.com/traefik/traefik/v2/pkg/tracing.SetErrorWithEvent'
+      linters:
+        - govet
