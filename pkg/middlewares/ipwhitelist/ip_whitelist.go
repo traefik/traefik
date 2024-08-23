@@ -68,7 +68,7 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug(msg)
-		tracing.SetErrorWithEvent(req, msg)
+		tracing.SetErrorWithEvent(req, msg) //nolint: govet
 		reject(ctx, rw)
 		return
 	}

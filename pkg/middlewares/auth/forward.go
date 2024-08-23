@@ -105,7 +105,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
 		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+		tracing.SetErrorWithEvent(req, logMessage) //nolint: govet
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -121,7 +121,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardErr != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
 		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+		tracing.SetErrorWithEvent(req, logMessage) //nolint: govet
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -132,7 +132,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if readError != nil {
 		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
 		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+		tracing.SetErrorWithEvent(req, logMessage) //nolint: govet
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -153,7 +153,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if !errors.Is(err, http.ErrNoLocation) {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
 				logger.Debug(logMessage)
-				tracing.SetErrorWithEvent(req, logMessage)
+				tracing.SetErrorWithEvent(req, logMessage) //nolint: govet
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
