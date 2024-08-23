@@ -27,21 +27,55 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
+---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: test-errors
+  name: error-page
 spec:
   errors:
     status:
-      - "500"
-      - "501"
-      - "503"
-      - "505-599"
-    query: /{status}.html
+      - "404"
+      - "500-599"
+    query: '/{status}.html'
     service:
-      name: whoami
-      port: 80
+      name: error-page
+      port: "http"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: error-page
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: error-page
+  template:
+    metadata:
+      labels:
+        app: error-page
+    spec:
+      containers:
+        - name: error-page
+          image: ghcr.io/tarampampam/error-pages
+          ports:
+            - name: http
+              containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: error-page
+spec:
+  selector:
+    app: error-page
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
 ```
 
 ```yaml tab="Consul Catalog"
