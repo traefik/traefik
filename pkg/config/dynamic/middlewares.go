@@ -1,6 +1,7 @@
 package dynamic
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -406,7 +407,7 @@ type IPStrategy struct {
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
 	// IPv6Subnet configures Traefik to consider all IPv6 addresses from the defined subnet as originating from the same IP. Applies to RemoteAddrStrategy and DepthStrategy.
-	IPv6Subnet int `json:"ipv6Subnet,omitempty" toml:"ipv6Subnet,omitempty" yaml:"ipv6Subnet,omitempty"`
+	IPv6Subnet *int `json:"ipv6Subnet,omitempty" toml:"ipv6Subnet,omitempty" yaml:"ipv6Subnet,omitempty"`
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
 
@@ -420,6 +421,10 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 	}
 
 	if s.Depth > 0 {
+		if s.IPv6Subnet != nil && (*s.IPv6Subnet <= 0 || *s.IPv6Subnet > 128) {
+			return nil, fmt.Errorf("invalid IPv6 subnet %d value, should be greater to 0 and lower or equal to 128", *s.IPv6Subnet)
+		}
+
 		return &ip.DepthStrategy{
 			Depth:      s.Depth,
 			IPv6Subnet: s.IPv6Subnet,
@@ -434,6 +439,10 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 		return &ip.PoolStrategy{
 			Checker: checker,
 		}, nil
+	}
+
+	if s.IPv6Subnet != nil && (*s.IPv6Subnet <= 0 || *s.IPv6Subnet > 128) {
+		return nil, fmt.Errorf("invalid IPv6 subnet %d value, should be greater to 0 and lower or equal to 128", *s.IPv6Subnet)
 	}
 
 	return &ip.RemoteAddrStrategy{
