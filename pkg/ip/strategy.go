@@ -19,7 +19,7 @@ type Strategy interface {
 // RemoteAddrStrategy a strategy that always return the remote address.
 type RemoteAddrStrategy struct {
 	// IPv6Subnet instructs the strategy to return the first IP of the subnet where IP belongs.
-	IPv6Subnet int
+	IPv6Subnet *int
 }
 
 // GetIP returns the selected IP.
@@ -29,8 +29,8 @@ func (s *RemoteAddrStrategy) GetIP(req *http.Request) string {
 		return req.RemoteAddr
 	}
 
-	if s.IPv6Subnet > 0 && s.IPv6Subnet <= 128 {
-		return getIPv6SubnetIP(ip, s.IPv6Subnet)
+	if s.IPv6Subnet != nil {
+		return getIPv6SubnetIP(ip, *s.IPv6Subnet)
 	}
 
 	return ip
@@ -40,7 +40,7 @@ func (s *RemoteAddrStrategy) GetIP(req *http.Request) string {
 type DepthStrategy struct {
 	Depth int
 	// IPv6Subnet instructs the strategy to return the first IP of the subnet where IP belongs.
-	IPv6Subnet int
+	IPv6Subnet *int
 }
 
 // GetIP returns the selected IP.
@@ -53,8 +53,9 @@ func (s *DepthStrategy) GetIP(req *http.Request) string {
 	}
 
 	ip := strings.TrimSpace(xffs[len(xffs)-s.Depth])
-	if s.IPv6Subnet > 0 && s.IPv6Subnet <= 128 {
-		return getIPv6SubnetIP(ip, s.IPv6Subnet)
+
+	if s.IPv6Subnet != nil {
+		return getIPv6SubnetIP(ip, *s.IPv6Subnet)
 	}
 
 	return ip

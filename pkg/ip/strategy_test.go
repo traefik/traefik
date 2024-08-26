@@ -20,7 +20,7 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 		desc       string
 		expected   string
 		remoteAddr string
-		ipv6Subnet int
+		ipv6Subnet *int
 	}{
 		// Valid IP format
 		{
@@ -28,40 +28,40 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 			expected: "192.0.2.1",
 		},
 		{
-			desc:       "Use RemoteAddr, ipv6 brackets with port",
+			desc:       "Use RemoteAddr, ipv6 brackets with port, no IPv6 subnet",
 			remoteAddr: ipv6BracketsPort,
 			expected:   "::abcd:ffff:c0a8:1",
 		},
 		{
-			desc:       "Use RemoteAddr, ipv6 brackets with zone and port",
+			desc:       "Use RemoteAddr, ipv6 brackets with zone and port, no IPv6 subnet",
 			remoteAddr: ipv6BracketsZonePort,
 			expected:   "::abcd:ffff:c0a8:1%1",
 		},
 
 		// Invalid IPv6 format
 		{
-			desc:       "Use RemoteAddr, ipv6 basic, missing brackets",
+			desc:       "Use RemoteAddr, ipv6 basic, missing brackets, no IPv6 subnet",
 			remoteAddr: ipv6Basic,
 			expected:   ipv6Basic,
 		},
 
 		// Valid IP format with subnet
 		{
-			desc:       "Use RemoteAddr, ignore subnet",
+			desc:       "Use RemoteAddr, ipv4, ignore subnet",
 			expected:   "192.0.2.1",
-			ipv6Subnet: 24,
+			ipv6Subnet: intPtr(24),
 		},
 		{
 			desc:       "Use RemoteAddr, ipv6 brackets with port, subnet",
 			remoteAddr: ipv6BracketsPort,
 			expected:   "::abcd:0:0:0",
-			ipv6Subnet: 80,
+			ipv6Subnet: intPtr(80),
 		},
 		{
 			desc:       "Use RemoteAddr, ipv6 brackets with zone and port, subnet",
 			remoteAddr: ipv6BracketsZonePort,
 			expected:   "::abcd:0:0:0",
-			ipv6Subnet: 80,
+			ipv6Subnet: intPtr(80),
 		},
 
 		// Valid IP, invalid subnet
@@ -69,7 +69,7 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 			desc:       "Use RemoteAddr, ipv6 brackets with port, invalid subnet",
 			remoteAddr: ipv6BracketsPort,
 			expected:   "::abcd:ffff:c0a8:1",
-			ipv6Subnet: 500,
+			ipv6Subnet: intPtr(500),
 		},
 	}
 
@@ -96,7 +96,7 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 		depth         int
 		xForwardedFor string
 		expected      string
-		ipv6Subnet    int
+		ipv6Subnet    *int
 	}{
 		{
 			desc:          "Use depth",
@@ -121,14 +121,14 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 			depth:         2,
 			xForwardedFor: "10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "10.0.0.2",
-			ipv6Subnet:    80,
+			ipv6Subnet:    intPtr(80),
 		},
 		{
 			desc:          "Use depth with IPv6 subnet",
 			depth:         2,
 			xForwardedFor: "10.0.0.3," + ipv6Basic + ",10.0.0.1",
 			expected:      "::abcd:0:0:0",
-			ipv6Subnet:    80,
+			ipv6Subnet:    intPtr(80),
 		},
 	}
 
@@ -196,4 +196,8 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 			assert.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+func intPtr(value int) *int {
+	return &value
 }
