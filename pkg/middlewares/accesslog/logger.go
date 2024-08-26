@@ -105,15 +105,28 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Level:     logrus.InfoLevel,
 	}
 
-	// Transform headers names in config to a canonical form, to be used as is without further transformations.
-	if config.Fields != nil && config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
-		fields := map[string]string{}
+	// Transform field and header names in config to a canonical form,
+	// to enable case-insensitive lookup.
+	if config.Fields != nil {
+		if len(config.Fields.Names) > 0 {
+			fields := map[string]string{}
 
-		for h, v := range config.Fields.Headers.Names {
-			fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+			for h, v := range config.Fields.Names {
+				fields[strings.ToLower(h)] = v
+			}
+
+			config.Fields.Names = fields
 		}
 
-		config.Fields.Headers.Names = fields
+		if config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
+			fields := map[string]string{}
+
+			for h, v := range config.Fields.Headers.Names {
+				fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+			}
+
+			config.Fields.Headers.Names = fields
+		}
 	}
 
 	logHandler := &Handler{
@@ -332,7 +345,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 		fields := logrus.Fields{}
 
 		for k, v := range logDataTable.Core {
-			if h.config.Fields.Keep(k) {
+			if h.config.Fields.Keep(strings.ToLower(k)) {
 				fields[k] = v
 			}
 		}
