@@ -240,6 +240,44 @@ This is useful for grouping IPv6 addresses into subnets to prevent bypassing thi
     | `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
     | `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
 
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.ipv6Subnet=64"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-inflightreq
+spec:
+  inFlightReq:
+    sourceCriterion:
+      ipStrategy:
+        ipv6Subnet: 64
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.ipv6Subnet=64"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        sourceCriterion:
+          ipStrategy:
+            ipv6Subnet: 64
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-inflightreq.inflightreq]
+    [http.middlewares.test-inflightreq.inFlightReq.sourceCriterion.ipStrategy]
+      ipv6Subnet = 64
+```
+
 #### `sourceCriterion.requestHeaderName`
 
 Name of the header used to group incoming requests.
