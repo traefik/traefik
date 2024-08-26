@@ -105,6 +105,9 @@ Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_ACMEBYPASS`:  
+Determines whether ACME TLS or HTTP challenge are allowed to be handle with custom routers. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
 

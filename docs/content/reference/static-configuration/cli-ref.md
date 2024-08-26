@@ -105,6 +105,9 @@ Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
+`--entrypoints.<name>.acmebypass`:  
+Determines whether ACME TLS or HTTP challenge are allowed to be handle with custom routers. (Default: ```false```)
+
 `--entrypoints.<name>.address`:  
 Entry point address.
 
