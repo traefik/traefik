@@ -21,25 +21,37 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP []string
-	entryPointsUDP []string
+	entryPointsTCP  []string
+	entryPointsUDP  []string
+	allowACMEByPass map[string]bool
 
-	managerFactory  *service.ManagerFactory
+	managerFactory *service.ManagerFactory
+
 	metricsRegistry metrics.Registry
 
 	pluginBuilder middleware.PluginsBuilder
-
-	chainBuilder *middleware.ChainBuilder
-	tlsManager   *tls.Manager
+	chainBuilder  *middleware.ChainBuilder
+	tlsManager    *tls.Manager
 }
 
 // NewRouterFactory creates a new RouterFactory.
 func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager,
 	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry,
 ) *RouterFactory {
+	handlesTLSChallenge := false
+	for _, resolver := range staticConfiguration.CertificatesResolvers {
+		if resolver.ACME.TLSChallenge != nil {
+			handlesTLSChallenge = true
+			break
+		}
+	}
+
+	allowACMEByPass := map[string]bool{}
 	var entryPointsTCP, entryPointsUDP []string
-	for name, cfg := range staticConfiguration.EntryPoints {
-		protocol, err := cfg.GetProtocol()
+	for name, ep := range staticConfiguration.EntryPoints {
+		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
+
+		protocol, err := ep.GetProtocol()
 		if err != nil {
 			// Should never happen because Traefik should not start if protocol is invalid.
 			log.WithoutContext().Errorf("Invalid protocol: %v", err)
@@ -60,6 +72,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		tlsManager:      tlsManager,
 		chainBuilder:    chainBuilder,
 		pluginBuilder:   pluginBuilder,
+		allowACMEByPass: allowACMEByPass,
 	}
 }
 
@@ -86,6 +99,12 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager)
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
+
+	for ep, r := range routersTCP {
+		if allowACMEByPass, ok := f.allowACMEByPass[ep]; ok && allowACMEByPass {
+			r.EnableACMETLSPassthrough()
+		}
+	}
 
 	// UDP
 	svcUDPManager := udp.NewManager(rtConf)
