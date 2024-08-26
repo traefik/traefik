@@ -16,6 +16,7 @@ serversTransport:
 entryPoints:
   EntryPoint0:
     address: foobar
+    ACMEByPass: true
     transport:
       lifeCycle:
         requestAcceptGraceTimeout: 42s
