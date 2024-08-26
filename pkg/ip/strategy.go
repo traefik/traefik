@@ -90,7 +90,8 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 	return ""
 }
 
-// getIPv6SubnetIP returns IPv6 subnet's IP address. It returns the original IP address in case of an error.
+// getIPv6SubnetIP returns the IPv6 subnet IP.
+// It returns the original IP when it is not an IPv6, or if parsing the IP has failed with an error.
 func getIPv6SubnetIP(ip string, ipv6Subnet int) string {
 	addr, err := netip.ParseAddr(ip)
 	if err != nil {
