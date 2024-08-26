@@ -465,6 +465,32 @@ func TestLoggerJSON(t *testing.T) {
 				RequestRefererHeader: assertString(testReferer),
 			},
 		},
+		{
+			desc: "fields and headers with unconventional letter case",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+				Fields: &types.AccessLogFields{
+					DefaultMode: "drop",
+					Names: map[string]string{
+						"rEqUeStHoSt": "keep",
+					},
+					Headers: &types.FieldHeaders{
+						DefaultMode: "drop",
+						Names: map[string]string{
+							"ReFeReR": "keep",
+						},
+					},
+				},
+			},
+			expected: map[string]func(t *testing.T, value interface{}){
+				RequestHost:          assertString(testHostname),
+				"level":              assertString("info"),
+				"msg":                assertString(""),
+				"time":               assertNotEmpty(),
+				RequestRefererHeader: assertString(testReferer),
+			},
+		},
 	}
 
 	for _, test := range testCases {
