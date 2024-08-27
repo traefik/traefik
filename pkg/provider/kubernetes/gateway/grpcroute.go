@@ -241,7 +241,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 		}
 	}
 
-	if err := p.isReferenceGranted(groupGateway, kindGRPCRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
+	if err := p.isReferenceGranted(kindGRPCRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
