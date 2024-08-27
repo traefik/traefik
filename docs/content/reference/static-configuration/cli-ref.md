@@ -109,7 +109,7 @@ Entry points definition. (Default: ```false```)
 Entry point address.
 
 `--entrypoints.<name>.allowacmebypass`:  
-Determines whether ACME TLS or HTTP challenge are allowed to be handle with custom routers. (Default: ```false```)
+Enables handling of ACME TLS and HTTP challenges with custom routers. (Default: ```false```)
 
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)

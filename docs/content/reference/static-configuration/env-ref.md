@@ -109,7 +109,7 @@ Entry points definition. (Default: ```false```)
 Entry point address.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_ALLOWACMEBYPASS`:  
-Determines whether ACME TLS or HTTP challenge are allowed to be handle with custom routers. (Default: ```false```)
+Enables handling of ACME TLS and HTTP challenges with custom routers. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
