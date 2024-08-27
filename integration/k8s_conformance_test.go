@@ -194,7 +194,10 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			Version:      version.Version,
 			Contact:      []string{"@traefik/maintainers"},
 		},
-		ConformanceProfiles: sets.New(ksuite.GatewayHTTPConformanceProfileName),
+		ConformanceProfiles: sets.New(
+			ksuite.GatewayHTTPConformanceProfileName,
+			ksuite.GatewayTLSConformanceProfileName,
+		),
 		SupportedFeatures: sets.New(
 			features.SupportGateway,
 			features.SupportGatewayPort8080,
@@ -207,6 +210,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			features.SupportHTTPRoutePathRewrite,
 			features.SupportHTTPRoutePathRedirect,
 			features.SupportHTTPRouteResponseHeaderModification,
+			features.SupportTLSRoute,
 		),
 	})
 	require.NoError(s.T(), err)
