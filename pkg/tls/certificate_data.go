@@ -1,45 +1,22 @@
 package tls
 
 import (
-	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/asn1"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"reflect"
 	"sort"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"golang.org/x/crypto/ocsp"
 )
 
 // CertificateData holds runtime data for runtime TLS certificate handling.
 type CertificateData struct {
-	config       *Certificate
-	ocspLock     *sync.RWMutex
-	Certificate  *tls.Certificate
-	MustStaple   bool
-	OCSPServer   []string
-	OCSPResponse *ocsp.Response
+	config      *Certificate
+	ocsp        *OCSP
+	Certificate *tls.Certificate
 }
-
-// Constants for PKIX MustStaple extension.
-var (
-	tlsFeatureExtensionOID = asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 24}
-	ocspMustStapleFeature  = []byte{0x30, 0x03, 0x02, 0x01, 0x05}
-	mustStapleExtension    = pkix.Extension{
-		Id:    tlsFeatureExtensionOID,
-		Value: ocspMustStapleFeature,
-	}
-)
 
 // CertificateCollection defines traefik CertificateCollection type.
 type CertificateCollection []CertificateData
@@ -101,118 +78,21 @@ func (c *CertificateData) AppendCertificate(certs map[string]map[string]*Certifi
 	} else {
 		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
 
-		mustStaple := false
-		for _, ext := range parsedCert.ExtraExtensions {
-			if ext.Id.Equal(mustStapleExtension.Id) && reflect.DeepEqual(ext.Value, mustStapleExtension.Value) {
-				mustStaple = true
-			}
+		ocspClient, err := NewOCSP(c.config.OCSP, &tlsCert)
+		if err != nil {
+			log.Debug().Msgf("Error creating OCSP client for domain(s) %s, skipping", SANs[0])
 		}
 
 		certs[storeName][certKey] = &CertificateData{
 			Certificate: &tlsCert,
-			OCSPServer:  parsedCert.OCSPServer,
-			MustStaple:  mustStaple,
+			ocsp:        ocspClient,
 			config: &Certificate{
 				SANs: SANs,
-				OCSP: types.OCSPConfig{
-					DisableStapling: c.config.OCSP.DisableStapling,
-				},
 			},
 		}
 	}
 
 	return err
-}
-
-func getOCSPForCert(certificate *CertificateData, issuedCertificate *x509.Certificate, issuerCertificate *x509.Certificate) ([]byte, *ocsp.Response, error) {
-	if len(certificate.OCSPServer) == 0 {
-		return nil, nil, errors.New("no OCSP server specified in certificate")
-	}
-
-	respURL := certificate.OCSPServer[0]
-	if len(certificate.config.OCSP.ResponderOverrides) > 0 {
-		if override, ok := certificate.config.OCSP.ResponderOverrides[respURL]; ok {
-			respURL = override
-		}
-	}
-
-	ocspReq, err := ocsp.CreateRequest(issuedCertificate, issuerCertificate, nil)
-	if err != nil {
-		return nil, nil, fmt.Errorf("creating OCSP request: %w", err)
-	}
-
-	reader := bytes.NewReader(ocspReq)
-	req, err := http.Post(respURL, "application/ocsp-request", reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("making OCSP request: %w", err)
-	}
-	defer req.Body.Close()
-
-	ocspResBytes, err := io.ReadAll(io.LimitReader(req.Body, 1024*1024))
-	if err != nil {
-		return nil, nil, fmt.Errorf("reading OCSP response: %w", err)
-	}
-
-	ocspRes, err := ocsp.ParseResponse(ocspResBytes, issuerCertificate)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parsing OCSP response: %w", err)
-	}
-
-	return ocspResBytes, ocspRes, nil
-}
-
-// StapleOCSP populates the ocsp response of the certificate if needed and not disabled by configuration.
-func (c *CertificateData) StapleOCSP() error {
-	if c.config.OCSP.DisableStapling {
-		return nil
-	}
-
-	if c.ocspLock == nil {
-		c.ocspLock = &sync.RWMutex{}
-	}
-
-	c.ocspLock.RLock()
-	ocspResponse := c.OCSPResponse
-	c.ocspLock.RUnlock()
-
-	if ocspResponse != nil && time.Now().Before(ocspResponse.ThisUpdate.Add(ocspResponse.NextUpdate.Sub(ocspResponse.ThisUpdate)/2)) {
-		return nil
-	}
-
-	c.ocspLock.Lock()
-	defer c.ocspLock.Unlock()
-
-	leaf, _ := x509.ParseCertificate(c.Certificate.Certificate[0])
-	var issuerCertificate *x509.Certificate
-	if len(c.Certificate.Certificate) == 1 {
-		issuerCertificate = leaf
-	} else {
-		ic, err := x509.ParseCertificate(c.Certificate.Certificate[1])
-		if err != nil {
-			return fmt.Errorf("cannot parse issuer certificate for %v: %w", c.config.SANs, err)
-		}
-
-		issuerCertificate = ic
-	}
-
-	ocspBytes, ocspResp, ocspErr := getOCSPForCert(c, leaf, issuerCertificate)
-	if ocspErr != nil {
-		return fmt.Errorf("no OCSP stapling for %v: %w", c.config.SANs, ocspErr)
-	}
-
-	log.Debug().Msgf("ocsp response: %v", ocspResp)
-	if ocspResp.Status == ocsp.Good {
-		if ocspResp.NextUpdate.After(leaf.NotAfter) {
-			return fmt.Errorf("invalid: OCSP response for %v valid after certificate expiration (%s)", c.config.SANs, leaf.NotAfter.Sub(ocspResp.NextUpdate))
-		}
-
-		c.Certificate.OCSPStaple = ocspBytes
-		c.OCSPResponse = ocspResp
-	}
-
-	// @todo check revocation status
-
-	return nil
 }
 
 // String is the method to format the flag's value, part of the flag.Value interface.

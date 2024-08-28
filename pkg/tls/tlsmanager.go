@@ -210,13 +210,13 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		bestCertificate := store.GetBestCertificate(clientHello)
 		if bestCertificate != nil {
 			doStaple := func() {
-				err := bestCertificate.StapleOCSP()
+				err := bestCertificate.ocsp.Staple()
 				if err != nil {
 					log.Warn().Err(err).Msg("ocsp - error during staple")
 				}
 			}
 
-			if bestCertificate.MustStaple {
+			if bestCertificate.ocsp.MustStaple {
 				doStaple()
 			} else {
 				go doStaple()
