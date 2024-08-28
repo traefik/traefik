@@ -5,7 +5,6 @@ import (
 	"crypto"
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -209,6 +209,8 @@ func mustMakeCertificate(t *testing.T, config types.OCSPConfig, cert, key string
 func startOCSPResponder(
 	t *testing.T, responses map[string][]byte,
 ) *httptest.Server {
+	t.Helper()
+
 	h := func(w http.ResponseWriter, r *http.Request) {
 		ct := r.Header.Get("Content-Type")
 		if ct != "application/ocsp-request" {
@@ -220,7 +222,7 @@ func startOCSPResponder(
 			t.Fatal(err)
 		}
 		w.Header().Set("Content-Type", "application/ocsp-response")
-		w.Write(responses[request.SerialNumber.String()])
+		_, _ = w.Write(responses[request.SerialNumber.String()])
 	}
 	return httptest.NewServer(http.HandlerFunc(h))
 }
