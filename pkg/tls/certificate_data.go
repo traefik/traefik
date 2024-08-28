@@ -48,16 +48,16 @@ type CertificateCollection []CertificateData
 func (c *CertificateData) AppendCertificate(certs map[string]map[string]*CertificateData, storeName string) error {
 	certContent, err := c.config.CertFile.Read()
 	if err != nil {
-		return fmt.Errorf("unable to read CertFile : %w", err)
+		return fmt.Errorf("unable to read CertFile: %w", err)
 	}
 
 	keyContent, err := c.config.KeyFile.Read()
 	if err != nil {
-		return fmt.Errorf("unable to read KeyFile : %w", err)
+		return fmt.Errorf("unable to read KeyFile: %w", err)
 	}
 	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return fmt.Errorf("unable to generate TLS certificate : %w", err)
+		return fmt.Errorf("unable to generate TLS certificate: %w", err)
 	}
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
@@ -130,6 +130,12 @@ func getOCSPForCert(certificate *CertificateData, issuedCertificate *x509.Certif
 	}
 
 	respURL := certificate.OCSPServer[0]
+	if len(certificate.config.OCSP.ResponderOverrides) > 0 {
+		if override, ok := certificate.config.OCSP.ResponderOverrides[respURL]; ok {
+			respURL = override
+		}
+	}
+
 	ocspReq, err := ocsp.CreateRequest(issuedCertificate, issuerCertificate, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating OCSP request: %w", err)
