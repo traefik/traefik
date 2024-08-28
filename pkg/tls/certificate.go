@@ -66,6 +66,8 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	return certs
 }
 
+// +k8s:deepcopy-gen=true
+
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself.
 type Certificate struct {
