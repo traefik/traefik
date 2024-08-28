@@ -200,8 +200,7 @@ linters:
     - maintidx # kind of duplicate of gocyclo
     - nonamedreturns # Too strict
     - gosmopolitan  # not relevant
-    - exportloopref # Useless with go1.22
-    - musttag
+    - exportloopref # Not relevant since go1.22
 
 issues:
   exclude-use-default: false
@@ -281,3 +280,6 @@ issues:
     - path: pkg/cli/loader_file.go
       linters:
         - goconst
+    - path: pkg/provider/acme/local_store.go
+      linters:
+        - musttag
