@@ -65,13 +65,13 @@ func (b *WRRLoadBalancer) AddWeightServer(serverHandler Handler, weight *int) {
 }
 
 func (b *WRRLoadBalancer) maxWeight() int {
-	max := -1
+	maximum := -1
 	for _, s := range b.servers {
-		if s.weight > max {
-			max = s.weight
+		if s.weight > maximum {
+			maximum = s.weight
 		}
 	}
-	return max
+	return maximum
 }
 
 func (b *WRRLoadBalancer) weightGcd() int {
@@ -103,8 +103,8 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	// and allows us not to build an iterator every time we readjust weights
 
 	// Maximum weight across all enabled servers
-	max := b.maxWeight()
-	if max == 0 {
+	maximum := b.maxWeight()
+	if maximum == 0 {
 		return nil, errors.New("all servers have 0 weight")
 	}
 
@@ -116,7 +116,7 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 		if b.index == 0 {
 			b.currentWeight -= gcd
 			if b.currentWeight <= 0 {
-				b.currentWeight = max
+				b.currentWeight = maximum
 			}
 		}
 		srv := b.servers[b.index]
