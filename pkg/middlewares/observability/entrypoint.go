@@ -22,8 +22,6 @@ import (
 
 const (
 	entryPointTypeName = "TracingEntryPoint"
-	traceID            = "TraceId"
-	spanID             = "SpanId"
 )
 
 type entryPointTracing struct {
@@ -71,11 +69,11 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
 	e.tracer.CaptureServerRequest(span, req)
-	logData := accesslog.GetLogData(req)
-	if logData != nil {
-		spanCtx := span.SpanContext()
-		logData.Core[traceID] = spanCtx.TraceID()
-		logData.Core[spanID] = spanCtx.SpanID()
+
+	if logData := accesslog.GetLogData(req); logData != nil {
+		spanContext := span.SpanContext()
+		logData.Core[accesslog.TraceID] = spanContext.TraceID().String()
+		logData.Core[accesslog.SpanID] = spanContext.SpanID().String()
 	}
 
 	recorder := newStatusCodeRecorder(rw, http.StatusOK)
