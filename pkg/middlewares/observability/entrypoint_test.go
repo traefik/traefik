@@ -201,6 +201,6 @@ func TestEntryPointMiddleware_tracing_info_into_log(t *testing.T) {
 	expectedSpanCtx := tracer.spans[0].SpanContext()
 
 	logData := accesslog.GetLogData(req)
-	assert.Equal(t, expectedSpanCtx.TraceID(), logData.Core[traceID])
-	assert.Equal(t, expectedSpanCtx.SpanID(), logData.Core[spanID])
+	assert.Equal(t, expectedSpanCtx.TraceID().String(), logData.Core[accesslog.TraceID])
+	assert.Equal(t, expectedSpanCtx.SpanID().String(), logData.Core[accesslog.SpanID])
 }
