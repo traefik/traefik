@@ -95,9 +95,8 @@ func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 	compressionWriter, err := newCompressionWriter(c.cfg.Algorithm, rw)
 	if err != nil {
 		logger := middlewares.GetLogger(r.Context(), c.cfg.MiddlewareName, typeName)
-		logMessage := fmt.Sprintf("create compression handler: %v", err)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(r.Context(), logMessage)
+		logger.Debug().Msgf("Create compression handler: %v", err)
+		observability.SetStatusErrorf(r.Context(), "Create compression handler: %v", err)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}

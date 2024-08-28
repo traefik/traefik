@@ -316,8 +316,7 @@ func getPort(instance ecsInstance, serverPort string) string {
 	nat.Sort(ports, less)
 
 	if len(ports) > 0 {
-		min := ports[0]
-		return min.Port()
+		return ports[0].Port()
 	}
 
 	return ""
