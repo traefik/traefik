@@ -402,10 +402,16 @@ http:
           keyFile: foobar
           ocsp:
             disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
         - certFile: foobar
           keyFile: foobar
           ocsp:
             disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -431,10 +437,16 @@ http:
           keyFile: foobar
           ocsp:
             disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
         - certFile: foobar
           keyFile: foobar
           ocsp:
             disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -548,10 +560,16 @@ tcp:
             keyFile: foobar
             ocsp:
               disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
           - certFile: foobar
             keyFile: foobar
             ocsp:
               disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
         peerCertURI: foobar
         spiffe:
           ids:
@@ -573,10 +591,16 @@ tcp:
             keyFile: foobar
             ocsp:
               disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
           - certFile: foobar
             keyFile: foobar
             ocsp:
               disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
         peerCertURI: foobar
         spiffe:
           ids:
@@ -614,6 +638,9 @@ tls:
       keyFile: foobar
       ocsp:
         disableStapling: true
+        responderOverrides:
+          name0: foobar
+          name1: foobar
       stores:
         - foobar
         - foobar
@@ -621,6 +648,9 @@ tls:
       keyFile: foobar
       ocsp:
         disableStapling: true
+        responderOverrides:
+          name0: foobar
+          name1: foobar
       stores:
         - foobar
         - foobar
@@ -670,6 +700,9 @@ tls:
         keyFile: foobar
         ocsp:
           disableStapling: true
+          responderOverrides:
+            name0: foobar
+            name1: foobar
       defaultGeneratedCert:
         resolver: foobar
         domain:
@@ -683,6 +716,9 @@ tls:
         keyFile: foobar
         ocsp:
           disableStapling: true
+          responderOverrides:
+            name0: foobar
+            name1: foobar
       defaultGeneratedCert:
         resolver: foobar
         domain:

@@ -351,12 +351,18 @@
         keyFile = "foobar"
         [http.serversTransports.ServersTransport0.certificates.ocsp]
           disableStapling = true
+          [http.serversTransports.ServersTransport0.certificates.ocsp.responderOverrides]
+            name0 = "foobar"
+            name1 = "foobar"
 
       [[http.serversTransports.ServersTransport0.certificates]]
         certFile = "foobar"
         keyFile = "foobar"
         [http.serversTransports.ServersTransport0.certificates.ocsp]
           disableStapling = true
+          [http.serversTransports.ServersTransport0.certificates.ocsp.responderOverrides]
+            name0 = "foobar"
+            name1 = "foobar"
       [http.serversTransports.ServersTransport0.forwardingTimeouts]
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
@@ -379,12 +385,18 @@
         keyFile = "foobar"
         [http.serversTransports.ServersTransport1.certificates.ocsp]
           disableStapling = true
+          [http.serversTransports.ServersTransport1.certificates.ocsp.responderOverrides]
+            name0 = "foobar"
+            name1 = "foobar"
 
       [[http.serversTransports.ServersTransport1.certificates]]
         certFile = "foobar"
         keyFile = "foobar"
         [http.serversTransports.ServersTransport1.certificates.ocsp]
           disableStapling = true
+          [http.serversTransports.ServersTransport1.certificates.ocsp.responderOverrides]
+            name0 = "foobar"
+            name1 = "foobar"
       [http.serversTransports.ServersTransport1.forwardingTimeouts]
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
@@ -486,12 +498,18 @@
           keyFile = "foobar"
           [tcp.serversTransports.TCPServersTransport0.tls.certificates.ocsp]
             disableStapling = true
+            [tcp.serversTransports.TCPServersTransport0.tls.certificates.ocsp.responderOverrides]
+              name0 = "foobar"
+              name1 = "foobar"
 
         [[tcp.serversTransports.TCPServersTransport0.tls.certificates]]
           certFile = "foobar"
           keyFile = "foobar"
           [tcp.serversTransports.TCPServersTransport0.tls.certificates.ocsp]
             disableStapling = true
+            [tcp.serversTransports.TCPServersTransport0.tls.certificates.ocsp.responderOverrides]
+              name0 = "foobar"
+              name1 = "foobar"
         [tcp.serversTransports.TCPServersTransport0.tls.spiffe]
           ids = ["foobar", "foobar"]
           trustDomain = "foobar"
@@ -510,12 +528,18 @@
           keyFile = "foobar"
           [tcp.serversTransports.TCPServersTransport1.tls.certificates.ocsp]
             disableStapling = true
+            [tcp.serversTransports.TCPServersTransport1.tls.certificates.ocsp.responderOverrides]
+              name0 = "foobar"
+              name1 = "foobar"
 
         [[tcp.serversTransports.TCPServersTransport1.tls.certificates]]
           certFile = "foobar"
           keyFile = "foobar"
           [tcp.serversTransports.TCPServersTransport1.tls.certificates.ocsp]
             disableStapling = true
+            [tcp.serversTransports.TCPServersTransport1.tls.certificates.ocsp.responderOverrides]
+              name0 = "foobar"
+              name1 = "foobar"
         [tcp.serversTransports.TCPServersTransport1.tls.spiffe]
           ids = ["foobar", "foobar"]
           trustDomain = "foobar"
@@ -556,6 +580,9 @@
     stores = ["foobar", "foobar"]
     [tls.certificates.ocsp]
       disableStapling = true
+      [tls.certificates.ocsp.responderOverrides]
+        name0 = "foobar"
+        name1 = "foobar"
 
   [[tls.certificates]]
     certFile = "foobar"
@@ -563,6 +590,9 @@
     stores = ["foobar", "foobar"]
     [tls.certificates.ocsp]
       disableStapling = true
+      [tls.certificates.ocsp.responderOverrides]
+        name0 = "foobar"
+        name1 = "foobar"
   [tls.options]
     [tls.options.Options0]
       minVersion = "foobar"
@@ -593,6 +623,9 @@
         keyFile = "foobar"
         [tls.stores.Store0.defaultCertificate.ocsp]
           disableStapling = true
+          [tls.stores.Store0.defaultCertificate.ocsp.responderOverrides]
+            name0 = "foobar"
+            name1 = "foobar"
       [tls.stores.Store0.defaultGeneratedCert]
         resolver = "foobar"
         [tls.stores.Store0.defaultGeneratedCert.domain]
@@ -604,6 +637,9 @@
         keyFile = "foobar"
         [tls.stores.Store1.defaultCertificate.ocsp]
           disableStapling = true
+          [tls.stores.Store1.defaultCertificate.ocsp.responderOverrides]
+            name0 = "foobar"
+            name1 = "foobar"
       [tls.stores.Store1.defaultGeneratedCert]
         resolver = "foobar"
         [tls.stores.Store1.defaultGeneratedCert.domain]
