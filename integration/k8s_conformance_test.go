@@ -17,6 +17,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/version"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -33,7 +34,6 @@ import (
 	"sigs.k8s.io/gateway-api/conformance/tests"
 	"sigs.k8s.io/gateway-api/conformance/utils/config"
 	ksuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
-	"sigs.k8s.io/gateway-api/pkg/features"
 	"sigs.k8s.io/yaml"
 )
 
@@ -195,19 +195,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			Contact:      []string{"@traefik/maintainers"},
 		},
 		ConformanceProfiles: sets.New(ksuite.GatewayHTTPConformanceProfileName),
-		SupportedFeatures: sets.New(
-			features.SupportGateway,
-			features.SupportGatewayPort8080,
-			features.SupportHTTPRoute,
-			features.SupportHTTPRouteQueryParamMatching,
-			features.SupportHTTPRouteMethodMatching,
-			features.SupportHTTPRoutePortRedirect,
-			features.SupportHTTPRouteSchemeRedirect,
-			features.SupportHTTPRouteHostRewrite,
-			features.SupportHTTPRoutePathRewrite,
-			features.SupportHTTPRoutePathRedirect,
-			features.SupportHTTPRouteResponseHeaderModification,
-		),
+		SupportedFeatures:   sets.New(gateway.SupportedFeatures()...),
 	})
 	require.NoError(s.T(), err)
 
