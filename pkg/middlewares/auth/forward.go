@@ -128,9 +128,9 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
-		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(req.Context(), logMessage)
+		logger.Debug().Msgf("Error calling %s. Cause %s", fa.address, err)
+		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
+
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -152,9 +152,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
+		logger.Debug().Msgf("Error calling %s. Cause: %s", fa.address, forwardErr)
+		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -163,9 +162,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	body, readError := io.ReadAll(forwardResponse.Body)
 	if readError != nil {
-		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
+		logger.Debug().Msgf("Error reading body %s. Cause: %s", fa.address, readError)
+		observability.SetStatusErrorf(req.Context(), "Error reading body %s. Cause: %s", fa.address, readError)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -199,9 +197,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
-				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
-				logger.Debug().Msg(logMessage)
-				observability.SetStatusErrorf(forwardReq.Context(), logMessage)
+				logger.Debug().Msgf("Error reading response location header %s. Cause: %s", fa.address, err)
+				observability.SetStatusErrorf(req.Context(), "Error reading response location header %s. Cause: %s", fa.address, err)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return

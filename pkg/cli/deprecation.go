@@ -214,7 +214,7 @@ type providers struct {
 	ETCD              *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Redis             *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	HTTP              *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	KubernetesIngress *ingress       `json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" file:"allowEmpty"`
+	KubernetesIngress *ingress       `json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
