@@ -33,6 +33,7 @@ rules:
       - gatewayclasses
       - gateways
       - httproutes
+      - grpcroutes
       - referencegrants
       - tcproutes
       - tlsroutes
@@ -46,6 +47,7 @@ rules:
       - gatewayclasses/status
       - gateways/status
       - httproutes/status
+      - grpcroutes/status
       - tcproutes/status
       - tlsroutes/status
     verbs:
