@@ -7,9 +7,11 @@ metadata:
 spec:
   ports:
     - name: web2
+      protocol: TCP
       port: 8000
       targetPort: web2
     - name: web
+      protocol: TCP
       port: 80
       targetPort: web
   selector:
@@ -48,9 +50,11 @@ metadata:
 spec:
   ports:
     - name: web2
+      protocol: TCP
       port: 8000
       targetPort: web2
     - name: web
+      protocol: TCP
       port: 80
       targetPort: web
   selector:
@@ -89,6 +93,7 @@ metadata:
 spec:
   ports:
     - name: web
+      protocol: TCP
       port: 8080
       targetPort: web
   selector:
