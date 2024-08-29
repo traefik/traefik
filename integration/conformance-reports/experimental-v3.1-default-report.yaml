@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1alpha1
-date: "-"
+date: '-'
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.1.0
 implementation:
