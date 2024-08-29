@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - '*'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'script/gcg/**'
 
 env:
   GO_VERSION: '1.22'
@@ -60,7 +64,7 @@ jobs:
 
       - name: Generate go test Slice
         id: test_split
-        uses: hashicorp-forge/go-test-split-action@v1
+        uses: hashicorp-forge/go-test-split-action@v2.0.0
         with:
           packages: ./integration
           total: ${{ matrix.parallel }}

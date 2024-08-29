@@ -591,6 +591,11 @@ Please take a look at the observability documentation for more information:
 - [Metrics](../observability/metrics/overview.md#addinternals)
 - [Tracing](../observability/tracing/overview.md#addinternals)
 
+#### Access logs
+
+In v3, the `ServiceURL` field is not an object anymore but a string representation.
+An update may be required if you index access logs.
+
 ## Dynamic Configuration Changes
 
 ### Router Rule Matchers

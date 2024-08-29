@@ -49,14 +49,14 @@ type Client interface {
 
 type clientWrapper struct {
 	clientset                   kclientset.Interface
-	factoryClusterScope         kinformers.SharedInformerFactory
+	clusterScopeFactory         kinformers.SharedInformerFactory
 	factoriesKube               map[string]kinformers.SharedInformerFactory
 	factoriesSecret             map[string]kinformers.SharedInformerFactory
 	factoriesIngress            map[string]kinformers.SharedInformerFactory
-	clusterFactory              kinformers.SharedInformerFactory
 	ingressLabelSelector        string
 	isNamespaceAll              bool
-	disableIngressClassInformer bool
+	disableIngressClassInformer bool // Deprecated.
+	disableClusterScopeInformer bool
 	watchedNamespaces           []string
 	serverVersion               *version.Version
 }
@@ -201,58 +201,52 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesSecret[ns] = factorySecret
 	}
 
-	c.factoryClusterScope = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
-	_, err = c.factoryClusterScope.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, ns := range namespaces {
 		c.factoriesIngress[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
 	}
-	c.factoryClusterScope.Start(stopCh)
 
 	for _, ns := range namespaces {
-		for typ, ok := range c.factoriesIngress[ns].WaitForCacheSync(stopCh) {
+		for t, ok := range c.factoriesIngress[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
 
-		for typ, ok := range c.factoriesKube[ns].WaitForCacheSync(stopCh) {
+		for t, ok := range c.factoriesKube[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
 
-		for typ, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
+		for t, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
 	}
 
-	for t, ok := range c.factoryClusterScope.WaitForCacheSync(stopCh) {
-		if !ok {
-			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
-		}
-	}
+	if !c.disableIngressClassInformer || !c.disableClusterScopeInformer {
+		c.clusterScopeFactory = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
 
-	if !c.disableIngressClassInformer {
-		c.clusterFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
-
-		_, err = c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		_, err = c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
-		c.clusterFactory.Start(stopCh)
+		if !c.disableClusterScopeInformer {
+			_, err = c.clusterScopeFactory.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
+		}
 
-		for typ, ok := range c.clusterFactory.WaitForCacheSync(stopCh) {
+		c.clusterScopeFactory.Start(stopCh)
+
+		for t, ok := range c.clusterScopeFactory.WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", typ)
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
 			}
 		}
 	}
@@ -370,18 +364,18 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 }
 
 func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
-	nodes, err := c.factoryClusterScope.Core().V1().Nodes().Lister().List(labels.Everything())
+	nodes, err := c.clusterScopeFactory.Core().V1().Nodes().Lister().List(labels.Everything())
 	exist, err := translateNotFoundError(err)
 	return nodes, exist, err
 }
 
 func (c *clientWrapper) GetIngressClasses() ([]*netv1.IngressClass, error) {
-	if c.clusterFactory == nil {
+	if c.clusterScopeFactory == nil {
 		return nil, errors.New("cluster factory not loaded")
 	}
 
 	var ics []*netv1.IngressClass
-	ingressClasses, err := c.clusterFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
+	ingressClasses, err := c.clusterScopeFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}

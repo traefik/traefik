@@ -180,7 +180,7 @@ spec:
               compress:
                 description: |-
                   Compress holds the compress middleware configuration.
-                  This middleware compresses responses before sending them to the client, using gzip compression.
+                  This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
                   More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/compress/
                 properties:
                   defaultEncoding:
@@ -188,6 +188,12 @@ spec:
                       the `Accept-Encoding` header is not in the request or contains
                       a wildcard (`*`).
                     type: string
+                  encodings:
+                    description: Encodings defines the list of supported compression
+                      algorithms.
+                    items:
+                      type: string
+                    type: array
                   excludedContentTypes:
                     description: |-
                       ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.

@@ -20,7 +20,7 @@ This provider works with [Docker (standalone) Engine](https://docs.docker.com/en
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker & Deploying / Exposing one Service"
 
     Enabling the docker provider
 
@@ -73,12 +73,14 @@ When using Docker Compose, labels are specified by the directive
 
 Traefik retrieves the private IP and port of containers from the Docker API.
 
-Port detection works as follows:
+Port detection for private communication works as follows:
 
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) a single port,
-  then Traefik uses this port for private communication.
+  then Traefik uses this port.
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
-  or does not expose any port, then you must manually specify which port Traefik should use for communication
+  then Traefik uses the lowest port.  E.g. if `80` and `8080` are exposed, Traefik will use `80`.
+- If a container does not expose any port, or the selection from multiple ports does not fit,
+  then you must manually specify which port Traefik should use for communication
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
   (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#services)).
 
@@ -132,6 +134,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - Accounting at container level, by exposing the socket on a another container than Traefik's.
         - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
         - SSH public key authentication (SSH is supported with Docker > 18.09)
+        - Authentication using HTTP Basic authentication through an HTTP proxy that exposes the Docker daemon socket.
 
     ??? info "More Resources and Examples"
 
@@ -214,6 +217,50 @@ See the [Docker API Access](#docker-api-access) section for more information.
     # ...
     ```
 
+??? example "Using HTTP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using HTTP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "http://127.0.0.1:2375"
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "http://127.0.0.1:2375"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=http://127.0.0.1:2375
+    # ...
+    ```
+
+??? example "Using TCP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using TCP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "tcp://127.0.0.1:2375"
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "tcp://127.0.0.1:2375"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # ...
+    ```
+
 ```yaml tab="File (YAML)"
 providers:
   docker:
@@ -227,6 +274,56 @@ providers:
 
 ```bash tab="CLI"
 --providers.docker.endpoint=unix:///var/run/docker.sock
+```
+
+### `username`
+
+_Optional, Default=""_
+
+Defines the username for Basic HTTP authentication.
+This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    username: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  username = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.username="foo"
+# ...
+```
+
+### `password`
+
+_Optional, Default=""_
+
+Defines the password for Basic HTTP authentication.
+This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    password: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  password = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.password="foo"
+# ...
 ```
 
 ### `useBindPortIP`
@@ -586,7 +683,7 @@ providers:
 _Optional, Default=false_
 
 If the parameter is set to `true`,
-any [servers load balancer](../routing/services/index.md#servers-load-balancer) defined for Docker containers is created 
+any [servers load balancer](../routing/services/index.md#servers-load-balancer) defined for Docker containers is created
 regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers.
 It also then stays alive and responsive even at times when it becomes empty,
 i.e. when all its children containers become unhealthy.

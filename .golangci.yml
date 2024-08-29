@@ -213,6 +213,7 @@ issues:
     - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
     - "should have a package comment, unless it's in another file for this package"
     - 'fmt.Sprintf can be replaced with string'
+    - 'SA1019: dockertypes.ContainerNode is deprecated'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:

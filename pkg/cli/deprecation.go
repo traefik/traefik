@@ -204,16 +204,17 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 }
 
 type providers struct {
-	Docker        *docker        `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Swarm         *swarm         `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Consul        *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	ConsulCatalog *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Nomad         *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Marathon      map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Rancher       map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	ETCD          *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Redis         *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	HTTP          *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Docker            *docker        `json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Swarm             *swarm         `json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Consul            *consul        `json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	ConsulCatalog     *consulCatalog `json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Nomad             *nomad         `json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Marathon          map[string]any `json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Rancher           map[string]any `json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	ETCD              *etcd          `json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Redis             *redis         `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	HTTP              *http          `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	KubernetesIngress *ingress       `json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" file:"allowEmpty"`
 }
 
 func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
@@ -243,6 +244,7 @@ func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
 	etcdIncompatible := p.ETCD.deprecationNotice(logger)
 	redisIncompatible := p.Redis.deprecationNotice(logger)
 	httpIncompatible := p.HTTP.deprecationNotice(logger)
+	p.KubernetesIngress.deprecationNotice(logger)
 	return incompatible ||
 		dockerIncompatible ||
 		consulIncompatible ||
@@ -455,6 +457,22 @@ func (h *http) deprecationNotice(logger zerolog.Logger) bool {
 	}
 
 	return incompatible
+}
+
+type ingress struct {
+	DisableIngressClassLookup *bool `json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty"`
+}
+
+func (i *ingress) deprecationNotice(logger zerolog.Logger) {
+	if i == nil {
+		return
+	}
+
+	if i.DisableIngressClassLookup != nil {
+		logger.Error().Msg("Kubernetes Ingress provider `disableIngressClassLookup` option has been deprecated in v3.1, and will be removed in the next major version." +
+			"Please use the `disableClusterScopeResources` option instead." +
+			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.1/migration/v3/#ingressclasslookup")
+	}
 }
 
 type experimental struct {
