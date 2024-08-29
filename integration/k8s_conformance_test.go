@@ -207,6 +207,8 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			features.SupportHTTPRoutePathRewrite,
 			features.SupportHTTPRoutePathRedirect,
 			features.SupportHTTPRouteResponseHeaderModification,
+			features.SupportHTTPRouteBackendProtocolH2C,
+			features.SupportHTTPRouteBackendProtocolWebSocket,
 		),
 	})
 	require.NoError(s.T(), err)
