@@ -170,7 +170,6 @@ Defines the list of query parameters to not redact.
 
 ```yaml tab="File (YAML)"
 tracing:
-  otlp:
     safeQueryParams:
       - bar
       - buz
@@ -178,10 +177,9 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.otlp]
     safeQueryParams = ["bar", "buz"]
 ```
 
 ```bash tab="CLI"
---tracing.otlp.safeQueryParams=bar,buz
+--tracing.safeQueryParams=bar,buz
 ```
