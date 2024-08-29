@@ -58,6 +58,23 @@ rules:
       - ingresses/status
     verbs:
       - update
+  - apiGroups:
+      - traefik.io
+      - traefik.containo.us
+    resources:
+      - middlewares
+      - middlewaretcps
+      - ingressroutes
+      - traefikservices
+      - ingressroutetcps
+      - ingressrouteudps
+      - tlsoptions
+      - tlsstores
+      - serverstransports
+    verbs:
+      - get
+      - list
+      - watch
 ```
 
 !!! info "You can find the reference for this file [there](../../reference/dynamic-configuration/kubernetes-crd/#rbac)."
