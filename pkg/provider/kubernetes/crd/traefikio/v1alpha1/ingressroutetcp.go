@@ -77,7 +77,7 @@ type ServiceTCP struct {
 	// hence fully terminating the connection.
 	// It is a duration in milliseconds, defaulting to 100.
 	// A negative value means an infinite deadline (i.e. the reading capability is never closed).
-	// Deprecated: TerminationDelay is not supported APIVersion traefik.io/v1, please use ServersTransport to configure the TerminationDelay instead.
+	// Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
 	TerminationDelay *int `json:"terminationDelay,omitempty"`
 	// ProxyProtocol defines the PROXY protocol configuration.
 	// More info: https://doc.traefik.io/traefik/v3.1/routing/services/#proxy-protocol
