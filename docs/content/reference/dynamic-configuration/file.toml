@@ -82,6 +82,7 @@
     [http.services.Service03]
       [http.services.Service03.mirroring]
         service = "foobar"
+        mirrorBody = true
         maxBodySize = 42
 
         [[http.services.Service03.mirroring.mirrors]]
