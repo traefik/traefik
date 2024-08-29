@@ -25,6 +25,9 @@ type Descriptor struct {
 
 	// Settings (optional)
 	Settings Settings `description:"Plugin's settings (works only for wasm plugins)." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
+
+	// Required (optional)
+	Required bool `description:"Plugin's requirement to start traefik" json:"required,omitempty" toml:"required,omitempty" yaml:"required,omitempty" export:"true"`
 }
 
 // LocalDescriptor The static part of a local plugin configuration.
