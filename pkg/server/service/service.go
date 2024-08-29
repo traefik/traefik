@@ -34,8 +34,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const defaultMirrorBody = true
-const defaultMaxBodySize int64 = -1
+const (
+	defaultMirrorBody        = true
+	defaultMaxBodySize int64 = -1
+)
 
 // RoundTripperGetter is a roundtripper getter interface.
 type RoundTripperGetter interface {
