@@ -99,38 +99,6 @@ helm install traefik traefik/traefik
       - "--log.level=DEBUG"
     ```
 
-### Exposing the Traefik dashboard
-
-This Helm chart does not expose the Traefik dashboard by default, for security concerns.
-Thus, there are multiple ways to expose the dashboard.
-For instance, the dashboard access could be achieved through a port-forward:
-
-```shell
-kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 9000:9000
-```
-
-It can then be reached at: `http://127.0.0.1:9000/dashboard/`
-
-Another way would be to apply your own configuration, for instance,
-by defining and applying an IngressRoute CRD (`kubectl apply -f dashboard.yaml`):
-
-```yaml
-# dashboard.yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: dashboard
-spec:
-  entryPoints:
-    - web
-  routes:
-    - match: Host(`traefik.localhost`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
-      kind: Rule
-      services:
-        - name: api@internal
-          kind: TraefikService
-```
-
 ## Use the Binary Distribution
 
 Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page.
