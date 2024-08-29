@@ -31,5 +31,7 @@ jobs:
       - name: Avoid generating webui
         run: touch webui/static/index.html
 
-      - name: K8s Gateway API conformance test
-        run: make test-gateway-api-conformance
+      - name: K8s Gateway API conformance test and report
+        run: |
+          make test-gateway-api-conformance
+          git diff --exit-code

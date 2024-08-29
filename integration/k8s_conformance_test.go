@@ -17,7 +17,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/version"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -191,7 +190,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			Organization: "traefik",
 			Project:      "traefik",
 			URL:          "https://traefik.io/",
-			Version:      version.Version,
+			Version:      *k8sConformanceTraefikVersion,
 			Contact:      []string{"@traefik/maintainers"},
 		},
 		ConformanceProfiles: sets.New(ksuite.GatewayHTTPConformanceProfileName, ksuite.GatewayGRPCConformanceProfileName),
