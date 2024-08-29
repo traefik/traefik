@@ -663,7 +663,7 @@ func (s *TracingSuite) TestNoInternals() {
 	err = json.Unmarshal(content, &out)
 	require.NoError(s.T(), err)
 
-	s.NotEmptyf(len(out.Traces), "expected at least one trace")
+	s.NotEmptyf(out.Traces, "expected at least one trace")
 
 	for _, t := range out.Traces {
 		baseURL, err := url.Parse("http://" + s.tempoIP + ":3200/api/traces/" + t.TraceID)
@@ -705,7 +705,7 @@ func (s *TracingSuite) checkTraceContent(expectedJSON []map[string]string) {
 	err = json.Unmarshal(content, &out)
 	require.NoError(s.T(), err)
 
-	s.NotEmptyf(len(out.Traces), "expected at least one trace")
+	s.NotEmptyf(out.Traces, "expected at least one trace")
 
 	var contents []string
 	for _, t := range out.Traces {
