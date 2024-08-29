@@ -229,10 +229,18 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/router.priority: "42"
     ```
 
+??? info "`traefik.ingress.kubernetes.io/router.rulesyntax`"
+
+    See [rule syntax](../routers/index.md#rulesyntax) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/router.pathmatcher`"
 
     Overrides the default router rule type used for a path.
-    Only path-related matcher name can be specified: `Path`, `PathPrefix`.
+    Only path-related matcher name should be specified: `Path`, `PathPrefix` or `PathRegexp`.
 
     Default `PathPrefix`
 

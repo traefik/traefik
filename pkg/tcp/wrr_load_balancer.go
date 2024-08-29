@@ -7,6 +7,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var errNoServersInPool = errors.New("no servers in the pool")
+
 type server struct {
 	Handler
 	weight int
@@ -34,8 +36,10 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	b.lock.Unlock()
 
 	if err != nil {
-		log.Error().Err(err).Msg("Error during load balancing")
-		conn.Close()
+		if !errors.Is(err, errNoServersInPool) {
+			log.Error().Err(err).Msg("Error during load balancing")
+		}
+		_ = conn.Close()
 		return
 	}
 
@@ -61,13 +65,13 @@ func (b *WRRLoadBalancer) AddWeightServer(serverHandler Handler, weight *int) {
 }
 
 func (b *WRRLoadBalancer) maxWeight() int {
-	max := -1
+	maximum := -1
 	for _, s := range b.servers {
-		if s.weight > max {
-			max = s.weight
+		if s.weight > maximum {
+			maximum = s.weight
 		}
 	}
-	return max
+	return maximum
 }
 
 func (b *WRRLoadBalancer) weightGcd() int {
@@ -91,7 +95,7 @@ func gcd(a, b int) int {
 
 func (b *WRRLoadBalancer) next() (Handler, error) {
 	if len(b.servers) == 0 {
-		return nil, errors.New("no servers in the pool")
+		return nil, errNoServersInPool
 	}
 
 	// The algo below may look messy, but is actually very simple
@@ -99,8 +103,8 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	// and allows us not to build an iterator every time we readjust weights
 
 	// Maximum weight across all enabled servers
-	max := b.maxWeight()
-	if max == 0 {
+	maximum := b.maxWeight()
+	if maximum == 0 {
 		return nil, errors.New("all servers have 0 weight")
 	}
 
@@ -112,7 +116,7 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 		if b.index == 0 {
 			b.currentWeight -= gcd
 			if b.currentWeight <= 0 {
-				b.currentWeight = max
+				b.currentWeight = maximum
 			}
 		}
 		srv := b.servers[b.index]
