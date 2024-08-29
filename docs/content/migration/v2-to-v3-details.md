@@ -541,6 +541,19 @@ it is now unsupported and would prevent Traefik to start.
 
 All Pilot related configuration should be removed from the static configuration.
 
+### Kubernetes Ingress Path Matching
+
+In v3, the Kubernetes Ingress default path matching does not support regexes anymore.
+
+#### Remediation
+
+Two levels of remediation are possible:
+
+- Interpret the default path matcher `PathPrefix` with v2 syntax.
+This can done globally for all routers with the [static configuration](#configure-the-default-syntax-in-static-configuration) or on a per-router basis by using the [traefik.ingress.kubernetes.io/router.rulesyntax](../routing/providers/kubernetes-ingress.md#annotations) annotation.
+
+- Adapt the path regex to be compatible with the Go regex syntax and change the default path matcher to use the `PathRegexp` matcher with the [`traefik.ingress.kubernetes.io/router.pathmatcher`](../routing/providers/kubernetes-ingress.md#annotations) annotation.
+
 ## Operations Changes
 
 ### Traefik RBAC Update
@@ -554,6 +567,16 @@ In v3, the `Content-Type` header is not auto-detected anymore when it is not set
 One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
 
 ### Observability
+
+#### Open Connections Metric
+
+In v3, the open connections metric has been replaced with a global one because it was erroneously at the HTTP level, and providing misleading information.
+While previously produced at the entryPoint, router, and service levels, it is now replaced with a global metric.
+The equivalent to `traefik_entrypoint_open_connections`, `traefik_router_open_connections` and `traefik_service_open_connections` is now `traefik_open_connections`.
+
+#### Configuration Reload Failures Metrics
+
+In v3, the `traefik_config_reloads_failure_total` and `traefik_config_last_reload_failure` metrics have been suppressed since they could not be implemented.
 
 #### gRPC Metrics
 

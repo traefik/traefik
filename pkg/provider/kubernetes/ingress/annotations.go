@@ -26,6 +26,7 @@ type RouterIng struct {
 	EntryPoints []string                 `json:"entryPoints,omitempty"`
 	Middlewares []string                 `json:"middlewares,omitempty"`
 	Priority    int                      `json:"priority,omitempty"`
+	RuleSyntax  string                   `json:"ruleSyntax,omitempty"`
 	TLS         *dynamic.RouterTLSConfig `json:"tls,omitempty" label:"allowEmpty"`
 }
 

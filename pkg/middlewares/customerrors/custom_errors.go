@@ -70,8 +70,8 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
 
 	if c.backendHandler == nil {
-		logger.Error().Msg("Error pages: no backend handler.")
-		observability.SetStatusErrorf(req.Context(), "Error pages: no backend handler.")
+		logger.Error().Msg("No backend handler.")
+		observability.SetStatusErrorf(req.Context(), "No backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
 	}
@@ -95,8 +95,8 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	pageReq, err := newRequest("http://" + req.Host + query)
 	if err != nil {
-		logger.Error().Err(err).Send()
-		observability.SetStatusErrorf(req.Context(), err.Error())
+		logger.Error().Msgf("Unable to create error page request: %v", err)
+		observability.SetStatusErrorf(req.Context(), "Unable to create error page request: %v", err)
 		http.Error(rw, http.StatusText(code), code)
 		return
 	}
