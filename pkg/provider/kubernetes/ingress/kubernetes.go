@@ -51,8 +51,10 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
-	DisableIngressClassLookup bool                `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
-	NativeLBByDefault         bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	// Deprecated: please use DisableClusterScopeResources.
+	DisableIngressClassLookup    bool `description:"Disables the lookup of IngressClasses (Deprecated, please use DisableClusterScopeResources)." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
+	DisableClusterScopeResources bool `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
+	NativeLBByDefault            bool `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -114,7 +116,8 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	cl.ingressLabelSelector = p.LabelSelector
-	cl.disableIngressClassInformer = p.DisableIngressClassLookup
+	cl.disableIngressClassInformer = p.DisableIngressClassLookup || p.DisableClusterScopeResources
+	cl.disableClusterScopeInformer = p.DisableClusterScopeResources
 	return cl, nil
 }
 
@@ -212,7 +215,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			Middlewares: map[string]*dynamic.Middleware{},
 			Services:    map[string]*dynamic.Service{},
 		},
-		TCP: &dynamic.TCPConfiguration{},
 	}
 
 	var ingressClasses []*netv1.IngressClass
@@ -591,6 +593,10 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		}
 
 		if svcConfig.Service.NodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
+			if p.DisableClusterScopeResources {
+				return nil, errors.New("nodes lookup is disabled")
+			}
+
 			nodes, nodesExists, nodesErr := client.GetNodes()
 			if nodesErr != nil {
 				return nil, nodesErr

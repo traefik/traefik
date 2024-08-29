@@ -46,7 +46,7 @@ type MiddlewareSpec struct {
 	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
 	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
-	Compress          *dynamic.Compress          `json:"compress,omitempty"`
+	Compress          *Compress                  `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                     `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
@@ -188,7 +188,7 @@ type RateLimit struct {
 	// It defaults to 0, which means no rate limiting.
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
 	// one needs to define a Period larger than a second.
-	Average int64 `json:"average,omitempty"`
+	Average *int64 `json:"average,omitempty"`
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
 	Period *intstr.IntOrString `json:"period,omitempty"`
@@ -199,6 +199,26 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Compress holds the compress middleware configuration.
+// This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
+// More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/compress/
+type Compress struct {
+	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
+	// `application/grpc` is always excluded.
+	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty"`
+	// IncludedContentTypes defines the list of content types to compare the Content-Type header of the responses before compressing.
+	IncludedContentTypes []string `json:"includedContentTypes,omitempty"`
+	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
+	// Default: 1024.
+	MinResponseBodyBytes *int `json:"minResponseBodyBytes,omitempty"`
+	// Encodings defines the list of supported compression algorithms.
+	Encodings []string `json:"encodings,omitempty"`
+	// DefaultEncoding specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
+	DefaultEncoding *string `json:"defaultEncoding,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

@@ -24,7 +24,9 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 
 	for _, route := range routes {
-		logger := log.Ctx(ctx).With().Str("tlsroute", route.Name).Str("namespace", route.Namespace).Logger()
+		logger := log.Ctx(ctx).With().
+			Str("tls_route", route.Name).
+			Str("namespace", route.Namespace).Logger()
 
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
@@ -82,7 +84,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			},
 		}
 		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
-			logger.Error().
+			logger.Warn().
 				Err(err).
 				Msg("Unable to update TLSRoute status")
 		}

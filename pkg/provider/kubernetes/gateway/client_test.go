@@ -268,7 +268,7 @@ func Test_gatewayStatusEquals(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := gatewayStatusEquals(test.statusA, test.statusB)
+			result := gatewayStatusEqual(test.statusA, test.statusB)
 
 			assert.Equal(t, test.expected, result)
 		})

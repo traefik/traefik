@@ -40,10 +40,11 @@ type Middleware struct {
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 
-	// Gateway API HTTPRoute filters middlewares.
-	RequestHeaderModifier *RequestHeaderModifier `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
-	RequestRedirect       *RequestRedirect       `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
-	URLRewrite            *URLRewrite            `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	// Gateway API filter middlewares.
+	RequestHeaderModifier  *HeaderModifier  `json:"requestHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	ResponseHeaderModifier *HeaderModifier  `json:"responseHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestRedirect        *RequestRedirect `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	URLRewrite             *URLRewrite      `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -165,8 +166,7 @@ func (c *CircuitBreaker) SetDefaults() {
 // +k8s:deepcopy-gen=true
 
 // Compress holds the compress middleware configuration.
-// This middleware compresses responses before sending them to the client, using gzip compression.
-// More info: https://doc.traefik.io/traefik/v3.1/middlewares/http/compress/
+// This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
 type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
 	// `application/grpc` is always excluded.
@@ -176,8 +176,14 @@ type Compress struct {
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
+	// Encodings defines the list of supported compression algorithms.
+	Encodings []string `json:"encodings,omitempty" toml:"encodings,omitempty" yaml:"encodings,omitempty" export:"true"`
 	// DefaultEncoding specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
 	DefaultEncoding string `json:"defaultEncoding,omitempty" toml:"defaultEncoding,omitempty" yaml:"defaultEncoding,omitempty" export:"true"`
+}
+
+func (c *Compress) SetDefaults() {
+	c.Encodings = []string{"zstd", "br", "gzip"}
 }
 
 // +k8s:deepcopy-gen=true
@@ -241,6 +247,9 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
+	// HeaderField defines a header field to store the authenticated user.
+	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#headerfield
+	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -686,8 +695,8 @@ type Users []string
 
 // +k8s:deepcopy-gen=true
 
-// RequestHeaderModifier holds the request header modifier configuration.
-type RequestHeaderModifier struct {
+// HeaderModifier holds the request/response header modifier configuration.
+type HeaderModifier struct {
 	Set    map[string]string `json:"set,omitempty"`
 	Add    map[string]string `json:"add,omitempty"`
 	Remove []string          `json:"remove,omitempty"`

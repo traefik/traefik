@@ -13,9 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const (
-	typeName = "RequestRedirect"
-)
+const typeName = "RequestRedirect"
 
 type redirect struct {
 	name string

@@ -287,6 +287,11 @@ providers:
 
 _Optional, Default: false_
 
+??? warning "Deprecated"
+
+    The Kubernetes Ingress provider option `disableIngressClassLookup` has been deprecated in v3.1, and will be removed in the next major version.
+	Please use the `disableClusterScopeResources` option instead.
+
 If the parameter is set to `true`,
 Traefik will not discover IngressClasses in the cluster.
 By doing so, it alleviates the requirement of giving Traefik the rights to look IngressClasses up.
@@ -310,6 +315,33 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesingress.disableingressclasslookup=true
+```
+
+### `disableClusterScopeResources`
+
+_Optional, Default: false_
+
+When this parameter is set to `true`,
+Traefik will not discover cluster scope resources (`IngressClass` and `Nodes`).
+By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.
+Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).
+This will also prevent from using the `NodePortLB` options on services.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    disableClusterScopeResources: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  disableClusterScopeResources = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.disableClusterScopeResources=true
 ```
 
 ### `ingressEndpoint`

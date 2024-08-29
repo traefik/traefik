@@ -85,6 +85,8 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    username = "foobar"
+    password = "foobar"
     endpoint = "foobar"
     httpClientTimeout = "42s"
     [providers.docker.tls]
@@ -100,6 +102,8 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    username = "foobar"
+    password = "foobar"
     endpoint = "foobar"
     httpClientTimeout = "42s"
     refreshSeconds = "42s"
@@ -124,6 +128,7 @@
     allowEmptyServices = true
     allowExternalNameServices = true
     disableIngressClassLookup = true
+    disableClusterScopeResources = true
     nativeLBByDefault = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
@@ -141,6 +146,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     nativeLBByDefault = true
+    disableClusterScopeResources = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

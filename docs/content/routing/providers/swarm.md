@@ -12,9 +12,17 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
+One of the best feature of Traefik is to delegate the routing configuration to the application level.
+With Docker Swarm, Traefik can leverage labels attached to a service to generate routing rules.
+
+!!! warning "Labels & sensitive data"
+
+    We recommend to *not* use labels to store sensitive data (certificates, credentials, etc).
+    Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
+
 ## Configuration Examples
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
 
     Enabling the docker provider (Swarm Mode)
 
@@ -42,7 +50,9 @@ Attach labels to your containers and let Traefik do the rest!
     --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+    Attach labels to services (not containers) while in Swarm mode (in your Docker compose file).
+    When there is only one service, and the router does not specify a service,
+    then that service is automatically assigned to the router.
 
     ```yaml
     version: "3"
@@ -58,6 +68,30 @@ Attach labels to your containers and let Traefik do the rest!
         While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
         Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
+
+??? example "Specify a Custom Port for the Container"
+
+    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        deploy:
+          labels:
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.routers.my-container.service=my-service"
+            # Tell Traefik to use the port 12345 to connect to `my-container`
+            - traefik.http.services.my-service.loadbalancer.server.port=12345
+    ```
+
+    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
+        By default, Traefik uses the lowest exposed port of a container as detailed in
+        [Port Detection](../providers/swarm.md#port-detection) of the Swarm provider.
+
+        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
+        overrides this behavior.
 
 ??? example "Specifying more than one router and service per container"
 
@@ -224,7 +258,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection)).
+    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/swarm.md#port-detection)).
     {: #port }
 
     ```yaml
