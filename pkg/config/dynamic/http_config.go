@@ -88,7 +88,7 @@ type Mirroring struct {
 
 // SetDefaults Default values for a WRRService.
 func (m *Mirroring) SetDefaults() {
-	var defaultMirrorBody = true
+	defaultMirrorBody := true
 	m.MirrorBody = &defaultMirrorBody
 	var defaultMaxBodySize int64 = -1
 	m.MaxBodySize = &defaultMaxBodySize

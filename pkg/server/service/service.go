@@ -32,8 +32,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
 )
 
-const defaultMirrorBody = true
-const defaultMaxBodySize int64 = -1
+const (
+	defaultMirrorBody        = true
+	defaultMaxBodySize int64 = -1
+)
 
 // RoundTripperGetter is a roundtripper getter interface.
 type RoundTripperGetter interface {
