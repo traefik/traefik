@@ -516,7 +516,7 @@ func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, erro
 	return api.NewClient(&config)
 }
 
-// Copied from the Kubernetes provider
+// Copied from the Kubernetes provider.
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan *api.Events) chan *api.Events {
 	if throttleDuration == 0 {
 		return nil
