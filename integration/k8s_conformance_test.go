@@ -228,8 +228,8 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	require.NoError(s.T(), err)
 	s.T().Logf("Conformance report:\n%s", string(rawReport))
 
-	require.NoError(s.T(), os.MkdirAll("./conformance-reports", 0o755))
-	outFile := filepath.Join("conformance-reports", fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
+	require.NoError(s.T(), os.MkdirAll("./conformance-reports/"+report.GatewayAPIVersion, 0o755))
+	outFile := filepath.Join("conformance-reports/"+report.GatewayAPIVersion, fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
 	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
 	s.T().Logf("Report written to: %s", outFile)
 }
