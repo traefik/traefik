@@ -606,10 +606,8 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 	ensureWorkingDirectoryIsClean()
 
-	file := s.adaptFile("fixtures/access_log/access_log_ping.toml", struct{}{})
-
 	// Start Traefik.
-	s.traefikCmd(withConfigFile(file))
+	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	defer func() {
 		traefikLog, err := os.ReadFile(traefikTestLogFile)
@@ -619,7 +617,7 @@ func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 
 	// waitForTraefik makes at least one call to the rawdata api endpoint,
 	// but the logs for this endpoint are ignored in checkAccessLogOutput.
-	s.waitForTraefik("customPing")
+	s.waitForTraefik("service3")
 
 	s.checkStatsForLogFile()
 
@@ -636,8 +634,9 @@ func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 	require.NoError(s.T(), err)
 
 	// Make some requests on the custom ping router.
-	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/ping", nil)
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8010/ping", nil)
 	require.NoError(s.T(), err)
+	req.Host = "ping.docker.local"
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	require.NoError(s.T(), err)
@@ -648,6 +647,25 @@ func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 	count := s.checkAccessLogOutput()
 
 	require.Equal(s.T(), 0, count)
+
+	// Make some requests on the custom ping router in error.
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8010/ping-error", nil)
+	require.NoError(s.T(), err)
+	req.Host = "ping-error.docker.local"
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.BodyContains("X-Forwarded-Host: ping-error.docker.local"))
+	require.NoError(s.T(), err)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.BodyContains("X-Forwarded-Host: ping-error.docker.local"))
+	require.NoError(s.T(), err)
+
+	// Here we verify that the remove of observability doesn't break the metrics for the error page service.
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
+	require.NoError(s.T(), err)
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("service3"))
+	require.NoError(s.T(), err)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyNotContains("service=\"ping"))
+	require.NoError(s.T(), err)
 
 	// Verify no other Traefik problems.
 	s.checkNoOtherTraefikProblems()

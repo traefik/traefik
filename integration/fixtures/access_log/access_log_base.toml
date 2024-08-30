@@ -22,9 +22,16 @@
     address = ":8008"
   [entryPoints.preflight]
     address = ":8009"
+  [entryPoints.ping]
+    address = ":8010"
 
 [api]
   insecure = true
+
+[ping]
+
+[metrics]
+  [metrics.prometheus]
 
 [providers]
   [providers.docker]
