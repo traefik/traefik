@@ -277,6 +277,158 @@ X-Forwarded-Server: traefik-6b66d45748-ns8mt
 X-Real-Ip: 10.42.1.0
 ```
 
+### GRPC
+
+The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 
+It allows the specification of routing rules that direct GRPC requests to the appropriate Kubernetes backend services. 
+
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/grpcroute/).
+
+For example, the following manifests configure an echo backend and its corresponding `GRPCRoute`, 
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `echo.localhost:80` address.
+
+```yaml tab="GRPCRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GRPCRoute
+metadata:
+  name: echo
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: http
+      kind: Gateway
+
+  hostnames:
+    - echo.localhost
+
+  rules:
+    - matches:
+        - method:
+            type: Exact
+            service: grpc.reflection.v1alpha.ServerReflection
+
+        - method:
+            type: Exact
+            service: gateway_api_conformance.echo_basic.grpcecho.GrpcEcho
+            method: Echo
+
+      backendRefs:
+        - name: echo
+          namespace: default
+          port: 3000
+```
+
+```yaml tab="Echo deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: echo
+
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+        - name: echo-basic
+          image: gcr.io/k8s-staging-gateway-api/echo-basic
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: GRPC_ECHO_SERVER
+              value: "1"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+  namespace: default
+spec:
+  selector:
+    app: echo
+
+  ports:
+    - port: 3000
+```
+
+Once everything is deployed, sending a GRPC request to the HTTP endpoint should return the following responses:
+
+```shell
+$ grpcurl -plaintext echo.localhost:80 gateway_api_conformance.echo_basic.grpcecho.GrpcEcho/Echo
+
+{
+  "assertions": {
+    "fullyQualifiedMethod": "/gateway_api_conformance.echo_basic.grpcecho.GrpcEcho/Echo",
+    "headers": [
+      {
+        "key": "x-real-ip",
+        "value": "10.42.2.0"
+      },
+      {
+        "key": "x-forwarded-server",
+        "value": "traefik-74b4cf85d8-nkqqf"
+      },
+      {
+        "key": "x-forwarded-port",
+        "value": "80"
+      },
+      {
+        "key": "x-forwarded-for",
+        "value": "10.42.2.0"
+      },
+      {
+        "key": "grpc-accept-encoding",
+        "value": "gzip"
+      },
+      {
+        "key": "user-agent",
+        "value": "grpcurl/1.9.1 grpc-go/1.61.0"
+      },
+      {
+        "key": "content-type",
+        "value": "application/grpc"
+      },
+      {
+        "key": "x-forwarded-host",
+        "value": "echo.localhost:80"
+      },
+      {
+        "key": ":authority",
+        "value": "echo.localhost:80"
+      },
+      {
+        "key": "accept-encoding",
+        "value": "gzip"
+      },
+      {
+        "key": "x-forwarded-proto",
+        "value": "http"
+      }
+    ],
+    "authority": "echo.localhost:80",
+    "context": {
+      "namespace": "default",
+      "pod": "echo-78f76675cf-9k7rf"
+    }
+  }
+}
+```
+
 ### TCP
 
 !!! info "Experimental Channel"
