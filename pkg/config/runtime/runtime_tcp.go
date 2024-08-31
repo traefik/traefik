@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync/atomic"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -87,6 +88,8 @@ type TCPServiceInfo struct {
 	// It is the caller's responsibility to set the initial status.
 	Status string   `json:"status,omitempty"`
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
+
+	serverStatus map[string]*atomic.Bool // keyed by server URL, UP or DOWN
 }
 
 // AddError adds err to s.Err, if it does not already exist.
@@ -108,6 +111,22 @@ func (s *TCPServiceInfo) AddError(err error, critical bool) {
 	if s.Status != StatusDisabled {
 		s.Status = StatusWarning
 	}
+}
+
+// UpdateServerStatus sets the status of the server in the TCPServiceInfo.
+func (s *TCPServiceInfo) UpdateServerStatus(server string, status bool) {
+	if s.serverStatus == nil {
+		s.serverStatus = make(map[string]*atomic.Bool)
+	}
+
+	if s, exists := s.serverStatus[server]; exists {
+		s.Store(status)
+		return
+	}
+
+	v := &atomic.Bool{}
+	v.Store(status)
+	s.serverStatus[server] = v
 }
 
 // TCPMiddlewareInfo holds information about a currently running middleware.

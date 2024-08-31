@@ -1,8 +1,10 @@
 package tcp
 
 import (
+	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 
 	"github.com/rs/zerolog/log"
 )
@@ -20,6 +22,11 @@ type WRRLoadBalancer struct {
 	lock          sync.Mutex
 	currentWeight int
 	index         int
+	// status is a record of which child services of the Balancer are healthy.
+	status map[string]*atomic.Bool
+	// updaters is the list of hooks that are run (to update the Balancer
+	// parent(s)), whenever the Balancer status changes.
+	updaters []func(bool)
 }
 
 // NewWRRLoadBalancer creates a new WRRLoadBalancer.
@@ -123,5 +130,33 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 		if srv.weight >= b.currentWeight {
 			return srv, nil
 		}
+	}
+}
+
+// SetStatus sets status (UP or DOWN) of a target server.
+func (b *WRRLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
+	statusString := "DOWN"
+	if up {
+		statusString = "UP"
+	}
+
+	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %s", childName, statusString)
+
+	currentStatus, exists := b.status[childName]
+	if !exists {
+		s := &atomic.Bool{}
+		s.Store(up)
+		b.status[childName] = s
+		return
+	}
+
+	if !currentStatus.CompareAndSwap(!up, up) {
+		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", statusString)
+		return
+	}
+
+	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", statusString)
+	for _, fn := range b.updaters {
+		fn(up)
 	}
 }
