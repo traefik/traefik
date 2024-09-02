@@ -290,6 +290,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		Mirroring: &dynamic.Mirroring{
 			Service:     fullNameMain,
 			Mirrors:     mirrorServices,
+			MirrorBody:  tService.Spec.Mirroring.MirrorBody,
 			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
 		},
 	}
