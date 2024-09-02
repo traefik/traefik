@@ -1,0 +1,7 @@
+Compile per docs/content/contributing/building-testing.md:
+
+    GO111MODULE=on /usr/lib/go-1.21/bin/go build ./cmd/traefik
+
+Run like:
+
+    ./traefik --configfile zstd-test/traefik.yml
