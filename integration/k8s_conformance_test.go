@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -227,6 +228,11 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	// However, we can track the date of the report thanks to the commit.
 	// TODO: to publish this report automatically, we have to figure out how to handle the date diff.
 	report.Date = "-"
+
+	// Ordering profile reports for the serialized report to be comparable.
+	slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
+		return strings.Compare(a.Name, b.Name)
+	})
 
 	rawReport, err := yaml.Marshal(report)
 	require.NoError(s.T(), err)
