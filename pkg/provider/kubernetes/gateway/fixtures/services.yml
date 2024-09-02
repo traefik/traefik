@@ -7,9 +7,11 @@ metadata:
 spec:
   ports:
     - name: web2
+      protocol: TCP
       port: 8000
       targetPort: web2
     - name: web
+      protocol: TCP
       port: 80
       targetPort: web
   selector:
@@ -48,9 +50,11 @@ metadata:
 spec:
   ports:
     - name: web2
+      protocol: TCP
       port: 8000
       targetPort: web2
     - name: web
+      protocol: TCP
       port: 80
       targetPort: web
   selector:
@@ -89,6 +93,7 @@ metadata:
 spec:
   ports:
     - name: web
+      protocol: TCP
       port: 8080
       targetPort: web
   selector:
@@ -317,3 +322,105 @@ status:
     ingress:
       - hostname: foo.bar
       - ip: 1.2.3.4
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-h2c
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-h2c
+
+addressType: IPv4
+ports:
+  - name: h2c
+    protocol: TCP
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.13
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-h2c
+  namespace: default
+
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      name: h2c
+      appProtocol: kubernetes.io/h2c
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-ws
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-ws
+
+addressType: IPv4
+ports:
+  - name: ws
+    protocol: TCP
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.14
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-ws
+  namespace: default
+
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      name: ws
+      appProtocol: kubernetes.io/ws
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-wss
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-wss
+
+addressType: IPv4
+ports:
+  - name: wss
+    protocol: TCP
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.15
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-wss
+  namespace: default
+
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      name: wss
+      appProtocol: kubernetes.io/wss

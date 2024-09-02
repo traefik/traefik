@@ -407,7 +407,10 @@ func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBacke
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	protocol := getProtocol(*svcPort)
+	protocol, err := getProtocol(*svcPort)
+	if err != nil {
+		return nil, err
+	}
 
 	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
@@ -702,13 +705,28 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 	}, nil
 }
 
-func getProtocol(portSpec corev1.ServicePort) string {
+func getProtocol(portSpec corev1.ServicePort) (string, error) {
+	if portSpec.Protocol != "TCP" {
+		return "", errors.New("only support TCP protocol")
+	}
+
 	protocol := "http"
 	if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
 		protocol = "https"
 	}
 
-	return protocol
+	if portSpec.AppProtocol != nil {
+		switch *portSpec.AppProtocol {
+		case "kubernetes.io/h2c":
+			protocol = "h2c"
+		case "kubernetes.io/ws":
+			protocol = "http"
+		case "kubernetes.io/wss":
+			protocol = "https"
+		}
+	}
+
+	return protocol, nil
 }
 
 func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
