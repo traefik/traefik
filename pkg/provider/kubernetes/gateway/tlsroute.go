@@ -195,7 +195,7 @@ func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routeKey strin
 }
 
 func (p *Provider) loadTLSService(route *gatev1alpha2.TLSRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
-	kind := ptr.Deref(backendRef.Kind, "Service")
+	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
 	if backendRef.Group != nil && *backendRef.Group != "" {
@@ -220,7 +220,7 @@ func (p *Provider) loadTLSService(route *gatev1alpha2.TLSRoute, backendRef gatev
 		}
 	}
 
-	if group != groupCore || kind != "Service" {
+	if group != groupCore || kind != kindService {
 		name, err := p.loadTCPBackendRef(backendRef)
 		if err != nil {
 			return serviceName, nil, &metav1.Condition{
