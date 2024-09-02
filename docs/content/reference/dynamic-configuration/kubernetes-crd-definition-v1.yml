@@ -2506,6 +2506,11 @@ spec:
                       Default value is -1, which means unlimited size.
                     format: int64
                     type: integer
+                  mirrorBody:
+                    description: |-
+                      MirrorBody defines whether the body of the request should be mirrored.
+                      Default value is true.
+                    type: boolean
                   mirrors:
                     description: Mirrors defines the list of mirrors where Traefik
                       will duplicate the traffic.
