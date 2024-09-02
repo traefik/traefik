@@ -1,0 +1,20 @@
+tcp:
+  routers:
+    test:
+      # Get wildcard LE EC certificate and use that
+      #rule: "Host(``)"
+      rule: "ClientIP(`0.0.0.0/0`)"
+      middlewares:
+        - zstd-decompress
+      service: test
+
+  middlewares:
+    zstd-decompress:
+      streamCompress:
+        algorithm: zstd
+
+  services:
+    test:
+      loadBalancer:
+        servers:
+          - address: 54.247.112.191:5222

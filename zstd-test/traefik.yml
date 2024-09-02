@@ -1,0 +1,157 @@
+#experimental:
+#  #plugins:
+#      #version: v0.0.1
+#  localPlugins:
+#    tracking-cookie:
+#      moduleName: github.com/moya-app/tracking-cookie
+
+################################################################
+#
+# Configuration sample for Traefik v2.
+#
+# For Traefik v1: https://github.com/traefik/traefik/blob/v1.7/traefik.sample.toml
+#
+################################################################
+
+################################################################
+# Global configuration
+################################################################
+#global:
+
+################################################################
+# EntryPoints configuration
+################################################################
+
+# EntryPoints definition
+#
+# Optional
+#
+entryPoints:
+  xmppzstd:
+    address: :5225
+
+################################################################
+# Traefik logs configuration
+################################################################
+
+# Traefik logs
+# Enabled by default and log to stdout
+#
+# Optional
+#
+log:
+  # Log level
+  #
+  # Optional
+  # Default: "ERROR"
+  #
+  level: DEBUG
+
+  # Sets the filepath for the traefik log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+#  filePath: log/traefik.log
+
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+#  format: json
+
+################################################################
+# Access logs configuration
+################################################################
+
+# Enable access logs
+# By default it will write to stdout and produce logs in the textual
+# Common Log Format (CLF), extended with additional fields.
+#
+# Optional
+#
+accessLog:
+#  # Sets the file path for the access log. If not specified, stdout will be used.
+#  # Intermediate directories are created if necessary.
+#  #
+#  # Optional
+#  # Default: os.Stdout
+#  #
+#  # TODO: Output to a file which goes straight in to rsyslogd which then sends it to kafka
+##  filePath: /path/to/log/log.txt
+#
+#  # Format is either "json" or "common".
+#  #
+#  # Optional
+#  # Default: "common"
+#  #
+  format: json
+#  # Only flush periodically
+#  #bufferingSize: 100
+  fields:
+    #defaultMode: keep
+    names:
+      # This is from BasicAuth plugin only has anything if traefik did the auth
+      ClientUsername: drop
+      # Same is split in host/port
+      ClientAddr: drop
+    headers:
+      defaultMode: drop
+      # Add in extra headers that are useful for logging/analysis purposes
+      names:
+        Authorization: keep
+        User-Agent: keep
+        Cookie: keep
+        Set-Cookie: keep
+
+
+################################################################
+# API and dashboard configuration
+################################################################
+
+# Enable API and dashboard
+#
+# Optional
+#
+#api:
+  # Enable the API in insecure mode
+  #
+  # Optional
+  # Default: false
+  #
+#  insecure: true
+
+  # Enabled Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+#  dashboard: false
+
+################################################################
+# Ping configuration
+################################################################
+
+# Enable ping
+#ping:
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+#  entryPoint: traefik
+
+################################################################
+# Docker configuration backend
+################################################################
+
+providers:
+  # TODO: Could keep globally in sync by having the config stored somewhere
+  # reliable (eg S3) and use http provider here to pull it. Config file can be
+  # yaml.
+  file:
+    filename: zstd-test/routing.yml
+    watch: true
+
