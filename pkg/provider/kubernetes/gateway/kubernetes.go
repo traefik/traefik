@@ -32,6 +32,7 @@ import (
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	"sigs.k8s.io/gateway-api/pkg/features"
 )
 
 const (
@@ -48,6 +49,23 @@ const (
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 )
+
+func SupportedFeatures() []features.SupportedFeature {
+	return []features.SupportedFeature{
+		features.SupportGateway,
+		features.SupportGatewayPort8080,
+		features.SupportGRPCRoute,
+		features.SupportHTTPRoute,
+		features.SupportHTTPRouteQueryParamMatching,
+		features.SupportHTTPRouteMethodMatching,
+		features.SupportHTTPRoutePortRedirect,
+		features.SupportHTTPRouteSchemeRedirect,
+		features.SupportHTTPRouteHostRewrite,
+		features.SupportHTTPRoutePathRewrite,
+		features.SupportHTTPRoutePathRedirect,
+		features.SupportHTTPRouteResponseHeaderModification,
+	}
+}
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -310,6 +328,11 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		return nil
 	}
 
+	supportedFeatures := []gatev1.SupportedFeature{}
+	for _, feature := range SupportedFeatures() {
+		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature(feature))
+	}
+
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
 		if gatewayClass.Spec.ControllerName != controllerName {
@@ -327,6 +350,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 				Message:            "Handled by Traefik controller",
 				LastTransitionTime: metav1.Now(),
 			}),
+			SupportedFeatures: supportedFeatures,
 		}
 
 		if err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, status); err != nil {
