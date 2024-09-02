@@ -32,6 +32,10 @@ metadata:
   name: TCP-app-1
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoami
