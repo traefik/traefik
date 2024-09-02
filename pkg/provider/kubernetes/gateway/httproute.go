@@ -211,7 +211,7 @@ func (p *Provider) loadWRRService(conf *dynamic.Configuration, routeKey string, 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
 func (p *Provider) loadService(route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, *metav1.Condition) {
-	kind := ptr.Deref(backendRef.Kind, "Service")
+	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
 	if backendRef.Group != nil && *backendRef.Group != "" {
@@ -236,7 +236,7 @@ func (p *Provider) loadService(route *gatev1.HTTPRoute, backendRef gatev1.HTTPBa
 		}
 	}
 
-	if group != groupCore || kind != "Service" {
+	if group != groupCore || kind != kindService {
 		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
 		if err != nil {
 			return serviceName, nil, &metav1.Condition{
