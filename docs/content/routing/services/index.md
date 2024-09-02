@@ -1222,7 +1222,7 @@ http:
         service: appv1
         # mirrorBody defines whether the request body should be mirrored.
         # Default value is true.
-        mirrorBody: true
+        mirrorBody: false
         # maxBodySize is the maximum size allowed for the body of the request.
         # If the body is larger, the request is not mirrored.
         # Default value is -1, which means unlimited size.
@@ -1254,7 +1254,7 @@ http:
       maxBodySize = 1024
       # mirrorBody defines whether the request body should be mirrored.
       # Default value is true.
-      mirrorBody = true
+      mirrorBody = false
     [[http.services.mirrored-api.mirroring.mirrors]]
       name = "appv2"
       percent = 10
