@@ -1004,8 +1004,13 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	_, err = rand.Read(body5)
 	require.NoError(s.T(), err)
 
-	verifyBody := func(req *http.Request) {
+	// forceOkResponse is used to avoid errors when Content-Length is set but no body is received
+	verifyBody := func(req *http.Request, canBodyBeEmpty bool) (forceOkResponse bool) {
 		b, _ := io.ReadAll(req.Body)
+		if canBodyBeEmpty && req.Header.Get("NoBody") == "true" {
+			require.Empty(s.T(), b)
+			return true
+		}
 		switch req.Header.Get("Size") {
 		case "20":
 			require.Equal(s.T(), body20, b)
@@ -1014,20 +1019,25 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 		default:
 			s.T().Fatal("Size header not present")
 		}
+		return false
 	}
 
 	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		verifyBody(req)
+		verifyBody(req, false)
 		atomic.AddInt32(&count, 1)
 	}))
 
 	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		verifyBody(req)
+		if verifyBody(req, true) {
+			rw.WriteHeader(http.StatusOK)
+		}
 		atomic.AddInt32(&countMirror1, 1)
 	}))
 
 	mirror2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		verifyBody(req)
+		if verifyBody(req, true) {
+			rw.WriteHeader(http.StatusOK)
+		}
 		atomic.AddInt32(&countMirror2, 1)
 	}))
 
@@ -1104,6 +1114,28 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	assert.Equal(s.T(), int32(10), countTotal)
 	assert.Equal(s.T(), int32(0), val1)
 	assert.Equal(s.T(), int32(0), val2)
+
+	atomic.StoreInt32(&count, 0)
+	atomic.StoreInt32(&countMirror1, 0)
+	atomic.StoreInt32(&countMirror2, 0)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithoutBody", bytes.NewBuffer(body20))
+	require.NoError(s.T(), err)
+	req.Header.Set("Size", "20")
+	req.Header.Set("NoBody", "true")
+	for range 10 {
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+	}
+
+	countTotal = atomic.LoadInt32(&count)
+	val1 = atomic.LoadInt32(&countMirror1)
+	val2 = atomic.LoadInt32(&countMirror2)
+
+	assert.Equal(s.T(), int32(10), countTotal)
+	assert.Equal(s.T(), int32(1), val1)
+	assert.Equal(s.T(), int32(5), val2)
 }
 
 func (s *SimpleSuite) TestMirrorCanceled() {
