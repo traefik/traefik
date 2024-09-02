@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -11,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
@@ -109,74 +111,159 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1alpha2.TL
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
-	router := dynamic.TCPRouter{
-		RuleSyntax:  "v3",
-		Rule:        hostSNIRule(hostnames),
-		EntryPoints: []string{listener.EPName},
-		TLS: &dynamic.RouterTCPTLSConfig{
-			Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
-		},
-	}
-
-	// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-	routeKey := provider.Normalize(route.Namespace + "-" + route.Name + "-" + listener.GWName + "-" + listener.EPName)
-	routerName := makeRouterName(router.Rule, routeKey)
-
-	var ruleServiceNames []string
-	for i, routeRule := range route.Spec.Rules {
+	for ri, routeRule := range route.Spec.Rules {
 		if len(routeRule.BackendRefs) == 0 {
 			// Should not happen due to validation.
 			// https://github.com/kubernetes-sigs/gateway-api/blob/v0.4.0/apis/v1alpha2/tlsroute_types.go#L120
 			continue
 		}
 
-		wrrService, subServices, err := p.loadTCPServices(route.Namespace, routeRule.BackendRefs)
+		router := dynamic.TCPRouter{
+			RuleSyntax:  "v3",
+			Rule:        hostSNIRule(hostnames),
+			EntryPoints: []string{listener.EPName},
+			TLS: &dynamic.RouterTCPTLSConfig{
+				Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
+			},
+		}
+
+		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		// Routing criteria should be introduced at some point.
+		routerName := makeRouterName("", routeKey)
+
+		if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0]) {
+			router.Service = string(routeRule.BackendRefs[0].Name)
+			conf.TCP.Routers[routerName] = &router
+			continue
+		}
+
+		var serviceCondition *metav1.Condition
+		router.Service, serviceCondition = p.loadTLSWRRService(conf, routerName, routeRule.BackendRefs, route)
+		if serviceCondition != nil {
+			condition = *serviceCondition
+		}
+
+		conf.TCP.Routers[routerName] = &router
+	}
+
+	return conf, condition
+}
+
+// loadTLSWRRService is generating a WRR service, even when there is only one target.
+func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1alpha2.TLSRoute) (string, *metav1.Condition) {
+	name := routeKey + "-wrr"
+	if _, ok := conf.TCP.Services[name]; ok {
+		return name, nil
+	}
+
+	var wrr dynamic.TCPWeightedRoundRobin
+	var condition *metav1.Condition
+	for _, backendRef := range backendRefs {
+		svcName, svc, errCondition := p.loadTLSService(route, backendRef)
+		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+
+		if errCondition != nil {
+			condition = errCondition
+
+			errName := routeKey + "-err-lb"
+			conf.TCP.Services[errName] = &dynamic.TCPService{
+				LoadBalancer: &dynamic.TCPServersLoadBalancer{
+					Servers: []dynamic.TCPServer{},
+				},
+			}
+
+			wrr.Services = append(wrr.Services, dynamic.TCPWRRService{
+				Name:   errName,
+				Weight: weight,
+			})
+			continue
+		}
+
+		if svc != nil {
+			conf.TCP.Services[svcName] = svc
+		}
+
+		wrr.Services = append(wrr.Services, dynamic.TCPWRRService{
+			Name:   svcName,
+			Weight: weight,
+		})
+	}
+
+	conf.TCP.Services[name] = &dynamic.TCPService{Weighted: &wrr}
+	return name, condition
+}
+
+func (p *Provider) loadTLSService(route *gatev1alpha2.TLSRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+	kind := ptr.Deref(backendRef.Kind, kindService)
+
+	group := groupCore
+	if backendRef.Group != nil && *backendRef.Group != "" {
+		group = string(*backendRef.Group)
+	}
+
+	namespace := route.Namespace
+	if backendRef.Namespace != nil && *backendRef.Namespace != "" {
+		namespace = string(*backendRef.Namespace)
+	}
+
+	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+
+	if err := p.isReferenceGranted(kindTLSRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+		}
+	}
+
+	if group != groupCore || kind != kindService {
+		name, err := p.loadTCPBackendRef(backendRef)
 		if err != nil {
-			// update "ResolvedRefs" status true with "InvalidBackendRefs" reason
-			condition = metav1.Condition{
+			return serviceName, nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
 				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.RouteReasonBackendNotFound),
-				Message:            fmt.Sprintf("Cannot load TLSRoute service %s/%s: %v", route.Namespace, route.Name, err),
+				Reason:             string(gatev1.RouteReasonInvalidKind),
+				Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
 			}
-			continue
 		}
 
-		for svcName, svc := range subServices {
-			conf.TCP.Services[svcName] = svc
+		return name, nil, nil
+	}
+
+	port := ptr.Deref(backendRef.Port, gatev1.PortNumber(0))
+	if port == 0 {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
 		}
-
-		serviceName := fmt.Sprintf("%s-wrr-%d", routerName, i)
-		conf.TCP.Services[serviceName] = wrrService
-
-		ruleServiceNames = append(ruleServiceNames, serviceName)
 	}
 
-	if len(ruleServiceNames) == 1 {
-		router.Service = ruleServiceNames[0]
-		conf.TCP.Routers[routerName] = &router
+	portStr := strconv.FormatInt(int64(port), 10)
+	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-		return conf, condition
+	lb, err := p.loadTCPServers(namespace, backendRef)
+	if err != nil {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+		}
 	}
 
-	routeServiceKey := routerName + "-wrr"
-	routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
-
-	for _, name := range ruleServiceNames {
-		service := dynamic.TCPWRRService{Name: name}
-		service.SetDefaults()
-
-		routeService.Weighted.Services = append(routeService.Weighted.Services, service)
-	}
-
-	conf.TCP.Services[routeServiceKey] = routeService
-
-	router.Service = routeServiceKey
-	conf.TCP.Routers[routerName] = &router
-
-	return conf, condition
+	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
 func hostSNIRule(hostnames []gatev1.Hostname) string {

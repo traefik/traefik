@@ -47,6 +47,7 @@ const (
 	kindGRPCRoute      = "GRPCRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
+	kindService        = "Service"
 )
 
 // Provider holds configurations of the provider.
@@ -376,11 +377,19 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			}
 		}
 
-		gatewayStatus, err := p.makeGatewayStatus(gateway, listeners, addresses)
-		if err != nil {
+		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
+		if len(errConditions) > 0 {
+			messages := map[string]struct{}{}
+			for _, condition := range errConditions {
+				messages[condition.Message] = struct{}{}
+			}
+			var conditionsErr error
+			for message := range messages {
+				conditionsErr = multierror.Append(conditionsErr, errors.New(message))
+			}
 			logger.Error().
-				Err(err).
-				Msg("Unable to create Gateway status")
+				Err(conditionsErr).
+				Msg("Gateway Not Accepted")
 		}
 
 		if err = p.client.UpdateGatewayStatus(ctx, ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus); err != nil {
@@ -576,7 +585,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					certificateNamespace = string(*certificateRef.Namespace)
 				}
 
-				if err := p.isReferenceGranted(groupGateway, kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+				if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -631,10 +640,10 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	return gatewayListeners
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, error) {
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
-	var result error
+	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
 		if len(listener.Status.Conditions) == 0 {
 			listener.Status.Conditions = append(listener.Status.Conditions,
@@ -669,14 +678,11 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			continue
 		}
 
-		for _, condition := range listener.Status.Conditions {
-			result = multierror.Append(result, errors.New(condition.Message))
-		}
-
+		errorConditions = append(errorConditions, listener.Status.Conditions...)
 		gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
 	}
 
-	if result != nil {
+	if len(errorConditions) > 0 {
 		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
@@ -687,7 +693,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Message:            "All Listeners must be valid",
 		})
 
-		return gatewayStatus, result
+		return gatewayStatus, errorConditions
 	}
 
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
@@ -783,7 +789,7 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func (p *Provider) isReferenceGranted(fromGroup, fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
+func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
 	if toNamespace == fromNamespace {
 		return nil
 	}
@@ -793,7 +799,7 @@ func (p *Provider) isReferenceGranted(fromGroup, fromKind, fromNamespace, toGrou
 		return fmt.Errorf("listing ReferenceGrant: %w", err)
 	}
 
-	refGrants = filterReferenceGrantsFrom(refGrants, fromGroup, fromKind, fromNamespace)
+	refGrants = filterReferenceGrantsFrom(refGrants, groupGateway, fromKind, fromNamespace)
 	refGrants = filterReferenceGrantsTo(refGrants, toGroup, toKind, toName)
 	if len(refGrants) == 0 {
 		return errors.New("missing ReferenceGrant")
