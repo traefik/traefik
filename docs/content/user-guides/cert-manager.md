@@ -14,7 +14,7 @@ You can configure Traefik Proxy to use Certificates of Cert Manager on Kubernete
 
 To obtain a certificate from Cert Manager, you'll need to:
 
-1. Deploy cert manager
+1. Deploy Cert Manager
 2. Configure an Issuer (or a ClusterIssuer)
 3. Create a Certificate with this Issuer
 4. Deploy Traefik Proxy
@@ -103,7 +103,7 @@ To obtain a certificate from Cert Manager, you'll need to:
         - name: domain-service
           port: 80
       tls:
-        secretName: domain-tls    # <=== Use name defined in Certificate resource
+        secretName: domain-tls    # <=== Use the name defined in Certificate resource
     ```
 
     ```yaml tab="HTTPRoute"
@@ -121,7 +121,7 @@ To obtain a certificate from Cert Manager, you'll need to:
           hostname: domain.example.com
           tls:
             certificateRefs:
-              - name: domain-tls  # <==== Use name defined in Certificate resource
+              - name: domain-tls  # <==== Use the name defined in Certificate resource
     ---
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
