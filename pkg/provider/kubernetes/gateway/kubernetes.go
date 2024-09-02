@@ -47,6 +47,7 @@ const (
 	kindGRPCRoute      = "GRPCRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
+	kindService        = "Service"
 )
 
 // Provider holds configurations of the provider.
