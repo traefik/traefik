@@ -216,7 +216,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 }
 
 func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
-	kind := ptr.Deref(backendRef.Kind, "Service")
+	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
 	if backendRef.Group != nil && *backendRef.Group != "" {
@@ -230,7 +230,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 
 	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
 
-	if group != groupCore || kind != "Service" {
+	if group != groupCore || kind != kindService {
 		return serviceName, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -241,7 +241,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 		}
 	}
 
-	if err := p.isReferenceGranted(groupGateway, kindGRPCRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
+	if err := p.isReferenceGranted(kindGRPCRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
