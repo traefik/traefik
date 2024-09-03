@@ -48,10 +48,33 @@ jobs:
           path: webui.tar.gz
 
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ darwin, freebsd, linux, openbsd, windows ]
+        arch: [ amd64, arm64 ]
+        include:
+          - os: freebsd
+            arch: 386
+          - os: linux
+            arch: 386
+          - os: linux
+            arch: arm
+            goarm: 6
+          - os: linux
+            arch: arm
+            goarm: 7
+          - os: linux
+            arch: ppc64le
+          - os: linux
+            arch: riscv64
+          - os: linux
+            arch: s390x
+          - os: openbsd
+            arch: 386
+          - os: windows
+            arch: 386
     needs:
       - build-webui
 
@@ -63,6 +86,8 @@ jobs:
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5
+        env:
+          ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -75,4 +100,8 @@ jobs:
         run: tar xvf webui.tar.gz
 
       - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.goarm }}
         run: make binary
