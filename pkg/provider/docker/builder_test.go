@@ -205,7 +205,7 @@ func withEndpointSpec(ops ...func(*swarm.EndpointSpec)) func(*swarm.Service) {
 	}
 }
 
-func modeDNSSR(spec *swarm.EndpointSpec) {
+func modeDNSRR(spec *swarm.EndpointSpec) {
 	spec.Mode = swarm.ResolutionModeDNSRR
 }
 
