@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/test-conformance.yaml'
       - 'pkg/provider/kubernetes/gateway/**'
+      - 'integration/fixtures/k8s-conformance/**'
       - 'integration/k8s_conformance_test.go'
 
 env:
