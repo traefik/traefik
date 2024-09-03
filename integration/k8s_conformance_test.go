@@ -196,6 +196,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 		},
 		ConformanceProfiles: sets.New(
 			ksuite.GatewayHTTPConformanceProfileName,
+			ksuite.GatewayGRPCConformanceProfileName,
 			ksuite.GatewayTLSConformanceProfileName,
 		),
 		SupportedFeatures: sets.New(
