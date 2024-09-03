@@ -197,8 +197,7 @@ linters:
     - maintidx # kind of duplicate of gocyclo
     - nonamedreturns # Too strict
     - gosmopolitan  # not relevant
-    - exportloopref # Useless with go1.22
-    - musttag
+    - exportloopref # Not relevant since go1.22
 
 issues:
   exclude-use-default: false
@@ -219,6 +218,7 @@ issues:
     - 'SA1019: c.Providers.Consul.Namespace is deprecated'
     - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
     - 'fmt.Sprintf can be replaced with string'
+    - 'SA1019: dockertypes.ContainerNode is deprecated'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:
@@ -270,3 +270,6 @@ issues:
       text: 'unusedwrite: unused write to field'
       linters:
         - govet
+    - path: pkg/provider/acme/local_store.go
+      linters:
+        - musttag

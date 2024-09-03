@@ -150,7 +150,6 @@ traefik.router.responses.bytes.total
 | Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
 | Request duration      | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
 | Open connections      | Count     | `method`, `protocol`, `service`         | The current count of open connections on a service.         |
-| Retries total         | Count     | `service`                               | The count of requests retries on a service.                 |
 | Server UP             | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up.  |
 | Requests bytes total  | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
 | Responses bytes total | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
@@ -160,7 +159,6 @@ traefik_service_requests_total
 traefik_service_requests_tls_total
 traefik_service_request_duration_seconds
 traefik_service_open_connections
-traefik_service_retries_total
 traefik_service_server_up
 traefik_service_requests_bytes_total
 traefik_service_responses_bytes_total
@@ -171,7 +169,6 @@ service.request.total
 router.service.tls.total
 service.request.duration
 service.connections.open
-service.retries.total
 service.server.up
 service.requests.bytes.total
 service.responses.bytes.total
@@ -182,7 +179,6 @@ traefik.service.requests.total
 traefik.service.requests.tls.total
 traefik.service.request.duration
 traefik.service.connections.open
-traefik.service.retries.total
 traefik.service.server.up
 traefik.service.requests.bytes.total
 traefik.service.responses.bytes.total
@@ -194,7 +190,6 @@ traefik.service.responses.bytes.total
 {prefix}.service.request.tls.total
 {prefix}.service.request.duration
 {prefix}.service.connections.open
-{prefix}.service.retries.total
 {prefix}.service.server.up
 {prefix}.service.requests.bytes.total
 {prefix}.service.responses.bytes.total

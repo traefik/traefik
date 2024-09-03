@@ -197,7 +197,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 			if config.FilePath != "" {
 				_, err = os.Stat(config.FilePath)
-				require.NoError(t, err, fmt.Sprintf("logger should create %s", config.FilePath))
+				require.NoErrorf(t, err, "logger should create %s", config.FilePath)
 			}
 
 			req := &http.Request{
@@ -701,7 +701,7 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	t.Helper()
 
 	if len(expected) == 0 {
-		assert.Zero(t, len(logData))
+		assert.Empty(t, logData)
 		t.Log(string(logData))
 		return
 	}
@@ -758,7 +758,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 
 	if config.FilePath != "" {
 		_, err = os.Stat(config.FilePath)
-		require.NoError(t, err, fmt.Sprintf("logger should create %s", config.FilePath))
+		require.NoErrorf(t, err, "logger should create %s", config.FilePath)
 	}
 
 	req := &http.Request{
