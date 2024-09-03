@@ -70,8 +70,8 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 0",
 			in: map[string]string{
-				"traefik": "bar",
-				"traefic": "bur",
+				"traefik":  "bar",
+				"traefik_": "bur",
 			},
 			expected: expected{error: true},
 		},
