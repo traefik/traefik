@@ -53,3 +53,11 @@ profiles:
     - HTTPRouteRequestTimeout
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 11
+      Skipped: 0
+  name: GATEWAY-TLS
+  summary: Core tests succeeded.
