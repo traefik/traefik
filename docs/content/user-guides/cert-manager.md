@@ -52,7 +52,7 @@ To obtain a certificate from Cert Manager, you'll need to:
       name: whoami
       namespace: traefik
     spec:
-      secretName: domain-tls        # <===  Name of secret here
+      secretName: domain-tls        # <===  Name of secret where the generated certificate will be stored
       dnsNames:
         - "domain.example.com"
       issuerRef:
@@ -83,7 +83,7 @@ To obtain a certificate from Cert Manager, you'll need to:
                 port:
                   number: 80
       tls:
-      - secretName: domain-tls # <=== Use name defined in Certificate resource
+      - secretName: domain-tls # <=== Use the name defined in Certificate resource
     ```
 
     ```yaml tab="IngressRoute"
