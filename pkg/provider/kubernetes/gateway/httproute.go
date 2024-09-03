@@ -158,7 +158,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadService(conf, routeKey, routeRule, route)
+				router.Service, serviceCondition = p.loadWRRService(conf, routerName, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -173,7 +173,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 	return conf, condition
 }
 
-func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute) (string, *metav1.Condition) {
+func (p *Provider) loadWRRService(conf *dynamic.Configuration, routeKey string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute) (string, *metav1.Condition) {
 	name := routeKey + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -182,7 +182,7 @@ func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, rou
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadHTTPService(route, backendRef)
+		svcName, svc, errCondition := p.loadService(route, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -208,10 +208,10 @@ func (p *Provider) loadService(conf *dynamic.Configuration, routeKey string, rou
 	return name, condition
 }
 
-// loadHTTPService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
+// loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, *metav1.Condition) {
-	kind := ptr.Deref(backendRef.Kind, "Service")
+func (p *Provider) loadService(route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
 	if backendRef.Group != nil && *backendRef.Group != "" {
@@ -225,7 +225,7 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 
 	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
 
-	if err := p.isReferenceGranted(groupGateway, kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
+	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -236,7 +236,7 @@ func (p *Provider) loadHTTPService(route *gatev1.HTTPRoute, backendRef gatev1.HT
 		}
 	}
 
-	if group != groupCore || kind != "Service" {
+	if group != groupCore || kind != kindService {
 		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
 		if err != nil {
 			return serviceName, nil, &metav1.Condition{
