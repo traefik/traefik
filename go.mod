@@ -17,7 +17,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-acme/lego/v4 v4.17.4
+	github.com/go-acme/lego/v4 v4.18.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
@@ -64,7 +64,7 @@ require (
 	github.com/tetratelabs/wazero v1.7.2
 	github.com/tidwall/gjson v1.17.0
 	github.com/traefik/grpc-web v0.16.0
-	github.com/traefik/paerser v0.2.0
+	github.com/traefik/paerser v0.2.1
 	github.com/traefik/yaegi v0.16.1
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
@@ -85,8 +85,8 @@ require (
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // No tag on the repo.
 	golang.org/x/mod v0.18.0
 	golang.org/x/net v0.26.0
-	golang.org/x/sys v0.21.0
-	golang.org/x/text v0.16.0
+	golang.org/x/sys v0.23.0
+	golang.org/x/text v0.17.0
 	golang.org/x/time v0.5.0
 	golang.org/x/tools v0.22.0
 	google.golang.org/grpc v1.64.1
@@ -221,7 +221,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/huandu/xstrings v1.4.0 // indirect
+	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/iij/doapi v0.0.0-20190504054126-0bbf12d6d7df // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
@@ -300,12 +300,12 @@ require (
 	github.com/selectel/go-selvpcclient/v3 v3.1.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/smartystreets/go-aws-auth v0.0.0-20180515143844-0c1422d1fdb9 // indirect
 	github.com/softlayer/softlayer-go v1.1.5 // indirect
 	github.com/softlayer/xmlrpc v0.0.0-20200409220501-5f089df7cb7e // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
-	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/cast v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.898 // indirect
@@ -317,7 +317,7 @@ require (
 	github.com/transip/gotransip/v6 v6.23.0 // indirect
 	github.com/ultradns/ultradns-go-sdk v1.6.1-20231103022937-8589b6a // indirect
 	github.com/vinyldns/go-vinyldns v0.9.16 // indirect
-	github.com/vultr/govultr/v2 v2.17.2 // indirect
+	github.com/vultr/govultr/v3 v3.9.0 // indirect
 	github.com/yandex-cloud/go-genproto v0.0.0-20240318083951-4fe6125f286e // indirect
 	github.com/yandex-cloud/go-sdk v0.0.0-20240318084659-dfa50323a0b4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
@@ -338,10 +338,10 @@ require (
 	go.uber.org/ratelimit v0.3.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/term v0.21.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/term v0.23.0 // indirect
 	google.golang.org/api v0.172.0 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
