@@ -239,7 +239,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		return
 	}
 
-	defer func(capt capture.Capture, rw http.ResponseWriter) {
+	defer func() {
 		logDataTable.DownstreamResponse = downstreamResponse{
 			headers: rw.Header().Clone(),
 		}
@@ -260,7 +260,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 
 		h.logTheRoundTrip(logDataTable)
-	}(capt, rw)
+	}()
 
 	next.ServeHTTP(rw, reqWithDataTable)
 }
