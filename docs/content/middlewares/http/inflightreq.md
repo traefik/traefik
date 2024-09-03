@@ -335,7 +335,7 @@ spec:
       requestHost: true
 ```
 
-```yaml tab="Cosul Catalog"
+```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
