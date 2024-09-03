@@ -103,7 +103,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
             # when the cross-provider syntax is used.
     ```
 
-    ```yaml tab="Kubernetes Ingress"
+    ```yaml tab="Ingress"
     apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
