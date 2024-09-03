@@ -183,14 +183,16 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 	}
 }
 
-func TestEntryPointMiddleware_tracing_info_into_log(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "http://www.test.com/", nil)
-	req = req.WithContext(context.WithValue(
-		req.Context(),
-		accesslog.DataTableKey,
-		&accesslog.LogData{
-			Core: accesslog.CoreLogData{},
-		}))
+func TestEntryPointMiddleware_tracingInfoIntoLog(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://www.test.com/", http.NoBody)
+	req = req.WithContext(
+		context.WithValue(
+			req.Context(),
+			accesslog.DataTableKey,
+			&accesslog.LogData{Core: accesslog.CoreLogData{}},
+		),
+	)
+
 	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {})
 
 	tracer := &mockTracer{}
