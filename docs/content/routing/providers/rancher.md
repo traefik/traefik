@@ -29,7 +29,7 @@ With Rancher, Traefik can leverage labels attached to a service to generate rout
 
 !!! info "Labels"
     
-    - Labels are case insensitive.
+    - Labels are case-insensitive.
     - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/rancher.md).
 
 ### General

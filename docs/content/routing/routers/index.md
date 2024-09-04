@@ -259,7 +259,7 @@ The table below lists all the available matchers:
     The regexp name (`name` in the above example) is an arbitrary value, that exists only for historical reasons.
 
     Any `regexp` supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used.
-    For example, here is a case insensitive path matcher syntax: ```Path(`/{path:(?i:Products)}`)```.
+    For example, here is a case-insensitive path matcher syntax: ```Path(`/{path:(?i:Products)}`)```.
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 

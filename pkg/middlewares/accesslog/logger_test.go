@@ -162,7 +162,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 			},
 		},
 		{
-			desc:     "with case insensitive match on header name",
+			desc:     "with case-insensitive match on header name",
 			header:   "User-Agent",
 			expected: types.AccessLogKeep,
 			accessLogFields: types.AccessLogFields{

@@ -120,7 +120,7 @@ func TestDecodeToNode(t *testing.T) {
 			}},
 		},
 		{
-			desc: "several entries, level 2, case insensitive",
+			desc: "several entries, level 2, case-insensitive",
 			in: map[string]string{
 				"traefik/foo/aaa": "bar",
 				"traefik/Foo/bbb": "bur",

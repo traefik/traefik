@@ -24,7 +24,7 @@ With Nomad, Traefik can leverage tags attached to a service to generate routing 
 
 !!! info "tags"
 
-    - tags are case insensitive.
+    - tags are case-insensitive.
     - The complete list of tags can be found [the reference page](../../reference/dynamic-configuration/nomad.md)
 
 ### General
