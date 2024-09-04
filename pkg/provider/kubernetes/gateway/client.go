@@ -175,6 +175,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	for _, ns := range namespaces {
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
+		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
 		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns))
 		_, err = factoryGateway.Gateway().V1().Gateways().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -206,20 +216,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			if err != nil {
 				return nil, err
 			}
-		}
-
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
-		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
+			_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
@@ -352,8 +352,6 @@ func (c *clientWrapper) ListTLSRoutes() ([]*gatev1alpha2.TLSRoute, error) {
 
 func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
 	if !c.isWatchedNamespace(namespace) {
-		log.Warn().Msgf("Failed to get ReferenceGrants: %q is not within watched namespaces", namespace)
-
 		return nil, fmt.Errorf("failed to get ReferenceGrants: namespace %s is not within watched namespaces", namespace)
 	}
 
@@ -522,7 +520,6 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
-				continue
 			}
 		}
 
@@ -672,7 +669,7 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 		copy(ancestorStatuses, status.Ancestors)
 
 		// keep statuses added by other gateway controllers,
-		// and statuses for Traefik gateway controller but not for the same Gateway as the one in parameter (ancestorRef).
+		// and statuses for Traefik gateway controller but not for the same Gateway as the one in parameter (AncestorRef).
 		for _, ancestorStatus := range currentPolicy.Status.Ancestors {
 			if ancestorStatus.ControllerName != controllerName {
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
@@ -760,7 +757,7 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	for _, policy := range policies {
 		for _, ref := range policy.Spec.TargetRefs {
 			// The policy does not target the service.
-			if ref.Group != groupCore || ref.Kind != "Service" || string(ref.Name) != serviceName {
+			if ref.Group != groupCore || ref.Kind != kindService || string(ref.Name) != serviceName {
 				continue
 			}
 
