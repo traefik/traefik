@@ -894,6 +894,12 @@ Interval for polling Nomad API. (Default: ```15```)
 `TRAEFIK_PROVIDERS_NOMAD_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_NOMAD_THROTTLEDURATION`:  
+Service refresh throttle duration (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_NOMAD_WATCH`:  
+Watch Nomad Service events. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
 Plugins configuration.
 
