@@ -257,37 +257,37 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) pollOrWatch(ctx context.Context) (<-chan *api.Events, error) {
-	if !p.Watch {
-		serviceEventsChan := make(chan *api.Events, 1)
-
-		go func() {
-			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
-			defer ticker.Stop()
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case t := <-ticker.C:
-					serviceEventsChan <- &api.Events{
-						Index: uint64(t.UnixNano()),
-					}
-				}
-			}
-		}()
-
-		return serviceEventsChan, nil
+	if p.Watch {
+		return p.client.EventStream().Stream(ctx,
+			map[api.Topic][]string{
+				api.TopicService: {"*"},
+			},
+			0,
+			&api.QueryOptions{
+				Namespace: p.namespace,
+			},
+		)
 	}
 
-	return p.client.EventStream().Stream(ctx,
-		map[api.Topic][]string{
-			api.TopicService: {"*"},
-		},
-		0,
-		&api.QueryOptions{
-			Namespace: p.namespace,
-		},
-	)
+	serviceEventsChan := make(chan *api.Events, 1)
+
+	go func() {
+		ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t := <-ticker.C:
+				serviceEventsChan <- &api.Events{
+					Index: uint64(t.UnixNano()),
+				}
+			}
+		}
+	}()
+
+	return serviceEventsChan, nil
 }
 
 func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuration, error) {
