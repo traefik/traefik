@@ -111,6 +111,9 @@ Entry point address.
 `TRAEFIK_ENTRYPOINTS_<NAME>_ALLOWACMEBYPASS`:  
 Enables handling of ACME TLS and HTTP challenges with custom routers. (Default: ```false```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_CONNECTION`:  
+List of Connection headers allowed to pass through the middleware chain before their removal, if and despite being listed in the client request Connection header.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
 

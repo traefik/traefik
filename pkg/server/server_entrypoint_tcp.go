@@ -565,6 +565,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
+		configuration.ForwardedHeaders.Connection,
 		next)
 	if err != nil {
 		return nil, err

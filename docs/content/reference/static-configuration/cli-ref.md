@@ -111,6 +111,9 @@ Entry point address.
 `--entrypoints.<name>.allowacmebypass`:  
 Enables handling of ACME TLS and HTTP challenges with custom routers. (Default: ```false```)
 
+`--entrypoints.<name>.forwardedheaders.connection`:  
+List of Connection headers allowed to pass through the middleware chain before their removal, if and despite being listed in the client request Connection header.
+
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 

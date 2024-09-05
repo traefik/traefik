@@ -1,4 +1,4 @@
-package connectionheader
+package auth
 
 import (
 	"net/http"
