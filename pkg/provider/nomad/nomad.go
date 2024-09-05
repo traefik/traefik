@@ -192,8 +192,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			serviceEventsChan, err := p.pollOrWatch(ctx)
 			if err != nil {
-				logger.Error().Err(err).Msg("Error watching nomad events")
-				return err
+				return fmt.Errorf("error watching nomad events: %w", err)
 			}
 
 			throttleDuration := time.Duration(p.ThrottleDuration)
