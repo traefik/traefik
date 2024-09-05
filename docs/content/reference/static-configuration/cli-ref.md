@@ -108,6 +108,9 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
+`--entrypoints.<name>.forwardedheaders.connection`:  
+List of Connection headers allowed to pass through the middleware chain before their removal, if and despite being listed in the client request Connection header.
+
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 
