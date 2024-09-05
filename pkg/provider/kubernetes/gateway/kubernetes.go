@@ -35,7 +35,8 @@ import (
 )
 
 const (
-	providerName   = "kubernetesgateway"
+	providerName = "kubernetesgateway"
+
 	controllerName = "traefik.io/gateway-controller"
 
 	groupCore    = "core"
@@ -48,6 +49,10 @@ const (
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
+
+	appProtocolH2C = "kubernetes.io/h2c"
+	appProtocolWS  = "kubernetes.io/ws"
+	appProtocolWSS = "kubernetes.io/wss"
 )
 
 // Provider holds configurations of the provider.
@@ -852,6 +857,79 @@ func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *g
 	}
 
 	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
+}
+
+type backendAddress struct {
+	Address string
+	Port    int32
+}
+
+func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
+	if ref.Port == nil {
+		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
+	}
+
+	service, exists, err := p.client.GetService(namespace, string(ref.Name))
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
+	}
+	if !exists {
+		return nil, corev1.ServicePort{}, errors.New("service not found")
+	}
+
+	var svcPort *corev1.ServicePort
+	for _, p := range service.Spec.Ports {
+		if p.Port == int32(*ref.Port) {
+			svcPort = &p
+			break
+		}
+	}
+	if svcPort == nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("service port %d not found", *ref.Port)
+	}
+
+	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("getting endpointslices: %w", err)
+	}
+	if len(endpointSlices) == 0 {
+		return nil, corev1.ServicePort{}, errors.New("endpointslices not found")
+	}
+
+	uniqAddresses := map[string]struct{}{}
+	backendServers := make([]backendAddress, 0)
+	for _, endpointSlice := range endpointSlices {
+		var port int32
+		for _, p := range endpointSlice.Ports {
+			if svcPort.Name == *p.Name {
+				port = *p.Port
+				break
+			}
+		}
+		if port == 0 {
+			continue
+		}
+
+		for _, endpoint := range endpointSlice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				continue
+			}
+
+			for _, address := range endpoint.Addresses {
+				if _, ok := uniqAddresses[address]; ok {
+					continue
+				}
+
+				uniqAddresses[address] = struct{}{}
+				backendServers = append(backendServers, backendAddress{
+					Address: address,
+					Port:    port,
+				})
+			}
+		}
+	}
+
+	return backendServers, *svcPort, nil
 }
 
 func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
