@@ -12,7 +12,6 @@ import (
 
 	"github.com/http-wasm/http-wasm-host-go/handler"
 	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
-	"github.com/juliens/wasm-goexport/host"
 	"github.com/tetratelabs/wazero"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -67,7 +66,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, fmt.Errorf("loading binary: %w", err)
 	}
 
-	rt := host.NewRuntime(wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(b.cache)))
+	rt := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(b.cache))
 
 	guestModule, err := rt.CompileModule(ctx, code)
 	if err != nil {
@@ -81,7 +80,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 
-	config := wazero.NewModuleConfig().WithSysWalltime()
+	config := wazero.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
 	for _, env := range b.settings.Envs {
 		config.WithEnv(env, os.Getenv(env))
 	}
