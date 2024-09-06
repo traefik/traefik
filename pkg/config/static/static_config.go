@@ -212,6 +212,9 @@ type Tracing struct {
 func (t *Tracing) SetDefaults() {
 	t.ServiceName = "traefik"
 	t.SampleRate = 1.0
+
+	t.OTLP = &opentelemetry.Config{}
+	t.OTLP.SetDefaults()
 }
 
 // Providers contains providers configuration.

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -21,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -30,9 +32,13 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
+	"google.golang.org/grpc/status"
 )
 
-const defaultMaxBodySize int64 = -1
+const (
+	defaultMirrorBody        = true
+	defaultMaxBodySize int64 = -1
+)
 
 // RoundTripperGetter is a roundtripper getter interface.
 type RoundTripperGetter interface {
@@ -195,11 +201,16 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
+	mirrorBody := defaultMirrorBody
+	if config.MirrorBody != nil {
+		mirrorBody = *config.MirrorBody
+	}
+
 	maxBodySize := defaultMaxBodySize
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
-	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize, config.HealthCheck)
+	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.HealthCheck)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
@@ -222,15 +233,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 
 	balancer := wrr.New(config.Sticky, config.HealthCheck != nil)
 	for _, service := range shuffle(config.Services, m.rand) {
-		if service.Status != nil {
-			serviceHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				writer.WriteHeader(*service.Status)
-			})
-			balancer.Add(service.Name, serviceHandler, service.Weight)
-			continue
-		}
-
-		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
+		serviceHandler, err := m.getServiceHandler(ctx, service)
 		if err != nil {
 			return nil, err
 		}
@@ -258,6 +261,34 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 	}
 
 	return balancer, nil
+}
+
+func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRService) (http.Handler, error) {
+	switch {
+	case service.Status != nil:
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.WriteHeader(*service.Status)
+		}), nil
+
+	case service.GRPCStatus != nil:
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			st := status.New(service.GRPCStatus.Code, service.GRPCStatus.Msg)
+
+			body, err := json.Marshal(st.Proto())
+			if err != nil {
+				http.Error(rw, "Failed to marshal status to JSON", http.StatusInternalServerError)
+				return
+			}
+
+			rw.Header().Set("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusOK)
+
+			_, _ = rw.Write(body)
+		}), nil
+
+	default:
+		return m.BuildHTTP(ctx, service.Name)
+	}
 }
 
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
@@ -340,6 +371,17 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
 			proxy = observability.NewService(ctx, serviceName, proxy)
+		}
+
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
+			// to re-target the request to it.
+			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
+			// In such a case, observability for internals being optional, the capture probe could be absent from context (no wrap via the entrypoint).
+			// But if the service targeted by this piece of middleware is not an internal one,
+			// and requires observability, we still want the capture probe to be present in the request context.
+			// Makes sure a capture probe is in the request context.
+			proxy, _ = capture.Wrap(proxy)
 		}
 
 		lb.Add(proxyName, proxy, server.Weight)

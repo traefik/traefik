@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/version"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -191,13 +191,18 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			Organization: "traefik",
 			Project:      "traefik",
 			URL:          "https://traefik.io/",
-			Version:      version.Version,
+			Version:      *k8sConformanceTraefikVersion,
 			Contact:      []string{"@traefik/maintainers"},
 		},
-		ConformanceProfiles: sets.New(ksuite.GatewayHTTPConformanceProfileName),
+		ConformanceProfiles: sets.New(
+			ksuite.GatewayHTTPConformanceProfileName,
+			ksuite.GatewayGRPCConformanceProfileName,
+			ksuite.GatewayTLSConformanceProfileName,
+		),
 		SupportedFeatures: sets.New(
 			features.SupportGateway,
 			features.SupportGatewayPort8080,
+			features.SupportGRPCRoute,
 			features.SupportHTTPRoute,
 			features.SupportHTTPRouteQueryParamMatching,
 			features.SupportHTTPRouteMethodMatching,
@@ -207,6 +212,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 			features.SupportHTTPRoutePathRewrite,
 			features.SupportHTTPRoutePathRedirect,
 			features.SupportHTTPRouteResponseHeaderModification,
+			features.SupportTLSRoute,
 		),
 	})
 	require.NoError(s.T(), err)
@@ -219,12 +225,22 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	report, err := cSuite.Report()
 	require.NoError(s.T(), err, "failed generating conformance report")
 
+	// Ignore report date to avoid diff with CI job.
+	// However, we can track the date of the report thanks to the commit.
+	// TODO: to publish this report automatically, we have to figure out how to handle the date diff.
+	report.Date = "-"
+
+	// Ordering profile reports for the serialized report to be comparable.
+	slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+
 	rawReport, err := yaml.Marshal(report)
 	require.NoError(s.T(), err)
 	s.T().Logf("Conformance report:\n%s", string(rawReport))
 
-	require.NoError(s.T(), os.MkdirAll("./conformance-reports", 0o755))
-	outFile := filepath.Join("conformance-reports", fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
+	require.NoError(s.T(), os.MkdirAll("./conformance-reports/"+report.GatewayAPIVersion, 0o755))
+	outFile := filepath.Join("conformance-reports/"+report.GatewayAPIVersion, fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
 	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
 	s.T().Logf("Report written to: %s", outFile)
 }

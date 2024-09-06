@@ -53,6 +53,9 @@ type TraefikServiceSpec struct {
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
+	// MirrorBody defines whether the body of the request should be mirrored.
+	// Default value is true.
+	MirrorBody *bool `json:"mirrorBody,omitempty"`
 	// MaxBodySize defines the maximum size allowed for the body of the request.
 	// If the body is larger, the request is not mirrored.
 	// Default value is -1, which means unlimited size.

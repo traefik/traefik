@@ -264,6 +264,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
 | `traefik/http/services/Service03/mirroring/maxBodySize` | `42` |
+| `traefik/http/services/Service03/mirroring/mirrorBody` | `true` |
 | `traefik/http/services/Service03/mirroring/mirrors/0/name` | `foobar` |
 | `traefik/http/services/Service03/mirroring/mirrors/0/percent` | `42` |
 | `traefik/http/services/Service03/mirroring/mirrors/1/name` | `foobar` |
