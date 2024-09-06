@@ -260,23 +260,16 @@ func (p *Provider) loadService(route *gatev1.HTTPRoute, backendRef gatev1.HTTPBa
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
 
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, err := p.loadHTTPServers(namespace, backendRef)
-	if err != nil {
-		return serviceName, nil, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonBackendNotFound),
-			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
-		}
+	lb, errCondition := p.loadHTTPServers(namespace, route, backendRef)
+	if errCondition != nil {
+		return serviceName, nil, errCondition
 	}
 
 	return serviceName, &dynamic.Service{LoadBalancer: lb}, nil
@@ -372,74 +365,39 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(namespace string, backendRef gatev1.HTTPBackendRef) (*dynamic.ServersLoadBalancer, error) {
-	if backendRef.Port == nil {
-		return nil, errors.New("port is required for Kubernetes Service reference")
-	}
-
-	service, exists, err := p.client.GetService(namespace, string(backendRef.Name))
+func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (*dynamic.ServersLoadBalancer, *metav1.Condition) {
+	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
-		return nil, fmt.Errorf("getting service: %w", err)
-	}
-	if !exists {
-		return nil, errors.New("service not found")
-	}
-
-	var svcPort *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if p.Port == int32(*backendRef.Port) {
-			svcPort = &p
-			break
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s: %s", namespace, backendRef.Name, err),
 		}
 	}
-	if svcPort == nil {
-		return nil, fmt.Errorf("service port %d not found", *backendRef.Port)
-	}
 
-	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
+	protocol, err := getProtocol(svcPort)
 	if err != nil {
-		return nil, fmt.Errorf("getting endpointslices: %w", err)
-	}
-	if len(endpointSlices) == 0 {
-		return nil, errors.New("endpointslices not found")
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s: %s", namespace, backendRef.Name, err),
+		}
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	protocol := getProtocol(*svcPort)
-
-	addresses := map[string]struct{}{}
-	for _, endpointSlice := range endpointSlices {
-		var port int32
-		for _, p := range endpointSlice.Ports {
-			if svcPort.Name == *p.Name {
-				port = *p.Port
-				break
-			}
-		}
-		if port == 0 {
-			continue
-		}
-
-		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
-				continue
-			}
-
-			for _, address := range endpoint.Addresses {
-				if _, ok := addresses[address]; ok {
-					continue
-				}
-
-				addresses[address] = struct{}{}
-				lb.Servers = append(lb.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
-				})
-			}
-		}
+	for _, ba := range backendAddresses {
+		lb.Servers = append(lb.Servers, dynamic.Server{
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port)))),
+		})
 	}
-
 	return lb, nil
 }
 
@@ -702,13 +660,29 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 	}, nil
 }
 
-func getProtocol(portSpec corev1.ServicePort) string {
-	protocol := "http"
-	if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-		protocol = "https"
+func getProtocol(portSpec corev1.ServicePort) (string, error) {
+	if portSpec.Protocol != corev1.ProtocolTCP {
+		return "", errors.New("only TCP protocol is supported")
 	}
 
-	return protocol
+	if portSpec.AppProtocol == nil {
+		protocol := "http"
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+			protocol = "https"
+		}
+		return protocol, nil
+	}
+
+	switch ap := *portSpec.AppProtocol; ap {
+	case appProtocolH2C:
+		return "h2c", nil
+	case appProtocolWS:
+		return "http", nil
+	case appProtocolWSS:
+		return "https", nil
+	default:
+		return "", fmt.Errorf("unsupported application protocol %s", ap)
+	}
 }
 
 func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
