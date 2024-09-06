@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -260,23 +259,16 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s/%s/%s: port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
 
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, err := p.loadGRPCServers(namespace, backendRef)
-	if err != nil {
-		return serviceName, nil, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonBackendNotFound),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
-		}
+	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
+	if errCondition != nil {
+		return serviceName, nil, errCondition
 	}
 
 	return serviceName, &dynamic.Service{LoadBalancer: lb}, nil
@@ -319,72 +311,49 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(namespace string, backendRef gatev1.GRPCBackendRef) (*dynamic.ServersLoadBalancer, error) {
-	if backendRef.Port == nil {
-		return nil, errors.New("port is required for Kubernetes Service reference")
-	}
-
-	service, exists, err := p.client.GetService(namespace, string(backendRef.Name))
+func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (*dynamic.ServersLoadBalancer, *metav1.Condition) {
+	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
-		return nil, fmt.Errorf("getting service: %w", err)
-	}
-	if !exists {
-		return nil, errors.New("service not found")
-	}
-
-	var svcPort *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if p.Port == int32(*backendRef.Port) {
-			svcPort = &p
-			break
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: %s", namespace, backendRef.Name, err),
 		}
 	}
-	if svcPort == nil {
-		return nil, fmt.Errorf("service port %d not found", *backendRef.Port)
+
+	if svcPort.Protocol != corev1.ProtocolTCP {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only TCP protocol is supported", namespace, backendRef.Name),
+		}
 	}
 
-	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
-	if err != nil {
-		return nil, fmt.Errorf("getting endpointslices: %w", err)
-	}
-	if len(endpointSlices) == 0 {
-		return nil, errors.New("endpointslices not found")
+	if svcPort.AppProtocol != nil && *svcPort.AppProtocol != appProtocolH2C {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only kubernetes.io/h2c appProtocol is supported", namespace, backendRef.Name),
+		}
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	addresses := map[string]struct{}{}
-	for _, endpointSlice := range endpointSlices {
-		var port int32
-		for _, p := range endpointSlice.Ports {
-			if svcPort.Name == *p.Name {
-				port = *p.Port
-				break
-			}
-		}
-		if port == 0 {
-			continue
-		}
-
-		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
-				continue
-			}
-
-			for _, address := range endpoint.Addresses {
-				if _, ok := addresses[address]; ok {
-					continue
-				}
-
-				addresses[address] = struct{}{}
-				lb.Servers = append(lb.Servers, dynamic.Server{
-					URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(address, strconv.Itoa(int(port)))),
-				})
-			}
-		}
+	for _, ba := range backendAddresses {
+		lb.Servers = append(lb.Servers, dynamic.Server{
+			URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port)))),
+		})
 	}
-
 	return lb, nil
 }
 
