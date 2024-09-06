@@ -403,6 +403,7 @@
       "Descriptor1": {
         "moduleName": "foobar",
         "version": "foobar",
+        "required": true,
         "settings": {
           "envs": [
             "xxxx",
