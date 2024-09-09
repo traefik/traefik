@@ -63,10 +63,10 @@ Specify the path to PEM encoded CA Certificates that can be used to authenticate
 `--certificatesresolvers.<name>.acme.caserver`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
-`--certificatesresolvers.<name>.acme.catlsservername`:  
+`--certificatesresolvers.<name>.acme.caservername`:  
 Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
-`--certificatesresolvers.<name>.acme.causesystemcertpool`:  
+`--certificatesresolvers.<name>.acme.casystemcertpool`:  
 Define if the certificates pool must use a copy of the system cert pool. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.certificatesduration`:  

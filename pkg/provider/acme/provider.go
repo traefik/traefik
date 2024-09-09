@@ -47,9 +47,9 @@ type Configuration struct {
 	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
-	CACertificates      []string `description:"Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
-	CAUseSystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caUseSystemCertPool,omitempty" toml:"caUseSystemCertPool,omitempty" yaml:"caUseSystemCertPool,omitempty" export:"true"`
-	CATLSServerName     string   `description:"Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caTlsServerName,omitempty" toml:"caTlsServerName,omitempty" yaml:"caTlsServerName,omitempty" export:"true"`
+	CACertificates   []string `description:"Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
+	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
+	CAServerName     string   `description:"Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caServerName,omitempty" toml:"caServerName,omitempty" yaml:"caServerName,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -380,13 +380,13 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 
 func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	if len(p.CACertificates) > 0 {
-		certPool, err := lego.CreateCertPool(p.CACertificates, p.CAUseSystemCertPool)
+		certPool, err := lego.CreateCertPool(p.CACertificates, p.CASystemCertPool)
 		if err != nil {
 			return nil, fmt.Errorf("creating cert pool with custom certificates: %w", err)
 		}
 
 		return &tls.Config{
-			ServerName: p.CATLSServerName,
+			ServerName: p.CAServerName,
 			RootCAs:    certPool,
 		}, nil
 	}

@@ -63,10 +63,10 @@ Specify the path to PEM encoded CA Certificates that can be used to authenticate
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVER`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
-`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CATLSSERVERNAME`:  
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVERNAME`:  
 Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
-`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CAUSESYSTEMCERTPOOL`:  
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASYSTEMCERTPOOL`:  
 Define if the certificates pool must use a copy of the system cert pool. (Default: ```false```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
