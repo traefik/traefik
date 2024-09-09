@@ -442,8 +442,8 @@
       keyType = "foobar"
       certificatesDuration = 42
       caCertificates = ["foobar", "foobar"]
-      caUseSystemCertPool = true
-      caTlsServerName = "foobar"
+      caSystemCertPool = true
+      caServerName = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
@@ -465,8 +465,8 @@
       keyType = "foobar"
       certificatesDuration = 42
       caCertificates = ["foobar", "foobar"]
-      caUseSystemCertPool = true
-      caTlsServerName = "foobar"
+      caSystemCertPool = true
+      caServerName = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"

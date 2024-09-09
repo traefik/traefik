@@ -744,31 +744,31 @@ certificatesResolvers:
     It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
     This environment variable is neither a fallback nor an override of the configuration option.
 
-### `caUseSystemCertPool`
+### `caSystemCertPool`
 
 _Optional, Default=false_
 
-The `caUseSystemCertPool` defines if the certificates pool must use a copy of the system cert pool.
+The `caSystemCertPool` defines if the certificates pool must use a copy of the system cert pool.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
     acme:
       # ...
-      caUseSystemCertPool: true
+      caSystemCertPool: true
       # ...
 ```
 
 ```toml tab="File (TOML)"
 [certificatesResolvers.myresolver.acme]
   # ...
-  caUseSystemCertPool = true
+  caSystemCertPool = true
   # ...
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.caUseSystemCertPool=true
+--certificatesresolvers.myresolver.acme.caSystemCertPool=true
 # ...
 ```
 
@@ -778,31 +778,31 @@ certificatesResolvers:
     `LEGO_CA_SYSTEM_CERT_POOL` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
     This environment variable is neither a fallback nor an override of the configuration option.
 
-### `caTlsServerName`
+### `caServerName`
 
 _Optional, Default=""_
 
-The `caTlsServerName` specifies the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+The `caServerName` specifies the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
     acme:
       # ...
-      caTlsServerName: "my-server"
+      caServerName: "my-server"
       # ...
 ```
 
 ```toml tab="File (TOML)"
 [certificatesResolvers.myresolver.acme]
   # ...
-  caTlsServerName = "my-server"
+  caServerName = "my-server"
   # ...
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.caTlsServerName="my-server"
+--certificatesresolvers.myresolver.acme.caServerName="my-server"
 # ...
 ```
 

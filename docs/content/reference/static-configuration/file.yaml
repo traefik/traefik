@@ -486,8 +486,8 @@ certificatesResolvers:
       caCertificates:
         - foobar
         - foobar
-      caUseSystemCertPool: true
-      caTlsServerName: foobar
+      caSystemCertPool: true
+      caServerName: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
@@ -513,8 +513,8 @@ certificatesResolvers:
       caCertificates:
         - foobar
         - foobar
-      caUseSystemCertPool: true
-      caTlsServerName: foobar
+      caSystemCertPool: true
+      caServerName: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
