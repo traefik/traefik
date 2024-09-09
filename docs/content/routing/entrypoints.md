@@ -393,6 +393,40 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     --entryPoints.web.forwardedHeaders.insecure
     ```
 
+??? info "`forwardedHeaders.connection`"
+    
+    As per RFC7230, Traefik respects the Connection options from the client request.
+    By doing so, it removes any header field(s) listed in the request Connection header and the Connection header field itself when empty.
+    The removal happens as soon as the request is handled by Traefik,
+    thus the removed headers are not available when the request passes through the middleware chain.
+    The `connection` option lists the Connection headers allowed to passthrough the middleware chain before their removal.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        forwardedHeaders:
+          connection:
+            - foobar
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.forwardedHeaders]
+          connection = ["foobar"]
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.forwardedHeaders.connection=foobar
+    ```
+
 ### Transport
 
 #### `respondingTimeouts`

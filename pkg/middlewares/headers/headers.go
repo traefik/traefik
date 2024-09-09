@@ -10,7 +10,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
@@ -69,12 +68,11 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 
 	if hasCustomHeaders || hasCorsHeaders {
 		logger.Debugf("Setting up customHeaders/Cors from %v", cfg)
-		h, err := NewHeader(nextHandler, cfg)
+		var err error
+		handler, err = NewHeader(nextHandler, cfg)
 		if err != nil {
 			return nil, err
 		}
-
-		handler = connectionheader.Remover(h)
 	}
 
 	return &headers{
