@@ -272,7 +272,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if len(p.CACertificates) > 0 {
 		httpClient, err := p.createHTTPClient()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating HTTP client: %w", err)
 		}
 
 		config.HTTPClient = httpClient
@@ -360,7 +360,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 func (p *Provider) createHTTPClient() (*http.Client, error) {
 	tlsConfig, err := p.createClientTLSConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating client TLS config: %w", err)
 	}
 
 	return &http.Client{
@@ -382,7 +382,7 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	if len(p.CACertificates) > 0 {
 		certPool, err := lego.CreateCertPool(p.CACertificates, p.CAUseSystemCertPool)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating cert pool with custom certificates: %w", err)
 		}
 
 		return &tls.Config{
@@ -404,7 +404,7 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 
 	certPool, err := lego.CreateCertPool(strings.Split(customCACertsPath, string(os.PathListSeparator)), useSystemCertPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating cert pool: %w", err)
 	}
 
 	return &tls.Config{
@@ -497,8 +497,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-							for i := range len(domains) {
-								domain := domains[i]
+							for _, domain := range domains {
 								safe.Go(func() {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
 									if err != nil {
@@ -534,8 +533,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-							for i := range len(domains) {
-								domain := domains[i]
+							for _, domain := range domains {
 								safe.Go(func() {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
 									if err != nil {
