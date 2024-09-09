@@ -109,6 +109,7 @@ type TLSConfig struct {
 type ForwardedHeaders struct {
 	Insecure   bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	TrustedIPs []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
+	Connection []string `description:"List of Connection headers allowed to pass through the middleware chain before their removal, if and despite being listed in the client request Connection header." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration.
