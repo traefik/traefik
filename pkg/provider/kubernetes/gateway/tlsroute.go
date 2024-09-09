@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -251,19 +253,47 @@ func (p *Provider) loadTLSService(route *gatev1alpha2.TLSRoute, backendRef gatev
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, err := p.loadTCPServers(namespace, backendRef)
-	if err != nil {
-		return serviceName, nil, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonBackendNotFound),
-			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
-		}
+	lb, errCondition := p.loadTLSServers(namespace, route, backendRef)
+	if errCondition != nil {
+		return serviceName, nil, errCondition
 	}
 
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
+}
+
+func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *metav1.Condition) {
+	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
+	if err != nil {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.GetGeneration(),
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s: %s", namespace, backendRef.Name, err),
+		}
+	}
+
+	if svcPort.Protocol != corev1.ProtocolTCP {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.GetGeneration(),
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s: only TCP protocol is supported", namespace, backendRef.Name),
+		}
+	}
+
+	lb := &dynamic.TCPServersLoadBalancer{}
+
+	for _, ba := range backendAddresses {
+		lb.Servers = append(lb.Servers, dynamic.TCPServer{
+			// TODO determine whether the servers needs TLS, from the port?
+			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
+		})
+	}
+	return lb, nil
 }
 
 func hostSNIRule(hostnames []gatev1.Hostname) string {
