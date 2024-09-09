@@ -269,13 +269,9 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 
-	if len(p.CACertificates) > 0 {
-		httpClient, err := p.createHTTPClient()
-		if err != nil {
-			return nil, fmt.Errorf("creating HTTP client: %w", err)
-		}
-
-		config.HTTPClient = httpClient
+	config.HTTPClient, err = p.createHTTPClient()
+	if err != nil {
+		return nil, fmt.Errorf("creating HTTP client: %w", err)
 	}
 
 	client, err := lego.NewClient(config)
