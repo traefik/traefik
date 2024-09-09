@@ -19,7 +19,7 @@
     address = ":8000"
   [entryPoints.web.forwardedHeaders]
     insecure = true
-    connectionHeaders = ["Foo"]
+    connection = ["Foo"]
 
 [providers.file]
   filename = "{{ .SelfFilename }}"
