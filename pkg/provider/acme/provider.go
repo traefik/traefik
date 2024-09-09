@@ -391,8 +391,10 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	// https://github.com/go-acme/lego/blob/834a9089f143e3407b3f5c8b93a0e285ba231fe2/lego/client_config.go#L24-L34
 	// https://github.com/go-acme/lego/blob/834a9089f143e3407b3f5c8b93a0e285ba231fe2/lego/client_config.go#L97-L113
 
+	serverName := os.Getenv("LEGO_CA_SERVER_NAME")
+
 	customCACertsPath := os.Getenv("LEGO_CA_CERTIFICATES")
-	if customCACertsPath == "" {
+	if customCACertsPath == "" && serverName == "" {
 		return nil, nil
 	}
 
@@ -404,7 +406,7 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	}
 
 	return &tls.Config{
-		ServerName: os.Getenv("LEGO_CA_SERVER_NAME"),
+		ServerName: serverName,
 		RootCAs:    certPool,
 	}, nil
 }
