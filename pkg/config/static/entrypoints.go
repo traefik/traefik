@@ -53,6 +53,8 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.ForwardedHeaders = &ForwardedHeaders{}
 	ep.UDP = &UDPConfig{}
 	ep.UDP.SetDefaults()
+	ep.HTTP = HTTPConfig{}
+	ep.HTTP.SetDefaults()
 	ep.HTTP2 = &HTTP2Config{}
 	ep.HTTP2.SetDefaults()
 }
@@ -63,6 +65,12 @@ type HTTPConfig struct {
 	Middlewares           []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	TLS                   *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	EncodeQuerySemicolons bool          `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty"`
+	MaxHeaderBytes        int           `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (c *HTTPConfig) SetDefaults() {
+	c.MaxHeaderBytes = 1 << 20 // 1 MB https://cs.opensource.google/go/go/+/refs/tags/go1.23.0:src/net/http/server.go;l=916
 }
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
