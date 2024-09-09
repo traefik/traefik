@@ -375,7 +375,7 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 }
 
 func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
-	if len(p.CACertificates) > 0 {
+	if len(p.CACertificates) > 0 || p.CAServerName != "" {
 		certPool, err := lego.CreateCertPool(p.CACertificates, p.CASystemCertPool)
 		if err != nil {
 			return nil, fmt.Errorf("creating cert pool with custom certificates: %w", err)
