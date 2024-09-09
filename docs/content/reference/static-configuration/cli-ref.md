@@ -58,7 +58,7 @@ Activate API directly on the entryPoint named traefik. (Default: ```false```)
 Certificates resolvers configuration. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.cacertificates`:  
-Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
 `--certificatesresolvers.<name>.acme.caserver`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
