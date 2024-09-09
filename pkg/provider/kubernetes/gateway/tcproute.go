@@ -260,7 +260,7 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 }
 
 func (p *Provider) loadTCPServers(namespace string, route *gatev1alpha2.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *metav1.Condition) {
-	servers, svcPort, err := p.getBackendAddresses(namespace, backendRef)
+	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
 		return nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -285,10 +285,9 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1alpha2.TCPRoute
 
 	lb := &dynamic.TCPServersLoadBalancer{}
 
-	for _, server := range servers {
+	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
-			// TODO determine whether the servers needs TLS, from the port?
-			Address: net.JoinHostPort(server.Address, strconv.Itoa(int(server.Port))),
+			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
 		})
 	}
 	return lb, nil
