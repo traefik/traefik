@@ -713,7 +713,7 @@ certificatesResolvers:
 
 _Optional, Default=[]_
 
-Specify the path to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+The `caCertificates` specifies the path list to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -748,7 +748,7 @@ certificatesResolvers:
 
 _Optional, Default=false_
 
-Define if the certificates pool must use a copy of the system cert pool.
+The `caUseSystemCertPool` defines if the certificates pool must use a copy of the system cert pool.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
