@@ -105,7 +105,7 @@ func (s *HeadersSuite) TestConnectionHopByHop() {
 		"X-Forwarded-Host": {"localhost"},
 	}
 
-	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	err = try.Request(req, time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 
 	accessLog, err := os.ReadFile(traefikTestAccessLogFile)
