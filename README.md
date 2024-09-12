@@ -35,7 +35,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://doc.traefik.io/traefik/).
+:warning: Please be aware that the old configurations for Traefik v1.x and some configurations for Traefik v2.x are NOT compatible with the latest v3.x config as of now. If you're running v3, please ensure you are using a [v3 configuration](https://doc.traefik.io/traefik/).
 
 ## Overview
 
@@ -87,7 +87,7 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation of Traefik v2 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
+You can find the complete documentation of Traefik v3 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
 
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
