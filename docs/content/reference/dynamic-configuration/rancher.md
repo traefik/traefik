@@ -8,7 +8,7 @@ description: "Read the official Traefik documentation to learn more on dynamic c
 Dynamic configuration with Rancher Labels
 {: .subtitle }
 
-The labels are case insensitive.
+The labels are case-insensitive.
 
 ```yaml
 labels:

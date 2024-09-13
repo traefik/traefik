@@ -3870,7 +3870,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 		networks map[string]*network.Summary
 	}{
 		{
-			service:  swarmService(withEndpointSpec(modeDNSSR)),
+			service:  swarmService(withEndpointSpec(modeDNSRR)),
 			expected: "",
 			networks: map[string]*network.Summary{},
 		},
@@ -3935,7 +3935,7 @@ func TestSwarmGetPort(t *testing.T) {
 	}{
 		{
 			service: swarmService(
-				withEndpointSpec(modeDNSSR),
+				withEndpointSpec(modeDNSRR),
 			),
 			networks:   map[string]*network.Summary{},
 			serverPort: "8080",

@@ -14,7 +14,7 @@ See also [Marathon user guide](../../user-guides/marathon.md).
 
 !!! info "Labels"
     
-    - Labels are case insensitive.
+    - Labels are case-insensitive.
     - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/marathon.md).
 
 ### General

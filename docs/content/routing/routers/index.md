@@ -259,7 +259,7 @@ The table below lists all the available matchers:
     The regexp name (`name` in the above example) is an arbitrary value, that exists only for historical reasons.
 
     Any `regexp` supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used.
-    For example, here is a case insensitive path matcher syntax: ```Path(`/{path:(?i:Products)}`)```.
+    For example, here is a case-insensitive path matcher syntax: ```Path(`/{path:(?i:Products)}`)```.
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 
@@ -946,7 +946,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     | Router-2 | ```ClientIP(`192.168.0.0/24`)```                            | 26       |
 
     Which means that requests from `192.168.0.12` would go to Router-2 even though Router-1 is intended to specifically handle them.
-    To achieve this intention, a priority (higher than 26) should be set on Router-1.
+    To achieve this intention, a priority (greater than 26) should be set on Router-1.
 
 ??? example "Setting priorities -- using the [File Provider](../../providers/file.md)"
 

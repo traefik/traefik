@@ -316,7 +316,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			}
 
 			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
-				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
+				log.WithoutContext().Errorf("Router %s uses a nonexistent resolver: %s", rtName, rt.TLS.CertResolver)
 			}
 		}
 	})

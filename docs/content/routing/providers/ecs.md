@@ -22,7 +22,7 @@ With ECS, Traefik can leverage labels attached to a container to generate routin
 
 !!! info "labels"
     
-    - labels are case insensitive.
+    - labels are case-insensitive.
     - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/ecs.md).
 
 ### General

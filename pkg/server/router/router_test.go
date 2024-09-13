@@ -986,7 +986,7 @@ func BenchmarkService(b *testing.B) {
 			LoadBalancer: &dynamic.ServersLoadBalancer{
 				Servers: []dynamic.Server{
 					{
-						URL: "tchouck",
+						URL: "tchouk",
 					},
 				},
 			},
