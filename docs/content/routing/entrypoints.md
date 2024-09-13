@@ -243,7 +243,8 @@ but is also used to route challenges connections/requests to services that could
 
 ??? info "No Certificate Resolvers configured"
 
-    When no certificate resolver is defined Traefik allows handling ACME TLS or HTTP challenges with user defined routers.
+    It is not necessary to use the `allowACMEByPass' option certificate option if no certificate resolver is defined.
+    In fact, Traefik will automatically allow ACME TLS or HTTP requests to be handled by custom routers in this case, since there can be no concurrency with its own challenge handlers.
 
 ```yaml tab="File (YAML)"
 entryPoints:
