@@ -233,6 +233,35 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
+### AllowACMEByPass
+
+_Optional, Default=false_
+
+`allowACMEByPass` determines whether a user defined router can handle ACME TLS or HTTP challenges instead of the Traefik dedicated one.
+This option can be used when a Traefik instance has one or more certificate resolvers configured,
+but is also used to route challenges connections/requests to services that could also initiate their own ACME challenges.
+
+??? info "No Certificate Resolvers configured"
+
+    It is not necessary to use the `allowACMEByPass' option certificate option if no certificate resolver is defined.
+    In fact, Traefik will automatically allow ACME TLS or HTTP requests to be handled by custom routers in this case, since there can be no concurrency with its own challenge handlers.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    allowACMEByPass: true
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  [entryPoints.foo.allowACMEByPass]
+    allowACMEByPass = true
+```
+
+```bash tab="CLI"
+--entryPoints.name.allowACMEByPass=true
+```
+
 ### HTTP/2
 
 #### `maxConcurrentStreams`
