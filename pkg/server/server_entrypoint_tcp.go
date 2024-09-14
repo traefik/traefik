@@ -36,6 +36,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"tailscale.com/tsnet"
 )
 
 type key string
@@ -251,7 +253,6 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 			return
 		}
-
 		writeCloser, err := writeCloser(conn)
 		if err != nil {
 			panic(err)
@@ -401,6 +402,8 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
 		return typedConn, nil
+	case *gonet.TCPConn:
+		return typedConn, nil
 	default:
 		return nil, fmt.Errorf("unknown connection type %T", typedConn)
 	}
@@ -489,12 +492,22 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
+	if config.TsNet {
+		s := new(tsnet.Server)
+		s.Hostname = name
+		listener, err = s.Listen("tcp", config.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("error creating tsnet listener: %w", err)
+		}
+	}
+
 	if config.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(ctx, config, listener)
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
+
 	return listener, nil
 }
 
