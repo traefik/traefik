@@ -46,7 +46,7 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 			expected:      "10.0.0.3",
 		},
 		{
-			desc:          "Use non existing depth in XForwardedFor",
+			desc:          "Use nonexistent depth in XForwardedFor",
 			depth:         2,
 			xForwardedFor: "",
 			expected:      "",

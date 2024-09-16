@@ -20,7 +20,9 @@ import (
 )
 
 func TestShutdownHijacked(t *testing.T) {
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		conn, _, err := rw.(http.Hijacker).Hijack()
 		require.NoError(t, err)
@@ -34,7 +36,9 @@ func TestShutdownHijacked(t *testing.T) {
 }
 
 func TestShutdownHTTP(t *testing.T) {
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second)
@@ -167,7 +171,9 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -204,7 +210,9 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -244,7 +252,9 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -290,7 +300,9 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))

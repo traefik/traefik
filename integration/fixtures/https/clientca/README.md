@@ -48,7 +48,7 @@ openssl genrsa -out client3.key 2048
 # Locality Name (eg, city) []:.
 # Organization Name (eg, company) [Internet Widgits Pty Ltd]:.
 # Organizational Unit Name (eg, section) []:.
-# Common Name (e.g. server FQDN or YOUR name) []:clien1.example.com
+# Common Name (e.g. server FQDN or YOUR name) []:client1.example.com
 # Email Address []:.
 # 
 # Please enter the following 'extra' attributes
@@ -58,7 +58,7 @@ openssl genrsa -out client3.key 2048
 # Issuer
 #   CN = ca1.example.com
 # Subject
-#   CN = clien1.example.com
+#   CN = client1.example.com
 openssl req -key client1.key -new -out client1.csr
 
 # Country Name (2 letter code) [AU]:.
