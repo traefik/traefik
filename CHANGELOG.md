@@ -1,3 +1,23 @@
+## [v2.11.9](https://github.com/traefik/traefik/tree/v2.11.9) (2024-09-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.8...v2.11.9)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.18.0 ([#11060](https://github.com/traefik/traefik/pull/11060) by [ldez](https://github.com/ldez))
+- **[acme]** Allow handling ACME challenges with custom routers ([#10981](https://github.com/traefik/traefik/pull/10981) by [rtribotte](https://github.com/rtribotte))
+- **[logs,middleware]** Make the keys of the accessLog.fields.names map case-insensitive ([#11040](https://github.com/traefik/traefik/pull/11040) by [SpecLad](https://github.com/SpecLad))
+- **[logs,middleware]** Ensure proper logs for aborted streaming responses ([#10819](https://github.com/traefik/traefik/pull/10819) by [hood](https://github.com/hood))
+- **[middleware,server]** Cleanup Connection headers before passing the middleware chain ([#11077](https://github.com/traefik/traefik/pull/11077) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Upgrade paerser to v0.2.1 ([#11048](https://github.com/traefik/traefik/pull/11048) by [mmatur](https://github.com/mmatur))
+- **[server,tcp]** Prevent error logging when TCP WRR pool is empty ([#10989](https://github.com/traefik/traefik/pull/10989) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Upgrade webui dependencies ([#11031](https://github.com/traefik/traefik/pull/11031) by [mloiseleur](https://github.com/mloiseleur))
+
+**Documentation:**
+- **[acme]** Fix typo in multiple DNS challenge provider warning ([#11001](https://github.com/traefik/traefik/pull/11001) by [tired-engineer](https://github.com/tired-engineer))
+- **[k8s]** Update k8s quickstart permissions ([#11049](https://github.com/traefik/traefik/pull/11049) by [mmatur](https://github.com/mmatur))
+- **[metrics]** Remove documentation for unimplemented service retries metric  ([#10983](https://github.com/traefik/traefik/pull/10983) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Unify tab titles ([#11072](https://github.com/traefik/traefik/pull/11072) by [jsoref](https://github.com/jsoref))
+- Give valid examples for exposing dashboard with default Helm values ([#11015](https://github.com/traefik/traefik/pull/11015) by [holysoles](https://github.com/holysoles))
+
 ## [v2.11.8](https://github.com/traefik/traefik/tree/v2.11.8) (2024-08-06)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.7...v2.11.8)
 
