@@ -24,7 +24,7 @@ With Consul Catalog, Traefik can leverage tags attached to a service to generate
 
 !!! info "tags"
     
-    - tags are case insensitive.
+    - tags are case-insensitive.
     - The complete list of tags can be found [the reference page](../../reference/dynamic-configuration/consul-catalog.md)
 
 ### General

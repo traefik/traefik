@@ -212,9 +212,10 @@ func Test_Routing(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc    string
-		routers []applyRouter
-		checks  []checkCase
+		desc                    string
+		routers                 []applyRouter
+		checks                  []checkCase
+		allowACMETLSPassthrough bool
 	}{
 		{
 			desc:    "No routers",
@@ -268,6 +269,18 @@ func Test_Routing(t *testing.T) {
 				{
 					desc:        "ACME TLS Challenge",
 					checkRouter: checkACMETLS,
+				},
+			},
+		},
+		{
+			desc:                    "TCP TLS passthrough catches ACME TLS",
+			allowACMETLSPassthrough: true,
+			routers:                 []applyRouter{routerTCPTLSCatchAllPassthrough},
+			checks: []checkCase{
+				{
+					desc:          "ACME TLS Challenge",
+					checkRouter:   checkACMETLS,
+					expectedError: "tls: first record does not look like a TLS handshake",
 				},
 			},
 		},
@@ -596,6 +609,10 @@ func Test_Routing(t *testing.T) {
 			router, err := manager.buildEntryPointHandler(context.Background(), dynConf.TCPRouters, dynConf.Routers, nil, nil)
 			require.NoError(t, err)
 
+			if test.allowACMETLSPassthrough {
+				router.EnableACMETLSPassthrough()
+			}
+
 			epListener, err := net.Listen("tcp", "127.0.0.1:0")
 			require.NoError(t, err)
 
@@ -717,7 +734,7 @@ func routerTCPTLSCatchAll(conf *runtime.Configuration) {
 	}
 }
 
-// routerTCPTLSCatchAllPassthrough a TCP TLS CatchAll Passthrough - HostSNI(`*`) router with TLS 1.0 config.
+// routerTCPTLSCatchAllPassthrough a TCP TLS CatchAll Passthrough - HostSNI(`*`) router with TLS 1.2 config.
 func routerTCPTLSCatchAllPassthrough(conf *runtime.Configuration) {
 	conf.TCPRouters["tcp-tls-catchall-passthrough"] = &runtime.TCPRouterInfo{
 		TCPRouter: &dynamic.TCPRouter{
