@@ -925,7 +925,7 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 
 	if config.FilePath != "" {
 		_, err = os.Stat(config.FilePath)
-		require.NoError(t, err, fmt.Sprintf("logger should create %s", config.FilePath))
+		require.NoError(t, err, "logger should create "+config.FilePath)
 	}
 
 	reqContext, cancelRequest := context.WithCancel(context.Background())
