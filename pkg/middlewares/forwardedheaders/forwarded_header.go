@@ -3,10 +3,13 @@ package forwardedheaders
 import (
 	"net"
 	"net/http"
+	"net/textproto"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"golang.org/x/net/http/httpguts"
 )
 
 const (
@@ -42,19 +45,20 @@ var xHeaders = []string{
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure   bool
-	trustedIps []string
-	ipChecker  *ip.Checker
-	next       http.Handler
-	hostname   string
+	insecure          bool
+	trustedIPs        []string
+	connectionHeaders []string
+	ipChecker         *ip.Checker
+	next              http.Handler
+	hostname          string
 }
 
 // NewXForwarded creates a new XForwarded.
-func NewXForwarded(insecure bool, trustedIps []string, next http.Handler) (*XForwarded, error) {
+func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
-	if len(trustedIps) > 0 {
+	if len(trustedIPs) > 0 {
 		var err error
-		ipChecker, err = ip.NewChecker(trustedIps)
+		ipChecker, err = ip.NewChecker(trustedIPs)
 		if err != nil {
 			return nil, err
 		}
@@ -66,11 +70,12 @@ func NewXForwarded(insecure bool, trustedIps []string, next http.Handler) (*XFor
 	}
 
 	return &XForwarded{
-		insecure:   insecure,
-		trustedIps: trustedIps,
-		ipChecker:  ipChecker,
-		next:       next,
-		hostname:   hostname,
+		insecure:          insecure,
+		trustedIPs:        trustedIPs,
+		connectionHeaders: connectionHeaders,
+		ipChecker:         ipChecker,
+		next:              next,
+		hostname:          hostname,
 	}, nil
 }
 
@@ -189,7 +194,51 @@ func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	x.rewrite(r)
 
+	x.removeConnectionHeaders(r)
+
 	x.next.ServeHTTP(w, r)
+}
+
+func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
+	var reqUpType string
+	if httpguts.HeaderValuesContainsToken(req.Header[connection], upgrade) {
+		reqUpType = unsafeHeader(req.Header).Get(upgrade)
+	}
+
+	var connectionHopByHopHeaders []string
+	for _, f := range req.Header[connection] {
+		for _, sf := range strings.Split(f, ",") {
+			if sf = textproto.TrimString(sf); sf != "" {
+				// Connection header cannot dictate to remove X- headers managed by Traefik,
+				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
+				// A proxy or gateway MUST ... and then remove the Connection header field itself
+				// (or replace it with the intermediary's own connection options for the forwarded message).
+				if slices.Contains(xHeaders, sf) {
+					continue
+				}
+
+				// Keep headers allowed through the middleware chain.
+				if slices.Contains(x.connectionHeaders, sf) {
+					connectionHopByHopHeaders = append(connectionHopByHopHeaders, sf)
+					continue
+				}
+
+				// Apply Connection header option.
+				req.Header.Del(sf)
+			}
+		}
+	}
+
+	if reqUpType != "" {
+		connectionHopByHopHeaders = append(connectionHopByHopHeaders, upgrade)
+		unsafeHeader(req.Header).Set(upgrade, reqUpType)
+	}
+	if len(connectionHopByHopHeaders) > 0 {
+		unsafeHeader(req.Header).Set(connection, strings.Join(connectionHopByHopHeaders, ","))
+		return
+	}
+
+	unsafeHeader(req.Header).Del(connection)
 }
 
 // unsafeHeader allows to manage Header values.
