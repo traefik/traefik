@@ -275,8 +275,72 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 		return serviceName, errCondition
 	}
 
-	if p.ExperimentalChannel {
-		servicePolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
+	if !p.ExperimentalChannel {
+		conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb}
+
+		return serviceName, nil
+	}
+
+	servicePolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
+	if err != nil {
+		return serviceName, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot list BackendTLSPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+		}
+	}
+
+	var matchedPolicy *gatev1alpha3.BackendTLSPolicy
+	for _, policy := range servicePolicies {
+		matched := false
+		for _, targetRef := range policy.Spec.TargetRefs {
+			if targetRef.SectionName == nil || svcPort.Name == string(*targetRef.SectionName) {
+				matchedPolicy = policy
+				matched = true
+				break
+			}
+		}
+
+		// If the policy targets the service, but doesn't match any port.
+		if !matched {
+			// update policy status
+			status := gatev1alpha2.PolicyStatus{
+				Ancestors: []gatev1alpha2.PolicyAncestorStatus{{
+					AncestorRef: gatev1alpha2.ParentReference{
+						Group:       ptr.To(gatev1.Group(groupGateway)),
+						Kind:        ptr.To(gatev1.Kind(kindGateway)),
+						Namespace:   ptr.To(gatev1.Namespace(namespace)),
+						Name:        gatev1.ObjectName(listener.GWName),
+						SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+					},
+					ControllerName: controllerName,
+					Conditions: []metav1.Condition{{
+						Type:               string(gatev1.RouteConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: route.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.RouteReasonBackendNotFound),
+						Message:            fmt.Sprintf("BackendTLSPolicy has no valid TargetRef for Service %s/%s", namespace, string(backendRef.Name)),
+					}},
+				}},
+			}
+
+			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+				logger := log.Ctx(ctx).With().
+					Str("http_route", route.Name).
+					Str("namespace", route.Namespace).Logger()
+				logger.Warn().
+					Err(err).
+					Msg("Unable to update TLSRoute status")
+			}
+		}
+	}
+
+	if matchedPolicy != nil {
+		st, err := p.loadServersTransport(namespace, *matchedPolicy)
 		if err != nil {
 			return serviceName, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -284,73 +348,13 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 				ObservedGeneration: route.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.RouteReasonRefNotPermitted),
-				Message:            fmt.Sprintf("Cannot list BackendTLSPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+				Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), err),
 			}
 		}
 
-		var matchedPolicy *gatev1alpha3.BackendTLSPolicy
-		for _, policy := range servicePolicies {
-			matched := false
-			for _, targetRef := range policy.Spec.TargetRefs {
-				if targetRef.SectionName == nil || svcPort.Name == string(*targetRef.SectionName) {
-					matchedPolicy = policy
-					matched = true
-					break
-				}
-			}
-
-			// If the policy targets the service, but doesn't match any port.
-			if !matched {
-				// update policy status
-				status := gatev1alpha2.PolicyStatus{
-					Ancestors: []gatev1alpha2.PolicyAncestorStatus{{
-						AncestorRef: gatev1alpha2.ParentReference{
-							Group:       ptr.To(gatev1.Group(groupGateway)),
-							Kind:        ptr.To(gatev1.Kind(kindGateway)),
-							Namespace:   ptr.To(gatev1.Namespace(namespace)),
-							Name:        gatev1.ObjectName(listener.GWName),
-							SectionName: ptr.To(gatev1.SectionName(listener.Name)),
-						},
-						ControllerName: controllerName,
-						Conditions: []metav1.Condition{{
-							Type:               string(gatev1.RouteConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: route.Generation,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1.RouteReasonBackendNotFound),
-							Message:            fmt.Sprintf("BackendTLSPolicy has no valid TargetRef for Service %s/%s", namespace, string(backendRef.Name)),
-						}},
-					}},
-				}
-
-				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-					logger := log.Ctx(ctx).With().
-						Str("http_route", route.Name).
-						Str("namespace", route.Namespace).Logger()
-					logger.Warn().
-						Err(err).
-						Msg("Unable to update TLSRoute status")
-				}
-			}
-		}
-
-		if matchedPolicy != nil {
-			st, err := p.loadServersTransport(namespace, *matchedPolicy)
-			if err != nil {
-				return serviceName, &metav1.Condition{
-					Type:               string(gatev1.RouteConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: route.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.RouteReasonRefNotPermitted),
-					Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), err),
-				}
-			}
-
-			if st != nil {
-				lb.ServersTransport = serviceName
-				conf.HTTP.ServersTransports[serviceName] = st
-			}
+		if st != nil {
+			lb.ServersTransport = serviceName
+			conf.HTTP.ServersTransports[serviceName] = st
 		}
 	}
 
@@ -485,67 +489,37 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 	return lb, svcPort, nil
 }
 
-func (p *Provider) loadServicePorts(namespace string, backendRef gatev1.HTTPBackendRef) (*corev1.ServicePort, []string, error) {
-	if backendRef.Port == nil {
-		return nil, nil, errors.New("port is required for Kubernetes Service reference")
-	}
-
-	service, exists, err := p.client.GetService(namespace, string(backendRef.Name))
-	if err != nil {
-		return nil, nil, fmt.Errorf("getting service: %w", err)
-	}
-	if !exists {
-		return nil, nil, errors.New("service not found")
-	}
-
-	var port *corev1.ServicePort
-	var portNames []string
-	for _, svcPort := range service.Spec.Ports {
-		if svcPort.Name != "" {
-			portNames = append(portNames, svcPort.Name)
-		}
-
-		if svcPort.Port == int32(*backendRef.Port) {
-			port = &svcPort
-		}
-	}
-
-	if port == nil {
-		return nil, nil, fmt.Errorf("service port %d not found", *backendRef.Port)
-	}
-
-	return port, portNames, nil
-}
-
 func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.BackendTLSPolicy) (*dynamic.ServersTransport, error) {
 	st := &dynamic.ServersTransport{
 		ServerName: string(policy.Spec.Validation.Hostname),
 	}
 
-	if policy.Spec.Validation.CACertificateRefs != nil {
-		// Support: Core - An optional single reference to a Kubernetes ConfigMap,
-		// with the CA certificate in a key named `ca.crt`.
-		if len(policy.Spec.Validation.CACertificateRefs) > 1 {
-			return nil, errors.New("backendTLSPolicy has more than one CA certificate")
-		}
+	if policy.Spec.Validation.CACertificateRefs == nil {
+		return st, nil
+	}
 
-		for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-			if caCertRef.Group == groupCore && caCertRef.Kind == "ConfigMap" {
-				configMap, exists, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
-				if err != nil {
-					return nil, fmt.Errorf("getting configmap: %w", err)
-				}
-				if !exists {
-					return nil, fmt.Errorf("configmap %s/%s not found", namespace, string(caCertRef.Name))
-				}
+	// Support: Core - An optional single reference to a Kubernetes ConfigMap,
+	// with the CA certificate in a key named `ca.crt`.
+	if len(policy.Spec.Validation.CACertificateRefs) > 1 {
+		return nil, errors.New("backendTLSPolicy has more than one CA certificate")
+	}
 
-				caCRT, ok := configMap.Data["ca.crt"]
-				if !ok {
-					return nil, fmt.Errorf("configmap %s/%s does not have ca.crt", namespace, string(caCertRef.Name))
-				}
-
-				st.RootCAs = append(st.RootCAs, types.FileOrContent(caCRT))
+	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
+		if caCertRef.Group == groupCore && caCertRef.Kind == "ConfigMap" {
+			configMap, exists, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, fmt.Errorf("getting configmap: %w", err)
 			}
+			if !exists {
+				return nil, fmt.Errorf("configmap %s/%s not found", namespace, string(caCertRef.Name))
+			}
+
+			caCRT, ok := configMap.Data["ca.crt"]
+			if !ok {
+				return nil, fmt.Errorf("configmap %s/%s does not have ca.crt", namespace, string(caCertRef.Name))
+			}
+
+			st.RootCAs = append(st.RootCAs, types.FileOrContent(caCRT))
 		}
 	}
 
