@@ -86,7 +86,7 @@ func Test_getPort_swarm(t *testing.T) {
 	}{
 		{
 			service: swarmService(
-				withEndpointSpec(modeDNSSR),
+				withEndpointSpec(modeDNSRR),
 			),
 			networks:   map[string]*docker.NetworkResource{},
 			serverPort: "8080",

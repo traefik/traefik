@@ -81,7 +81,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
         - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
     ```
 
-    ```yaml tab="Kubernetes Ingress Route"
+    ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
@@ -103,7 +103,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
             # when the cross-provider syntax is used.
     ```
 
-    ```yaml tab="Kubernetes Ingress"
+    ```yaml tab="Ingress"
     apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:

@@ -8,7 +8,6 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -46,12 +45,11 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 
 	if hasCustomHeaders || hasCorsHeaders {
 		logger.Debug().Msgf("Setting up customHeaders/Cors from %v", cfg)
-		h, err := NewHeader(nextHandler, cfg)
+		var err error
+		handler, err = NewHeader(nextHandler, cfg)
 		if err != nil {
 			return nil, err
 		}
-
-		handler = connectionheader.Remover(h)
 	}
 
 	return &headers{
