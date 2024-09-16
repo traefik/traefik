@@ -149,7 +149,7 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// We Set even in the case where the source already exists,
-	// because we want to update the expiryTime everytime we get the source,
+	// because we want to update the expiryTime every time we get the source,
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := rl.buckets.Set(source, bucket, rl.ttl); err != nil {
 		logger.Error().Err(err).Msg("Could not insert/update bucket")
