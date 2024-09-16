@@ -3,6 +3,7 @@ package static
 import (
 	"fmt"
 	"math"
+	"net/http"
 	"strings"
 
 	ptypes "github.com/traefik/paerser/types"
@@ -52,6 +53,7 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.ForwardedHeaders = &ForwardedHeaders{}
 	ep.UDP = &UDPConfig{}
 	ep.UDP.SetDefaults()
+	ep.HTTP = HTTPConfig{}
 	ep.HTTP.SetDefaults()
 	ep.HTTP2 = &HTTP2Config{}
 	ep.HTTP2.SetDefaults()
@@ -65,12 +67,14 @@ type HTTPConfig struct {
 	EncodedCharacters     *EncodedCharacters `description:"Defines which encoded characters are allowed in the request path." json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
 	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
 	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
+	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (h *HTTPConfig) SetDefaults() {
 	sanitizePath := true
 	h.SanitizePath = &sanitizePath
+	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.
