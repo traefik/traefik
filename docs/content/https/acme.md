@@ -11,7 +11,7 @@ Automatic HTTPS
 You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
-    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and can not be overridden.
+    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and cannot be overridden.
     
     When running Traefik in a container this file should be persisted across restarts. 
     If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
@@ -298,7 +298,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     
     Multiple DNS challenge provider are not supported with Traefik, but you can use `CNAME` to handle that.
     For example, if you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
-    This way, you can obtain certificates for `example.com` with the `foo` account.
+    This way, you can obtain certificates for `example.org` with the `bar` account.
 
 !!! important
     A `provider` is mandatory.

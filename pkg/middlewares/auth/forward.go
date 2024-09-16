@@ -13,7 +13,6 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -111,7 +110,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.authResponseHeadersRegex = re
 	}
 
-	return fa, nil
+	return Remover(fa), nil
 }
 
 func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) {
@@ -121,7 +120,7 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	req = connectionheader.Remove(req)
+	req = Remove(req)
 
 	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
