@@ -632,18 +632,13 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	}
 
-	var maxHeaderBytes int
-	if configuration.HTTP.MaxHeaderBytes > 0 {
-		maxHeaderBytes = configuration.HTTP.MaxHeaderBytes
-	}
-
 	serverHTTP := &http.Server{
 		Handler:        handler,
 		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		MaxHeaderBytes: maxHeaderBytes,
+		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
