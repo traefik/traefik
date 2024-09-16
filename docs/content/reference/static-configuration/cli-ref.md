@@ -141,6 +141,9 @@ HTTP configuration.
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
+`--entrypoints.<name>.http.maxheaderbytes`:  
+Maximum size of request headers in bytes. (Default: ```1048576```)
+
 `--entrypoints.<name>.http.middlewares`:  
 Default middlewares for the routers linked to the entry point.
 

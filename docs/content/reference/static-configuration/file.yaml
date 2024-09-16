@@ -80,6 +80,7 @@ entryPoints:
               - foobar
               - foobar
       encodeQuerySemicolons: true
+      maxHeaderBytes: 42
     http2:
       maxConcurrentStreams: 42
     http3:
