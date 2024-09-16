@@ -37,6 +37,9 @@ entryPoints:
       trustedIPs:
         - foobar
         - foobar
+      connection:
+        - foobar
+        - foobar
     http:
       redirections:
         entryPoint:
