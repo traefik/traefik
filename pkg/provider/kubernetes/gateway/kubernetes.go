@@ -316,6 +316,12 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		return nil
 	}
 
+	var supportedFeatures []gatev1.SupportedFeature
+	for _, feature := range SupportedFeatures() {
+		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature(feature))
+	}
+	slices.Sort(supportedFeatures)
+
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
 		if gatewayClass.Spec.ControllerName != controllerName {
@@ -333,6 +339,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 				Message:            "Handled by Traefik controller",
 				LastTransitionTime: metav1.Now(),
 			}),
+			SupportedFeatures: supportedFeatures,
 		}
 
 		if err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, status); err != nil {
