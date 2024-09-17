@@ -56,26 +56,6 @@ const (
 	appProtocolWSS = "kubernetes.io/wss"
 )
 
-func SupportedFeatures() []features.SupportedFeature {
-	return []features.SupportedFeature{
-		features.SupportGateway,
-		features.SupportGatewayPort8080,
-		features.SupportGRPCRoute,
-		features.SupportHTTPRoute,
-		features.SupportHTTPRouteQueryParamMatching,
-		features.SupportHTTPRouteMethodMatching,
-		features.SupportHTTPRoutePortRedirect,
-		features.SupportHTTPRouteSchemeRedirect,
-		features.SupportHTTPRouteHostRewrite,
-		features.SupportHTTPRoutePathRewrite,
-		features.SupportHTTPRoutePathRedirect,
-		features.SupportHTTPRouteResponseHeaderModification,
-		features.SupportTLSRoute,
-		features.SupportHTTPRouteBackendProtocolH2C,
-		features.SupportHTTPRouteBackendProtocolWebSocket,
-	}
-}
-
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint            string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -957,6 +937,26 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	}
 
 	return backendServers, *svcPort, nil
+}
+
+func SupportedFeatures() []features.SupportedFeature {
+	return []features.SupportedFeature{
+		features.SupportGateway,
+		features.SupportGatewayPort8080,
+		features.SupportGRPCRoute,
+		features.SupportHTTPRoute,
+		features.SupportHTTPRouteQueryParamMatching,
+		features.SupportHTTPRouteMethodMatching,
+		features.SupportHTTPRoutePortRedirect,
+		features.SupportHTTPRouteSchemeRedirect,
+		features.SupportHTTPRouteHostRewrite,
+		features.SupportHTTPRoutePathRewrite,
+		features.SupportHTTPRoutePathRedirect,
+		features.SupportHTTPRouteResponseHeaderModification,
+		features.SupportTLSRoute,
+		features.SupportHTTPRouteBackendProtocolH2C,
+		features.SupportHTTPRouteBackendProtocolWebSocket,
+	}
 }
 
 func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
