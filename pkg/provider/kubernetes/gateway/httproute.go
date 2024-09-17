@@ -494,33 +494,29 @@ func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.Ba
 		ServerName: string(policy.Spec.Validation.Hostname),
 	}
 
-	if policy.Spec.Validation.CACertificateRefs == nil {
+	if policy.Spec.Validation.WellKnownCACertificates != nil {
 		return st, nil
 	}
 
-	// Support: Core - An optional single reference to a Kubernetes ConfigMap,
-	// with the CA certificate in a key named `ca.crt`.
-	if len(policy.Spec.Validation.CACertificateRefs) > 1 {
-		return nil, errors.New("backendTLSPolicy has more than one CA certificate")
-	}
-
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if caCertRef.Group == groupCore && caCertRef.Kind == "ConfigMap" {
-			configMap, exists, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
-			if err != nil {
-				return nil, fmt.Errorf("getting configmap: %w", err)
-			}
-			if !exists {
-				return nil, fmt.Errorf("configmap %s/%s not found", namespace, string(caCertRef.Name))
-			}
-
-			caCRT, ok := configMap.Data["ca.crt"]
-			if !ok {
-				return nil, fmt.Errorf("configmap %s/%s does not have ca.crt", namespace, string(caCertRef.Name))
-			}
-
-			st.RootCAs = append(st.RootCAs, types.FileOrContent(caCRT))
+		if caCertRef.Group != groupCore || caCertRef.Kind != "ConfigMap" {
+			continue
 		}
+
+		configMap, exists, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+		if err != nil {
+			return nil, fmt.Errorf("getting configmap: %w", err)
+		}
+		if !exists {
+			return nil, fmt.Errorf("configmap %s/%s not found", namespace, string(caCertRef.Name))
+		}
+
+		caCRT, ok := configMap.Data["ca.crt"]
+		if !ok {
+			return nil, fmt.Errorf("configmap %s/%s does not have ca.crt", namespace, string(caCertRef.Name))
+		}
+
+		st.RootCAs = append(st.RootCAs, types.FileOrContent(caCRT))
 	}
 
 	return st, nil
