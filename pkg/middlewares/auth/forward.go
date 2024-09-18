@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -53,6 +54,7 @@ type forwardAuth struct {
 	authRequestHeaders       []string
 	addAuthCookiesToResponse map[string]struct{}
 	headerField              string
+	forwardBody              bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -74,6 +76,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		authRequestHeaders:       config.AuthRequestHeaders,
 		addAuthCookiesToResponse: addAuthCookiesToResponse,
 		headerField:              config.HeaderField,
+		forwardBody:              config.ForwardBody,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -133,6 +136,19 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	if fa.forwardBody {
+		bodyByte, err := io.ReadAll(req.Body)
+		if err != nil {
+			logger.Debug().Msgf("Error while reading Body: %s", err)
+			observability.SetStatusErrorf(req.Context(), "Error while reading Body: %s", err)
+
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		req.Body = io.NopCloser(bytes.NewReader(bodyByte))
+		forwardReq.Body = io.NopCloser(bytes.NewReader(bodyByte))
 	}
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
