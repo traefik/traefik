@@ -1,3 +1,15 @@
+## [v3.1.4](https://github.com/traefik/traefik/tree/v3.1.4) (2024-09-19)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.3...v3.1.4)
+
+**Bug fixes:**
+- **[metrics]** Guess Datadog socket type when prefix is unix ([#11102](https://github.com/traefik/traefik/pull/11102) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Mention v3 in readme ([#11082](https://github.com/traefik/traefik/pull/11082) by [kabaluyot](https://github.com/kabaluyot))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#11107](https://github.com/traefik/traefik/pull/11107) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.10](https://github.com/traefik/traefik/tree/v2.11.10) (2024-09-19)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.9...v2.11.10)
 
