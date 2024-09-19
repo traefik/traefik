@@ -31,7 +31,6 @@ This address can be a Unix Domain Socket (UDS) in the following format: `unix://
 When the prefix is set to `unix`, the socket type will be automatically determined. 
 To explicitly define the socket type and avoid automatic detection, you can use the prefixes `unixgram` for `SOCK_DGRAM` (datagram sockets) and `unixstream` for `SOCK_STREAM` (stream sockets), respectively.
 
-
 ```yaml tab="File (YAML)"
 metrics:
   datadog:

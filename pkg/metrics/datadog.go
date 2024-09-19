@@ -119,16 +119,24 @@ func initDatadogClient(ctx context.Context, config *types.Datadog, logger gokitl
 		defer ticker.Stop()
 
 		dialer := func(network, address string) (net.Conn, error) {
-			if network != "" {
+			switch network {
+			case "unix":
+				// To mimic the Datadog client when the network is unix we will try to guess the UDS type.
+				newConn, err := net.Dial("unixgram", address)
+				if err != nil && strings.Contains(err.Error(), "protocol wrong type for socket") {
+					return net.Dial("unix", address)
+				}
+				return newConn, err
+
+			case "unixgram":
+				return net.Dial("unixgram", address)
+
+			case "unixstream":
+				return net.Dial("unix", address)
+
+			default:
 				return net.Dial(network, address)
 			}
-
-			// To mimic the Datadog client when the network is of type unix we will try to guess the UDS type.
-			newConn, err := net.Dial("unixgram", address)
-			if err != nil && strings.Contains(err.Error(), "protocol wrong type for socket") {
-				return net.Dial("unix", address)
-			}
-			return newConn, err
 		}
 		datadogClient.WriteLoop(ctx, ticker.C, conn.NewManager(dialer, network, address, time.After, logger))
 	})
@@ -148,13 +156,13 @@ func parseDatadogAddress(address string) (string, string) {
 	var addr string
 	switch {
 	case strings.HasPrefix(address, unixAddressPrefix):
-		network = ""
+		network = "unix"
 		addr = address[len(unixAddressPrefix):]
 	case strings.HasPrefix(address, unixAddressDatagramPrefix):
 		network = "unixgram"
 		addr = address[len(unixAddressDatagramPrefix):]
 	case strings.HasPrefix(address, unixAddressStreamPrefix):
-		network = "unix"
+		network = "unixstream"
 		addr = address[len(unixAddressStreamPrefix):]
 	case address != "":
 		addr = address
