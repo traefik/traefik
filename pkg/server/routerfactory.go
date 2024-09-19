@@ -40,7 +40,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 ) *RouterFactory {
 	handlesTLSChallenge := false
 	for _, resolver := range staticConfiguration.CertificatesResolvers {
-		if resolver.ACME.TLSChallenge != nil {
+		if resolver.ACME != nil && resolver.ACME.TLSChallenge != nil {
 			handlesTLSChallenge = true
 			break
 		}
