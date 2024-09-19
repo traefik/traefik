@@ -61,7 +61,7 @@ func TestDatadog_parseDatadogAddress(t *testing.T) {
 		{
 			desc:       "unix address",
 			address:    "unix:///path/to/datadog.socket",
-			expNetwork: "",
+			expNetwork: "unix",
 			expAddress: "/path/to/datadog.socket",
 		},
 		{
@@ -73,7 +73,7 @@ func TestDatadog_parseDatadogAddress(t *testing.T) {
 		{
 			desc:       "unixstream address",
 			address:    "unixstream:///path/to/datadog.socket",
-			expNetwork: "unix",
+			expNetwork: "unixstream",
 			expAddress: "/path/to/datadog.socket",
 		},
 	}
