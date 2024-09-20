@@ -1,3 +1,63 @@
+## [v3.1.4](https://github.com/traefik/traefik/tree/v3.1.4) (2024-09-19)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.3...v3.1.4)
+
+**Bug fixes:**
+- **[metrics]** Guess Datadog socket type when prefix is unix ([#11102](https://github.com/traefik/traefik/pull/11102) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Mention v3 in readme ([#11082](https://github.com/traefik/traefik/pull/11082) by [kabaluyot](https://github.com/kabaluyot))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#11107](https://github.com/traefik/traefik/pull/11107) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.10](https://github.com/traefik/traefik/tree/v2.11.10) (2024-09-19)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.9...v2.11.10)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.47.0 ([#11104](https://github.com/traefik/traefik/pull/11104) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Check if ACME certificate resolver is not nil ([#11103](https://github.com/traefik/traefik/pull/11103) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.1.3](https://github.com/traefik/traefik/tree/v3.1.3) (2024-09-16)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.2...v3.1.3)
+
+**Bug fixes:**
+- **[k8s/ingress,rules,k8s]** Allow configuring rule syntax with Kubernetes Ingress annotation ([#10985](https://github.com/traefik/traefik/pull/10985) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress]** Re-allow empty configuration for Kubernetes Ingress provider ([#11008](https://github.com/traefik/traefik/pull/11008) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,metrics]** Wrap capture for services used by pieces of middleware ([#11058](https://github.com/traefik/traefik/pull/11058) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Removes goexport dependency and adds _initialize ([#11088](https://github.com/traefik/traefik/pull/11088) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[k8s/crd,k8s]** Remove mentions about APIVersion traefik.io/v1 ([#11020](https://github.com/traefik/traefik/pull/11020) by [rtribotte](https://github.com/rtribotte))
+- **[k8s]** Update quick-start-with-kubernetes.md to include required permissions ([#11010](https://github.com/traefik/traefik/pull/11010) by [eastmane](https://github.com/eastmane))
+- **[metrics]** Mention missing metrics removal in the migration guide ([#10982](https://github.com/traefik/traefik/pull/10982) by [rtribotte](https://github.com/rtribotte))
+- **[tracing]** Fix tracing documentation ([#11067](https://github.com/traefik/traefik/pull/11067) by [mmatur](https://github.com/mmatur))
+- **[tracing]** OTLP doc + potential panic ([#11052](https://github.com/traefik/traefik/pull/11052) by [mmatur](https://github.com/mmatur))
+
+**Misc:**
+- Merge v2.11 into v3.1 ([#11092](https://github.com/traefik/traefik/pull/11092) by [kevinpollet](https://github.com/kevinpollet))
+- Merge v2.11 into v3.1 ([#11065](https://github.com/traefik/traefik/pull/11065) by [mmatur](https://github.com/mmatur))
+- Merge v2.11 into v3.1 ([#11044](https://github.com/traefik/traefik/pull/11044) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.9](https://github.com/traefik/traefik/tree/v2.11.9) (2024-09-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.8...v2.11.9)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.18.0 ([#11060](https://github.com/traefik/traefik/pull/11060) by [ldez](https://github.com/ldez))
+- **[acme]** Allow handling ACME challenges with custom routers ([#10981](https://github.com/traefik/traefik/pull/10981) by [rtribotte](https://github.com/rtribotte))
+- **[logs,middleware]** Make the keys of the accessLog.fields.names map case-insensitive ([#11040](https://github.com/traefik/traefik/pull/11040) by [SpecLad](https://github.com/SpecLad))
+- **[logs,middleware]** Ensure proper logs for aborted streaming responses ([#10819](https://github.com/traefik/traefik/pull/10819) by [hood](https://github.com/hood))
+- **[middleware,server]** Cleanup Connection headers before passing the middleware chain ([#11077](https://github.com/traefik/traefik/pull/11077) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Upgrade paerser to v0.2.1 ([#11048](https://github.com/traefik/traefik/pull/11048) by [mmatur](https://github.com/mmatur))
+- **[server,tcp]** Prevent error logging when TCP WRR pool is empty ([#10989](https://github.com/traefik/traefik/pull/10989) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Upgrade webui dependencies ([#11031](https://github.com/traefik/traefik/pull/11031) by [mloiseleur](https://github.com/mloiseleur))
+
+**Documentation:**
+- **[acme]** Fix typo in multiple DNS challenge provider warning ([#11001](https://github.com/traefik/traefik/pull/11001) by [tired-engineer](https://github.com/tired-engineer))
+- **[k8s]** Update k8s quickstart permissions ([#11049](https://github.com/traefik/traefik/pull/11049) by [mmatur](https://github.com/mmatur))
+- **[metrics]** Remove documentation for unimplemented service retries metric  ([#10983](https://github.com/traefik/traefik/pull/10983) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Unify tab titles ([#11072](https://github.com/traefik/traefik/pull/11072) by [jsoref](https://github.com/jsoref))
+- Give valid examples for exposing dashboard with default Helm values ([#11015](https://github.com/traefik/traefik/pull/11015) by [holysoles](https://github.com/holysoles))
+
 ## [v3.1.2](https://github.com/traefik/traefik/tree/v3.1.2) (2024-08-06)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.1...v3.1.2)
 

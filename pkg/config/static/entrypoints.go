@@ -13,6 +13,7 @@ import (
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	AllowACMEByPass  bool                  `description:"Enables handling of ACME TLS and HTTP challenges with custom routers." json:"allowACMEByPass,omitempty" toml:"allowACMEByPass,omitempty" yaml:"allowACMEByPass,omitempty"`
 	ReusePort        bool                  `description:"Enables EntryPoints from the same or different processes listening on the same TCP/UDP port." json:"reusePort,omitempty" toml:"reusePort,omitempty" yaml:"reusePort,omitempty"`
 	AsDefault        bool                  `description:"Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined." json:"asDefault,omitempty" toml:"asDefault,omitempty" yaml:"asDefault,omitempty"`
 	Transport        *EntryPointsTransport `description:"Configures communication between clients and Traefik." json:"transport,omitempty" toml:"transport,omitempty" yaml:"transport,omitempty" export:"true"`
@@ -120,6 +121,7 @@ type TLSConfig struct {
 type ForwardedHeaders struct {
 	Insecure   bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	TrustedIPs []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
+	Connection []string `description:"List of Connection headers that are allowed to pass through the middleware chain before being removed." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration.

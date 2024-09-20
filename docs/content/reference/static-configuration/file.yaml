@@ -35,6 +35,7 @@ tcpServersTransport:
 entryPoints:
   EntryPoint0:
     address: foobar
+    allowACMEByPass: true
     reusePort: true
     asDefault: true
     transport:
@@ -55,6 +56,9 @@ entryPoints:
     forwardedHeaders:
       insecure: true
       trustedIPs:
+        - foobar
+        - foobar
+      connection:
         - foobar
         - foobar
     http:
