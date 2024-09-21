@@ -1193,3 +1193,7 @@ systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypo
 !!! warning "Docker Support"
 
     Socket activation is not supported by Docker but works with Podman containers.
+
+!!! warning "Multiple listeners in socket file"
+
+    Each systemd socket file must contain only one Listen directive, except in the case of HTTP/3, where the file must include both ListenStream and ListenDatagram directives. To set up TCP and UDP listeners on the same port, use multiple socket files with different entrypoints names.
