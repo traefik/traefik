@@ -91,19 +91,24 @@ func NewUDPEntryPoint(config *static.EntryPoint, name string) (*UDPEntryPoint, e
 
 	timeout := time.Duration(config.UDP.Timeout)
 
-	if pConn, ok := socketActivationPacketConns[name]; ok {
-		listener, err = udp.ListenPacketConn(pConn, timeout)
-	} else {
-		if len(socketActivationListeners) > 0 {
-			log.Warn().Str("name", name).Msg("Unable to find socket activation listener for entryPoint")
+	// if we have predefined connections from socket activation
+	if socketActivation.isEnabled() {
+		if conn, err := socketActivation.getConn(name); err == nil {
+			listener, err = udp.ListenPacketConn(conn, timeout)
+			if err != nil {
+				log.Warn().Str("name", name).Msgf("Unable to create socket activation listener: %v", err)
+			}
+		} else {
+			log.Warn().Str("name", name).Msgf("Unable to use socket activation for entrypoint: %v", err)
 		}
-
-		listenConfig := newListenConfig(config)
-		listener, err = udp.Listen(listenConfig, "udp", config.GetAddress(), timeout)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("error creating listener: %w", err)
+	if listener == nil {
+		listenConfig := newListenConfig(config)
+		listener, err = udp.Listen(listenConfig, "udp", config.GetAddress(), timeout)
+		if err != nil {
+			return nil, fmt.Errorf("error creating listener: %w", err)
+		}
 	}
 
 	return &UDPEntryPoint{listener: listener, switcher: &udp.HandlerSwitcher{}, transportConfiguration: config.Transport}, nil
