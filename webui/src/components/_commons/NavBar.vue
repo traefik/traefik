@@ -129,7 +129,7 @@
                       align="left"
                       icon="eva-github-outline"
                       no-caps
-                      label="Github repository"
+                      label="GitHub repository"
                       class="btn-submenu full-width"
                     />
                   </q-item>

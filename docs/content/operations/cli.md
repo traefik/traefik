@@ -33,7 +33,7 @@ traefik [--flag[=true|false| ]] [-f [true|false| ]]
 
 All flags are documented in the [(static configuration) CLI reference](../reference/static-configuration/cli.md).
 
-!!! info "Flags are case insensitive."
+!!! info "Flags are case-insensitive."
 
 ### `healthcheck`
 

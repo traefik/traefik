@@ -106,15 +106,28 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Level:     logrus.InfoLevel,
 	}
 
-	// Transform headers names in config to a canonical form, to be used as is without further transformations.
-	if config.Fields != nil && config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
-		fields := map[string]string{}
+	// Transform header names to a canonical form, to be used as is without further transformations,
+	// and transform field names to lower case, to enable case-insensitive lookup.
+	if config.Fields != nil {
+		if len(config.Fields.Names) > 0 {
+			fields := map[string]string{}
 
-		for h, v := range config.Fields.Headers.Names {
-			fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+			for h, v := range config.Fields.Names {
+				fields[strings.ToLower(h)] = v
+			}
+
+			config.Fields.Names = fields
 		}
 
-		config.Fields.Headers.Names = fields
+		if config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
+			fields := map[string]string{}
+
+			for h, v := range config.Fields.Headers.Names {
+				fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+			}
+
+			config.Fields.Headers.Names = fields
+		}
 	}
 
 	logHandler := &Handler{
@@ -184,16 +197,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
-	defer func() {
-		if h.config.BufferingSize > 0 {
-			h.logHandlerChan <- handlerParams{
-				logDataTable: logDataTable,
-			}
-			return
-		}
-		h.logTheRoundTrip(logDataTable)
-	}()
-
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
 	core[RequestCount] = nextRequestCount()
@@ -238,19 +241,30 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		return
 	}
 
+	defer func() {
+		logDataTable.DownstreamResponse = downstreamResponse{
+			headers: rw.Header().Clone(),
+		}
+
+		logDataTable.DownstreamResponse.status = capt.StatusCode()
+		logDataTable.DownstreamResponse.size = capt.ResponseSize()
+		logDataTable.Request.size = capt.RequestSize()
+
+		if _, ok := core[ClientUsername]; !ok {
+			core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
+		}
+
+		if h.config.BufferingSize > 0 {
+			h.logHandlerChan <- handlerParams{
+				logDataTable: logDataTable,
+			}
+			return
+		}
+
+		h.logTheRoundTrip(logDataTable)
+	}()
+
 	next.ServeHTTP(rw, reqWithDataTable)
-
-	if _, ok := core[ClientUsername]; !ok {
-		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
-	}
-
-	logDataTable.DownstreamResponse = downstreamResponse{
-		headers: rw.Header().Clone(),
-	}
-
-	logDataTable.DownstreamResponse.status = capt.StatusCode()
-	logDataTable.DownstreamResponse.size = capt.ResponseSize()
-	logDataTable.Request.size = capt.RequestSize()
 }
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
@@ -334,7 +348,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 		fields := logrus.Fields{}
 
 		for k, v := range logDataTable.Core {
-			if h.config.Fields.Keep(k) {
+			if h.config.Fields.Keep(strings.ToLower(k)) {
 				fields[k] = v
 			}
 		}

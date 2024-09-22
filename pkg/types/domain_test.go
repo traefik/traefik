@@ -137,7 +137,7 @@ func TestMatchDomain(t *testing.T) {
 			expected:   true,
 		},
 		{
-			desc:       "dot replaced by a cahr",
+			desc:       "dot replaced by a char",
 			certDomain: "sub.sub.traefik.wtf",
 			domain:     "sub.sub.traefikiwtf",
 			expected:   false,

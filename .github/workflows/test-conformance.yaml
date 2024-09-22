@@ -5,11 +5,13 @@ on:
     branches:
       - '*'
     paths:
+      - '.github/workflows/test-conformance.yaml'
       - 'pkg/provider/kubernetes/gateway/**'
+      - 'integration/fixtures/k8s-conformance/**'
       - 'integration/k8s_conformance_test.go'
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.23'
   CGO_ENABLED: 0
 
 jobs:
