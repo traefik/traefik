@@ -3,6 +3,7 @@ package static
 import (
 	"fmt"
 	"math"
+	"net/http"
 	"strings"
 
 	ptypes "github.com/traefik/paerser/types"
@@ -12,6 +13,7 @@ import (
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	AllowACMEByPass  bool                  `description:"Enables handling of ACME TLS and HTTP challenges with custom routers." json:"allowACMEByPass,omitempty" toml:"allowACMEByPass,omitempty" yaml:"allowACMEByPass,omitempty"`
 	ReusePort        bool                  `description:"Enables EntryPoints from the same or different processes listening on the same TCP/UDP port." json:"reusePort,omitempty" toml:"reusePort,omitempty" yaml:"reusePort,omitempty"`
 	AsDefault        bool                  `description:"Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined." json:"asDefault,omitempty" toml:"asDefault,omitempty" yaml:"asDefault,omitempty"`
 	Transport        *EntryPointsTransport `description:"Configures communication between clients and Traefik." json:"transport,omitempty" toml:"transport,omitempty" yaml:"transport,omitempty" export:"true"`
@@ -53,6 +55,8 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.ForwardedHeaders = &ForwardedHeaders{}
 	ep.UDP = &UDPConfig{}
 	ep.UDP.SetDefaults()
+	ep.HTTP = HTTPConfig{}
+	ep.HTTP.SetDefaults()
 	ep.HTTP2 = &HTTP2Config{}
 	ep.HTTP2.SetDefaults()
 }
@@ -63,6 +67,12 @@ type HTTPConfig struct {
 	Middlewares           []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	TLS                   *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	EncodeQuerySemicolons bool          `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty"`
+	MaxHeaderBytes        int           `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (c *HTTPConfig) SetDefaults() {
+	c.MaxHeaderBytes = http.DefaultMaxHeaderBytes
 }
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
@@ -111,6 +121,7 @@ type TLSConfig struct {
 type ForwardedHeaders struct {
 	Insecure   bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	TrustedIPs []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
+	Connection []string `description:"List of Connection headers that are allowed to pass through the middleware chain before being removed." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration.

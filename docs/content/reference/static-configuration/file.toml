@@ -30,6 +30,7 @@
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
+    allowACMEByPass = true
     reusePort = true
     asDefault = true
     [entryPoints.EntryPoint0.transport]
@@ -48,9 +49,11 @@
     [entryPoints.EntryPoint0.forwardedHeaders]
       insecure = true
       trustedIPs = ["foobar", "foobar"]
+      connection = ["foobar", "foobar"]
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true
+      maxHeaderBytes = 42
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
           to = "foobar"

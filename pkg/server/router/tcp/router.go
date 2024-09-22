@@ -21,6 +21,8 @@ const defaultBufSize = 4096
 
 // Router is a TCP router.
 type Router struct {
+	acmeTLSPassthrough bool
+
 	// Contains TCP routes.
 	muxerTCP tcpmuxer.Muxer
 	// Contains TCP TLS routes.
@@ -164,7 +166,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	// Handling ACME-TLS/1 challenges.
-	if slices.Contains(hello.protos, tlsalpn01.ACMETLS1Protocol) {
+	if !r.acmeTLSPassthrough && slices.Contains(hello.protos, tlsalpn01.ACMETLS1Protocol) {
 		r.acmeTLSALPNHandler().ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
@@ -315,6 +317,10 @@ func (r *Router) SetHTTPHandler(handler http.Handler) {
 func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
 	r.httpsTLSConfig = config
+}
+
+func (r *Router) EnableACMETLSPassthrough() {
+	r.acmeTLSPassthrough = true
 }
 
 // Conn is a connection proxy that handles Peeked bytes.

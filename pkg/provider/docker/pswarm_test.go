@@ -114,7 +114,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 						"traefik.docker.network": "barnet",
 						"traefik.docker.LBSwarm": "true",
 					}),
-					withEndpointSpec(modeDNSSR)),
+					withEndpointSpec(modeDNSRR)),
 			},
 			dockerVersion:    "1.30",
 			networks:         []network.Summary{},
@@ -140,7 +140,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 						"traefik.docker.network": "barnet",
 						"traefik.docker.LBSwarm": "true",
 					}),
-					withEndpointSpec(modeDNSSR)),
+					withEndpointSpec(modeDNSRR)),
 			},
 			dockerVersion: "1.30",
 			networks: []network.Summary{
@@ -185,7 +185,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					serviceLabels(map[string]string{
 						"traefik.docker.network": "barnet",
 					}),
-					withEndpointSpec(modeDNSSR)),
+					withEndpointSpec(modeDNSRR)),
 			},
 			tasks: []swarm.Task{
 				swarmTask("id1",

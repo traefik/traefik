@@ -1197,7 +1197,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     | Router-2 | ```ClientIP(`192.168.0.0/24`)```                            | 26       |
 
     Which means that requests from `192.168.0.12` would go to Router-2 even though Router-1 is intended to specifically handle them.
-    To achieve this intention, a priority (higher than 26) should be set on Router-1.
+    To achieve this intention, a priority (greater than 26) should be set on Router-1.
 
 ??? example "Setting priorities -- using the [File Provider](../../providers/file.md)"
 

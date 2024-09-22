@@ -801,7 +801,7 @@ func deleteUnnecessaryDomains(ctx context.Context, domains []types.Domain) []typ
 			}
 
 			// Check if CN or SANS to check already exists
-			// or can not be checked by a wildcard
+			// or cannot be checked by a wildcard
 			var newDomainsToCheck []string
 			for _, domainProcessed := range domainToCheck.ToStrArray() {
 				if idxDomain < idxDomainToCheck && isDomainAlreadyChecked(domainProcessed, domain.ToStrArray()) {

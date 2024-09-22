@@ -185,7 +185,10 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
-	rt := &tcprouter.Router{}
+	rt, err := tcprouter.NewRouter()
+	if err != nil {
+		return nil, fmt.Errorf("error preparing tcp router: %w", err)
+	}
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
@@ -607,6 +610,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
+		configuration.ForwardedHeaders.Connection,
 		next)
 	if err != nil {
 		return nil, err
@@ -633,11 +637,12 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	serverHTTP := &http.Server{
-		Handler:      handler,
-		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		Handler:        handler,
+		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
