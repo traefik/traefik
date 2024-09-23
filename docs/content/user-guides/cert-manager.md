@@ -21,7 +21,7 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
 
 ## Example with ACME and HTTP challenge
 
-!!! example "ACME issuer on http challenge"
+!!! example "ACME issuer for HTTP challenge"
 
     ```yaml tab="Issuer"
     apiVersion: cert-manager.io/v1
