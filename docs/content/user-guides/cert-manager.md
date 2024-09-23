@@ -67,7 +67,6 @@ In order to use this certificate with an Ingress, the [Kubernetes Ingress](../..
 
     This provider is enabled by default on Traefik Helm Chart.
 
-
 !!! example "Route with this Certificate"
 
     ```yaml tab="Ingress"
@@ -102,7 +101,6 @@ In order to use this certificate with an IngressRoute, the [Kubernetes CRD](../.
 
     This provider is enabled by default on Traefik Helm Chart.
 
-
 !!! example "Route with this Certificate"
 
     ```yaml tab="IngressRoute"
@@ -134,7 +132,6 @@ In order to use this certificate with an HTTPRoute, the [Kubernetes Gateway](../
     This provider is disabled by default on Traefik Helm Chart.
 
 !!! example "Route with this Certificate"
-
 
     ```yaml tab="HTTPRoute"
     ---
