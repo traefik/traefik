@@ -57,7 +57,7 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
         kind: Issuer
     ```
 
-Let's see now how to use it with the various Kubernetes provider of Traefik Proxy. The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy
+Let's see now how to use it with the various Kubernetes provider of Traefik Proxy. The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy.
 
 ### with an Ingress
 
