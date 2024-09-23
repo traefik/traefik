@@ -1,6 +1,6 @@
 ---
 title: "Traefik Cert Manager Integration"
-description: "Learn how to configure Traefik Proxy to use Cert Manager for certificate on your routers. Read the technical documentation."
+description: "Learn how to configure Traefik Proxy to use Cert Manager for certificate for your routers. Read the technical documentation."
 ---
 
 # Cert Manager
