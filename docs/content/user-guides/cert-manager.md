@@ -1,30 +1,29 @@
 ---
-title: "Traefik Cert Manager Integration"
-description: "Learn how to configure Traefik Proxy to use Cert Manager for certificate for your routers. Read the technical documentation."
+title: "Integration with cert-manager"
+description: "Learn how to use cert-manager certificates with Traefik Proxy for your routers. Read the technical documentation."
 ---
 
-# Cert Manager
+# cert-manager
 
-Provision TLS Certificate for Traefik Proxy with Cert Manager on Kubernetes
+Provision TLS Certificate for Traefik Proxy with cert-manager on Kubernetes
 {: .subtitle }
 
-You can configure Traefik Proxy to use Certificates of Cert Manager on Kubernetes.
+Traefik Proxy can use Certificates of cert-manager on Kubernetes.
 
-## Checklist
+## Pre-requisites
 
-To obtain a certificate from Cert Manager, you'll need to:
+To obtain certificates from cert-manager usable in Traefik Proxy, you'll need to:
 
-1. Deploy Cert Manager
-2. Configure an Issuer (or a ClusterIssuer)
-3. Create a Certificate with this Issuer
-4. Deploy Traefik Proxy
-5. Use the certificate in an Ingress / IngressRoute / HTTPRoute
+1. Have cert-manager properly configured
+2. Have Traefik Proxy configured
 
-## Configuration Example with ACME and HTTP challenge
+The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
+
+## Example with ACME and HTTP challenge
 
 !!! example "ACME issuer on http challenge"
 
-    ```yaml
+    ```yaml tab="Issuer"
     apiVersion: cert-manager.io/v1
     kind: Issuer
     metadata:
@@ -43,9 +42,7 @@ To obtain a certificate from Cert Manager, you'll need to:
                 ingressClassName: traefik
     ```
 
-!!! example "Certificate with this Issuer"
-
-    ```yaml
+    ```yaml tab="Certificate"
     apiVersion: cert-manager.io/v1
     kind: Certificate
     metadata:
@@ -59,6 +56,17 @@ To obtain a certificate from Cert Manager, you'll need to:
         name: acme
         kind: Issuer
     ```
+
+Let's see now how to use it with the various Kubernetes provider of Traefik Proxy. The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy
+
+### with an Ingress
+
+In order to use this certificate with an Ingress, the [Kubernetes Ingress](../../routing/providers/kubernetes-ingress/) provider, this provider needs to be enabled.
+
+!!! info Traefik Helm Chart
+
+    This provider is enabled by default on Traefik Helm Chart.
+
 
 !!! example "Route with this Certificate"
 
@@ -86,6 +94,17 @@ To obtain a certificate from Cert Manager, you'll need to:
       - secretName: domain-tls # <=== Use the name defined in Certificate resource
     ```
 
+### with an IngressRoute
+
+In order to use this certificate with an IngressRoute, the [Kubernetes CRD](../../routing/providers/kubernetes-crd) provider, this provider needs to be enabled.
+
+!!! info Traefik Helm Chart
+
+    This provider is enabled by default on Traefik Helm Chart.
+
+
+!!! example "Route with this Certificate"
+
     ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
@@ -105,6 +124,17 @@ To obtain a certificate from Cert Manager, you'll need to:
       tls:
         secretName: domain-tls    # <=== Use the name defined in Certificate resource
     ```
+
+### with an HTTPRoute
+
+In order to use this certificate with an HTTPRoute, the [Kubernetes Gateway](../../routing/providers/kubernetes-gateway) provider, this provider needs to be enabled.
+
+!!! info Traefik Helm Chart
+
+    This provider is disabled by default on Traefik Helm Chart.
+
+!!! example "Route with this Certificate"
+
 
     ```yaml tab="HTTPRoute"
     ---
@@ -146,10 +176,12 @@ To obtain a certificate from Cert Manager, you'll need to:
 
 ## Troubleshooting
 
-There are multiples sources available to investigate when using Cert Manager:
+There are multiples sources available to investigate when using cert-manager:
 
 1. Kubernetes events in `Certificate` and `CertificateRequest` resources
-2. Cert-Manager logs
-3. Dashboard and/or logs of Traefik Proxy
+2. cert-manager logs
+3. Dashboard and/or (debug) logs of Traefik Proxy
+
+cert-manager documentation provides a [detailed guide](https://cert-manager.io/docs/troubleshooting/) on how to troubleshoot a certificate request.
 
 {!traefik-for-business-applications.md!}
