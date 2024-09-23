@@ -148,8 +148,8 @@ To obtain a certificate from Cert Manager, you'll need to:
 
 There are multiples sources available to investigate when using Cert Manager:
 
-1. `Certificate` and `CertificateRequest` kubernetes events
-2. logs of Cert Manager
-3. dashboard and/or logs of Traefik Proxy
+1. Kubernetes events in `Certificate` and `CertificateRequest` resources
+2. Cert-Manager logs
+3. Dashboard and/or logs of Traefik Proxy
 
 {!traefik-for-business-applications.md!}
