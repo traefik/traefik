@@ -215,9 +215,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				certPool.AddCert(cert)
 			}
 
-			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{
-				RootCAs: certPool,
-			}})
+			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, nil)
 			builder.proxy = func(req *http.Request) (*url.URL, error) {
 				u, err := url.Parse(proxyURL)
 				if err != nil {

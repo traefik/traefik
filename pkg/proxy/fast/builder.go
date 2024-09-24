@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 // TransportManager manages transport used for backend communications.
@@ -20,6 +21,7 @@ type TransportManager interface {
 
 // ProxyBuilder handles the connection pools for the FastProxy proxies.
 type ProxyBuilder struct {
+	debug            bool
 	transportManager TransportManager
 
 	// lock isn't needed because ProxyBuilder is not called concurrently.
@@ -31,8 +33,9 @@ type ProxyBuilder struct {
 }
 
 // NewProxyBuilder creates a new ProxyBuilder.
-func NewProxyBuilder(transportManager TransportManager) *ProxyBuilder {
+func NewProxyBuilder(transportManager TransportManager, config *static.FastProxyConfig) *ProxyBuilder {
 	return &ProxyBuilder{
+		debug:            config != nil && config.Debug,
 		transportManager: transportManager,
 		pools:            make(map[string]map[string]*connPool),
 		proxy:            http.ProxyFromEnvironment,
@@ -81,7 +84,7 @@ func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader 
 	}
 
 	pool := r.getPool(cfgName, cfg, tlsConfig, targetURL, proxyURL)
-	return NewReverseProxy(targetURL, proxyURL, passHostHeader, responseHeaderTimeout, pool)
+	return NewReverseProxy(targetURL, proxyURL, r.debug, passHostHeader, responseHeaderTimeout, pool)
 }
 
 func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {

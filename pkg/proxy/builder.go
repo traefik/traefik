@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -23,20 +24,21 @@ type TransportManager interface {
 // Builder is a proxy builder which returns a fast proxy or httputil proxy corresponding
 // to the ServersTransport configuration.
 type Builder struct {
+	fastProxy        bool
 	fastProxyBuilder *fast.ProxyBuilder
-	httputilBuilder  *httputil.ProxyBuilder
+
+	httputilBuilder *httputil.ProxyBuilder
 
 	transportManager httputil.TransportManager
-	fastProxy        bool
 }
 
 // NewBuilder creates and returns a new Builder instance.
-func NewBuilder(transportManager TransportManager, semConvMetricsRegistry *metrics.SemConvMetricsRegistry, fastProxy bool) *Builder {
+func NewBuilder(transportManager TransportManager, semConvMetricsRegistry *metrics.SemConvMetricsRegistry, fastProxyConfig *static.FastProxyConfig) *Builder {
 	return &Builder{
-		fastProxyBuilder: fast.NewProxyBuilder(transportManager),
+		fastProxy:        fastProxyConfig != nil,
+		fastProxyBuilder: fast.NewProxyBuilder(transportManager, fastProxyConfig),
 		httputilBuilder:  httputil.NewProxyBuilder(transportManager, semConvMetricsRegistry),
 		transportManager: transportManager,
-		fastProxy:        fastProxy,
 	}
 }
 
@@ -55,6 +57,5 @@ func (b *Builder) Build(configName string, targetURL *url.URL, shouldObserve, pa
 	if !b.fastProxy || !serversTransport.DisableHTTP2 && (targetURL.Scheme == "https" || targetURL.Scheme == "h2c") {
 		return b.httputilBuilder.Build(configName, targetURL, shouldObserve, passHostHeader, flushInterval)
 	}
-
 	return b.fastProxyBuilder.Build(configName, targetURL, passHostHeader)
 }

@@ -108,6 +108,8 @@ func (t timeoutError) Temporary() bool {
 
 // ReverseProxy is the FastProxy reverse proxy implementation.
 type ReverseProxy struct {
+	debug bool
+
 	connPool *connPool
 
 	bufferPool      pool[[]byte]
@@ -123,7 +125,7 @@ type ReverseProxy struct {
 }
 
 // NewReverseProxy creates a new ReverseProxy.
-func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
+func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, debug, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
 	var proxyAuth string
 	if proxyURL != nil && proxyURL.User != nil && targetURL.Scheme == "http" {
 		username := proxyURL.User.Username()
@@ -132,6 +134,7 @@ func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool,
 	}
 
 	return &ReverseProxy{
+		debug:                 debug,
 		passHostHeader:        passHostHeader,
 		targetURL:             targetURL,
 		proxyAuth:             proxyAuth,
@@ -169,6 +172,10 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if httpguts.HeaderValuesContainsToken(req.Header["Te"], "trailers") {
 		outReq.Header.Set("Te", "trailers")
+	}
+
+	if p.debug {
+		outReq.Header.Set("X-Traefik-Fast-Proxy", "enabled")
 	}
 
 	reqUpType := upgradeType(req.Header)
