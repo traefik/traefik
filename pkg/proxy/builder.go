@@ -20,7 +20,7 @@ type TransportManager interface {
 	GetTLSConfig(name string) (*tls.Config, error)
 }
 
-// Builder is a proxy builder which returns a fasthttp or httputil proxy corresponding
+// Builder is a proxy builder which returns a fast proxy or httputil proxy corresponding
 // to the ServersTransport configuration.
 type Builder struct {
 	fastProxyBuilder *fast.ProxyBuilder
