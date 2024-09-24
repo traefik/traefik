@@ -228,6 +228,9 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
+`--experimental.fastproxy`:  
+Enable the FastProxy implementation. (Default: ```false```)
+
 `--experimental.kubernetesgateway`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
