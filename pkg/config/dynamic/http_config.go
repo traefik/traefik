@@ -248,6 +248,7 @@ type Server struct {
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" label:"weight"`
 	Scheme string `json:"-" toml:"-" yaml:"-" file:"-"`
 	Port   string `json:"-" toml:"-" yaml:"-" file:"-"`
+	Fenced bool   `json:"-" toml:"-" yaml:"-" file:"-"`
 }
 
 // SetDefaults Default values for a Server.
