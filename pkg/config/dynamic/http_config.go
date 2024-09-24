@@ -259,6 +259,7 @@ type Server struct {
 	PreservePath bool   `json:"preservePath,omitempty" toml:"preservePath,omitempty" yaml:"preservePath,omitempty" label:"-" export:"true"`
 	Scheme       string `json:"-" toml:"-" yaml:"-" file:"-"`
 	Port         string `json:"-" toml:"-" yaml:"-" file:"-"`
+	Fenced bool   `json:"-" toml:"-" yaml:"-" file:"-"`
 }
 
 // SetDefaults Default values for a Server.

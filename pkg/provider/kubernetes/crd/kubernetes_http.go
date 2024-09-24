@@ -544,7 +544,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+			if endpoint.Conditions.Ready == nil || endpoint.Conditions.Serving == nil || (!*endpoint.Conditions.Ready && !*endpoint.Conditions.Serving) {
 				continue
 			}
 
@@ -555,7 +555,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 				addresses[address] = struct{}{}
 				servers = append(servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					Fenced: !*endpoint.Conditions.Ready,
 				})
 			}
 		}
