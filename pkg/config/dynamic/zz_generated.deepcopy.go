@@ -704,6 +704,11 @@ func (in *IPStrategy) DeepCopyInto(out *IPStrategy) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.IPv6Subnet != nil {
+		in, out := &in.IPv6Subnet, &out.IPv6Subnet
+		*out = new(int)
+		**out = **in
+	}
 	return
 }
 
