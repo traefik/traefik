@@ -678,7 +678,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+			if endpoint.Conditions.Ready == nil || endpoint.Conditions.Serving == nil || (!*endpoint.Conditions.Ready && !*endpoint.Conditions.Serving) {
 				continue
 			}
 
@@ -689,7 +689,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 				addresses[address] = struct{}{}
 				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					Fenced: !*endpoint.Conditions.Ready,
 				})
 			}
 		}
