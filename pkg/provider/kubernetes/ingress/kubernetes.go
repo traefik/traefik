@@ -678,7 +678,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || endpoint.Conditions.Serving == nil || (!*endpoint.Conditions.Ready && !*endpoint.Conditions.Serving) {
+			if !k8s.EndpointServing(endpoint) {
 				continue
 			}
 
