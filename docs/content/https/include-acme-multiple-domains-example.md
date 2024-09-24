@@ -1,5 +1,5 @@
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 ## Dynamic configuration
 labels:
   - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
@@ -7,18 +7,6 @@ labels:
   - traefik.http.routers.blog.tls.certresolver=myresolver
   - traefik.http.routers.blog.tls.domains[0].main=example.com
   - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
-```
-
-```yaml tab="Docker (Swarm)"
-## Dynamic configuration
-deploy:
-  labels:
-    - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
-    - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
-    - traefik.http.routers.blog.tls=true
-    - traefik.http.routers.blog.tls.certresolver=myresolver
-    - traefik.http.routers.blog.tls.domains[0].main=example.com
-    - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
 ```
 
 ```yaml tab="Kubernetes"
@@ -41,27 +29,6 @@ spec:
     - main: example.com
       sans:
       - '*.example.org'
-```
-
-```json tab="Marathon"
-labels: {
-  "traefik.http.routers.blog.rule": "Host(`example.com`) && Path(`/blog`)",
-  "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "myresolver",
-  "traefik.http.routers.blog.tls.domains[0].main": "example.com",
-  "traefik.http.routers.blog.tls.domains[0].sans": "*.example.org",
-  "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
-}
-```
-
-```yaml tab="Rancher"
-## Dynamic configuration
-labels:
-  - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
-  - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=myresolver
-  - traefik.http.routers.blog.tls.domains[0].main=example.com
-  - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
 ```
 
 ```yaml tab="File (YAML)"

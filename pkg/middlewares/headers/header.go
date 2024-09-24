@@ -1,15 +1,14 @@
 package headers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/vulcand/oxy/v2/forward"
 )
 
@@ -28,9 +27,6 @@ type Header struct {
 func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
-
-	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
-	handleDeprecation(ctx, &cfg)
 
 	regexes := make([]*regexp.Regexp, len(cfg.AccessControlAllowOriginListRegex))
 	for i, str := range cfg.AccessControlAllowOriginListRegex {
@@ -63,7 +59,7 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// If there is a next, call it.
 	if s.next != nil {
-		s.next.ServeHTTP(newResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
+		s.next.ServeHTTP(middlewares.NewResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
 	}
 }
 

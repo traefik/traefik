@@ -4,6 +4,7 @@
 
 [log]
   level = "DEBUG"
+  noColor = true
 
 [serversTransport.forwardingTimeouts]
   dialTimeout = "300ms"

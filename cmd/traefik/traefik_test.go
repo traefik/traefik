@@ -9,6 +9,7 @@ import (
 	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 // FooCert is a PEM-encoded TLS cert.
@@ -110,6 +111,76 @@ func TestAppendCertMetric(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expected, gauge.metrics)
+		})
+	}
+}
+
+func TestGetDefaultsEntrypoints(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		entrypoints static.EntryPoints
+		expected    []string
+	}{
+		{
+			desc: "Skips special names",
+			entrypoints: map[string]*static.EntryPoint{
+				"web": {
+					Address: ":80",
+				},
+				"traefik": {
+					Address: ":8080",
+				},
+			},
+			expected: []string{"web"},
+		},
+		{
+			desc: "Two EntryPoints not attachable",
+			entrypoints: map[string]*static.EntryPoint{
+				"web": {
+					Address: ":80",
+				},
+				"websecure": {
+					Address: ":443",
+				},
+			},
+			expected: []string{"web", "websecure"},
+		},
+		{
+			desc: "Two EntryPoints only one attachable",
+			entrypoints: map[string]*static.EntryPoint{
+				"web": {
+					Address: ":80",
+				},
+				"websecure": {
+					Address:   ":443",
+					AsDefault: true,
+				},
+			},
+			expected: []string{"websecure"},
+		},
+		{
+			desc: "Two attachable EntryPoints",
+			entrypoints: map[string]*static.EntryPoint{
+				"web": {
+					Address:   ":80",
+					AsDefault: true,
+				},
+				"websecure": {
+					Address:   ":443",
+					AsDefault: true,
+				},
+			},
+			expected: []string{"web", "websecure"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			actual := getDefaultsEntrypoints(&static.Configuration{
+				EntryPoints: test.entrypoints,
+			})
+
+			assert.ElementsMatch(t, test.expected, actual)
 		})
 	}
 }

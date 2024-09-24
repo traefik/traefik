@@ -2,17 +2,29 @@ package dynamic
 
 import (
 	"reflect"
+	"time"
 
-	"github.com/traefik/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
 
 // TCPConfiguration contains all the TCP configuration parameters.
 type TCPConfiguration struct {
-	Routers     map[string]*TCPRouter     `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
-	Services    map[string]*TCPService    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
-	Middlewares map[string]*TCPMiddleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Routers           map[string]*TCPRouter           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
+	Services          map[string]*TCPService          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Middlewares       map[string]*TCPMiddleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Models            map[string]*TCPModel            `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	ServersTransports map[string]*TCPServersTransport `json:"serversTransports,omitempty" toml:"serversTransports,omitempty" yaml:"serversTransports,omitempty" label:"-" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPModel is a set of default router's values.
+type TCPModel struct {
+	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -52,6 +64,7 @@ type TCPRouter struct {
 	Middlewares []string            `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string              `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	Rule        string              `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	RuleSyntax  string              `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
 	Priority    int                 `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
 	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
@@ -70,20 +83,17 @@ type RouterTCPTLSConfig struct {
 
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
+	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	ServersTransport string         `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
 	// of its connected peers indicates it has closed the writing capability of its
 	// connection, to close the reading capability as well, hence fully terminating the
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
-	TerminationDelay *int           `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
-	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
-}
-
-// SetDefaults Default values for a TCPServersLoadBalancer.
-func (l *TCPServersLoadBalancer) SetDefaults() {
-	defaultTerminationDelay := 100 // in milliseconds
-	l.TerminationDelay = &defaultTerminationDelay
+	// Deprecated: use ServersTransport to configure the TerminationDelay instead.
+	TerminationDelay *int `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -109,12 +119,13 @@ func (l *TCPServersLoadBalancer) Mergeable(loadBalancer *TCPServersLoadBalancer)
 type TCPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
 	Port    string `json:"-" toml:"-" yaml:"-"`
+	TLS     bool   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // ProxyProtocol holds the PROXY Protocol configuration.
-// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#proxy-protocol
+// More info: https://doc.traefik.io/traefik/v3.1/routing/services/#proxy-protocol
 type ProxyProtocol struct {
 	// Version defines the PROXY Protocol version to use.
 	Version int `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
@@ -123,4 +134,38 @@ type ProxyProtocol struct {
 // SetDefaults Default values for a ProxyProtocol.
 func (p *ProxyProtocol) SetDefaults() {
 	p.Version = 2
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPServersTransport options to configure communication between Traefik and the servers.
+type TCPServersTransport struct {
+	DialKeepAlive ptypes.Duration `description:"Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled" json:"dialKeepAlive,omitempty" toml:"dialKeepAlive,omitempty" yaml:"dialKeepAlive,omitempty" export:"true"`
+	DialTimeout   ptypes.Duration `description:"Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
+	// of its connected peers indicates it has closed the writing capability of its
+	// connection, to close the reading capability as well, hence fully terminating the
+	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
+	// means an infinite deadline (i.e. the reading capability is never closed).
+	TerminationDelay ptypes.Duration  `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	TLS              *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TLSClientConfig options to configure TLS communication between Traefik and the servers.
+type TLSClientConfig struct {
+	ServerName         string                  `description:"Defines the serverName used to contact the server." json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty"`
+	InsecureSkipVerify bool                    `description:"Disables SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
+	RootCAs            []types.FileOrContent   `description:"Defines a list of CA secret used to validate self-signed certificate" json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
+	Certificates       traefiktls.Certificates `description:"Defines a list of secret storing client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
+	PeerCertURI        string                  `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
+	Spiffe             *Spiffe                 `description:"Defines the SPIFFE TLS configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// SetDefaults sets the default values for a TCPServersTransport.
+func (t *TCPServersTransport) SetDefaults() {
+	t.DialTimeout = ptypes.Duration(30 * time.Second)
+	t.DialKeepAlive = ptypes.Duration(15 * time.Second)
+	t.TerminationDelay = ptypes.Duration(100 * time.Millisecond)
 }

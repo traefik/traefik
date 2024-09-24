@@ -75,14 +75,13 @@ nav:
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
+      - 'Swarm': 'providers/swarm.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Kubernetes Gateway API': 'providers/kubernetes-gateway.md'
       - 'Consul Catalog': 'providers/consul-catalog.md'
       - 'Nomad': 'providers/nomad.md'
       - 'ECS': 'providers/ecs.md'
-      - 'Marathon': 'providers/marathon.md'
-      - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
       - 'Consul': 'providers/consul.md'
       - 'Etcd': 'providers/etcd.md'
@@ -96,19 +95,20 @@ nav:
       - 'Services': 'routing/services/index.md'
       - 'Providers':
           - 'Docker': 'routing/providers/docker.md'
+          - 'Swarm': 'routing/providers/swarm.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
           - 'Kubernetes Gateway API': 'routing/providers/kubernetes-gateway.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Nomad': 'routing/providers/nomad.md'
           - 'ECS': 'routing/providers/ecs.md'
-          - 'Marathon': 'routing/providers/marathon.md'
-          - 'Rancher': 'routing/providers/rancher.md'
           - 'KV': 'routing/providers/kv.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
       - 'Let''s Encrypt': 'https/acme.md'
+      - 'Tailscale': 'https/tailscale.md'
+      - 'SPIFFE': 'https/spiffe.md'
   - 'Middlewares':
     - 'Overview': 'middlewares/overview.md'
     - 'HTTP':
@@ -123,6 +123,7 @@ nav:
         - 'DigestAuth': 'middlewares/http/digestauth.md'
         - 'Errors': 'middlewares/http/errorpages.md'
         - 'ForwardAuth': 'middlewares/http/forwardauth.md'
+        - 'GrpcWeb': 'middlewares/http/grpcweb.md'
         - 'Headers': 'middlewares/http/headers.md'
         - 'IPWhiteList': 'middlewares/http/ipwhitelist.md'
         - 'IPAllowList': 'middlewares/http/ipallowlist.md'
@@ -148,27 +149,22 @@ nav:
       - 'API': 'operations/api.md'
       - 'Ping': 'operations/ping.md'
   - 'Observability':
+      - 'Overview': 'observability/overview.md'
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
       - 'Metrics':
           - 'Overview': 'observability/metrics/overview.md'
           - 'Datadog': 'observability/metrics/datadog.md'
-          - 'InfluxDB': 'observability/metrics/influxdb.md'
           - 'InfluxDB2': 'observability/metrics/influxdb2.md'
+          - 'OpenTelemetry': 'observability/metrics/opentelemetry.md'
           - 'Prometheus': 'observability/metrics/prometheus.md'
           - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
           - 'Overview': 'observability/tracing/overview.md'
-          - 'Jaeger': 'observability/tracing/jaeger.md'
-          - 'Zipkin': 'observability/tracing/zipkin.md'
-          - 'Datadog': 'observability/tracing/datadog.md'
-          - 'Instana': 'observability/tracing/instana.md'
-          - 'Haystack': 'observability/tracing/haystack.md'
-          - 'Elastic': 'observability/tracing/elastic.md'
+          - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'Marathon': 'user-guides/marathon.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS with Let''s Encrypt':
@@ -176,6 +172,10 @@ nav:
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Migration':
+      - 'Traefik v3 minor migrations': 'migration/v3.md'
+      - 'Traefik v2 to v3':
+        - 'Migration guide': 'migration/v2-to-v3.md'
+        - 'Configuration changes for v3': 'migration/v2-to-v3-details.md'
       - 'Traefik v2 minor migrations': 'migration/v2.md'
       - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':
@@ -197,14 +197,12 @@ nav:
       - 'Dynamic Configuration':
         - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
+        - 'Swarm': 'reference/dynamic-configuration/swarm.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
-        - 'Kubernetes Gateway API': 'reference/dynamic-configuration/kubernetes-gateway.md'
         - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
         - 'Nomad': "reference/dynamic-configuration/nomad.md"
         - 'ECS': 'reference/dynamic-configuration/ecs.md'
         - 'KV': 'reference/dynamic-configuration/kv.md'
-        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
-        - 'Rancher': 'reference/dynamic-configuration/rancher.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'

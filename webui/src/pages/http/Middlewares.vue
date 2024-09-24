@@ -13,6 +13,8 @@
             <main-table
               ref="mainTable"
               v-bind="getTableProps({ type: 'http-middlewares' })"
+              v-model:current-sort="sortBy"
+              v-model:current-sort-dir="sortDir"
               :data="allMiddlewares.items"
               :on-load-more="handleLoadMore"
               :end-reached="allMiddlewares.endReached"
@@ -52,7 +54,9 @@ export default defineComponent({
   data () {
     return {
       filter: '',
-      status: ''
+      status: '',
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
@@ -63,6 +67,12 @@ export default defineComponent({
       this.refreshAll()
     },
     'filter' () {
+      this.refreshAll()
+    },
+    'sortBy' () {
+      this.refreshAll()
+    },
+    'sortDir' () {
       this.refreshAll()
     }
   },
@@ -75,6 +85,8 @@ export default defineComponent({
       return this.getAllMiddlewares({
         query: this.filter,
         status: this.status,
+        sortBy: this.sortBy,
+        direction: this.sortDir,
         ...params
       })
     },

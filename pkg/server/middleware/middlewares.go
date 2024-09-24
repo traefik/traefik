@@ -10,29 +10,34 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/addprefix"
-	"github.com/traefik/traefik/v2/pkg/middlewares/auth"
-	"github.com/traefik/traefik/v2/pkg/middlewares/buffering"
-	"github.com/traefik/traefik/v2/pkg/middlewares/chain"
-	"github.com/traefik/traefik/v2/pkg/middlewares/circuitbreaker"
-	"github.com/traefik/traefik/v2/pkg/middlewares/compress"
-	"github.com/traefik/traefik/v2/pkg/middlewares/customerrors"
-	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
-	"github.com/traefik/traefik/v2/pkg/middlewares/inflightreq"
-	"github.com/traefik/traefik/v2/pkg/middlewares/ipallowlist"
-	"github.com/traefik/traefik/v2/pkg/middlewares/ipwhitelist"
-	"github.com/traefik/traefik/v2/pkg/middlewares/passtlsclientcert"
-	"github.com/traefik/traefik/v2/pkg/middlewares/ratelimiter"
-	"github.com/traefik/traefik/v2/pkg/middlewares/redirect"
-	"github.com/traefik/traefik/v2/pkg/middlewares/replacepath"
-	"github.com/traefik/traefik/v2/pkg/middlewares/replacepathregex"
-	"github.com/traefik/traefik/v2/pkg/middlewares/retry"
-	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefix"
-	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefixregex"
-	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/addprefix"
+	"github.com/traefik/traefik/v3/pkg/middlewares/auth"
+	"github.com/traefik/traefik/v3/pkg/middlewares/buffering"
+	"github.com/traefik/traefik/v3/pkg/middlewares/chain"
+	"github.com/traefik/traefik/v3/pkg/middlewares/circuitbreaker"
+	"github.com/traefik/traefik/v3/pkg/middlewares/compress"
+	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
+	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
+	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
+	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
+	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
+	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
+	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
+	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcert"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter"
+	"github.com/traefik/traefik/v3/pkg/middlewares/redirect"
+	"github.com/traefik/traefik/v3/pkg/middlewares/replacepath"
+	"github.com/traefik/traefik/v3/pkg/middlewares/replacepathregex"
+	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
+	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
+	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
 type middlewareStackType int
@@ -183,12 +188,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				if !config.ContentType.AutoDetect {
-					rw.Header()["Content-Type"] = nil
-				}
-				next.ServeHTTP(rw, req)
-			}), nil
+			return contenttype.New(ctx, next, *config.ContentType, middlewareName)
 		}
 	}
 
@@ -222,6 +222,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// GrpcWeb
+	if config.GrpcWeb != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return grpcweb.New(ctx, next, *config.GrpcWeb, middlewareName), nil
+		}
+	}
+
 	// Headers
 	if config.Headers != nil {
 		if middleware != nil {
@@ -234,7 +244,8 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 	// IPWhiteList
 	if config.IPWhiteList != nil {
-		log.FromContext(ctx).Warn("IPWhiteList is deprecated, please use IPAllowList instead.")
+		qualifiedName := provider.GetQualifiedName(ctx, middlewareName)
+		log.Warn().Msgf("Middleware %q of type IPWhiteList is deprecated, please use IPAllowList instead.", qualifiedName)
 
 		if middleware != nil {
 			return nil, badConf
@@ -376,9 +387,49 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// Gateway API HTTPRoute filters middlewares.
+	if config.RequestHeaderModifier != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return headermodifier.NewRequestHeaderModifier(ctx, next, *config.RequestHeaderModifier, middlewareName), nil
+		}
+	}
+
+	if config.ResponseHeaderModifier != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return headermodifier.NewResponseHeaderModifier(ctx, next, *config.ResponseHeaderModifier, middlewareName), nil
+		}
+	}
+
+	if config.RequestRedirect != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return gapiredirect.NewRequestRedirect(ctx, next, *config.RequestRedirect, middlewareName)
+		}
+	}
+
+	if config.URLRewrite != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
+		}
+	}
+
 	if middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	return tracing.Wrap(ctx, middleware), nil
+	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
+	// Hence, regarding internal resources' observability deactivation,
+	// this would not enable tracing.
+	return observability.WrapMiddleware(ctx, middleware), nil
 }

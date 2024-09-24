@@ -75,8 +75,8 @@
             "scheme": "foo",
             "path": "foo",
             "port": 42,
-            "interval": "foo",
-            "timeout": "foo",
+            "interval": "1m51s",
+            "timeout": "1m51s",
             "hostname": "xxxx",
             "followRedirects": true,
             "headers": {
@@ -85,7 +85,7 @@
           },
           "passHostHeader": true,
           "responseForwarding": {
-            "flushInterval": "foo"
+            "flushInterval": "1m51s"
           },
           "serversTransport": "foo"
         }
@@ -99,8 +99,7 @@
         "stripPrefix": {
           "prefixes": [
             "foo"
-          ],
-          "forceSlash": true
+          ]
         },
         "stripPrefixRegex": {
           "regex": [
@@ -119,7 +118,7 @@
             "foo"
           ]
         },
-        "ipWhiteList": {
+        "ipAllowList": {
           "sourceRange": [
             "xxxx"
           ],
@@ -161,10 +160,6 @@
           "hostsProxyHeaders": [
             "foo"
           ],
-          "sslRedirect": true,
-          "sslTemporaryRedirect": true,
-          "sslHost": "xxxx",
-          "sslForceHost": true,
           "stsSeconds": 42,
           "stsIncludeSubdomains": true,
           "stsPreload": true,
@@ -175,9 +170,9 @@
           "browserXssFilter": true,
           "customBrowserXSSValue": "xxxx",
           "contentSecurityPolicy": "xxxx",
+          "contentSecurityPolicyReportOnly": "xxxx",
           "publicKey": "xxxx",
           "referrerPolicy": "foo",
-          "featurePolicy": "foo",
           "permissionsPolicy": "foo",
           "isDevelopment": true
         },
@@ -235,7 +230,6 @@
           "address": "xxxx",
           "tls": {
             "ca": "xxxx",
-            "caOptional": true,
             "cert": "xxxx",
             "key": "xxxx",
             "insecureSkipVerify": true
@@ -309,9 +303,7 @@
           "attempts": 42,
           "initialInterval": "42ns"
         },
-        "contentType": {
-          "autoDetect": true
-        },
+        "contentType": {},
         "plugin": {
           "foo": {
             "answer": {}
@@ -398,13 +390,33 @@
       },
       "foo": {
         "loadBalancer": {
-          "terminationDelay": 42,
           "proxyProtocol": {
             "version": 42
           },
           "servers": [
             {
               "address": "xxxx"
+            }
+          ],
+          "serversTransport": "foo"
+        }
+      }
+    },
+    "serversTransports": {
+      "foo": {
+        "dialKeepAlive": "42ns",
+        "dialTimeout": "42ns",
+        "terminationDelay": "42ns",
+        "tls": {
+          "serverName": "xxxx",
+          "insecureSkipVerify": true,
+          "rootCAs": [
+            "xxxx"
+          ],
+          "certificates": [
+            {
+              "certFile": "xxxx",
+              "keyFile": "xxxx"
             }
           ]
         }

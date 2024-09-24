@@ -1,0 +1,48 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /bar
+        pathType: Prefix
+        backend:
+          service:
+            name: service1
+            port:
+              name: foobar
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+    - name: foobar
+      port: 4711
+  clusterIP: 10.0.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - name: foobar
+    port: 4711
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true

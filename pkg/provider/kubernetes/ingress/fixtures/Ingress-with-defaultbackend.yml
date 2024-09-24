@@ -1,0 +1,73 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: defaultbackend
+  namespace: testing
+
+spec:
+  defaultBackend:
+    service:
+      name: defaultservice
+      port:
+        number: 8080
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+    - port: 80
+  clusterIP: 10.0.0.1
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: defaultservice
+  namespace: testing
+
+spec:
+  ports:
+    - port: 8080
+  clusterIP: 10.0.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: defaultservice-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: defaultservice
+
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true

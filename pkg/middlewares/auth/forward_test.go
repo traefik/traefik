@@ -4,19 +4,25 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	tracingMiddleware "github.com/traefik/traefik/v2/pkg/middlewares/tracing"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/forward"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/embedded"
 )
 
 func TestForwardAuthFail(t *testing.T) {
@@ -59,6 +65,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 		w.Header().Add("X-Auth-Group", "group1")
 		w.Header().Add("X-Auth-Group", "group2")
 		w.Header().Add("Foo-Bar", "auth-value")
+		w.Header().Add("Set-Cookie", "authCookie=Auth")
+		w.Header().Add("Set-Cookie", "authCookieNotAdded=Auth")
 		fmt.Fprintln(w, "Success")
 	}))
 	t.Cleanup(server.Close)
@@ -69,6 +77,9 @@ func TestForwardAuthSuccess(t *testing.T) {
 		assert.Equal(t, []string{"group1", "group2"}, r.Header["X-Auth-Group"])
 		assert.Equal(t, "auth-value", r.Header.Get("Foo-Bar"))
 		assert.Empty(t, r.Header.Get("Foo-Baz"))
+		w.Header().Add("Set-Cookie", "authCookie=Backend")
+		w.Header().Add("Set-Cookie", "backendCookie=Backend")
+		w.Header().Add("Other-Header", "BackendHeaderValue")
 		fmt.Fprintln(w, "traefik")
 	})
 
@@ -76,6 +87,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		Address:                  server.URL,
 		AuthResponseHeaders:      []string{"X-Auth-User", "X-Auth-Group"},
 		AuthResponseHeadersRegex: "^Foo-",
+		AddAuthCookiesToResponse: []string{"authCookie"},
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
@@ -90,6 +102,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, []string{"backendCookie=Backend", "authCookie=Auth"}, res.Header["Set-Cookie"])
+	assert.Equal(t, []string{"BackendHeaderValue"}, res.Header["Other-Header"])
 
 	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
@@ -450,43 +464,147 @@ func Test_writeHeader(t *testing.T) {
 	}
 }
 
-func TestForwardAuthUsesTracing(t *testing.T) {
+func TestForwardAuthTracing(t *testing.T) {
+	type expected struct {
+		name       string
+		attributes []attribute.KeyValue
+	}
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Mockpfx-Ids-Traceid") == "" {
-			t.Errorf("expected Mockpfx-Ids-Traceid header to be present in request")
+		if r.Header.Get("Traceparent") == "" {
+			t.Errorf("expected Traceparent header to be present in request")
 		}
+
+		w.Header().Set("X-Bar", "foo")
+		w.Header().Add("X-Bar", "bar")
+		w.WriteHeader(http.StatusNotFound)
 	}))
 	t.Cleanup(server.Close)
 
-	next := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	parse, err := url.Parse(server.URL)
+	require.NoError(t, err)
 
-	auth := dynamic.ForwardAuth{
-		Address: server.URL,
+	_, serverPort, err := net.SplitHostPort(parse.Host)
+	require.NoError(t, err)
+
+	serverPortInt, err := strconv.Atoi(serverPort)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		desc     string
+		expected []expected
+	}{
+		{
+			desc: "basic test",
+			expected: []expected{
+				{
+					name: "initial",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "unspecified"),
+					},
+				},
+				{
+					name: "AuthRequest",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "client"),
+						attribute.String("http.request.method", "GET"),
+						attribute.String("network.protocol.version", "1.1"),
+						attribute.String("url.full", server.URL),
+						attribute.String("url.scheme", "http"),
+						attribute.String("user_agent.original", ""),
+						attribute.String("network.peer.address", "127.0.0.1"),
+						attribute.Int64("network.peer.port", int64(serverPortInt)),
+						attribute.String("server.address", "127.0.0.1"),
+						attribute.Int64("server.port", int64(serverPortInt)),
+						attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
+						attribute.Int64("http.response.status_code", int64(404)),
+						attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
+					},
+				},
+			},
+		},
 	}
 
-	tracer := mocktracer.New()
-	opentracing.SetGlobalTracer(tracer)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			next := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
-	tr, _ := tracing.NewTracing("testApp", 100, &mockBackend{tracer})
+			auth := dynamic.ForwardAuth{
+				Address:            server.URL,
+				AuthRequestHeaders: []string{"X-Foo"},
+			}
+			next, err := NewForward(context.Background(), next, auth, "authTest")
+			require.NoError(t, err)
 
-	next, err := NewForward(context.Background(), next, auth, "authTest")
-	require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
+			req.RemoteAddr = "10.0.0.1:1234"
+			req.Header.Set("User-Agent", "forward-test")
+			req.Header.Set("X-Forwarded-Proto", "http")
+			req.Header.Set("X-Foo", "foo")
+			req.Header.Add("X-Foo", "bar")
 
-	next = tracingMiddleware.NewEntryPoint(context.Background(), tr, "tracingTest", next)
+			otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	ts := httptest.NewServer(next)
-	t.Cleanup(ts.Close)
+			mockTracer := &mockTracer{}
+			tracer := tracing.NewTracer(mockTracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"})
+			initialCtx, initialSpan := tracer.Start(req.Context(), "initial")
+			defer initialSpan.End()
+			req = req.WithContext(initialCtx)
 
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+			recorder := httptest.NewRecorder()
+			next.ServeHTTP(recorder, req)
+
+			for i, span := range mockTracer.spans {
+				assert.Equal(t, test.expected[i].name, span.name)
+				assert.Equal(t, test.expected[i].attributes, span.attributes)
+			}
+		})
+	}
 }
 
-type mockBackend struct {
-	opentracing.Tracer
+type mockTracer struct {
+	embedded.Tracer
+
+	spans []*mockSpan
 }
 
-func (b *mockBackend) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	return b.Tracer, io.NopCloser(nil), nil
+var _ trace.Tracer = &mockTracer{}
+
+func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	config := trace.NewSpanStartConfig(opts...)
+	span := &mockSpan{}
+	span.SetName(name)
+	span.SetAttributes(attribute.String("span.kind", config.SpanKind().String()))
+	span.SetAttributes(config.Attributes()...)
+	t.spans = append(t.spans, span)
+	return trace.ContextWithSpan(ctx, span), span
+}
+
+// mockSpan is an implementation of Span that preforms no operations.
+type mockSpan struct {
+	embedded.Span
+
+	name       string
+	attributes []attribute.KeyValue
+}
+
+var _ trace.Span = &mockSpan{}
+
+func (*mockSpan) SpanContext() trace.SpanContext {
+	return trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}})
+}
+func (*mockSpan) IsRecording() bool                  { return false }
+func (s *mockSpan) SetStatus(_ codes.Code, _ string) {}
+func (s *mockSpan) SetAttributes(kv ...attribute.KeyValue) {
+	s.attributes = append(s.attributes, kv...)
+}
+func (s *mockSpan) End(...trace.SpanEndOption)                  {}
+func (s *mockSpan) RecordError(_ error, _ ...trace.EventOption) {}
+func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
+func (s *mockSpan) AddLink(_ trace.Link)                        {}
+
+func (s *mockSpan) SetName(name string) { s.name = name }
+
+func (s *mockSpan) TracerProvider() trace.TracerProvider {
+	return nil
 }

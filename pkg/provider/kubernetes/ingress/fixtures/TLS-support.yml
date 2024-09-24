@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-tls-secret
+  namespace: testing
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+spec:
+  tls:
+  - secretName: my-tls-secret
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: ""
+        backend:
+          service:
+            name: example-com
+            port:
+              number: 80
+        pathType: Prefix
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  tls:
+  - secretName: my-undefined-secret
+  rules:
+  - host: example.fail
+    http:
+      paths:
+      - path: ""
+        backend:
+          service:
+            name: example-fail
+            port:
+              number: 80
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-com
+  namespace: testing
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  clusterIP: 10.0.0.1
+  type: ClusterIP
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-org
+  namespace: testing
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  clusterIP: 10.0.0.2
+  type: ClusterIP
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: example-com-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: example-com
+
+addressType: IPv4
+ports:
+  - name: http
+    port: 80
+endpoints:
+  - addresses:
+      - 10.11.0.1
+    conditions:
+      ready: true

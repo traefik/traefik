@@ -817,6 +817,22 @@
               </div>
             </div>
           </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - contentSecurityPolicyReportOnly -->
+          <q-card-section v-if="middleware.headers">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Content Security Policy (Report Only)
+                </div>
+                <q-chip
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ exData(middleware).contentSecurityPolicyReportOnly }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - publicKey -->
           <q-card-section v-if="middleware.headers">
             <div class="row items-start no-wrap">
@@ -1490,11 +1506,66 @@
               </div>
             </div>
           </q-card-section>
+
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [requestHeaderModifier] - set -->
+          <q-card-section v-if="middleware.requestHeaderModifier">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Set
+                </div>
+                <q-chip
+                  v-for="(val, key) in exData(middleware).set"
+                  :key="key"
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ key }}: {{ val }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [requestHeaderModifier] - add -->
+          <q-card-section v-if="middleware.requestHeaderModifier">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Add
+                </div>
+                <q-chip
+                  v-for="(val, key) in exData(middleware).add"
+                  :key="key"
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ key }}: {{ val }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [requestHeaderModifier] - remove -->
+          <q-card-section v-if="middleware.requestHeaderModifier">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Remove
+                </div>
+                <q-chip
+                  v-for="(name, key) in exData(middleware).remove"
+                  :key="key"
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ name }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
         </q-card-section>
 
         <q-card-section v-if="protocol === 'tcp'">
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
-          <q-card-section v-if="middleware.ipWhiteList">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - sourceRange -->
+          <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">

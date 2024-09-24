@@ -1,0 +1,36 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"middlewares": [
+			"auth",
+			"addPrefixTest@anotherprovider"
+		],
+		"name": "bar@myprovider",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar`)",
+		"service": "foo-service@myprovider",
+		"status": "disabled",
+		"using": [
+			"web"
+		]
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"middlewares": [
+			"addPrefixTest",
+			"auth"
+		],
+		"name": "test@myprovider",
+		"provider": "myprovider",
+		"rule": "Host(`fii.bar.other`)",
+		"service": "fii-service@myprovider",
+		"status": "enabled",
+		"using": [
+			"web"
+		]
+	}
+]

@@ -11,11 +11,11 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/healthcheck"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // Mirroring is an http.Handler that can mirror requests.
@@ -25,6 +25,7 @@ type Mirroring struct {
 	rw             http.ResponseWriter
 	routinePool    *safe.Pool
 
+	mirrorBody       bool
 	maxBodySize      int64
 	wantsHealthCheck bool
 
@@ -33,11 +34,12 @@ type Mirroring struct {
 }
 
 // New returns a new instance of *Mirroring.
-func New(handler http.Handler, pool *safe.Pool, maxBodySize int64, hc *dynamic.HealthCheck) *Mirroring {
+func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int64, hc *dynamic.HealthCheck) *Mirroring {
 	return &Mirroring{
 		routinePool:      pool,
 		handler:          handler,
 		rw:               blackHoleResponseWriter{},
+		mirrorBody:       mirrorBody,
 		maxBodySize:      maxBodySize,
 		wantsHealthCheck: hc != nil,
 	}
@@ -82,18 +84,18 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger := log.FromContext(req.Context())
-	rr, bytesRead, err := newReusableRequest(req, m.maxBodySize)
+	logger := log.Ctx(req.Context())
+	rr, bytesRead, err := newReusableRequest(req, m.mirrorBody, m.maxBodySize)
 	if err != nil && !errors.Is(err, errBodyTooLarge) {
-		http.Error(rw, http.StatusText(http.StatusInternalServerError)+
-			fmt.Sprintf("error creating reusable request: %v", err), http.StatusInternalServerError)
+		http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
+			http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
 		return
 	}
 
 	if errors.Is(err, errBodyTooLarge) {
 		req.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
 		m.handler.ServeHTTP(rw, req)
-		logger.Debug("no mirroring, request body larger than allowed size")
+		logger.Debug().Msg("No mirroring, request body larger than allowed size")
 		return
 	}
 
@@ -102,7 +104,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	select {
 	case <-req.Context().Done():
 		// No mirroring if request has been canceled during main handler ServeHTTP
-		logger.Warn("no mirroring, request has been canceled during main handler ServeHTTP")
+		logger.Warn().Msg("No mirroring, request has been canceled during main handler ServeHTTP")
 		return
 	default:
 	}
@@ -179,7 +181,7 @@ func (b blackHoleResponseWriter) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
-func (b blackHoleResponseWriter) WriteHeader(statusCode int) {}
+func (b blackHoleResponseWriter) WriteHeader(_ int) {}
 
 type contextStopPropagation struct {
 	context.Context
@@ -200,11 +202,11 @@ var errBodyTooLarge = errors.New("request body too large")
 
 // if the returned error is errBodyTooLarge, newReusableRequest also returns the
 // bytes that were already consumed from the request's body.
-func newReusableRequest(req *http.Request, maxBodySize int64) (*reusableRequest, []byte, error) {
+func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*reusableRequest, []byte, error) {
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil || req.ContentLength == 0 {
+	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
 		return &reusableRequest{req: req}, nil, nil
 	}
 

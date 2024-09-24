@@ -7,6 +7,7 @@
         ],
         "service": "api@internal",
         "rule": "PathPrefix(`/api`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775806
       },
       "dashboard": {
@@ -19,8 +20,14 @@
         ],
         "service": "dashboard@internal",
         "rule": "PathPrefix(`/`)",
+        "ruleSyntax": "v3",
         "priority": 9223372036854775805
       }
+    },
+    "services": {
+      "api": {},
+      "dashboard": {},
+      "noop": {}
     },
     "middlewares": {
       "dashboard_redirect": {
@@ -38,11 +45,6 @@
           ]
         }
       }
-    },
-    "services": {
-      "api": {},
-      "dashboard": {},
-      "noop": {}
     }
   },
   "tcp": {},

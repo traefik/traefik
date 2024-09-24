@@ -9,7 +9,7 @@ import (
 // +kubebuilder:storageversion
 
 // TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
-// More info: https://doc.traefik.io/traefik/v2.11/https/tls/#tls-options
+// More info: https://doc.traefik.io/traefik/v3.1/https/tls/#tls-options
 type TLSOption struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -32,22 +32,23 @@ type TLSOptionSpec struct {
 	// Default: None.
 	MaxVersion string `json:"maxVersion,omitempty"`
 	// CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
-	// More info: https://doc.traefik.io/traefik/v2.11/https/tls/#cipher-suites
+	// More info: https://doc.traefik.io/traefik/v3.1/https/tls/#cipher-suites
 	CipherSuites []string `json:"cipherSuites,omitempty"`
 	// CurvePreferences defines the preferred elliptic curves in a specific order.
-	// More info: https://doc.traefik.io/traefik/v2.11/https/tls/#curve-preferences
+	// More info: https://doc.traefik.io/traefik/v3.1/https/tls/#curve-preferences
 	CurvePreferences []string `json:"curvePreferences,omitempty"`
 	// ClientAuth defines the server's policy for TLS Client Authentication.
 	ClientAuth ClientAuth `json:"clientAuth,omitempty"`
 	// SniStrict defines whether Traefik allows connections from clients connections that do not specify a server_name extension.
 	SniStrict bool `json:"sniStrict,omitempty"`
+	// ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
+	// More info: https://doc.traefik.io/traefik/v3.1/https/tls/#alpn-protocols
+	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
+
 	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
 	// It is enabled automatically when minVersion or maxVersion is set.
 	// Deprecated: https://github.com/golang/go/issues/45430
-	PreferServerCipherSuites bool `json:"preferServerCipherSuites,omitempty"`
-	// ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
-	// More info: https://doc.traefik.io/traefik/v2.11/https/tls/#alpn-protocols
-	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
+	PreferServerCipherSuites *bool `json:"preferServerCipherSuites,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

@@ -12,20 +12,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-type MockForwarder struct{}
-
-func (MockForwarder) ServeHTTP(http.ResponseWriter, *http.Request) {
-	panic("implement me")
-}
-
 func TestGetLoadBalancer(t *testing.T) {
-	sm := Manager{}
+	sm := Manager{
+		roundTripperManager: newRtMock(),
+	}
 
 	testCases := []struct {
 		desc        string
@@ -69,7 +65,8 @@ func TestGetLoadBalancer(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler, err := sm.getLoadBalancer(context.Background(), test.serviceName, test.service, test.fwd)
+			serviceInfo := &runtime.ServiceInfo{Service: &dynamic.Service{LoadBalancer: test.service}}
+			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, serviceInfo)
 			if test.expectError {
 				require.Error(t, err)
 				assert.Nil(t, handler)
@@ -142,6 +139,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			desc:        "Load balances between the two servers",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
+				PassHostHeader: Bool(true),
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -272,34 +270,6 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			},
 		},
 		{
-			desc:        "Cookie value is backward compatible",
-			serviceName: "test",
-			service: &dynamic.ServersLoadBalancer{
-				Sticky: &dynamic.Sticky{
-					Cookie: &dynamic.Cookie{},
-				},
-				Servers: []dynamic.Server{
-					{
-						URL: server1.URL,
-					},
-					{
-						URL: server2.URL,
-					},
-				},
-			},
-			cookieRawValue: "_6f743=" + server1.URL,
-			expected: []ExpectedResult{
-				{
-					StatusCode: http.StatusOK,
-					XFrom:      "first",
-				},
-				{
-					StatusCode: http.StatusOK,
-					XFrom:      "first",
-				},
-			},
-		},
-		{
 			desc:        "No user-agent",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
@@ -336,7 +306,8 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, test.service)
+			serviceInfo := &runtime.ServiceInfo{Service: &dynamic.Service{LoadBalancer: test.service}}
+			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, serviceInfo)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, handler)
@@ -407,14 +378,19 @@ func Test1xxResponses(t *testing.T) {
 	}))
 	t.Cleanup(backend.Close)
 
-	config := &dynamic.ServersLoadBalancer{
-		Servers: []dynamic.Server{
-			{
-				URL: backend.URL,
+	info := &runtime.ServiceInfo{
+		Service: &dynamic.Service{
+			LoadBalancer: &dynamic.ServersLoadBalancer{
+				Servers: []dynamic.Server{
+					{
+						URL: backend.URL,
+					},
+				},
 			},
 		},
 	}
-	handler, err := sm.getLoadBalancerServiceHandler(context.Background(), "foobar", config)
+
+	handler, err := sm.getLoadBalancerServiceHandler(context.Background(), "foobar", info)
 	assert.NoError(t, err)
 
 	frontend := httptest.NewServer(handler)
@@ -558,4 +534,22 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 
 	_, err := manager.BuildHTTP(context.Background(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+}
+
+func Bool(v bool) *bool { return &v }
+
+type MockForwarder struct{}
+
+func (MockForwarder) ServeHTTP(http.ResponseWriter, *http.Request) {
+	panic("not available")
+}
+
+type rtMock struct{}
+
+func newRtMock() RoundTripperGetter {
+	return &rtMock{}
+}
+
+func (r *rtMock) Get(_ string) (http.RoundTripper, error) {
+	return http.DefaultTransport, nil
 }

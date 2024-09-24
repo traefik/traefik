@@ -18,19 +18,8 @@ data:
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: supersecret
-  namespace: default
-
-data:
-  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
-
----
 kind: GatewayClass
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway-class
 spec:
@@ -38,7 +27,7 @@ spec:
 
 ---
 kind: Gateway
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway
   namespace: default
@@ -126,7 +115,7 @@ spec:
 
 ---
 kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: http-app-default
   namespace: default
@@ -141,7 +130,11 @@ spec:
       kind: Gateway
       group: gateway.networking.k8s.io
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: whoami
           port: 80
           weight: 1
@@ -194,7 +187,7 @@ spec:
 
 ---
 kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: http-app-bar
   namespace: bar
@@ -211,7 +204,11 @@ spec:
       kind: Gateway
       group: gateway.networking.k8s.io
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: whoami-bar
           port: 80
           weight: 1

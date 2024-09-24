@@ -20,27 +20,30 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints      string `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	ExposedByDefault bool   `description:"Expose services by default" json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	RefreshSeconds   int    `description:"Polling interval (in seconds)" json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
+	ExposedByDefault bool   `description:"Expose services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	RefreshSeconds   int    `description:"Polling interval (in seconds)." json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	// Provider lookup parameters.
-	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
-	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
-	ECSAnywhere          bool     `description:"Enable ECS Anywhere support" json:"ecsAnywhere,omitempty" toml:"ecsAnywhere,omitempty" yaml:"ecsAnywhere,omitempty" export:"true"`
-	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
-	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty" loggable:"false"`
-	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty" loggable:"false"`
+	Clusters             []string `description:"ECS Cluster names." json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster." json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	HealthyTasksOnly     bool     `description:"Determines whether to discover only healthy tasks." json:"healthyTasksOnly,omitempty" toml:"healthyTasksOnly,omitempty" yaml:"healthyTasksOnly,omitempty" export:"true"`
+	ECSAnywhere          bool     `description:"Enable ECS Anywhere support." json:"ecsAnywhere,omitempty" toml:"ecsAnywhere,omitempty" yaml:"ecsAnywhere,omitempty" export:"true"`
+	Region               string   `description:"AWS region to use for requests."  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
+	AccessKeyID          string   `description:"AWS credentials access key ID to use for making requests." json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty" loggable:"false"`
+	SecretAccessKey      string   `description:"AWS credentials access key to use for making requests." json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty" loggable:"false"`
 	defaultRuleTpl       *template.Template
 }
 
@@ -84,6 +87,7 @@ var (
 func (p *Provider) SetDefaults() {
 	p.Clusters = []string{"default"}
 	p.AutoDiscoverClusters = false
+	p.HealthyTasksOnly = false
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
@@ -100,7 +104,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
+func (p *Provider) createClient(logger zerolog.Logger) (*awsClient, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
@@ -110,7 +114,7 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 
 	ec2meta := ec2metadata.New(sess)
 	if p.Region == "" && ec2meta.Available() {
-		logger.Infoln("No region provided, querying instance metadata endpoint...")
+		logger.Info().Msg("No region provided, querying instance metadata endpoint...")
 		identity, err := ec2meta.GetInstanceIdentityDocument()
 		if err != nil {
 			return nil, err
@@ -142,9 +146,7 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 		cfg.Region = &p.Region
 	}
 
-	cfg.WithLogger(aws.LoggerFunc(func(args ...interface{}) {
-		logger.Debug(args...)
-	}))
+	cfg.WithLogger(logs.NewAWSWrapper(logger))
 
 	return &awsClient{
 		ecs.New(sess, cfg),
@@ -156,8 +158,8 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 // Provide configuration to traefik from ECS.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "ecs"))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, "ecs").Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			awsClient, err := p.createClient(logger)
@@ -188,11 +190,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), routineCtx), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to Provider api %+v", err)
+			logger.Error().Err(err).Msg("Cannot retrieve data")
 		}
 	})
 
@@ -216,7 +218,7 @@ func (p *Provider) loadConfiguration(ctx context.Context, client *awsClient, con
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
 // and the EC2 instance data.
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	var clustersArn []*string
 	var clusters []string
@@ -247,7 +249,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 	var instances []ecsInstance
 
-	logger.Debugf("ECS Clusters: %s", clusters)
+	logger.Debug().Msgf("ECS Clusters: %s", clusters)
 	for _, c := range clusters {
 		input := &ecs.ListTasksInput{
 			Cluster:       &c,
@@ -262,12 +264,15 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					Cluster: &c,
 				})
 				if err != nil {
-					logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
+					logger.Error().Msgf("Unable to describe tasks for %v", page.TaskArns)
 				} else {
 					for _, t := range resp.Tasks {
-						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
-							tasks[aws.StringValue(t.TaskArn)] = t
+						if p.HealthyTasksOnly && aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+							logger.Debug().Msgf("Skipping unhealthy task %s", aws.StringValue(t.TaskArn))
+							continue
 						}
+
+						tasks[aws.StringValue(t.TaskArn)] = t
 					}
 				}
 			}
@@ -316,14 +321,14 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				if containerDefinition == nil {
-					logger.Debugf("Unable to find container definition for %s", aws.StringValue(container.Name))
+					logger.Debug().Msgf("Unable to find container definition for %s", aws.StringValue(container.Name))
 					continue
 				}
 
 				var mach *machine
 				if aws.StringValue(taskDef.NetworkMode) == "awsvpc" && len(task.Attachments) != 0 {
 					if len(container.NetworkInterfaces) == 0 {
-						logger.Errorf("Skip container %s: no network interfaces", aws.StringValue(container.Name))
+						logger.Error().Msgf("Skip container %s: no network interfaces", aws.StringValue(container.Name))
 						continue
 					}
 
@@ -351,7 +356,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				} else {
 					miContainerInstance := miInstances[aws.StringValue(task.ContainerInstanceArn)]
 					if containerInstance == nil && miContainerInstance == nil {
-						logger.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
+						logger.Error().Msgf("Unable to find container instance information for %s", aws.StringValue(container.Name))
 						continue
 					}
 
@@ -390,7 +395,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				extraConf, err := p.getConfiguration(instance)
 				if err != nil {
-					logger.Errorf("Skip container %s: %w", getServiceName(instance), err)
+					logger.Error().Err(err).Msgf("Skip container %s", getServiceName(instance))
 					continue
 				}
 				instance.ExtraConf = extraConf
@@ -532,13 +537,13 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 }
 
 func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient, taskDefArns map[string]*ecs.Task) (map[string]*ecs.TaskDefinition, error) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 	taskDef := make(map[string]*ecs.TaskDefinition)
 
 	for arn, task := range taskDefArns {
 		if definition, ok := existingTaskDefCache.Get(arn); ok {
 			taskDef[arn] = definition.(*ecs.TaskDefinition)
-			logger.Debugf("Found cached task definition for %s. Skipping the call", arn)
+			logger.Debug().Msgf("Found cached task definition for %s. Skipping the call", arn)
 		} else {
 			resp, err := client.ecs.DescribeTaskDefinitionWithContext(ctx, &ecs.DescribeTaskDefinitionInput{
 				TaskDefinition: task.TaskDefinitionArn,

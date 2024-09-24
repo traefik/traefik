@@ -17,22 +17,27 @@ const (
 // See RFC 7230, section 6.1.
 func Remover(next http.Handler) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		var reqUpType string
-		if httpguts.HeaderValuesContainsToken(req.Header[connectionHeader], upgradeHeader) {
-			reqUpType = req.Header.Get(upgradeHeader)
-		}
-
-		removeConnectionHeaders(req.Header)
-
-		if reqUpType != "" {
-			req.Header.Set(connectionHeader, upgradeHeader)
-			req.Header.Set(upgradeHeader, reqUpType)
-		} else {
-			req.Header.Del(connectionHeader)
-		}
-
-		next.ServeHTTP(rw, req)
+		next.ServeHTTP(rw, Remove(req))
 	}
+}
+
+// Remove removes hop-by-hop header on the request.
+func Remove(req *http.Request) *http.Request {
+	var reqUpType string
+	if httpguts.HeaderValuesContainsToken(req.Header[connectionHeader], upgradeHeader) {
+		reqUpType = req.Header.Get(upgradeHeader)
+	}
+
+	removeConnectionHeaders(req.Header)
+
+	if reqUpType != "" {
+		req.Header.Set(connectionHeader, upgradeHeader)
+		req.Header.Set(upgradeHeader, reqUpType)
+	} else {
+		req.Header.Del(connectionHeader)
+	}
+
+	return req
 }
 
 func removeConnectionHeaders(h http.Header) {

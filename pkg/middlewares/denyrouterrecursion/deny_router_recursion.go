@@ -7,7 +7,8 @@ import (
 	"strconv"
 
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/logs"
 )
 
 const xTraefikRouter = "X-Traefik-Router"
@@ -42,7 +43,9 @@ func New(routerName string, next http.Handler) (*DenyRouterRecursion, error) {
 // ServeHTTP implements http.Handler.
 func (l *DenyRouterRecursion) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.Header.Get(xTraefikRouter) == l.routerNameHash {
-		log.WithoutContext().Debugf("Rejecting request in provenance of the same router (%q) to stop potential infinite loop.", l.routerName)
+		logger := log.With().Str(logs.MiddlewareType, "DenyRouterRecursion").Logger()
+		logger.Debug().Msgf("Rejecting request in provenance of the same router (%q) to stop potential infinite loop.", l.routerName)
+
 		rw.WriteHeader(http.StatusBadRequest)
 
 		return

@@ -30,7 +30,7 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Latency Check
 labels:
   - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
@@ -50,18 +50,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Latency Check
 - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.latency-check.circuitbreaker.expression": "LatencyAtQuantileMS(50.0) > 100"
-}
-```
-
-```yaml tab="Rancher"
-# Latency Check
-labels:
-  - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
 ```
 
 ```yaml tab="File (YAML)"
@@ -97,6 +85,7 @@ At specified intervals (`checkPeriod`), the circuit breaker evaluates `expressio
 ### Open
 
 While open, the fallback mechanism takes over the normal service calls for a duration of `FallbackDuration`.
+The fallback mechanism returns a `HTTP 503` (or `ResponseCode`) to the client.
 After this duration, it enters the recovering state.
 
 ### Recovering
@@ -191,3 +180,9 @@ The duration for which the circuit breaker will wait before trying to recover (f
 _Optional, Default="10s"_
 
 The duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+
+### `ResponseCode`
+
+_Optional, Default="503"_
+
+The status code that the circuit breaker will return while it is in the open state.

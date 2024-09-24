@@ -14,10 +14,7 @@ import (
 )
 
 func TestConsecutiveWrites(t *testing.T) {
-	addr, err := net.ResolveUDPAddr("udp", ":0")
-	require.NoError(t, err)
-
-	ln, err := Listen("udp", addr, 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -75,11 +72,7 @@ func TestConsecutiveWrites(t *testing.T) {
 }
 
 func TestListenNotBlocking(t *testing.T) {
-	addr, err := net.ResolveUDPAddr("udp", ":0")
-
-	require.NoError(t, err)
-
-	ln, err := Listen("udp", addr, 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -165,10 +158,7 @@ func TestListenNotBlocking(t *testing.T) {
 }
 
 func TestListenWithZeroTimeout(t *testing.T) {
-	addr, err := net.ResolveUDPAddr("udp", ":0")
-	require.NoError(t, err)
-
-	_, err = Listen("udp", addr, 0)
+	_, err := Listen(net.ListenConfig{}, "udp", ":0", 0)
 	assert.Error(t, err)
 }
 
@@ -183,10 +173,7 @@ func TestTimeoutWithoutRead(t *testing.T) {
 func testTimeout(t *testing.T, withRead bool) {
 	t.Helper()
 
-	addr, err := net.ResolveUDPAddr("udp", ":0")
-	require.NoError(t, err)
-
-	ln, err := Listen("udp", addr, 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -227,10 +214,7 @@ func testTimeout(t *testing.T, withRead bool) {
 }
 
 func TestShutdown(t *testing.T) {
-	addr, err := net.ResolveUDPAddr("udp", ":0")
-	require.NoError(t, err)
-
-	l, err := Listen("udp", addr, 3*time.Second)
+	l, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
 	require.NoError(t, err)
 
 	go func() {
@@ -331,10 +315,7 @@ func TestReadLoopMaxDataSize(t *testing.T) {
 
 	doneCh := make(chan struct{})
 
-	addr, err := net.ResolveUDPAddr("udp", ":0")
-	require.NoError(t, err)
-
-	l, err := Listen("udp", addr, 3*time.Second)
+	l, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
 	require.NoError(t, err)
 
 	defer func() {

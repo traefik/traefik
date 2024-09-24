@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_parseRouterConfig(t *testing.T) {
@@ -24,6 +24,7 @@ func Test_parseRouterConfig(t *testing.T) {
 				"traefik.ingress.kubernetes.io/router.entrypoints":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.middlewares":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.priority":           "42",
+				"traefik.ingress.kubernetes.io/router.rulesyntax":         "foobar",
 				"traefik.ingress.kubernetes.io/router.tls":                "true",
 				"traefik.ingress.kubernetes.io/router.tls.certresolver":   "foobar",
 				"traefik.ingress.kubernetes.io/router.tls.domains.0.main": "foobar",
@@ -38,6 +39,7 @@ func Test_parseRouterConfig(t *testing.T) {
 					EntryPoints: []string{"foobar", "foobar"},
 					Middlewares: []string{"foobar", "foobar"},
 					Priority:    42,
+					RuleSyntax:  "foobar",
 					TLS: &dynamic.RouterTLSConfig{
 						CertResolver: "foobar",
 						Domains: []types.Domain{
@@ -125,7 +127,7 @@ func Test_parseServiceConfig(t *testing.T) {
 					ServersScheme:    "protocol",
 					ServersTransport: "foobar@file",
 					PassHostHeader:   Bool(true),
-					NativeLB:         true,
+					NativeLB:         Bool(true),
 				},
 			},
 		},
@@ -180,6 +182,7 @@ func Test_convertAnnotations(t *testing.T) {
 				"traefik.ingress.kubernetes.io/router.entrypoints":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.middlewares":        "foobar,foobar",
 				"traefik.ingress.kubernetes.io/router.priority":           "42",
+				"traefik.ingress.kubernetes.io/router.rulesyntax":         "foobar",
 				"traefik.ingress.kubernetes.io/router.tls":                "true",
 				"traefik.ingress.kubernetes.io/router.tls.certresolver":   "foobar",
 				"traefik.ingress.kubernetes.io/router.tls.domains.0.main": "foobar",
@@ -194,6 +197,7 @@ func Test_convertAnnotations(t *testing.T) {
 				"traefik.router.entrypoints":         "foobar,foobar",
 				"traefik.router.middlewares":         "foobar,foobar",
 				"traefik.router.priority":            "42",
+				"traefik.router.rulesyntax":          "foobar",
 				"traefik.router.tls":                 "true",
 				"traefik.router.tls.certresolver":    "foobar",
 				"traefik.router.tls.domains[0].main": "foobar",

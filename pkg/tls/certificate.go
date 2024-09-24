@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -48,8 +48,8 @@ var (
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself.
 type Certificate struct {
-	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
+	CertFile types.FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
+	KeyFile  types.FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
 }
 
 // Certificates defines traefik certificates type
@@ -63,7 +63,7 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	for _, certificate := range c {
 		cert, err := certificate.GetCertificate()
 		if err != nil {
-			log.WithoutContext().Debugf("Error while getting certificate: %v", err)
+			log.Debug().Err(err).Msg("Error while getting certificate")
 			continue
 		}
 
@@ -71,33 +71,6 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	}
 
 	return certs
-}
-
-// FileOrContent hold a file path or content.
-type FileOrContent string
-
-func (f FileOrContent) String() string {
-	return string(f)
-}
-
-// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
-func (f FileOrContent) IsPath() bool {
-	_, err := os.Stat(f.String())
-	return err == nil
-}
-
-func (f FileOrContent) Read() ([]byte, error) {
-	var content []byte
-	if f.IsPath() {
-		var err error
-		content, err = os.ReadFile(f.String())
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		content = []byte(f)
-	}
-	return content, nil
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by store name.
@@ -153,30 +126,41 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 		}
 	}
 	if certExists {
-		log.Debugf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
+		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
 	} else {
-		log.Debugf("Adding certificate for domain(s) %s", certKey)
+		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
 		certs[storeName][certKey] = &tlsCert
 	}
 
 	return err
 }
 
-// GetCertificate retrieves Certificate as tls.Certificate.
+// GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
 func (c *Certificate) GetCertificate() (tls.Certificate, error) {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read CertFile : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to read CertFile: %w", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile: %w", err)
 	}
 
 	cert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to generate TLS certificate : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
+	}
+
+	return cert, nil
+}
+
+// GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
+// It assumes that the configured CertFile and KeyFile are of byte type.
+func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
+	cert, err := tls.X509KeyPair([]byte(c.CertFile), []byte(c.KeyFile))
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
 
 	return cert, nil
@@ -218,8 +202,8 @@ func (c *Certificates) Set(value string) error {
 			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*c = append(*c, Certificate{
-			CertFile: FileOrContent(files[0]),
-			KeyFile:  FileOrContent(files[1]),
+			CertFile: types.FileOrContent(files[0]),
+			KeyFile:  types.FileOrContent(files[1]),
 		})
 	}
 	return nil

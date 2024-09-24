@@ -4,7 +4,7 @@ import { getTotal } from './utils'
 const apiBase = '/tcp'
 
 function getAllRouters (params) {
-  return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
+  return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}&sortBy=${params.sortBy}&direction=${params.direction}&serviceName=${params.serviceName}&middlewareName=${params.middlewareName}`)
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)
@@ -22,7 +22,7 @@ function getRouterByName (name) {
 }
 
 function getAllServices (params) {
-  return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
+  return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}&sortBy=${params.sortBy}&direction=${params.direction}`)
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)
@@ -40,7 +40,7 @@ function getServiceByName (name) {
 }
 
 function getAllMiddlewares (params) {
-  return APP.api.get(`${apiBase}/middlewares?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
+  return APP.api.get(`${apiBase}/middlewares?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}&sortBy=${params.sortBy}&direction=${params.direction}`)
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)

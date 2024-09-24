@@ -1,6 +1,6 @@
 ---
 kind: GatewayClass
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway-class
 spec:
@@ -8,7 +8,7 @@ spec:
 
 ---
 kind: Gateway
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway
   namespace: default
@@ -24,7 +24,7 @@ spec:
 
 ---
 kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: http-app-1
   namespace: default
@@ -62,6 +62,17 @@ spec:
             - name: my-header
               type: Exact
               value: bar
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+
+    - matches:
+        - path:
+            type: RegularExpression
+            value: "^/buzz/[0-9]+$"
       backendRefs:
         - name: whoami
           port: 80
