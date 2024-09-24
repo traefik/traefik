@@ -552,8 +552,11 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	p.resolvingDomainsMutex.Lock()
 
-	sort.Strings(domains)
-	domainKey := strings.Join(domains, ",")
+	sortedDomains := make([]string, len(domains))
+	copy(sortedDomains, domains)
+	sort.Strings(sortedDomains)
+
+	domainKey := strings.Join(sortedDomains, ",")
 
 	if _, ok := p.resolvingDomains[domainKey]; ok {
 		p.resolvingDomainsMutex.Unlock()
@@ -562,15 +565,15 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	p.resolvingDomains[domainKey] = struct{}{}
 
-	for _, certDomain := range domains {
+	for _, certDomain := range sortedDomains {
 		p.resolvingDomains[certDomain] = struct{}{}
 	}
 
 	p.resolvingDomainsMutex.Unlock()
 
-	defer p.removeResolvingDomains(append(domains, domainKey))
+	defer p.removeResolvingDomains(append(sortedDomains, domainKey))
 
-	logger.Debugf("Loading ACME certificates %+v...", domains)
+	logger.Debugf("Loading ACME certificates %+v...", sortedDomains)
 
 	client, err := p.getClient()
 	if err != nil {
@@ -585,16 +588,16 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	cert, err := client.Certificate.Obtain(request)
 	if err != nil {
-		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", domains, err)
+		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", sortedDomains, err)
 	}
 	if cert == nil {
-		return nil, fmt.Errorf("unable to generate a certificate for the domains %v", domains)
+		return nil, fmt.Errorf("unable to generate a certificate for the domains %v", sortedDomains)
 	}
 	if len(cert.Certificate) == 0 || len(cert.PrivateKey) == 0 {
-		return nil, fmt.Errorf("certificate for domains %v is empty: %v", domains, cert)
+		return nil, fmt.Errorf("certificate for domains %v is empty: %v", sortedDomains, cert)
 	}
 
-	logger.Debugf("Default certificate obtained for domains %+v", domains)
+	logger.Debugf("Default certificate obtained for domains %+v", sortedDomains)
 
 	return cert, nil
 }
@@ -947,12 +950,14 @@ func (p *Provider) certExists(validDomains []string) bool {
 	p.certificatesMu.RLock()
 	defer p.certificatesMu.RUnlock()
 
-	sort.Strings(validDomains)
+	sortedDomains := make([]string, len(validDomains))
+	copy(sortedDomains, validDomains)
+	sort.Strings(sortedDomains)
 
 	for _, cert := range p.certificates {
 		domains := cert.Certificate.Domain.ToStrArray()
 		sort.Strings(domains)
-		if reflect.DeepEqual(domains, validDomains) {
+		if reflect.DeepEqual(domains, sortedDomains) {
 			return true
 		}
 	}
