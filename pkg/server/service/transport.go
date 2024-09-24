@@ -69,14 +69,11 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 		}
 
 		var err error
-		var tlsConfig *tls.Config
 
+		var tlsConfig *tls.Config
 		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
 			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", configName)
-
-			//TODO default tls config?
 		}
-
 		t.tlsConfigs[configName] = tlsConfig
 
 		t.roundTrippers[configName], err = t.createRoundTripper(newConfig, tlsConfig)
@@ -92,14 +89,11 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 		}
 
 		var err error
-		var tlsConfig *tls.Config
 
+		var tlsConfig *tls.Config
 		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
 			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", newConfigName)
-
-			//TODO default tls config?
 		}
-
 		t.tlsConfigs[newConfigName] = tlsConfig
 
 		t.roundTrippers[newConfigName], err = t.createRoundTripper(newConfig, tlsConfig)

@@ -47,7 +47,6 @@ func TestConnPool_ConnReuse(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -84,7 +83,7 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 		{
 			desc: "Multiple connections with defered release",
 			poolFn: func(pool *connPool) {
-				for i := 0; i < 7; i++ {
+				for range 7 {
 					c, _ := pool.AcquireConn()
 					defer pool.ReleaseConn(c)
 				}
@@ -95,7 +94,6 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
