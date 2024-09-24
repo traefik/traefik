@@ -227,12 +227,14 @@
         [http.middlewares.Middleware13.ipAllowList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
     [http.middlewares.Middleware14]
       [http.middlewares.Middleware14.ipWhiteList]
         sourceRange = ["foobar", "foobar"]
         [http.middlewares.Middleware14.ipWhiteList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
     [http.middlewares.Middleware15]
       [http.middlewares.Middleware15.inFlightReq]
         amount = 42
@@ -242,6 +244,7 @@
           [http.middlewares.Middleware15.inFlightReq.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
     [http.middlewares.Middleware16]
       [http.middlewares.Middleware16.passTLSClientCert]
         pem = true
@@ -286,6 +289,7 @@
           [http.middlewares.Middleware18.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
     [http.middlewares.Middleware19]
       [http.middlewares.Middleware19.redirectRegex]
         regex = "foobar"
