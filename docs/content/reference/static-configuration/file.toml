@@ -484,6 +484,7 @@
     [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]
+  fastProxy = true
   kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
