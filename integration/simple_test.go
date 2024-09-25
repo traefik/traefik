@@ -65,6 +65,32 @@ func (s *SimpleSuite) TestSimpleDefaultConfig() {
 	require.NoError(s.T(), err)
 }
 
+func (s *SimpleSuite) TestSimpleFastProxy() {
+	var callCount int
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		assert.Contains(s.T(), req.Header, "X-Traefik-Fast-Proxy")
+		callCount++
+	}))
+	defer srv1.Close()
+
+	file := s.adaptFile("fixtures/simple_fastproxy.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/", time.Second)
+	require.NoError(s.T(), err)
+
+	assert.GreaterOrEqual(s.T(), 1, callCount)
+}
+
 func (s *SimpleSuite) TestWithWebConfig() {
 	s.cmdTraefik(withConfigFile("fixtures/simple_web.toml"))
 

@@ -509,6 +509,8 @@
       [experimental.localPlugins.LocalDescriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+  [experimental.fastProxy]
+    debug = true
 
 [core]
   defaultRuleSyntax = "foobar"
