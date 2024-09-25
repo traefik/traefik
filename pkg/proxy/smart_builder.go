@@ -9,9 +9,9 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service"
 )
 
 // TransportManager manages transport used for backend communications.
@@ -21,41 +21,41 @@ type TransportManager interface {
 	GetTLSConfig(name string) (*tls.Config, error)
 }
 
-// Builder is a proxy builder which returns a fast proxy or httputil proxy corresponding
+// SmartBuilder is a proxy builder which returns a fast proxy or httputil proxy corresponding
 // to the ServersTransport configuration.
-type Builder struct {
-	fastProxy        bool
+type SmartBuilder struct {
 	fastProxyBuilder *fast.ProxyBuilder
-
-	httputilBuilder *httputil.ProxyBuilder
+	proxyBuilder     service.ProxyBuilder
 
 	transportManager httputil.TransportManager
 }
 
-// NewBuilder creates and returns a new Builder instance.
-func NewBuilder(transportManager TransportManager, semConvMetricsRegistry *metrics.SemConvMetricsRegistry, fastProxyConfig *static.FastProxyConfig) *Builder {
-	return &Builder{
-		fastProxy:        fastProxyConfig != nil,
+// NewSmartBuilder creates and returns a new SmartBuilder instance.
+func NewSmartBuilder(transportManager TransportManager, proxyBuilder service.ProxyBuilder, fastProxyConfig static.FastProxyConfig) *SmartBuilder {
+	return &SmartBuilder{
 		fastProxyBuilder: fast.NewProxyBuilder(transportManager, fastProxyConfig),
-		httputilBuilder:  httputil.NewProxyBuilder(transportManager, semConvMetricsRegistry),
+		proxyBuilder:     proxyBuilder,
 		transportManager: transportManager,
 	}
 }
 
 // Update is the handler called when the dynamic configuration is updated.
-func (b *Builder) Update(newConfigs map[string]*dynamic.ServersTransport) {
+func (b *SmartBuilder) Update(newConfigs map[string]*dynamic.ServersTransport) {
 	b.fastProxyBuilder.Update(newConfigs)
 }
 
 // Build builds an HTTP proxy for the given URL using the ServersTransport with the given name.
-func (b *Builder) Build(configName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error) {
+func (b *SmartBuilder) Build(configName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error) {
 	serversTransport, err := b.transportManager.Get(configName)
 	if err != nil {
 		return nil, fmt.Errorf("getting ServersTransport: %w", err)
 	}
 
-	if !b.fastProxy || !serversTransport.DisableHTTP2 && (targetURL.Scheme == "https" || targetURL.Scheme == "h2c") {
-		return b.httputilBuilder.Build(configName, targetURL, shouldObserve, passHostHeader, flushInterval)
+	// The fast proxy implementation cannot handle HTTP/2 requests for now.
+	// For the https scheme we cannot guess if the backend communication will use HTTP2,
+	// thus we check if HTTP/2 is disabled to use the fast proxy implementation when this is possible.
+	if targetURL.Scheme == "h2c" || (targetURL.Scheme == "https" && !serversTransport.DisableHTTP2) {
+		return b.proxyBuilder.Build(configName, targetURL, shouldObserve, passHostHeader, flushInterval)
 	}
 	return b.fastProxyBuilder.Build(configName, targetURL, passHostHeader)
 }

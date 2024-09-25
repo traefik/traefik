@@ -34,6 +34,9 @@ func NewProxyBuilder(transportManager TransportManager, semConvMetricsRegistry *
 	}
 }
 
+// Update does nothing.
+func (r *ProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
+
 // Build builds a new httputil.ReverseProxy with the given configuration.
 func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error) {
 	roundTripper, err := r.transportManager.GetRoundTripper(cfgName)
