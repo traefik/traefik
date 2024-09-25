@@ -43,7 +43,7 @@ const (
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
 	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
-	Update(map[string]*dynamic.ServersTransport)
+	Update(configs map[string]*dynamic.ServersTransport)
 }
 
 // Manager The service manager.
