@@ -231,6 +231,9 @@ Timeout defines how long to wait on an idle session before releasing the related
 `--experimental.fastproxy`:  
 Enable the FastProxy implementation. (Default: ```false```)
 
+`--experimental.fastproxy.debug`:  
+Enable debug mode for the FastProxy implementation. (Default: ```false```)
+
 `--experimental.kubernetesgateway`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 

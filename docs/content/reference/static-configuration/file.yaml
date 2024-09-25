@@ -572,7 +572,8 @@ experimental:
         mounts:
           - foobar
           - foobar
-  fastProxy: true
+  fastProxy:
+    debug: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar
