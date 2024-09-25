@@ -317,10 +317,14 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	}
 
 	var supportedFeatures []gatev1.SupportedFeature
-	for _, feature := range SupportedFeatures() {
-		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature(feature))
+	if p.ExperimentalChannel {
+		for _, feature := range SupportedFeatures() {
+			supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
+		}
+		slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
+			return strings.Compare(string(a.Name), string(b.Name))
+		})
 	}
-	slices.Sort(supportedFeatures)
 
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {

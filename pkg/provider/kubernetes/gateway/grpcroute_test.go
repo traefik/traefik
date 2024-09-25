@@ -50,7 +50,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 				},
 				Headers: []gatev1.GRPCHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.HeaderMatchExact),
+						Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
 						Name:  "foo",
 						Value: "bar",
 					},
@@ -70,7 +70,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 				},
 				Headers: []gatev1.GRPCHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.HeaderMatchExact),
+						Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
 						Name:  "foo",
 						Value: "bar",
 					},
@@ -177,7 +177,7 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 			desc: "One exact match type",
 			headers: []gatev1.GRPCHeaderMatch{
 				{
-					Type:  ptr.To(gatev1.HeaderMatchExact),
+					Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
 					Name:  "foo",
 					Value: "bar",
 				},
@@ -188,7 +188,7 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 			desc: "One regexp match type",
 			headers: []gatev1.GRPCHeaderMatch{
 				{
-					Type:  ptr.To(gatev1.HeaderMatchRegularExpression),
+					Type:  ptr.To(gatev1.GRPCHeaderMatchRegularExpression),
 					Name:  "foo",
 					Value: ".*",
 				},
@@ -199,12 +199,12 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 			desc: "One exact and regexp match type",
 			headers: []gatev1.GRPCHeaderMatch{
 				{
-					Type:  ptr.To(gatev1.HeaderMatchExact),
+					Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
 					Name:  "foo",
 					Value: "bar",
 				},
 				{
-					Type:  ptr.To(gatev1.HeaderMatchRegularExpression),
+					Type:  ptr.To(gatev1.GRPCHeaderMatchRegularExpression),
 					Name:  "foo",
 					Value: ".*",
 				},

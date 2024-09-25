@@ -396,10 +396,10 @@ func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {
 func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
 	var rules []string
 	for _, header := range headers {
-		switch ptr.Deref(header.Type, gatev1.HeaderMatchExact) {
-		case gatev1.HeaderMatchExact:
+		switch ptr.Deref(header.Type, gatev1.GRPCHeaderMatchExact) {
+		case gatev1.GRPCHeaderMatchExact:
 			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
-		case gatev1.HeaderMatchRegularExpression:
+		case gatev1.GRPCHeaderMatchRegularExpression:
 			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
 		}
 	}

@@ -22,6 +22,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -50,6 +51,7 @@ type K8sConformanceSuite struct {
 
 	k3sContainer *k3s.K3sContainer
 	kubeClient   client.Client
+	restConfig   *rest.Config
 	clientSet    *kclientset.Clientset
 }
 
@@ -88,7 +90,7 @@ func (s *K8sConformanceSuite) SetupSuite() {
 
 	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/k8s-conformance/00-experimental-v1.1.0.yml"),
+		k3s.WithManifest("./fixtures/k8s-conformance/00-experimental-v1.2.0-rc1.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -111,17 +113,17 @@ func (s *K8sConformanceSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeConfigYaml)
+	s.restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeConfigYaml)
 	if err != nil {
 		s.T().Fatalf("Error loading Kubernetes config: %v", err)
 	}
 
-	s.kubeClient, err = client.New(restConfig, client.Options{})
+	s.kubeClient, err = client.New(s.restConfig, client.Options{})
 	if err != nil {
 		s.T().Fatalf("Error initializing Kubernetes client: %v", err)
 	}
 
-	s.clientSet, err = kclientset.NewForConfig(restConfig)
+	s.clientSet, err = kclientset.NewForConfig(s.restConfig)
 	if err != nil {
 		s.T().Fatalf("Error initializing Kubernetes REST client: %v", err)
 	}
@@ -183,6 +185,7 @@ func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 		GatewayClassName:           "traefik",
 		Debug:                      true,
 		CleanupBaseResources:       true,
+		RestConfig:                 s.restConfig,
 		TimeoutConfig:              config.DefaultTimeoutConfig(),
 		ManifestFS:                 []fs.FS{&conformance.Manifests},
 		EnableAllSupportedFeatures: false,
