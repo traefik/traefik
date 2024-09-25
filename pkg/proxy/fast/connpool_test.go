@@ -2,10 +2,12 @@ package fast
 
 import (
 	"net"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConnPool_ConnReuse(t *testing.T) {
@@ -112,6 +114,34 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 			assert.Equal(t, test.expected, keepOpenedConn)
 		})
 	}
+}
+
+func TestGC(t *testing.T) {
+	var isDestroyed bool
+	pools := map[string]*connPool{}
+	dialer := func() (net.Conn, error) {
+		c := &mockConn{closeFn: func() error {
+			return nil
+		}}
+		return c, nil
+	}
+
+	pools["test"] = newConnPool(10, 1*time.Second, dialer)
+	runtime.SetFinalizer(pools["test"], func(p *connPool) {
+		isDestroyed = true
+	})
+	c, err := pools["test"].AcquireConn()
+	require.NoError(t, err)
+
+	pools["test"].ReleaseConn(c)
+
+	pools["test"].Close()
+
+	delete(pools, "test")
+
+	runtime.GC()
+
+	require.True(t, isDestroyed)
 }
 
 type mockConn struct {
