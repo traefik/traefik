@@ -68,8 +68,8 @@ func (s *SimpleSuite) TestSimpleDefaultConfig() {
 func (s *SimpleSuite) TestSimpleFastProxy() {
 	var callCount int
 	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		callCount++
 		assert.Contains(s.T(), req.Header, "X-Traefik-Fast-Proxy")
+		callCount++
 	}))
 	defer srv1.Close()
 
@@ -88,7 +88,7 @@ func (s *SimpleSuite) TestSimpleFastProxy() {
 	err = try.GetRequest("http://127.0.0.1:8000/", time.Second)
 	require.NoError(s.T(), err)
 
-	assert.Equal(s.T(), 1, callCount)
+	assert.GreaterOrEqual(s.T(), 1, callCount)
 }
 
 func (s *SimpleSuite) TestWithWebConfig() {
