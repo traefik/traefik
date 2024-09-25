@@ -24,6 +24,7 @@
 
 [http.routers]
   [http.routers.router1]
+    entrypoints = ["web"]
     service = "service1"
     rule = "PathPrefix(`/`)"
 
