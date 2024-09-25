@@ -48,12 +48,18 @@ func NewProxyBuilder(transportManager TransportManager, config static.FastProxyC
 func (r *ProxyBuilder) Update(newConfigs map[string]*dynamic.ServersTransport) {
 	for configName := range r.configs {
 		if _, ok := newConfigs[configName]; !ok {
+			for _, c := range r.pools[configName] {
+				c.Close()
+			}
 			delete(r.pools, configName)
 		}
 	}
 
 	for newConfigName, newConfig := range newConfigs {
 		if !reflect.DeepEqual(newConfig, r.configs[newConfigName]) {
+			for _, c := range r.pools[newConfigName] {
+				c.Close()
+			}
 			delete(r.pools, newConfigName)
 		}
 	}

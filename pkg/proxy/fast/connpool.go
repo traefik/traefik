@@ -26,6 +26,8 @@ type connPool struct {
 	dialer          func() (net.Conn, error)
 	idleConns       chan *conn
 	idleConnTimeout time.Duration
+	ticker          *time.Ticker
+	doneCh          chan struct{}
 }
 
 // newConnPool creates a new connPool.
@@ -34,10 +36,32 @@ func newConnPool(maxIdleConn int, idleConnTimeout time.Duration, dialer func() (
 		dialer:          dialer,
 		idleConns:       make(chan *conn, maxIdleConn),
 		idleConnTimeout: idleConnTimeout,
+		doneCh:          make(chan struct{}),
 	}
-	c.cleanIdleConns()
+
+	if idleConnTimeout > 0 {
+		c.ticker = time.NewTicker(c.idleConnTimeout / 2)
+		go func() {
+			for {
+				select {
+				case <-c.ticker.C:
+					c.cleanIdleConns()
+				case <-c.doneCh:
+					return
+				}
+			}
+		}()
+	}
 
 	return c
+}
+
+// Close closes stop the cleanIdleConn goroutine.
+func (c *connPool) Close() {
+	if c.idleConnTimeout > 0 {
+		close(c.doneCh)
+		c.ticker.Stop()
+	}
 }
 
 // AcquireConn returns an idle net.Conn from the pool.
@@ -70,8 +94,6 @@ func (c *connPool) ReleaseConn(co *conn) {
 
 // cleanIdleConns is a routine cleaning the expired connections at a regular basis.
 func (c *connPool) cleanIdleConns() {
-	defer time.AfterFunc(c.idleConnTimeout/2, c.cleanIdleConns)
-
 	for {
 		select {
 		case co := <-c.idleConns:
