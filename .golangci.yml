@@ -229,7 +229,7 @@ issues:
       text: 'struct-tag: unknown option ''inline'' in JSON tag'
       linters:
         - revive
-    - path: pkg/server/service/bufferpool.go
+    - path: pkg/proxy/httputil/bufferpool.go
       text: 'SA6002: argument should be pointer-like to avoid allocations'
     - path: pkg/server/middleware/middlewares.go
       text: "Function 'buildConstructor' has too many statements"
