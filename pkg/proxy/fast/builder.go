@@ -33,9 +33,9 @@ type ProxyBuilder struct {
 }
 
 // NewProxyBuilder creates a new ProxyBuilder.
-func NewProxyBuilder(transportManager TransportManager, config *static.FastProxyConfig) *ProxyBuilder {
+func NewProxyBuilder(transportManager TransportManager, config static.FastProxyConfig) *ProxyBuilder {
 	return &ProxyBuilder{
-		debug:            config != nil && config.Debug,
+		debug:            config.Debug,
 		transportManager: transportManager,
 		pools:            make(map[string]map[string]*connPool),
 		proxy:            http.ProxyFromEnvironment,

@@ -24,7 +24,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
@@ -41,12 +40,18 @@ const (
 	defaultMaxBodySize int64 = -1
 )
 
+// ProxyBuilder builds reverse proxy handlers.
+type ProxyBuilder interface {
+	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
+	Update(map[string]*dynamic.ServersTransport)
+}
+
 // Manager The service manager.
 type Manager struct {
 	routinePool      *safe.Pool
 	observabilityMgr *middleware.ObservabilityMgr
 	transportManager httputil.TransportManager
-	proxyBuilder     *proxy.Builder
+	proxyBuilder     ProxyBuilder
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -55,7 +60,7 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder *proxy.Builder) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
 	return &Manager{
 		routinePool:      routinePool,
 		observabilityMgr: observabilityMgr,

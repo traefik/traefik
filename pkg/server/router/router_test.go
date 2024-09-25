@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -314,8 +314,7 @@ func TestRouterManager_Get(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-			builder := proxy.NewBuilder(transportManager, nil, false)
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, builder)
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager()
 
@@ -689,8 +688,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-			builder := proxy.NewBuilder(transportManager, nil, false)
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, builder)
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
@@ -895,4 +893,14 @@ func BenchmarkService(b *testing.B) {
 	for range b.N {
 		handler.ServeHTTP(w, req)
 	}
+}
+
+type proxyBuilderMock struct{}
+
+func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
+	return http.HandlerFunc(func(responseWriter http.ResponseWriter, req *http.Request) {}), nil
+}
+
+func (p proxyBuilderMock) Update(_ map[string]*dynamic.ServersTransport) {
+	panic("implement me")
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
 )
@@ -215,7 +216,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				certPool.AddCert(cert)
 			}
 
-			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, nil)
+			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, static.FastProxyConfig{})
 			builder.proxy = func(req *http.Request) (*url.URL, error) {
 				u, err := url.Parse(proxyURL)
 				if err != nil {

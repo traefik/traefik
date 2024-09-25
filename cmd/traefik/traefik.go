@@ -38,6 +38,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/proxy"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -283,8 +284,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	transportManager := service.NewTransportManager(spiffeX509Source)
-	fastProxy := staticConfiguration.Experimental != nil && staticConfiguration.Experimental.FastProxy
-	proxyBuilder := proxy.NewBuilder(transportManager, semConvMetricRegistry, fastProxy)
+
+	var proxyBuilder service.ProxyBuilder = httputil.NewProxyBuilder(transportManager, semConvMetricRegistry)
+	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.FastProxy != nil {
+		proxyBuilder = proxy.NewSmartBuilder(transportManager, proxyBuilder, *staticConfiguration.Experimental.FastProxy)
+	}
+
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, observabilityMgr, transportManager, proxyBuilder, acmeHTTPHandler)
