@@ -484,7 +484,6 @@
     [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]
-  fastProxy = true
   kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
@@ -510,6 +509,8 @@
       [experimental.localPlugins.LocalDescriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+  [experimental.fastProxy]
+    debug = true
 
 [core]
   defaultRuleSyntax = "foobar"
