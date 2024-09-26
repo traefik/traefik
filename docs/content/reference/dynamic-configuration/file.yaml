@@ -268,6 +268,7 @@ http:
           excludedIPs:
             - foobar
             - foobar
+          ipv6Subnet: 42
         rejectStatusCode: 42
     Middleware14:
       ipWhiteList:
@@ -279,6 +280,7 @@ http:
           excludedIPs:
             - foobar
             - foobar
+          ipv6Subnet: 42
     Middleware15:
       inFlightReq:
         amount: 42
@@ -288,6 +290,7 @@ http:
             excludedIPs:
               - foobar
               - foobar
+            ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
     Middleware16:
@@ -334,6 +337,7 @@ http:
             excludedIPs:
               - foobar
               - foobar
+            ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
     Middleware19:
