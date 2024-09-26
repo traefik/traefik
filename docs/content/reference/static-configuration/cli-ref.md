@@ -918,6 +918,12 @@ Interval for polling Nomad API. (Default: ```15```)
 `--providers.nomad.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`--providers.nomad.throttleduration`:  
+Watch throttle duration. (Default: ```0```)
+
+`--providers.nomad.watch`:  
+Watch Nomad Service events. (Default: ```false```)
+
 `--providers.plugin.<name>`:  
 Plugins configuration.
 

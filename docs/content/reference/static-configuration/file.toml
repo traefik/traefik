@@ -203,6 +203,8 @@
     exposedByDefault = true
     refreshInterval = "42s"
     allowEmptyServices = true
+    watch = true
+    throttleDuration = "42s"
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"
