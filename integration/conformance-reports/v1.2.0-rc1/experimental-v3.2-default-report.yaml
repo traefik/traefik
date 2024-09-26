@@ -1,14 +1,14 @@
-apiVersion: gateway.networking.k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1
 date: '-'
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.1.0
+gatewayAPIVersion: v1.2.0-rc1
 implementation:
   contact:
   - '@traefik/maintainers'
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.1
+  version: v3.2
 kind: ConformanceReport
 mode: default
 profiles:
@@ -30,10 +30,12 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 10
+      Passed: 12
       Skipped: 0
     supportedFeatures:
     - GatewayPort8080
+    - HTTPRouteBackendProtocolH2C
+    - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
     - HTTPRoutePathRedirect
@@ -44,9 +46,11 @@ profiles:
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
     - GatewayHTTPListenerIsolation
+    - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteBackendTimeout
+    - HTTPRouteDestinationPortMatching
     - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors

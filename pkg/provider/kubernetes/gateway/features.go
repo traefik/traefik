@@ -2,22 +2,22 @@ package gateway
 
 import "sigs.k8s.io/gateway-api/pkg/features"
 
-func SupportedFeatures() []features.SupportedFeature {
-	return []features.SupportedFeature{
-		features.SupportGateway,
-		features.SupportGatewayPort8080,
-		features.SupportGRPCRoute,
-		features.SupportHTTPRoute,
-		features.SupportHTTPRouteQueryParamMatching,
-		features.SupportHTTPRouteMethodMatching,
-		features.SupportHTTPRoutePortRedirect,
-		features.SupportHTTPRouteSchemeRedirect,
-		features.SupportHTTPRouteHostRewrite,
-		features.SupportHTTPRoutePathRewrite,
-		features.SupportHTTPRoutePathRedirect,
-		features.SupportHTTPRouteResponseHeaderModification,
-		features.SupportTLSRoute,
-		features.SupportHTTPRouteBackendProtocolH2C,
-		features.SupportHTTPRouteBackendProtocolWebSocket,
+func SupportedFeatures() []features.FeatureName {
+	return []features.FeatureName{
+		features.GatewayFeature.Name,
+		features.GatewayPort8080Feature.Name,
+		features.GRPCRouteFeature.Name,
+		features.HTTPRouteFeature.Name,
+		features.HTTPRouteQueryParamMatchingFeature.Name,
+		features.HTTPRouteMethodMatchingFeature.Name,
+		features.HTTPRoutePortRedirectFeature.Name,
+		features.HTTPRouteSchemeRedirectFeature.Name,
+		features.HTTPRouteHostRewriteFeature.Name,
+		features.HTTPRoutePathRewriteFeature.Name,
+		features.HTTPRoutePathRedirectFeature.Name,
+		features.HTTPRouteResponseHeaderModificationFeature.Name,
+		features.HTTPRouteBackendProtocolH2CFeature.Name,
+		features.HTTPRouteBackendProtocolWebSocketFeature.Name,
+		features.TLSRouteFeature.Name,
 	}
 }
