@@ -9,7 +9,6 @@ import (
 	"hash/fnv"
 	"math/rand"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"reflect"
 	"strings"
@@ -25,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -40,17 +40,18 @@ const (
 	defaultMaxBodySize int64 = -1
 )
 
-// RoundTripperGetter is a roundtripper getter interface.
-type RoundTripperGetter interface {
-	Get(name string) (http.RoundTripper, error)
+// ProxyBuilder builds reverse proxy handlers.
+type ProxyBuilder interface {
+	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
+	Update(configs map[string]*dynamic.ServersTransport)
 }
 
 // Manager The service manager.
 type Manager struct {
-	routinePool         *safe.Pool
-	observabilityMgr    *middleware.ObservabilityMgr
-	bufferPool          httputil.BufferPool
-	roundTripperManager RoundTripperGetter
+	routinePool      *safe.Pool
+	observabilityMgr *middleware.ObservabilityMgr
+	transportManager httputil.TransportManager
+	proxyBuilder     ProxyBuilder
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -59,16 +60,16 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
 	return &Manager{
-		routinePool:         routinePool,
-		observabilityMgr:    observabilityMgr,
-		bufferPool:          newBufferPool(),
-		roundTripperManager: roundTripperManager,
-		services:            make(map[string]http.Handler),
-		configs:             configs,
-		healthCheckers:      make(map[string]*healthcheck.ServiceHealthChecker),
-		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
+		routinePool:      routinePool,
+		observabilityMgr: observabilityMgr,
+		transportManager: transportManager,
+		proxyBuilder:     proxyBuilder,
+		services:         make(map[string]http.Handler),
+		configs:          configs,
+		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
+		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -298,9 +299,9 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	logger.Debug().Msg("Creating load-balancer")
 
 	// TODO: should we keep this config value as Go is now handling stream response correctly?
-	flushInterval := dynamic.DefaultFlushInterval
+	flushInterval := time.Duration(dynamic.DefaultFlushInterval)
 	if service.ResponseForwarding != nil {
-		flushInterval = service.ResponseForwarding.FlushInterval
+		flushInterval = time.Duration(service.ResponseForwarding.FlushInterval)
 	}
 
 	if len(service.ServersTransport) > 0 {
@@ -315,11 +316,6 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	passHostHeader := dynamic.DefaultPassHostHeader
 	if service.PassHostHeader != nil {
 		passHostHeader = *service.PassHostHeader
-	}
-
-	roundTripper, err := m.roundTripperManager.Get(service.ServersTransport)
-	if err != nil {
-		return nil, err
 	}
 
 	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
@@ -341,13 +337,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
-			// Wrapping the roundTripper with the Tracing roundTripper,
-			// to handle the reverseProxy client span creation.
-			roundTripper = newObservabilityRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
+		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, flushInterval)
+		if err != nil {
+			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
-
-		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
 		// Prevents from enabling observability for internal resources.
 
@@ -393,6 +387,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	}
 
 	if service.HealthCheck != nil {
+		roundTripper, err := m.transportManager.GetRoundTripper(service.ServersTransport)
+		if err != nil {
+			return nil, fmt.Errorf("getting RoundTripper: %w", err)
+		}
+
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
 			m.observabilityMgr.MetricsRegistry(),

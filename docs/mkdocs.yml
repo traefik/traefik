@@ -163,6 +163,7 @@ nav:
           - 'Overview': 'observability/tracing/overview.md'
           - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
   - 'User Guides':
+      - 'FastProxy': 'user-guides/fastproxy.md'
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Docker':

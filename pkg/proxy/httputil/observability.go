@@ -1,4 +1,4 @@
-package service
+package httputil
 
 import (
 	"context"
@@ -23,6 +23,13 @@ type wrapper struct {
 	rt                    http.RoundTripper
 }
 
+func newObservabilityRoundTripper(semConvMetricRegistry *metrics.SemConvMetricsRegistry, rt http.RoundTripper) http.RoundTripper {
+	return &wrapper{
+		semConvMetricRegistry: semConvMetricRegistry,
+		rt:                    rt,
+	}
+}
+
 func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
 	var span trace.Span
@@ -42,7 +49,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var headers http.Header
 	response, err := t.rt.RoundTrip(req)
 	if err != nil {
-		statusCode = computeStatusCode(err)
+		statusCode = ComputeStatusCode(err)
 	}
 	if response != nil {
 		statusCode = response.StatusCode
@@ -95,11 +102,4 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	return response, err
-}
-
-func newObservabilityRoundTripper(semConvMetricRegistry *metrics.SemConvMetricsRegistry, rt http.RoundTripper) http.RoundTripper {
-	return &wrapper{
-		semConvMetricRegistry: semConvMetricRegistry,
-		rt:                    rt,
-	}
 }

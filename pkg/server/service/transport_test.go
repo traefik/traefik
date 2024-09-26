@@ -141,7 +141,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
 	srv.StartTLS()
 
-	rtManager := NewRoundTripperManager(nil)
+	transportManager := NewTransportManager(nil)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
@@ -151,9 +151,9 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	}
 
 	for range 10 {
-		rtManager.Update(dynamicConf)
+		transportManager.Update(dynamicConf)
 
-		tr, err := rtManager.Get("test")
+		tr, err := transportManager.GetRoundTripper("test")
 		require.NoError(t, err)
 
 		client := http.Client{Transport: tr}
@@ -173,9 +173,9 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 		},
 	}
 
-	rtManager.Update(dynamicConf)
+	transportManager.Update(dynamicConf)
 
-	tr, err := rtManager.Get("test")
+	tr, err := transportManager.GetRoundTripper("test")
 	require.NoError(t, err)
 
 	client := http.Client{Transport: tr}
@@ -209,7 +209,7 @@ func TestMTLS(t *testing.T) {
 	}
 	srv.StartTLS()
 
-	rtManager := NewRoundTripperManager(nil)
+	transportManager := NewTransportManager(nil)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
@@ -227,9 +227,9 @@ func TestMTLS(t *testing.T) {
 		},
 	}
 
-	rtManager.Update(dynamicConf)
+	transportManager.Update(dynamicConf)
 
-	tr, err := rtManager.Get("test")
+	tr, err := transportManager.GetRoundTripper("test")
 	require.NoError(t, err)
 
 	client := http.Client{Transport: tr}
@@ -348,7 +348,7 @@ func TestSpiffeMTLS(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			rtManager := NewRoundTripperManager(test.clientSource)
+			transportManager := NewTransportManager(test.clientSource)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": {
@@ -356,9 +356,9 @@ func TestSpiffeMTLS(t *testing.T) {
 				},
 			}
 
-			rtManager.Update(dynamicConf)
+			transportManager.Update(dynamicConf)
 
-			tr, err := rtManager.Get("test")
+			tr, err := transportManager.GetRoundTripper("test")
 			require.NoError(t, err)
 
 			client := http.Client{Transport: tr}
@@ -415,7 +415,7 @@ func TestDisableHTTP2(t *testing.T) {
 			srv.EnableHTTP2 = test.serverHTTP2
 			srv.StartTLS()
 
-			rtManager := NewRoundTripperManager(nil)
+			transportManager := NewTransportManager(nil)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": {
@@ -424,9 +424,9 @@ func TestDisableHTTP2(t *testing.T) {
 				},
 			}
 
-			rtManager.Update(dynamicConf)
+			transportManager.Update(dynamicConf)
 
-			tr, err := rtManager.Get("test")
+			tr, err := transportManager.GetRoundTripper("test")
 			require.NoError(t, err)
 
 			client := http.Client{Transport: tr}
@@ -593,7 +593,7 @@ func TestKerberosRoundTripper(t *testing.T) {
 
 			origCount := 0
 			dedicatedCount := 0
-			rt := KerberosRoundTripper{
+			rt := kerberosRoundTripper{
 				new: func() http.RoundTripper {
 					return roundTripperFn(func(req *http.Request) (*http.Response, error) {
 						dedicatedCount++
