@@ -56,7 +56,7 @@ _Optional, Default=15s_
 
 Defines the polling interval.
 
-!!! note "This option is ignored when the Watch mode is enabled."
+!!! note "This option is ignored when the [watch](#watch) mode is enabled."
 
 ```yaml tab="File (YAML)"
 providers:
@@ -112,7 +112,7 @@ If left empty, the provider does not apply any throttling and does not drop any 
 The value of `throttleDuration` should be provided in seconds or as a valid duration format,
 see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
-!!! warning "This option is only compatible with the Watch mode."
+!!! warning "This option is only compatible with the [watch](#watch) mode."
 
 ```yaml tab="File (YAML)"
 providers:
