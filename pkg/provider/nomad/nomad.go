@@ -95,7 +95,7 @@ type Configuration struct {
 	RefreshInterval    ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
 	AllowEmptyServices bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	Watch              bool            `description:"Watch Nomad Service events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
-	ThrottleDuration   ptypes.Duration `description:"Service refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	ThrottleDuration   ptypes.Duration `description:"Watch throttle duration." json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
@@ -120,8 +120,6 @@ func (c *Configuration) SetDefaults() {
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.DefaultRule = defaultTemplateRule
-	c.AllowEmptyServices = false
-	c.Watch = false
 	c.ThrottleDuration = ptypes.Duration(0)
 }
 
@@ -159,6 +157,10 @@ func (p *Provider) Init() error {
 		return errors.New("wildcard namespace not supported")
 	}
 
+	if p.ThrottleDuration > 0 && !p.Watch {
+		return errors.New("throttle duration should not be used with polling mode")
+	}
+
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
 		return fmt.Errorf("error while parsing default rule: %w", err)
@@ -192,7 +194,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			serviceEventsChan, err := p.pollOrWatch(ctx)
 			if err != nil {
-				return fmt.Errorf("error watching nomad events: %w", err)
+				return fmt.Errorf("watching Nomad events: %w", err)
 			}
 
 			throttleDuration := time.Duration(p.ThrottleDuration)
@@ -201,34 +203,40 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				serviceEventsChan = throttledChan
 			}
 
+			conf, err := p.loadConfiguration(ctx)
+			if err != nil {
+				return fmt.Errorf("loading configuration: %w", err)
+			}
+			if _, err := p.updateLastConfiguration(conf); err != nil {
+				return fmt.Errorf("updating last configuration: %w", err)
+			}
+
+			configurationChan <- dynamic.Message{
+				ProviderName:  p.name,
+				Configuration: conf,
+			}
+
 			for {
 				select {
 				case <-ctx.Done():
 					return nil
 				case event := <-serviceEventsChan:
-					// Note that event is the *first* event that came in during this
-					// throttling interval -- if we're hitting our throttle, we may have
-					// dropped events. This is fine, because we don't treat different
-					// event types differently. But if we do in the future, we'll need to
-					// track more information about the dropped events.
-					conf, err := p.loadConfiguration(ctx)
+					conf, err = p.loadConfiguration(ctx)
 					if err != nil {
-						logger.Error().Err(err).Msg("Unable to build the configuration")
+						return fmt.Errorf("loading configuration: %w", err)
+					}
+					updated, err := p.updateLastConfiguration(conf)
+					if err != nil {
+						return fmt.Errorf("updating last configuration: %w", err)
+					}
+					if !updated {
+						logger.Debug().Msgf("Skipping Nomad event %d with no changes", event.Index)
 						continue
 					}
 
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Nomad event %d with no changes", event.Index)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  p.name,
-							Configuration: conf,
-						}
+					configurationChan <- dynamic.Message{
+						ProviderName:  p.name,
+						Configuration: conf,
 					}
 
 					// If we're throttling, we sleep here for the throttle duration to
@@ -240,7 +248,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		failure := func(err error, d time.Duration) {
-			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", d)
+			logger.Error().Err(err).Msgf("Loading configuration, retrying in %s", d)
 		}
 
 		if retryErr := backoff.RetryNotify(
@@ -305,6 +313,20 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 	}
 
 	return p.buildConfig(ctx, items), nil
+}
+
+func (p *Provider) updateLastConfiguration(conf *dynamic.Configuration) (bool, error) {
+	confHash, err := hashstructure.Hash(conf, nil)
+	if err != nil {
+		return false, fmt.Errorf("hashing the configuration: %w", err)
+	}
+
+	if p.lastConfiguration.Get() == confHash {
+		return false, nil
+	}
+
+	p.lastConfiguration.Set(confHash)
+	return true, nil
 }
 
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
