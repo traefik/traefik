@@ -47,7 +47,6 @@ accessLog:
 
 ### `format`
 
-
 _Optional, Default="common"_
 
 By default, logs are written using the Common Log Format (CLF).
