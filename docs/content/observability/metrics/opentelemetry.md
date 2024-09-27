@@ -139,6 +139,28 @@ metrics:
 --metrics.otlp.pushInterval=10s
 ```
 
+#### `serviceName`
+
+_Optional, Default="traefik"_
+
+OTEL service name to use.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    serviceName: name
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp]
+    serviceName = "name"
+```
+
+```bash tab="CLI"
+--metrics.otlp.serviceName=name
+```
+
 ### HTTP configuration
 
 _Optional_
