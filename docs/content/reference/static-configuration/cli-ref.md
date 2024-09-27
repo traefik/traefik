@@ -429,6 +429,9 @@ TLS key
 `--metrics.otlp.pushinterval`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
 
+`--metrics.otlp.servicename`:  
+OTEL service name to use. (Default: ```traefik```)
+
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
