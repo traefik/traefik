@@ -112,6 +112,7 @@ type ExtensionBuilderRegistry interface {
 type gatewayListener struct {
 	Name string
 
+	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
 	TLS               *gatev1.GatewayTLSConfig
 	Hostname          *gatev1.Hostname
@@ -429,6 +430,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			GWName:       gateway.Name,
 			GWNamespace:  gateway.Namespace,
 			GWGeneration: gateway.Generation,
+			Port:         listener.Port,
 			Protocol:     listener.Protocol,
 			TLS:          listener.TLS,
 			Hostname:     listener.Hostname,
@@ -1115,6 +1117,10 @@ func matchListener(listener gatewayListener, routeNamespace string, parentRef ga
 
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
 	if sectionName != "" && sectionName != listener.Name {
+		return false
+	}
+
+	if parentRef.Port != nil && *parentRef.Port != listener.Port {
 		return false
 	}
 
