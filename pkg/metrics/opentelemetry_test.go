@@ -297,7 +297,6 @@ func TestOpenTelemetry(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
 			c := make(chan *string, 5)
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
