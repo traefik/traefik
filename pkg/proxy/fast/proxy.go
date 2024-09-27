@@ -382,7 +382,12 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	rw.WriteHeader(res.StatusCode())
 
-	// Chunked response, Content-Length is set to -1 by FastProxy when "Transfer-Encoding: chunked" header is received.
+	if !isBodyAllowedForStatus(res.StatusCode()) {
+		p.connPool.ReleaseConn(co)
+		return nil
+	}
+
+	// Chunked response, Content-Length is set to -1 by FastHTTP when "Transfer-Encoding: chunked" header is received.
 	if res.Header.ContentLength() == -1 {
 		cbr := httputil.NewChunkedReader(br)
 
@@ -500,6 +505,21 @@ func isGraphic(s string) bool {
 		}
 	}
 
+	return true
+}
+
+// isBodyAllowedForStatus reports whether a given response status code
+// permits a body. See RFC 7230, section 3.3.
+// From https://github.com/golang/go/blame/master/src/net/http/transfer.go#L459
+func isBodyAllowedForStatus(status int) bool {
+	switch {
+	case status >= 100 && status <= 199:
+		return false
+	case status == 204:
+		return false
+	case status == 304:
+		return false
+	}
 	return true
 }
 
