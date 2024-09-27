@@ -8,7 +8,7 @@ description: "Learn how to use cert-manager certificates with Traefik Proxy for 
 Provision TLS Certificate for Traefik Proxy with cert-manager on Kubernetes
 {: .subtitle }
 
-Traefik Proxy can use Certificates of cert-manager on Kubernetes.
+Traefik Proxy can get Certificates from cert-manager on Kubernetes.
 
 ## Pre-requisites
 
@@ -57,7 +57,7 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
         kind: Issuer
     ```
 
-Let's see now how to use it with the various Kubernetes provider of Traefik Proxy. The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
+Let's see now how to use it with the various Kubernetes providers of Traefik Proxy. The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
 
 ### with an Ingress
 
@@ -65,7 +65,7 @@ In order to use this certificate with an Ingress, the [Kubernetes Ingress](../..
 
 !!! info Traefik Helm Chart
 
-    This provider is enabled by default on Traefik Helm Chart.
+    This provider is enabled by default in the Traefik Helm Chart.
 
 !!! example "Route with this Certificate"
 
@@ -99,7 +99,7 @@ In order to use this certificate with an IngressRoute, the [Kubernetes CRD](../.
 
 !!! info Traefik Helm Chart
 
-    This provider is enabled by default on Traefik Helm Chart.
+    This provider is enabled by default in the Traefik Helm Chart.
 
 !!! example "Route with this Certificate"
 
@@ -129,7 +129,7 @@ In order to use this certificate with an HTTPRoute, the [Kubernetes Gateway](../
 
 !!! info Traefik Helm Chart
 
-    This provider is disabled by default on Traefik Helm Chart.
+    This provider is disabled by default in the Traefik Helm Chart.
 
 !!! example "Route with this Certificate"
 
@@ -173,11 +173,11 @@ In order to use this certificate with an HTTPRoute, the [Kubernetes Gateway](../
 
 ## Troubleshooting
 
-There are multiples sources available to investigate when using cert-manager:
+There are multiple event sources available to investigate when using cert-manager:
 
 1. Kubernetes events in `Certificate` and `CertificateRequest` resources
 2. cert-manager logs
-3. Dashboard and/or (debug) logs of Traefik Proxy
+3. Dashboard and/or (debug) logs from Traefik Proxy
 
 cert-manager documentation provides a [detailed guide](https://cert-manager.io/docs/troubleshooting/) on how to troubleshoot a certificate request.
 
