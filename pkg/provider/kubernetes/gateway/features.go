@@ -18,6 +18,7 @@ func SupportedFeatures() []features.FeatureName {
 		features.HTTPRouteResponseHeaderModificationFeature.Name,
 		features.HTTPRouteBackendProtocolH2CFeature.Name,
 		features.HTTPRouteBackendProtocolWebSocketFeature.Name,
+		features.HTTPRouteDestinationPortMatchingFeature.Name,
 		features.TLSRouteFeature.Name,
 	}
 }
