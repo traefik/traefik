@@ -30,12 +30,13 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 12
+      Passed: 13
       Skipped: 0
     supportedFeatures:
     - GatewayPort8080
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
+    - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
     - HTTPRoutePathRedirect
@@ -50,7 +51,6 @@ profiles:
     - GatewayStaticAddresses
     - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteBackendTimeout
-    - HTTPRouteDestinationPortMatching
     - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors

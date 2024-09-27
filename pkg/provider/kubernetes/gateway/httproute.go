@@ -53,17 +53,16 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 			}
 
 			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
-
 				accepted := true
-				if !allowRoute(listener, route.Namespace, kindHTTPRoute) {
+				if !matchListener(listener, route.Namespace, parentRef) {
+					accepted = false
+				}
+				if accepted && !allowRoute(listener, route.Namespace, kindHTTPRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
+				if accepted && !ok {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
 					accepted = false
 				}
