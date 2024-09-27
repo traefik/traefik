@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000 // No tag on the repo.
 	github.com/andybalholm/brotli v1.1.0
+	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/aws/aws-sdk-go v1.44.327
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
@@ -67,6 +68,7 @@ require (
 	github.com/traefik/yaegi v0.16.1
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
+	github.com/valyala/fasthttp v1.55.0
 	github.com/vulcand/oxy/v2 v2.0.0
 	github.com/vulcand/predicate v1.2.0
 	go.opentelemetry.io/collector/pdata v1.10.0
@@ -98,13 +100,8 @@ require (
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // No tag on the repo.
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.18.0
-	sigs.k8s.io/gateway-api v1.2.0-rc1
+	sigs.k8s.io/gateway-api v1.2.0-rc2
 	sigs.k8s.io/yaml v1.4.0
-)
-
-require (
-	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
-	github.com/valyala/fasthttp v1.55.0
 )
 
 require (
