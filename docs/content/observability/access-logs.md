@@ -47,7 +47,10 @@ accessLog:
 
 ### `format`
 
-By default, logs are written using the Common Log Format (CLF) (value: `common`).
+
+_Optional, Default="common"_
+
+By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
 If the given format is unsupported, the default (CLF) is used instead.
 
