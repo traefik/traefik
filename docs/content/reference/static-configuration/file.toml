@@ -342,6 +342,7 @@
     addServicesLabels = true
     explicitBoundaries = [42.0, 42.0]
     pushInterval = "42s"
+    serviceName = "foobar"
     [metrics.otlp.grpc]
       endpoint = "foobar"
       insecure = true

@@ -402,6 +402,7 @@ metrics:
       - 42
       - 42
     pushInterval: 42s
+    serviceName: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
