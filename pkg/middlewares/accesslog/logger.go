@@ -223,17 +223,16 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestAddr] = req.Host
 		core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
 	}
-	// copy the URL without the scheme, hostname etc
-	urlCopy := &url.URL{
-		Path:       req.URL.Path,
-		RawPath:    req.URL.RawPath,
-		RawQuery:   req.URL.RawQuery,
-		ForceQuery: req.URL.ForceQuery,
-		Fragment:   req.URL.Fragment,
+	// copy the URL without the scheme, hostname AND query
+	pathCopy := &url.URL{
+		Path:     req.URL.Path,
+		RawPath:  req.URL.RawPath,
+		Fragment: req.URL.Fragment,
 	}
-	urlCopyString := urlCopy.String()
+	urlPathString := pathCopy.String()
 	core[RequestMethod] = req.Method
-	core[RequestPath] = urlCopyString
+	core[RequestPath] = urlPathString
+	core[RequestQuery] = req.URL.RawQuery
 	core[RequestProtocol] = req.Proto
 
 	core[RequestScheme] = "http"
@@ -377,6 +376,18 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 		h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
 		h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
 
+		// Collapse RequestPath and RequestQuery back into RequestPath to preserve log output
+		// API surface even if/when the query is being filtered separately.
+		pathWithQuery := &url.URL{
+			Path:     toLog(fields, RequestPath, "", false).(string),
+			RawQuery: toLog(fields, RequestQuery, "", false).(string),
+		}
+		if pathWithQuery.String() != "" {
+			fields[RequestPath] = pathWithQuery.String()
+		}
+		delete(fields, RequestQuery)
+
+		// even
 		h.mu.Lock()
 		defer h.mu.Unlock()
 		h.logger.WithContext(ctx).WithFields(fields).Println()
