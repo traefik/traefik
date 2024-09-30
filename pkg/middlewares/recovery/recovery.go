@@ -5,8 +5,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 const (
@@ -18,9 +17,32 @@ type recovery struct {
 	next http.Handler
 }
 
+type responseWriterWithHeaderStatus struct {
+	http.ResponseWriter
+	headerWritten bool
+}
+
+func (w *responseWriterWithHeaderStatus) WriteHeader(statusCode int) {
+	if !w.headerWritten {
+		w.headerWritten = true
+		w.ResponseWriter.WriteHeader(statusCode)
+	}
+}
+
+func (w *responseWriterWithHeaderStatus) Write(b []byte) (int, error) {
+	if !w.headerWritten {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+func (w *responseWriterWithHeaderStatus) Header() http.Header {
+	return w.ResponseWriter.Header()
+}
+
 // New creates recovery middleware.
 func New(ctx context.Context, next http.Handler) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, middlewareName, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, middlewareName, typeName).Debug().Msg("Creating middleware")
 
 	return &recovery{
 		next: next,
@@ -28,25 +50,33 @@ func New(ctx context.Context, next http.Handler) (http.Handler, error) {
 }
 
 func (re *recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	defer recoverFunc(rw, req)
+	rws := &responseWriterWithHeaderStatus{ResponseWriter: rw}
+	defer recoverFunc(rws, req)
 	re.next.ServeHTTP(rw, req)
 }
 
-func recoverFunc(rw http.ResponseWriter, r *http.Request) {
+func recoverFunc(rws *responseWriterWithHeaderStatus, req *http.Request) {
 	if err := recover(); err != nil {
-		logger := log.FromContext(middlewares.GetLoggerCtx(r.Context(), middlewareName, typeName))
-		if !shouldLogPanic(err) {
-			logger.Debugf("Request has been aborted [%s - %s]: %v", r.RemoteAddr, r.URL, err)
-			return
+		logger := middlewares.GetLogger(req.Context(), middlewareName, typeName)
+		if shouldLogPanic(err) {
+			logger.Error().Msgf("Recovered from panic in HTTP handler [%s - %s]: %+v", req.RemoteAddr, req.URL, err)
+			const size = 64 << 10
+			buf := make([]byte, size)
+			buf = buf[:runtime.Stack(buf, false)]
+			logger.Error().Msgf("Stack: %s", buf)
+		} else {
+			logger.Debug().Msgf("Request has been aborted [%s - %s]: %v", req.RemoteAddr, req.URL, err)
 		}
 
-		logger.Errorf("Recovered from panic in HTTP handler [%s - %s]: %+v", r.RemoteAddr, r.URL, err)
-		const size = 64 << 10
-		buf := make([]byte, size)
-		buf = buf[:runtime.Stack(buf, false)]
-		logger.Errorf("Stack: %s", buf)
-
-		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if rws.headerWritten {
+			// headers already sent, need to close the connection
+			// not sure how to access the underlying connection from the response writer
+			// I don't think we can use Hijack here because that would close the TCP socket, what about HTTP/2?
+			panic(http.ErrAbortHandler)
+		} else {
+			// headers not sent, send error response
+			http.Error(rws, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	}
 }
 
