@@ -38,8 +38,10 @@ const (
 	RequestPort = "RequestPort"
 	// RequestMethod is the map key used for the HTTP method.
 	RequestMethod = "RequestMethod"
-	// RequestPath is the map key used for the HTTP request URI, not including the scheme, host or port.
+	// RequestPath is the map key used for the HTTP request URI, not including the scheme, host, port or query portion.
 	RequestPath = "RequestPath"
+	// RequestQuery is the map key used for the HTTP request query string.
+	RequestQuery = "RequestQuery"
 	// RequestProtocol is the map key used for the version of HTTP requested.
 	RequestProtocol = "RequestProtocol"
 	// RequestScheme is the map key used for the HTTP request scheme.
