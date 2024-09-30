@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	v1 "k8s.io/api/discovery/v1"
+	"k8s.io/api/discovery/v1"
 )
 
 // EndpointServing returns true if the endpoint is still serving the service, regardless of its ready status.
