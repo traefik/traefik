@@ -120,8 +120,6 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	req = Remove(req)
-
 	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
 		logger.Debug().Msgf("Error calling %s. Cause %s", fa.address, err)
@@ -262,6 +260,8 @@ func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
+
+	RemoveConnectionHeaders(forwardReq)
 	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
 
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
