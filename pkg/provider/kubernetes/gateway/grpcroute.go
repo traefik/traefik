@@ -49,17 +49,16 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 			}
 
 			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
-
 				accepted := true
-				if !allowRoute(listener, route.Namespace, kindGRPCRoute) {
+				if !matchListener(listener, route.Namespace, parentRef) {
+					accepted = false
+				}
+				if accepted && !allowRoute(listener, route.Namespace, kindGRPCRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
+				if accepted && !ok {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
 					accepted = false
 				}
@@ -396,10 +395,10 @@ func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {
 func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
 	var rules []string
 	for _, header := range headers {
-		switch ptr.Deref(header.Type, gatev1.HeaderMatchExact) {
-		case gatev1.HeaderMatchExact:
+		switch ptr.Deref(header.Type, gatev1.GRPCHeaderMatchExact) {
+		case gatev1.GRPCHeaderMatchExact:
 			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
-		case gatev1.HeaderMatchRegularExpression:
+		case gatev1.GRPCHeaderMatchRegularExpression:
 			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
 		}
 	}
