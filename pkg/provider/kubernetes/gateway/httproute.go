@@ -482,7 +482,7 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port)))),
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
 	return lb, svcPort, nil
