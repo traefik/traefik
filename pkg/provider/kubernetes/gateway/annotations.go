@@ -7,18 +7,16 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/label"
 )
 
-const (
-	annotationsPrefix = "traefik.io/"
-)
+const annotationsPrefix = "traefik.io/"
 
 // ServiceConfig is the service's root configuration from annotations.
 type ServiceConfig struct {
-	Service Service `json:"service,omitempty"`
+	Service Service `json:"service"`
 }
 
 // Service is the service's configuration from annotations.
 type Service struct {
-	NativeLB bool `json:"nativeLB,omitempty"`
+	NativeLB bool `json:"nativeLB"`
 }
 
 func parseServiceAnnotations(annotations map[string]string) (ServiceConfig, error) {
