@@ -203,6 +203,8 @@
     exposedByDefault = true
     refreshInterval = "42s"
     allowEmptyServices = true
+    watch = true
+    throttleDuration = "42s"
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"
@@ -340,6 +342,7 @@
     addServicesLabels = true
     explicitBoundaries = [42.0, 42.0]
     pushInterval = "42s"
+    serviceName = "foobar"
     [metrics.otlp.grpc]
       endpoint = "foobar"
       insecure = true
@@ -509,6 +512,8 @@
       [experimental.localPlugins.LocalDescriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+  [experimental.fastProxy]
+    debug = true
 
 [core]
   defaultRuleSyntax = "foobar"
