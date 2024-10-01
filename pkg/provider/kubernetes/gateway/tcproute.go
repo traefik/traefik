@@ -286,7 +286,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1alpha2.TCPRoute
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
-			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
+			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
 	return lb, nil
