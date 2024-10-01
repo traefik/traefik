@@ -289,7 +289,7 @@ func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
 			// TODO determine whether the servers needs TLS, from the port?
-			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
+			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
 	return lb, nil
