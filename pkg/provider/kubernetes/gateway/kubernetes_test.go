@@ -2336,7 +2336,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Simple HTTPRoute with NativeLB enabled",
+			desc:     "Simple HTTPRoute with NativeLBByDefault enabled",
 			paths:    []string{"services.yml", "httproute/simple.yml"},
 			nativeLB: true,
 			entryPoints: map[string]Entrypoint{"web": {
@@ -2481,7 +2481,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			p := Provider{
 				EntryPoints:         test.entryPoints,
 				ExperimentalChannel: test.experimentalChannel,
-				NativeLB:            test.nativeLB,
+				NativeLBByDefault:   test.nativeLB,
 				client:              client,
 			}
 
@@ -3947,7 +3947,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Simple TCPRoute with NativeLB",
+			desc:     "Simple TCPRoute with NativeLBByDefault",
 			paths:    []string{"services.yml", "tcproute/simple.yml"},
 			nativeLB: true,
 			entryPoints: map[string]Entrypoint{
@@ -4081,7 +4081,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 			p := Provider{
 				EntryPoints:         test.entryPoints,
-				NativeLB:            test.nativeLB,
+				NativeLBByDefault:   test.nativeLB,
 				ExperimentalChannel: true,
 				client:              client,
 			}
@@ -5205,7 +5205,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Simple TLSRoute with NativeLB",
+			desc:     "Simple TLSRoute with NativeLBByDefault",
 			paths:    []string{"services.yml", "tlsroute/simple_TLS_to_TLSRoute.yml"},
 			nativeLB: true,
 			entryPoints: map[string]Entrypoint{
@@ -5345,7 +5345,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 
 			p := Provider{
 				EntryPoints:         test.entryPoints,
-				NativeLB:            test.nativeLB,
+				NativeLBByDefault:   test.nativeLB,
 				ExperimentalChannel: true,
 				client:              client,
 			}

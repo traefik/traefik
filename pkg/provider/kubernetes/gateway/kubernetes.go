@@ -65,7 +65,7 @@ type Provider struct {
 	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
-	NativeLB            bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLB,omitempty" toml:"nativeLB,omitempty" yaml:"nativeLB,omitempty" export:"true"`
+	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -910,7 +910,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
 	}
 
-	if p.NativeLB || annotationsConfig.Service.NativeLB {
+	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
 		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
 			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
 		}

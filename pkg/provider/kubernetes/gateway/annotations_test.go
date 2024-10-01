@@ -11,7 +11,7 @@ func Test_parseServiceConfig(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		annotations map[string]string
-		expected    *ServiceConfig
+		expected    ServiceConfig
 	}{
 		{
 			desc: "service annotations",
@@ -20,7 +20,7 @@ func Test_parseServiceConfig(t *testing.T) {
 				"traefik.io/foo":              "bar",
 				"traefik.io/service.nativelb": "true",
 			},
-			expected: &ServiceConfig{
+			expected: ServiceConfig{
 				Service: Service{
 					NativeLB: true,
 				},
@@ -29,12 +29,12 @@ func Test_parseServiceConfig(t *testing.T) {
 		{
 			desc:        "empty map",
 			annotations: map[string]string{},
-			expected:    nil,
+			expected:    ServiceConfig{},
 		},
 		{
 			desc:        "nil map",
 			annotations: nil,
-			expected:    nil,
+			expected:    ServiceConfig{},
 		},
 	}
 
