@@ -166,7 +166,7 @@ See the [Docker API Access](#docker-api-access) section for more information.
 
     services:
       traefik:
-         image: traefik:v3.1 # The official v3 Traefik docker image
+         image: traefik:v3.2 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:

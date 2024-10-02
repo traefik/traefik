@@ -279,7 +279,7 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.2
     environment:
       - TZ=US/Alaska
     command:
