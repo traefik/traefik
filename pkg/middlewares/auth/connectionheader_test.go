@@ -50,19 +50,13 @@ func TestRemover(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-
-			h := Remover(next)
-
 			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)
 
 			for k, v := range test.reqHeaders {
 				req.Header.Set(k, v)
 			}
 
-			rw := httptest.NewRecorder()
-
-			h.ServeHTTP(rw, req)
+			RemoveConnectionHeaders(req)
 
 			assert.Equal(t, test.expected, req.Header)
 		})

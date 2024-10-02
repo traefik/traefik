@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"github.com/http-wasm/http-wasm-host-go/handler"
@@ -134,6 +135,15 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating middleware: %w", err)
 	}
+
+	// Traefik does not Close the middleware when creating a new instance on a configuration change.
+	// When the middleware is marked to be GC, we need to close it so the wasm instance is properly closed.
+	// Reference: https://github.com/traefik/traefik/issues/11119
+	runtime.SetFinalizer(mw, func(mw wasm.Middleware) {
+		if err := mw.Close(context.Background()); err != nil {
+			logger.Err(err).Msg("middleware Close failed")
+		}
+	})
 
 	return mw.NewHandler(ctx, next), applyCtx, nil
 }

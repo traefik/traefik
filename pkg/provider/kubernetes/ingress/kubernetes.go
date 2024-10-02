@@ -219,7 +219,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	var ingressClasses []*netv1.IngressClass
 
-	if !p.DisableIngressClassLookup {
+	if !p.DisableIngressClassLookup && !p.DisableClusterScopeResources {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")
