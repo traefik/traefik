@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"github.com/http-wasm/http-wasm-host-go/handler"
@@ -135,7 +136,15 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, fmt.Errorf("creating middleware: %w", err)
 	}
 
-	return mw.NewHandler(ctx, next), applyCtx, nil
+	h := mw.NewHandler(ctx, next)
+	runtime.SetFinalizer(h, func(_ http.Handler) {
+		if err := mw.Close(ctx); err != nil {
+			logger.Err(err).Msg("[wasm] middleware Close failed")
+		} else {
+			logger.Debug().Msg("[wasm] middleware Close ok")
+		}
+	})
+	return h, applyCtx, nil
 }
 
 // WasmMiddleware is an HTTP handler plugin wrapper.
