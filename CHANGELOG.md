@@ -1,3 +1,17 @@
+## [v2.11.11](https://github.com/traefik/traefik/tree/v2.11.11) (2024-10-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.10...v2.11.11)
+
+**Bug fixes:**
+- **[acme]** Ensure defaultGeneratedCert.main as Subject&#39;s CN ([#10581](https://github.com/traefik/traefik/pull/10581) by [Lamatte](https://github.com/Lamatte))
+- **[middleware,authentication]** Clean connection headers for forward auth request only ([#11095](https://github.com/traefik/traefik/pull/11095) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Bump github.com/klauspost/compress to 8e14b1b5a913 ([#11141](https://github.com/traefik/traefik/pull/11141) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Rework condition to not log on timeout ([#11133](https://github.com/traefik/traefik/pull/11133) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Remove unused boot files from webui ([#11109](https://github.com/traefik/traefik/pull/11109) by [michelheusschen](https://github.com/michelheusschen))
+
+**Documentation:**
+- **[accesslogs]** Specify default format value for access log ([#11130](https://github.com/traefik/traefik/pull/11130) by [darkweaver87](https://github.com/darkweaver87))
+- **[api]** Update API documentation to mention pagination ([#11115](https://github.com/traefik/traefik/pull/11115) by [lyrandy](https://github.com/lyrandy))
+
 ## [v2.11.10](https://github.com/traefik/traefik/tree/v2.11.10) (2024-09-19)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.9...v2.11.10)
 
