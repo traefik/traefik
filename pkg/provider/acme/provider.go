@@ -887,7 +887,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 	p.certificatesMu.RLock()
 
-	// err -> dead -> 1/3 -> revoked -> ok
+	// err -> dead -> 1/3 -> ok
 
 	// gracefulPeriod must be < to renewPeriod
 	if gracefulPeriod >= renewPeriod {
@@ -896,7 +896,6 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 	var toRenew []*CertAndStore
 	var toRemove []*CertAndStore
-	var toCheck []*CertAndStore
 
 	for _, cert := range p.certificates {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
@@ -914,50 +913,12 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		case crt.NotAfter.Before(time.Now().Add(renewPeriod)):
 			toRenew = append(toRenew, cert)
 
-		// Need to check the revocation.
 		default:
-			if len(crt.OCSPServer) == 0 || crt.OCSPServer[0] == "" {
-				toCheck = append(toCheck, cert)
-			}
+			// skip
 		}
 	}
 
 	p.certificatesMu.RUnlock()
-
-	if len(toCheck) > 0 {
-		numWorkers := 100
-
-		resultsChan := make(chan *CertAndStore)
-		crtChan := make(chan *CertAndStore, numWorkers)
-
-		go func() {
-			wg := sync.WaitGroup{}
-			wg.Add(numWorkers)
-
-			for range numWorkers {
-				go func() {
-					worker(ctx, crtChan, resultsChan)
-					wg.Done()
-				}()
-			}
-
-			wg.Wait()
-			close(resultsChan)
-		}()
-
-		go func() {
-			for _, cert := range toCheck {
-				crtChan <- cert
-			}
-			close(crtChan)
-		}()
-
-		for cert := range resultsChan {
-			if cert != nil {
-				toRenew = append(toRenew, cert)
-			}
-		}
-	}
 
 	if len(toRemove) > 0 {
 		err := p.removeCertificates(toRemove)
@@ -1000,33 +961,6 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		err = p.addCertificateForDomain(cert.Domain, renewedCert, cert.Store)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error adding certificate for domain")
-		}
-	}
-}
-
-func worker(ctx context.Context, crtChan chan *CertAndStore, resultsChan chan *CertAndStore) {
-	o := NewOCSP(nil)
-
-	for cert := range crtChan {
-		crt, err := getX509Certificate(ctx, &cert.Certificate)
-		if err != nil || crt == nil {
-			resultsChan <- cert
-			continue
-		}
-
-		_, response, err := o.Call(ctx, []*x509.Certificate{crt})
-		if err != nil || response == nil {
-			resultsChan <- cert
-			continue
-		}
-
-		if response.RevokedAt.IsZero() {
-			continue
-		}
-
-		if response.RevokedAt.Before(time.Now()) {
-			resultsChan <- cert
-			continue
 		}
 	}
 }
