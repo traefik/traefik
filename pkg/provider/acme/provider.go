@@ -80,6 +80,8 @@ type DNSChallenge struct {
 	DelayBeforeCheck        ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
 	Resolvers               []string        `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
 	DisablePropagationCheck bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
+	PropagationRNS          bool            `description:"Use all the recursive nameservers to check the propagation of the TXT record." json:"propagationRNS,omitempty" toml:"propagationRNS,omitempty" yaml:"propagationRNS,omitempty" export:"true"`
+	PropagationDisableANS   bool            `description:"Disable the need to await propagation of the TXT record to all authoritative name servers." json:"propagationDisableANS,omitempty" toml:"propagationDisableANS,omitempty" yaml:"propagationDisableANS,omitempty" export:"true"`
 }
 
 // HTTPChallenge contains HTTP challenge configuration.
@@ -298,19 +300,13 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		}
 
 		err = client.Challenge.SetDNS01Provider(provider,
-			dns01.CondOption(len(p.DNSChallenge.Resolvers) > 0, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers)),
-			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
-				if p.DNSChallenge.DelayBeforeCheck > 0 {
-					logger.Debugf("Delaying %d rather than validating DNS propagation now.", p.DNSChallenge.DelayBeforeCheck)
-					time.Sleep(time.Duration(p.DNSChallenge.DelayBeforeCheck))
-				}
-
-				if p.DNSChallenge.DisablePropagationCheck {
-					return true, nil
-				}
-
-				return check(fqdn, value)
-			}),
+			dns01.CondOption(len(p.DNSChallenge.Resolvers) > 0,
+				dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers)),
+			dns01.CondOption(p.DNSChallenge.PropagationRNS,
+				dns01.RecursiveNSsPropagationRequirement()),
+			dns01.CondOption(p.DNSChallenge.PropagationDisableANS,
+				dns01.DisableAuthoritativeNssPropagationRequirement()),
+			dns01.PropagationWait(time.Duration(p.DNSChallenge.DelayBeforeCheck), p.DNSChallenge.DisablePropagationCheck),
 		)
 		if err != nil {
 			return nil, err
