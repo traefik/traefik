@@ -26,11 +26,12 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc                      string
-		ingressClass              string
-		expected                  *dynamic.Configuration
-		allowEmptyServices        bool
-		disableIngressClassLookup bool
+		desc                         string
+		ingressClass                 string
+		expected                     *dynamic.Configuration
+		allowEmptyServices           bool
+		disableIngressClassLookup    bool
+		disableClusterScopeResources bool
 	}{
 		{
 			desc: "Empty ingresses",
@@ -1336,6 +1337,38 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			// Duplicate test case with the same fixture as the one above, but with the disableClusterScopeResources option to true.
+			// Showing that disabling the ingressClass discovery still allow the discovery of ingresses with ingress annotation.
+			desc:                         "Ingress with ingress annotation",
+			disableClusterScopeResources: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Ingress with ingressClass",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1369,6 +1402,19 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			// Showing that disabling the ingressClass discovery avoid discovering Ingresses with an IngressClass.
 			desc:                      "Ingress with ingressClass",
 			disableIngressClassLookup: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			// Duplicate test case with the same fixture as the one above, but with the disableClusterScopeResources option to true.
+			// Showing that disabling the ingressClass discovery avoid discovering Ingresses with an IngressClass.
+			desc:                         "Ingress with ingressClass",
+			disableClusterScopeResources: true,
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1455,9 +1501,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 
 			clientMock := newClientMock(generateTestFilename(test.desc))
 			p := Provider{
-				IngressClass:              test.ingressClass,
-				AllowEmptyServices:        test.allowEmptyServices,
-				DisableIngressClassLookup: test.disableIngressClassLookup,
+				IngressClass:                 test.ingressClass,
+				AllowEmptyServices:           test.allowEmptyServices,
+				DisableIngressClassLookup:    test.disableIngressClassLookup,
+				DisableClusterScopeResources: test.disableClusterScopeResources,
 			}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
