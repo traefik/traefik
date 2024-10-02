@@ -49,10 +49,10 @@ and the RBAC authorization resources which will be referenced through the `servi
 
 ```bash
 # Install Traefik Resource Definitions:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.2/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 
 # Install RBAC for Traefik:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.2/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
 ```
 
 ### Services
@@ -60,7 +60,7 @@ kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/con
 Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/traefik/whoami).
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/user-guides/crd-acme/02-services.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.2/docs/content/user-guides/crd-acme/02-services.yml
 ```
 
 ```yaml
@@ -73,7 +73,7 @@ Next, the deployments, i.e. the actual pods behind the services.
 Again, one pod for Traefik, and one for the whoami app.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/user-guides/crd-acme/03-deployments.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.2/docs/content/user-guides/crd-acme/03-deployments.yml
 ```
 
 ```yaml
@@ -100,7 +100,7 @@ Look it up.
 We can now finally apply the actual ingressRoutes, with:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/user-guides/crd-acme/04-ingressroutes.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.2/docs/content/user-guides/crd-acme/04-ingressroutes.yml
 ```
 
 ```yaml
@@ -126,7 +126,7 @@ Nowadays, TLS v1.0 and v1.1 are deprecated.
 In order to force TLS v1.2 or later on all your IngressRoute, you can define the `default` TLSOption:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.1/docs/content/user-guides/crd-acme/05-tlsoption.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.2/docs/content/user-guides/crd-acme/05-tlsoption.yml
 ```
 
 ```yaml
