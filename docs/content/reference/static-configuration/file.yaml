@@ -183,6 +183,7 @@ providers:
       service:
         name: foobar
         namespace: foobar
+    nativeLBByDefault: true
   rest:
     insecure: true
   consulCatalog:

@@ -67,6 +67,8 @@ accessLog:
 
 ### `format`
 
+_Optional, Default="common"_
+
 By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
 If the given format is unsupported, the default (CLF) is used instead.
@@ -277,7 +279,7 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.2
     environment:
       - TZ=US/Alaska
     command:

@@ -801,6 +801,9 @@ Kubernetes label selector to select specific GatewayClasses.
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetesgateway.nativelbbydefault`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
+
 `--providers.kubernetesgateway.statusaddress.hostname`:  
 Hostname used for Kubernetes Gateway status address.
 
