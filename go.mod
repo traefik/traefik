@@ -30,7 +30,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/nomad/api v0.0.0-20240122103822-8a4bd61caf74 // No tag on the repo.
-	github.com/http-wasm/http-wasm-host-go v0.6.1-0.20241003071530-5881fad7215d
+	github.com/http-wasm/http-wasm-host-go v0.6.1-0.20241003155807-d9e07495db6c
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
 	github.com/klauspost/compress v1.17.11-0.20240927175842-8e14b1b5a913 // Required to have the content-type fix: https://github.com/klauspost/compress/pull/1011
