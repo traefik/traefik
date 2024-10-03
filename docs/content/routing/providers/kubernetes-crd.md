@@ -352,6 +352,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
               secure: true
               sameSite: none
               maxAge: 42  
+              path: /
           strategy: RoundRobin
           weight: 10
           nativeLB: true                # [12]

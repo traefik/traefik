@@ -55,6 +55,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            path = "/"
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
@@ -110,6 +111,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            path = "/"
         [http.services.Service04.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
