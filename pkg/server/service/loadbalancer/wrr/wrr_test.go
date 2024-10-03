@@ -226,6 +226,7 @@ func TestSticky(t *testing.T) {
 			HTTPOnly: true,
 			SameSite: "none",
 			MaxAge:   42,
+			Path:     "/",
 		},
 	}, false)
 
@@ -263,6 +264,7 @@ func TestSticky(t *testing.T) {
 	assert.True(t, recorder.cookies["test"].Secure)
 	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
 	assert.Equal(t, 42, recorder.cookies["test"].MaxAge)
+	assert.Equal(t, "/", recorder.cookies["test"].Path)
 }
 
 func TestSticky_FallBack(t *testing.T) {
