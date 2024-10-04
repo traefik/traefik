@@ -5,6 +5,7 @@ metadata:
   namespace: default
 
 spec:
+  clusterIP: 10.10.10.1
   ports:
     - name: web2
       protocol: TCP
@@ -262,6 +263,7 @@ metadata:
   namespace: default
 
 spec:
+  clusterIP: 10.10.10.1
   ports:
     - protocol: TCP
       port: 9000
@@ -424,3 +426,45 @@ spec:
       port: 80
       name: wss
       appProtocol: kubernetes.io/wss
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-native
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "true"
+spec:
+  clusterIP: 10.10.10.1
+  ports:
+    - name: web2
+      protocol: TCP
+      port: 8000
+      targetPort: web2
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: containous
+    task: whoami
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-native
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "true"
+
+spec:
+  clusterIP: 10.10.10.1
+  ports:
+    - protocol: TCP
+      port: 9000
+      name: tcp-1
+    - protocol: TCP
+      port: 10000
+      name: tcp-2

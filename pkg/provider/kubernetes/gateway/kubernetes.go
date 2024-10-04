@@ -65,6 +65,7 @@ type Provider struct {
 	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
+	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -873,8 +874,8 @@ func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *g
 }
 
 type backendAddress struct {
-	Address string
-	Port    int32
+	IP   string
+	Port int32
 }
 
 func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
@@ -889,6 +890,9 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	if !exists {
 		return nil, corev1.ServicePort{}, errors.New("service not found")
 	}
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
+	}
 
 	var svcPort *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
@@ -899,6 +903,22 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	}
 	if svcPort == nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("service port %d not found", *ref.Port)
+	}
+
+	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
+	}
+
+	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
+			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+		}
+
+		return []backendAddress{{
+			IP:   service.Spec.ClusterIP,
+			Port: svcPort.Port,
+		}}, *svcPort, nil
 	}
 
 	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
@@ -935,8 +955,8 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 
 				uniqAddresses[address] = struct{}{}
 				backendServers = append(backendServers, backendAddress{
-					Address: address,
-					Port:    port,
+					IP:   address,
+					Port: port,
 				})
 			}
 		}

@@ -350,7 +350,7 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port)))),
+			URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
 	return lb, nil

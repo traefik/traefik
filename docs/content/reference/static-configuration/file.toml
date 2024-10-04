@@ -158,6 +158,7 @@
     labelSelector = "foobar"
     throttleDuration = "42s"
     experimentalChannel = true
+    nativeLBByDefault = true
     [providers.kubernetesGateway.statusAddress]
       ip = "foobar"
       hostname = "foobar"

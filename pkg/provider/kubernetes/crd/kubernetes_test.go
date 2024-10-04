@@ -1609,7 +1609,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -4891,7 +4891,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -4972,7 +4972,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 
 	k8sObjects, crdObjects := readResources(t, []string{"services.yml", "with_multiple_endpointslices.yml"})
 
-	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	kubeClient := kubefake.NewClientset(k8sObjects...)
 	crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 	client := newClientImpl(kubeClient, crdClient)
@@ -5481,7 +5481,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -6971,7 +6971,7 @@ func TestCrossNamespace(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -7240,7 +7240,7 @@ func TestExternalNameService(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -7421,7 +7421,7 @@ func TestNativeLB(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -7686,7 +7686,7 @@ func TestNodePortLB(t *testing.T) {
 
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -7727,7 +7727,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 		}
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	kubeClient := kubefake.NewClientset(k8sObjects...)
 	crdClient := traefikcrdfake.NewSimpleClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
@@ -8198,7 +8198,7 @@ func TestGlobalNativeLB(t *testing.T) {
 				}
 			}
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
