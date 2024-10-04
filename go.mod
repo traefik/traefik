@@ -51,6 +51,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/client_model v0.6.1
 	github.com/quic-go/quic-go v0.47.0
+	github.com/redis/go-redis/v9 v9.2.1
 	github.com/rs/zerolog v1.29.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spiffe/go-spiffe/v2 v2.1.1
@@ -71,6 +72,7 @@ require (
 	github.com/valyala/fasthttp v1.55.0
 	github.com/vulcand/oxy/v2 v2.0.0
 	github.com/vulcand/predicate v1.2.0
+	github.com/yuin/gopher-lua v1.1.1
 	go.opentelemetry.io/collector/pdata v1.10.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.53.0
 	go.opentelemetry.io/otel v1.28.0
@@ -290,7 +292,6 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/redis/go-redis/v9 v9.2.1 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/sacloud/api-client-go v0.2.10 // indirect
 	github.com/sacloud/go-http v0.1.8 // indirect
