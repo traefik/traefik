@@ -251,8 +251,7 @@ spec:
                                     type: string
                                   path:
                                     description: |- 
-                                      Path defines the path of the cookie.
-                                      When set the cookie will only be sent for requests to the given path or subpaths.
+                                      When path is set the cookie will only be sent for requests to the given path or subpaths.
                                       When not provided the cookie will be send on every request to the domain.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                     type: string
@@ -1149,8 +1148,7 @@ spec:
                                 type: string
                               path:
                                 description: |- 
-                                  Path defines the path of the cookie.
-                                  When set the cookie will only be sent for requests to the given path or subpaths.
+                                  When path is set the cookie will only be sent for requests to the given path or subpaths.
                                   When not provided the cookie will be send on every request to the domain.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                 type: string
@@ -2709,8 +2707,7 @@ spec:
                                   type: string
                                 path:
                                   description: |- 
-                                    Path defines the path of the cookie.
-                                    When set the cookie will only be sent for requests to the given path or subpaths.
+                                    When path is set the cookie will only be sent for requests to the given path or subpaths.
                                     When not provided the cookie will be send on every request to the domain.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                   type: string
@@ -2823,8 +2820,7 @@ spec:
                             type: string
                           path:
                             description: |- 
-                              Path defines the path of the cookie.
-                              When set the cookie will only be sent for requests to the given path or subpaths.
+                              When path is set the cookie will only be sent for requests to the given path or subpaths.
                               When not provided the cookie will be send on every request to the domain.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
@@ -3013,8 +3009,7 @@ spec:
                                   type: string
                                 path:
                                   description: |- 
-                                    Path defines the path of the cookie.
-                                    When set the cookie will only be sent for requests to the given path or subpaths.
+                                    When path is set the cookie will only be sent for requests to the given path or subpaths.
                                     When not provided the cookie will be send on every request to the domain.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                   type: string
@@ -3067,8 +3062,7 @@ spec:
                             type: string
                           path:
                             description: |- 
-                              Path defines the path of the cookie.
-                              When set the cookie will only be sent for requests to the given path or subpaths.
+                              When path is set the cookie will only be sent for requests to the given path or subpaths.
                               When not provided the cookie will be send on every request to the domain.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
