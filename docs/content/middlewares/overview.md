@@ -35,7 +35,7 @@ whoami:
     - "traefik.http.routers.router1.middlewares=foo-add-prefix@docker"
 ```
 
-```yaml tab="Kubernetes IngressRoute"
+```yaml tab="IngressRoute"
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

@@ -47,7 +47,7 @@ Further details of specific enforcement policies may be posted separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project's leadership.
 
-When an inapropriate behavior is reported, maintainers will discuss on the Maintainer's Discord before marking the message as "abuse". 
+When an inappropriate behavior is reported, maintainers will discuss on the Maintainer's Discord before marking the message as "abuse". 
 This conversation beforehand avoids one-sided decisions.
 
 The first message will be edited and marked as abuse.

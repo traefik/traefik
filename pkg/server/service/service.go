@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"reflect"
 	"strings"
@@ -21,8 +21,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -30,21 +32,26 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
+	"google.golang.org/grpc/status"
 )
 
-const defaultMaxBodySize int64 = -1
+const (
+	defaultMirrorBody        = true
+	defaultMaxBodySize int64 = -1
+)
 
-// RoundTripperGetter is a roundtripper getter interface.
-type RoundTripperGetter interface {
-	Get(name string) (http.RoundTripper, error)
+// ProxyBuilder builds reverse proxy handlers.
+type ProxyBuilder interface {
+	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
+	Update(configs map[string]*dynamic.ServersTransport)
 }
 
 // Manager The service manager.
 type Manager struct {
-	routinePool         *safe.Pool
-	observabilityMgr    *middleware.ObservabilityMgr
-	bufferPool          httputil.BufferPool
-	roundTripperManager RoundTripperGetter
+	routinePool      *safe.Pool
+	observabilityMgr *middleware.ObservabilityMgr
+	transportManager httputil.TransportManager
+	proxyBuilder     ProxyBuilder
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -53,16 +60,16 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
 	return &Manager{
-		routinePool:         routinePool,
-		observabilityMgr:    observabilityMgr,
-		bufferPool:          newBufferPool(),
-		roundTripperManager: roundTripperManager,
-		services:            make(map[string]http.Handler),
-		configs:             configs,
-		healthCheckers:      make(map[string]*healthcheck.ServiceHealthChecker),
-		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
+		routinePool:      routinePool,
+		observabilityMgr: observabilityMgr,
+		transportManager: transportManager,
+		proxyBuilder:     proxyBuilder,
+		services:         make(map[string]http.Handler),
+		configs:          configs,
+		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
+		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -195,11 +202,16 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
+	mirrorBody := defaultMirrorBody
+	if config.MirrorBody != nil {
+		mirrorBody = *config.MirrorBody
+	}
+
 	maxBodySize := defaultMaxBodySize
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
-	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize, config.HealthCheck)
+	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.HealthCheck)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
@@ -222,15 +234,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 
 	balancer := wrr.New(config.Sticky, config.HealthCheck != nil)
 	for _, service := range shuffle(config.Services, m.rand) {
-		if service.Status != nil {
-			serviceHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				writer.WriteHeader(*service.Status)
-			})
-			balancer.Add(service.Name, serviceHandler, service.Weight)
-			continue
-		}
-
-		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
+		serviceHandler, err := m.getServiceHandler(ctx, service)
 		if err != nil {
 			return nil, err
 		}
@@ -260,6 +264,34 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 	return balancer, nil
 }
 
+func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRService) (http.Handler, error) {
+	switch {
+	case service.Status != nil:
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.WriteHeader(*service.Status)
+		}), nil
+
+	case service.GRPCStatus != nil:
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			st := status.New(service.GRPCStatus.Code, service.GRPCStatus.Msg)
+
+			body, err := json.Marshal(st.Proto())
+			if err != nil {
+				http.Error(rw, "Failed to marshal status to JSON", http.StatusInternalServerError)
+				return
+			}
+
+			rw.Header().Set("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusOK)
+
+			_, _ = rw.Write(body)
+		}), nil
+
+	default:
+		return m.BuildHTTP(ctx, service.Name)
+	}
+}
+
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
 	service := info.LoadBalancer
 
@@ -267,9 +299,9 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	logger.Debug().Msg("Creating load-balancer")
 
 	// TODO: should we keep this config value as Go is now handling stream response correctly?
-	flushInterval := dynamic.DefaultFlushInterval
+	flushInterval := time.Duration(dynamic.DefaultFlushInterval)
 	if service.ResponseForwarding != nil {
-		flushInterval = service.ResponseForwarding.FlushInterval
+		flushInterval = time.Duration(service.ResponseForwarding.FlushInterval)
 	}
 
 	if len(service.ServersTransport) > 0 {
@@ -284,11 +316,6 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	passHostHeader := dynamic.DefaultPassHostHeader
 	if service.PassHostHeader != nil {
 		passHostHeader = *service.PassHostHeader
-	}
-
-	roundTripper, err := m.roundTripperManager.Get(service.ServersTransport)
-	if err != nil {
-		return nil, err
 	}
 
 	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
@@ -310,13 +337,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
-			// Wrapping the roundTripper with the Tracing roundTripper,
-			// to handle the reverseProxy client span creation.
-			roundTripper = newObservabilityRoundTripper(m.observabilityMgr.SemConvMetricsRegistry(), roundTripper)
+		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, flushInterval)
+		if err != nil {
+			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
-
-		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
 		// Prevents from enabling observability for internal resources.
 
@@ -342,6 +367,17 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy = observability.NewService(ctx, serviceName, proxy)
 		}
 
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
+			// to re-target the request to it.
+			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
+			// In such a case, observability for internals being optional, the capture probe could be absent from context (no wrap via the entrypoint).
+			// But if the service targeted by this piece of middleware is not an internal one,
+			// and requires observability, we still want the capture probe to be present in the request context.
+			// Makes sure a capture probe is in the request context.
+			proxy, _ = capture.Wrap(proxy)
+		}
+
 		lb.Add(proxyName, proxy, server.Weight)
 
 		// servers are considered UP by default.
@@ -351,6 +387,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	}
 
 	if service.HealthCheck != nil {
+		roundTripper, err := m.transportManager.GetRoundTripper(service.ServersTransport)
+		if err != nil {
+			return nil, fmt.Errorf("getting RoundTripper: %w", err)
+		}
+
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
 			m.observabilityMgr.MetricsRegistry(),

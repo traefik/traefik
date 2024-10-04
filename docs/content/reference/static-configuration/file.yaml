@@ -35,6 +35,7 @@ tcpServersTransport:
 entryPoints:
   EntryPoint0:
     address: foobar
+    allowACMEByPass: true
     reusePort: true
     asDefault: true
     transport:
@@ -55,6 +56,9 @@ entryPoints:
     forwardedHeaders:
       insecure: true
       trustedIPs:
+        - foobar
+        - foobar
+      connection:
         - foobar
         - foobar
     http:
@@ -80,6 +84,7 @@ entryPoints:
               - foobar
               - foobar
       encodeQuerySemicolons: true
+      maxHeaderBytes: 42
     http2:
       maxConcurrentStreams: 42
     http3:
@@ -178,6 +183,7 @@ providers:
       service:
         name: foobar
         namespace: foobar
+    nativeLBByDefault: true
   rest:
     insecure: true
   consulCatalog:
@@ -231,6 +237,8 @@ providers:
     exposedByDefault: true
     refreshInterval: 42s
     allowEmptyServices: true
+    watch: true
+    throttleDuration: 42s
     namespaces:
       - foobar
       - foobar
@@ -395,6 +403,7 @@ metrics:
       - 42
       - 42
     pushInterval: 42s
+    serviceName: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -483,6 +492,11 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      caCertificates:
+        - foobar
+        - foobar
+      caSystemCertPool: true
+      caServerName: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
@@ -505,6 +519,11 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      caCertificates:
+        - foobar
+        - foobar
+      caSystemCertPool: true
+      caServerName: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
@@ -557,6 +576,8 @@ experimental:
         mounts:
           - foobar
           - foobar
+  fastProxy:
+    debug: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar

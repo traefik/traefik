@@ -5,11 +5,13 @@ on:
     branches:
       - '*'
     paths:
+      - '.github/workflows/test-conformance.yaml'
       - 'pkg/provider/kubernetes/gateway/**'
+      - 'integration/fixtures/k8s-conformance/**'
       - 'integration/k8s_conformance_test.go'
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.23'
   CGO_ENABLED: 0
 
 jobs:
@@ -31,5 +33,7 @@ jobs:
       - name: Avoid generating webui
         run: touch webui/static/index.html
 
-      - name: K8s Gateway API conformance test
-        run: make test-gateway-api-conformance
+      - name: K8s Gateway API conformance test and report
+        run: |
+          make test-gateway-api-conformance
+          git diff --exit-code

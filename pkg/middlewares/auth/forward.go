@@ -14,7 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -124,13 +123,11 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	req = connectionheader.Remove(req)
-
 	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
-		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(req.Context(), logMessage)
+		logger.Debug().Msgf("Error calling %s. Cause %s", fa.address, err)
+		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
+
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -152,9 +149,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
+		logger.Debug().Msgf("Error calling %s. Cause: %s", fa.address, forwardErr)
+		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -163,9 +159,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	body, readError := io.ReadAll(forwardResponse.Body)
 	if readError != nil {
-		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
-		logger.Debug().Msg(logMessage)
-		observability.SetStatusErrorf(forwardReq.Context(), logMessage)
+		logger.Debug().Msgf("Error reading body %s. Cause: %s", fa.address, readError)
+		observability.SetStatusErrorf(req.Context(), "Error reading body %s. Cause: %s", fa.address, readError)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -199,9 +194,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
-				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
-				logger.Debug().Msg(logMessage)
-				observability.SetStatusErrorf(forwardReq.Context(), logMessage)
+				logger.Debug().Msgf("Error reading response location header %s. Cause: %s", fa.address, err)
+				observability.SetStatusErrorf(req.Context(), "Error reading response location header %s. Cause: %s", fa.address, err)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
@@ -278,6 +272,8 @@ func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
+
+	RemoveConnectionHeaders(forwardReq)
 	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
 
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)

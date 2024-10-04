@@ -212,6 +212,9 @@ type Tracing struct {
 func (t *Tracing) SetDefaults() {
 	t.ServiceName = "traefik"
 	t.SampleRate = 1.0
+
+	t.OTLP = &opentelemetry.Config{}
+	t.OTLP.SetDefaults()
 }
 
 // Providers contains providers configuration.
@@ -314,7 +317,6 @@ func (c *Configuration) initACMEProvider() {
 
 // ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
-	var acmeEmail string
 	for name, resolver := range c.CertificatesResolvers {
 		if resolver.ACME != nil && resolver.Tailscale != nil {
 			return fmt.Errorf("unable to initialize certificates resolver %q, as ACME and Tailscale providers are mutually exclusive", name)
@@ -327,11 +329,6 @@ func (c *Configuration) ValidateConfiguration() error {
 		if len(resolver.ACME.Storage) == 0 {
 			return fmt.Errorf("unable to initialize certificates resolver %q with no storage location for the certificates", name)
 		}
-
-		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
-			return fmt.Errorf("unable to initialize certificates resolver %q, as all ACME resolvers must use the same email", name)
-		}
-		acmeEmail = resolver.ACME.Email
 	}
 
 	if c.Core != nil {

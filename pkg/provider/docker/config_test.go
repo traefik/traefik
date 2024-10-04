@@ -3976,7 +3976,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 		networks map[string]*network.Summary
 	}{
 		{
-			service:  swarmService(withEndpointSpec(modeDNSSR)),
+			service:  swarmService(withEndpointSpec(modeDNSRR)),
 			expected: "",
 			networks: map[string]*network.Summary{},
 		},
