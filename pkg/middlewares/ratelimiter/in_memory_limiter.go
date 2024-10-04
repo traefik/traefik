@@ -48,7 +48,7 @@ func NewInMemoryRateLimiter(
 }
 
 func (b *InMemoryRateLimiter) Allow(ctx context.Context, source string) (Result, error) {
-	// Get bucket which contain limiter information.
+	// Get bucket which contains limiter information.
 	var bucket *rate.Limiter
 	if rlSource, exists := b.buckets.Get(source); exists {
 		bucket = rlSource.(*rate.Limiter)

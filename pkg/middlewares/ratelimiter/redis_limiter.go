@@ -36,15 +36,16 @@ func NewRedisLimiter(
 	logger *zerolog.Logger,
 ) (Limiter, error) {
 	options := &redis.UniversalOptions{
-		Addrs:        config.Redis.Endpoints,
-		Username:     config.Redis.Username,
-		Password:     config.Redis.Password,
-		DB:           config.Redis.DB,
-		PoolSize:     config.Redis.PoolSize,
-		MinIdleConns: config.Redis.MinIdleConns,
-		ReadTimeout:  config.Redis.ReadTimeout,
-		WriteTimeout: config.Redis.WriteTimeout,
-		DialTimeout:  config.Redis.DialTimeout,
+		Addrs:          config.Redis.Endpoints,
+		Username:       config.Redis.Username,
+		Password:       config.Redis.Password,
+		DB:             config.Redis.DB,
+		PoolSize:       config.Redis.PoolSize,
+		MinIdleConns:   config.Redis.MinIdleConns,
+		ReadTimeout:    config.Redis.ReadTimeout,
+		WriteTimeout:   config.Redis.WriteTimeout,
+		DialTimeout:    config.Redis.DialTimeout,
+		MaxActiveConns: config.Redis.MaxActiveConns,
 	}
 	if config.Redis.TLS != nil {
 		tlsConfig, err := config.Redis.TLS.CreateTLSConfig(context.Background())

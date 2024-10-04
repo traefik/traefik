@@ -151,7 +151,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/dialTimeout` | `42ns` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/endpoints/0` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/endpoints/1` | `foobar` |
-| `traefik/http/middlewares/Middleware18/rateLimit/redis/idleConnTimeout` | `42ns` |
+| `traefik/http/middlewares/Middleware18/rateLimit/redis/maxActiveConns` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/minIdleConns` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/omitempty` | `42ns` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/password` | `foobar` |

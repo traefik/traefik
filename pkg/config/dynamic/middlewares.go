@@ -549,17 +549,17 @@ type RateLimit struct {
 
 // Redis is a group of options for redis.
 type Redis struct {
-	Endpoints       []string         `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
-	TLS             *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	Username        string           `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password        string           `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
-	DB              int              `json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
-	PoolSize        int              `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
-	MinIdleConns    int              `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty" export:"true"`
-	IdleConnTimeout time.Duration    `json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
-	ReadTimeout     time.Duration    `json:"readTimeout,omitempty" toml:"omitempty,omitempty" yaml:"readTimeout,omitempty" export:"true"`
-	WriteTimeout    time.Duration    `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
-	DialTimeout     time.Duration    `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+	Endpoints      []string         `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
+	TLS            *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Username       string           `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password       string           `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	DB             int              `json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
+	PoolSize       int              `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
+	MinIdleConns   int              `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty" export:"true"`
+	MaxActiveConns int              `json:"maxActiveConns,omitempty" toml:"maxActiveConns,omitempty" yaml:"maxActiveConns,omitempty" export:"true"`
+	ReadTimeout    time.Duration    `json:"readTimeout,omitempty" toml:"omitempty,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout   time.Duration    `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	DialTimeout    time.Duration    `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
