@@ -11,7 +11,7 @@ Automatic HTTPS
 You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
-    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and can not be overridden.
+    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and cannot be overridden.
     
     When running Traefik in a container this file should be persisted across restarts. 
     If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
@@ -298,7 +298,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     
     Multiple DNS challenge provider are not supported with Traefik, but you can use `CNAME` to handle that.
     For example, if you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
-    This way, you can obtain certificates for `example.com` with the `foo` account.
+    This way, you can obtain certificates for `example.org` with the `bar` account.
 
 !!! important
     A `provider` is mandatory.
@@ -341,6 +341,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Derak Cloud](https://derak.cloud/)                                    | `derak`            | `DERAK_API_KEY`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/derak)            |
 | [deSEC](https://desec.io)                                              | `desec`            | `DESEC_TOKEN`                                                                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/desec)            |
 | [DigitalOcean](https://www.digitalocean.com)                           | `digitalocean`     | `DO_AUTH_TOKEN`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/digitalocean)     |
+| [DirectAdmin](https://www.directadmin.com)                             | `directadmin`      | `DIRECTADMIN_API_URL` , `DIRECTADMIN_USERNAME`, `DIRECTADMIN_PASSWORD`                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/directadmin)      |
 | [DNS Made Easy](https://dnsmadeeasy.com)                               | `dnsmadeeasy`      | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/dnsmadeeasy)      |
 | [dnsHome.de](https://www.dnshome.de)                                   | `dnsHomede`        | `DNSHOMEDE_CREDENTIALS`                                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/dnshomede)        |
 | [DNSimple](https://dnsimple.com)                                       | `dnsimple`         | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/dnsimple)         |
@@ -384,12 +385,15 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Joker.com](https://joker.com)                                         | `joker`            | `JOKER_API_MODE` with `JOKER_API_KEY` or `JOKER_USERNAME`, `JOKER_PASSWORD`                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/joker)            |
 | [Liara](https://liara.ir)                                              | `liara`            | `LIARA_API_KEY`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/liara)            |
 | [Lightsail](https://aws.amazon.com/lightsail/)                         | `lightsail`        | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/lightsail)        |
+| [Lima-City](https://www.lima-city.de)                                  | `limacity`         | `LIMACITY_API_KEY`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/limacity)         |
 | [Linode v4](https://www.linode.com)                                    | `linode`           | `LINODE_TOKEN`                                                                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/linode)           |
 | [Liquid Web](https://www.liquidweb.com/)                               | `liquidweb`        | `LIQUID_WEB_PASSWORD`, `LIQUID_WEB_USERNAME`, `LIQUID_WEB_ZONE`                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/liquidweb)        |
 | [Loopia](https://loopia.com/)                                          | `loopia`           | `LOOPIA_API_PASSWORD`, `LOOPIA_API_USER`                                                                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/loopia)           |
 | [LuaDNS](https://luadns.com)                                           | `luadns`           | `LUADNS_API_USERNAME`, `LUADNS_API_TOKEN`                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/luadns)           |
 | [Mail-in-a-Box](https://mailinabox.email)                              | `mailinabox`       | `MAILINABOX_EMAIL`, `MAILINABOX_PASSWORD`, `MAILINABOX_BASE_URL`                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/mailinabox)       |
 | [Metaname](https://metaname.net)                                       | `metaname`         | `METANAME_ACCOUNT_REFERENCE`, `METANAME_API_KEY`                                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/metaname)         |
+| [mijn.host](https://mijn.host/)                                        | `mijnhost`         | `MIJNHOST_API_KEY`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/mijnhost)         |
+| [Mittwald](https://www.mittwald.de)                                    | `mittwald`         | `MITTWALD_TOKEN`                                                                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/mittwald)         |
 | [MyDNS.jp](https://www.mydns.jp/)                                      | `mydnsjp`          | `MYDNSJP_MASTER_ID`, `MYDNSJP_PASSWORD`                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/mydnsjp)          |
 | [Mythic Beasts](https://www.mythic-beasts.com)                         | `mythicbeasts`     | `MYTHICBEASTS_USER_NAME`, `MYTHICBEASTS_PASSWORD`                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/mythicbeasts)     |
 | [name.com](https://www.name.com/)                                      | `namedotcom`       | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/namedotcom)       |
@@ -418,8 +422,8 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Route 53](https://aws.amazon.com/route53/)                            | `route53`          | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `[AWS_REGION]`, `[AWS_HOSTED_ZONE_ID]` or a configured user/instance IAM profile.                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/route53)          |
 | [Sakura Cloud](https://cloud.sakura.ad.jp/)                            | `sakuracloud`      | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/sakuracloud)      |
 | [Scaleway](https://www.scaleway.com)                                   | `scaleway`         | `SCW_API_TOKEN`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/scaleway)         |
-| [Selectel](https://selectel.ru/en/)                                    | `selectel`         | `SELECTEL_API_TOKEN`                                                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/selectel)         |
 | [Selectel v2](https://selectel.ru/en/)                                 | `selectelv2`       | `SELECTELV2_ACCOUNT_ID`, `SELECTELV2_PASSWORD`, `SELECTELV2_PROJECT_ID`, `SELECTELV2_USERNAME`                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/selectelv2)       |
+| [Selectel](https://selectel.ru/en/)                                    | `selectel`         | `SELECTEL_API_TOKEN`                                                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/selectel)         |
 | [Servercow](https://servercow.de)                                      | `servercow`        | `SERVERCOW_USERNAME`, `SERVERCOW_PASSWORD`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/servercow)        |
 | [Shellrent](https://www.shellrent.com)                                 | `shellrent`        | `SHELLRENT_USERNAME`, `SHELLRENT_TOKEN`                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/shellrent)        |
 | [Simply.com](https://www.simply.com/en/domains/)                       | `simply`           | `SIMPLY_ACCOUNT_NAME`, `SIMPLY_API_KEY`                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/simply)           |
@@ -704,6 +708,109 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.keyType=RSA4096
 # ...
 ```
+
+### `caCertificates`
+
+_Optional, Default=[]_
+
+The `caCertificates` option specifies the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caCertificates:
+        - path/certificates1.pem
+        - path/certificates2.pem
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caCertificates = [ "path/certificates1.pem", "path/certificates2.pem" ]
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caCertificates="path/certificates1.pem,path/certificates2.pem"
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
+### `caSystemCertPool`
+
+_Optional, Default=false_
+
+The `caSystemCertPool` option defines if the certificates pool must use a copy of the system cert pool.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caSystemCertPool: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caSystemCertPool = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caSystemCertPool=true
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SYSTEM_CERT_POOL`.
+    `LEGO_CA_SYSTEM_CERT_POOL` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
+### `caServerName`
+
+_Optional, Default=""_
+
+The `caServerName` option specifies the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caServerName: "my-server"
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caServerName = "my-server"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caServerName="my-server"
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SERVER_NAME`.
+    `LEGO_CA_SERVER_NAME` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
 
 ## Fallback
 

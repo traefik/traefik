@@ -8,7 +8,7 @@ description: "Learn how to do dynamic configuration in Traefik Proxy with AWS EC
 Dynamic configuration with ECS provider
 {: .subtitle }
 
-The labels are case insensitive.
+The labels are case-insensitive.
 
 ```yaml
 --8<-- "content/reference/dynamic-configuration/ecs.yml"

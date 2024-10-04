@@ -85,7 +85,7 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    sampleRate = 0.2
+  sampleRate = 0.2
 ```
 
 ```bash tab="CLI"
@@ -107,9 +107,9 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    [tracing.globalAttributes]
-      attr1 = "foo"
-      attr2 = "bar"
+  [tracing.globalAttributes]
+    attr1 = "foo"
+    attr2 = "bar"
 ```
 
 ```bash tab="CLI"
@@ -132,7 +132,7 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    capturedRequestHeaders = ["X-CustomHeader"]
+  capturedRequestHeaders = ["X-CustomHeader"]
 ```
 
 ```bash tab="CLI"
@@ -154,7 +154,7 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    capturedResponseHeaders = ["X-CustomHeader"]
+  capturedResponseHeaders = ["X-CustomHeader"]
 ```
 
 ```bash tab="CLI"
@@ -170,18 +170,16 @@ Defines the list of query parameters to not redact.
 
 ```yaml tab="File (YAML)"
 tracing:
-  otlp:
-    safeQueryParams:
-      - bar
-      - buz
+  safeQueryParams:
+    - bar
+    - buz
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.otlp]
-    safeQueryParams = ["bar", "buz"]
+  safeQueryParams = ["bar", "buz"]
 ```
 
 ```bash tab="CLI"
---tracing.otlp.safeQueryParams=bar,buz
+--tracing.safeQueryParams=bar,buz
 ```

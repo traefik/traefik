@@ -136,6 +136,15 @@ api:
 
 All the following endpoints must be accessed with a `GET` HTTP request.
 
+!!! info "Pagination"
+
+    By default, up to 100 results are returned per page, and the next page can be checked using the `X-Next-Page` HTTP Header. 
+    To control pagination, use the `page` and `per_page` query parameters.
+
+    ```bash
+    curl https://traefik.example.com:8080/api/http/routers?page=2&per_page=20
+    ```
+
 | Path                           | Description                                                                                 |
 |--------------------------------|---------------------------------------------------------------------------------------------|
 | `/api/http/routers`            | Lists all the HTTP routers information.                                                     |

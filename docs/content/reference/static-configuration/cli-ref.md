@@ -57,8 +57,17 @@ Activate API directly on the entryPoint named traefik. (Default: ```false```)
 `--certificatesresolvers.<name>`:  
 Certificates resolvers configuration. (Default: ```false```)
 
+`--certificatesresolvers.<name>.acme.cacertificates`:  
+Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
 `--certificatesresolvers.<name>.acme.caserver`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
+
+`--certificatesresolvers.<name>.acme.caservername`:  
+Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+`--certificatesresolvers.<name>.acme.casystemcertpool`:  
+Define if the certificates pool must use a copy of the system cert pool. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
@@ -117,8 +126,14 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
+`--entrypoints.<name>.allowacmebypass`:  
+Enables handling of ACME TLS and HTTP challenges with custom routers. (Default: ```false```)
+
 `--entrypoints.<name>.asdefault`:  
 Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined. (Default: ```false```)
+
+`--entrypoints.<name>.forwardedheaders.connection`:  
+List of Connection headers that are allowed to pass through the middleware chain before being removed.
 
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
@@ -131,6 +146,9 @@ HTTP configuration.
 
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
+
+`--entrypoints.<name>.http.maxheaderbytes`:  
+Maximum size of request headers in bytes. (Default: ```1048576```)
 
 `--entrypoints.<name>.http.middlewares`:  
 Default middlewares for the routers linked to the entry point.
@@ -209,6 +227,12 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
+
+`--experimental.fastproxy`:  
+Enable the FastProxy implementation. (Default: ```false```)
+
+`--experimental.fastproxy.debug`:  
+Enable debug mode for the FastProxy implementation. (Default: ```false```)
 
 `--experimental.kubernetesgateway`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
@@ -404,6 +428,9 @@ TLS key
 
 `--metrics.otlp.pushinterval`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
+
+`--metrics.otlp.servicename`:  
+OTEL service name to use. (Default: ```traefik```)
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -774,6 +801,9 @@ Kubernetes label selector to select specific GatewayClasses.
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetesgateway.nativelbbydefault`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
+
 `--providers.kubernetesgateway.statusaddress.hostname`:  
 Hostname used for Kubernetes Gateway status address.
 
@@ -893,6 +923,12 @@ Interval for polling Nomad API. (Default: ```15```)
 
 `--providers.nomad.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
+
+`--providers.nomad.throttleduration`:  
+Watch throttle duration. (Default: ```0```)
+
+`--providers.nomad.watch`:  
+Watch Nomad Service events. (Default: ```false```)
 
 `--providers.plugin.<name>`:  
 Plugins configuration.

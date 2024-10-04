@@ -103,18 +103,21 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/rejectStatusCode` | `42` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/sourceRange/0` | `foobar` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/sourceRange/1` | `foobar` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/sourceRange/0` | `foobar` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/sourceRange/1` | `foobar` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/amount` | `42` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/requestHeaderName` | `foobar` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/requestHost` | `true` |
 | `traefik/http/middlewares/Middleware16/passTLSClientCert/info/issuer/commonName` | `true` |
@@ -162,6 +165,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/requestHeaderName` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/requestHost` | `true` |
 | `traefik/http/middlewares/Middleware19/redirectRegex/permanent` | `true` |
@@ -279,6 +283,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
 | `traefik/http/services/Service03/mirroring/maxBodySize` | `42` |
+| `traefik/http/services/Service03/mirroring/mirrorBody` | `true` |
 | `traefik/http/services/Service03/mirroring/mirrors/0/name` | `foobar` |
 | `traefik/http/services/Service03/mirroring/mirrors/0/percent` | `42` |
 | `traefik/http/services/Service03/mirroring/mirrors/1/name` | `foobar` |

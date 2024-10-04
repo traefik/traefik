@@ -777,7 +777,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.HTTP = &http.Provider{
-		Endpoint:     "Myenpoint",
+		Endpoint:     "Myendpoint",
 		PollInterval: 42,
 		PollTimeout:  42,
 		TLS: &types.ClientTLS{
