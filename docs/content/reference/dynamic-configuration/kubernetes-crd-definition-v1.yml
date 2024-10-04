@@ -252,7 +252,7 @@ spec:
                                   path:
                                     description: |- 
                                       When path is set the cookie will only be sent for requests to the given path or subpaths.
-                                      When not provided the cookie will be send on every request to the domain.
+                                      When not provided the cookie will be sent on every request to the domain.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                     type: string
                                   sameSite:
@@ -1149,7 +1149,7 @@ spec:
                               path:
                                 description: |- 
                                   When path is set the cookie will only be sent for requests to the given path or subpaths.
-                                  When not provided the cookie will be send on every request to the domain.
+                                  When not provided the cookie will be sent on every request to the domain.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                 type: string
                               sameSite:
@@ -2708,7 +2708,7 @@ spec:
                                 path:
                                   description: |- 
                                     When path is set the cookie will only be sent for requests to the given path or subpaths.
-                                    When not provided the cookie will be send on every request to the domain.
+                                    When not provided the cookie will be sent on every request to the domain.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                   type: string
                                 sameSite:
@@ -2821,7 +2821,7 @@ spec:
                           path:
                             description: |- 
                               When path is set the cookie will only be sent for requests to the given path or subpaths.
-                              When not provided the cookie will be send on every request to the domain.
+                              When not provided the cookie will be sent on every request to the domain.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
                           sameSite:
@@ -3010,7 +3010,7 @@ spec:
                                 path:
                                   description: |- 
                                     When path is set the cookie will only be sent for requests to the given path or subpaths.
-                                    When not provided the cookie will be send on every request to the domain.
+                                    When not provided the cookie will be sent on every request to the domain.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                   type: string
                                 sameSite:
@@ -3063,7 +3063,7 @@ spec:
                           path:
                             description: |- 
                               When path is set the cookie will only be sent for requests to the given path or subpaths.
-                              When not provided the cookie will be send on every request to the domain.
+                              When not provided the cookie will be sent on every request to the domain.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
                           sameSite:

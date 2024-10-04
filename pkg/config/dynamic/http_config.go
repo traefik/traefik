@@ -180,7 +180,7 @@ type Cookie struct {
 	// When set to zero, the cookie never expires.
 	MaxAge int `json:"maxAge,omitempty" toml:"maxAge,omitempty" yaml:"maxAge,omitempty" export:"true"`
 	// When path is set the cookie will only be sent for requests to the given path or subpaths.
-	// When not provided the cookie will be send on every request to the domain.
+	// When not provided the cookie will be sent on every request to the domain.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
 	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 }
