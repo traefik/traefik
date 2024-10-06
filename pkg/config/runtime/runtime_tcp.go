@@ -129,6 +129,23 @@ func (s *TCPServiceInfo) UpdateServerStatus(server string, status bool) {
 	s.serverStatus[server] = v
 }
 
+// GetAllStatus returns all the statuses of all the servers in TCPServiceInfo.
+func (s *TCPServiceInfo) GetAllStatus() map[string]string {
+	if len(s.serverStatus) == 0 {
+		return nil
+	}
+
+	allStatus := make(map[string]string, len(s.serverStatus))
+	for k, v := range s.serverStatus {
+		status := StatusDown
+		if v.Load() {
+			status = StatusUp
+		}
+		allStatus[k] = status
+	}
+	return allStatus
+}
+
 // TCPMiddlewareInfo holds information about a currently running middleware.
 type TCPMiddlewareInfo struct {
 	*dynamic.TCPMiddleware // dynamic configuration
