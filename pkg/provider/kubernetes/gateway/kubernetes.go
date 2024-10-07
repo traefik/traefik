@@ -1117,24 +1117,36 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-func matchListener(listener gatewayListener, routeNamespace string, parentRef gatev1.ParentReference) bool {
-	if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
-		return false
+func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	var listeners []gatewayListener
+
+	for _, listener := range gatewayListeners {
+		for _, parentRef := range parentRefs {
+			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+				continue
+			}
+
+			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+				continue
+			}
+
+			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+			if listener.GWNamespace != parentRefNamespace {
+				continue
+			}
+
+			if string(parentRef.Name) != listener.GWName {
+				continue
+			}
+
+			listeners = append(listeners, listener)
+		}
 	}
 
-	if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
-		return false
-	}
+	return listeners
+}
 
-	parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-	if listener.GWNamespace != parentRefNamespace {
-		return false
-	}
-
-	if string(parentRef.Name) != listener.GWName {
-		return false
-	}
-
+func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
 	if sectionName != "" && sectionName != listener.Name {
 		return false
