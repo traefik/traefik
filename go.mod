@@ -100,7 +100,7 @@ require (
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // No tag on the repo.
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.18.0
-	sigs.k8s.io/gateway-api v1.2.0-rc2
+	sigs.k8s.io/gateway-api v1.2.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
