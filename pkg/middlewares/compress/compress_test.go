@@ -701,6 +701,8 @@ func BenchmarkCompressZstandard(b *testing.B) {
 }
 
 func runCompressionBenchmark(b *testing.B, algorithm string) {
+	b.Helper()
+
 	testCases := []struct {
 		name     string
 		parallel bool

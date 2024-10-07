@@ -134,7 +134,7 @@ type compression interface {
 	// Close also makes sure to flush whatever was left to write from the buffer.
 	Close() error
 	// Reset reinitializes the state of the encoder, allowing it to be reused.
-	Reset(io.Writer)
+	Reset(w io.Writer)
 }
 
 type compressionWriter struct {
