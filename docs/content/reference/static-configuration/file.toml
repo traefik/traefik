@@ -53,6 +53,7 @@
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true
+      maxHeaderBytes = 42
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
           to = "foobar"
@@ -87,6 +88,8 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    username = "foobar"
+    password = "foobar"
     endpoint = "foobar"
     httpClientTimeout = "42s"
     [providers.docker.tls]
@@ -102,6 +105,8 @@
     useBindPortIP = true
     watch = true
     defaultRule = "foobar"
+    username = "foobar"
+    password = "foobar"
     endpoint = "foobar"
     httpClientTimeout = "42s"
     refreshSeconds = "42s"
@@ -153,6 +158,7 @@
     labelSelector = "foobar"
     throttleDuration = "42s"
     experimentalChannel = true
+    nativeLBByDefault = true
     [providers.kubernetesGateway.statusAddress]
       ip = "foobar"
       hostname = "foobar"
@@ -198,6 +204,8 @@
     exposedByDefault = true
     refreshInterval = "42s"
     allowEmptyServices = true
+    watch = true
+    throttleDuration = "42s"
     namespaces = ["foobar", "foobar"]
     [providers.nomad.endpoint]
       address = "foobar"
@@ -335,6 +343,7 @@
     addServicesLabels = true
     explicitBoundaries = [42.0, 42.0]
     pushInterval = "42s"
+    serviceName = "foobar"
     [metrics.otlp.grpc]
       endpoint = "foobar"
       insecure = true
@@ -439,6 +448,9 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      caCertificates = ["foobar", "foobar"]
+      caSystemCertPool = true
+      caServerName = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
@@ -459,6 +471,9 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      caCertificates = ["foobar", "foobar"]
+      caSystemCertPool = true
+      caServerName = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
@@ -498,6 +513,8 @@
       [experimental.localPlugins.LocalDescriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+  [experimental.fastProxy]
+    debug = true
 
 [core]
   defaultRuleSyntax = "foobar"

@@ -16,9 +16,11 @@ import (
 
 const typeName = "Compress"
 
-// DefaultMinSize is the default minimum size (in bytes) required to enable compression.
+// defaultMinSize is the default minimum size (in bytes) required to enable compression.
 // See https://github.com/klauspost/compress/blob/9559b037e79ad673c71f6ef7c732c00949014cd2/gzhttp/compress.go#L47.
-const DefaultMinSize = 1024
+const defaultMinSize = 1024
+
+var defaultSupportedEncodings = []string{zstdName, brotliName, gzipName}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -27,6 +29,7 @@ type compress struct {
 	excludes        []string
 	includes        []string
 	minSize         int
+	encodings       []string
 	defaultEncoding string
 
 	brotliHandler http.Handler
@@ -62,9 +65,21 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		includes = append(includes, mediaType)
 	}
 
-	minSize := DefaultMinSize
+	minSize := defaultMinSize
 	if conf.MinResponseBodyBytes > 0 {
 		minSize = conf.MinResponseBodyBytes
+	}
+
+	if len(conf.Encodings) == 0 {
+		return nil, errors.New("at least one encoding must be specified")
+	}
+	for _, encoding := range conf.Encodings {
+		if !slices.Contains(defaultSupportedEncodings, encoding) {
+			return nil, fmt.Errorf("unsupported encoding: %s", encoding)
+		}
+	}
+	if conf.DefaultEncoding != "" && !slices.Contains(conf.Encodings, conf.DefaultEncoding) {
+		return nil, fmt.Errorf("unsupported default encoding: %s", conf.DefaultEncoding)
 	}
 
 	c := &compress{
@@ -73,6 +88,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		excludes:        excludes,
 		includes:        includes,
 		minSize:         minSize,
+		encodings:       conf.Encodings,
 		defaultEncoding: conf.DefaultEncoding,
 	}
 
@@ -131,7 +147,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	c.chooseHandler(getCompressionType(acceptEncoding, c.defaultEncoding), rw, req)
+	c.chooseHandler(getCompressionEncoding(acceptEncoding, c.defaultEncoding, c.encodings), rw, req)
 }
 
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {

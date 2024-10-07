@@ -57,8 +57,17 @@ Activate API directly on the entryPoint named traefik. (Default: ```false```)
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>`:  
 Certificates resolvers configuration. (Default: ```false```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CACERTIFICATES`:  
+Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVER`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVERNAME`:  
+Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASYSTEMCERTPOOL`:  
+Define if the certificates pool must use a copy of the system cert pool. (Default: ```false```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
 Certificates' duration in hours. (Default: ```2160```)
@@ -147,6 +156,9 @@ UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MAXHEADERBYTES`:  
+Maximum size of request headers in bytes. (Default: ```1048576```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 
@@ -215,6 +227,12 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
+
+`TRAEFIK_EXPERIMENTAL_FASTPROXY`:  
+Enable the FastProxy implementation. (Default: ```false```)
+
+`TRAEFIK_EXPERIMENTAL_FASTPROXY_DEBUG`:  
+Enable debug mode for the FastProxy implementation. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
@@ -411,6 +429,9 @@ TLS key
 `TRAEFIK_METRICS_OTLP_PUSHINTERVAL`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
 
+`TRAEFIK_METRICS_OTLP_SERVICENAME`:  
+OTEL service name to use. (Default: ```traefik```)
+
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
@@ -597,6 +618,9 @@ Client timeout for HTTP connections. (Default: ```0```)
 `TRAEFIK_PROVIDERS_DOCKER_NETWORK`:  
 Default Docker network used.
 
+`TRAEFIK_PROVIDERS_DOCKER_PASSWORD`:  
+Password for Basic HTTP authentication.
+
 `TRAEFIK_PROVIDERS_DOCKER_TLS_CA`:  
 TLS CA
 
@@ -611,6 +635,9 @@ TLS key
 
 `TRAEFIK_PROVIDERS_DOCKER_USEBINDPORTIP`:  
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_DOCKER_USERNAME`:  
+Username for Basic HTTP authentication.
 
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch Docker events. (Default: ```true```)
@@ -774,6 +801,9 @@ Kubernetes label selector to select specific GatewayClasses.
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NATIVELBBYDEFAULT`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_HOSTNAME`:  
 Hostname used for Kubernetes Gateway status address.
 
@@ -894,6 +924,12 @@ Interval for polling Nomad API. (Default: ```15```)
 `TRAEFIK_PROVIDERS_NOMAD_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_NOMAD_THROTTLEDURATION`:  
+Watch throttle duration. (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_NOMAD_WATCH`:  
+Watch Nomad Service events. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
 Plugins configuration.
 
@@ -981,6 +1017,9 @@ Client timeout for HTTP connections. (Default: ```0```)
 `TRAEFIK_PROVIDERS_SWARM_NETWORK`:  
 Default Docker network used.
 
+`TRAEFIK_PROVIDERS_SWARM_PASSWORD`:  
+Password for Basic HTTP authentication.
+
 `TRAEFIK_PROVIDERS_SWARM_REFRESHSECONDS`:  
 Polling interval for swarm mode. (Default: ```15```)
 
@@ -998,6 +1037,9 @@ TLS key
 
 `TRAEFIK_PROVIDERS_SWARM_USEBINDPORTIP`:  
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_USERNAME`:  
+Username for Basic HTTP authentication.
 
 `TRAEFIK_PROVIDERS_SWARM_WATCH`:  
 Watch Docker events. (Default: ```true```)

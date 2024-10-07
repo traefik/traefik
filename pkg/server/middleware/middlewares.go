@@ -397,6 +397,15 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	if config.ResponseHeaderModifier != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return headermodifier.NewResponseHeaderModifier(ctx, next, *config.ResponseHeaderModifier, middlewareName), nil
+		}
+	}
+
 	if config.RequestRedirect != nil {
 		if middleware != nil {
 			return nil, badConf

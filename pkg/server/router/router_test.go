@@ -2,10 +2,12 @@ package router
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -18,7 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/tls"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func TestRouterManager_Get(t *testing.T) {
@@ -309,11 +311,12 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			})
 
-			roundTripperManager := service.NewRoundTripperManager(nil)
-			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := tls.NewManager()
+			tlsManager := traefiktls.NewManager()
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
@@ -340,7 +343,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 		serviceConfig    map[string]*dynamic.Service
 		routerConfig     map[string]*dynamic.Router
 		middlewareConfig map[string]*dynamic.Middleware
-		tlsOptions       map[string]tls.Options
+		tlsOptions       map[string]traefiktls.Options
 		expectedError    int
 	}{
 		{
@@ -597,7 +600,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					TLS:         &dynamic.RouterTLSConfig{},
 				},
 			},
-			tlsOptions:    map[string]tls.Options{},
+			tlsOptions:    map[string]traefiktls.Options{},
 			expectedError: 1,
 		},
 		{
@@ -624,9 +627,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			tlsOptions: map[string]tls.Options{
+			tlsOptions: map[string]traefiktls.Options{
 				"broken-tlsOption": {
-					ClientAuth: tls.ClientAuth{
+					ClientAuth: traefiktls.ClientAuth{
 						ClientAuthType: "foobar",
 					},
 				},
@@ -655,9 +658,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					TLS:         &dynamic.RouterTLSConfig{},
 				},
 			},
-			tlsOptions: map[string]tls.Options{
+			tlsOptions: map[string]traefiktls.Options{
 				"default": {
-					ClientAuth: tls.ClientAuth{
+					ClientAuth: traefiktls.ClientAuth{
 						ClientAuthType: "foobar",
 					},
 				},
@@ -682,11 +685,12 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 			})
 
-			roundTripperManager := service.NewRoundTripperManager(nil)
-			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := tls.NewManager()
+			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
@@ -759,11 +763,12 @@ func TestProviderOnMiddlewares(t *testing.T) {
 		},
 	})
 
-	roundTripperManager := service.NewRoundTripperManager(nil)
-	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	tlsManager := tls.NewManager()
+	tlsManager := traefiktls.NewManager()
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
@@ -775,12 +780,20 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	assert.Equal(t, []string{"m1@docker", "m2@docker", "m1@file"}, rtConf.Middlewares["chain@docker"].Chain.Middlewares)
 }
 
-type staticRoundTripperGetter struct {
+type staticTransportManager struct {
 	res *http.Response
 }
 
-func (s staticRoundTripperGetter) Get(name string) (http.RoundTripper, error) {
+func (s staticTransportManager) GetRoundTripper(_ string) (http.RoundTripper, error) {
 	return &staticTransport{res: s.res}, nil
+}
+
+func (s staticTransportManager) GetTLSConfig(_ string) (*tls.Config, error) {
+	panic("implement me")
+}
+
+func (s staticTransportManager) Get(_ string) (*dynamic.ServersTransport, error) {
+	panic("implement me")
 }
 
 type staticTransport struct {
@@ -829,9 +842,9 @@ func BenchmarkRouterServe(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	tlsManager := tls.NewManager()
+	tlsManager := traefiktls.NewManager()
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
@@ -871,7 +884,7 @@ func BenchmarkService(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil)
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
@@ -880,4 +893,14 @@ func BenchmarkService(b *testing.B) {
 	for range b.N {
 		handler.ServeHTTP(w, req)
 	}
+}
+
+type proxyBuilderMock struct{}
+
+func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
+	return http.HandlerFunc(func(responseWriter http.ResponseWriter, req *http.Request) {}), nil
+}
+
+func (p proxyBuilderMock) Update(_ map[string]*dynamic.ServersTransport) {
+	panic("implement me")
 }

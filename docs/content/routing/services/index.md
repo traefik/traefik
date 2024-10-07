@@ -1207,6 +1207,7 @@ http:
 The mirroring is able to mirror requests sent to a service to other services.
 Please note that by default the whole request is buffered in memory while it is being mirrored.
 See the maxBodySize option in the example below for how to modify this behaviour.
+You can also omit the request body by setting the mirrorBody option to `false`.
 
 !!! info "Supported Providers"
 
@@ -1219,6 +1220,9 @@ http:
     mirrored-api:
       mirroring:
         service: appv1
+        # mirrorBody defines whether the request body should be mirrored.
+        # Default value is true.
+        mirrorBody: false
         # maxBodySize is the maximum size allowed for the body of the request.
         # If the body is larger, the request is not mirrored.
         # Default value is -1, which means unlimited size.
@@ -1248,6 +1252,9 @@ http:
       # If the body is larger, the request is not mirrored.
       # Default value is -1, which means unlimited size.
       maxBodySize = 1024
+      # mirrorBody defines whether the request body should be mirrored.
+      # Default value is true.
+      mirrorBody = false
     [[http.services.mirrored-api.mirroring.mirrors]]
       name = "appv2"
       percent = 10

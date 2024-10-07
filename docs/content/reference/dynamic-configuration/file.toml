@@ -82,6 +82,7 @@
     [http.services.Service03]
       [http.services.Service03.mirroring]
         service = "foobar"
+        mirrorBody = true
         maxBodySize = 42
 
         [[http.services.Service03.mirroring.mirrors]]
@@ -143,6 +144,7 @@
         excludedContentTypes = ["foobar", "foobar"]
         includedContentTypes = ["foobar", "foobar"]
         minResponseBodyBytes = 42
+        encodings = ["foobar", "foobar"]
         defaultEncoding = "foobar"
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]
@@ -167,6 +169,7 @@
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
+        headerField = "foobar"
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
@@ -224,12 +227,14 @@
         [http.middlewares.Middleware13.ipAllowList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
     [http.middlewares.Middleware14]
       [http.middlewares.Middleware14.ipWhiteList]
         sourceRange = ["foobar", "foobar"]
         [http.middlewares.Middleware14.ipWhiteList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
     [http.middlewares.Middleware15]
       [http.middlewares.Middleware15.inFlightReq]
         amount = 42
@@ -239,6 +244,7 @@
           [http.middlewares.Middleware15.inFlightReq.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
     [http.middlewares.Middleware16]
       [http.middlewares.Middleware16.passTLSClientCert]
         pem = true
@@ -283,6 +289,7 @@
           [http.middlewares.Middleware18.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
     [http.middlewares.Middleware19]
       [http.middlewares.Middleware19.redirectRegex]
         regex = "foobar"

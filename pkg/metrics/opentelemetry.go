@@ -207,7 +207,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 	}
 
 	res, err := resource.New(ctx,
-		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
+		resource.WithAttributes(semconv.ServiceNameKey.String(config.ServiceName)),
 		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
 		resource.WithFromEnv(),
 		resource.WithTelemetrySDK(),

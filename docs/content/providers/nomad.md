@@ -56,6 +56,8 @@ _Optional, Default=15s_
 
 Defines the polling interval.
 
+!!! note "This option is ignored when the [watch](#watch) mode is enabled."
+
 ```yaml tab="File (YAML)"
 providers:
   nomad:
@@ -71,6 +73,62 @@ providers:
 
 ```bash tab="CLI"
 --providers.nomad.refreshInterval=30s
+# ...
+```
+
+### `watch`
+
+_Optional, Default=false_
+
+Enables the watch mode to refresh the configuration on a per-event basis.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    watch: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  watch = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.watch
+# ...
+```
+
+### `throttleDuration`
+
+_Optional, Default=0s_
+
+The `throttleDuration` option defines how often the provider is allowed to handle service events from Nomad.
+This prevents a Nomad cluster that updates many times per second from continuously changing your Traefik configuration.
+
+If left empty, the provider does not apply any throttling and does not drop any Nomad service events.
+
+The value of `throttleDuration` should be provided in seconds or as a valid duration format,
+see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+
+!!! warning "This option is only compatible with the [watch](#watch) mode."
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    throttleDuration: 2s
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  throttleDuration = "2s"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.throttleDuration=2s
 # ...
 ```
 

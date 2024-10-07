@@ -14,25 +14,25 @@ import (
 func TestRequestHeaderModifier(t *testing.T) {
 	testCases := []struct {
 		desc            string
-		config          dynamic.RequestHeaderModifier
+		config          dynamic.HeaderModifier
 		requestHeaders  http.Header
 		expectedHeaders http.Header
 	}{
 		{
 			desc:            "no config",
-			config:          dynamic.RequestHeaderModifier{},
+			config:          dynamic.HeaderModifier{},
 			expectedHeaders: map[string][]string{},
 		},
 		{
 			desc: "set header",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Set: map[string]string{"Foo": "Bar"},
 			},
 			expectedHeaders: map[string][]string{"Foo": {"Bar"}},
 		},
 		{
 			desc: "set header with existing headers",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Set: map[string]string{"Foo": "Bar"},
 			},
 			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
@@ -40,7 +40,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 		},
 		{
 			desc: "set multiple headers with existing headers",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Set: map[string]string{"Foo": "Bar", "Bar": "Foo"},
 			},
 			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foobar"}},
@@ -48,14 +48,14 @@ func TestRequestHeaderModifier(t *testing.T) {
 		},
 		{
 			desc: "add header",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Add: map[string]string{"Foo": "Bar"},
 			},
 			expectedHeaders: map[string][]string{"Foo": {"Bar"}},
 		},
 		{
 			desc: "add header with existing headers",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Add: map[string]string{"Foo": "Bar"},
 			},
 			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
@@ -63,7 +63,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 		},
 		{
 			desc: "add multiple headers with existing headers",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Add: map[string]string{"Foo": "Bar", "Bar": "Foo"},
 			},
 			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foobar"}},
@@ -71,14 +71,14 @@ func TestRequestHeaderModifier(t *testing.T) {
 		},
 		{
 			desc: "remove header",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Remove: []string{"Foo"},
 			},
 			expectedHeaders: map[string][]string{},
 		},
 		{
 			desc: "remove header with existing headers",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Remove: []string{"Foo"},
 			},
 			requestHeaders:  map[string][]string{"Foo": {"Baz"}, "Bar": {"Foo"}},
@@ -86,7 +86,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 		},
 		{
 			desc: "remove multiple headers with existing headers",
-			config: dynamic.RequestHeaderModifier{
+			config: dynamic.HeaderModifier{
 				Remove: []string{"Foo", "Bar"},
 			},
 			requestHeaders:  map[string][]string{"Foo": {"Bar"}, "Bar": {"Foo"}, "Baz": {"Bar"}},
@@ -106,11 +106,11 @@ func TestRequestHeaderModifier(t *testing.T) {
 			handler := NewRequestHeaderModifier(context.Background(), next, test.config, "foo-request-header-modifier")
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-			if test.requestHeaders != nil {
-				req.Header = test.requestHeaders
+			for h, v := range test.requestHeaders {
+				req.Header[h] = v
 			}
-
 			resp := httptest.NewRecorder()
+
 			handler.ServeHTTP(resp, req)
 
 			assert.Equal(t, test.expectedHeaders, gotHeaders)

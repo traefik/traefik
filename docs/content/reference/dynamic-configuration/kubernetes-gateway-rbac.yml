@@ -16,6 +16,7 @@ rules:
     resources:
       - services
       - secrets
+      - configmaps
     verbs:
       - get
       - list
@@ -33,9 +34,11 @@ rules:
       - gatewayclasses
       - gateways
       - httproutes
-      - referencegrants
+      - grpcroutes
       - tcproutes
       - tlsroutes
+      - referencegrants
+      - backendtlspolicies
     verbs:
       - get
       - list
@@ -46,8 +49,11 @@ rules:
       - gatewayclasses/status
       - gateways/status
       - httproutes/status
+      - grpcroutes/status
       - tcproutes/status
       - tlsroutes/status
+      - referencegrants/status
+      - backendtlspolicies/status
     verbs:
       - update
 

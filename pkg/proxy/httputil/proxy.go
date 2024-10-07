@@ -1,4 +1,4 @@
-package service
+package httputil
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval ti
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
-		ErrorHandler:  errorHandler,
+		ErrorHandler:  ErrorHandler,
 	}
 }
 
@@ -93,8 +93,9 @@ func isWebSocketUpgrade(req *http.Request) bool {
 		strings.EqualFold(req.Header.Get("Upgrade"), "websocket")
 }
 
-func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
-	statusCode := computeStatusCode(err)
+// ErrorHandler is the http.Handler called when something goes wrong when forwarding the request.
+func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
+	statusCode := ComputeStatusCode(err)
 
 	logger := log.Ctx(req.Context())
 	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
@@ -105,7 +106,8 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	}
 }
 
-func computeStatusCode(err error) int {
+// ComputeStatusCode computes the HTTP status code according to the given error.
+func ComputeStatusCode(err error) int {
 	switch {
 	case errors.Is(err, io.EOF):
 		return http.StatusBadGateway
