@@ -49,10 +49,8 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 			}
 
 			for _, listener := range gatewayListeners {
-				accepted := true
-				if !matchListener(listener, route.Namespace, parentRef) {
-					accepted = false
-				}
+				accepted := matchListener(listener, parentRef)
+
 				if accepted && !allowRoute(listener, route.Namespace, kindGRPCRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
