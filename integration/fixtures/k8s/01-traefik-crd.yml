@@ -249,7 +249,7 @@ spec:
                                     description: Name defines the Cookie name.
                                     type: string
                                   path:
-                                    description: |- 
+                                    description: |-
                                       When path is set the cookie will only be sent for requests to the given path or subpaths.
                                       When not provided the cookie will be sent on every request to the domain.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
@@ -1147,7 +1147,7 @@ spec:
                                 description: Name defines the Cookie name.
                                 type: string
                               path:
-                                description: |- 
+                                description: |-
                                   When path is set the cookie will only be sent for requests to the given path or subpaths.
                                   When not provided the cookie will be sent on every request to the domain.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
@@ -2706,7 +2706,7 @@ spec:
                                   description: Name defines the Cookie name.
                                   type: string
                                 path:
-                                  description: |- 
+                                  description: |-
                                     When path is set the cookie will only be sent for requests to the given path or subpaths.
                                     When not provided the cookie will be sent on every request to the domain.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
@@ -2819,7 +2819,7 @@ spec:
                             description: Name defines the Cookie name.
                             type: string
                           path:
-                            description: |- 
+                            description: |-
                               When path is set the cookie will only be sent for requests to the given path or subpaths.
                               When not provided the cookie will be sent on every request to the domain.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
@@ -3008,7 +3008,7 @@ spec:
                                   description: Name defines the Cookie name.
                                   type: string
                                 path:
-                                  description: |- 
+                                  description: |-
                                     When path is set the cookie will only be sent for requests to the given path or subpaths.
                                     When not provided the cookie will be sent on every request to the domain.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
@@ -3061,7 +3061,7 @@ spec:
                             description: Name defines the Cookie name.
                             type: string
                           path:
-                            description: |- 
+                            description: |-
                               When path is set the cookie will only be sent for requests to the given path or subpaths.
                               When not provided the cookie will be sent on every request to the domain.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
