@@ -796,9 +796,9 @@ func getProtocol(portSpec corev1.ServicePort) (string, error) {
 	switch ap := *portSpec.AppProtocol; ap {
 	case appProtocolH2C:
 		return "h2c", nil
-	case appProtocolWS:
+	case appProtocolHTTP, appProtocolWS:
 		return "http", nil
-	case appProtocolWSS:
+	case appProtocolHTTPS, appProtocolWSS:
 		return "https", nil
 	default:
 		return "", fmt.Errorf("unsupported application protocol %s", ap)
