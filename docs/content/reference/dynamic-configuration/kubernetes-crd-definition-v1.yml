@@ -248,6 +248,12 @@ spec:
                                   name:
                                     description: Name defines the Cookie name.
                                     type: string
+                                  path:
+                                    description: |-
+                                      When path is set the cookie will only be sent for requests to the given path or subpaths.
+                                      When not provided the cookie will be sent on every request to the domain.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
+                                    type: string
                                   sameSite:
                                     description: |-
                                       SameSite defines the same site policy.
@@ -1139,6 +1145,12 @@ spec:
                                 type: integer
                               name:
                                 description: Name defines the Cookie name.
+                                type: string
+                              path:
+                                description: |-
+                                  When path is set the cookie will only be sent for requests to the given path or subpaths.
+                                  When not provided the cookie will be sent on every request to the domain.
+                                  More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                 type: string
                               sameSite:
                                 description: |-
@@ -2693,6 +2705,12 @@ spec:
                                 name:
                                   description: Name defines the Cookie name.
                                   type: string
+                                path:
+                                  description: |-
+                                    When path is set the cookie will only be sent for requests to the given path or subpaths.
+                                    When not provided the cookie will be sent on every request to the domain.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
+                                  type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
@@ -2799,6 +2817,12 @@ spec:
                             type: integer
                           name:
                             description: Name defines the Cookie name.
+                            type: string
+                          path:
+                            description: |-
+                              When path is set the cookie will only be sent for requests to the given path or subpaths.
+                              When not provided the cookie will be sent on every request to the domain.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
                           sameSite:
                             description: |-
@@ -2983,6 +3007,12 @@ spec:
                                 name:
                                   description: Name defines the Cookie name.
                                   type: string
+                                path:
+                                  description: |-
+                                    When path is set the cookie will only be sent for requests to the given path or subpaths.
+                                    When not provided the cookie will be sent on every request to the domain.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
+                                  type: string
                                 sameSite:
                                   description: |-
                                     SameSite defines the same site policy.
@@ -3029,6 +3059,12 @@ spec:
                             type: integer
                           name:
                             description: Name defines the Cookie name.
+                            type: string
+                          path:
+                            description: |-
+                              When path is set the cookie will only be sent for requests to the given path or subpaths.
+                              When not provided the cookie will be sent on every request to the domain.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
                           sameSite:
                             description: |-
