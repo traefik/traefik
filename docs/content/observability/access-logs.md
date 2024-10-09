@@ -158,7 +158,8 @@ Each field can be set to:
 
 - `keep` to keep the value
 - `drop` to drop the value
-- `redact` to replace the value with "redacted"
+
+Header fields may also optionally be set to `redact` to replace the value with "REDACTED".
 
 The `defaultMode` for `fields.names` is `keep`.
 

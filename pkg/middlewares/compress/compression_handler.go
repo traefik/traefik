@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/zstd"
@@ -45,6 +46,7 @@ type CompressionHandler struct {
 	excludedContentTypes []parsedContentType
 	includedContentTypes []parsedContentType
 	next                 http.Handler
+	writerPool           sync.Pool
 }
 
 // NewCompressionHandler returns a new compressing handler.
@@ -92,7 +94,7 @@ func NewCompressionHandler(cfg Config, next http.Handler) (http.Handler, error) 
 func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add(vary, acceptEncoding)
 
-	compressionWriter, err := newCompressionWriter(c.cfg.Algorithm, rw)
+	compressionWriter, err := c.getCompressionWriter(rw)
 	if err != nil {
 		logger := middlewares.GetLogger(r.Context(), c.cfg.MiddlewareName, typeName)
 		logger.Debug().Msgf("Create compression handler: %v", err)
@@ -100,6 +102,7 @@ func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	defer c.putCompressionWriter(compressionWriter)
 
 	responseWriter := &responseWriter{
 		rw:                   rw,
@@ -130,11 +133,26 @@ type compression interface {
 	// as it would otherwise send some extra "end of compression" bytes.
 	// Close also makes sure to flush whatever was left to write from the buffer.
 	Close() error
+	// Reset reinitializes the state of the encoder, allowing it to be reused.
+	Reset(w io.Writer)
 }
 
 type compressionWriter struct {
 	compression
 	alg string
+}
+
+func (c *CompressionHandler) getCompressionWriter(rw io.Writer) (*compressionWriter, error) {
+	if writer, ok := c.writerPool.Get().(*compressionWriter); ok {
+		writer.compression.Reset(rw)
+		return writer, nil
+	}
+	return newCompressionWriter(c.cfg.Algorithm, rw)
+}
+
+func (c *CompressionHandler) putCompressionWriter(writer *compressionWriter) {
+	writer.Reset(nil)
+	c.writerPool.Put(writer)
 }
 
 func newCompressionWriter(algo string, in io.Writer) (*compressionWriter, error) {

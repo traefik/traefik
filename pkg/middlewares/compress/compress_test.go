@@ -688,39 +688,32 @@ func Test1xxResponses(t *testing.T) {
 	assert.NotEqualValues(t, body, fakeBody)
 }
 
-func BenchmarkCompress(b *testing.B) {
+func BenchmarkCompressGzip(b *testing.B) {
+	runCompressionBenchmark(b, gzipName)
+}
+
+func BenchmarkCompressBrotli(b *testing.B) {
+	runCompressionBenchmark(b, brotliName)
+}
+
+func BenchmarkCompressZstandard(b *testing.B) {
+	runCompressionBenchmark(b, zstdName)
+}
+
+func runCompressionBenchmark(b *testing.B, algorithm string) {
+	b.Helper()
+
 	testCases := []struct {
 		name     string
 		parallel bool
 		size     int
 	}{
-		{
-			name: "2k",
-			size: 2048,
-		},
-		{
-			name: "20k",
-			size: 20480,
-		},
-		{
-			name: "100k",
-			size: 102400,
-		},
-		{
-			name:     "2k parallel",
-			parallel: true,
-			size:     2048,
-		},
-		{
-			name:     "20k parallel",
-			parallel: true,
-			size:     20480,
-		},
-		{
-			name:     "100k parallel",
-			parallel: true,
-			size:     102400,
-		},
+		{"2k", false, 2048},
+		{"20k", false, 20480},
+		{"100k", false, 102400},
+		{"2k parallel", true, 2048},
+		{"20k parallel", true, 20480},
+		{"100k parallel", true, 102400},
 	}
 
 	for _, test := range testCases {
@@ -734,7 +727,7 @@ func BenchmarkCompress(b *testing.B) {
 			handler, _ := New(context.Background(), next, dynamic.Compress{}, "testing")
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
-			req.Header.Set("Accept-Encoding", "gzip")
+			req.Header.Set("Accept-Encoding", algorithm)
 
 			b.ReportAllocs()
 			b.SetBytes(int64(test.size))
@@ -742,7 +735,7 @@ func BenchmarkCompress(b *testing.B) {
 				b.ResetTimer()
 				b.RunParallel(func(pb *testing.PB) {
 					for pb.Next() {
-						runBenchmark(b, req, handler)
+						runBenchmark(b, req, handler, algorithm)
 					}
 				})
 				return
@@ -750,13 +743,13 @@ func BenchmarkCompress(b *testing.B) {
 
 			b.ResetTimer()
 			for range b.N {
-				runBenchmark(b, req, handler)
+				runBenchmark(b, req, handler, algorithm)
 			}
 		})
 	}
 }
 
-func runBenchmark(b *testing.B, req *http.Request, handler http.Handler) {
+func runBenchmark(b *testing.B, req *http.Request, handler http.Handler, algorithm string) {
 	b.Helper()
 
 	res := httptest.NewRecorder()
@@ -765,7 +758,7 @@ func runBenchmark(b *testing.B, req *http.Request, handler http.Handler) {
 		b.Fatalf("Expected 200 but got %d", code)
 	}
 
-	assert.Equal(b, gzipName, res.Header().Get(contentEncodingHeader))
+	assert.Equal(b, algorithm, res.Header().Get(contentEncodingHeader))
 }
 
 func generateBytes(length int) []byte {
