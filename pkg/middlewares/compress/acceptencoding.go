@@ -1,6 +1,7 @@
 package compress
 
 import (
+	"cmp"
 	"slices"
 	"strconv"
 	"strings"
@@ -19,7 +20,7 @@ const (
 
 type Encoding struct {
 	Type   string
-	Weight *float64
+	Weight float64
 }
 
 func getCompressionEncoding(acceptEncoding []string, defaultEncoding string, supportedEncodings []string) string {
@@ -42,11 +43,11 @@ func getCompressionEncoding(acceptEncoding []string, defaultEncoding string, sup
 
 		encoding := encodings[0]
 
-		if encoding.Type == identityName && encoding.Weight != nil && *encoding.Weight == 0 {
+		if encoding.Type == identityName && encoding.Weight == 0 {
 			return notAcceptable
 		}
 
-		if encoding.Type == wildcardName && encoding.Weight != nil && *encoding.Weight == 0 {
+		if encoding.Type == wildcardName && encoding.Weight == 0 {
 			return notAcceptable
 		}
 
@@ -87,11 +88,13 @@ func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encodin
 				continue
 			}
 
-			var weight *float64
+			// If no "q" parameter is present, the default weight is 1.
+			// https://www.rfc-editor.org/rfc/rfc9110.html#name-quality-values
+			weight := 1.0
 			if len(parsed) > 1 && strings.HasPrefix(parsed[1], "q=") {
 				w, _ := strconv.ParseFloat(strings.TrimPrefix(parsed[1], "q="), 64)
 
-				weight = &w
+				weight = w
 				hasWeight = true
 			}
 
@@ -102,41 +105,9 @@ func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encodin
 		}
 	}
 
-	slices.SortFunc(encodings, compareEncoding)
+	slices.SortFunc(encodings, func(a, b Encoding) int {
+		return cmp.Compare(b.Weight, a.Weight)
+	})
 
 	return encodings, hasWeight
-}
-
-func compareEncoding(a, b Encoding) int {
-	lhs, rhs := a.Weight, b.Weight
-
-	if lhs == nil && rhs == nil {
-		return 0
-	}
-
-	if lhs == nil && *rhs == 0 {
-		return -1
-	}
-
-	if lhs == nil {
-		return 1
-	}
-
-	if rhs == nil && *lhs == 0 {
-		return 1
-	}
-
-	if rhs == nil {
-		return -1
-	}
-
-	if *lhs < *rhs {
-		return 1
-	}
-
-	if *lhs > *rhs {
-		return -1
-	}
-
-	return 0
 }
