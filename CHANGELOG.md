@@ -1,3 +1,15 @@
+## [v3.1.6](https://github.com/traefik/traefik/tree/v3.1.6) (2024-10-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.5...v3.1.6)
+
+**Bug fixes:**
+- **[middleware]** Reuse compression writers ([#11168](https://github.com/traefik/traefik/pull/11168) by [michelheusschen](https://github.com/michelheusschen))
+- **[middleware]** Use correct default weight in Accept-Encoding ([#11084](https://github.com/traefik/traefik/pull/11084) by [michelheusschen](https://github.com/michelheusschen))
+- **[plugins]** Close wasm middleware to prevent memory leak ([#11151](https://github.com/traefik/traefik/pull/11151) by [ttys3](https://github.com/ttys3))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#11179](https://github.com/traefik/traefik/pull/11179) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.1 ([#11174](https://github.com/traefik/traefik/pull/11174) by [mmatur](https://github.com/mmatur))
+
 ## [v2.11.12](https://github.com/traefik/traefik/tree/v2.11.12) (2024-10-09)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.11...v2.11.12)
 
@@ -16,6 +28,8 @@
 **Bug fixes:**
 - **[k8s/ingress,k8s]** Disable IngressClass lookup when disableClusterScopeResources is enabled ([#11111](https://github.com/traefik/traefik/pull/11111) by [jnoordsij](https://github.com/jnoordsij))
 - **[server]** Rework condition to not log on timeout ([#11132](https://github.com/traefik/traefik/pull/11132) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
 - Merge branch v2.11 into v3.1 ([#11149](https://github.com/traefik/traefik/pull/11149) by [kevinpollet](https://github.com/kevinpollet))
 - Merge branch v2.11 into v3.1 ([#11142](https://github.com/traefik/traefik/pull/11142) by [rtribotte](https://github.com/rtribotte))
 
