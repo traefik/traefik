@@ -1,13 +1,10 @@
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
-TAG_NAME := $(shell git tag -l --contains HEAD)
+TAG_NAME := $(shell git describe --abbrev=0 --tags --exact-match)
 SHA := $(shell git rev-parse HEAD)
 VERSION_GIT := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
 VERSION := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
 
-GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
-
-REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 BIN_NAME := traefik
 CODENAME ?= cheddar
 

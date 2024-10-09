@@ -6,6 +6,7 @@ script_dir="$( cd "$( dirname "${0}" )" && pwd -P)"
 
 if command -v shellcheck
 then
+    exit_code=0
     # The list of shell script come from the (grep ...) command, feeding the loop
     while IFS= read -r script_to_check
     do
@@ -18,7 +19,13 @@ then
         | grep -v '.git/' | grep -v 'vendor/'  | grep -v 'node_modules/' \
         | cut -d':' -f1
     )
-    wait # Wait for all background command to be completed
+    # Wait for all background command to be completed
+    for p in $(jobs -p)
+    do
+        wait "$p" || exit_code=$?
+    done
+    exit $exit_code
 else
     echo "== Command shellcheck not found in your PATH. No shell script checked."
+    exit 1
 fi
