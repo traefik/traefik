@@ -417,14 +417,14 @@ func getGRPCServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	}
 
 	if portSpec.AppProtocol == nil {
-		return "h2c", nil
+		return schemeH2C, nil
 	}
 
 	switch ap := *portSpec.AppProtocol; ap {
 	case appProtocolH2C:
-		return "h2c", nil
+		return schemeH2C, nil
 	case appProtocolHTTPS:
-		return "https", nil
+		return schemeHTTPS, nil
 	default:
 		return "", fmt.Errorf("unsupported application protocol %s", ap)
 	}

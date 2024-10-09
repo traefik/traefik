@@ -50,11 +50,15 @@ const (
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
 
-	appProtocolHTTP = "http"
+	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
-	appProtocolH2C = "kubernetes.io/h2c"
-	appProtocolWS  = "kubernetes.io/ws"
-	appProtocolWSS = "kubernetes.io/wss"
+	appProtocolH2C   = "kubernetes.io/h2c"
+	appProtocolWS    = "kubernetes.io/ws"
+	appProtocolWSS   = "kubernetes.io/wss"
+
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+	schemeH2C   = "h2c"
 )
 
 // Provider holds configurations of the provider.

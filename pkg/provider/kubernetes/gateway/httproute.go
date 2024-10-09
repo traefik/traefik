@@ -721,7 +721,7 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch g
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
-	if filterScheme == "http" || filterScheme == "https" {
+	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
 		port = ptr.To("")
 	}
 	if filter.Port != nil {
@@ -789,20 +789,20 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	}
 
 	if portSpec.AppProtocol == nil {
-		protocol := "http"
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			protocol = "https"
+		protocol := schemeHTTP
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
+			protocol = schemeHTTPS
 		}
 		return protocol, nil
 	}
 
 	switch ap := *portSpec.AppProtocol; ap {
 	case appProtocolH2C:
-		return "h2c", nil
+		return schemeH2C, nil
 	case appProtocolHTTP, appProtocolWS:
-		return "http", nil
+		return schemeHTTP, nil
 	case appProtocolHTTPS, appProtocolWSS:
-		return "https", nil
+		return schemeHTTPS, nil
 	default:
 		return "", fmt.Errorf("unsupported application protocol %s", ap)
 	}
