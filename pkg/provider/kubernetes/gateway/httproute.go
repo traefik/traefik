@@ -468,7 +468,7 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 		}
 	}
 
-	protocol, err := getProtocol(svcPort)
+	protocol, err := getHTTPServiceProtocol(svcPort)
 	if err != nil {
 		return nil, corev1.ServicePort{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -783,7 +783,7 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 	}, nil
 }
 
-func getProtocol(portSpec corev1.ServicePort) (string, error) {
+func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	if portSpec.Protocol != corev1.ProtocolTCP {
 		return "", errors.New("only TCP protocol is supported")
 	}
@@ -799,9 +799,9 @@ func getProtocol(portSpec corev1.ServicePort) (string, error) {
 	switch ap := *portSpec.AppProtocol; ap {
 	case appProtocolH2C:
 		return "h2c", nil
-	case appProtocolWS:
+	case appProtocolHTTP, appProtocolWS:
 		return "http", nil
-	case appProtocolWSS:
+	case appProtocolHTTPS, appProtocolWSS:
 		return "https", nil
 	default:
 		return "", fmt.Errorf("unsupported application protocol %s", ap)
