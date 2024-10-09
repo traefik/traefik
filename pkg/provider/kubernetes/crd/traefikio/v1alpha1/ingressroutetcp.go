@@ -26,6 +26,10 @@ type RouteTCP struct {
 	// Match defines the router's rule.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rule_1
 	Match string `json:"match"`
+	// Kind defines the kind of the route.
+	// Rule is the only supported kind.
+	// +kubebuilder:validation:Enum=Rule
+	Kind string `json:"kind"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
 	Priority int `json:"priority,omitempty"`
