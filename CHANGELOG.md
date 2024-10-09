@@ -1,3 +1,15 @@
+## [v2.11.12](https://github.com/traefik/traefik/tree/v2.11.12) (2024-10-09)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.11...v2.11.12)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress to dbd6c381492a ([#11162](https://github.com/traefik/traefik/pull/11162) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Upgrade to node 22.9 and yarn lock to fix vulnerabilities ([#11173](https://github.com/traefik/traefik/pull/11173) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Adopt a layout for the large amount of entrypoint port numbers ([#11157](https://github.com/traefik/traefik/pull/11157) by [framebassman](https://github.com/framebassman))
+
+**Documentation:**
+- **[accesslogs]** Clarify that only header fields may be redacted in access-logs ([#11139](https://github.com/traefik/traefik/pull/11139) by [mattbnz](https://github.com/mattbnz))
+- Update business callout ([#11172](https://github.com/traefik/traefik/pull/11172) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v3.1.5](https://github.com/traefik/traefik/tree/v3.1.5) (2024-10-02)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.4...v3.1.5)
 
