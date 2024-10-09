@@ -27,6 +27,7 @@ type basicAuth struct {
 	headerField       string
 	removeHeader      bool
 	name              string
+	checkSecret       func(password, secret string) bool
 	singleflightGroup *singleflight.Group
 }
 
@@ -45,6 +46,7 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		headerField:       authConfig.HeaderField,
 		removeHeader:      authConfig.RemoveHeader,
 		name:              name,
+		checkSecret:       goauth.CheckSecret,
 		singleflightGroup: new(singleflight.Group),
 	}
 
@@ -105,7 +107,7 @@ func (b *basicAuth) checkPassword(user, password string) bool {
 
 	key := password + secret
 	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
-		return goauth.CheckSecret(password, secret), nil
+		return b.checkSecret(password, secret), nil
 	})
 
 	return match.(bool)
