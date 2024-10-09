@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -337,14 +338,15 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 		}
 	}
 
-	if svcPort.AppProtocol != nil && *svcPort.AppProtocol != appProtocolH2C {
+	protocol, err := getGRPCServiceProtocol(svcPort)
+	if err != nil {
 		return nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only kubernetes.io/h2c appProtocol is supported", namespace, backendRef.Name),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only \"kubernetes.io/h2c\" and \"https\" appProtocol is supported", namespace, backendRef.Name),
 		}
 	}
 
@@ -353,7 +355,7 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
 	return lb, nil
@@ -407,4 +409,23 @@ func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
 	}
 
 	return rules
+}
+
+func getGRPCServiceProtocol(portSpec corev1.ServicePort) (string, error) {
+	if portSpec.Protocol != corev1.ProtocolTCP {
+		return "", errors.New("only TCP protocol is supported")
+	}
+
+	if portSpec.AppProtocol == nil {
+		return schemeH2C, nil
+	}
+
+	switch ap := *portSpec.AppProtocol; ap {
+	case appProtocolH2C:
+		return schemeH2C, nil
+	case appProtocolHTTPS:
+		return schemeHTTPS, nil
+	default:
+		return "", fmt.Errorf("unsupported application protocol %s", ap)
+	}
 }
