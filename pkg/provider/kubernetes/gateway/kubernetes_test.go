@@ -49,6 +49,47 @@ func init() {
 	}
 }
 
+func TestGatewayClassLabelSelector(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
+
+	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	// This is initialized by the Provider init method but this cannot be called in a unit test.
+	client.labelSelector = "name=traefik-internal"
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	p := Provider{
+		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
+		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
+		client:        client,
+	}
+
+	_ = p.loadConfigurationFromGateways(context.Background())
+
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-external", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Empty(t, gw.Status.Addresses)
+
+	gw, err = gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-internal", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Len(t, gw.Status.Addresses, 1)
+	require.NotNil(t, gw.Status.Addresses[0].Type)
+
+	assert.Equal(t, gatev1.IPAddressType, *gw.Status.Addresses[0].Type)
+	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
+}
+
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
 		desc                string

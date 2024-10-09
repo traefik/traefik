@@ -357,7 +357,13 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		}
 	}
 
-	gateways := p.client.ListGateways()
+	var gateways []*gatev1.Gateway
+	for _, gateway := range p.client.ListGateways() {
+		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
+			continue
+		}
+		gateways = append(gateways, gateway)
+	}
 
 	var gatewayListeners []gatewayListener
 	for _, gateway := range gateways {
@@ -365,10 +371,6 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
-
-		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
-			continue
-		}
 
 		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
 	}
