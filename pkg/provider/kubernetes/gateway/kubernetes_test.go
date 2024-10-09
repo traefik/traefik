@@ -6779,127 +6779,171 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 	}
 }
 
-func Test_matchListener(t *testing.T) {
+func Test_matchingGatewayListener(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		gwListener     gatewayListener
-		parentRef      gatev1.ParentReference
+		gwListeners    []gatewayListener
+		parentRefs     []gatev1.ParentReference
 		routeNamespace string
-		wantMatch      bool
+		wantLen        int
 	}{
 		{
 			desc: "Unsupported group",
-			gwListener: gatewayListener{
+			gwListeners: []gatewayListener{{
 				Name:        "foo",
 				GWName:      "gateway",
 				GWNamespace: "default",
-			},
-			parentRef: gatev1.ParentReference{
+			}},
+			parentRefs: []gatev1.ParentReference{{
 				Group: ptr.To(gatev1.Group("foo")),
-			},
-			wantMatch: false,
+			}},
+			wantLen: 0,
 		},
 		{
 			desc: "Unsupported kind",
-			gwListener: gatewayListener{
+			gwListeners: []gatewayListener{{
 				Name:        "foo",
 				GWName:      "gateway",
 				GWNamespace: "default",
-			},
-			parentRef: gatev1.ParentReference{
+			}},
+			parentRefs: []gatev1.ParentReference{{
 				Group: ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:  ptr.To(gatev1.Kind("foo")),
-			},
-			wantMatch: false,
+			}},
+			wantLen: 0,
 		},
 		{
 			desc: "Namespace does not match the listener",
-			gwListener: gatewayListener{
+			gwListeners: []gatewayListener{{
 				Name:        "foo",
 				GWName:      "gateway",
 				GWNamespace: "default",
-			},
-			parentRef: gatev1.ParentReference{
+			}},
+			parentRefs: []gatev1.ParentReference{{
 				Namespace: ptr.To(gatev1.Namespace("foo")),
 				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:      ptr.To(gatev1.Kind("Gateway")),
-			},
-			wantMatch: false,
+			}},
+			wantLen: 0,
 		},
 		{
 			desc: "Route namespace defaulting does not match the listener",
-			gwListener: gatewayListener{
+			gwListeners: []gatewayListener{{
 				Name:        "foo",
 				GWName:      "gateway",
 				GWNamespace: "default",
-			},
+			}},
 			routeNamespace: "foo",
-			parentRef: gatev1.ParentReference{
+			parentRefs: []gatev1.ParentReference{{
 				Group: ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:  ptr.To(gatev1.Kind("Gateway")),
-			},
-			wantMatch: false,
+			}},
+			wantLen: 0,
 		},
 		{
 			desc: "Name does not match the listener",
-			gwListener: gatewayListener{
-				Name:        "foo",
+			gwListeners: []gatewayListener{{
 				GWName:      "gateway",
 				GWNamespace: "default",
-			},
-			parentRef: gatev1.ParentReference{
+			}},
+			parentRefs: []gatev1.ParentReference{{
 				Namespace: ptr.To(gatev1.Namespace("default")),
 				Name:      "foo",
 				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:      ptr.To(gatev1.Kind("Gateway")),
-			},
-			wantMatch: false,
-		},
-		{
-			desc: "SectionName does not match a listener",
-			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
-			},
-			parentRef: gatev1.ParentReference{
-				SectionName: ptr.To(gatev1.SectionName("bar")),
-				Name:        "gateway",
-				Namespace:   ptr.To(gatev1.Namespace("default")),
-				Group:       ptr.To(gatev1.Group(gatev1.GroupName)),
-				Kind:        ptr.To(gatev1.Kind("Gateway")),
-			},
-			wantMatch: false,
+			}},
+			wantLen: 0,
 		},
 		{
 			desc: "Match",
-			gwListener: gatewayListener{
-				Name:        "foo",
+			gwListeners: []gatewayListener{{
 				GWName:      "gateway",
 				GWNamespace: "default",
+			}},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "gateway",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+			}},
+			wantLen: 1,
+		},
+		{
+			desc: "Match with route namespace defaulting",
+			gwListeners: []gatewayListener{{
+				GWName:      "gateway",
+				GWNamespace: "default",
+			}},
+			routeNamespace: "default",
+			parentRefs: []gatev1.ParentReference{{
+				Name:  "gateway",
+				Group: ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:  ptr.To(gatev1.Kind("Gateway")),
+			}},
+			wantLen: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			listeners := matchingGatewayListeners(test.gwListeners, test.routeNamespace, test.parentRefs)
+			assert.Len(t, listeners, test.wantLen)
+		})
+	}
+}
+
+func Test_matchListener(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		gwListener gatewayListener
+		parentRef  gatev1.ParentReference
+		wantMatch  bool
+	}{
+		{
+			desc: "Section do not match",
+			gwListener: gatewayListener{
+				Name: "foo",
+				Port: gatev1.PortNumber(80),
+			},
+			parentRef: gatev1.ParentReference{
+				SectionName: ptr.To(gatev1.SectionName("bar")),
+				Port:        ptr.To(gatev1.PortNumber(80)),
+			},
+		},
+		{
+			desc: "Section matches",
+			gwListener: gatewayListener{
+				Name: "foo",
+				Port: gatev1.PortNumber(80),
 			},
 			parentRef: gatev1.ParentReference{
 				SectionName: ptr.To(gatev1.SectionName("foo")),
-				Name:        "gateway",
-				Namespace:   ptr.To(gatev1.Namespace("default")),
-				Group:       ptr.To(gatev1.Group(gatev1.GroupName)),
-				Kind:        ptr.To(gatev1.Kind("Gateway")),
+				Port:        ptr.To(gatev1.PortNumber(80)),
 			},
 			wantMatch: true,
 		},
 		{
-			desc: "Match with route namespace defaulting",
+			desc: "Port do not match",
 			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+				Name: "foo",
+				Port: gatev1.PortNumber(90),
 			},
-			routeNamespace: "default",
 			parentRef: gatev1.ParentReference{
 				SectionName: ptr.To(gatev1.SectionName("foo")),
-				Name:        "gateway",
-				Group:       ptr.To(gatev1.Group(gatev1.GroupName)),
-				Kind:        ptr.To(gatev1.Kind("Gateway")),
+				Port:        ptr.To(gatev1.PortNumber(80)),
+			},
+		},
+		{
+			desc: "Port matches",
+			gwListener: gatewayListener{
+				Name: "foo",
+				Port: gatev1.PortNumber(80),
+			},
+			parentRef: gatev1.ParentReference{
+				SectionName: ptr.To(gatev1.SectionName("foo")),
+				Port:        ptr.To(gatev1.PortNumber(80)),
 			},
 			wantMatch: true,
 		},
@@ -6909,7 +6953,7 @@ func Test_matchListener(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			gotMatch := matchListener(test.gwListener, test.routeNamespace, test.parentRef)
+			gotMatch := matchListener(test.gwListener, test.parentRef)
 			assert.Equal(t, test.wantMatch, gotMatch)
 		})
 	}
