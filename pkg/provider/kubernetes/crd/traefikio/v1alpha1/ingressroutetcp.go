@@ -69,6 +69,9 @@ type TLSTCP struct {
 type ServiceTCP struct {
 	// Name defines the name of the referenced Kubernetes Service.
 	Name string `json:"name"`
+	// Kind defines the kind of the Service.
+	// +kubebuilder:validation:Enum=Service
+	Kind string `json:"kind,omitempty"`
 	// Namespace defines the namespace of the referenced Kubernetes Service.
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
