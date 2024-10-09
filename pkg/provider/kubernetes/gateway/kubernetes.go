@@ -50,6 +50,8 @@ const (
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
 
+	appProtocolHTTP = "http"
+	appProtocolHTTPS = "https"
 	appProtocolH2C = "kubernetes.io/h2c"
 	appProtocolWS  = "kubernetes.io/ws"
 	appProtocolWSS = "kubernetes.io/wss"
