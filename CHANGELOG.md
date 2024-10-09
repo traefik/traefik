@@ -1,3 +1,20 @@
+## [v3.2.0-rc2](https://github.com/traefik/traefik/tree/v3.2.0-rc2) (2024-10-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.2.0-rc2)
+
+**Enhancements:**
+- **[k8s,k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.2.0 ([#11167](https://github.com/traefik/traefik/pull/11167) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Support http and https appProtocol for Kubernetes Service ([#11176](https://github.com/traefik/traefik/pull/11176) by [WillDaSilva](https://github.com/WillDaSilva))
+- **[k8s,k8s/gatewayapi]** Avoid updating Accepted status for routes matching no Gateways ([#11170](https://github.com/traefik/traefik/pull/11170) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Do not update gateway status when not selected by a gateway class ([#11169](https://github.com/traefik/traefik/pull/11169) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Detail CRD update with v3.2 in the migration guide ([#11164](https://github.com/traefik/traefik/pull/11164) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v3.1 into v3.2 ([#11181](https://github.com/traefik/traefik/pull/11181) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.1.6](https://github.com/traefik/traefik/tree/v3.1.6) (2024-10-09)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.5...v3.1.6)
 

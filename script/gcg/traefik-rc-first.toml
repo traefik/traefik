@@ -10,8 +10,8 @@ PreviousRef = "v3.1.0-rc1"
 BaseBranch = "master"
 FutureCurrentRefName = "v3.2.0-rc1"
 
-ThresholdPreviousRef = 10000
-ThresholdCurrentRef = 10000
+ThresholdPreviousRef = 10
+ThresholdCurrentRef = 10
 
 Debug = true
 DisplayLabel = true
