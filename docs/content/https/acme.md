@@ -706,6 +706,34 @@ certificatesResolvers:
 # ...
 ```
 
+### `gracefulPeriod`
+
+_Optional, Default=0_
+
+Time before considering deleting a certificate.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      gracefulPeriod: 2d
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  gracefulPeriod = "2d"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.gracefulPeriod=2d
+# ...
+```
+
 ### `preferredChain`
 
 _Optional, Default=""_
