@@ -32,6 +32,11 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			Str("tls_route", route.Name).
 			Str("namespace", route.Namespace).Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
@@ -48,11 +53,9 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				accepted := true
-				if !matchListener(listener, route.Namespace, parentRef) {
-					accepted = false
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
+
 				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false

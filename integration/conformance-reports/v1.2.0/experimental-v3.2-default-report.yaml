@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 date: '-'
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.2.0-rc2
+gatewayAPIVersion: v1.2.0
 implementation:
   contact:
   - '@traefik/maintainers'
