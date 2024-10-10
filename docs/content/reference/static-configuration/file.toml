@@ -432,6 +432,7 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      gracefulPeriod = "42ns"
       [certificatesResolvers.CertificateResolver0.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
@@ -451,6 +452,7 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      gracefulPeriod = "42ns"
       [certificatesResolvers.CertificateResolver1.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
