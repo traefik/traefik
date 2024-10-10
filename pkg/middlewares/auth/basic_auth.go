@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -26,6 +27,9 @@ type basicAuth struct {
 	headerField  string
 	removeHeader bool
 	name         string
+
+	checkSecret       func(password, secret string) bool
+	singleflightGroup *singleflight.Group
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -38,11 +42,13 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	}
 
 	ba := &basicAuth{
-		next:         next,
-		users:        users,
-		headerField:  authConfig.HeaderField,
-		removeHeader: authConfig.RemoveHeader,
-		name:         name,
+		next:              next,
+		users:             users,
+		headerField:       authConfig.HeaderField,
+		removeHeader:      authConfig.RemoveHeader,
+		name:              name,
+		checkSecret:       goauth.CheckSecret,
+		singleflightGroup: new(singleflight.Group),
 	}
 
 	realm := defaultRealm
@@ -64,10 +70,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	user, password, ok := req.BasicAuth()
 	if ok {
-		secret := b.auth.Secrets(user, b.auth.Realm)
-		if secret == "" || !goauth.CheckSecret(password, secret) {
-			ok = false
-		}
+		ok = b.checkPassword(user, password)
 	}
 
 	logData := accesslog.GetLogData(req)
@@ -95,6 +98,20 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		req.Header.Del(authorizationHeader)
 	}
 	b.next.ServeHTTP(rw, req)
+}
+
+func (b *basicAuth) checkPassword(user, password string) bool {
+	secret := b.auth.Secrets(user, b.auth.Realm)
+	if secret == "" {
+		return false
+	}
+
+	key := password + secret
+	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
+		return b.checkSecret(password, secret), nil
+	})
+
+	return match.(bool)
 }
 
 func (b *basicAuth) secretBasic(user, realm string) string {
