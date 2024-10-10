@@ -26,10 +26,6 @@ type RouteTCP struct {
 	// Match defines the router's rule.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rule_1
 	Match string `json:"match"`
-	// Kind defines the kind of the route.
-	// Rule is the only supported kind.
-	// +kubebuilder:validation:Enum=Rule
-	Kind string `json:"kind"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
 	Priority int `json:"priority,omitempty"`
@@ -69,9 +65,6 @@ type TLSTCP struct {
 type ServiceTCP struct {
 	// Name defines the name of the referenced Kubernetes Service.
 	Name string `json:"name"`
-	// Kind defines the kind of the Service.
-	// +kubebuilder:validation:Enum=Service
-	Kind string `json:"kind,omitempty"`
 	// Namespace defines the namespace of the referenced Kubernetes Service.
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
