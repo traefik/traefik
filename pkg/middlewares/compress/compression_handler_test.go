@@ -162,7 +162,7 @@ func Test_NoBody(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			h := mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: zstdName}, next)
+			h := mustNewCompressionHandler(t, Config{MinSize: 1024}, zstdName, next)
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.Header.Set(acceptEncoding, "zstd")
@@ -181,8 +181,7 @@ func Test_NoBody(t *testing.T) {
 
 func Test_MinSize(t *testing.T) {
 	cfg := Config{
-		MinSize:   128,
-		Algorithm: zstdName,
+		MinSize: 128,
 	}
 
 	var bodySize int
@@ -197,7 +196,7 @@ func Test_MinSize(t *testing.T) {
 		}
 	})
 
-	h := mustNewCompressionHandler(t, cfg, next)
+	h := mustNewCompressionHandler(t, cfg, zstdName, next)
 
 	req, _ := http.NewRequest(http.MethodGet, "/whatever", &bytes.Buffer{})
 	req.Header.Add(acceptEncoding, "zstd")
@@ -224,7 +223,7 @@ func Test_MultipleWriteHeader(t *testing.T) {
 		rw.WriteHeader(http.StatusNotFound)
 	})
 
-	h := mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: zstdName}, next)
+	h := mustNewCompressionHandler(t, Config{MinSize: 1024}, zstdName, next)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set(acceptEncoding, "zstd")
@@ -239,12 +238,14 @@ func Test_FlushBeforeWrite(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		cfg            Config
+		algo           string
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -252,7 +253,8 @@ func Test_FlushBeforeWrite(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -272,7 +274,7 @@ func Test_FlushBeforeWrite(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, next))
+			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
 			defer srv.Close()
 
 			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
@@ -302,12 +304,14 @@ func Test_FlushAfterWrite(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		cfg            Config
+		algo           string
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -315,7 +319,8 @@ func Test_FlushAfterWrite(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -338,7 +343,7 @@ func Test_FlushAfterWrite(t *testing.T) {
 				}
 			})
 
-			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, next))
+			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
 			defer srv.Close()
 
 			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
@@ -368,12 +373,14 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		cfg            Config
+		algo           string
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -381,7 +388,8 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -400,7 +408,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 				rw.(http.Flusher).Flush()
 			})
 
-			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, next))
+			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
 			defer srv.Close()
 
 			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
@@ -430,12 +438,14 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		cfg            Config
+		algo           string
 		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
 			desc: "brotli",
-			cfg:  Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return brotli.NewReader(reader), nil
 			},
@@ -443,7 +453,8 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 		},
 		{
 			desc: "zstd",
-			cfg:  Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Test"},
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
 			readerBuilder: func(reader io.Reader) (io.Reader, error) {
 				return zstd.NewReader(reader)
 			},
@@ -461,7 +472,7 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 				rw.(http.Flusher).Flush()
 			})
 
-			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, next))
+			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
 			defer srv.Close()
 
 			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
@@ -556,7 +567,6 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -568,7 +578,7 @@ func Test_ExcludedContentTypes(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			h := mustNewCompressionHandler(t, cfg, next)
+			h := mustNewCompressionHandler(t, cfg, zstdName, next)
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set(acceptEncoding, zstdName)
@@ -667,7 +677,6 @@ func Test_IncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -679,7 +688,7 @@ func Test_IncludedContentTypes(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			h := mustNewCompressionHandler(t, cfg, next)
+			h := mustNewCompressionHandler(t, cfg, zstdName, next)
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set(acceptEncoding, zstdName)
@@ -778,7 +787,6 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
-				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -803,7 +811,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 				}
 			})
 
-			h := mustNewCompressionHandler(t, cfg, next)
+			h := mustNewCompressionHandler(t, cfg, zstdName, next)
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set(acceptEncoding, zstdName)
@@ -903,7 +911,6 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 			cfg := Config{
 				MinSize:              1024,
 				IncludedContentTypes: test.includedContentTypes,
-				Algorithm:            zstdName,
 			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -928,7 +935,7 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 				}
 			})
 
-			h := mustNewCompressionHandler(t, cfg, next)
+			h := mustNewCompressionHandler(t, cfg, zstdName, next)
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set(acceptEncoding, zstdName)
@@ -959,10 +966,26 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 	}
 }
 
-func mustNewCompressionHandler(t *testing.T, cfg Config, next http.Handler) http.Handler {
+func mustNewCompressionHandler(t *testing.T, cfg Config, algo string, next http.Handler) http.Handler {
 	t.Helper()
 
-	w, err := NewCompressionHandler(cfg, next)
+	var writer NewCompressionWriter
+	switch algo {
+	case zstdName:
+		writer = func(rw http.ResponseWriter) (CompressionWriter, string, error) {
+			writer, err := zstd.NewWriter(rw)
+			require.NoError(t, err)
+			return writer, zstdName, nil
+		}
+	case brotliName:
+		writer = func(rw http.ResponseWriter) (CompressionWriter, string, error) {
+			return brotli.NewWriter(rw), brotliName, nil
+		}
+	default:
+		assert.Failf(t, "unknown compression algorithm: %s", algo)
+	}
+
+	w, err := NewCompressionHandler(cfg, writer, next)
 	require.NoError(t, err)
 
 	return w
@@ -981,7 +1004,7 @@ func newTestBrotliHandler(t *testing.T, body []byte) http.Handler {
 		require.NoError(t, err)
 	})
 
-	return mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: brotliName, MiddlewareName: "Compress"}, next)
+	return mustNewCompressionHandler(t, Config{MinSize: 1024, MiddlewareName: "Compress"}, brotliName, next)
 }
 
 func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
@@ -997,7 +1020,7 @@ func newTestZstandardHandler(t *testing.T, body []byte) http.Handler {
 		require.NoError(t, err)
 	})
 
-	return mustNewCompressionHandler(t, Config{MinSize: 1024, Algorithm: zstdName, MiddlewareName: "Compress"}, next)
+	return mustNewCompressionHandler(t, Config{MinSize: 1024, MiddlewareName: "Compress"}, zstdName, next)
 }
 
 func Test_ParseContentType_equals(t *testing.T) {
