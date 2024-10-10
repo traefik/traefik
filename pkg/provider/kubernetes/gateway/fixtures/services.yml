@@ -96,6 +96,7 @@ spec:
     - name: web
       protocol: TCP
       port: 8080
+      appProtocol: http
       targetPort: web
   selector:
     app: containous
@@ -131,6 +132,8 @@ metadata:
 spec:
   ports:
     - name: websecure
+      protocol: TCP
+      appProtocol: https
       port: 443
       targetPort: websecure
   selector:

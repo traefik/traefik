@@ -1,0 +1,51 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: traefik-internal
+  labels:
+    name: traefik-internal
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik-internal
+  namespace: default
+spec:
+  gatewayClassName: traefik-internal
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 9080
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: traefik-external
+  labels:
+    name: traefik-external
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik-external
+  namespace: default
+spec:
+  gatewayClassName: traefik-external
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 9080
+      allowedRoutes:
+        namespaces:
+          from: Same
