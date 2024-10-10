@@ -21,12 +21,13 @@ const (
 )
 
 type basicAuth struct {
-	next              http.Handler
-	auth              *goauth.BasicAuth
-	users             map[string]string
-	headerField       string
-	removeHeader      bool
-	name              string
+	next         http.Handler
+	auth         *goauth.BasicAuth
+	users        map[string]string
+	headerField  string
+	removeHeader bool
+	name         string
+
 	checkSecret       func(password, secret string) bool
 	singleflightGroup *singleflight.Group
 }
