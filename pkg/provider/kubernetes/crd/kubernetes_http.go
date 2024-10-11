@@ -55,6 +55,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowCrossNamespace:          p.AllowCrossNamespace,
 			allowExternalNameServices:    p.AllowExternalNameServices,
 			allowEmptyServices:           p.AllowEmptyServices,
+			nativeLB:                     p.NativeLB,
 			nativeLBByDefault:            p.NativeLBByDefault,
 			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
@@ -204,6 +205,7 @@ type configBuilder struct {
 	allowCrossNamespace          bool
 	allowExternalNameServices    bool
 	allowEmptyServices           bool
+	nativeLB                     bool
 	nativeLBByDefault            bool
 	disableClusterScopeResources bool
 }
@@ -431,7 +433,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, nil
 	}
 
-	nativeLB := c.nativeLBByDefault
+	nativeLB := c.nativeLBByDefault || c.nativeLB
 	if svc.NativeLB != nil {
 		nativeLB = *svc.NativeLB
 	}

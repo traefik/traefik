@@ -151,6 +151,7 @@ providers:
     allowExternalNameServices: true
     disableIngressClassLookup: true
     disableClusterScopeResources: true
+    nativeLB: true
     nativeLBByDefault: true
   kubernetesCRD:
     endpoint: foobar
@@ -165,6 +166,7 @@ providers:
     ingressClass: foobar
     throttleDuration: 42s
     allowEmptyServices: true
+    nativeLB: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
   kubernetesGateway:
@@ -183,6 +185,7 @@ providers:
       service:
         name: foobar
         namespace: foobar
+    nativeLB: true
     nativeLBByDefault: true
   rest:
     insecure: true
