@@ -1,6 +1,7 @@
 package forwardedheaders
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/textproto"
@@ -40,17 +41,25 @@ var xHeaders = []string{
 	xRealIP,
 }
 
+type key string
+
+// PeerSocketAddrKey is the peer socket address which only exists in case of a proxy proto connection.
+const PeerSocketAddrKey key = "peerSocketAddr"
+
+// XForwardedForAddr is the previous hop address (trusted) to be added to the X-Forwarded-For header.
+const XForwardedForAddr key = "xForwardedForAddr"
+
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
 // and other relevant headers for a reverse-proxy.
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure          bool
-	trustedIPs        []string
-	connectionHeaders []string
-	ipChecker         *ip.Checker
-	next              http.Handler
-	hostname          string
+	insecure             bool
+	trustedIPs           []string
+	connectionHeaders    []string
+	ipChecker            *ip.Checker
+	next                 http.Handler
+	hostname             string
 }
 
 // NewXForwarded creates a new XForwarded.
@@ -70,12 +79,12 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}
 
 	return &XForwarded{
-		insecure:          insecure,
-		trustedIPs:        trustedIPs,
-		connectionHeaders: connectionHeaders,
-		ipChecker:         ipChecker,
-		next:              next,
-		hostname:          hostname,
+		insecure:             insecure,
+		trustedIPs:           trustedIPs,
+		connectionHeaders:    connectionHeaders,
+		ipChecker:            ipChecker,
+		next:                 next,
+		hostname:             hostname,
 	}, nil
 }
 
@@ -186,11 +195,25 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+	var isTrusted bool
+	forwardedForAddr := r.RemoteAddr
+	if x.isTrustedIP(r.RemoteAddr) {
+		isTrusted = true
+
+		// In case of a ProxyProtocol connection the http.Request#RemoteAddr is the original one.
+		// To check if Forwarded headers are trusted we have to use the peer socket address.
+	} else if peerSocketAddr, ok := r.Context().Value(PeerSocketAddrKey).(string); ok && x.isTrustedIP(peerSocketAddr) {
+		isTrusted = true
+		forwardedForAddr = peerSocketAddr
+	}
+
+	if !x.insecure && !isTrusted {
 		for _, h := range xHeaders {
 			unsafeHeader(r.Header).Del(h)
 		}
 	}
+
+	r = r.WithContext(context.WithValue(r.Context(), XForwardedForAddr, forwardedForAddr))
 
 	x.rewrite(r)
 
