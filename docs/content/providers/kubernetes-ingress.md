@@ -509,6 +509,35 @@ For more information, please check out the `traefik.ingress.kubernetes.io/servic
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
+    nativeLB: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  nativeLB = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.nativeLB=true
+```
+
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+??? warning "Deprecated"
+
+    The Kubernetes Ingress provider option `nativeLBByDefault` has been deprecated in v3.2, and will be removed in the next major version.
+    Please use the `nativeLB` option instead.
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the `traefik.ingress.kubernetes.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-ingress.md#on-service).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
     nativeLBByDefault: true
     # ...
 ```

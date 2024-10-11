@@ -337,9 +337,38 @@ providers:
 --providers.kubernetescrd.allowexternalnameservices=true
 ```
 
+### `nativeLB`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the IngressRoute `nativeLB` option [documentation](../routing/providers/kubernetes-crd.md#load-balancing).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    nativeLB: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  nativeLB = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.nativeLB=true
+```
+
 ### `nativeLBByDefault`
 
 _Optional, Default: false_
+
+??? warning "Deprecated"
+
+    The Kubernetes CRD provider option `nativeLBByDefault` has been deprecated in v3.2, and will be removed in the next major version.
+    Please use the `nativeLB` option instead.
 
 Defines whether to use Native Kubernetes load-balancing mode by default.
 For more information, please check out the IngressRoute `nativeLB` option [documentation](../routing/providers/kubernetes-crd.md#load-balancing).
