@@ -57,5 +57,5 @@ func (b *SmartBuilder) Build(configName string, targetURL *url.URL, shouldObserv
 	if targetURL.Scheme == "h2c" || (targetURL.Scheme == "https" && !serversTransport.DisableHTTP2) {
 		return b.proxyBuilder.Build(configName, targetURL, shouldObserve, passHostHeader, false, flushInterval)
 	}
-	return b.fastProxyBuilder.Build(configName, targetURL, passHostHeader)
+	return b.fastProxyBuilder.Build(configName, targetURL, passHostHeader, false)
 }

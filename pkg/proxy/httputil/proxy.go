@@ -46,11 +46,19 @@ func directorBuilder(target *url.URL, passHostHeader bool, keepPath bool) func(r
 
 		outReq.URL.Path = u.Path
 		if keepPath && target.Path != "" {
-			path, err := url.JoinPath(target.Path, u.Path)
+			joinPath, err := url.JoinPath(target.Path, u.Path)
 			if err != nil {
-				path = u.Path
+				joinPath = u.Path
 			}
-			outReq.URL.Path = path
+			outReq.URL.Path = joinPath
+
+			if target.RawPath != "" {
+				rawPath, err := url.JoinPath(target.RawPath, u.RawPath)
+				if err != nil {
+					rawPath = u.RawPath
+				}
+				outReq.URL.RawPath = rawPath
+			}
 		}
 
 		outReq.URL.RawPath = u.RawPath
