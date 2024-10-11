@@ -367,7 +367,7 @@ _Optional, Default: false_
 
 ??? warning "Deprecated"
 
-    The Kubernetes CRD provider option `nativeLBByDefault` has been deprecated in v3.2, and will be removed in the next major version.
+    The Kubernetes CRD provider option `nativeLBByDefault` has been deprecated in v3.3, and will be removed in the next major version.
     Please use the `nativeLB` option instead.
 
 Defines whether to use Native Kubernetes load-balancing mode by default.
