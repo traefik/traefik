@@ -333,4 +333,57 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
+### `nativeLB`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the IngressRoute `nativeLB` option [documentation](../routing/providers/kubernetes-crd.md#load-balancing).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    nativeLB: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  nativeLB = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.nativeLB=true
+```
+
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+??? warning "Deprecated"
+
+    The Kubernetes CRD provider option `nativeLBByDefault` has been deprecated in v3.2, and will be removed in the next major version.
+    Please use the `nativeLB` option instead.
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the IngressRoute `nativeLB` option [documentation](../routing/providers/kubernetes-crd.md#load-balancing).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.nativeLBByDefault=true
+```
+
 {!traefik-for-business-applications.md!}
