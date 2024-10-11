@@ -639,7 +639,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	prevConnContext := serverHTTP.ConnContext
 	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
 		if proxyProtoAddr, ok := c.RemoteAddr().(proxyProtoAddr); ok {
-			ctx = context.WithValue(ctx, forwardedheaders.PeerSocketAddrKey, proxyProtoAddr.peerSocketAddr)
+			ctx = context.WithValue(ctx, forwardedheaders.PeerSocketAddr, proxyProtoAddr.peerSocketAddr)
 		}
 
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
