@@ -27,7 +27,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
     ```bash
     # Install Gateway API CRDs from the Standard channel.
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
     ```
 
 2. Install/update the Traefik [RBAC](../reference/dynamic-configuration/kubernetes-gateway.md#rbac).
@@ -275,7 +275,7 @@ providers:
 
     ```bash
     # Install Gateway API CRDs from the Experimental channel.
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/experimental-install.yaml
     ```
 
 ### `labelselector`
