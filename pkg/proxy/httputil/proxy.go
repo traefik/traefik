@@ -21,9 +21,9 @@ const StatusClientClosedRequest = 499
 // StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 const StatusClientClosedRequestText = "Client Closed Request"
 
-func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+func buildSingleHostProxy(target *url.URL, passHostHeader bool, keepPath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader),
+		Director:      directorBuilder(target, passHostHeader, keepPath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
@@ -31,7 +31,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval ti
 	}
 }
 
-func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Request) {
+func directorBuilder(target *url.URL, passHostHeader bool, keepPath bool) func(req *http.Request) {
 	return func(outReq *http.Request) {
 		outReq.URL.Scheme = target.Scheme
 		outReq.URL.Host = target.Host
@@ -45,6 +45,14 @@ func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Reques
 		}
 
 		outReq.URL.Path = u.Path
+		if keepPath && target.Path != "" {
+			path, err := url.JoinPath(target.Path, u.Path)
+			if err != nil {
+				path = u.Path
+			}
+			outReq.URL.Path = path
+		}
+
 		outReq.URL.RawPath = u.RawPath
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
