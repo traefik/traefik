@@ -551,6 +551,8 @@ github.com/hashicorp/serf v0.8.2/go.mod h1:6hOLApaqBFA1NXqRQAsxw9QxuDEvNxSQRwA/J
 github.com/hashicorp/serf v0.10.1 h1:Z1H2J60yRKvfDYAOZLd2MU0ND4AH/WDz7xYHDWQsIPY=
 github.com/hashicorp/serf v0.10.1/go.mod h1:yL2t6BqATOLGc5HF7qbFkTfXoPIY0WZdWHfEvMqbG+4=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
+github.com/http-wasm/http-wasm-host-go v0.7.0 h1:+1KrRyOO6tWiDB24QrtSYyDmzFLBBs3jioKaUT0mq1c=
+github.com/http-wasm/http-wasm-host-go v0.7.0/go.mod h1:adXKcLmL7yuavH/e0kBAp7b3TgAHTo/enCduyN5bXGM=
 github.com/huandu/xstrings v1.3.3/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/huandu/xstrings v1.5.0 h1:2ag3IFq9ZDANvthTwTiqSSZLjDc+BedvHPAp5tJy2TI=
 github.com/huandu/xstrings v1.5.0/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
@@ -597,8 +599,8 @@ github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvW
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/klauspost/compress v1.10.3/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
-github.com/klauspost/compress v1.17.11-0.20240927175842-8e14b1b5a913 h1:7s7Xd7zVElAw1qh/eh+tXDNfDNXXj38Tpq54eeG6/BM=
-github.com/klauspost/compress v1.17.11-0.20240927175842-8e14b1b5a913/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
+github.com/klauspost/compress v1.17.11-0.20241004063537-dbd6c381492a h1:cwHOqPB4H4iQq8177kf2SxpjNbcjJ2m3lNwKIe28Hqg=
+github.com/klauspost/compress v1.17.11-0.20241004063537-dbd6c381492a/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
 github.com/klauspost/cpuid/v2 v2.2.5 h1:0E5MSMDEoAulmXNFquVs//DdoomxaoTY1kUhbc/qbZg=
 github.com/klauspost/cpuid/v2 v2.2.5/go.mod h1:Lcz8mBdAVJIBVzewtcLocK12l3Y+JytZYpaMropDUws=
@@ -995,8 +997,8 @@ github.com/testcontainers/testcontainers-go v0.32.0 h1:ug1aK08L3gCHdhknlTTwWjPHP
 github.com/testcontainers/testcontainers-go v0.32.0/go.mod h1:CRHrzHLQhlXUsa5gXjTOfqIEJcrK5+xMDmBr/WMI88E=
 github.com/testcontainers/testcontainers-go/modules/k3s v0.32.0 h1:Z3DTMveNUqeGJZ+CXZhpvI7OF1BS71Ywi3SwoXLZ4Lc=
 github.com/testcontainers/testcontainers-go/modules/k3s v0.32.0/go.mod h1:SYp1WtvNc3n/cg5atO6LvaOd2aqkQYMSDCcWPOUdaZg=
-github.com/tetratelabs/wazero v1.7.2 h1:1+z5nXJNwMLPAWaTePFi49SSTL0IMx/i3Fg8Yc25GDc=
-github.com/tetratelabs/wazero v1.7.2/go.mod h1:ytl6Zuh20R/eROuyDaGPkp82O9C/DJfXAwJfQ3X6/7Y=
+github.com/tetratelabs/wazero v1.8.0 h1:iEKu0d4c2Pd+QSRieYbnQC9yiFlMS9D+Jr0LsRmcF4g=
+github.com/tetratelabs/wazero v1.8.0/go.mod h1:yAI0XTsMBhREkM/YDAK/zNou3GoiAce1P6+rp/wQhjs=
 github.com/tidwall/gjson v1.17.0 h1:/Jocvlh98kcTfpN2+JzGQWQcqrPQwDrVEMApx/M5ZwM=
 github.com/tidwall/gjson v1.17.0/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/match v1.1.1 h1:+Ho715JplO36QYgwN9PGYNhgZvoUSc9X2c80KVTi+GA=
@@ -1011,8 +1013,6 @@ github.com/tklauser/numcpus v0.6.1/go.mod h1:1XfjsgE2zo8GVw7POkMbHENHzVg3GzmoZ9f
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/traefik/grpc-web v0.16.0 h1:eeUWZaFg6ZU0I9dWOYE2D5qkNzRBmXzzuRlxdltascY=
 github.com/traefik/grpc-web v0.16.0/go.mod h1:2ttniSv7pTgBWIU2HZLokxRfFX3SA60c/DTmQQgVml4=
-github.com/traefik/http-wasm-host-go v0.0.0-20240618100324-3c53dcaa1a70 h1:I+oBnV0orhmasb87yaX54tOAfqrV9+yKoQ1Cum5mq8w=
-github.com/traefik/http-wasm-host-go v0.0.0-20240618100324-3c53dcaa1a70/go.mod h1:zQB3w+df4hryDEqBorGyA1DwPJ86LfKIASNLFuj6CuI=
 github.com/traefik/paerser v0.2.1 h1:LFgeak1NmjEHF53c9ENdXdL1UMkF/lD5t+7Evsz4hH4=
 github.com/traefik/paerser v0.2.1/go.mod h1:7BBDd4FANoVgaTZG+yh26jI6CA2nds7D/4VTEdIsh24=
 github.com/traefik/yaegi v0.16.1 h1:f1De3DVJqIDKmnasUF6MwmWv1dSEEat0wcpXhD2On3E=
@@ -1542,8 +1542,8 @@ rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8
 rsc.io/pdf v0.1.1/go.mod h1:n8OzWcQ6Sp37PL01nO98y4iUCRdTGarVfzxY20ICaU4=
 sigs.k8s.io/controller-runtime v0.18.0 h1:Z7jKuX784TQSUL1TIyeuF7j8KXZ4RtSX0YgtjKcSTME=
 sigs.k8s.io/controller-runtime v0.18.0/go.mod h1:tuAt1+wbVsXIT8lPtk5RURxqAnq7xkpv2Mhttslg7Hw=
-sigs.k8s.io/gateway-api v1.2.0-rc2 h1:v7V7JzaBuzwOLWWyyqlkqiqBi3ANBuZGV+uyyKzwmE8=
-sigs.k8s.io/gateway-api v1.2.0-rc2/go.mod h1:EpNfEXNjiYfUJypf0eZ0P5iXA9ekSGWaS1WgPaM42X0=
+sigs.k8s.io/gateway-api v1.2.0 h1:LrToiFwtqKTKZcZtoQPTuo3FxhrrhTgzQG0Te+YGSo8=
+sigs.k8s.io/gateway-api v1.2.0/go.mod h1:EpNfEXNjiYfUJypf0eZ0P5iXA9ekSGWaS1WgPaM42X0=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd/go.mod h1:B8JuhiUyNFVKdsE8h686QcCxMaH6HrOAZj4vswFpcB0=
 sigs.k8s.io/structured-merge-diff/v4 v4.4.1 h1:150L+0vs/8DA78h1u02ooW1/fFq/Lwr+sGiqlzvrtq4=
