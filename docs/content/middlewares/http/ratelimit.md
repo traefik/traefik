@@ -31,8 +31,8 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    average: 100
-    burst: 200
+      average: 100
+      burst: 200
 ```
 
 ```yaml tab="Consul Catalog"
@@ -47,19 +47,19 @@ spec:
 # In addition, a burst of 200 requests is allowed.
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        average: 100
-        burst: 200
+      test-ratelimit:
+          rateLimit:
+              average: 100
+              burst: 200
 ```
 
 ```toml tab="File (TOML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    average = 100
-    burst = 200
+[http.middlewares.test-ratelimit.rateLimit]
+  average = 100
+  burst = 200
 ```
 
 ## Configuration Options
@@ -87,7 +87,7 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    average: 100
+      average: 100
 ```
 
 ```yaml tab="Consul Catalog"
@@ -99,16 +99,16 @@ spec:
 # 100 reqs/s
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        average: 100
+      test-ratelimit:
+          rateLimit:
+              average: 100
 ```
 
 ```toml tab="File (TOML)"
 # 100 reqs/s
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    average = 100
+[http.middlewares.test-ratelimit.rateLimit]
+  average = 100
 ```
 
 ### `period`
@@ -136,8 +136,8 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    period: 1m
-    average: 6
+      period: 1m
+      average: 6
 ```
 
 ```yaml tab="Consul Catalog"
@@ -150,18 +150,18 @@ spec:
 # 6 reqs/minute
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        average: 6
-        period: 1m
+      test-ratelimit:
+          rateLimit:
+              average: 6
+              period: 1m
 ```
 
 ```toml tab="File (TOML)"
 # 6 reqs/minute
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    average = 6
-    period = "1m"
+[http.middlewares.test-ratelimit.rateLimit]
+  average = 6
+  period = "1m"
 ```
 
 ### `burst`
@@ -182,7 +182,7 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    burst: 100
+      burst: 100
 ```
 
 ```yaml tab="Consul Catalog"
@@ -192,15 +192,15 @@ spec:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        burst: 100
+      test-ratelimit:
+          rateLimit:
+              burst: 100
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    burst = 100
+[http.middlewares.test-ratelimit.rateLimit]
+  burst = 100
 ```
 
 ### `sourceCriterion`
@@ -219,21 +219,21 @@ The `ipStrategy` option defines three parameters that configures how Traefik det
 
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and select the IP located at the `depth` position (starting from the right).
 
-- If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
-- `depth` is ignored if its value is less than or equal to 0.
+-   If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
+-   `depth` is ignored if its value is less than or equal to 0.
 
 If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
 See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
 !!! example "Example of Depth & X-Forwarded-For"
 
-    If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used as the criterion is `"12.0.0.1"` (`depth=2`).
+  If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used as the criterion is `"12.0.0.1"` (`depth=2`).
 
-    | `X-Forwarded-For`                       | `depth` | clientIP     |
-    |-----------------------------------------|---------|--------------|
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
+  | `X-Forwarded-For`                       | `depth` | clientIP     |
+  |-----------------------------------------|---------|--------------|
+  | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
+  | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
+  | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -247,9 +247,9 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    sourceCriterion:
-      ipStrategy:
-        depth: 2
+      sourceCriterion:
+          ipStrategy:
+              depth: 2
 ```
 
 ```yaml tab="Consul Catalog"
@@ -259,18 +259,18 @@ spec:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        sourceCriterion:
-          ipStrategy:
-            depth: 2
+      test-ratelimit:
+          rateLimit:
+              sourceCriterion:
+                  ipStrategy:
+                      depth: 2
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion.ipStrategy]
-      depth = 2
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.sourceCriterion.ipStrategy]
+    depth = 2
 ```
 
 ##### `ipStrategy.excludedIPs`
@@ -281,28 +281,28 @@ http:
 
 `excludedIPs` is meant to address two classes of somewhat distinct use-cases:
 
-1. Distinguish IPs which are behind the same (set of) reverse-proxies so that each of them contributes, independently to the others,
-   to its own rate-limit "bucket" (cf the [leaky bucket analogy](https://wikipedia.org/wiki/Leaky_bucket)).
-   In this case, `excludedIPs` should be set to match the list of `X-Forwarded-For IPs` that are to be excluded,
-   in order to find the actual clientIP.
+1.  Distinguish IPs which are behind the same (set of) reverse-proxies so that each of them contributes, independently to the others,
+  to its own rate-limit "bucket" (cf the [leaky bucket analogy](https://wikipedia.org/wiki/Leaky_bucket)).
+  In this case, `excludedIPs` should be set to match the list of `X-Forwarded-For IPs` that are to be excluded,
+  in order to find the actual clientIP.
 
-    !!! example "Each IP as a distinct source"
+  !!! example "Each IP as a distinct source"
 
-        | X-Forwarded-For                | excludedIPs           | clientIP     |
-        |--------------------------------|-----------------------|--------------|
-        | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
-        | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
+       | X-Forwarded-For                | excludedIPs           | clientIP     |
+       |--------------------------------|-----------------------|--------------|
+       | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
+       | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
 
-2. Group together a set of IPs (also behind a common set of reverse-proxies) so that they are considered the same source,
-   and all contribute to the same rate-limit bucket.
+2.  Group together a set of IPs (also behind a common set of reverse-proxies) so that they are considered the same source,
+  and all contribute to the same rate-limit bucket.
 
-    !!! example "Group IPs together as same source"
+  !!! example "Group IPs together as same source"
 
-        |  X-Forwarded-For               |  excludedIPs | clientIP     |
-        |--------------------------------|--------------|--------------|
-        | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
-        | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
-        | `"10.0.0.3,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+       |  X-Forwarded-For               |  excludedIPs | clientIP     |
+       |--------------------------------|--------------|--------------|
+       | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+       | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+       | `"10.0.0.3,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
 
 For completeness, below are additional examples to illustrate how the matching works.
 For a given request the list of `X-Forwarded-For` IPs is checked from most recent to most distant against the `excludedIPs` pool,
@@ -310,11 +310,11 @@ and the first IP that is _not_ in the pool (if any) is returned.
 
 !!! example "Matching for clientIP"
 
-    |  X-Forwarded-For               |  excludedIPs          | clientIP     |
-    |--------------------------------|-----------------------|--------------|
-    | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"11.0.0.1"`          | `"13.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1"`          | `"10.0.0.1,11.0.0.1"` | `""`         |
+  |  X-Forwarded-For               |  excludedIPs          | clientIP     |
+  |--------------------------------|-----------------------|--------------|
+  | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"11.0.0.1"`          | `"13.0.0.1"` |
+  | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
+  | `"10.0.0.1,11.0.0.1"`          | `"10.0.0.1,11.0.0.1"` | `""`         |
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -328,11 +328,11 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    sourceCriterion:
-      ipStrategy:
-        excludedIPs:
-        - 127.0.0.1/32
-        - 192.168.1.7
+      sourceCriterion:
+          ipStrategy:
+              excludedIPs:
+                  - 127.0.0.1/32
+                  - 192.168.1.7
 ```
 
 ```yaml tab="Consul Catalog"
@@ -342,20 +342,20 @@ spec:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        sourceCriterion:
-          ipStrategy:
-            excludedIPs:
-              - "127.0.0.1/32"
-              - "192.168.1.7"
+      test-ratelimit:
+          rateLimit:
+              sourceCriterion:
+                  ipStrategy:
+                      excludedIPs:
+                          - "127.0.0.1/32"
+                          - "192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion.ipStrategy]
-      excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.sourceCriterion.ipStrategy]
+    excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```
 
 ##### `ipStrategy.ipv6Subnet`
@@ -365,17 +365,17 @@ If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed i
 
 This is useful for grouping IPv6 addresses into subnets to prevent bypassing this middleware by obtaining a new IPv6.
 
-- `ipv6Subnet` is ignored if its value is outside of 0-128 interval
+-   `ipv6Subnet` is ignored if its value is outside of 0-128 interval
 
 !!! example "Example of ipv6Subnet"
 
-    If `ipv6Subnet` is provided, the IP is transformed in the following way.
+  If `ipv6Subnet` is provided, the IP is transformed in the following way.
 
-    | `IP`                      | `ipv6Subnet` | clientIP              |
-    |---------------------------|--------------|-----------------------|
-    | `"::abcd:1111:2222:3333"` | `64`         | `"::0:0:0:0"`         |
-    | `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
-    | `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
+  | `IP`                      | `ipv6Subnet` | clientIP              |
+  |---------------------------|--------------|-----------------------|
+  | `"::abcd:1111:2222:3333"` | `64`         | `"::0:0:0:0"`         |
+  | `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
+  | `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -389,9 +389,9 @@ metadata:
   name: test-ratelimit
 spec:
   ratelimit:
-    sourceCriterion:
-      ipStrategy:
-        ipv6Subnet: 64
+      sourceCriterion:
+          ipStrategy:
+              ipv6Subnet: 64
 ```
 
 ```yaml tab="Consul Catalog"
@@ -401,18 +401,18 @@ spec:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      ratelimit:
-        sourceCriterion:
-          ipStrategy:
-            ipv6Subnet: 64
+      test-ratelimit:
+          ratelimit:
+              sourceCriterion:
+                  ipStrategy:
+                      ipv6Subnet: 64
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.test-ratelimit.ratelimit]
-    [http.middlewares.test-ratelimit.ratelimit.sourceCriterion.ipStrategy]
-      ipv6Subnet = 64
+[http.middlewares.test-ratelimit.ratelimit]
+  [http.middlewares.test-ratelimit.ratelimit.sourceCriterion.ipStrategy]
+    ipv6Subnet = 64
 ```
 
 #### `sourceCriterion.requestHeaderName`
@@ -430,11 +430,11 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: test-ratelimit
+name: test-ratelimit
 spec:
-  rateLimit:
+rateLimit:
 	sourceCriterion:
-      requestHeaderName: username
+    requestHeaderName: username
 ```
 
 ```yaml tab="Consul Catalog"
@@ -444,17 +444,17 @@ spec:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        sourceCriterion:
-          requestHeaderName: username
+      test-ratelimit:
+          rateLimit:
+              sourceCriterion:
+                  requestHeaderName: username
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
-      requestHeaderName = "username"
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
+    requestHeaderName = "username"
 ```
 
 #### `sourceCriterion.requestHost`
@@ -473,8 +473,8 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    sourceCriterion:
-      requestHost: true
+      sourceCriterion:
+          requestHost: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -484,15 +484,671 @@ spec:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        sourceCriterion:
-          requestHost: true
+      test-ratelimit:
+          rateLimit:
+              sourceCriterion:
+                  requestHost: true
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.test-ratelimit.rateLimit]
-    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
-      requestHost = true
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
+    requestHost = true
+```
+
+### `redis`
+
+Using `redis` to store the tokens in token bucket algorithm. If none are set, the default is to use the in-memory of traefik to store the tokens.
+
+#### `redis.endpoints`
+
+_Required, Default="127.0.0.1:6379"_
+
+Defines how to connect to the Redis server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      # ...
+      redis:
+          endpoints:
+              - "127.0.0.1:6379"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  endpoints:
+                      - "127.0.0.1:6379"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    endpoints = ["127.0.0.1:6379"]
+```
+
+#### `redis.username`
+
+_Optional, Default=""_
+
+`username` is the username used to authenticate with the Redis server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      # ...
+      redis:
+          username: user
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  username: user
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    username = "user"
+```
+
+#### `redis.password`
+
+_Optional, Default=""_
+
+`password` is the password to authenticate against the Redis server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      # ...
+      redis:
+          password: password
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  password: password
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    password = "password"
+```
+
+#### `redis.db`
+
+_Optional, Default=0_
+
+Defines the database to be selected after connecting to the Redis.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  db: 0
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  db: 0
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    db = 0
+```
+
+#### `redis.tls`
+
+Same as this [config](https://doc.traefik.io/traefik/providers/redis/#tls)
+
+_Optional_
+
+Defines the TLS configuration used for the secure connection to Redis.
+
+##### `redis.tls.ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to Redis,
+it defaults to the system bundle.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      redis:
+          tls:
+              ca: path/to/ca.crt
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              redis:
+                  tls:
+                      ca: path/to/ca.crt
+```
+
+```toml tab="File (TOML)"
+[providers.redis.tls]
+ca = "path/to/ca.crt"
+```
+
+##### `redis.tls.cert`
+
+_Optional_
+
+`cert` is the path to the public certificate used for the secure connection to Redis.
+When using this option, setting the `key` option is required.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      redis:
+          tls:
+              cert: path/to/foo.cert
+              key: path/to/foo.key
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              redis:
+                  tls:
+                      cert: path/to/foo.cert
+                      key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    [http.middlewares.test-ratelimit.rateLimit.redis.tls]
+      cert = "path/to/foo.cert"
+      key = "path/to/foo.key"
+```
+
+##### `redis.tls.key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to Redis.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      redis:
+          tls:
+              cert: path/to/foo.cert
+              key: path/to/foo.key
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              redis:
+                  tls:
+                      cert: path/to/foo.cert
+                      key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    [http.middlewares.test-ratelimit.rateLimit.redis.tls]
+      cert = "path/to/foo.cert"
+      key = "path/to/foo.key"
+```
+
+##### `redis.tls.insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certificate presented by the server regardless of the hostnames it covers.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      # ...
+      redis:
+          tls:
+              insecureSkipVerify: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  tls:
+                      insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    [http.middlewares.test-ratelimit.rateLimit.redis.tls]
+      insecureSkipVerify = true
+```
+
+#### `redis.poolSize`
+
+_Optional, Default=10_
+
+Base number of socket connections.
+
+Default is 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+
+If there is not enough connections in the pool, new connections will be allocated in excess of `redis.poolSize`, you can limit it through `redis.maxActiveConns`.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  db: 0
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  poolSize: 42
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    poolSize = 42
+```
+
+#### `redis.minIdleConns`
+
+_Optional, Default=0_
+
+Minimum number of idle connections which is useful when establishing new connection is slow.
+
+Default is 0. the idle connections are not closed by default.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  minIdleConns: 42
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  minIdleConns: 42
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    minIdleConns = 42
+```
+
+#### `redis.maxActiveConns`
+
+_Optional, Default=0_
+
+Maximum number of connections allocated by the pool at a given time.
+
+When zero, there is no limit on the number of connections in the pool.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  maxActiveConns: 42
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  maxActiveConns: 42
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    maxActiveConns = 42
+```
+
+#### `redis.readTimeout`
+
+_Optional, Default=0_
+
+Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
+
+-   `0` - default timeout (3 seconds).
+-   `-1` - no timeout (block indefinitely).
+-   `-2` - disables SetReadDeadline calls completely.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  readTimeout: 42s
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  readTimeout: 42s
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    readTimeout = 42s
+```
+
+#### `redis.writeTimeout`
+
+_Optional, Default=0_
+
+Timeout for socket writes. If reached, commands will fail
+with a timeout instead of blocking. Supported values:
+
+-   `0` - default timeout (3 seconds).
+-   `-1` - no timeout (block indefinitely).
+-   `-2` - disables SetWriteDeadline calls completely.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  writeTimeout: 42s
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  writeTimeout: 42s
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    writeTimeout = 42s
+```
+
+#### `redis.dialTimeout`
+
+_Optional, Default=5s_
+
+Dial timeout for establishing new connections.
+Default is 5 seconds.
+
+Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
+
+-   `0` - default timeout (5 seconds).
+-   `-1` - no timeout (block indefinitely).
+-   `-2` - disables SetReadDeadline calls completely.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  dialTimeout: 42s
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+      test-ratelimit:
+          rateLimit:
+              # ...
+              redis:
+                  dialTimeout: 42s
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+[http.middlewares.test-ratelimit.rateLimit]
+  [http.middlewares.test-ratelimit.rateLimit.redis]
+    dialTimeout = 42s
 ```
