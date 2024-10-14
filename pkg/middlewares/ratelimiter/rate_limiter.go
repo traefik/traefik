@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mailgun/ttlmap"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -26,21 +26,26 @@ const (
 // rateLimiter implements rate limiting and traffic shaping with a set of token buckets;
 // one for each traffic source. The same parameters are applied to all the buckets.
 type rateLimiter struct {
-	name  string
-	rate  rate.Limit // reqs/s
-	burst int64
+	name string
+	rate rate.Limit // reqs/s
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
 	// For now it is somewhat arbitrarily set to 1/(2*rate).
-	maxDelay time.Duration
-	// each rate limiter for a given source is stored in the buckets ttlmap.
-	// To keep this ttlmap constrained in size,
-	// each ratelimiter is "garbage collected" when it is considered expired.
-	// It is considered expired after it hasn't been used for ttl seconds.
-	ttl           int
+	maxDelay      time.Duration
 	sourceMatcher utils.SourceExtractor
 	next          http.Handler
+	logger        *zerolog.Logger
 
-	buckets *ttlmap.TtlMap // actual buckets, keyed by source.
+	limiter Limiter
+}
+
+type Result struct {
+	Ok        bool
+	Remaining float64
+	Delay     time.Duration
+}
+
+type Limiter interface {
+	Allow(ctx context.Context, token string) (Result, error)
 }
 
 // New returns a rate limiter middleware.
@@ -59,11 +64,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}
 
 	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
-	if err != nil {
-		return nil, err
-	}
-
-	buckets, err := ttlmap.NewConcurrent(maxSources)
 	if err != nil {
 		return nil, err
 	}
@@ -109,17 +109,30 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
+	var limiter Limiter
+	if config.Redis != nil {
+		limiter, err = NewRedisLimiter(rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		limiter, err = NewInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	return &rateLimiter{
+	rateLimmiter := &rateLimiter{
+		logger:        logger,
 		name:          name,
 		rate:          rate.Limit(rtl),
-		burst:         burst,
 		maxDelay:      maxDelay,
 		next:          next,
 		sourceMatcher: sourceMatcher,
-		buckets:       buckets,
-		ttl:           ttl,
-	}, nil
+		limiter:       limiter,
+	}
+
+	return rateLimmiter, nil
 }
 
 func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
@@ -137,43 +150,31 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// always equal to 1 if exist.
 	if amount != 1 {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	var bucket *rate.Limiter
-	if rlSource, exists := rl.buckets.Get(source); exists {
-		bucket = rlSource.(*rate.Limiter)
-	} else {
-		bucket = rate.NewLimiter(rl.rate, int(rl.burst))
-	}
-
-	// We Set even in the case where the source already exists,
-	// because we want to update the expiryTime every time we get the source,
-	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
-	if err := rl.buckets.Set(source, bucket, rl.ttl); err != nil {
-		logger.Error().Err(err).Msg("Could not insert/update bucket")
-		observability.SetStatusErrorf(req.Context(), "Could not insert/update bucket")
+	result, err := rl.limiter.Allow(ctx, source)
+	if err != nil {
+		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
+		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
 		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
 
-	res := bucket.Reserve()
-	if !res.OK() {
-		observability.SetStatusErrorf(req.Context(), "No bursty traffic allowed")
-		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
-		return
+	if !result.Ok {
+		if result.Delay > rl.maxDelay {
+			rl.serveDelayError(ctx, rw, result.Delay)
+		} else {
+			observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
+			http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
+		}
 	}
 
-	delay := res.Delay()
-	if delay > rl.maxDelay {
-		res.Cancel()
-		rl.serveDelayError(ctx, rw, delay)
-		return
+	if result.Ok {
+		rl.next.ServeHTTP(rw, req)
 	}
-
-	time.Sleep(delay)
-	rl.next.ServeHTTP(rw, req)
 }
 
 func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
