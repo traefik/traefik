@@ -47,7 +47,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 			proxyType: proxyHTTP,
 		},
 		{
-			desc:         "Proxy HTTP with HTTP Backend keep path",
+			desc:         "Proxy HTTP with HTTP Backend with preserve path",
 			proxyType:    proxyHTTP,
 			preservePath: true,
 		},

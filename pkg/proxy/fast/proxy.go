@@ -210,20 +210,14 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	u2.Path = u.Path
 	u2.RawPath = u.RawPath
 
-	// Preserve the backend server's path
-	if p.preservePath && p.targetURL.Path != "" {
-		// If the target URL has a path, join it with the incoming request path
-		joinPath, err := url.JoinPath(p.targetURL.Path, u.Path)
-		if err != nil {
-			joinPath = u.Path
+	if p.preservePath {
+		path, err := url.JoinPath(p.targetURL.Path, u.Path)
+		if err == nil {
+			u2.Path = path
 		}
-		u2.Path = joinPath
 
-		if p.targetURL.RawPath != "" {
-			rawPath, err := url.JoinPath(p.targetURL.RawPath, u.RawPath)
-			if err != nil {
-				rawPath = u.RawPath
-			}
+		rawPath, err := url.JoinPath(p.targetURL.EscapedPath(), u.EscapedPath())
+		if err == nil {
 			u2.RawPath = rawPath
 		}
 	}

@@ -45,23 +45,20 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 		}
 
 		outReq.URL.Path = u.Path
-		if preservePath && target.Path != "" {
-			joinPath, err := url.JoinPath(target.Path, u.Path)
-			if err != nil {
-				joinPath = u.Path
-			}
-			outReq.URL.Path = joinPath
+		outReq.URL.RawPath = u.RawPath
 
-			if target.RawPath != "" {
-				rawPath, err := url.JoinPath(target.RawPath, u.RawPath)
-				if err != nil {
-					rawPath = u.RawPath
-				}
+		if preservePath {
+			path, err := url.JoinPath(target.Path, u.Path)
+			if err == nil {
+				outReq.URL.Path = path
+			}
+
+			rawPath, err := url.JoinPath(target.EscapedPath(), u.EscapedPath())
+			if err == nil {
 				outReq.URL.RawPath = rawPath
 			}
 		}
 
-		outReq.URL.RawPath = u.RawPath
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 		outReq.RequestURI = "" // Outgoing request should not have RequestURI
@@ -70,7 +67,7 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 		outReq.ProtoMajor = 1
 		outReq.ProtoMinor = 1
 
-		// Do not pass client Host header unless optsetter PassHostHeader is set.
+		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
 			outReq.Host = outReq.URL.Host
 		}

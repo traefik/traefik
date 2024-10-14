@@ -116,6 +116,7 @@ Each service has a load-balancer, even if there is only one server to forward tr
 #### Servers
 
 Servers declare a single instance of your program.
+
 The `url` option point to a specific instance.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
@@ -170,8 +171,9 @@ The `weight` option allows for weighted load balancing on the servers.
 
 The `preservePath` option allows to preserve the URL path.
 
-!!! info
-    If a heal-check is configured for the server, the path is no preserved.
+!!! info "Health Check"
+
+    When a [health check](#health-check) is configured for the server, the path is no preserved.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 

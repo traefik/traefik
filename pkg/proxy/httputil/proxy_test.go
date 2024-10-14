@@ -2,13 +2,15 @@ package httputil
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func TestDirectorBuilder(t *testing.T) {
+func Test_directorBuilder(t *testing.T) {
 	tests := []struct {
 		name            string
 		target          *url.URL
@@ -23,7 +25,7 @@ func TestDirectorBuilder(t *testing.T) {
 	}{
 		{
 			name:           "Basic proxy",
-			target:         mustParseURL("http://example.com"),
+			target:         testhelpers.MustParseURL("http://example.com"),
 			passHostHeader: false,
 			preservePath:   false,
 			incomingURL:    "http://localhost/test?param=value",
@@ -34,7 +36,7 @@ func TestDirectorBuilder(t *testing.T) {
 		},
 		{
 			name:           "HTTPS target",
-			target:         mustParseURL("https://secure.example.com"),
+			target:         testhelpers.MustParseURL("https://secure.example.com"),
 			passHostHeader: false,
 			preservePath:   false,
 			incomingURL:    "http://localhost/secure",
@@ -43,28 +45,29 @@ func TestDirectorBuilder(t *testing.T) {
 			expectedPath:   "/secure",
 		},
 		{
-			name:           "Pass host header",
-			target:         mustParseURL("http://example.com"),
+			name:           "PassHostHeader",
+			target:         testhelpers.MustParseURL("http://example.com"),
 			passHostHeader: true,
 			preservePath:   false,
 			incomingURL:    "http://original.host/test",
 			expectedScheme: "http",
-			expectedHost:   "example.com",
+			expectedHost:   "original.host",
 			expectedPath:   "/test",
 		},
 		{
-			name:           "Keep path",
-			target:         mustParseURL("http://example.com/base"),
-			passHostHeader: false,
-			preservePath:   true,
-			incomingURL:    "http://localhost/test",
-			expectedScheme: "http",
-			expectedHost:   "example.com",
-			expectedPath:   "/base/test",
+			name:            "Preserve path",
+			target:          testhelpers.MustParseURL("http://example.com/base%2Ffoo"),
+			passHostHeader:  false,
+			preservePath:    true,
+			incomingURL:     "http://localhost/test",
+			expectedScheme:  "http",
+			expectedHost:    "example.com",
+			expectedPath:    "/base/foo/test",
+			expectedRawPath: "/base%2Ffoo/test",
 		},
 		{
 			name:           "Handle semicolons in query",
-			target:         mustParseURL("http://example.com"),
+			target:         testhelpers.MustParseURL("http://example.com"),
 			passHostHeader: false,
 			preservePath:   false,
 			incomingURL:    "http://localhost/test?param1=value1;param2=value2",
@@ -75,37 +78,25 @@ func TestDirectorBuilder(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			director := directorBuilder(tt.target, tt.passHostHeader, tt.preservePath)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 
-			incomingURL := mustParseURL(tt.incomingURL)
-			req := &http.Request{
-				URL:        incomingURL,
-				Host:       incomingURL.Host,
-				RequestURI: tt.incomingURL,
-			}
+			director := directorBuilder(test.target, test.passHostHeader, test.preservePath)
 
+			req := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
 			director(req)
 
-			assert.Equal(t, tt.expectedScheme, req.URL.Scheme)
-			assert.Equal(t, tt.expectedHost, req.URL.Host)
-			assert.Equal(t, tt.expectedPath, req.URL.Path)
-			assert.Equal(t, tt.expectedRawPath, req.URL.RawPath)
-			assert.Equal(t, tt.expectedQuery, req.URL.RawQuery)
+			assert.Equal(t, test.expectedScheme, req.URL.Scheme)
+			assert.Equal(t, test.expectedHost, req.Host)
+			assert.Equal(t, test.expectedPath, req.URL.Path)
+			assert.Equal(t, test.expectedRawPath, req.URL.RawPath)
+			assert.Equal(t, test.expectedQuery, req.URL.RawQuery)
 			assert.Empty(t, req.RequestURI)
 			assert.Equal(t, "HTTP/1.1", req.Proto)
 			assert.Equal(t, 1, req.ProtoMajor)
 			assert.Equal(t, 1, req.ProtoMinor)
-			assert.False(t, !tt.passHostHeader && req.Host != req.URL.Host)
+			assert.False(t, !test.passHostHeader && req.Host != req.URL.Host)
 		})
 	}
-}
-
-func mustParseURL(rawURL string) *url.URL {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		panic(err)
-	}
-	return u
 }
