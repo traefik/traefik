@@ -360,7 +360,7 @@ _Optional, Default=""_
 
 Defines a default docker network to use for connections to all containers.
 
-This option can be overridden on a per-container basis with the `traefik.docker.network` label.
+This option can be overridden on a per-container basis with the `traefik.swarm.network` label.
 
 ```yaml tab="File (YAML)"
 providers:
