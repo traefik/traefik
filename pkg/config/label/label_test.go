@@ -191,6 +191,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "1s",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
+		"traefik.http.services.Service1.loadbalancer.server.preservePath":              "false",
 		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
 		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
 		"traefik.http.services.Service1.loadbalancer.serversTransport":                 "foobar",
@@ -1229,8 +1230,9 @@ func TestEncodeConfiguration(t *testing.T) {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
-								Scheme: "foobar",
-								Port:   "8080",
+								Scheme:       "foobar",
+								Port:         "8080",
+								PreservePath: false,
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
@@ -1429,6 +1431,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.server.PreservePath":              "false",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
@@ -1447,6 +1450,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",
+		"traefik.HTTP.Services.Service1.LoadBalancer.server.PreservePath":              "false",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ServersTransport":                 "foobar",
 
