@@ -68,7 +68,7 @@ func (r *ProxyBuilder) Update(newConfigs map[string]*dynamic.ServersTransport) {
 }
 
 // Build builds a new ReverseProxy with the given configuration.
-func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader bool) (http.Handler, error) {
+func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader, preservePath bool) (http.Handler, error) {
 	proxyURL, err := r.proxy(&http.Request{URL: targetURL})
 	if err != nil {
 		return nil, fmt.Errorf("getting proxy: %w", err)
@@ -90,7 +90,7 @@ func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader 
 	}
 
 	pool := r.getPool(cfgName, cfg, tlsConfig, targetURL, proxyURL)
-	return NewReverseProxy(targetURL, proxyURL, r.debug, passHostHeader, responseHeaderTimeout, pool)
+	return NewReverseProxy(targetURL, proxyURL, r.debug, passHostHeader, preservePath, responseHeaderTimeout, pool)
 }
 
 func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
