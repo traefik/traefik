@@ -774,6 +774,9 @@ Kubernetes label selector to use.
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetescrd.nativelb`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
+
 `--providers.kubernetescrd.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
@@ -800,6 +803,9 @@ Kubernetes label selector to select specific GatewayClasses.
 
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
+
+`--providers.kubernetesgateway.nativelb`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
 
 `--providers.kubernetesgateway.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
@@ -863,6 +869,9 @@ Kubernetes Ingress label selector to use.
 
 `--providers.kubernetesingress.namespaces`:  
 Kubernetes namespaces.
+
+`--providers.kubernetesingress.nativelb`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
 `--providers.kubernetesingress.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)

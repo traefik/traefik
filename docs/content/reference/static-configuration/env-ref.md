@@ -774,6 +774,9 @@ Kubernetes label selector to use.
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_NATIVELB`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_NATIVELBBYDEFAULT`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
@@ -800,6 +803,9 @@ Kubernetes label selector to select specific GatewayClasses.
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
 Kubernetes namespaces.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NATIVELB`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NATIVELBBYDEFAULT`:  
 Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
@@ -863,6 +869,9 @@ Kubernetes Ingress label selector to use.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NAMESPACES`:  
 Kubernetes namespaces.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NATIVELB`:  
+Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NATIVELBBYDEFAULT`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
