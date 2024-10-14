@@ -168,7 +168,10 @@ The `weight` option allows for weighted load balancing on the servers.
           weight = 1
     ```
 
-The `keepPath` option allow to preserve url path.
+The `preservePath` option allow to preserve url path.
+
+!!! info
+    If a heal-check is configured for the server, the path is no preserved.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
@@ -180,7 +183,7 @@ The `keepPath` option allow to preserve url path.
           loadBalancer:
             servers:
               - url: "http://private-ip-server-1/base"
-                keepPath: true
+                preservePath: true
     ```
 
     ```toml tab="TOML"
@@ -189,7 +192,7 @@ The `keepPath` option allow to preserve url path.
       [http.services.my-service.loadBalancer]
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-1/base"
-          keepPath = true
+          preservePath = true
     ```
 
 #### Load-balancing

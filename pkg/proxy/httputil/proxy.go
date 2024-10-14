@@ -21,9 +21,9 @@ const StatusClientClosedRequest = 499
 // StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 const StatusClientClosedRequestText = "Client Closed Request"
 
-func buildSingleHostProxy(target *url.URL, passHostHeader bool, keepPath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader, keepPath),
+		Director:      directorBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
@@ -31,7 +31,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, keepPath bool, f
 	}
 }
 
-func directorBuilder(target *url.URL, passHostHeader bool, keepPath bool) func(req *http.Request) {
+func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(req *http.Request) {
 	return func(outReq *http.Request) {
 		outReq.URL.Scheme = target.Scheme
 		outReq.URL.Host = target.Host
@@ -45,7 +45,7 @@ func directorBuilder(target *url.URL, passHostHeader bool, keepPath bool) func(r
 		}
 
 		outReq.URL.Path = u.Path
-		if keepPath && target.Path != "" {
+		if preservePath && target.Path != "" {
 			joinPath, err := url.JoinPath(target.Path, u.Path)
 			if err != nil {
 				joinPath = u.Path

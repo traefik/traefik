@@ -121,12 +121,12 @@ type ReverseProxy struct {
 
 	targetURL             *url.URL
 	passHostHeader        bool
-	keepPath              bool
+	preservePath          bool
 	responseHeaderTimeout time.Duration
 }
 
 // NewReverseProxy creates a new ReverseProxy.
-func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, keepPath bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
+func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, preservePath bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
 	var proxyAuth string
 	if proxyURL != nil && proxyURL.User != nil && targetURL.Scheme == "http" {
 		username := proxyURL.User.Username()
@@ -137,7 +137,7 @@ func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, keepPa
 	return &ReverseProxy{
 		debug:                 debug,
 		passHostHeader:        passHostHeader,
-		keepPath:              keepPath,
+		preservePath:          preservePath,
 		targetURL:             targetURL,
 		proxyAuth:             proxyAuth,
 		connPool:              connPool,
@@ -211,7 +211,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	u2.RawPath = u.RawPath
 
 	// Preserve the backend server's path
-	if p.keepPath && p.targetURL.Path != "" {
+	if p.preservePath && p.targetURL.Path != "" {
 		// If the target URL has a path, join it with the incoming request path
 		joinPath, err := url.JoinPath(p.targetURL.Path, u.Path)
 		if err != nil {

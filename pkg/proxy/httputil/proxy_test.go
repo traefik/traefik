@@ -13,7 +13,7 @@ func TestDirectorBuilder(t *testing.T) {
 		name            string
 		target          *url.URL
 		passHostHeader  bool
-		keepPath        bool
+		preservePath    bool
 		incomingURL     string
 		expectedScheme  string
 		expectedHost    string
@@ -25,7 +25,7 @@ func TestDirectorBuilder(t *testing.T) {
 			name:           "Basic proxy",
 			target:         mustParseURL("http://example.com"),
 			passHostHeader: false,
-			keepPath:       false,
+			preservePath:   false,
 			incomingURL:    "http://localhost/test?param=value",
 			expectedScheme: "http",
 			expectedHost:   "example.com",
@@ -36,7 +36,7 @@ func TestDirectorBuilder(t *testing.T) {
 			name:           "HTTPS target",
 			target:         mustParseURL("https://secure.example.com"),
 			passHostHeader: false,
-			keepPath:       false,
+			preservePath:   false,
 			incomingURL:    "http://localhost/secure",
 			expectedScheme: "https",
 			expectedHost:   "secure.example.com",
@@ -46,7 +46,7 @@ func TestDirectorBuilder(t *testing.T) {
 			name:           "Pass host header",
 			target:         mustParseURL("http://example.com"),
 			passHostHeader: true,
-			keepPath:       false,
+			preservePath:   false,
 			incomingURL:    "http://original.host/test",
 			expectedScheme: "http",
 			expectedHost:   "example.com",
@@ -56,7 +56,7 @@ func TestDirectorBuilder(t *testing.T) {
 			name:           "Keep path",
 			target:         mustParseURL("http://example.com/base"),
 			passHostHeader: false,
-			keepPath:       true,
+			preservePath:   true,
 			incomingURL:    "http://localhost/test",
 			expectedScheme: "http",
 			expectedHost:   "example.com",
@@ -66,7 +66,7 @@ func TestDirectorBuilder(t *testing.T) {
 			name:           "Handle semicolons in query",
 			target:         mustParseURL("http://example.com"),
 			passHostHeader: false,
-			keepPath:       false,
+			preservePath:   false,
 			incomingURL:    "http://localhost/test?param1=value1;param2=value2",
 			expectedScheme: "http",
 			expectedHost:   "example.com",
@@ -77,7 +77,7 @@ func TestDirectorBuilder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			director := directorBuilder(tt.target, tt.passHostHeader, tt.keepPath)
+			director := directorBuilder(tt.target, tt.passHostHeader, tt.preservePath)
 
 			incomingURL := mustParseURL(tt.incomingURL)
 			req := &http.Request{

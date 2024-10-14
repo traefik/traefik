@@ -36,20 +36,20 @@ type authCreds struct {
 
 func TestProxyFromEnvironment(t *testing.T) {
 	testCases := []struct {
-		desc      string
-		proxyType string
-		tls       bool
-		keepPath  bool
-		auth      *authCreds
+		desc         string
+		proxyType    string
+		tls          bool
+		preservePath bool
+		auth         *authCreds
 	}{
 		{
 			desc:      "Proxy HTTP with HTTP Backend",
 			proxyType: proxyHTTP,
 		},
 		{
-			desc:      "Proxy HTTP with HTTP Backend keep path",
-			proxyType: proxyHTTP,
-			keepPath:  true,
+			desc:         "Proxy HTTP with HTTP Backend keep path",
+			proxyType:    proxyHTTP,
+			preservePath: true,
 		},
 		{
 			desc:      "Proxy HTTP with HTTP backend and proxy auth",
@@ -106,9 +106,9 @@ func TestProxyFromEnvironment(t *testing.T) {
 			proxyType: proxySocks5,
 		},
 		{
-			desc:      "Proxy Socks5 with HTTP backend and keep path",
-			proxyType: proxySocks5,
-			keepPath:  true,
+			desc:         "Proxy Socks5 with HTTP backend and keep path",
+			proxyType:    proxySocks5,
+			preservePath: true,
 		},
 		{
 			desc:      "Proxy Socks5 with HTTP backend and proxy auth",
@@ -241,7 +241,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				return u, nil
 			}
 
-			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL+"/test"), false, test.keepPath)
+			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL+"/test"), false, test.preservePath)
 			require.NoError(t, err)
 
 			reverseProxyServer := httptest.NewServer(reverseProxy)
@@ -258,7 +258,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 			require.NoError(t, err)
 
 			expected := "backend/"
-			if test.keepPath {
+			if test.preservePath {
 				expected = "backend/test/"
 			}
 			assert.Equal(t, expected, string(body))

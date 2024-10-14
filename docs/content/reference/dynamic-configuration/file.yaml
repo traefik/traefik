@@ -66,10 +66,10 @@ http:
         servers:
           - url: foobar
             weight: 42
-            keepPath: true
+            preservePath: true
           - url: foobar
             weight: 42
-            keepPath: true
+            preservePath: true
         healthCheck:
           scheme: foobar
           mode: foobar
