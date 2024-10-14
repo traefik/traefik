@@ -168,7 +168,7 @@ The `weight` option allows for weighted load balancing on the servers.
           weight = 1
     ```
 
-The `preservePath` option allow to preserve url path.
+The `preservePath` option allows to preserve the URL path.
 
 !!! info
     If a heal-check is configured for the server, the path is no preserved.
