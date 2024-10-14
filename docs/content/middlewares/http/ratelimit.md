@@ -18,8 +18,8 @@ It is based on a [token bucket](https://en.wikipedia.org/wiki/Token_bucket) impl
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
 ```
 
 ```yaml tab="Kubernetes"
@@ -28,11 +28,11 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        average: 100
-        burst: 200
+  rateLimit:
+    average: 100
+    burst: 200
 ```
 
 ```yaml tab="Consul Catalog"
@@ -46,11 +46,11 @@ spec:
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                average: 100
-                burst: 200
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 200
 ```
 
 ```toml tab="File (TOML)"
@@ -76,7 +76,7 @@ So for a rate below 1 req/s, one needs to define a `period` larger than a second
 ```yaml tab="Docker & Swarm"
 # 100 reqs/s
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```yaml tab="Kubernetes"
@@ -84,10 +84,10 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        average: 100
+  rateLimit:
+    average: 100
 ```
 
 ```yaml tab="Consul Catalog"
@@ -98,10 +98,10 @@ spec:
 ```yaml tab="File (YAML)"
 # 100 reqs/s
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                average: 100
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        average: 100
 ```
 
 ```toml tab="File (TOML)"
@@ -124,8 +124,8 @@ It defaults to `1` second.
 ```yaml tab="Docker & Swarm"
 # 6 reqs/minute
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
 ```yaml tab="Kubernetes"
@@ -133,11 +133,11 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        period: 1m
-        average: 6
+  rateLimit:
+    period: 1m
+    average: 6
 ```
 
 ```yaml tab="Consul Catalog"
@@ -149,11 +149,11 @@ spec:
 ```yaml tab="File (YAML)"
 # 6 reqs/minute
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                average: 6
-                period: 1m
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        average: 6
+        period: 1m
 ```
 
 ```toml tab="File (TOML)"
@@ -172,17 +172,17 @@ It defaults to `1`.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        burst: 100
+  rateLimit:
+    burst: 100
 ```
 
 ```yaml tab="Consul Catalog"
@@ -191,10 +191,10 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                burst: 100
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        burst: 100
 ```
 
 ```toml tab="File (TOML)"
@@ -219,8 +219,8 @@ The `ipStrategy` option defines three parameters that configures how Traefik det
 
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and select the IP located at the `depth` position (starting from the right).
 
--   If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
--   `depth` is ignored if its value is less than or equal to 0.
+- If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
+- `depth` is ignored if its value is less than or equal to 0.
 
 If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
 See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
@@ -237,19 +237,19 @@ See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        sourceCriterion:
-            ipStrategy:
-                depth: 2
+  rateLimit:
+    sourceCriterion:
+      ipStrategy:
+        depth: 2
 ```
 
 ```yaml tab="Consul Catalog"
@@ -258,12 +258,12 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                sourceCriterion:
-                    ipStrategy:
-                        depth: 2
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          ipStrategy:
+            depth: 2
 ```
 
 ```toml tab="File (TOML)"
@@ -281,28 +281,28 @@ http:
 
 `excludedIPs` is meant to address two classes of somewhat distinct use-cases:
 
-1.  Distinguish IPs which are behind the same (set of) reverse-proxies so that each of them contributes, independently to the others,
-    to its own rate-limit "bucket" (cf the [leaky bucket analogy](https://wikipedia.org/wiki/Leaky_bucket)).
-    In this case, `excludedIPs` should be set to match the list of `X-Forwarded-For IPs` that are to be excluded,
-    in order to find the actual clientIP.
+1. Distinguish IPs which are behind the same (set of) reverse-proxies so that each of them contributes, independently to the others,
+   to its own rate-limit "bucket" (cf the [leaky bucket analogy](https://wikipedia.org/wiki/Leaky_bucket)).
+   In this case, `excludedIPs` should be set to match the list of `X-Forwarded-For IPs` that are to be excluded,
+   in order to find the actual clientIP.
 
     !!! example "Each IP as a distinct source"
 
-         | X-Forwarded-For                | excludedIPs           | clientIP     |
-         |--------------------------------|-----------------------|--------------|
-         | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
-         | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
+        | X-Forwarded-For                | excludedIPs           | clientIP     |
+        |--------------------------------|-----------------------|--------------|
+        | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
+        | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
 
-2.  Group together a set of IPs (also behind a common set of reverse-proxies) so that they are considered the same source,
-    and all contribute to the same rate-limit bucket.
+2. Group together a set of IPs (also behind a common set of reverse-proxies) so that they are considered the same source,
+   and all contribute to the same rate-limit bucket.
 
     !!! example "Group IPs together as same source"
 
-         |  X-Forwarded-For               |  excludedIPs | clientIP     |
-         |--------------------------------|--------------|--------------|
-         | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
-         | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
-         | `"10.0.0.3,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+        |  X-Forwarded-For               |  excludedIPs | clientIP     |
+        |--------------------------------|--------------|--------------|
+        | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+        | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+        | `"10.0.0.3,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
 
 For completeness, below are additional examples to illustrate how the matching works.
 For a given request the list of `X-Forwarded-For` IPs is checked from most recent to most distant against the `excludedIPs` pool,
@@ -318,21 +318,21 @@ and the first IP that is _not_ in the pool (if any) is returned.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        sourceCriterion:
-            ipStrategy:
-                excludedIPs:
-                    - 127.0.0.1/32
-                    - 192.168.1.7
+  rateLimit:
+    sourceCriterion:
+      ipStrategy:
+        excludedIPs:
+        - 127.0.0.1/32
+        - 192.168.1.7
 ```
 
 ```yaml tab="Consul Catalog"
@@ -341,14 +341,14 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                sourceCriterion:
-                    ipStrategy:
-                        excludedIPs:
-                            - "127.0.0.1/32"
-                            - "192.168.1.7"
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          ipStrategy:
+            excludedIPs:
+              - "127.0.0.1/32"
+              - "192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
@@ -365,7 +365,7 @@ If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed i
 
 This is useful for grouping IPv6 addresses into subnets to prevent bypassing this middleware by obtaining a new IPv6.
 
--   `ipv6Subnet` is ignored if its value is outside of 0-128 interval
+- `ipv6Subnet` is ignored if its value is outside of 0-128 interval
 
 !!! example "Example of ipv6Subnet"
 
@@ -379,19 +379,19 @@ This is useful for grouping IPv6 addresses into subnets to prevent bypassing thi
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6Subnet=64"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6Subnet=64"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    ratelimit:
-        sourceCriterion:
-            ipStrategy:
-                ipv6Subnet: 64
+  ratelimit:
+    sourceCriterion:
+      ipStrategy:
+        ipv6Subnet: 64
 ```
 
 ```yaml tab="Consul Catalog"
@@ -400,12 +400,12 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-        test-ratelimit:
-            ratelimit:
-                sourceCriterion:
-                    ipStrategy:
-                        ipv6Subnet: 64
+  middlewares:
+    test-ratelimit:
+      ratelimit:
+        sourceCriterion:
+          ipStrategy:
+            ipv6Subnet: 64
 ```
 
 ```toml tab="File (TOML)"
@@ -423,7 +423,7 @@ Name of the header used to group incoming requests.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="Kubernetes"
@@ -443,11 +443,11 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                sourceCriterion:
-                    requestHeaderName: username
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          requestHeaderName: username
 ```
 
 ```toml tab="File (TOML)"
@@ -463,18 +463,18 @@ Whether to consider the request host as the source.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        sourceCriterion:
-            requestHost: true
+  rateLimit:
+    sourceCriterion:
+      requestHost: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -483,11 +483,11 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-        test-ratelimit:
-            rateLimit:
-                sourceCriterion:
-                    requestHost: true
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          requestHost: true
 ```
 
 ```toml tab="File (TOML)"
@@ -531,13 +531,13 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-    middlewares:
-			test-ratelimit:
-				rateLimit:
-					# ...
-					redis:
-						endpoints:
-							- "127.0.0.1:6379"
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          endpoints:
+            - "127.0.0.1:6379"
 ```
 
 ```toml tab="File (TOML)"
@@ -562,12 +562,12 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-    name: test-ratelimit
+  name: test-ratelimit
 spec:
-    rateLimit:
-        # ...
-        redis:
-            username: user
+  rateLimit:
+    # ...
+    redis:
+      username: user
 ```
 
 ```yaml tab="Consul Catalog"
