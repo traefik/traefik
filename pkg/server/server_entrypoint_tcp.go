@@ -472,7 +472,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 	if socketActivation.isEnabled() {
 		listener, err = socketActivation.getListener(name)
 		if err != nil {
-			log.Ctx(ctx).Warn().Str("name", name).Msgf("Unable to use socket activation for entrypoint: %v", err)
+			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
 		}
 	}
 
