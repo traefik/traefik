@@ -274,7 +274,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
-		nativeLB := p.NativeLBByDefault
+		nativeLB := p.NativeLBByDefault || p.NativeLB
 		if svc.NativeLB != nil {
 			nativeLB = *svc.NativeLB
 		}
