@@ -42,7 +42,7 @@ const (
 
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
-	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
+	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
 	Update(configs map[string]*dynamic.ServersTransport)
 }
 
@@ -338,7 +338,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
 		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
-		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, flushInterval)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
