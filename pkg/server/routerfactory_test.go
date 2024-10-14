@@ -254,7 +254,7 @@ func TestInternalServices(t *testing.T) {
 
 type proxyBuilderMock struct{}
 
-func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
+func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _, _ bool, _ time.Duration) (http.Handler, error) {
 	return http.HandlerFunc(func(responseWriter http.ResponseWriter, req *http.Request) {}), nil
 }
 
