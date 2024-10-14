@@ -509,20 +509,20 @@ Defines how to connect to the Redis server.
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-	name: test-ratelimit
+  name: test-ratelimit
 spec:
-	rateLimit:
-		# ...
-		redis:
-			endpoints:
-				- "127.0.0.1:6379"
+  rateLimit:
+    # ...
+    redis:
+      endpoints:
+        - "127.0.0.1:6379"
 ```
 
 ```yaml tab="Consul Catalog"
@@ -576,12 +576,12 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					username: user
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          username: user
 ```
 
 ```toml tab="File (TOML)"
@@ -606,12 +606,12 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-	name: test-ratelimit
+  name: test-ratelimit
 spec:
-	rateLimit:
-		# ...
-		redis:
-			password: password
+  rateLimit:
+    # ...
+    redis:
+      password: password
 ```
 
 ```yaml tab="Consul Catalog"
@@ -620,12 +620,12 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					password: password
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          password: password
 ```
 
 ```toml tab="File (TOML)"
@@ -643,17 +643,17 @@ Defines the database to be selected after connecting to the Redis.
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
 ```
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					db: 0
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          db: 0
 ```
 
 ```yaml tab="Consul Catalog"
@@ -662,12 +662,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					db: 0
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          db: 0
 ```
 
 ```toml tab="File (TOML)"
@@ -701,12 +701,12 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-	name: test-ratelimit
+  name: test-ratelimit
 spec:
-	rateLimit:
-		redis:
-			tls:
-				ca: path/to/ca.crt
+  rateLimit:
+    redis:
+      tls:
+        ca: path/to/ca.crt
 ```
 
 ```yaml tab="Consul Catalog"
@@ -715,12 +715,12 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				redis:
-					tls:
-						ca: path/to/ca.crt
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        redis:
+          tls:
+            ca: path/to/ca.crt
 ```
 
 ```toml tab="File (TOML)"
@@ -737,21 +737,21 @@ When using this option, setting the `key` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-	name: test-ratelimit
+  name: test-ratelimit
 spec:
-	rateLimit:
-		redis:
-			tls:
-				cert: path/to/foo.cert
-				key: path/to/foo.key
+  rateLimit:
+    redis:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
 ```
 
 ```yaml tab="Consul Catalog"
@@ -761,13 +761,13 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				redis:
-					tls:
-						cert: path/to/foo.cert
-						key: path/to/foo.key
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        redis:
+          tls:
+            cert: path/to/foo.cert
+            key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
@@ -788,21 +788,21 @@ When using this option, setting the `cert` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-	name: test-ratelimit
+  name: test-ratelimit
 spec:
-	rateLimit:
-		redis:
-			tls:
-				cert: path/to/foo.cert
-				key: path/to/foo.key
+  rateLimit:
+    redis:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
 ```
 
 ```yaml tab="Consul Catalog"
@@ -812,13 +812,13 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				redis:
-					tls:
-						cert: path/to/foo.cert
-						key: path/to/foo.key
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        redis:
+          tls:
+            cert: path/to/foo.cert
+            key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
@@ -838,20 +838,20 @@ If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certi
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-	name: test-ratelimit
+  name: test-ratelimit
 spec:
-	rateLimit:
-		# ...
-		redis:
-			tls:
-				insecureSkipVerify: true
+  rateLimit:
+    # ...
+    redis:
+      tls:
+        insecureSkipVerify: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -860,13 +860,13 @@ spec:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					tls:
-						insecureSkipVerify: true
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          tls:
+            insecureSkipVerify: true
 ```
 
 ```toml tab="File (TOML)"
@@ -889,17 +889,17 @@ If there is not enough connections in the pool, new connections will be allocate
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
 ```
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					db: 0
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          db: 0
 ```
 
 ```yaml tab="Consul Catalog"
@@ -908,12 +908,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					poolSize: 42
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          poolSize: 42
 ```
 
 ```toml tab="File (TOML)"
@@ -938,12 +938,12 @@ labels:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					minIdleConns: 42
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          minIdleConns: 42
 ```
 
 ```yaml tab="Consul Catalog"
@@ -952,12 +952,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					minIdleConns: 42
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          minIdleConns: 42
 ```
 
 ```toml tab="File (TOML)"
@@ -982,12 +982,12 @@ labels:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					maxActiveConns: 42
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          maxActiveConns: 42
 ```
 
 ```yaml tab="Consul Catalog"
@@ -996,12 +996,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					maxActiveConns: 42
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          maxActiveConns: 42
 ```
 
 ```toml tab="File (TOML)"
@@ -1023,17 +1023,17 @@ Timeout for socket reads. If reached, commands will fail with a timeout instead 
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
 ```
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					readTimeout: 42s
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          readTimeout: 42s
 ```
 
 ```yaml tab="Consul Catalog"
@@ -1042,12 +1042,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					readTimeout: 42s
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          readTimeout: 42s
 ```
 
 ```toml tab="File (TOML)"
@@ -1070,17 +1070,17 @@ with a timeout instead of blocking. Supported values:
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
 ```
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					writeTimeout: 42s
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          writeTimeout: 42s
 ```
 
 ```yaml tab="Consul Catalog"
@@ -1089,12 +1089,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					writeTimeout: 42s
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          writeTimeout: 42s
 ```
 
 ```toml tab="File (TOML)"
@@ -1119,17 +1119,17 @@ Timeout for socket reads. If reached, commands will fail with a timeout instead 
 
 ```yaml tab="Docker & Swarm"
 labels:
-	- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
 ```
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					dialTimeout: 42s
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          dialTimeout: 42s
 ```
 
 ```yaml tab="Consul Catalog"
@@ -1138,12 +1138,12 @@ http:
 
 ```yaml tab="File (YAML)"
 http:
-	middlewares:
-		test-ratelimit:
-			rateLimit:
-				# ...
-				redis:
-					dialTimeout: 42s
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          dialTimeout: 42s
 ```
 
 ```toml tab="File (TOML)"
