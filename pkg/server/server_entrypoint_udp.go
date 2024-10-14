@@ -96,10 +96,10 @@ func NewUDPEntryPoint(config *static.EntryPoint, name string) (*UDPEntryPoint, e
 		if conn, err := socketActivation.getConn(name); err == nil {
 			listener, err = udp.ListenPacketConn(conn, timeout)
 			if err != nil {
-				log.Warn().Str("name", name).Msgf("Unable to create socket activation listener: %v", err)
+				log.Warn().Err(err).Str("name", name).Msg("Unable to create socket activation listener")
 			}
 		} else {
-			log.Warn().Str("name", name).Msgf("Unable to use socket activation for entrypoint: %v", err)
+			log.Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
 		}
 	}
 

@@ -41,7 +41,7 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 	if socketActivation.isEnabled() {
 		conn, err = socketActivation.getConn(name)
 		if err != nil {
-			log.Ctx(ctx).Warn().Str("name", name).Msgf("Unable to use socket activation for entrypoint: %v", err)
+			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
 		}
 	}
 
