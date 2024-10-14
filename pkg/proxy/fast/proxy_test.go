@@ -36,20 +36,14 @@ type authCreds struct {
 
 func TestProxyFromEnvironment(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		proxyType    string
-		tls          bool
-		preservePath bool
-		auth         *authCreds
+		desc      string
+		proxyType string
+		tls       bool
+		auth      *authCreds
 	}{
 		{
 			desc:      "Proxy HTTP with HTTP Backend",
 			proxyType: proxyHTTP,
-		},
-		{
-			desc:         "Proxy HTTP with HTTP Backend with preserve path",
-			proxyType:    proxyHTTP,
-			preservePath: true,
 		},
 		{
 			desc:      "Proxy HTTP with HTTP backend and proxy auth",
@@ -106,11 +100,6 @@ func TestProxyFromEnvironment(t *testing.T) {
 			proxyType: proxySocks5,
 		},
 		{
-			desc:         "Proxy Socks5 with HTTP backend and keep path",
-			proxyType:    proxySocks5,
-			preservePath: true,
-		},
-		{
 			desc:      "Proxy Socks5 with HTTP backend and proxy auth",
 			proxyType: proxySocks5,
 			auth: &authCreds{
@@ -137,7 +126,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			backendURL, backendCert := newBackendServer(t, test.tls, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				_, _ = rw.Write([]byte("backend" + req.URL.Path))
+				_, _ = rw.Write([]byte("backend"))
 			}))
 
 			var proxyCalled bool
@@ -241,7 +230,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				return u, nil
 			}
 
-			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL+"/test"), false, test.preservePath)
+			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL), false, false)
 			require.NoError(t, err)
 
 			reverseProxyServer := httptest.NewServer(reverseProxy)
@@ -257,14 +246,36 @@ func TestProxyFromEnvironment(t *testing.T) {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			expected := "backend/"
-			if test.preservePath {
-				expected = "backend/test/"
-			}
-			assert.Equal(t, expected, string(body))
+			assert.Equal(t, "backend", string(body))
 			assert.True(t, proxyCalled)
 		})
 	}
+}
+
+func TestPreservePath(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+		assert.Equal(t, "/foo/bar", req.URL.Path)
+		assert.Equal(t, "", req.URL.RawPath)
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL, err := url.JoinPath(server.URL, "foo")
+	require.NoError(t, err)
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/bar", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func newCertificate(t *testing.T, domain string) *tls.Certificate {
