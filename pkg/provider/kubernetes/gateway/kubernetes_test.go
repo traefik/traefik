@@ -2459,7 +2459,10 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-my-middleware"},
+							Middlewares: []string{
+								"default-first-middleware",
+								"default-second-middleware",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2525,11 +2528,15 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-my-middleware"},
+							Middlewares: []string{
+								"default-first-middleware",
+								"default-second-middleware",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-my-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
 					},
 					Services: map[string]*dynamic.Service{
 						"default-http-app-1-my-gateway-web-0-wrr": {
