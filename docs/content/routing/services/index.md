@@ -173,9 +173,9 @@ The `preservePath` option allows to preserve the URL path.
 
 !!! info "Health Check"
 
-    When a [health check](#health-check) is configured for the server, the path is no preserved.
+    When a [health check](#health-check) is configured for the server, the path is not preserved.
 
-??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
+??? example "A Service with One Server and PreservePath -- Using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="YAML"
     ## Dynamic configuration
