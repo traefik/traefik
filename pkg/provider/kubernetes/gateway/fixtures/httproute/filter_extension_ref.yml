@@ -54,4 +54,9 @@ spec:
           extensionRef:
             group: traefik.io
             kind: Middleware
-            name: my-middleware
+            name: first-middleware
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: second-middleware
