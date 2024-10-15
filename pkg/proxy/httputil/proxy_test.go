@@ -56,14 +56,14 @@ func Test_directorBuilder(t *testing.T) {
 		},
 		{
 			name:            "Preserve path",
-			target:          testhelpers.MustParseURL("http://example.com/base%2Ffoo"),
+			target:          testhelpers.MustParseURL("http://example.com/base"),
 			passHostHeader:  false,
 			preservePath:    true,
-			incomingURL:     "http://localhost/test",
+			incomingURL:     "http://localhost/foo%2Fbar",
 			expectedScheme:  "http",
 			expectedHost:    "example.com",
-			expectedPath:    "/base/foo/test",
-			expectedRawPath: "/base%2Ffoo/test",
+			expectedPath:    "/base/foo/bar",
+			expectedRawPath: "/base/foo%2Fbar",
 		},
 		{
 			name:           "Handle semicolons in query",

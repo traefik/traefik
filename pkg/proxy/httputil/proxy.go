@@ -15,11 +15,13 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
-// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
-const StatusClientClosedRequest = 499
+const (
+	// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
+	StatusClientClosedRequest = 499
 
-// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
-const StatusClientClosedRequestText = "Client Closed Request"
+	// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
+	StatusClientClosedRequestText = "Client Closed Request"
+)
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
@@ -48,15 +50,7 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 		outReq.URL.RawPath = u.RawPath
 
 		if preservePath {
-			path, err := url.JoinPath(target.Path, u.Path)
-			if err == nil {
-				outReq.URL.Path = path
-			}
-
-			rawPath, err := url.JoinPath(target.EscapedPath(), u.EscapedPath())
-			if err == nil {
-				outReq.URL.RawPath = rawPath
-			}
+			outReq.URL.Path, outReq.URL.RawPath = JoinURLPath(target, u)
 		}
 
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
@@ -119,6 +113,13 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	}
 }
 
+func statusText(statusCode int) string {
+	if statusCode == StatusClientClosedRequest {
+		return StatusClientClosedRequestText
+	}
+	return http.StatusText(statusCode)
+}
+
 // ComputeStatusCode computes the HTTP status code according to the given error.
 func ComputeStatusCode(err error) int {
 	switch {
@@ -140,9 +141,38 @@ func ComputeStatusCode(err error) int {
 	return http.StatusInternalServerError
 }
 
-func statusText(statusCode int) string {
-	if statusCode == StatusClientClosedRequest {
-		return StatusClientClosedRequestText
+// JoinURLPath computes the joined path and raw path of the given URLs.
+// From https://github.com/golang/go/blob/b521ebb55a9b26c8824b219376c7f91f7cda6ec2/src/net/http/httputil/reverseproxy.go#L221
+func JoinURLPath(a, b *url.URL) (path, rawpath string) {
+	if a.RawPath == "" && b.RawPath == "" {
+		return singleJoiningSlash(a.Path, b.Path), ""
 	}
-	return http.StatusText(statusCode)
+
+	// Same as singleJoiningSlash, but uses EscapedPath to determine
+	// whether a slash should be added
+	apath := a.EscapedPath()
+	bpath := b.EscapedPath()
+
+	aslash := strings.HasSuffix(apath, "/")
+	bslash := strings.HasPrefix(bpath, "/")
+
+	switch {
+	case aslash && bslash:
+		return a.Path + b.Path[1:], apath + bpath[1:]
+	case !aslash && !bslash:
+		return a.Path + "/" + b.Path, apath + "/" + bpath
+	}
+	return a.Path + b.Path, apath + bpath
+}
+
+func singleJoiningSlash(a, b string) string {
+	aslash := strings.HasSuffix(a, "/")
+	bslash := strings.HasPrefix(b, "/")
+	switch {
+	case aslash && bslash:
+		return a + b[1:]
+	case !aslash && !bslash:
+		return a + "/" + b
+	}
+	return a + b
 }

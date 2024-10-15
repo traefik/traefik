@@ -211,15 +211,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	u2.RawPath = u.RawPath
 
 	if p.preservePath {
-		path, err := url.JoinPath(p.targetURL.Path, u.Path)
-		if err == nil {
-			u2.Path = path
-		}
-
-		rawPath, err := url.JoinPath(p.targetURL.EscapedPath(), u.EscapedPath())
-		if err == nil {
-			u2.RawPath = rawPath
-		}
+		u2.Path, u2.RawPath = proxyhttputil.JoinURLPath(p.targetURL, u)
 	}
 
 	u2.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
