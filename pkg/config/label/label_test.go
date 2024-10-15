@@ -191,6 +191,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "1s",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
+		"traefik.http.services.Service1.loadbalancer.server.preservePath":              "false",
 		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
 		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
 		"traefik.http.services.Service1.loadbalancer.serversTransport":                 "foobar",
@@ -1229,8 +1230,9 @@ func TestEncodeConfiguration(t *testing.T) {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
-								Scheme: "foobar",
-								Port:   "8080",
+								Scheme:       "foobar",
+								Port:         "8080",
+								PreservePath: false,
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
