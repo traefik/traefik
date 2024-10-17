@@ -388,8 +388,8 @@ which in turn will create the resulting routers, services, handlers, etc.
 If the Kubernetes cluster version is 1.18+,
 the new `pathType` property can be leveraged to define the rules matchers:
 
-- `Exact`: This path type forces the rule matcher to `Path`
-- `Prefix`: This path type forces the rule matcher to `PathPrefix`
+- `Exact`: This path type forces the rule matcher to `Path` such that a request path is matched exactly and with case sensitivity
+- `Prefix`: This path type forces the rule matcher to a special type of `PathRegexp` such that a request path is matched on an element by element basis and with case sensitivity
 
 Please see [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types) for more information.
 
