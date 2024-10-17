@@ -780,7 +780,7 @@ func buildRule(matcher string, path string) string {
 		// i.e. /v12 should not match /v1 , but traefik's PathPrefix matcher works as a prefix match not the
 		// element by element match as Kubernetes Ingress, so we need to use PathRegexp as a workaround.
 		// Check out TestPrefixMatchRegex() for more examples.
-		path = strings.TrimSuffix(path, "/")
+		path = strings.TrimRight(path, "/")
 		return "PathRegexp(`" + buildPrefixMatchRegex(path) + "`)"
 	}
 
