@@ -2074,6 +2074,16 @@ func TestPrefixMatchRegex(t *testing.T) {
 			requestPath: "/aaa/ccc",
 			match:       true,
 		},
+		{
+			path:        "/...",
+			requestPath: "/aaa",
+			match:       false,
+		},
+		{
+			path:        "/...",
+			requestPath: "/.../",
+			match:       true,
+		},
 	}
 
 	for i, tt := range tests {
