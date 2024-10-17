@@ -1,3 +1,44 @@
+## [v3.2.0-rc2](https://github.com/traefik/traefik/tree/v3.2.0-rc2) (2024-10-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.2.0-rc2)
+
+**Enhancements:**
+- **[k8s,k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.2.0 ([#11167](https://github.com/traefik/traefik/pull/11167) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Support http and https appProtocol for Kubernetes Service ([#11176](https://github.com/traefik/traefik/pull/11176) by [WillDaSilva](https://github.com/WillDaSilva))
+- **[k8s,k8s/gatewayapi]** Avoid updating Accepted status for routes matching no Gateways ([#11170](https://github.com/traefik/traefik/pull/11170) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Do not update gateway status when not selected by a gateway class ([#11169](https://github.com/traefik/traefik/pull/11169) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Detail CRD update with v3.2 in the migration guide ([#11164](https://github.com/traefik/traefik/pull/11164) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v3.1 into v3.2 ([#11181](https://github.com/traefik/traefik/pull/11181) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.1.6](https://github.com/traefik/traefik/tree/v3.1.6) (2024-10-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.5...v3.1.6)
+
+**Bug fixes:**
+- **[middleware]** Reuse compression writers ([#11168](https://github.com/traefik/traefik/pull/11168) by [michelheusschen](https://github.com/michelheusschen))
+- **[middleware]** Use correct default weight in Accept-Encoding ([#11084](https://github.com/traefik/traefik/pull/11084) by [michelheusschen](https://github.com/michelheusschen))
+- **[plugins]** Close wasm middleware to prevent memory leak ([#11151](https://github.com/traefik/traefik/pull/11151) by [ttys3](https://github.com/ttys3))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#11179](https://github.com/traefik/traefik/pull/11179) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.1 ([#11174](https://github.com/traefik/traefik/pull/11174) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.12](https://github.com/traefik/traefik/tree/v2.11.12) (2024-10-09)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.11...v2.11.12)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress to dbd6c381492a ([#11162](https://github.com/traefik/traefik/pull/11162) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Upgrade to node 22.9 and yarn lock to fix vulnerabilities ([#11173](https://github.com/traefik/traefik/pull/11173) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Adopt a layout for the large amount of entrypoint port numbers ([#11157](https://github.com/traefik/traefik/pull/11157) by [framebassman](https://github.com/framebassman))
+
+**Documentation:**
+- **[accesslogs]** Clarify that only header fields may be redacted in access-logs ([#11139](https://github.com/traefik/traefik/pull/11139) by [mattbnz](https://github.com/mattbnz))
+- Update business callout ([#11172](https://github.com/traefik/traefik/pull/11172) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v3.2.0-rc1](https://github.com/traefik/traefik/tree/v3.2.0-rc1) (2024-10-02)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.0-rc1...v3.2.0-rc1)
 
@@ -32,6 +73,8 @@
 **Bug fixes:**
 - **[k8s/ingress,k8s]** Disable IngressClass lookup when disableClusterScopeResources is enabled ([#11111](https://github.com/traefik/traefik/pull/11111) by [jnoordsij](https://github.com/jnoordsij))
 - **[server]** Rework condition to not log on timeout ([#11132](https://github.com/traefik/traefik/pull/11132) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
 - Merge branch v2.11 into v3.1 ([#11149](https://github.com/traefik/traefik/pull/11149) by [kevinpollet](https://github.com/kevinpollet))
 - Merge branch v2.11 into v3.1 ([#11142](https://github.com/traefik/traefik/pull/11142) by [rtribotte](https://github.com/rtribotte))
 
