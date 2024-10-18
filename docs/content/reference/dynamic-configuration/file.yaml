@@ -381,8 +381,18 @@ http:
       certificates:
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -406,8 +416,18 @@ http:
       certificates:
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
         - certFile: foobar
           keyFile: foobar
+          ocsp:
+            disableStapling: true
+            responderOverrides:
+              name0: foobar
+              name1: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -519,8 +539,18 @@ tcp:
         certificates:
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
         peerCertURI: foobar
         spiffe:
           ids:
@@ -540,8 +570,18 @@ tcp:
         certificates:
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
           - certFile: foobar
             keyFile: foobar
+            ocsp:
+              disableStapling: true
+              responderOverrides:
+                name0: foobar
+                name1: foobar
         peerCertURI: foobar
         spiffe:
           ids:
@@ -577,11 +617,21 @@ tls:
   certificates:
     - certFile: foobar
       keyFile: foobar
+      ocsp:
+        disableStapling: true
+        responderOverrides:
+          name0: foobar
+          name1: foobar
       stores:
         - foobar
         - foobar
     - certFile: foobar
       keyFile: foobar
+      ocsp:
+        disableStapling: true
+        responderOverrides:
+          name0: foobar
+          name1: foobar
       stores:
         - foobar
         - foobar
@@ -629,6 +679,11 @@ tls:
       defaultCertificate:
         certFile: foobar
         keyFile: foobar
+        ocsp:
+          disableStapling: true
+          responderOverrides:
+            name0: foobar
+            name1: foobar
       defaultGeneratedCert:
         resolver: foobar
         domain:
@@ -640,6 +695,11 @@ tls:
       defaultCertificate:
         certFile: foobar
         keyFile: foobar
+        ocsp:
+          disableStapling: true
+          responderOverrides:
+            name0: foobar
+            name1: foobar
       defaultGeneratedCert:
         resolver: foobar
         domain:
