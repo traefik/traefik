@@ -66,10 +66,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			for _, entry := range fileList {
-				if entry.IsDir() {
-					// ignore sub-dir
-					continue
-				}
 				watchItems = append(watchItems, path.Join(p.Directory, entry.Name()))
 			}
 		case len(p.Filename) > 0:
