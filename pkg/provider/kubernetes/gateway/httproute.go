@@ -36,6 +36,11 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 			Str("namespace", route.Namespace).
 			Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
@@ -52,18 +57,15 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
 
-				accepted := true
-				if !allowRoute(listener, route.Namespace, kindHTTPRoute) {
+				if accepted && !allowRoute(listener, route.Namespace, kindHTTPRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
+				if accepted && !ok {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
 					accepted = false
 				}
@@ -466,7 +468,7 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 		}
 	}
 
-	protocol, err := getProtocol(svcPort)
+	protocol, err := getHTTPServiceProtocol(svcPort)
 	if err != nil {
 		return nil, corev1.ServicePort{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -483,7 +485,7 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port)))),
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
 	return lb, svcPort, nil
@@ -719,7 +721,7 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch g
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
-	if filterScheme == "http" || filterScheme == "https" {
+	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
 		port = ptr.To("")
 	}
 	if filter.Port != nil {
@@ -781,26 +783,26 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 	}, nil
 }
 
-func getProtocol(portSpec corev1.ServicePort) (string, error) {
+func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	if portSpec.Protocol != corev1.ProtocolTCP {
 		return "", errors.New("only TCP protocol is supported")
 	}
 
 	if portSpec.AppProtocol == nil {
-		protocol := "http"
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			protocol = "https"
+		protocol := schemeHTTP
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
+			protocol = schemeHTTPS
 		}
 		return protocol, nil
 	}
 
 	switch ap := *portSpec.AppProtocol; ap {
 	case appProtocolH2C:
-		return "h2c", nil
-	case appProtocolWS:
-		return "http", nil
-	case appProtocolWSS:
-		return "https", nil
+		return schemeH2C, nil
+	case appProtocolHTTP, appProtocolWS:
+		return schemeHTTP, nil
+	case appProtocolHTTPS, appProtocolWSS:
+		return schemeHTTPS, nil
 	default:
 		return "", fmt.Errorf("unsupported application protocol %s", ap)
 	}

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -32,6 +33,11 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 			Str("namespace", route.Namespace).
 			Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
@@ -48,18 +54,15 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
 
-				accepted := true
-				if !allowRoute(listener, route.Namespace, kindGRPCRoute) {
+				if accepted && !allowRoute(listener, route.Namespace, kindGRPCRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
+				if accepted && !ok {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
 					accepted = false
 				}
@@ -335,14 +338,15 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 		}
 	}
 
-	if svcPort.AppProtocol != nil && *svcPort.AppProtocol != appProtocolH2C {
+	protocol, err := getGRPCServiceProtocol(svcPort)
+	if err != nil {
 		return nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only kubernetes.io/h2c appProtocol is supported", namespace, backendRef.Name),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only \"kubernetes.io/h2c\" and \"https\" appProtocol is supported", namespace, backendRef.Name),
 		}
 	}
 
@@ -351,7 +355,7 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port)))),
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
 	return lb, nil
@@ -396,13 +400,32 @@ func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {
 func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
 	var rules []string
 	for _, header := range headers {
-		switch ptr.Deref(header.Type, gatev1.HeaderMatchExact) {
-		case gatev1.HeaderMatchExact:
+		switch ptr.Deref(header.Type, gatev1.GRPCHeaderMatchExact) {
+		case gatev1.GRPCHeaderMatchExact:
 			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
-		case gatev1.HeaderMatchRegularExpression:
+		case gatev1.GRPCHeaderMatchRegularExpression:
 			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
 		}
 	}
 
 	return rules
+}
+
+func getGRPCServiceProtocol(portSpec corev1.ServicePort) (string, error) {
+	if portSpec.Protocol != corev1.ProtocolTCP {
+		return "", errors.New("only TCP protocol is supported")
+	}
+
+	if portSpec.AppProtocol == nil {
+		return schemeH2C, nil
+	}
+
+	switch ap := *portSpec.AppProtocol; ap {
+	case appProtocolH2C:
+		return schemeH2C, nil
+	case appProtocolHTTPS:
+		return schemeHTTPS, nil
+	default:
+		return "", fmt.Errorf("unsupported application protocol %s", ap)
+	}
 }

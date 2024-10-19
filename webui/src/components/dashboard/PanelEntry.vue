@@ -64,7 +64,7 @@ export default defineComponent({
     &-focus {
       border: solid 2px $accent;
     }
-    &-ex-size{
+    &-ex-size {
       .text-h3 {
         font-size: 22px;
       }

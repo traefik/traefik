@@ -183,6 +183,7 @@ providers:
       service:
         name: foobar
         namespace: foobar
+    nativeLBByDefault: true
   rest:
     insecure: true
   consulCatalog:
@@ -236,6 +237,8 @@ providers:
     exposedByDefault: true
     refreshInterval: 42s
     allowEmptyServices: true
+    watch: true
+    throttleDuration: 42s
     namespaces:
       - foobar
       - foobar
@@ -400,6 +403,7 @@ metrics:
       - 42
       - 42
     pushInterval: 42s
+    serviceName: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -572,6 +576,8 @@ experimental:
         mounts:
           - foobar
           - foobar
+  fastProxy:
+    debug: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar

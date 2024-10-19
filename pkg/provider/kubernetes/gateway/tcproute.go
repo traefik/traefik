@@ -32,6 +32,11 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 			Str("namespace", route.Namespace).
 			Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
@@ -48,13 +53,10 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
 
-				accepted := true
-				if !allowRoute(listener, route.Namespace, kindTCPRoute) {
+				if accepted && !allowRoute(listener, route.Namespace, kindTCPRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
@@ -287,7 +289,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1alpha2.TCPRoute
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
-			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
+			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
 	return lb, nil

@@ -228,6 +228,12 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
+`TRAEFIK_EXPERIMENTAL_FASTPROXY`:  
+Enable the FastProxy implementation. (Default: ```false```)
+
+`TRAEFIK_EXPERIMENTAL_FASTPROXY_DEBUG`:  
+Enable debug mode for the FastProxy implementation. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -422,6 +428,9 @@ TLS key
 
 `TRAEFIK_METRICS_OTLP_PUSHINTERVAL`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
+
+`TRAEFIK_METRICS_OTLP_SERVICENAME`:  
+OTEL service name to use. (Default: ```traefik```)
 
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -792,6 +801,9 @@ Kubernetes label selector to select specific GatewayClasses.
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NATIVELBBYDEFAULT`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_STATUSADDRESS_HOSTNAME`:  
 Hostname used for Kubernetes Gateway status address.
 
@@ -911,6 +923,12 @@ Interval for polling Nomad API. (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_NOMAD_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_THROTTLEDURATION`:  
+Watch throttle duration. (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_NOMAD_WATCH`:  
+Watch Nomad Service events. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
 Plugins configuration.

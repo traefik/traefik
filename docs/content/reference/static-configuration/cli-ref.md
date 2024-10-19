@@ -228,6 +228,12 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
+`--experimental.fastproxy`:  
+Enable the FastProxy implementation. (Default: ```false```)
+
+`--experimental.fastproxy.debug`:  
+Enable debug mode for the FastProxy implementation. (Default: ```false```)
+
 `--experimental.kubernetesgateway`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -422,6 +428,9 @@ TLS key
 
 `--metrics.otlp.pushinterval`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
+
+`--metrics.otlp.servicename`:  
+OTEL service name to use. (Default: ```traefik```)
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -792,6 +801,9 @@ Kubernetes label selector to select specific GatewayClasses.
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetesgateway.nativelbbydefault`:  
+Defines whether to use Native Kubernetes load-balancing by default. (Default: ```false```)
+
 `--providers.kubernetesgateway.statusaddress.hostname`:  
 Hostname used for Kubernetes Gateway status address.
 
@@ -911,6 +923,12 @@ Interval for polling Nomad API. (Default: ```15```)
 
 `--providers.nomad.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
+
+`--providers.nomad.throttleduration`:  
+Watch throttle duration. (Default: ```0```)
+
+`--providers.nomad.watch`:  
+Watch Nomad Service events. (Default: ```false```)
 
 `--providers.plugin.<name>`:  
 Plugins configuration.

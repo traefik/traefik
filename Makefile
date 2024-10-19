@@ -1,13 +1,10 @@
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
-TAG_NAME := $(shell git tag -l --contains HEAD)
+TAG_NAME := $(shell git describe --abbrev=0 --tags --exact-match)
 SHA := $(shell git rev-parse HEAD)
 VERSION_GIT := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
 VERSION := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
 
-GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
-
-REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 BIN_NAME := traefik
 CODENAME ?= cheddar
 
@@ -104,7 +101,7 @@ test-integration: binary
 #? test-gateway-api-conformance: Run the conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.1" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.2" $(TESTFLAGS)
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui

@@ -67,6 +67,8 @@ accessLog:
 
 ### `format`
 
+_Optional, Default="common"_
+
 By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
 If the given format is unsupported, the default (CLF) is used instead.
@@ -156,7 +158,8 @@ Each field can be set to:
 
 - `keep` to keep the value
 - `drop` to drop the value
-- `redact` to replace the value with "redacted"
+
+Header fields may also optionally be set to `redact` to replace the value with "REDACTED".
 
 The `defaultMode` for `fields.names` is `keep`.
 
@@ -277,7 +280,7 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.2
     environment:
       - TZ=US/Alaska
     command:

@@ -32,6 +32,11 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			Str("tls_route", route.Name).
 			Str("namespace", route.Namespace).Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
@@ -48,18 +53,15 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
 
-				accepted := true
-				if !allowRoute(listener, route.Namespace, kindTLSRoute) {
+				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
+				if accepted && !ok {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
 					accepted = false
 				}
@@ -290,7 +292,7 @@ func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
 			// TODO determine whether the servers needs TLS, from the port?
-			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
+			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
 	return lb, nil

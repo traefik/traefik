@@ -50,9 +50,15 @@ const (
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
 
-	appProtocolH2C = "kubernetes.io/h2c"
-	appProtocolWS  = "kubernetes.io/ws"
-	appProtocolWSS = "kubernetes.io/wss"
+	appProtocolHTTP  = "http"
+	appProtocolHTTPS = "https"
+	appProtocolH2C   = "kubernetes.io/h2c"
+	appProtocolWS    = "kubernetes.io/ws"
+	appProtocolWSS   = "kubernetes.io/wss"
+
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+	schemeH2C   = "h2c"
 )
 
 // Provider holds configurations of the provider.
@@ -65,6 +71,7 @@ type Provider struct {
 	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
+	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -112,6 +119,7 @@ type ExtensionBuilderRegistry interface {
 type gatewayListener struct {
 	Name string
 
+	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
 	TLS               *gatev1.GatewayTLSConfig
 	Hostname          *gatev1.Hostname
@@ -317,10 +325,14 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	}
 
 	var supportedFeatures []gatev1.SupportedFeature
-	for _, feature := range SupportedFeatures() {
-		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature(feature))
+	if p.ExperimentalChannel {
+		for _, feature := range SupportedFeatures() {
+			supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
+		}
+		slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
+			return strings.Compare(string(a.Name), string(b.Name))
+		})
 	}
-	slices.Sort(supportedFeatures)
 
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
@@ -351,7 +363,13 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		}
 	}
 
-	gateways := p.client.ListGateways()
+	var gateways []*gatev1.Gateway
+	for _, gateway := range p.client.ListGateways() {
+		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
+			continue
+		}
+		gateways = append(gateways, gateway)
+	}
 
 	var gatewayListeners []gatewayListener
 	for _, gateway := range gateways {
@@ -359,10 +377,6 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
-
-		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
-			continue
-		}
 
 		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
 	}
@@ -425,6 +439,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			GWName:       gateway.Name,
 			GWNamespace:  gateway.Namespace,
 			GWGeneration: gateway.Generation,
+			Port:         listener.Port,
 			Protocol:     listener.Protocol,
 			TLS:          listener.TLS,
 			Hostname:     listener.Hostname,
@@ -867,8 +882,8 @@ func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *g
 }
 
 type backendAddress struct {
-	Address string
-	Port    int32
+	IP   string
+	Port int32
 }
 
 func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
@@ -883,6 +898,9 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	if !exists {
 		return nil, corev1.ServicePort{}, errors.New("service not found")
 	}
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
+	}
 
 	var svcPort *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
@@ -893,6 +911,22 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	}
 	if svcPort == nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("service port %d not found", *ref.Port)
+	}
+
+	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
+	}
+
+	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
+			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+		}
+
+		return []backendAddress{{
+			IP:   service.Spec.ClusterIP,
+			Port: svcPort.Port,
+		}}, *svcPort, nil
 	}
 
 	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
@@ -929,8 +963,8 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 
 				uniqAddresses[address] = struct{}{}
 				backendServers = append(backendServers, backendAddress{
-					Address: address,
-					Port:    port,
+					IP:   address,
+					Port: port,
 				})
 			}
 		}
@@ -1091,26 +1125,42 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-func matchListener(listener gatewayListener, routeNamespace string, parentRef gatev1.ParentReference) bool {
-	if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
-		return false
+func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	var listeners []gatewayListener
+
+	for _, listener := range gatewayListeners {
+		for _, parentRef := range parentRefs {
+			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+				continue
+			}
+
+			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+				continue
+			}
+
+			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+			if listener.GWNamespace != parentRefNamespace {
+				continue
+			}
+
+			if string(parentRef.Name) != listener.GWName {
+				continue
+			}
+
+			listeners = append(listeners, listener)
+		}
 	}
 
-	if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
-		return false
-	}
+	return listeners
+}
 
-	parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-	if listener.GWNamespace != parentRefNamespace {
-		return false
-	}
-
-	if string(parentRef.Name) != listener.GWName {
-		return false
-	}
-
+func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
 	if sectionName != "" && sectionName != listener.Name {
+		return false
+	}
+
+	if parentRef.Port != nil && *parentRef.Port != listener.Port {
 		return false
 	}
 
