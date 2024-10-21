@@ -102,9 +102,14 @@ func isWebSocketUpgrade(req *http.Request) bool {
 
 // ErrorHandler is the http.Handler called when something goes wrong when forwarding the request.
 func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
+	ErrorHandlerWithContext(req.Context(), w, err)
+}
+
+// ErrorHandlerWithContext is the http.Handler called when something goes wrong when forwarding the request.
+func ErrorHandlerWithContext(ctx context.Context, w http.ResponseWriter, err error) {
 	statusCode := ComputeStatusCode(err)
 
-	logger := log.Ctx(req.Context())
+	logger := log.Ctx(ctx)
 	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
 
 	w.WriteHeader(statusCode)
