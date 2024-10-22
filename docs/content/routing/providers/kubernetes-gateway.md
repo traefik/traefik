@@ -606,6 +606,28 @@ IP: 10.42.2.4
 IP: fe80::d873:20ff:fef5:be86
 ```
 
+## Native Load Balancing
+
+By default, Traefik send the traffic directly to the pods IPs and reuses the established connections to the backends for performance purposes.
+
+It is possible to override this behavior and configure Traefik to send the traffic to the service IP. The Kubernetes Service itself does load-balance to the pods.
+
+It can be done with an annotation on the backend `Service`.
+By default, NativeLB is false.
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "true"
+spec:
+[...]
+```
+
 ## Using Traefik middleware as HTTPRoute filter
 
 An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.

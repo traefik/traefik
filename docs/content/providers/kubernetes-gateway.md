@@ -304,6 +304,30 @@ providers:
 --providers.kubernetesgateway.labelselector="app=traefik"
 ```
 
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the `"traefik.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-gateway.md#native-load-balancing).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.nativeLBByDefault=true
+```
+
 ### `throttleDuration`
 
 _Optional, Default: 0_
