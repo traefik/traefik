@@ -606,20 +606,27 @@ IP: 10.42.2.4
 IP: fe80::d873:20ff:fef5:be86
 ```
 
-## Annotations
+## Native Load Balancing
 
-### On Service
+By default, Traefik send the traffic directly to the pods IPs and reuses the established connections to the backends for performance purposes.
 
-??? info "`traefik.io/service.nativelb`"
+It is possible to override this behavior and configure Traefik to send the traffic to the service IP. The Kubernetes Service itself does load-balance to the pods.
 
-    Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
-    The Kubernetes Service itself does load-balance to the pods.
-    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
-    By default, NativeLB is false.
+It can be done with an annotation on the backend `Service`.
+By default, NativeLB is false.
 
-    ```yaml
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+  namespace: default
+  annotations:
     traefik.io/service.nativelb: "true"
-    ```
+spec:
+[...]
+```
 
 ## Using Traefik middleware as HTTPRoute filter
 
