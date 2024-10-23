@@ -268,3 +268,5 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
+
+{!traefik-for-business-applications.md!}
