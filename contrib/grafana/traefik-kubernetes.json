@@ -408,7 +408,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(traefik_service_requests_total{service=~\"$service.*\",protocol=\"http\"}[$interval])) by (method, code)",
+          "expr": "sum(rate(traefik_service_requests_total{exported_service=~\"$exported_service.*\",protocol=\"http\"}[$interval])) by (method, code)",
           "legendFormat": "{{method}}[{{code}}]",
           "range": true,
           "refId": "A"
@@ -507,8 +507,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        traefik_service_request_duration_seconds_sum{service=~\"$service.*\",protocol=\"http\"} / \n          traefik_service_request_duration_seconds_count{service=~\"$service.*\",protocol=\"http\"},\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)\n\n",
-          "legendFormat": "{{method}}[{{code}}] on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        traefik_service_request_duration_seconds_sum{exported_service=~\"$exported_service.*\",protocol=\"http\"} / \n          traefik_service_request_duration_seconds_count{exported_service=~\"$exported_service.*\",protocol=\"http\"},\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)\n\n",
+          "legendFormat": "{{method}}[{{code}}] on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -606,8 +606,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        sum by (service,code) \n          (rate(traefik_service_requests_total{service=~\"$service.*\",protocol=\"http\"}[$interval])) > 0,\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)",
-          "legendFormat": "[{{code}}] on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        sum by (exported_service,code) \n          (rate(traefik_service_requests_total{exported_service=~\"$exported_service.*\",protocol=\"http\"}[$interval])) > 0,\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)",
+          "legendFormat": "[{{code}}] on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -711,8 +711,8 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "label_replace(\n  1 - (sum by (service)\n    (rate(traefik_service_request_duration_seconds_bucket{le=\"1.2\",service=~\"$service.*\"}[$interval])) / sum by (service) \n    (rate(traefik_service_request_duration_seconds_count{service=~\"$service.*\"}[$interval]))\n  ) > 0,\n  \"service\", \"$1\", \"service\", \"([^@]+)@.*\"\n)",
-              "legendFormat": "{{service}}",
+              "expr": "label_replace(\n  1 - (sum by (exported_service)\n    (rate(traefik_service_request_duration_seconds_bucket{le=\"1.2\",exported_service=~\"$exported_service.*\"}[$interval])) / sum by (exported_service) \n    (rate(traefik_service_request_duration_seconds_count{exported_service=~\"$exported_service.*\"}[$interval]))\n  ) > 0,\n  \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\"\n)",
+              "legendFormat": "{{exported_service}}",
               "range": true,
               "refId": "A"
             }
@@ -806,8 +806,8 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "label_replace(\n  1 - (sum by (service)\n    (rate(traefik_service_request_duration_seconds_bucket{le=\"0.3\",service=~\"$service.*\"}[$interval])) / sum by (service) \n    (rate(traefik_service_request_duration_seconds_count{service=~\"$service.*\"}[$interval]))\n  ) > 0,\n  \"service\", \"$1\", \"service\", \"([^@]+)@.*\"\n)",
-              "legendFormat": "{{service}}",
+              "expr": "label_replace(\n  1 - (sum by (exported_service)\n    (rate(traefik_service_request_duration_seconds_bucket{le=\"0.3\",exported_service=~\"$exported_service.*\"}[$interval])) / sum by (exported_service) \n    (rate(traefik_service_request_duration_seconds_count{exported_service=~\"$exported_service.*\"}[$interval]))\n  ) > 0,\n  \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\"\n)",
+              "legendFormat": "{{exported_service}}",
               "range": true,
               "refId": "A"
             }
@@ -922,8 +922,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{service=~\"$service.*\",code=~\"2..\",protocol=\"http\"}[$interval])) > 0,\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)",
-          "legendFormat": "{{method}}[{{code}}] on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        sum by (exported_service,method,code) \n          (rate(traefik_service_requests_total{exported_service=~\"$exported_service.*\",code=~\"2..\",protocol=\"http\"}[$interval])) > 0,\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)",
+          "legendFormat": "{{method}}[{{code}}] on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -1022,8 +1022,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{service=~\"$service.*\",code=~\"5..\",protocol=\"http\"}[$interval])) > 0,\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)",
-          "legendFormat": "{{method}}[{{code}}] on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        sum by (exported_service,method,code) \n          (rate(traefik_service_requests_total{exported_service=~\"$exported_service.*\",code=~\"5..\",protocol=\"http\"}[$interval])) > 0,\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)",
+          "legendFormat": "{{method}}[{{code}}] on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -1122,8 +1122,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{service=~\"$service.*\",code!~\"2..|5..\",protocol=\"http\"}[$interval])) > 0,\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)",
-          "legendFormat": "{{method}}[{{code}}] on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        sum by (exported_service,method,code) \n          (rate(traefik_service_requests_total{exported_service=~\"$exported_service.*\",code!~\"2..|5..\",protocol=\"http\"}[$interval])) > 0,\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)",
+          "legendFormat": "{{method}}[{{code}}] on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -1222,8 +1222,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_requests_bytes_total{service=~\"$service.*\",protocol=\"http\"}[$interval])) > 0,\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)",
-          "legendFormat": "{{method}} on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        sum by (exported_service,method) \n          (rate(traefik_service_requests_bytes_total{exported_service=~\"$exported_service.*\",protocol=\"http\"}[$interval])) > 0,\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)",
+          "legendFormat": "{{method}} on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -1322,8 +1322,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_responses_bytes_total{service=~\"$service.*\",protocol=\"http\"}[$interval])) > 0,\n        \"service\", \"$1\", \"service\", \"([^@]+)@.*\")\n)",
-          "legendFormat": "{{method}} on {{service}}",
+          "expr": "topk(15,\n    label_replace(\n        sum by (exported_service,method) \n          (rate(traefik_service_responses_bytes_total{exported_service=~\"$exported_service.*\",protocol=\"http\"}[$interval])) > 0,\n        \"exported_service\", \"$1\", \"exported_service\", \"([^@]+)@.*\")\n)",
+          "legendFormat": "{{method}} on {{exported_service}}",
           "range": true,
           "refId": "A"
         }
@@ -1546,14 +1546,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(traefik_service_requests_total, service)",
+        "definition": "label_values(traefik_service_requests_total, exported_service)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
-        "name": "service",
+        "name": "exported_service",
         "options": [],
         "query": {
-          "query": "label_values(traefik_service_requests_total, service)",
+          "query": "label_values(traefik_service_requests_total, exported_service)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
