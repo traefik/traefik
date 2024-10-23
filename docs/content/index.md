@@ -30,4 +30,4 @@ Developing Traefik, our main goal is to make it effortless to use, and we're sur
 
     Using Traefik OSS in Production? Consider our enterprise-grade [API Gateway](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc) or our [24/7/365 OSS Support](https://info.traefik.io/request-commercial-support?cta=doc).
 
-    See our API gateway upgrade in action in [this short demo video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc).
+    To see how easy it is to upgrade to our API gateway, watch [this short demo video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc).
