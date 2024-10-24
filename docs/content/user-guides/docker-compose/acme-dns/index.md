@@ -186,3 +186,5 @@ environment:
   - "OVH_APPLICATION_SECRET_FILE=/run/secrets/ovh_application_secret"
   - "OVH_CONSUMER_KEY_FILE=/run/secrets/ovh_consumer_key"
 ```
+
+{!traefik-for-business-applications.md!}

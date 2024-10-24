@@ -2963,7 +2963,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 		entryPoints          map[string]Entrypoint
 	}{
 		{
-			desc: "HTTPRoute with ExtensionRef filter",
+			desc: "ExtensionRef filter",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
 				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, nil, nil
@@ -2991,7 +2991,10 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-my-middleware"},
+							Middlewares: []string{
+								"default-my-first-middleware",
+								"default-my-second-middleware",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3029,7 +3032,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			},
 		},
 		{
-			desc: "HTTPRoute with ExtensionRef filter and create middleware",
+			desc: "ExtensionRef filter with middleware creation",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
 				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}}, nil
@@ -3057,11 +3060,15 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-my-middleware"},
+							Middlewares: []string{
+								"default-my-first-middleware",
+								"default-my-second-middleware",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-my-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
 					},
 					Services: map[string]*dynamic.Service{
 						"default-http-app-1-my-gateway-web-0-1c0cf64bde37d9d0df06-wrr": {
@@ -3097,7 +3104,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			},
 		},
 		{
-			desc: "ExtensionRef filter: Unknown",
+			desc: "Unknown ExtensionRef filter",
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
