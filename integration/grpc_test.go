@@ -93,7 +93,7 @@ func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 	roots := x509.NewCertPool()
 	roots.AppendCertsFromPEM(LocalhostCert)
 	credsClient := credentials.NewClientTLSFromCert(roots, "")
-	conn, err := grpc.Dial("127.0.0.1:4443", grpc.WithTransportCredentials(credsClient))
+	conn, err := grpc.NewClient("127.0.0.1:4443", grpc.WithTransportCredentials(credsClient))
 	if err != nil {
 		return nil, func() error { return nil }, err
 	}
@@ -101,7 +101,7 @@ func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 }
 
 func getHelloClientGRPCh2c() (helloworld.GreeterClient, func() error, error) {
-	conn, err := grpc.Dial("127.0.0.1:8081", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("127.0.0.1:8081", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, func() error { return nil }, err
 	}
