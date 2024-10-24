@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sync/atomic"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -89,7 +89,7 @@ type TCPServiceInfo struct {
 	Status string   `json:"status,omitempty"`
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
 
-	serverStatus map[string]*atomic.Bool // keyed by server URL, UP or DOWN
+	serverStatus *sync.Map // keyed by server URL, UP or DOWN
 }
 
 // AddError adds err to s.Err, if it does not already exist.
@@ -116,33 +116,29 @@ func (s *TCPServiceInfo) AddError(err error, critical bool) {
 // UpdateServerStatus sets the status of the server in the TCPServiceInfo.
 func (s *TCPServiceInfo) UpdateServerStatus(server string, status bool) {
 	if s.serverStatus == nil {
-		s.serverStatus = make(map[string]*atomic.Bool)
+		s.serverStatus = &sync.Map{}
 	}
 
-	if s, exists := s.serverStatus[server]; exists {
-		s.Store(status)
-		return
+	if currentStatus, loaded := s.serverStatus.LoadOrStore(server, status); loaded && currentStatus != status {
+		s.serverStatus.Swap(server, status)
 	}
-
-	v := &atomic.Bool{}
-	v.Store(status)
-	s.serverStatus[server] = v
 }
 
 // GetAllStatus returns all the statuses of all the servers in TCPServiceInfo.
 func (s *TCPServiceInfo) GetAllStatus() map[string]string {
-	if len(s.serverStatus) == 0 {
+	if s.serverStatus == nil {
 		return nil
 	}
 
-	allStatus := make(map[string]string, len(s.serverStatus))
-	for k, v := range s.serverStatus {
-		status := StatusDown
-		if v.Load() {
-			status = StatusUp
+	allStatus := make(map[string]string, 0)
+	s.serverStatus.Range(func(key, value interface{}) bool {
+		allStatus[key.(string)] = StatusDown
+		if value.(bool) {
+			allStatus[key.(string)] = StatusUp
 		}
-		allStatus[k] = status
-	}
+		return true
+	})
+
 	return allStatus
 }
 
