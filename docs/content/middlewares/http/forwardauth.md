@@ -637,3 +637,4 @@ http:
     [http.middlewares.test-auth.forwardAuth.tls]
       insecureSkipVerify: true
 ```
+{!traefik-for-business-applications.md!}
