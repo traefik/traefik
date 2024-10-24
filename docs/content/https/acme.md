@@ -370,6 +370,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [hosting.de](https://www.hosting.de)                                   | `hostingde`        | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/hostingde)        |
 | [Hosttech](https://www.hosttech.eu)                                    | `hosttech`         | `HOSTTECH_API_KEY`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/hosttech)         |
 | [http.net](https://www.http.net/)                                      | `httpnet`          | `HTTPNET_API_KEY`                                                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/httpnet)          |
+| [Huawei Cloud](https://huaweicloud.com)                                | `huaweicloud`      | `HUAWEICLOUD_ACCESS_KEY_ID`, `HUAWEICLOUD_SECRET_ACCESS_KEY`, `HUAWEICLOUD_REGION`                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/huaweicloud)      |
 | [Hurricane Electric](https://dns.he.net)                               | `hurricane`        | `HURRICANE_TOKENS` [^6]                                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/hurricane)        |
 | [HyperOne](https://www.hyperone.com)                                   | `hyperone`         | `HYPERONE_PASSPORT_LOCATION`, `HYPERONE_LOCATION_ID`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/hyperone)         |
 | [IBM Cloud (SoftLayer)](https://www.ibm.com/cloud/)                    | `ibmcloud`         | `SOFTLAYER_USERNAME`, `SOFTLAYER_API_KEY`                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/ibmcloud)         |
@@ -424,6 +425,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Scaleway](https://www.scaleway.com)                                   | `scaleway`         | `SCW_API_TOKEN`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/scaleway)         |
 | [Selectel v2](https://selectel.ru/en/)                                 | `selectelv2`       | `SELECTELV2_ACCOUNT_ID`, `SELECTELV2_PASSWORD`, `SELECTELV2_PROJECT_ID`, `SELECTELV2_USERNAME`                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/selectelv2)       |
 | [Selectel](https://selectel.ru/en/)                                    | `selectel`         | `SELECTEL_API_TOKEN`                                                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/selectel)         |
+| [SelfHost.(de/eu)](https://www.selfhost.de)                            | `selfhostde`       | `SELFHOSTDE_USERNAME`, `SELFHOSTDE_PASSWORD`, `SELFHOSTDE_RECORDS_MAPPING`                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/selfhostde)       |
 | [Servercow](https://servercow.de)                                      | `servercow`        | `SERVERCOW_USERNAME`, `SERVERCOW_PASSWORD`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/servercow)        |
 | [Shellrent](https://www.shellrent.com)                                 | `shellrent`        | `SHELLRENT_USERNAME`, `SHELLRENT_TOKEN`                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/shellrent)        |
 | [Simply.com](https://www.simply.com/en/domains/)                       | `simply`           | `SIMPLY_ACCOUNT_NAME`, `SIMPLY_API_KEY`                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/simply)           |
@@ -460,11 +462,6 @@ For complete details, refer to your provider's _Additional configuration_ link.
 [^5]: The `Global API Key` needs to be used, not the `Origin CA Key`.
 [^6]: As explained in the [LEGO hurricane configuration](https://go-acme.github.io/lego/dns/hurricane/#credentials), each domain or wildcard (record name) needs a token. So each update of record name must be followed by an update of the `HURRICANE_TOKENS` variable, and a restart of Traefik.
 
-!!! info "`delayBeforeCheck`"
-    By default, the `provider` verifies the TXT record _before_ letting ACME verify.
-    You can delay this operation by specifying a delay (in seconds) with `delayBeforeCheck` (value must be greater than zero).
-    This option is useful when internal networks block external DNS queries.
-
 #### `resolvers`
 
 Use custom DNS servers to resolve the FQDN authority.
@@ -492,6 +489,66 @@ certificatesResolvers:
 ```bash tab="CLI"
 # ...
 --certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+```
+
+#### `delayBeforeCheck`
+
+By default, the `provider` verifies the TXT record _before_ letting ACME verify.
+
+You can delay this operation by specifying a delay (in seconds) with `delayBeforeCheck` (value must be greater than zero).
+
+This option is useful when internal networks block external DNS queries.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        delayBeforeCheck: 2s
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
+    # ...
+    delayBeforeCheck = "2s"
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.dnschallenge.delayBeforeCheck=2s
+```
+
+#### `disablePropagationCheck`
+
+**Not recommended**
+
+Disable the TXT records propagation checks before notifying ACME that the DNS challenge is ready. 
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        disablePropagationCheck: true
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
+    # ...
+    disablePropagationCheck = true
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.dnschallenge.disablePropagationCheck=true
 ```
 
 #### Wildcard Domains

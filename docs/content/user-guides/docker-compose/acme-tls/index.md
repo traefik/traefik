@@ -82,3 +82,5 @@ labels:
   # Uses the Host rule to define which certificate to issue
   - "traefik.http.routers.whoami.tls.certresolver=myresolver"
 ```
+
+{!traefik-for-business-applications.md!}
