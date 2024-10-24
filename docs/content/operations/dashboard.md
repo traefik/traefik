@@ -80,7 +80,6 @@ to allow defining:
 !!! note ""
     Since API is [not enabled by default](./api.md), the dashboard is not enabled by default
 
-
 ### Dashboard Router Rule
 
 As underlined in the [documentation for the `api.dashboard` option](./api.md#dashboard),
