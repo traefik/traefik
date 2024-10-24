@@ -77,6 +77,10 @@ to allow defining:
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred to as "Traefik-ception").
 
+!!! note ""
+    Since API is [not enabled by default](./api.md), the dashboard is not enabled by default
+
+
 ### Dashboard Router Rule
 
 As underlined in the [documentation for the `api.dashboard` option](./api.md#dashboard),
