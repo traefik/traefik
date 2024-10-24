@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/andybalholm/brotli"
-	"github.com/klauspost/compress/zstd"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
@@ -24,6 +22,30 @@ const (
 	contentType     = "Content-Type"
 )
 
+// CompressionWriter compresses the written bytes.
+type CompressionWriter interface {
+	// Write data to the encoder.
+	// Input data will be buffered and as the buffer fills up
+	// content will be compressed and written to the output.
+	// When done writing, use Close to flush the remaining output
+	// and write CRC if requested.
+	Write(p []byte) (n int, err error)
+	// Flush will send the currently written data to output
+	// and block until everything has been written.
+	// This should only be used on rare occasions where pushing the currently queued data is critical.
+	Flush() error
+	// Close closes the underlying writers if/when appropriate.
+	// Note that the compressed writer should not be closed if we never used it,
+	// as it would otherwise send some extra "end of compression" bytes.
+	// Close also makes sure to flush whatever was left to write from the buffer.
+	Close() error
+	// Reset reinitializes the state of the encoder, allowing it to be reused.
+	Reset(w io.Writer)
+}
+
+// NewCompressionWriter returns a new CompressionWriter with its corresponding algorithm.
+type NewCompressionWriter func(rw http.ResponseWriter) (CompressionWriter, string, error)
+
 // Config is the Brotli handler configuration.
 type Config struct {
 	// ExcludedContentTypes is the list of content types for which we should not compress.
@@ -34,8 +56,6 @@ type Config struct {
 	IncludedContentTypes []string
 	// MinSize is the minimum size (in bytes) required to enable compression.
 	MinSize int
-	// Algorithm used for the compression (currently Brotli and Zstandard)
-	Algorithm string
 	// MiddlewareName use for logging purposes
 	MiddlewareName string
 }
@@ -46,15 +66,13 @@ type CompressionHandler struct {
 	excludedContentTypes []parsedContentType
 	includedContentTypes []parsedContentType
 	next                 http.Handler
-	writerPool           sync.Pool
+
+	writerPool sync.Pool
+	newWriter  NewCompressionWriter
 }
 
 // NewCompressionHandler returns a new compressing handler.
-func NewCompressionHandler(cfg Config, next http.Handler) (http.Handler, error) {
-	if cfg.Algorithm == "" {
-		return nil, errors.New("compression algorithm undefined")
-	}
-
+func NewCompressionHandler(cfg Config, newWriter NewCompressionWriter, next http.Handler) (http.Handler, error) {
 	if cfg.MinSize < 0 {
 		return nil, errors.New("minimum size must be greater than or equal to zero")
 	}
@@ -88,6 +106,7 @@ func NewCompressionHandler(cfg Config, next http.Handler) (http.Handler, error) 
 		excludedContentTypes: excludedContentTypes,
 		includedContentTypes: includedContentTypes,
 		next:                 next,
+		newWriter:            newWriter,
 	}, nil
 }
 
@@ -117,70 +136,38 @@ func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 	c.next.ServeHTTP(responseWriter, r)
 }
 
-type compression interface {
-	// Write data to the encoder.
-	// Input data will be buffered and as the buffer fills up
-	// content will be compressed and written to the output.
-	// When done writing, use Close to flush the remaining output
-	// and write CRC if requested.
-	Write(p []byte) (n int, err error)
-	// Flush will send the currently written data to output
-	// and block until everything has been written.
-	// This should only be used on rare occasions where pushing the currently queued data is critical.
-	Flush() error
-	// Close closes the underlying writers if/when appropriate.
-	// Note that the compressed writer should not be closed if we never used it,
-	// as it would otherwise send some extra "end of compression" bytes.
-	// Close also makes sure to flush whatever was left to write from the buffer.
-	Close() error
-	// Reset reinitializes the state of the encoder, allowing it to be reused.
-	Reset(w io.Writer)
-}
-
-type compressionWriter struct {
-	compression
-	alg string
-}
-
-func (c *CompressionHandler) getCompressionWriter(rw io.Writer) (*compressionWriter, error) {
-	if writer, ok := c.writerPool.Get().(*compressionWriter); ok {
-		writer.compression.Reset(rw)
+func (c *CompressionHandler) getCompressionWriter(rw http.ResponseWriter) (*compressionWriterWrapper, error) {
+	if writer, ok := c.writerPool.Get().(*compressionWriterWrapper); ok {
+		writer.Reset(rw)
 		return writer, nil
 	}
-	return newCompressionWriter(c.cfg.Algorithm, rw)
+
+	writer, algo, err := c.newWriter(rw)
+	if err != nil {
+		return nil, fmt.Errorf("creating compression writer: %w", err)
+	}
+	return &compressionWriterWrapper{CompressionWriter: writer, algo: algo}, nil
 }
 
-func (c *CompressionHandler) putCompressionWriter(writer *compressionWriter) {
+func (c *CompressionHandler) putCompressionWriter(writer *compressionWriterWrapper) {
 	writer.Reset(nil)
 	c.writerPool.Put(writer)
 }
 
-func newCompressionWriter(algo string, in io.Writer) (*compressionWriter, error) {
-	switch algo {
-	case brotliName:
-		return &compressionWriter{compression: brotli.NewWriter(in), alg: algo}, nil
-
-	case zstdName:
-		writer, err := zstd.NewWriter(in)
-		if err != nil {
-			return nil, fmt.Errorf("creating zstd writer: %w", err)
-		}
-		return &compressionWriter{compression: writer, alg: algo}, nil
-
-	default:
-		return nil, fmt.Errorf("unknown compression algo: %s", algo)
-	}
+type compressionWriterWrapper struct {
+	CompressionWriter
+	algo string
 }
 
-func (c *compressionWriter) ContentEncoding() string {
-	return c.alg
+func (c *compressionWriterWrapper) ContentEncoding() string {
+	return c.algo
 }
 
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
 // TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
 type responseWriter struct {
 	rw                http.ResponseWriter
-	compressionWriter *compressionWriter
+	compressionWriter *compressionWriterWrapper
 
 	minSize              int
 	excludedContentTypes []parsedContentType

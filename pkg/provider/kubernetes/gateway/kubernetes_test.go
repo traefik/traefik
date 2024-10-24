@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -2962,7 +2963,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 		entryPoints          map[string]Entrypoint
 	}{
 		{
-			desc: "HTTPRoute with ExtensionRef filter",
+			desc: "ExtensionRef filter",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
 				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, nil, nil
@@ -2990,7 +2991,10 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-my-middleware"},
+							Middlewares: []string{
+								"default-my-first-middleware",
+								"default-my-second-middleware",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3028,7 +3032,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			},
 		},
 		{
-			desc: "HTTPRoute with ExtensionRef filter and create middleware",
+			desc: "ExtensionRef filter with middleware creation",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
 				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}}, nil
@@ -3056,11 +3060,15 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
 							RuleSyntax:  "v3",
-							Middlewares: []string{"default-my-middleware"},
+							Middlewares: []string{
+								"default-my-first-middleware",
+								"default-my-second-middleware",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-my-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
 					},
 					Services: map[string]*dynamic.Service{
 						"default-http-app-1-my-gateway-web-0-1c0cf64bde37d9d0df06-wrr": {
@@ -3096,7 +3104,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			},
 		},
 		{
-			desc: "ExtensionRef filter: Unknown",
+			desc: "Unknown ExtensionRef filter",
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -3201,6 +3209,296 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			}
 
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/filter_extension_ref.yml"})
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				EntryPoints: test.entryPoints,
+				client:      client,
+			}
+
+			for group, kindFuncs := range test.groupKindFilterFuncs {
+				for kind, filterFunc := range kindFuncs {
+					p.RegisterFilterFuncs(group, kind, filterFunc)
+				}
+			}
+			conf := p.loadConfigurationFromGateways(context.Background())
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		groupKindFilterFuncs map[string]map[string]BuildFilterFunc
+		expected             *dynamic.Configuration
+		entryPoints          map[string]Entrypoint
+	}{
+		{
+			desc: "ExtensionRef filter",
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+					return namespace + "-" + name, nil, nil
+				}},
+			},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00": {
+							EntryPoints: []string{"web"},
+							Service:     "default-grpc-app-1-my-gateway-web-0-wrr",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
+							Priority:    22,
+							RuleSyntax:  "v3",
+							Middlewares: []string{
+								"default-my-first-middleware",
+								"default-my-second-middleware",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-grpc-app-1-my-gateway-web-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "ExtensionRef filter with middleware creation",
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}}, nil
+				}},
+			},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00": {
+							EntryPoints: []string{"web"},
+							Service:     "default-grpc-app-1-my-gateway-web-0-wrr",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
+							Priority:    22,
+							RuleSyntax:  "v3",
+							Middlewares: []string{
+								"default-my-first-middleware",
+								"default-my-second-middleware",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-my-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-grpc-app-1-my-gateway-web-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Unknown ExtensionRef filter",
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00": {
+							EntryPoints: []string{"web"},
+							Service:     "default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00-err-wrr",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
+							Priority:    22,
+							RuleSyntax:  "v3",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00-err-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "invalid-grpcroute-filter",
+										Weight: ptr.To(1),
+										GRPCStatus: &dynamic.GRPCStatus{
+											Code: codes.Unavailable,
+											Msg:  "Service Unavailable",
+										},
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "ExtensionRef filter with filterFunc error",
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+					return "", nil, errors.New("BOOM")
+				}},
+			},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00": {
+							EntryPoints: []string{"web"},
+							Service:     "default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00-err-wrr",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
+							Priority:    22,
+							RuleSyntax:  "v3",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-grpc-app-1-my-gateway-web-0-74471866db6e94e08d00-err-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "invalid-grpcroute-filter",
+										Weight: ptr.To(1),
+										GRPCStatus: &dynamic.GRPCStatus{
+											Code: codes.Unavailable,
+											Msg:  "Service Unavailable",
+										},
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.expected == nil {
+				return
+			}
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "grpcroute/filter_extension_ref.yml"})
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
