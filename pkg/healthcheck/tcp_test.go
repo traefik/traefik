@@ -1,11 +1,9 @@
 package healthcheck
 
 import (
-	"container/list"
 	"context"
 	"net"
 	"net/netip"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -19,30 +17,36 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
+func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		desc                  string
 		mode                  string
 		status                int
-		server                *TCPServer
+		server                *sequencedTcpServer
 		expNumRemovedServers  int
 		expNumUpsertedServers int
 		expGaugeValue         float64
 		targetStatus          string
 	}{
 		{
-			desc:                  "healthy server staying healthy",
-			server:                newTCPServer(true),
+			desc: "healthy server staying healthy",
+			server: newTCPServer(t,
+				tcpMockSequence{accept: true},
+				tcpMockSequence{accept: true},
+			),
 			expNumRemovedServers:  0,
-			expNumUpsertedServers: 1,
+			expNumUpsertedServers: 2,
 			expGaugeValue:         1,
 			targetStatus:          truntime.StatusUp,
 		},
 		{
-			desc:                  "healthy server becoming unhealthy",
-			server:                newTCPServer(true, false),
+			desc: "healthy server becoming unhealthy",
+			server: newTCPServer(t,
+				tcpMockSequence{accept: true},
+				tcpMockSequence{accept: false},
+			),
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         0,
@@ -57,10 +61,10 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer t.Cleanup(cancel)
 
-			targetURL := test.server.Start(t, cancel)
+			test.server.Start(t)
 
 			targets := make(map[string]*net.TCPAddr)
-			targets["target1"] = targetURL
+			targets["target1"] = test.server.Addr
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 			gauge := &testhelpers.CollectingGauge{}
@@ -73,15 +77,9 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 
 			service := NewServiceTCPHealthChecker(&MetricsMock{gauge}, config, lb, serviceInfo, targets, "serviceName")
 
-			go service.Launch(ctx)
-
-			runtime.Gosched()
-
-			select {
-			case <-time.After(100 * time.Millisecond):
-				t.Fatal("test did not complete in time")
-			default:
-				<-ctx.Done()
+			for range test.server.StatusSequence {
+				test.server.Next()
+				service.Check(ctx)
 			}
 
 			lb.RLock()
@@ -90,78 +88,84 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
 			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
-			assert.Equal(t, []string{"service", "serviceName", "url", targetURL.String()}, gauge.LastLabelValues)
-			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
+			assert.Equal(t, []string{"service", "serviceName", "url", test.server.Addr.String()}, gauge.LastLabelValues)
+			assert.Equal(t, map[string]string{test.server.Addr.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
 }
 
-type TCPServer struct {
-	status *list.List
+type tcpMockSequence struct {
+	accept     bool
+	payloadIn  string
+	payloadOut string
 }
 
-func newTCPServer(statusSequence ...bool) *TCPServer {
-	handler := &TCPServer{
-		status: list.New(),
-	}
-
-	for _, status := range statusSequence {
-		handler.status.PushBack(status)
-	}
-
-	return handler
+type sequencedTcpServer struct {
+	Addr           *net.TCPAddr
+	StatusSequence []tcpMockSequence
+	release        chan struct{}
 }
 
-func (s *TCPServer) Start(t *testing.T, done context.CancelFunc) *net.TCPAddr {
-	t.Helper()
-
+func newTCPServer(t *testing.T, statusSequence ...tcpMockSequence) *sequencedTcpServer {
 	listener, err := net.ListenTCP("tcp", net.TCPAddrFromAddrPort(netip.MustParseAddrPort("127.0.0.1:0")))
 	require.NoError(t, err)
-
-	t.Cleanup(func() { _ = listener.Close() })
-
-	statusSeq := s.status.Front()
-	status := statusSeq.Value.(bool)
-	go func() {
-		for {
-			if status {
-				conn, err := listener.Accept()
-				assert.NoError(t, err)
-				t.Cleanup(func() { _ = conn.Close() })
-
-				go func() {
-					for {
-						buf := make([]byte, 1024)
-						n, err := conn.Read(buf)
-						if err != nil {
-							return
-						}
-
-						recv := strings.TrimSpace(string(buf[:n]))
-
-						switch recv {
-						case "health":
-							_, _ = conn.Write([]byte("OK\n"))
-						case "quit":
-							done()
-							_, _ = conn.Write([]byte("Bye\n"))
-							return
-						}
-					}
-				}()
-			}
-
-			statusSeq = statusSeq.Next()
-			if statusSeq == nil {
-				done()
-				return
-			}
-			status = statusSeq.Value.(bool)
-		}
-	}()
 
 	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
 	require.True(t, ok)
 
-	return tcpAddr
+	listener.Close()
+
+	return &sequencedTcpServer{
+		Addr:           tcpAddr,
+		StatusSequence: statusSequence,
+		release:        make(chan struct{}),
+	}
+}
+
+func (s *sequencedTcpServer) Next() {
+	s.release <- struct{}{}
+}
+
+func (s *sequencedTcpServer) Start(t *testing.T) {
+	t.Helper()
+
+	go func() {
+		for _, seq := range s.StatusSequence {
+			<-s.release
+
+			if !seq.accept {
+				continue
+			}
+
+			listener, err := net.ListenTCP("tcp", s.Addr)
+			require.NoError(t, err)
+
+			conn, err := listener.Accept()
+			require.NoError(t, err)
+
+			if seq.payloadIn == "" {
+				conn.Close()
+				listener.Close()
+				continue
+			}
+
+			conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+			buf := make([]byte, 1024)
+			n, _ := conn.Read(buf)
+
+			recv := strings.TrimSpace(string(buf[:n]))
+
+			switch recv {
+			case seq.payloadIn:
+				_, _ = conn.Write([]byte(seq.payloadOut))
+			default:
+				_, _ = conn.Write([]byte("FAULT\n"))
+			}
+
+			conn.Close()
+			listener.Close()
+		}
+
+		close(s.release)
+	}()
 }
