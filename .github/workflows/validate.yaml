@@ -12,6 +12,25 @@ env:
 
 jobs:
 
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: "${{ env.GOLANGCI_LINT_VERSION }}"
+
   validate:
     runs-on: ubuntu-latest
 
@@ -26,9 +45,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Install golangci-lint ${{ env.GOLANGCI_LINT_VERSION }}
-        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
-
       - name: Install misspell ${{ env.MISSPELL_VERSION }}
         run: curl -sfL https://raw.githubusercontent.com/golangci/misspell/master/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSPELL_VERSION}
 
@@ -36,7 +52,7 @@ jobs:
         run: touch webui/static/index.html
 
       - name: Validate
-        run: make validate
+        run: make validate-files
 
   validate-generate:
     runs-on: ubuntu-latest

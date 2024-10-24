@@ -145,3 +145,5 @@ http:
     prefixes = ["/foobar"]
     forceSlash = false
 ```
+
+{!traefik-for-business-applications.md!}
