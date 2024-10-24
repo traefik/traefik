@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
+	"github.com/klauspost/compress/zstd"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"go.opentelemetry.io/otel/trace"
@@ -94,12 +96,12 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 
 	var err error
 
-	c.zstdHandler, err = c.newCompressionHandler(zstdName, name)
+	c.zstdHandler, err = c.newZstdHandler(name)
 	if err != nil {
 		return nil, err
 	}
 
-	c.brotliHandler, err = c.newCompressionHandler(brotliName, name)
+	c.brotliHandler, err = c.newBrotliHandler(name)
 	if err != nil {
 		return nil, err
 	}
@@ -190,13 +192,34 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 	return wrapper(c.next), nil
 }
 
-func (c *compress) newCompressionHandler(algo string, middlewareName string) (http.Handler, error) {
-	cfg := Config{MinSize: c.minSize, Algorithm: algo, MiddlewareName: middlewareName}
+func (c *compress) newBrotliHandler(middlewareName string) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
 	if len(c.includes) > 0 {
 		cfg.IncludedContentTypes = c.includes
 	} else {
 		cfg.ExcludedContentTypes = c.excludes
 	}
 
-	return NewCompressionHandler(cfg, c.next)
+	newBrotliWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
+		return brotli.NewWriter(rw), brotliName, nil
+	}
+	return NewCompressionHandler(cfg, newBrotliWriter, c.next)
+}
+
+func (c *compress) newZstdHandler(middlewareName string) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
+	if len(c.includes) > 0 {
+		cfg.IncludedContentTypes = c.includes
+	} else {
+		cfg.ExcludedContentTypes = c.excludes
+	}
+
+	newZstdWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
+		writer, err := zstd.NewWriter(rw)
+		if err != nil {
+			return nil, "", fmt.Errorf("creating zstd writer: %w", err)
+		}
+		return writer, zstdName, nil
+	}
+	return NewCompressionHandler(cfg, newZstdWriter, c.next)
 }

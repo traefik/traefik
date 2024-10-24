@@ -30,7 +30,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
     ```
 
-2. Install/update the Traefik [RBAC](../reference/dynamic-configuration/kubernetes-gateway.md#rbac).
+2. Install the additional Traefik RBAC required for Gateway API.
 
     ```bash
     # Install Traefik RBACs.
