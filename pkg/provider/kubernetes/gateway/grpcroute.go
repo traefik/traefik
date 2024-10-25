@@ -120,7 +120,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindGRPCRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 
 		matches := routeRule.Matches
 		if len(matches) == 0 {
@@ -166,7 +166,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(conf, routeKey, routeRule, route)
+				router.Service, serviceCondition = p.loadGRPCService(conf, routerName, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -267,7 +267,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 	}
 
 	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
+	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
 	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
 	if errCondition != nil {
