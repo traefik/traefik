@@ -2,6 +2,7 @@ package fast
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -19,72 +20,75 @@ type switchProtocolCopier struct {
 	user, backend io.ReadWriter
 }
 
-func (c switchProtocolCopier) copyFromBackend(errc chan<- error) {
+func (c switchProtocolCopier) copyFromBackend(errCh chan<- error) {
 	_, err := io.Copy(c.user, c.backend)
-	errc <- err
+	errCh <- err
 }
 
-func (c switchProtocolCopier) copyToBackend(errc chan<- error) {
+func (c switchProtocolCopier) copyToBackend(errCh chan<- error) {
 	_, err := io.Copy(c.backend, c.user)
-	errc <- err
+	errCh <- err
 }
 
-func handleUpgradeResponse(rw http.ResponseWriter, req *http.Request, reqUpType string, res *fasthttp.Response, backConn net.Conn) {
-	defer backConn.Close()
+type upgradeHandler func(rw http.ResponseWriter, res *fasthttp.Response, backConn net.Conn)
 
-	resUpType := upgradeTypeFastHTTP(&res.Header)
+func upgradeResponseHandler(ctx context.Context, reqUpType string) upgradeHandler {
+	return func(rw http.ResponseWriter, res *fasthttp.Response, backConn net.Conn) {
+		resUpType := upgradeTypeFastHTTP(&res.Header)
 
-	if !strings.EqualFold(reqUpType, resUpType) {
-		httputil.ErrorHandler(rw, req, fmt.Errorf("backend tried to switch protocol %q when %q was requested", resUpType, reqUpType))
-		return
-	}
-
-	hj, ok := rw.(http.Hijacker)
-	if !ok {
-		httputil.ErrorHandler(rw, req, fmt.Errorf("can't switch protocols using non-Hijacker ResponseWriter type %T", rw))
-		return
-	}
-	backConnCloseCh := make(chan bool)
-	go func() {
-		// Ensure that the cancellation of a request closes the backend.
-		// See issue https://golang.org/issue/35559.
-		select {
-		case <-req.Context().Done():
-		case <-backConnCloseCh:
+		if !strings.EqualFold(reqUpType, resUpType) {
+			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("backend tried to switch protocol %q when %q was requested", resUpType, reqUpType))
+			backConn.Close()
+			return
 		}
-		_ = backConn.Close()
-	}()
 
-	defer close(backConnCloseCh)
-
-	conn, brw, err := hj.Hijack()
-	if err != nil {
-		httputil.ErrorHandler(rw, req, fmt.Errorf("hijack failed on protocol switch: %w", err))
-		return
-	}
-	defer conn.Close()
-
-	for k, values := range rw.Header() {
-		for _, v := range values {
-			res.Header.Add(k, v)
+		hj, ok := rw.(http.Hijacker)
+		if !ok {
+			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("can't switch protocols using non-Hijacker ResponseWriter type %T", rw))
+			backConn.Close()
+			return
 		}
-	}
+		backConnCloseCh := make(chan bool)
+		go func() {
+			// Ensure that the cancellation of a request closes the backend.
+			// See issue https://golang.org/issue/35559.
+			select {
+			case <-ctx.Done():
+			case <-backConnCloseCh:
+			}
+			_ = backConn.Close()
+		}()
+		defer close(backConnCloseCh)
 
-	if err := res.Header.Write(brw.Writer); err != nil {
-		httputil.ErrorHandler(rw, req, fmt.Errorf("response write: %w", err))
-		return
-	}
+		conn, brw, err := hj.Hijack()
+		if err != nil {
+			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("hijack failed on protocol switch: %w", err))
+			return
+		}
+		defer conn.Close()
 
-	if err := brw.Flush(); err != nil {
-		httputil.ErrorHandler(rw, req, fmt.Errorf("response flush: %w", err))
-		return
-	}
+		for k, values := range rw.Header() {
+			for _, v := range values {
+				res.Header.Add(k, v)
+			}
+		}
 
-	errc := make(chan error, 1)
-	spc := switchProtocolCopier{user: conn, backend: backConn}
-	go spc.copyToBackend(errc)
-	go spc.copyFromBackend(errc)
-	<-errc
+		if err := res.Header.Write(brw.Writer); err != nil {
+			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("response write: %w", err))
+			return
+		}
+
+		if err := brw.Flush(); err != nil {
+			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("response flush: %w", err))
+			return
+		}
+
+		errCh := make(chan error, 1)
+		spc := switchProtocolCopier{user: conn, backend: backConn}
+		go spc.copyToBackend(errCh)
+		go spc.copyFromBackend(errCh)
+		<-errCh
+	}
 }
 
 func upgradeType(h http.Header) string {
