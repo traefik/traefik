@@ -42,7 +42,7 @@ type conn struct {
 	broken           atomic.Bool
 	upgraded         atomic.Bool
 
-	closeMu  sync.RWMutex
+	closeMu  sync.Mutex
 	closed   bool
 	closeErr error
 
@@ -60,17 +60,16 @@ func (c *conn) Read(b []byte) (n int, err error) {
 // Ensures that connection is closed only once,
 // to avoid duplicate close error.
 func (c *conn) Close() error {
-	c.closeMu.RLock()
-	if c.closed {
-		return c.closeErr
-	}
-	c.closeMu.RUnlock()
-
 	c.closeMu.Lock()
 	defer c.closeMu.Unlock()
 
+	if c.closed {
+		return c.closeErr
+	}
+
 	c.closed = true
 	c.closeErr = c.Conn.Close()
+
 	return c.closeErr
 }
 
