@@ -123,7 +123,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindHTTPRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
@@ -224,7 +224,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http")
 
 	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, &metav1.Condition{
