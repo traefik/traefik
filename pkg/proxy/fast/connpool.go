@@ -61,16 +61,19 @@ func (c *conn) Read(b []byte) (n int, err error) {
 // to avoid duplicate close error.
 func (c *conn) Close() error {
 	c.closeMu.RLock()
-	if c.closed {
-		return c.closeErr
-	}
+	closed, closeErr := c.closed, c.closeErr
 	c.closeMu.RUnlock()
+
+	if closed {
+		return closeErr
+	}
 
 	c.closeMu.Lock()
 	defer c.closeMu.Unlock()
 
 	c.closed = true
 	c.closeErr = c.Conn.Close()
+
 	return c.closeErr
 }
 
