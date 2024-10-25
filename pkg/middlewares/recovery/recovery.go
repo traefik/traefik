@@ -33,6 +33,7 @@ func New(ctx context.Context, next http.Handler) (http.Handler, error) {
 func (re *recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	recoveryRW := newRecoveryResponseWriter(rw)
 	defer recoverFunc(recoveryRW, req)
+
 	re.next.ServeHTTP(recoveryRW, req)
 }
 
@@ -77,21 +78,8 @@ func newRecoveryResponseWriter(rw http.ResponseWriter) recoveryResponseWriter {
 }
 
 type responseWriterWrapper struct {
-	rw http.ResponseWriter
-
+	rw          http.ResponseWriter
 	headersSent bool
-}
-
-func (r *responseWriterWrapper) finalizeResponse() {
-	// If headers have been sent, this is not possible to respond with an HTTP error,
-	// and we let the server abort the response silently thanks to the http.ErrAbortHandler sentinel panic value.
-	if r.headersSent {
-		panic(http.ErrAbortHandler)
-	}
-
-	// The response has not yet started to be written,
-	// we can safely return a fresh new error response.
-	http.Error(r.rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 func (r *responseWriterWrapper) Header() http.Header {
@@ -104,6 +92,10 @@ func (r *responseWriterWrapper) Write(bytes []byte) (int, error) {
 }
 
 func (r *responseWriterWrapper) WriteHeader(code int) {
+	if r.headersSent {
+		return
+	}
+
 	// Handling informational headers.
 	if code >= 100 && code <= 199 {
 		r.rw.WriteHeader(code)
@@ -126,6 +118,18 @@ func (r *responseWriterWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 
 	return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
+}
+
+func (r *responseWriterWrapper) finalizeResponse() {
+	// If headers have been sent this is not possible to respond with an HTTP error,
+	// and we let the server abort the response silently thanks to the http.ErrAbortHandler sentinel panic value.
+	if r.headersSent {
+		panic(http.ErrAbortHandler)
+	}
+
+	// The response has not yet started to be written,
+	// we can safely return a fresh new error response.
+	http.Error(r.rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 type responseWriterWrapperWithCloseNotify struct {
