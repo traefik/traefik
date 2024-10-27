@@ -267,6 +267,9 @@ Directory to mount to the wasm guest.
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.
 
+`TRAEFIK_EXPERIMENTAL_REQUIREPLUGINSTOSTART`:  
+Require plugins to be loaded successfully to start Traefik. (Default: ```false```)
+
 `TRAEFIK_GLOBAL_CHECKNEWVERSION`:  
 Periodically check if a new version has been released. (Default: ```true```)
 
