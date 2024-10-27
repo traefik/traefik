@@ -239,6 +239,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
+		if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.RequirePluginsToStart {
+			return nil, fmt.Errorf("plugin: failed to create plugin builder: %w", err)
+		}
 		pluginLogger.Err(err).Msg("Plugins are disabled because an error has occurred.")
 	} else if hasPlugins {
 		pluginLogger.Info().Msg("Plugins loaded.")
