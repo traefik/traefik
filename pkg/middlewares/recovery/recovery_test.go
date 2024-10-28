@@ -2,6 +2,8 @@ package recovery
 
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,17 +13,54 @@ import (
 )
 
 func TestRecoverHandler(t *testing.T) {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		panic("I love panicking!")
+	tests := []struct {
+		desc        string
+		panicErr    error
+		headersSent bool
+	}{
+		{
+			desc:        "headers sent and custom panic error",
+			panicErr:    errors.New("foo"),
+			headersSent: true,
+		},
+		{
+			desc:        "headers sent and error abort handler",
+			panicErr:    http.ErrAbortHandler,
+			headersSent: true,
+		},
+		{
+			desc:     "custom panic error",
+			panicErr: errors.New("foo"),
+		},
+		{
+			desc:     "error abort handler",
+			panicErr: http.ErrAbortHandler,
+		},
 	}
-	recovery, err := New(context.Background(), http.HandlerFunc(fn))
-	require.NoError(t, err)
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	server := httptest.NewServer(recovery)
-	defer server.Close()
+			fn := func(rw http.ResponseWriter, req *http.Request) {
+				if test.headersSent {
+					rw.WriteHeader(http.StatusTeapot)
+				}
+				panic(test.panicErr)
+			}
+			recovery, err := New(context.Background(), http.HandlerFunc(fn))
+			require.NoError(t, err)
 
-	resp, err := http.Get(server.URL)
-	require.NoError(t, err)
+			server := httptest.NewServer(recovery)
+			t.Cleanup(server.Close)
 
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			res, err := http.Get(server.URL)
+			if test.headersSent {
+				require.Nil(t, res)
+				assert.ErrorIs(t, err, io.EOF)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+			}
+		})
+	}
 }

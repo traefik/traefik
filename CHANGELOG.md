@@ -1,3 +1,25 @@
+## [v3.1.7](https://github.com/traefik/traefik/tree/v3.1.7) (2024-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.6...v3.1.7)
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Preserve HTTPRoute filters order ([#11198](https://github.com/traefik/traefik/pull/11198) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s,k8s/gatewayapi]** Fix broken links in Kubernetes Gateway provider page ([#11188](https://github.com/traefik/traefik/pull/11188) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#11232](https://github.com/traefik/traefik/pull/11232) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.1 ([#11218](https://github.com/traefik/traefik/pull/11218) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.13](https://github.com/traefik/traefik/tree/v2.11.13) (2024-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.12...v2.11.13)
+
+**Bug fixes:**
+- **[middleware,service]** Panic on aborted requests to properly close the connection ([#11129](https://github.com/traefik/traefik/pull/11129) by [tonybart1337](https://github.com/tonybart1337))
+
+**Documentation:**
+- Update business callouts ([#11217](https://github.com/traefik/traefik/pull/11217) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v3.2.0-rc2](https://github.com/traefik/traefik/tree/v3.2.0-rc2) (2024-10-09)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.2.0-rc2)
 
