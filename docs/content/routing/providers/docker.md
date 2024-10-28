@@ -105,6 +105,10 @@ Traefik creates, for each container, a corresponding [service](../services/index
 The Service automatically gets a server per instance of the container,
 and the router automatically gets a rule defined by `defaultRule` (if no rule for it was defined in labels).
 
+!!! info "`defaultRule`"
+
+    If [`defaultRule`](../../providers/docker#defaultrule) is set to an empty string (`""`) no router will be created.
+
 #### Service definition
 
 --8<-- "content/routing/providers/service-by-label.md"

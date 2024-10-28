@@ -21,6 +21,7 @@ import (
 )
 
 // DefaultTemplateRule The default template for the default rule.
+// TODO: Change this to `""` for v4
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 type Shared struct {
@@ -34,6 +35,11 @@ type Shared struct {
 	DefaultRule string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	defaultRuleTpl *template.Template
+}
+
+// shouldCreateDefaultService tells you if you should create a service if no service label is present.
+func (p *Shared) shouldCreateDefaultService() bool {
+	return p.DefaultRule != ""
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {

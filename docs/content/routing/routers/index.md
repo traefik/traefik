@@ -1042,6 +1042,10 @@ The table below lists all the available matchers:
 | [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |<!-- markdownlint-disable-line MD051 -->
 | [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
+!!! tip "`defaultRule`"
+
+    For providers with a [`defaultRule`](../../providers/docker#defaultrule) option, if it is set to an empty string (`""`) no router will be created by default, unless the service provides its own rule.
+
 !!! tip "Backticks or Quotes?"
 
      To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
