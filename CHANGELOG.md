@@ -1,3 +1,12 @@
+## [v2.11.13](https://github.com/traefik/traefik/tree/v2.11.13) (2024-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.12...v2.11.13)
+
+**Bug fixes:**
+- **[middleware,service]** Panic on aborted requests to properly close the connection ([#11129](https://github.com/traefik/traefik/pull/11129) by [tonybart1337](https://github.com/tonybart1337))
+
+**Documentation:**
+- Update business callouts ([#11217](https://github.com/traefik/traefik/pull/11217) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v3.1.6](https://github.com/traefik/traefik/tree/v3.1.6) (2024-10-09)
 [All Commits](https://github.com/traefik/traefik/compare/v3.1.5...v3.1.6)
 
