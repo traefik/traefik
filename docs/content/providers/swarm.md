@@ -486,6 +486,10 @@ It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
 The container service name can be accessed with the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
+!!! info "`defaultRule`"
+
+    If `defaultRule` is set to an empty string (`""`) by default no router will be created unless a custom rule is specified.
+
 ```yaml tab="File (YAML)"
 providers:
   swarm:

@@ -88,7 +88,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 }
 
 func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguration) error {
-	if len(configuration.Services) == 0 {
+	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
 		configuration.Services = map[string]*dynamic.TCPService{
 			getName(i): {
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
@@ -109,7 +109,7 @@ func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguratio
 }
 
 func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguration) error {
-	if len(configuration.Services) == 0 {
+	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 
 		configuration.Services[getName(i)] = &dynamic.UDPService{
@@ -130,7 +130,7 @@ func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguratio
 }
 
 func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfiguration) error {
-	if len(configuration.Services) == 0 {
+	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
 		configuration.Services = make(map[string]*dynamic.Service)
 
 		lb := new(dynamic.ServersLoadBalancer)

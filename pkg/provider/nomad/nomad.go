@@ -27,6 +27,7 @@ const (
 	providerName = "nomad"
 
 	// defaultTemplateRule is the default template for the default rule.
+	// TODO: Change this to `""` for v4
 	defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 	// defaultPrefix is the default prefix used in tag values indicating the service
@@ -121,6 +122,11 @@ func (c *Configuration) SetDefaults() {
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.DefaultRule = defaultTemplateRule
 	c.ThrottleDuration = ptypes.Duration(0)
+}
+
+// shouldCreateDefaultService tells you if you should create a service if no service label is present.
+func (c *Configuration) shouldCreateDefaultService() bool {
+	return c.DefaultRule != ""
 }
 
 type EndpointConfig struct {

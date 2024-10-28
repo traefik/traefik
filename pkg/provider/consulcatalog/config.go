@@ -141,7 +141,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 }
 
 func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dynamic.TCPConfiguration) error {
-	if len(configuration.Services) == 0 {
+	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
 		configuration.Services = map[string]*dynamic.TCPService{
 			getName(item): {
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
@@ -159,7 +159,7 @@ func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dy
 }
 
 func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dynamic.UDPConfiguration) error {
-	if len(configuration.Services) == 0 {
+	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 
 		lb := &dynamic.UDPServersLoadBalancer{}
@@ -179,7 +179,7 @@ func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dy
 }
 
 func (p *Provider) buildServiceConfiguration(item itemData, configuration *dynamic.HTTPConfiguration) error {
-	if len(configuration.Services) == 0 {
+	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
 		configuration.Services = make(map[string]*dynamic.Service)
 
 		lb := &dynamic.ServersLoadBalancer{}
