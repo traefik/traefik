@@ -4,11 +4,11 @@ RepositoryName = "traefik"
 OutputType = "file"
 FileName = "traefik_changelog.md"
 
-# example final release of v3.1.0
-CurrentRef = "v3.1.0-rc1"
-PreviousRef = "v3.0.0-beta2" # divergence with master and branch v3 has been initiated with v3.0.0-beta2
+# example final release of v3.2.0
+CurrentRef = "v3.2.0-rc1"
+PreviousRef = "v3.1.0-rc1"
 BaseBranch = "master"
-FutureCurrentRefName = "v3.1.0-rc1"
+FutureCurrentRefName = "v3.2.0-rc1"
 
 ThresholdPreviousRef = 10
 ThresholdCurrentRef = 10
