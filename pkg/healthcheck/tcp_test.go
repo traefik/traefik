@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/netip"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -22,9 +23,8 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 
 	testCases := []struct {
 		desc                  string
-		mode                  string
-		status                int
 		server                *sequencedTcpServer
+		config                *dynamic.TCPServerHealthCheck
 		expNumRemovedServers  int
 		expNumUpsertedServers int
 		expGaugeValue         float64
@@ -36,6 +36,11 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 				tcpMockSequence{accept: true},
 				tcpMockSequence{accept: true},
 			),
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Millisecond * 100),
+				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				TLS:      false,
+			},
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 2,
 			expGaugeValue:         1,
@@ -47,6 +52,47 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 				tcpMockSequence{accept: true},
 				tcpMockSequence{accept: false},
 			),
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Millisecond * 100),
+				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				TLS:      false,
+			},
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         0,
+			targetStatus:          truntime.StatusDown,
+		},
+		{
+			desc: "healthy server with request and response",
+			server: newTCPServer(t,
+				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
+				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
+			),
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Millisecond * 100),
+				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				TLS:      false,
+				Payload:  "request",
+				Expected: "response",
+			},
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 2,
+			expGaugeValue:         1,
+			targetStatus:          truntime.StatusUp,
+		},
+		{
+			desc: "healthy server with request and response becoming unhealthy",
+			server: newTCPServer(t,
+				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
+				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "bad response"},
+			),
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Millisecond * 100),
+				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				TLS:      false,
+				Payload:  "request",
+				Expected: "response",
+			},
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         0,
@@ -69,16 +115,12 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 			gauge := &testhelpers.CollectingGauge{}
 			serviceInfo := &truntime.TCPServiceInfo{}
-			config := &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
-				TLS:      false,
-			}
 
-			service := NewServiceTCPHealthChecker(&MetricsMock{gauge}, config, lb, serviceInfo, targets, "serviceName")
+			service := NewServiceTCPHealthChecker(&MetricsMock{gauge}, test.config, lb, serviceInfo, targets, "serviceName")
 
 			for range test.server.StatusSequence {
 				test.server.Next()
+				runtime.Gosched()
 				service.Check(ctx)
 			}
 
@@ -143,13 +185,15 @@ func (s *sequencedTcpServer) Start(t *testing.T) {
 			conn, err := listener.Accept()
 			require.NoError(t, err)
 
+			listener.Close()
+
 			if seq.payloadIn == "" {
 				conn.Close()
-				listener.Close()
+
 				continue
 			}
 
-			conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+			conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 			buf := make([]byte, 1024)
 			n, _ := conn.Read(buf)
 
@@ -162,8 +206,7 @@ func (s *sequencedTcpServer) Start(t *testing.T) {
 				_, _ = conn.Write([]byte("FAULT\n"))
 			}
 
-			conn.Close()
-			listener.Close()
+			defer conn.Close()
 		}
 
 		close(s.release)
