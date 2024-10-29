@@ -723,4 +723,31 @@ X-Forwarded-Server: traefik-6b66d45748-ns8mt
 X-Real-Ip: 10.42.2.1
 ```
 
+## Native Load Balancing
+
+By default, Traefik sends the traffic directly to the pod IPs and reuses the established connections to the backends for performance purposes.
+
+It is possible to override this behavior and configure Traefik to send the traffic to the service IP.
+The Kubernetes service itself does the load balancing to the pods.
+It can be done with the annotation `traefik.io/service.nativelb` on the backend `Service`.
+
+By default, NativeLB is `false`.
+
+!!! info "Default value"
+
+    Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../providers/kubernetes-gateway.md#nativelbbydefault) at the provider level. 
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "true"
+spec:
+[...]
+```
+
 {!traefik-for-business-applications.md!}

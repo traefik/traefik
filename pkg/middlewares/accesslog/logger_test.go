@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -954,8 +953,14 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 	req = req.WithContext(reqContext)
 
 	chain := alice.New()
+
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return recovery.New(context.Background(), next)
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			defer func() {
+				_ = recover() // ignore the stream backend panic to avoid the test to fail.
+			}()
+			next.ServeHTTP(rw, req)
+		}), nil
 	})
 	chain = chain.Append(capture.Wrap)
 	chain = chain.Append(WrapHandler(logger))

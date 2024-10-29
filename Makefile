@@ -126,20 +126,16 @@ lint:
 
 .PHONY: validate-files
 #? validate-files: Validate code and docs
-validate-files: lint
+validate-files:
 	$(foreach exec,$(LINT_EXECUTABLES),\
             $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
+	$(CURDIR)/script/validate-vendor.sh
 	$(CURDIR)/script/validate-misspell.sh
 	$(CURDIR)/script/validate-shell-script.sh
 
 .PHONY: validate
 #? validate: Validate code, docs, and vendor
-validate: lint
-	$(foreach exec,$(EXECUTABLES),\
-            $(if $(shell which $(exec)),,$(error "No $(exec) in PATH")))
-	$(CURDIR)/script/validate-vendor.sh
-	$(CURDIR)/script/validate-misspell.sh
-	$(CURDIR)/script/validate-shell-script.sh
+validate: lint validate-files
 
 # Target for building images for multiple architectures.
 .PHONY: multi-arch-image-%

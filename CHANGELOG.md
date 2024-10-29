@@ -1,3 +1,82 @@
+## [v3.2.0](https://github.com/traefik/traefik/tree/v3.2.0) (2024-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.2.0)
+
+**Enhancements:**
+- **[acme]** Remove same email requirement for certresolvers ([#11019](https://github.com/traefik/traefik/pull/11019) by [Emrio](https://github.com/Emrio))
+- **[acme]** Add support for custom CA certificates by certificate resolver ([#10816](https://github.com/traefik/traefik/pull/10816) by [ldez](https://github.com/ldez))
+- **[acme]** Add 30 day certificatesDuration step ([#10970](https://github.com/traefik/traefik/pull/10970) by [luker983](https://github.com/luker983))
+- **[docker]** Support HTTP BasicAuth for docker and swarm endpoint ([#10776](https://github.com/traefik/traefik/pull/10776) by [985492783](https://github.com/985492783))
+- **[k8s,k8s/gatewayapi]** Add supported features to the Gateway API GatewayClass status ([#11056](https://github.com/traefik/traefik/pull/11056) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Update sigs.k8s.io/gateway-api to v1.2.0-rc1 ([#11124](https://github.com/traefik/traefik/pull/11124) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Add support for backend protocol selection in HTTP and GRPC routes ([#11051](https://github.com/traefik/traefik/pull/11051) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Improve Kubernetes GatewayAPI TCPRoute and TLSRoute support ([#11042](https://github.com/traefik/traefik/pull/11042) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Support HTTPRoute destination port matching ([#11134](https://github.com/traefik/traefik/pull/11134) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s,k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.2.0-rc2 ([#11131](https://github.com/traefik/traefik/pull/11131) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s,k8s/gatewayapi]** Add support for Gateway API BackendTLSPolicies ([#11009](https://github.com/traefik/traefik/pull/11009) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Support NativeLB option in GatewayAPI provider ([#11147](https://github.com/traefik/traefik/pull/11147) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Support ResponseHeaderModifier filter ([#10987](https://github.com/traefik/traefik/pull/10987) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s,k8s/gatewayapi]** Support GRPC routes ([#10975](https://github.com/traefik/traefik/pull/10975) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s,k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.2.0 ([#11167](https://github.com/traefik/traefik/pull/11167) by [rtribotte](https://github.com/rtribotte))
+- **[metrics,otel]** Allow setting service.name for OTLP metrics ([#10917](https://github.com/traefik/traefik/pull/10917) by [cmartell-at-ocp](https://github.com/cmartell-at-ocp))
+- **[middleware,accesslogs]** Record trace id and EntryPoint span id into access log ([#10921](https://github.com/traefik/traefik/pull/10921) by [weijiany](https://github.com/weijiany))
+- **[middleware,authentication]** Support LogUserHeader with forwardAuth middleware ([#10833](https://github.com/traefik/traefik/pull/10833) by [GaleHuang](https://github.com/GaleHuang))
+- **[middleware]** Add encodings option to the compression middleware ([#10943](https://github.com/traefik/traefik/pull/10943) by [wollomatic](https://github.com/wollomatic))
+- **[middleware]** Add support for ipv6 subnet in ipStrategy ([#9747](https://github.com/traefik/traefik/pull/9747) by [michal-kralik](https://github.com/michal-kralik))
+- **[nomad]** Support for watching instead of polling Nomad ([#10997](https://github.com/traefik/traefik/pull/10997) by [deverton-godaddy](https://github.com/deverton-godaddy))
+- **[server,performance]** Introduce a fast proxy mode to improve HTTP/1.1 performances with backends ([#11122](https://github.com/traefik/traefik/pull/11122) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Configurable max request header size ([#10995](https://github.com/traefik/traefik/pull/10995) by [lucasrod16](https://github.com/lucasrod16))
+- **[service]** Add mirrorBody option to HTTP mirroring ([#11032](https://github.com/traefik/traefik/pull/11032) by [MatteoPaier](https://github.com/MatteoPaier))
+- **[service]** Add an option to preserve server path ([#11193](https://github.com/traefik/traefik/pull/11193) by [mmatur](https://github.com/mmatur))
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Ensuring Gateway API reflected Traefik resource name unicity ([#11222](https://github.com/traefik/traefik/pull/11222) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Preserve GRPCRoute filters order ([#11199](https://github.com/traefik/traefik/pull/11199) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s,k8s/gatewayapi]** Support http and https appProtocol for Kubernetes Service ([#11176](https://github.com/traefik/traefik/pull/11176) by [WillDaSilva](https://github.com/WillDaSilva))
+- **[k8s,k8s/gatewayapi]** Avoid updating Accepted status for routes matching no Gateways ([#11170](https://github.com/traefik/traefik/pull/11170) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/gatewayapi]** Do not update gateway status when not selected by a gateway class ([#11169](https://github.com/traefik/traefik/pull/11169) by [kevinpollet](https://github.com/kevinpollet))
+- **[service]** Detect and drop broken conns in the fastproxy pool ([#11212](https://github.com/traefik/traefik/pull/11212) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s,k8s/gatewayapi]** Document nativeLBByDefault annotation on Kubernetes Gateway provider ([#11209](https://github.com/traefik/traefik/pull/11209) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/crd,k8s]** Detail CRD update with v3.2 in the migration guide ([#11164](https://github.com/traefik/traefik/pull/11164) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/gatewayapi]** Add missing RBAC in the migration guide ([#11189](https://github.com/traefik/traefik/pull/11189) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s]** Fix instructions for downloading CRDs of Gateway API v1.2 ([#11191](https://github.com/traefik/traefik/pull/11191) by [mloiseleur](https://github.com/mloiseleur))
+- Prepare release v3.2.0-rc2 ([#11182](https://github.com/traefik/traefik/pull/11182) by [kevinpollet](https://github.com/kevinpollet))
+- Prepare Release v3.2.0-rc1 ([#11154](https://github.com/traefik/traefik/pull/11154) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v3.1 into v3.2 ([#11219](https://github.com/traefik/traefik/pull/11219) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.1 into v3.2 ([#11181](https://github.com/traefik/traefik/pull/11181) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.1 into master ([#11153](https://github.com/traefik/traefik/pull/11153) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.1 into master ([#11110](https://github.com/traefik/traefik/pull/11110) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.1 into master ([#11066](https://github.com/traefik/traefik/pull/11066) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.1 into master ([#11047](https://github.com/traefik/traefik/pull/11047) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.1 into master ([#10980](https://github.com/traefik/traefik/pull/10980) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.1 into master ([#10952](https://github.com/traefik/traefik/pull/10952) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.1 into master ([#10906](https://github.com/traefik/traefik/pull/10906) by [rtribotte](https://github.com/rtribotte))
+
+## [v3.1.7](https://github.com/traefik/traefik/tree/v3.1.7) (2024-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v3.1.6...v3.1.7)
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Preserve HTTPRoute filters order ([#11198](https://github.com/traefik/traefik/pull/11198) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s,k8s/gatewayapi]** Fix broken links in Kubernetes Gateway provider page ([#11188](https://github.com/traefik/traefik/pull/11188) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v2.11 into v3.1 ([#11232](https://github.com/traefik/traefik/pull/11232) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.1 ([#11218](https://github.com/traefik/traefik/pull/11218) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.13](https://github.com/traefik/traefik/tree/v2.11.13) (2024-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.12...v2.11.13)
+
+**Bug fixes:**
+- **[middleware,service]** Panic on aborted requests to properly close the connection ([#11129](https://github.com/traefik/traefik/pull/11129) by [tonybart1337](https://github.com/tonybart1337))
+
+**Documentation:**
+- Update business callouts ([#11217](https://github.com/traefik/traefik/pull/11217) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v3.2.0-rc2](https://github.com/traefik/traefik/tree/v3.2.0-rc2) (2024-10-09)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.2.0-rc2)
 
