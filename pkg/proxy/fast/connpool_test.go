@@ -58,7 +58,7 @@ func TestConnPool_ConnReuse(t *testing.T) {
 				return &net.TCPConn{}, nil
 			}
 
-			pool := newConnPool(2, 0, dialer)
+			pool := newConnPool(2, 0, 0, dialer)
 			test.poolFn(pool)
 
 			assert.Equal(t, test.expected, connAlloc)
@@ -102,13 +102,16 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 			var keepOpenedConn int
 			dialer := func() (net.Conn, error) {
 				keepOpenedConn++
-				return &mockConn{closeFn: func() error {
-					keepOpenedConn--
-					return nil
-				}}, nil
+				return &mockConn{
+					doneCh: make(chan struct{}),
+					closeFn: func() error {
+						keepOpenedConn--
+						return nil
+					},
+				}, nil
 			}
 
-			pool := newConnPool(test.maxIdleConn, 0, dialer)
+			pool := newConnPool(test.maxIdleConn, 0, 0, dialer)
 			test.poolFn(pool)
 
 			assert.Equal(t, test.expected, keepOpenedConn)
@@ -129,7 +132,7 @@ func TestGC(t *testing.T) {
 		return c, nil
 	}
 
-	pools["test"] = newConnPool(10, 1*time.Second, dialer)
+	pools["test"] = newConnPool(10, 1*time.Second, 0, dialer)
 	runtime.SetFinalizer(pools["test"], func(p *connPool) {
 		isDestroyed = true
 	})
@@ -149,10 +152,12 @@ func TestGC(t *testing.T) {
 
 type mockConn struct {
 	closeFn func() error
+	doneCh  chan struct{} // makes sure that the readLoop is blocking avoiding close.
 }
 
 func (m *mockConn) Read(_ []byte) (n int, err error) {
-	panic("implement me")
+	<-m.doneCh
+	return 0, nil
 }
 
 func (m *mockConn) Write(_ []byte) (n int, err error) {
@@ -160,6 +165,7 @@ func (m *mockConn) Write(_ []byte) (n int, err error) {
 }
 
 func (m *mockConn) Close() error {
+	defer close(m.doneCh)
 	if m.closeFn != nil {
 		return m.closeFn()
 	}

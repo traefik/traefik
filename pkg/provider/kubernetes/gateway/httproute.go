@@ -123,7 +123,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindHTTPRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
@@ -224,7 +224,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http")
 
 	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, &metav1.Condition{
@@ -384,39 +384,58 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 }
 
 func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, routerName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
+	type namedMiddleware struct {
+		Name   string
+		Config *dynamic.Middleware
+	}
+
 	pm := ptr.Deref(pathMatch, gatev1.HTTPPathMatch{
 		Type:  ptr.To(gatev1.PathMatchPathPrefix),
 		Value: ptr.To("/"),
 	})
 
-	middlewares := make(map[string]*dynamic.Middleware)
+	var middlewares []namedMiddleware
 	for i, filter := range filters {
 		name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
+
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
-			middlewares[name] = createRequestRedirect(filter.RequestRedirect, pm)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createRequestRedirect(filter.RequestRedirect, pm),
+			})
 
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
-			middlewares[name] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createRequestHeaderModifier(filter.RequestHeaderModifier),
+			})
 
 		case gatev1.HTTPRouteFilterResponseHeaderModifier:
-			middlewares[name] = createResponseHeaderModifier(filter.ResponseHeaderModifier)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createResponseHeaderModifier(filter.ResponseHeaderModifier),
+			})
 
 		case gatev1.HTTPRouteFilterExtensionRef:
 			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
 			if err != nil {
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
-
-			middlewares[name] = middleware
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
+			})
 
 		case gatev1.HTTPRouteFilterURLRewrite:
-			var err error
 			middleware, err := createURLRewrite(filter.URLRewrite, pm)
 			if err != nil {
 				return nil, fmt.Errorf("invalid filter %s: %w", filter.Type, err)
 			}
-			middlewares[name] = middleware
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
+			})
 
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -428,12 +447,11 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, route
 	}
 
 	var middlewareNames []string
-	for name, middleware := range middlewares {
-		if middleware != nil {
-			conf.HTTP.Middlewares[name] = middleware
+	for _, m := range middlewares {
+		if m.Config != nil {
+			conf.HTTP.Middlewares[m.Name] = m.Config
 		}
-
-		middlewareNames = append(middlewareNames, name)
+		middlewareNames = append(middlewareNames, m.Name)
 	}
 
 	return middlewareNames, nil
