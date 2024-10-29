@@ -504,6 +504,8 @@ certificatesResolvers:
           - foobar
           - foobar
         disablePropagationCheck: true
+        propagationRNS: true
+        propagationDisableANS: true
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
@@ -531,6 +533,8 @@ certificatesResolvers:
           - foobar
           - foobar
         disablePropagationCheck: true
+        propagationRNS: true
+        propagationDisableANS: true
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
