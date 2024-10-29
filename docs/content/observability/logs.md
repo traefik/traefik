@@ -180,3 +180,5 @@ log:
 ```bash tab="CLI"
 --log.compress=true
 ```
+
+{!traefik-for-business-applications.md!}

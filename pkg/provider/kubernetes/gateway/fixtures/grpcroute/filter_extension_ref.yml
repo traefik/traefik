@@ -20,16 +20,16 @@ spec:
       port: 80
       allowedRoutes:
         kinds:
-          - kind: HTTPRoute
+          - kind: GRPCRoute
             group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
 ---
-kind: HTTPRoute
+kind: GRPCRoute
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
-  name: http-app-1
+  name: grpc-app-1
   namespace: default
 spec:
   parentRefs:
@@ -37,18 +37,12 @@ spec:
       kind: Gateway
       group: gateway.networking.k8s.io
   hostnames:
-    - "foo.com"
+    - foo.com
   rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /bar
-      backendRefs:
+    - backendRefs:
         - name: whoami
           port: 80
           weight: 1
-          kind: Service
-          group: ""
       filters:
         - type: ExtensionRef
           extensionRef:
