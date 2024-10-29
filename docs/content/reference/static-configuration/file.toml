@@ -459,6 +459,8 @@
         delayBeforeCheck = "42s"
         resolvers = ["foobar", "foobar"]
         disablePropagationCheck = true
+        propagationRNS = true
+        propagationDisableANS = true
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
@@ -482,6 +484,8 @@
         delayBeforeCheck = "42s"
         resolvers = ["foobar", "foobar"]
         disablePropagationCheck = true
+        propagationRNS = true
+        propagationDisableANS = true
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
