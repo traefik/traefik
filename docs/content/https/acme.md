@@ -551,6 +551,60 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.dnschallenge.disablePropagationCheck=true
 ```
 
+#### `propagationRNS`
+
+Use all the recursive nameservers to check the propagation of the TXT records.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        propagationRNS: true
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
+    # ...
+    propagationRNS = true
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.dnschallenge.propagationRNS=true
+```
+
+#### `propagationDisableANS`
+
+Disable the need to await propagation of the TXT records to all authoritative name servers.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        propagationDisableANS: true
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
+    # ...
+    propagationDisableANS = true
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.dnschallenge.propagationDisableANS=true
+```
+
 #### Wildcard Domains
 
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
