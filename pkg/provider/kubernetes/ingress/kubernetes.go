@@ -402,19 +402,38 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 		return fmt.Errorf("cannot get service %s, received error: %w", p.IngressEndpoint.PublishedService, err)
 	}
 
-	if exists && service.Status.LoadBalancer.Ingress == nil {
-		// service exists, but has no Load Balancer status
-		log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
-		return nil
-	}
-
 	if !exists {
 		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
 	}
 
-	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
-	if err != nil {
-		return err
+	var ingresses []netv1.IngressLoadBalancerIngress
+
+	switch {
+	case service.Status.LoadBalancer.Ingress != nil:
+		converted, err := convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
+		if err != nil {
+			return err
+		}
+
+		ingresses = converted
+
+	case service.Spec.Type == corev1.ServiceTypeClusterIP:
+		if len(service.Spec.ClusterIPs) == 0 {
+			log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no ClusterIPs set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
+			return nil
+		}
+
+		clusterIPs := make([]netv1.IngressLoadBalancerIngress, 0, len(service.Spec.ClusterIPs))
+		for _, clusterIP := range service.Spec.ClusterIPs {
+			clusterIPs = append(clusterIPs, netv1.IngressLoadBalancerIngress{IP: clusterIP})
+		}
+
+		ingresses = clusterIPs
+
+	default:
+		// service exists, but has no Load Balancer status
+		log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
+		return nil
 	}
 
 	return k8sClient.UpdateIngressStatus(ing, ingresses)
