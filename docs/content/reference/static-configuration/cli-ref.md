@@ -84,6 +84,12 @@ Assume DNS propagates after a delay in seconds rather than finding and querying 
 `--certificatesresolvers.<name>.acme.dnschallenge.disablepropagationcheck`:  
 Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
 
+`--certificatesresolvers.<name>.acme.dnschallenge.propagationdisableans`:  
+Disable the need to await propagation of the TXT record to all authoritative nameservers. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagationrns`:  
+Use all the recursive nameservers to check the propagation of the TXT record. (Default: ```false```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge.provider`:  
 Use a DNS-01 based challenge provider rather than HTTPS.
 

@@ -84,6 +84,12 @@ Assume DNS propagates after a delay in seconds rather than finding and querying 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_DISABLEPROPAGATIONCHECK`:  
 Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_PROPAGATIONDISABLEANS`:  
+Disable the need to await propagation of the TXT record to all authoritative nameservers. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_PROPAGATIONRNS`:  
+Use all the recursive nameservers to check the propagation of the TXT record. (Default: ```false```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_PROVIDER`:  
 Use a DNS-01 based challenge provider rather than HTTPS.
 
