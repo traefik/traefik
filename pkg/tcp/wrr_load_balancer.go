@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -20,6 +21,11 @@ type WRRLoadBalancer struct {
 	lock          sync.Mutex
 	currentWeight int
 	index         int
+	// status is a record of which child services of the Balancer are healthy.
+	status sync.Map
+	// updaters is the list of hooks that are run (to update the Balancer
+	// parent(s)), whenever the Balancer status changes.
+	updaters []func(bool)
 }
 
 // NewWRRLoadBalancer creates a new WRRLoadBalancer.
@@ -124,4 +130,26 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 			return srv, nil
 		}
 	}
+}
+
+// SetStatus sets status (UP or DOWN) of a target server.
+func (b *WRRLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
+	statusString := "DOWN"
+	if up {
+		statusString = "UP"
+	}
+
+	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %s", childName, statusString)
+
+	currentStatus, _ := b.status.LoadOrStore(childName, true)
+	if b.status.CompareAndSwap(childName, currentStatus, up) {
+		log.Ctx(ctx).Debug().Msgf("Propagating new %s status", statusString)
+		for _, fn := range b.updaters {
+			fn(up)
+		}
+
+		return
+	}
+
+	log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", statusString)
 }
