@@ -76,6 +76,7 @@ type awsClient struct {
 }
 
 // DefaultTemplateRule The default template for the default rule.
+// TODO: Change this to `""` for v4
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 var (
@@ -102,6 +103,11 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	return nil
+}
+
+// shouldCreateDefaultService tells you if you should create a service if no service label is present.
+func (p *Provider) shouldCreateDefaultService() bool {
+	return p.DefaultRule != ""
 }
 
 func (p *Provider) createClient(logger zerolog.Logger) (*awsClient, error) {

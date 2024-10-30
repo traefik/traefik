@@ -25,6 +25,7 @@ import (
 )
 
 // defaultTemplateRule is the default template for the default rule.
+// TODO: Change this to `""` for v4
 const defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 // providerName is the Consul Catalog provider name.
@@ -101,6 +102,11 @@ func (c *Configuration) SetDefaults() {
 	c.DefaultRule = defaultTemplateRule
 	c.ServiceName = "traefik"
 	c.StrictChecks = defaultStrictChecks()
+}
+
+// shouldCreateDefaultService tells you if you should create a service if no service label is present.
+func (p *Provider) shouldCreateDefaultService() bool {
+	return p.DefaultRule != ""
 }
 
 // Provider is the Consul Catalog provider implementation.
