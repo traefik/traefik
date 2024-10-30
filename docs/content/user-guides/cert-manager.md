@@ -8,8 +8,6 @@ description: "Learn how to use cert-manager certificates with Traefik Proxy for 
 Provision TLS Certificate for Traefik Proxy with cert-manager on Kubernetes
 {: .subtitle }
 
-Traefik Proxy can get Certificates from cert-manager on Kubernetes.
-
 ## Pre-requisites
 
 To obtain certificates from cert-manager that can be used in Traefik Proxy, you will need to:
