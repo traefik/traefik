@@ -87,6 +87,7 @@
     network = "foobar"
     useBindPortIP = true
     watch = true
+    autoRouter = true
     defaultRule = "foobar"
     username = "foobar"
     password = "foobar"
@@ -104,6 +105,7 @@
     network = "foobar"
     useBindPortIP = true
     watch = true
+    autoRouter = true
     defaultRule = "foobar"
     username = "foobar"
     password = "foobar"
@@ -175,6 +177,7 @@
     stale = true
     cache = true
     exposedByDefault = true
+    autoRouter = true
     defaultRule = "foobar"
     connectAware = true
     connectByDefault = true
@@ -197,6 +200,7 @@
         username = "foobar"
         password = "foobar"
   [providers.nomad]
+    autoRouter = true
     defaultRule = "foobar"
     constraints = "foobar"
     prefix = "foobar"
@@ -222,6 +226,7 @@
     exposedByDefault = true
     refreshSeconds = 42
     defaultRule = "foobar"
+    autoRouter = true
     clusters = ["foobar", "foobar"]
     autoDiscoverClusters = true
     healthyTasksOnly = true

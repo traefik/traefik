@@ -519,6 +519,9 @@ Per-request ACL token.
 `--providers.consulcatalog`:  
 Enable ConsulCatalog backend with default settings. (Default: ```false```)
 
+`--providers.consulcatalog.autorouter`:  
+Automatically create a router when none are given. (Default: ```true```)
+
 `--providers.consulcatalog.cache`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
@@ -600,6 +603,9 @@ Enable Docker backend with default settings. (Default: ```false```)
 `--providers.docker.allowemptyservices`:  
 Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
 
+`--providers.docker.autorouter`:  
+Automatically create a router when none are given. (Default: ```true```)
+
 `--providers.docker.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
@@ -650,6 +656,9 @@ AWS credentials access key ID to use for making requests.
 
 `--providers.ecs.autodiscoverclusters`:  
 Auto discover cluster. (Default: ```false```)
+
+`--providers.ecs.autorouter`:  
+Automatically create a router when none are given. (Default: ```true```)
 
 `--providers.ecs.clusters`:  
 ECS Cluster names. (Default: ```default```)
@@ -879,6 +888,9 @@ Enable Nomad backend with default settings. (Default: ```false```)
 `--providers.nomad.allowemptyservices`:  
 Allow the creation of services without endpoints. (Default: ```false```)
 
+`--providers.nomad.autorouter`:  
+Automatically create a router when none are given. (Default: ```true```)
+
 `--providers.nomad.constraints`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
 
@@ -998,6 +1010,9 @@ Enable Docker Swarm backend with default settings. (Default: ```false```)
 
 `--providers.swarm.allowemptyservices`:  
 Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
+
+`--providers.swarm.autorouter`:  
+Automatically create a router when none are given. (Default: ```true```)
 
 `--providers.swarm.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.

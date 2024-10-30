@@ -495,6 +495,9 @@ Enable Consul backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG`:  
 Enable ConsulCatalog backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_AUTOROUTER`:  
+Automatically create a router when none are given. (Default: ```true```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
@@ -600,6 +603,9 @@ Enable Docker backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_DOCKER_ALLOWEMPTYSERVICES`:  
 Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_DOCKER_AUTOROUTER`:  
+Automatically create a router when none are given. (Default: ```true```)
+
 `TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
@@ -650,6 +656,9 @@ AWS credentials access key ID to use for making requests.
 
 `TRAEFIK_PROVIDERS_ECS_AUTODISCOVERCLUSTERS`:  
 Auto discover cluster. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ECS_AUTOROUTER`:  
+Automatically create a router when none are given. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_ECS_CLUSTERS`:  
 ECS Cluster names. (Default: ```default```)
@@ -879,6 +888,9 @@ Enable Nomad backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_NOMAD_ALLOWEMPTYSERVICES`:  
 Allow the creation of services without endpoints. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_NOMAD_AUTOROUTER`:  
+Automatically create a router when none are given. (Default: ```true```)
+
 `TRAEFIK_PROVIDERS_NOMAD_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
 
@@ -998,6 +1010,9 @@ Enable Docker Swarm backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_SWARM_ALLOWEMPTYSERVICES`:  
 Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_AUTOROUTER`:  
+Automatically create a router when none are given. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_SWARM_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
