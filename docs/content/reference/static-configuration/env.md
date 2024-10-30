@@ -5,7 +5,7 @@ description: "Reference the environment variables for static configuration in Tr
 
 # Static Configuration: Environment variables
 
-!!! caution "Environment Variable Naming"
+!!! warning "Environment Variable Casing"
 
     Traefik normalizes the environment variable key-value pairs by lowercasing them.
     This means that when you interpolate a string in an environment variable's name,
@@ -14,25 +14,14 @@ description: "Reference the environment variables for static configuration in Tr
     For example, assuming you have set environment variables as follows:
 
     ```bash
-        export TRAEFIK_ENTRYPOINTS_web=true
-        export TRAEFIK_ENTRYPOINTS_web_ADDRESS=:80
+        export TRAEFIK_ENTRYPOINTS_WEB=true
+        export TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
 
         export TRAEFIK_CERTIFICATESRESOLVERS_myResolver=true
         export TRAEFIK_CERTIFICATESRESOLVERS_myResolver_ACME_CASERVER=....
     ```
-    Although the Certificate Resolver is named `myResolver`, referencing it as follows will not work:
-
-    !!! failure "Wrong Usage"
-        ```bash
-            export TRAEFIK_ENTRYPOINTS_web_HTTP_TLS_CERTRESOLVER=myResolver
-        ```
-    You must specify the Certificate Resolver's name as a lowercase string:
-
-    !!! success "Correct Usage"
-        ```bash
-            export TRAEFIK_ENTRYPOINTS_web_HTTP_TLS_CERTRESOLVER=myresolver
-        ```
-
-### Below are the supported Environment Variables
+    
+    Although the Entrypoint is named `WEB` and the Certificate Resolver is named `myResolver`, 
+    they have to be referenced respectively as `web`, and `myresolver` in the configuration.
 
 --8<-- "content/reference/static-configuration/env-ref.md"
