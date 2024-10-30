@@ -80,7 +80,11 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 			Labels: labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i), p.defaultRuleTpl, model)
+		// TODO: Still autogenerate a router when `traefik.http.router=true` or `traefik.http.router.[name]=true`
+		if len(config.HTTP.Routers) > 0 || p.AutoRouter {
+			provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i), p.defaultRuleTpl, model)
+		}
+
 		configurations[svcName] = config
 	}
 

@@ -41,6 +41,8 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.DefaultRule = DefaultTemplateRule
+	// Todo: Change this to `false` for v4
+	p.AutoRouter = true
 }
 
 // Init the provider.
