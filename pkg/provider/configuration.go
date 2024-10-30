@@ -419,17 +419,19 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			continue
 		}
 
-		if router.Service == "" {
-			if len(configuration.Services) > 1 {
-				delete(configuration.Routers, routerName)
-				loggerRouter.Error().
-					Msgf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
-				continue
-			}
+		if router.Service != "" {
+			continue
+		}
 
-			for serviceName := range configuration.Services {
-				router.Service = serviceName
-			}
+		if len(configuration.Services) > 1 {
+			delete(configuration.Routers, routerName)
+			loggerRouter.Error().
+				Msgf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
+			continue
+		}
+
+		for serviceName := range configuration.Services {
+			router.Service = serviceName
 		}
 	}
 }

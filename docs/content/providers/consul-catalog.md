@@ -511,6 +511,10 @@ and the template has access to all the labels (i.e. tags beginning with the `pre
 
 The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
 
+!!! info "`defaultRule`"
+
+    If `defaultRule` is set to an empty string (`""`) by default no router will be created unless a custom rule is specified.
+
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:

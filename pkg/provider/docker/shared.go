@@ -31,6 +31,7 @@ type Shared struct {
 	UseBindPortIP      bool   `description:"Use the ip address from the bound port, rather than from the inner network." json:"useBindPortIP,omitempty" toml:"useBindPortIP,omitempty" yaml:"useBindPortIP,omitempty" export:"true"`
 
 	Watch       bool   `description:"Watch Docker events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	AutoRouter  bool   `description:"Automatically create a router when none are given." json:"autoRouter,omitempty" toml:"autoRouter,omitempty" yaml:"autoRouter,omitempty" export:"true"`
 	DefaultRule string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	defaultRuleTpl *template.Template

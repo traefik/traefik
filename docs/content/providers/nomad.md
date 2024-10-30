@@ -418,10 +418,14 @@ and the template has access to all the labels (i.e. tags beginning with the `pre
 
 The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
 
+!!! info "`defaultRule`"
+
+    If `defaultRule` is set to an empty string (`""`) by default no router will be created unless a custom rule is specified.
+
 ```yaml tab="File (YAML)"
 providers:
   nomad:
-    defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+    defaultRule: 'Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
     # ...
 ```
 
@@ -451,7 +455,7 @@ The `constraints` option can be set to an expression that Traefik matches agains
 to create any route for that service. If none of the service tags match the expression, no route for that service is
 created. If the expression is empty, all detected services are included.
 
-The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
+The expression syntax is based on the `` Tag(`tag`) ``, and `` TagRegex(`tag`) `` functions,
 as well as the usual boolean logic, as shown in examples below.
 
 ??? example "Constraints Expression Examples"

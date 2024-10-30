@@ -441,6 +441,10 @@ The container name can be accessed with the `ContainerName` identifier.
 The service name can be accessed with the `Name` identifier.
 The template has access to all the labels defined on this container with the `Labels` identifier.
 
+!!! info "`defaultRule`"
+
+    If `defaultRule` is set to an empty string (`""`) by default no router will be created unless a custom rule is specified.
+
 ```yaml tab="File (YAML)"
 providers:
   docker:

@@ -94,7 +94,10 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 			Labels:        container.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
+		// TODO: Still autogenerate a router when `traefik.http.router=true` or `traefik.http.router.[name]=true`
+		if len(confFromLabel.HTTP.Routers) > 0 || p.AutoRouter {
+			provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
+		}
 
 		configurations[containerName] = confFromLabel
 	}

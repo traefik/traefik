@@ -25,6 +25,7 @@ import (
 )
 
 // defaultTemplateRule is the default template for the default rule.
+// TODO: Change this to `""` for v4
 const defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 // providerName is the Consul Catalog provider name.
@@ -84,6 +85,7 @@ type Configuration struct {
 	Stale             bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
 	Cache             bool            `description:"Use local agent caching for catalog reads." json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty" export:"true"`
 	ExposedByDefault  bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	AutoRouter        bool            `description:"Automatically create a router when none are given." json:"autoRouter,omitempty" toml:"autoRouter,omitempty" yaml:"autoRouter,omitempty" export:"true"`
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty" export:"true"`
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
@@ -101,6 +103,8 @@ func (c *Configuration) SetDefaults() {
 	c.DefaultRule = defaultTemplateRule
 	c.ServiceName = "traefik"
 	c.StrictChecks = defaultStrictChecks()
+	// Todo: Change this to `false` for v4
+	c.AutoRouter = true
 }
 
 // Provider is the Consul Catalog provider implementation.
