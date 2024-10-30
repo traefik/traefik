@@ -21,7 +21,6 @@ import (
 )
 
 // DefaultTemplateRule The default template for the default rule.
-// TODO: Change this to `""` for v4
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 type Shared struct {
@@ -32,14 +31,10 @@ type Shared struct {
 	UseBindPortIP      bool   `description:"Use the ip address from the bound port, rather than from the inner network." json:"useBindPortIP,omitempty" toml:"useBindPortIP,omitempty" yaml:"useBindPortIP,omitempty" export:"true"`
 
 	Watch       bool   `description:"Watch Docker events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	AutoRouter  bool   `description:"Automatically create a router when none are given." json:"autoRouter,omitempty" toml:"autoRouter,omitempty" yaml:"autoRouter,omitempty" export:"true"`
 	DefaultRule string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	defaultRuleTpl *template.Template
-}
-
-// shouldCreateDefaultService tells you if you should create a service if no service label is present.
-func (p *Shared) shouldCreateDefaultService() bool {
-	return p.DefaultRule != ""
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {

@@ -94,7 +94,10 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 			Labels:        container.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
+		// TODO: Still autogenerate a router when `traefik.http.router=true` or `traefik.http.router.[name]=true`
+		if len(confFromLabel.HTTP.Routers) > 0 || p.AutoRouter {
+			provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
+		}
 
 		configurations[containerName] = confFromLabel
 	}
@@ -105,7 +108,7 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
 	serviceName := getServiceName(container)
 
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = map[string]*dynamic.TCPService{
 			serviceName: {
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
@@ -130,7 +133,7 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.UDPConfiguration) error {
 	serviceName := getServiceName(container)
 
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 		configuration.Services[serviceName] = &dynamic.UDPService{
 			LoadBalancer: &dynamic.UDPServersLoadBalancer{},
@@ -154,7 +157,7 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.HTTPConfiguration) error {
 	serviceName := getServiceName(container)
 
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
 		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()

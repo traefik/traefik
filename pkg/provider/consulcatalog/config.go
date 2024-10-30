@@ -101,7 +101,10 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			Labels: item.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, getName(item), p.defaultRuleTpl, model)
+		// TODO: Still autogenerate a router when `traefik.http.router=true` or `traefik.http.router.[name]=true`
+		if len(confFromLabel.HTTP.Routers) > 0 || p.AutoRouter {
+			provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, getName(item), p.defaultRuleTpl, model)
+		}
 
 		configurations[svcName] = confFromLabel
 	}
@@ -141,7 +144,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 }
 
 func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dynamic.TCPConfiguration) error {
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = map[string]*dynamic.TCPService{
 			getName(item): {
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
@@ -159,7 +162,7 @@ func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dy
 }
 
 func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dynamic.UDPConfiguration) error {
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 
 		lb := &dynamic.UDPServersLoadBalancer{}
@@ -179,7 +182,7 @@ func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dy
 }
 
 func (p *Provider) buildServiceConfiguration(item itemData, configuration *dynamic.HTTPConfiguration) error {
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
 
 		lb := &dynamic.ServersLoadBalancer{}

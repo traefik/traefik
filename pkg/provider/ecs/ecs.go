@@ -35,6 +35,7 @@ type Provider struct {
 	ExposedByDefault bool   `description:"Expose services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	RefreshSeconds   int    `description:"Polling interval (in seconds)." json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	AutoRouter       bool   `description:"Automatically create a router when none are given." json:"autoRouter,omitempty" toml:"autoRouter,omitempty" yaml:"autoRouter,omitempty" export:"true"`
 
 	// Provider lookup parameters.
 	Clusters             []string `description:"ECS Cluster names." json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
@@ -76,7 +77,6 @@ type awsClient struct {
 }
 
 // DefaultTemplateRule The default template for the default rule.
-// TODO: Change this to `""` for v4
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 var (
@@ -92,6 +92,8 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
+	// Todo: Change this to `false` for v4
+	p.AutoRouter = true
 }
 
 // Init the provider.
@@ -103,11 +105,6 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	return nil
-}
-
-// shouldCreateDefaultService tells you if you should create a service if no service label is present.
-func (p *Provider) shouldCreateDefaultService() bool {
-	return p.DefaultRule != ""
 }
 
 func (p *Provider) createClient(logger zerolog.Logger) (*awsClient, error) {

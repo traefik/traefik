@@ -87,6 +87,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 
 // Configuration represents the Nomad provider configuration.
 type Configuration struct {
+	AutoRouter         bool            `description:"Automatically create a router when none are given." json:"autoRouter,omitempty" toml:"autoRouter,omitempty" yaml:"autoRouter,omitempty" export:"true"`
 	DefaultRule        string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	Constraints        string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Endpoint           *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
@@ -122,11 +123,8 @@ func (c *Configuration) SetDefaults() {
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.DefaultRule = defaultTemplateRule
 	c.ThrottleDuration = ptypes.Duration(0)
-}
-
-// shouldCreateDefaultService tells you if you should create a service if no service label is present.
-func (c *Configuration) shouldCreateDefaultService() bool {
-	return c.DefaultRule != ""
+	// Todo: Change this to `false` for v4
+	c.AutoRouter = true
 }
 
 type EndpointConfig struct {

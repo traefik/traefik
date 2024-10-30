@@ -81,8 +81,10 @@ func (p *Provider) buildConfiguration(ctx context.Context, instances []ecsInstan
 			Labels: instance.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
-
+		// TODO: Still autogenerate a router when `traefik.http.router=true` or `traefik.http.router.[name]=true`
+		if len(confFromLabel.HTTP.Routers) > 0 || p.AutoRouter {
+			provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
+		}
 		configurations[instanceName] = confFromLabel
 	}
 
@@ -92,7 +94,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, instances []ecsInstan
 func (p *Provider) buildTCPServiceConfiguration(instance ecsInstance, configuration *dynamic.TCPConfiguration) error {
 	serviceName := getServiceName(instance)
 
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = map[string]*dynamic.TCPService{
 			serviceName: {
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
@@ -113,7 +115,7 @@ func (p *Provider) buildTCPServiceConfiguration(instance ecsInstance, configurat
 func (p *Provider) buildUDPServiceConfiguration(instance ecsInstance, configuration *dynamic.UDPConfiguration) error {
 	serviceName := getServiceName(instance)
 
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 		lb := &dynamic.UDPServersLoadBalancer{}
 		configuration.Services[serviceName] = &dynamic.UDPService{
@@ -134,7 +136,7 @@ func (p *Provider) buildUDPServiceConfiguration(instance ecsInstance, configurat
 func (p *Provider) buildServiceConfiguration(_ context.Context, instance ecsInstance, configuration *dynamic.HTTPConfiguration) error {
 	serviceName := getServiceName(instance)
 
-	if len(configuration.Services) == 0 && p.shouldCreateDefaultService() {
+	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
 		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
