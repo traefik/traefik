@@ -90,7 +90,8 @@ rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 
 ## Insecure Mode
 
-The dashboard can use API in [insecure](./api.md#insecure) mode. This mode is not recommended and should be used for testing purpose only.
+The dashboard is also enabled when API is in [insecure](./api.md#insecure) mode.
+This mode is not recommended and should be used for testing purpose only.
 
 ```yaml tab="File (YAML)"
 api:
