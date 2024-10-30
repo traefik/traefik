@@ -33,8 +33,9 @@ There are 2 ways to configure and access the dashboard:
 
 This is the **recommended** method.
 
-Start by enabling [Traefik's API](./api.md), which will enable the dashboard
-on the [static configuration](../getting-started/configuration-overview.md#the-static-configuration):
+When enabling [Traefik's API](./api.md)
+in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration),
+it also enables the dashboard.
 
 ```yaml tab="File (YAML)"
 api: {}
@@ -91,17 +92,22 @@ rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 
 The dashboard can use API in [insecure](./api.md#insecure) mode. This mode is not recommended and should be used for testing purpose only.
 
-When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
-at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
-
-On Kubernetes, the port can be forwarded:
-
-```bash
-kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 8080:8080
+```yaml tab="File (YAML)"
+api:
+  insecure: true
 ```
 
-This forward allows to access the dashboard locally on  
-[http://localhost:8080/dashboard](http://localhost:8080/dashboard)
+```toml tab="File (TOML)"
+[api]
+  insecure = true
+```
+
+```bash tab="CLI"
+--api.insecure=true
+```
+
+When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
+at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
 
 ## Disable the dashboard
 
