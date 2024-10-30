@@ -128,5 +128,4 @@ api:
 --api.dashboard=false
 ```
 
-
 {!traefik-for-business-applications.md!}
