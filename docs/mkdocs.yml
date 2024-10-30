@@ -165,6 +165,7 @@ nav:
   - 'User Guides':
       - 'FastProxy': 'user-guides/fastproxy.md'
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
+      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
