@@ -12,7 +12,7 @@ Traefik Proxy can get Certificates from cert-manager on Kubernetes.
 
 ## Pre-requisites
 
-To obtain certificates from cert-manager usable in Traefik Proxy, you'll need to:
+To obtain certificates from cert-manager that can be used in Traefik Proxy, you will need to:
 
 1. Have cert-manager properly configured
 2. Have Traefik Proxy configured
@@ -49,7 +49,7 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
       name: whoami
       namespace: traefik
     spec:
-      secretName: domain-tls        # <===  Name of secret where the generated certificate will be stored
+      secretName: domain-tls        # <===  Name of secret where the generated certificate will be stored.
       dnsNames:
         - "domain.example.com"
       issuerRef:
@@ -57,11 +57,12 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
         kind: Issuer
     ```
 
-Let's see now how to use it with the various Kubernetes providers of Traefik Proxy. The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
+Let's see now how to use it with the various Kubernetes providers of Traefik Proxy.
+The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
 
-### with an Ingress
+### With an Ingress
 
-In order to use this certificate with an Ingress, the [Kubernetes Ingress](../../routing/providers/kubernetes-ingress/) provider, this provider needs to be enabled.
+To use this certificate with an Ingress, the [Kubernetes Ingress](../../providers/kubernetes-ingress/) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -90,12 +91,12 @@ In order to use this certificate with an Ingress, the [Kubernetes Ingress](../..
                 port:
                   number: 80
       tls:
-      - secretName: domain-tls # <=== Use the name defined in Certificate resource
+      - secretName: domain-tls # <=== Use the name defined in Certificate resource.
     ```
 
-### with an IngressRoute
+### With an IngressRoute
 
-In order to use this certificate with an IngressRoute, the [Kubernetes CRD](../../routing/providers/kubernetes-crd) provider, this provider needs to be enabled.
+To use this certificate with an IngressRoute, the [Kubernetes CRD](../../providers/kubernetes-crd) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -120,12 +121,12 @@ In order to use this certificate with an IngressRoute, the [Kubernetes CRD](../.
         - name: domain-service
           port: 80
       tls:
-        secretName: domain-tls    # <=== Use the name defined in Certificate resource
+        secretName: domain-tls    # <=== Use the name defined in Certificate resource.
     ```
 
-### with an HTTPRoute
+### With an HTTPRoute
 
-In order to use this certificate with an HTTPRoute, the [Kubernetes Gateway](../../routing/providers/kubernetes-gateway) provider, this provider needs to be enabled.
+To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../../routing/providers/kubernetes-gateway) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -148,7 +149,7 @@ In order to use this certificate with an HTTPRoute, the [Kubernetes Gateway](../
           hostname: domain.example.com
           tls:
             certificateRefs:
-              - name: domain-tls  # <==== Use the name defined in Certificate resource
+              - name: domain-tls  # <==== Use the name defined in Certificate resource.
     ---
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
