@@ -100,7 +100,7 @@ func upgradeType(h http.Header) string {
 }
 
 func upgradeTypeFastHTTP(h fasthttpHeader) string {
-	if !bytes.Contains(h.Peek("Connection"), []byte("Upgrade")) {
+	if !bytes.Contains(bytes.ToLower(h.Peek("Connection")), []byte("upgrade")) {
 		return ""
 	}
 
