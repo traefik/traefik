@@ -650,6 +650,9 @@ This option overrides the value of `exposedByDefault`.
 
 #### `traefik.docker.network`
 
+!!! warning
+    `traefik.docker.network` is deprecated, use `traefik.swarm.network` instead.
+
 ```yaml
 - "traefik.docker.network=mynetwork"
 ```
@@ -663,6 +666,9 @@ otherwise it will randomly pick one (depending on how docker is returning them).
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
 
 #### `traefik.docker.lbswarm`
+
+!!! warning
+    `traefik.docker.lbswarm` is deprecated, use `traefik.swarm.network` instead.
 
 ```yaml
 - "traefik.docker.lbswarm=true"
