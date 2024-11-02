@@ -200,7 +200,7 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 			continue
 		}
 
-		if dData.ExtraConf.Docker.LBSwarm {
+		if dData.ExtraConf.Swarm.LBSwarm || dData.ExtraConf.Docker.LBSwarm {
 			if len(dData.NetworkSettings.Networks) > 0 {
 				dockerDataList = append(dockerDataList, dData)
 			}
@@ -233,33 +233,37 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 	if err != nil {
 		return dockerData{}, err
 	}
+	if extraConf.Docker.LBSwarm {
+		logger.Warn().Msgf("Labels `traefik.docker.*` for Docker Swarm are deprecated. Please use `traefik.swarm.*` labels instead")
+	}
 	dData.ExtraConf = extraConf
 
-	if service.Spec.EndpointSpec != nil {
-		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
-			if dData.ExtraConf.Docker.LBSwarm {
-				logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+	if service.Spec.EndpointSpec == nil {
+		return dData, nil
+	}
+	if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
+		if dData.ExtraConf.Swarm.LBSwarm || dData.ExtraConf.Docker.LBSwarm {
+			logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+		}
+	} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
+		dData.NetworkSettings.Networks = make(map[string]*networkData)
+		for _, virtualIP := range service.Endpoint.VirtualIPs {
+			networkService := networkMap[virtualIP.NetworkID]
+			if networkService == nil {
+				logger.Debug().Msgf("Network not found, id: %s", virtualIP.NetworkID)
+				continue
 			}
-		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
-			dData.NetworkSettings.Networks = make(map[string]*networkData)
-			for _, virtualIP := range service.Endpoint.VirtualIPs {
-				networkService := networkMap[virtualIP.NetworkID]
-				if networkService != nil {
-					if len(virtualIP.Addr) > 0 {
-						ip, _, _ := net.ParseCIDR(virtualIP.Addr)
-						network := &networkData{
-							Name: networkService.Name,
-							ID:   virtualIP.NetworkID,
-							Addr: ip.String(),
-						}
-						dData.NetworkSettings.Networks[network.Name] = network
-					} else {
-						logger.Debug().Msgf("No virtual IPs found in network %s", virtualIP.NetworkID)
-					}
-				} else {
-					logger.Debug().Msgf("Network not found, id: %s", virtualIP.NetworkID)
-				}
+			if len(virtualIP.Addr) <= 0 {
+				logger.Debug().Msgf("No virtual IPs found in network %s", virtualIP.NetworkID)
+				continue
 			}
+			ip, _, _ := net.ParseCIDR(virtualIP.Addr)
+			network := &networkData{
+				Name: networkService.Name,
+				ID:   virtualIP.NetworkID,
+				Addr: ip.String(),
+			}
+			dData.NetworkSettings.Networks[network.Name] = network
 		}
 	}
 	return dData, nil
