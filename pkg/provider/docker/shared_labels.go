@@ -16,6 +16,7 @@ const (
 type configuration struct {
 	Enable bool
 	Docker specificConfiguration
+	Swarm  specificConfiguration
 }
 
 type specificConfiguration struct {
@@ -29,9 +30,12 @@ func (p *Shared) extractLabels(container dockerData) (configuration, error) {
 		Docker: specificConfiguration{
 			Network: p.Network,
 		},
+		Swarm: specificConfiguration{
+			Network: p.Network,
+		},
 	}
 
-	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable")
+	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable", "traefik.swarm.")
 	if err != nil {
 		return configuration{}, err
 	}
