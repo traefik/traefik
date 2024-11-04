@@ -42,6 +42,9 @@ Access log format: json | common (Default: ```common```)
 `--api`:  
 Enable api/dashboard. (Default: ```false```)
 
+`--api.basepath`:  
+Defines the base path where the API and Dashboard will be exposed. (Default: ```/```)
+
 `--api.dashboard`:  
 Activate dashboard. (Default: ```true```)
 
