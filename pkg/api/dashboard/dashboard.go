@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"fmt"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -60,7 +61,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Append adds dashboard routes on the given router, optionally using the given
 // assets (or webui.FS otherwise).
-func Append(router *mux.Router, basePath string, customAssets fs.FS) {
+func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 	assets := customAssets
 	if assets == nil {
 		assets = webui.FS
@@ -68,7 +69,7 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) {
 
 	indexTemplate, err := template.ParseFS(assets, "index.html")
 	if err != nil {
-		log.Error().Err(err).Msg("unable to load index.html")
+		return fmt.Errorf("parsing index template: %w", err)
 	}
 
 	dashboardPath := strings.TrimSuffix(basePath, "/") + "/dashboard/"
@@ -93,7 +94,9 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) {
 
 			apiPath := strings.TrimSuffix(basePath, "/") + "/api/"
 			if err = indexTemplate.Execute(w, indexTemplateData{APIUrl: apiPath}); err != nil {
-				log.Error().Err(err).Msg("Unable to serve APIPortal index.html page")
+				log.Error().Err(err).Msg("Unable to render index template")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
 		})
 
@@ -110,6 +113,7 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) {
 
 			http.StripPrefix(dashboardPath, http.FileServerFS(assets)).ServeHTTP(w, r)
 		})
+	return nil
 }
 
 func safePrefix(req *http.Request) string {

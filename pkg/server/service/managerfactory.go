@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/api"
 	"github.com/traefik/traefik/v3/pkg/api/dashboard"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
@@ -47,7 +48,10 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 			factory.dashboardHandler = dashboard.Handler{BasePath: staticConfiguration.API.BasePath}
 			factory.api = func(configuration *runtime.Configuration) http.Handler {
 				router := apiRouterBuilder(configuration).(*mux.Router)
-				dashboard.Append(router, staticConfiguration.API.BasePath, nil)
+				if err := dashboard.Append(router, staticConfiguration.API.BasePath, nil); err != nil {
+					log.Error().Err(err).Msg("Error appending dashboard to API router")
+				}
+
 				return router
 			}
 		} else {
