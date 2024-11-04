@@ -560,6 +560,10 @@ certificatesResolvers:
 
 Use all the recursive nameservers to check the propagation of the TXT records.
 
+It can be used to enforce propagation checks by checking all the recursive nameservers instead of only one.
+
+This is important if you are using `propagationDisableANS`.
+
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
@@ -586,6 +590,10 @@ certificatesResolvers:
 #### `propagationDisableANS`
 
 Disable the need to await propagation of the TXT records to all authoritative name servers.
+
+This option will skip the propagation check on the nameservers of the authority (SOA).
+
+It should be used only if the nameservers of the authority are not reachable.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
