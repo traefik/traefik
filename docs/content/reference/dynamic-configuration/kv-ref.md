@@ -22,6 +22,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware05/circuitBreaker/recoveryDuration` | `42s` |
 | `traefik/http/middlewares/Middleware05/circuitBreaker/responseCode` | `42` |
 | `traefik/http/middlewares/Middleware06/compress/defaultEncoding` | `foobar` |
+| `traefik/http/middlewares/Middleware06/compress/encodings/0` | `foobar` |
+| `traefik/http/middlewares/Middleware06/compress/encodings/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/excludedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/excludedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware06/compress/includedContentTypes/0` | `foobar` |
@@ -46,6 +48,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeadersRegex` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/cert` | `foobar` |
@@ -100,18 +103,21 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware13/ipAllowList/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/rejectStatusCode` | `42` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/sourceRange/0` | `foobar` |
 | `traefik/http/middlewares/Middleware13/ipAllowList/sourceRange/1` | `foobar` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware14/ipWhiteList/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/sourceRange/0` | `foobar` |
 | `traefik/http/middlewares/Middleware14/ipWhiteList/sourceRange/1` | `foobar` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/amount` | `42` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/requestHeaderName` | `foobar` |
 | `traefik/http/middlewares/Middleware15/inFlightReq/sourceCriterion/requestHost` | `true` |
 | `traefik/http/middlewares/Middleware16/passTLSClientCert/info/issuer/commonName` | `true` |
@@ -144,6 +150,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/ipStrategy/ipv6Subnet` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/requestHeaderName` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/sourceCriterion/requestHost` | `true` |
 | `traefik/http/middlewares/Middleware19/redirectRegex/permanent` | `true` |
@@ -249,8 +256,10 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/healthCheck/timeout` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
+| `traefik/http/services/Service02/loadBalancer/servers/0/preservePath` | `true` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/url` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/weight` | `42` |
+| `traefik/http/services/Service02/loadBalancer/servers/1/preservePath` | `true` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
@@ -261,6 +270,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
 | `traefik/http/services/Service03/mirroring/maxBodySize` | `42` |
+| `traefik/http/services/Service03/mirroring/mirrorBody` | `true` |
 | `traefik/http/services/Service03/mirroring/mirrors/0/name` | `foobar` |
 | `traefik/http/services/Service03/mirroring/mirrors/0/percent` | `42` |
 | `traefik/http/services/Service03/mirroring/mirrors/1/name` | `foobar` |

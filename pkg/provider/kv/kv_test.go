@@ -61,6 +61,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/servers/0/url":                                 "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/1/url":                                 "foobar",
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
+		"traefik/http/services/Service02/mirroring/mirrorBody":                                       "true",
 		"traefik/http/services/Service02/mirroring/maxBodySize":                                      "42",
 		"traefik/http/services/Service02/mirroring/mirrors/0/name":                                   "foobar",
 		"traefik/http/services/Service02/mirroring/mirrors/0/percent":                                "42",
@@ -207,6 +208,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware02/buffering/retryExpression":                            "foobar",
 		"traefik/http/middlewares/Middleware02/buffering/maxRequestBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware02/buffering/memRequestBodyBytes":                        "42",
+		"traefik/http/middlewares/Middleware05/compress/encodings":                                   "foobar, foobar",
 		"traefik/http/middlewares/Middleware05/compress/minResponseBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware18/retry/attempts":                                       "42",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/0":                               "foobar",
@@ -412,6 +414,10 @@ func Test_buildConfiguration(t *testing.T) {
 				"Middleware05": {
 					Compress: &dynamic.Compress{
 						MinResponseBodyBytes: 42,
+						Encodings: []string{
+							"foobar",
+							"foobar",
+						},
 					},
 				},
 				"Middleware08": {
@@ -671,6 +677,7 @@ func Test_buildConfiguration(t *testing.T) {
 				"Service02": {
 					Mirroring: &dynamic.Mirroring{
 						Service:     "foobar",
+						MirrorBody:  func(v bool) *bool { return &v }(true),
 						MaxBodySize: func(v int64) *int64 { return &v }(42),
 						Mirrors: []dynamic.MirrorService{
 							{

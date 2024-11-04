@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -180,4 +181,28 @@ func TestEntryPointMiddleware_metrics(t *testing.T) {
 			metricdatatest.AssertEqual[metricdata.Metrics](t, expected, got.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp(), metricdatatest.IgnoreValue())
 		})
 	}
+}
+
+func TestEntryPointMiddleware_tracingInfoIntoLog(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://www.test.com/", http.NoBody)
+	req = req.WithContext(
+		context.WithValue(
+			req.Context(),
+			accesslog.DataTableKey,
+			&accesslog.LogData{Core: accesslog.CoreLogData{}},
+		),
+	)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {})
+
+	tracer := &mockTracer{}
+
+	handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{}, []string{}, []string{}), nil, "test", next)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	expectedSpanCtx := tracer.spans[0].SpanContext()
+
+	logData := accesslog.GetLogData(req)
+	assert.Equal(t, expectedSpanCtx.TraceID().String(), logData.Core[accesslog.TraceID])
+	assert.Equal(t, expectedSpanCtx.SpanID().String(), logData.Core[accesslog.SpanID])
 }

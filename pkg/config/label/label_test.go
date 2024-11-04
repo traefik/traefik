@@ -90,10 +90,12 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.stsseconds":                                  "42",
 		"traefik.http.middlewares.Middleware9.ipallowlist.ipstrategy.depth":                        "42",
 		"traefik.http.middlewares.Middleware9.ipallowlist.ipstrategy.excludedips":                  "foobar, fiibar",
+		"traefik.http.middlewares.Middleware9.ipallowlist.ipstrategy.ipv6subnet":                   "42",
 		"traefik.http.middlewares.Middleware9.ipallowlist.sourcerange":                             "foobar, fiibar",
 		"traefik.http.middlewares.Middleware10.inflightreq.amount":                                 "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.depth":       "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.excludedips": "foobar, fiibar",
+		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.ipv6subnet":  "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.requestheadername":      "foobar",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.requesthost":            "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.notafter":                    "true",
@@ -123,6 +125,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.requesthost":              "true",
 		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.ipstrategy.depth":         "42",
 		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.ipstrategy.excludedips":   "foobar, foobar",
+		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.ipstrategy.ipv6subnet":    "42",
 		"traefik.http.middlewares.Middleware13.redirectregex.permanent":                            "true",
 		"traefik.http.middlewares.Middleware13.redirectregex.regex":                                "foobar",
 		"traefik.http.middlewares.Middleware13.redirectregex.replacement":                          "foobar",
@@ -137,6 +140,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
 		"traefik.http.middlewares.Middleware17.stripprefix.forceslash":                             "true",
 		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
+		"traefik.http.middlewares.Middleware19.compress.encodings":                                 "foobar, fiibar",
 		"traefik.http.middlewares.Middleware19.compress.minresponsebodybytes":                      "42",
 		"traefik.http.middlewares.Middleware20.plugin.tomato.aaa":                                  "foo1",
 		"traefik.http.middlewares.Middleware20.plugin.tomato.bbb":                                  "foo2",
@@ -391,6 +395,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "fiibar"},
+								IPv6Subnet:  intPtr(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -436,6 +441,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "foobar"},
+								IPv6Subnet:  intPtr(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -493,6 +499,10 @@ func TestDecodeConfiguration(t *testing.T) {
 				"Middleware19": {
 					Compress: &dynamic.Compress{
 						MinResponseBodyBytes: 42,
+						Encodings: []string{
+							"foobar",
+							"fiibar",
+						},
 					},
 				},
 				"Middleware2": {
@@ -643,6 +653,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"foobar",
 								"fiibar",
 							},
+							IPv6Subnet: intPtr(42),
 						},
 					},
 				},
@@ -908,6 +919,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "fiibar"},
+								IPv6Subnet:  intPtr(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -952,6 +964,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "foobar"},
+								IPv6Subnet:  intPtr(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -1009,6 +1022,10 @@ func TestEncodeConfiguration(t *testing.T) {
 				"Middleware19": {
 					Compress: &dynamic.Compress{
 						MinResponseBodyBytes: 42,
+						Encodings: []string{
+							"foobar",
+							"fiibar",
+						},
 					},
 				},
 				"Middleware2": {
@@ -1167,6 +1184,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"foobar",
 								"fiibar",
 							},
+							IPv6Subnet: intPtr(42),
 						},
 					},
 				},
@@ -1329,11 +1347,13 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.STSSeconds":                                  "42",
 		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.IPStrategy.Depth":                        "42",
 		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.IPStrategy.ExcludedIPs":                  "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.IPStrategy.IPv6Subnet":                   "42",
 		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.RejectStatusCode":                        "0",
 		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.SourceRange":                             "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.Amount":                                 "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.Depth":       "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.ExcludedIPs": "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.IPv6Subnet":  "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.RequestHeaderName":      "foobar",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.RequestHost":            "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.NotAfter":                    "true",
@@ -1363,6 +1383,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.RequestHost":              "true",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.IPStrategy.Depth":         "42",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.IPStrategy.ExcludedIPs":   "foobar, foobar",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.IPStrategy.IPv6Subnet":    "42",
 		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":                                "foobar",
 		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":                          "foobar",
 		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":                            "true",
@@ -1377,6 +1398,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware19.Compress.Encodings":                                 "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware19.Compress.MinResponseBodyBytes":                      "42",
 		"traefik.HTTP.Middlewares.Middleware20.Plugin.tomato.aaa":                                  "foo1",
 		"traefik.HTTP.Middlewares.Middleware20.Plugin.tomato.bbb":                                  "foo2",
@@ -1475,4 +1497,8 @@ func TestEncodeConfiguration(t *testing.T) {
 		}
 	}
 	assert.Equal(t, expected, labels)
+}
+
+func intPtr(value int) *int {
+	return &value
 }

@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) of the specification.
+The Kubernetes Gateway API provider supports version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.1.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.2.0/traefik-traefik).
 
 ## Deploying a Gateway
 
@@ -275,6 +275,158 @@ X-Forwarded-Port: 443
 X-Forwarded-Proto: https
 X-Forwarded-Server: traefik-6b66d45748-ns8mt
 X-Real-Ip: 10.42.1.0
+```
+
+### GRPC
+
+The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 
+It allows the specification of routing rules that direct GRPC requests to the appropriate Kubernetes backend services. 
+
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/grpcroute/).
+
+For example, the following manifests configure an echo backend and its corresponding `GRPCRoute`, 
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `echo.localhost:80` address.
+
+```yaml tab="GRPCRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GRPCRoute
+metadata:
+  name: echo
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: http
+      kind: Gateway
+
+  hostnames:
+    - echo.localhost
+
+  rules:
+    - matches:
+        - method:
+            type: Exact
+            service: grpc.reflection.v1alpha.ServerReflection
+
+        - method:
+            type: Exact
+            service: gateway_api_conformance.echo_basic.grpcecho.GrpcEcho
+            method: Echo
+
+      backendRefs:
+        - name: echo
+          namespace: default
+          port: 3000
+```
+
+```yaml tab="Echo deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: echo
+
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+        - name: echo-basic
+          image: gcr.io/k8s-staging-gateway-api/echo-basic
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: GRPC_ECHO_SERVER
+              value: "1"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+  namespace: default
+spec:
+  selector:
+    app: echo
+
+  ports:
+    - port: 3000
+```
+
+Once everything is deployed, sending a GRPC request to the HTTP endpoint should return the following responses:
+
+```shell
+$ grpcurl -plaintext echo.localhost:80 gateway_api_conformance.echo_basic.grpcecho.GrpcEcho/Echo
+
+{
+  "assertions": {
+    "fullyQualifiedMethod": "/gateway_api_conformance.echo_basic.grpcecho.GrpcEcho/Echo",
+    "headers": [
+      {
+        "key": "x-real-ip",
+        "value": "10.42.2.0"
+      },
+      {
+        "key": "x-forwarded-server",
+        "value": "traefik-74b4cf85d8-nkqqf"
+      },
+      {
+        "key": "x-forwarded-port",
+        "value": "80"
+      },
+      {
+        "key": "x-forwarded-for",
+        "value": "10.42.2.0"
+      },
+      {
+        "key": "grpc-accept-encoding",
+        "value": "gzip"
+      },
+      {
+        "key": "user-agent",
+        "value": "grpcurl/1.9.1 grpc-go/1.61.0"
+      },
+      {
+        "key": "content-type",
+        "value": "application/grpc"
+      },
+      {
+        "key": "x-forwarded-host",
+        "value": "echo.localhost:80"
+      },
+      {
+        "key": ":authority",
+        "value": "echo.localhost:80"
+      },
+      {
+        "key": "accept-encoding",
+        "value": "gzip"
+      },
+      {
+        "key": "x-forwarded-proto",
+        "value": "http"
+      }
+    ],
+    "authority": "echo.localhost:80",
+    "context": {
+      "namespace": "default",
+      "pod": "echo-78f76675cf-9k7rf"
+    }
+  }
+}
 ```
 
 ### TCP
@@ -569,6 +721,33 @@ X-Forwarded-Port: 80
 X-Forwarded-Proto: http
 X-Forwarded-Server: traefik-6b66d45748-ns8mt
 X-Real-Ip: 10.42.2.1
+```
+
+## Native Load Balancing
+
+By default, Traefik sends the traffic directly to the pod IPs and reuses the established connections to the backends for performance purposes.
+
+It is possible to override this behavior and configure Traefik to send the traffic to the service IP.
+The Kubernetes service itself does the load balancing to the pods.
+It can be done with the annotation `traefik.io/service.nativelb` on the backend `Service`.
+
+By default, NativeLB is `false`.
+
+!!! info "Default value"
+
+    Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../providers/kubernetes-gateway.md#nativelbbydefault) at the provider level. 
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "true"
+spec:
+[...]
 ```
 
 {!traefik-for-business-applications.md!}

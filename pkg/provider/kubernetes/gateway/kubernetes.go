@@ -35,7 +35,8 @@ import (
 )
 
 const (
-	providerName   = "kubernetesgateway"
+	providerName = "kubernetesgateway"
+
 	controllerName = "traefik.io/gateway-controller"
 
 	groupCore    = "core"
@@ -44,8 +45,20 @@ const (
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
 	kindHTTPRoute      = "HTTPRoute"
+	kindGRPCRoute      = "GRPCRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
+	kindService        = "Service"
+
+	appProtocolHTTP  = "http"
+	appProtocolHTTPS = "https"
+	appProtocolH2C   = "kubernetes.io/h2c"
+	appProtocolWS    = "kubernetes.io/ws"
+	appProtocolWSS   = "kubernetes.io/wss"
+
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+	schemeH2C   = "h2c"
 )
 
 // Provider holds configurations of the provider.
@@ -58,6 +71,7 @@ type Provider struct {
 	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
+	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -105,6 +119,7 @@ type ExtensionBuilderRegistry interface {
 type gatewayListener struct {
 	Name string
 
+	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
 	TLS               *gatev1.GatewayTLSConfig
 	Hostname          *gatev1.Hostname
@@ -155,8 +170,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 		return
 	}
 
-	err := p.routerTransform.Apply(ctx, rt, route)
-	if err != nil {
+	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
 }
@@ -310,6 +324,16 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		return nil
 	}
 
+	var supportedFeatures []gatev1.SupportedFeature
+	if p.ExperimentalChannel {
+		for _, feature := range SupportedFeatures() {
+			supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
+		}
+		slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
+			return strings.Compare(string(a.Name), string(b.Name))
+		})
+	}
+
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
 		if gatewayClass.Spec.ControllerName != controllerName {
@@ -327,6 +351,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 				Message:            "Handled by Traefik controller",
 				LastTransitionTime: metav1.Now(),
 			}),
+			SupportedFeatures: supportedFeatures,
 		}
 
 		if err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, status); err != nil {
@@ -338,7 +363,13 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		}
 	}
 
-	gateways := p.client.ListGateways()
+	var gateways []*gatev1.Gateway
+	for _, gateway := range p.client.ListGateways() {
+		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
+			continue
+		}
+		gateways = append(gateways, gateway)
+	}
 
 	var gatewayListeners []gatewayListener
 	for _, gateway := range gateways {
@@ -347,14 +378,12 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
-			continue
-		}
-
 		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
 	}
 
 	p.loadHTTPRoutes(ctx, gatewayListeners, conf)
+
+	p.loadGRPCRoutes(ctx, gatewayListeners, conf)
 
 	if p.ExperimentalChannel {
 		p.loadTCPRoutes(ctx, gatewayListeners, conf)
@@ -374,11 +403,19 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			}
 		}
 
-		gatewayStatus, err := p.makeGatewayStatus(gateway, listeners, addresses)
-		if err != nil {
+		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
+		if len(errConditions) > 0 {
+			messages := map[string]struct{}{}
+			for _, condition := range errConditions {
+				messages[condition.Message] = struct{}{}
+			}
+			var conditionsErr error
+			for message := range messages {
+				conditionsErr = multierror.Append(conditionsErr, errors.New(message))
+			}
 			logger.Error().
-				Err(err).
-				Msg("Unable to create Gateway status")
+				Err(conditionsErr).
+				Msg("Gateway Not Accepted")
 		}
 
 		if err = p.client.UpdateGatewayStatus(ctx, ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus); err != nil {
@@ -402,6 +439,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			GWName:       gateway.Name,
 			GWNamespace:  gateway.Namespace,
 			GWGeneration: gateway.Generation,
+			Port:         listener.Port,
 			Protocol:     listener.Protocol,
 			TLS:          listener.TLS,
 			Hostname:     listener.Hostname,
@@ -574,7 +612,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					certificateNamespace = string(*certificateRef.Namespace)
 				}
 
-				if err := p.isReferenceGranted(groupGateway, kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+				if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -629,10 +667,10 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	return gatewayListeners
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, error) {
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
-	var result error
+	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
 		if len(listener.Status.Conditions) == 0 {
 			listener.Status.Conditions = append(listener.Status.Conditions,
@@ -667,14 +705,11 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			continue
 		}
 
-		for _, condition := range listener.Status.Conditions {
-			result = multierror.Append(result, errors.New(condition.Message))
-		}
-
+		errorConditions = append(errorConditions, listener.Status.Conditions...)
 		gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
 	}
 
-	if result != nil {
+	if len(errorConditions) > 0 {
 		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
@@ -685,7 +720,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Message:            "All Listeners must be valid",
 		})
 
-		return gatewayStatus, result
+		return gatewayStatus, errorConditions
 	}
 
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
@@ -781,7 +816,7 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func (p *Provider) isReferenceGranted(fromGroup, fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
+func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
 	if toNamespace == fromNamespace {
 		return nil
 	}
@@ -791,7 +826,7 @@ func (p *Provider) isReferenceGranted(fromGroup, fromKind, fromNamespace, toGrou
 		return fmt.Errorf("listing ReferenceGrant: %w", err)
 	}
 
-	refGrants = filterReferenceGrantsFrom(refGrants, fromGroup, fromKind, fromNamespace)
+	refGrants = filterReferenceGrantsFrom(refGrants, groupGateway, fromKind, fromNamespace)
 	refGrants = filterReferenceGrantsTo(refGrants, toGroup, toKind, toName)
 	if len(refGrants) == 0 {
 		return errors.New("missing ReferenceGrant")
@@ -846,6 +881,98 @@ func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *g
 	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
 }
 
+type backendAddress struct {
+	IP   string
+	Port int32
+}
+
+func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
+	if ref.Port == nil {
+		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
+	}
+
+	service, exists, err := p.client.GetService(namespace, string(ref.Name))
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
+	}
+	if !exists {
+		return nil, corev1.ServicePort{}, errors.New("service not found")
+	}
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
+	}
+
+	var svcPort *corev1.ServicePort
+	for _, p := range service.Spec.Ports {
+		if p.Port == int32(*ref.Port) {
+			svcPort = &p
+			break
+		}
+	}
+	if svcPort == nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("service port %d not found", *ref.Port)
+	}
+
+	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
+	}
+
+	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
+			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+		}
+
+		return []backendAddress{{
+			IP:   service.Spec.ClusterIP,
+			Port: svcPort.Port,
+		}}, *svcPort, nil
+	}
+
+	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("getting endpointslices: %w", err)
+	}
+	if len(endpointSlices) == 0 {
+		return nil, corev1.ServicePort{}, errors.New("endpointslices not found")
+	}
+
+	uniqAddresses := map[string]struct{}{}
+	backendServers := make([]backendAddress, 0)
+	for _, endpointSlice := range endpointSlices {
+		var port int32
+		for _, p := range endpointSlice.Ports {
+			if svcPort.Name == *p.Name {
+				port = *p.Port
+				break
+			}
+		}
+		if port == 0 {
+			continue
+		}
+
+		for _, endpoint := range endpointSlice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				continue
+			}
+
+			for _, address := range endpoint.Addresses {
+				if _, ok := uniqAddresses[address]; ok {
+					continue
+				}
+
+				uniqAddresses[address] = struct{}{}
+				backendServers = append(backendServers, backendAddress{
+					IP:   address,
+					Port: port,
+				})
+			}
+		}
+	}
+
+	return backendServers, *svcPort, nil
+}
+
 func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
@@ -864,7 +991,10 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 		}}
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
-		return []gatev1.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
+		return []gatev1.RouteGroupKind{
+			{Kind: kindHTTPRoute, Group: &group},
+			{Kind: kindGRPCRoute, Group: &group},
+		}, nil
 
 	case gatev1.TLSProtocolType:
 		if experimentalChannel {
@@ -995,26 +1125,42 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-func matchListener(listener gatewayListener, routeNamespace string, parentRef gatev1.ParentReference) bool {
-	if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
-		return false
+func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	var listeners []gatewayListener
+
+	for _, listener := range gatewayListeners {
+		for _, parentRef := range parentRefs {
+			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+				continue
+			}
+
+			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+				continue
+			}
+
+			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+			if listener.GWNamespace != parentRefNamespace {
+				continue
+			}
+
+			if string(parentRef.Name) != listener.GWName {
+				continue
+			}
+
+			listeners = append(listeners, listener)
+		}
 	}
 
-	if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
-		return false
-	}
+	return listeners
+}
 
-	parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-	if listener.GWNamespace != parentRefNamespace {
-		return false
-	}
-
-	if string(parentRef.Name) != listener.GWName {
-		return false
-	}
-
+func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
 	if sectionName != "" && sectionName != listener.Name {
+		return false
+	}
+
+	if parentRef.Port != nil && *parentRef.Port != listener.Port {
 		return false
 	}
 

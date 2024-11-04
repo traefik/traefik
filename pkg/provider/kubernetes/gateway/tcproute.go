@@ -2,10 +2,10 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -32,6 +32,11 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 			Str("namespace", route.Namespace).
 			Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
@@ -48,13 +53,10 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				if !matchListener(listener, route.Namespace, parentRef) {
-					continue
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
 
-				accepted := true
-				if !allowRoute(listener, route.Namespace, kindTCPRoute) {
+				if accepted && !allowRoute(listener, route.Namespace, kindTCPRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
 				}
@@ -108,182 +110,199 @@ func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1alpha2.TC
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
-	router := dynamic.TCPRouter{
-		Rule:        "HostSNI(`*`)",
-		EntryPoints: []string{listener.EPName},
-		RuleSyntax:  "v3",
-	}
-
-	if listener.Protocol == gatev1.TLSProtocolType && listener.TLS != nil {
-		// TODO support let's encrypt
-		router.TLS = &dynamic.RouterTCPTLSConfig{
-			Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
-		}
-	}
-
-	// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-	routerName := provider.Normalize(route.Namespace + "-" + route.Name + "-" + listener.GWName + "-" + listener.EPName)
-
-	var ruleServiceNames []string
-	for i, rule := range route.Spec.Rules {
+	for ri, rule := range route.Spec.Rules {
 		if rule.BackendRefs == nil {
 			// Should not happen due to validation.
 			// https://github.com/kubernetes-sigs/gateway-api/blob/v0.4.0/apis/v1alpha2/tcproute_types.go#L76
 			continue
 		}
 
-		wrrService, subServices, err := p.loadTCPServices(route.Namespace, rule.BackendRefs)
-		if err != nil {
-			return conf, metav1.Condition{
-				Type:               string(gatev1.RouteConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: route.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.RouteReasonBackendNotFound),
-				Message:            fmt.Sprintf("Cannot load TCPRoute service %s/%s: %v", route.Namespace, route.Name, err),
+		router := dynamic.TCPRouter{
+			Rule:        "HostSNI(`*`)",
+			EntryPoints: []string{listener.EPName},
+			RuleSyntax:  "v3",
+		}
+
+		if listener.Protocol == gatev1.TLSProtocolType && listener.TLS != nil {
+			router.TLS = &dynamic.RouterTCPTLSConfig{
+				Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
 			}
 		}
 
-		for svcName, svc := range subServices {
-			conf.TCP.Services[svcName] = svc
+		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTCPRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
+		// Routing criteria should be introduced at some point.
+		routerName := makeRouterName("", routeKey)
+
+		if len(rule.BackendRefs) == 1 && isInternalService(rule.BackendRefs[0]) {
+			router.Service = string(rule.BackendRefs[0].Name)
+			conf.TCP.Routers[routerName] = &router
+			continue
 		}
 
-		serviceName := fmt.Sprintf("%s-wrr-%d", routerName, i)
-		conf.TCP.Services[serviceName] = wrrService
+		var serviceCondition *metav1.Condition
+		router.Service, serviceCondition = p.loadTCPWRRService(conf, routerName, rule.BackendRefs, route)
+		if serviceCondition != nil {
+			condition = *serviceCondition
+		}
 
-		ruleServiceNames = append(ruleServiceNames, serviceName)
-	}
-
-	if len(ruleServiceNames) == 1 {
-		router.Service = ruleServiceNames[0]
 		conf.TCP.Routers[routerName] = &router
-		return conf, condition
 	}
-
-	routeServiceKey := routerName + "-wrr"
-	routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
-
-	for _, name := range ruleServiceNames {
-		service := dynamic.TCPWRRService{Name: name}
-		service.SetDefaults()
-
-		routeService.Weighted.Services = append(routeService.Weighted.Services, service)
-	}
-
-	conf.TCP.Services[routeServiceKey] = routeService
-
-	router.Service = routeServiceKey
-	conf.TCP.Routers[routerName] = &router
 
 	return conf, condition
 }
 
-// loadTCPServices is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTCPServices(namespace string, backendRefs []gatev1.BackendRef) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
-	services := map[string]*dynamic.TCPService{}
-
-	wrrSvc := &dynamic.TCPService{
-		Weighted: &dynamic.TCPWeightedRoundRobin{
-			Services: []dynamic.TCPWRRService{},
-		},
+// loadTCPWRRService is generating a WRR service, even when there is only one target.
+func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1alpha2.TCPRoute) (string, *metav1.Condition) {
+	name := routeKey + "-wrr"
+	if _, ok := conf.TCP.Services[name]; ok {
+		return name, nil
 	}
 
+	var wrr dynamic.TCPWeightedRoundRobin
+	var condition *metav1.Condition
 	for _, backendRef := range backendRefs {
-		if backendRef.Group == nil || backendRef.Kind == nil {
-			// Should not happen as this is validated by kubernetes
+		svcName, svc, errCondition := p.loadTCPService(route, backendRef)
+		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+
+		if errCondition != nil {
+			condition = errCondition
+
+			errName := routeKey + "-err-lb"
+			conf.TCP.Services[errName] = &dynamic.TCPService{
+				LoadBalancer: &dynamic.TCPServersLoadBalancer{
+					Servers: []dynamic.TCPServer{},
+				},
+			}
+
+			wrr.Services = append(wrr.Services, dynamic.TCPWRRService{
+				Name:   errName,
+				Weight: weight,
+			})
 			continue
 		}
 
-		if isInternalService(backendRef) {
-			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.Name)
+		if svc != nil {
+			conf.TCP.Services[svcName] = svc
 		}
 
-		weight := int(ptr.Deref(backendRef.Weight, 1))
-
-		if isTraefikService(backendRef) {
-			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
-			continue
-		}
-
-		if *backendRef.Group != "" && *backendRef.Group != groupCore && *backendRef.Kind != "Service" {
-			return nil, nil, fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-		}
-
-		if backendRef.Port == nil {
-			return nil, nil, errors.New("port is required for Kubernetes Service reference")
-		}
-
-		service, exists, err := p.client.GetService(namespace, string(backendRef.Name))
-		if err != nil {
-			return nil, nil, fmt.Errorf("getting service: %w", err)
-		}
-		if !exists {
-			return nil, nil, errors.New("service not found")
-		}
-
-		var svcPort *corev1.ServicePort
-		for _, p := range service.Spec.Ports {
-			if p.Port == int32(*backendRef.Port) {
-				svcPort = &p
-				break
-			}
-		}
-		if svcPort == nil {
-			return nil, nil, fmt.Errorf("service port %d not found", *backendRef.Port)
-		}
-
-		endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(backendRef.Name))
-		if err != nil {
-			return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
-		}
-		if len(endpointSlices) == 0 {
-			return nil, nil, errors.New("endpointslices not found")
-		}
-
-		svc := dynamic.TCPService{LoadBalancer: &dynamic.TCPServersLoadBalancer{}}
-
-		addresses := map[string]struct{}{}
-		for _, endpointSlice := range endpointSlices {
-			var port int32
-			for _, p := range endpointSlice.Ports {
-				if svcPort.Name == *p.Name {
-					port = *p.Port
-					break
-				}
-			}
-			if port == 0 {
-				continue
-			}
-
-			for _, endpoint := range endpointSlice.Endpoints {
-				if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
-					continue
-				}
-
-				for _, address := range endpoint.Addresses {
-					if _, ok := addresses[address]; ok {
-						continue
-					}
-
-					addresses[address] = struct{}{}
-					svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
-						Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
-					})
-				}
-			}
-		}
-
-		serviceName := provider.Normalize(service.Namespace + "-" + service.Name + "-" + strconv.Itoa(int(svcPort.Port)))
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
+		wrr.Services = append(wrr.Services, dynamic.TCPWRRService{
+			Name:   svcName,
+			Weight: weight,
+		})
 	}
 
-	if len(wrrSvc.Weighted.Services) == 0 {
-		return nil, nil, errors.New("no service has been created")
+	conf.TCP.Services[name] = &dynamic.TCPService{Weighted: &wrr}
+	return name, condition
+}
+
+func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+	kind := ptr.Deref(backendRef.Kind, kindService)
+
+	group := groupCore
+	if backendRef.Group != nil && *backendRef.Group != "" {
+		group = string(*backendRef.Group)
 	}
 
-	return wrrSvc, services, nil
+	namespace := route.Namespace
+	if backendRef.Namespace != nil && *backendRef.Namespace != "" {
+		namespace = string(*backendRef.Namespace)
+	}
+
+	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+
+	if err := p.isReferenceGranted(kindTCPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+		}
+	}
+
+	if group != groupCore || kind != kindService {
+		name, err := p.loadTCPBackendRef(backendRef)
+		if err != nil {
+			return serviceName, nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonInvalidKind),
+				Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+			}
+		}
+
+		return name, nil, nil
+	}
+
+	port := ptr.Deref(backendRef.Port, gatev1.PortNumber(0))
+	if port == 0 {
+		return serviceName, nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
+		}
+	}
+
+	portStr := strconv.FormatInt(int64(port), 10)
+	serviceName = provider.Normalize(serviceName + "-" + portStr)
+
+	lb, errCondition := p.loadTCPServers(namespace, route, backendRef)
+	if errCondition != nil {
+		return serviceName, nil, errCondition
+	}
+
+	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
+}
+
+func (p *Provider) loadTCPServers(namespace string, route *gatev1alpha2.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *metav1.Condition) {
+	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
+	if err != nil {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.GetGeneration(),
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonBackendNotFound),
+			Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s: %s", namespace, backendRef.Name, err),
+		}
+	}
+
+	if svcPort.Protocol != corev1.ProtocolTCP {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.GetGeneration(),
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+			Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s: only TCP protocol is supported", namespace, backendRef.Name),
+		}
+	}
+
+	lb := &dynamic.TCPServersLoadBalancer{}
+
+	for _, ba := range backendAddresses {
+		lb.Servers = append(lb.Servers, dynamic.TCPServer{
+			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
+		})
+	}
+	return lb, nil
+}
+
+func (p *Provider) loadTCPBackendRef(backendRef gatev1.BackendRef) (string, error) {
+	// Support for cross-provider references (e.g: api@internal).
+	// This provides the same behavior as for IngressRoutes.
+	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+		return string(backendRef.Name), nil
+	}
+
+	return "", fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 }
 
 func mergeTCPConfiguration(from, to *dynamic.Configuration) {

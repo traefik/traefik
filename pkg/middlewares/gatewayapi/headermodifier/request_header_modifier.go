@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const typeName = "RequestHeaderModifier"
+const requestHeaderModifierTypeName = "RequestHeaderModifier"
 
 // requestHeaderModifier is a middleware used to modify the headers of an HTTP request.
 type requestHeaderModifier struct {
@@ -22,8 +22,8 @@ type requestHeaderModifier struct {
 }
 
 // NewRequestHeaderModifier creates a new request header modifier middleware.
-func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dynamic.RequestHeaderModifier, name string) http.Handler {
-	logger := middlewares.GetLogger(ctx, name, typeName)
+func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dynamic.HeaderModifier, name string) http.Handler {
+	logger := middlewares.GetLogger(ctx, name, requestHeaderModifierTypeName)
 	logger.Debug().Msg("Creating middleware")
 
 	return &requestHeaderModifier{
@@ -36,7 +36,7 @@ func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dyn
 }
 
 func (r *requestHeaderModifier) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, typeName, trace.SpanKindUnspecified
+	return r.name, requestHeaderModifierTypeName, trace.SpanKindUnspecified
 }
 
 func (r *requestHeaderModifier) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
