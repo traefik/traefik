@@ -3114,8 +3114,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Route with kind not of a rule type (empty kind) is ignored",
-			paths: []string{"services.yml", "with_wrong_rule_kind.yml"},
+			desc:  "Route with empty kind is allowed",
+			paths: []string{"services.yml", "with_empty_rule_kind.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3129,9 +3129,33 @@ func TestLoadIngressRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-02719a68b11e915a4b23": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-02719a68b11e915a4b23",
+							Rule:        "/prefix",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-02719a68b11e915a4b23": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
