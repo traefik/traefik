@@ -60,7 +60,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
-			if route.Kind != "Rule" {
+			if len(route.Kind) > 0 && route.Kind != "Rule" {
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
 				continue
 			}
