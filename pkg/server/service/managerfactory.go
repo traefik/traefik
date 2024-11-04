@@ -44,10 +44,10 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 		apiRouterBuilder := api.NewBuilder(staticConfiguration)
 
 		if staticConfiguration.API.Dashboard {
-			factory.dashboardHandler = dashboard.Handler{}
+			factory.dashboardHandler = dashboard.Handler{BasePath: staticConfiguration.API.BasePath}
 			factory.api = func(configuration *runtime.Configuration) http.Handler {
 				router := apiRouterBuilder(configuration).(*mux.Router)
-				dashboard.Append(router, nil)
+				dashboard.Append(router, staticConfiguration.API.BasePath, nil)
 				return router
 			}
 		} else {
