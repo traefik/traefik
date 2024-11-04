@@ -294,6 +294,7 @@
       name1 = "foobar"
 
 [api]
+  basePath = "foobar"
   insecure = true
   dashboard = true
   debug = true
