@@ -57,7 +57,7 @@ spec:
                       description: |-
                         Kind defines the kind of the route.
                         Rule is the only supported kind.
-                        If not defined, defaults to Rule
+                        If not defined, defaults to Rule.
                       enum:
                       - Rule
                       type: string

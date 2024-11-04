@@ -28,8 +28,8 @@ type Route struct {
 	Match string `json:"match"`
 	// Kind defines the kind of the route.
 	// Rule is the only supported kind.
+	// If not defined, defaults to Rule.
 	// +kubebuilder:validation:Enum=Rule
-	// If not defined, defaults to Rule
 	Kind string `json:"kind,omitempty"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority
