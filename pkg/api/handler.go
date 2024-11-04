@@ -78,7 +78,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 func (h Handler) createRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
 
-	apiRouter := router.PathPrefix(h.staticConfig.API.BasePath).Subrouter()
+	apiRouter := router.PathPrefix(h.staticConfig.API.BasePath).Subrouter().UseEncodedPath()
 
 	if h.staticConfig.API.Debug {
 		DebugHandler{}.Append(apiRouter)
