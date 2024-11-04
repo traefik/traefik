@@ -12,10 +12,50 @@ import (
 	"github.com/traefik/traefik/v3/webui"
 )
 
+type indexTemplateData struct {
+	APIUrl string
+}
+
 // Handler expose dashboard routes.
 type Handler struct {
-	assets   fs.FS // optional assets, to override the webui.FS default
 	BasePath string
+
+	assets fs.FS // optional assets, to override the webui.FS default
+}
+
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	assets := h.assets
+	if assets == nil {
+		assets = webui.FS
+	}
+
+	// allow iframes from our domains only
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
+	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
+
+	// The content type must be guessed by the file server.
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+	w.Header().Del("Content-Type")
+
+	if r.URL.Path == "/" {
+		indexTemplate, err := template.ParseFS(assets, "index.html")
+		if err != nil {
+			log.Error().Err(err).Msg("Unable to parse index template")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		apiPath := strings.TrimSuffix(h.BasePath, "/") + "/api/"
+		if err = indexTemplate.Execute(w, indexTemplateData{APIUrl: apiPath}); err != nil {
+			log.Error().Err(err).Msg("Unable to render index template")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		return
+	}
+
+	http.FileServerFS(assets).ServeHTTP(w, r)
 }
 
 // Append adds dashboard routes on the given router, optionally using the given
@@ -70,41 +110,6 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) {
 
 			http.StripPrefix(dashboardPath, http.FileServerFS(assets)).ServeHTTP(w, r)
 		})
-}
-
-type indexTemplateData struct {
-	APIUrl string
-}
-
-func (g Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	assets := g.assets
-	if assets == nil {
-		assets = webui.FS
-	}
-
-	// allow iframes from our domains only
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
-	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
-
-	// The content type must be guessed by the file server.
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
-	w.Header().Del("Content-Type")
-
-	if r.RequestURI == "/" {
-		indexTemplate, err := template.ParseFS(assets, "index.html")
-		if err != nil {
-			log.Error().Err(err).Msg("Unable to serve APIPortal index.html page")
-		}
-
-		apiPath := strings.TrimSuffix(g.BasePath, "/") + "/api/"
-		if err = indexTemplate.Execute(w, indexTemplateData{APIUrl: apiPath}); err != nil {
-			log.Error().Err(err).Msg("Unable to serve APIPortal index.html page")
-		}
-
-		return
-	}
-
-	http.FileServerFS(assets).ServeHTTP(w, r)
 }
 
 func safePrefix(req *http.Request) string {
