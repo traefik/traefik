@@ -57,6 +57,7 @@ spec:
                       description: |-
                         Kind defines the kind of the route.
                         Rule is the only supported kind.
+                        If not defined, defaults to Rule.
                       enum:
                       - Rule
                       type: string
@@ -280,7 +281,6 @@ spec:
                         More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax
                       type: string
                   required:
-                  - kind
                   - match
                   type: object
                 type: array
