@@ -116,12 +116,8 @@ Each service has a load-balancer, even if there is only one server to forward tr
 #### Servers
 
 Servers declare a single instance of your program.
-The `url` option point to a specific instance.
 
-!!! info ""
-    Paths in the servers' `url` have no effect.
-    If you want the requests to be sent to a specific path on your servers,
-    configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/http/addprefix.md) or [ReplacePath](../../middlewares/http/replacepath.md)) middlewares.
+The `url` option point to a specific instance.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
@@ -171,6 +167,34 @@ The `weight` option allows for weighted load balancing on the servers.
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-2/"
           weight = 1
+    ```
+
+The `preservePath` option allows to preserve the URL path.
+
+!!! info "Health Check"
+
+    When a [health check](#health-check) is configured for the server, the path is not preserved.
+
+??? example "A Service with One Server and PreservePath -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              - url: "http://private-ip-server-1/base"
+                preservePath: true
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/base"
+          preservePath = true
     ```
 
 #### Load-balancing

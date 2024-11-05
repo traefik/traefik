@@ -15,15 +15,17 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
-// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
-const StatusClientClosedRequest = 499
+const (
+	// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
+	StatusClientClosedRequest = 499
 
-// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
-const StatusClientClosedRequestText = "Client Closed Request"
+	// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
+	StatusClientClosedRequestText = "Client Closed Request"
+)
 
-func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader),
+		Director:      directorBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
@@ -31,7 +33,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, flushInterval ti
 	}
 }
 
-func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Request) {
+func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(req *http.Request) {
 	return func(outReq *http.Request) {
 		outReq.URL.Scheme = target.Scheme
 		outReq.URL.Host = target.Host
@@ -46,6 +48,11 @@ func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Reques
 
 		outReq.URL.Path = u.Path
 		outReq.URL.RawPath = u.RawPath
+
+		if preservePath {
+			outReq.URL.Path, outReq.URL.RawPath = JoinURLPath(target, u)
+		}
+
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 		outReq.RequestURI = "" // Outgoing request should not have RequestURI
@@ -54,7 +61,7 @@ func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Reques
 		outReq.ProtoMajor = 1
 		outReq.ProtoMinor = 1
 
-		// Do not pass client Host header unless optsetter PassHostHeader is set.
+		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
 			outReq.Host = outReq.URL.Host
 		}
@@ -95,15 +102,27 @@ func isWebSocketUpgrade(req *http.Request) bool {
 
 // ErrorHandler is the http.Handler called when something goes wrong when forwarding the request.
 func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
+	ErrorHandlerWithContext(req.Context(), w, err)
+}
+
+// ErrorHandlerWithContext is the http.Handler called when something goes wrong when forwarding the request.
+func ErrorHandlerWithContext(ctx context.Context, w http.ResponseWriter, err error) {
 	statusCode := ComputeStatusCode(err)
 
-	logger := log.Ctx(req.Context())
+	logger := log.Ctx(ctx)
 	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
 
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
 		logger.Debug().Err(werr).Msg("Error while writing status code")
 	}
+}
+
+func statusText(statusCode int) string {
+	if statusCode == StatusClientClosedRequest {
+		return StatusClientClosedRequestText
+	}
+	return http.StatusText(statusCode)
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
@@ -127,9 +146,38 @@ func ComputeStatusCode(err error) int {
 	return http.StatusInternalServerError
 }
 
-func statusText(statusCode int) string {
-	if statusCode == StatusClientClosedRequest {
-		return StatusClientClosedRequestText
+// JoinURLPath computes the joined path and raw path of the given URLs.
+// From https://github.com/golang/go/blob/b521ebb55a9b26c8824b219376c7f91f7cda6ec2/src/net/http/httputil/reverseproxy.go#L221
+func JoinURLPath(a, b *url.URL) (path, rawpath string) {
+	if a.RawPath == "" && b.RawPath == "" {
+		return singleJoiningSlash(a.Path, b.Path), ""
 	}
-	return http.StatusText(statusCode)
+
+	// Same as singleJoiningSlash, but uses EscapedPath to determine
+	// whether a slash should be added
+	apath := a.EscapedPath()
+	bpath := b.EscapedPath()
+
+	aslash := strings.HasSuffix(apath, "/")
+	bslash := strings.HasPrefix(bpath, "/")
+
+	switch {
+	case aslash && bslash:
+		return a.Path + b.Path[1:], apath + bpath[1:]
+	case !aslash && !bslash:
+		return a.Path + "/" + b.Path, apath + "/" + bpath
+	}
+	return a.Path + b.Path, apath + bpath
+}
+
+func singleJoiningSlash(a, b string) string {
+	aslash := strings.HasSuffix(a, "/")
+	bslash := strings.HasPrefix(b, "/")
+	switch {
+	case aslash && bslash:
+		return a + b[1:]
+	case !aslash && !bslash:
+		return a + "/" + b
+	}
+	return a + b
 }

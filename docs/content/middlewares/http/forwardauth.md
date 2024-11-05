@@ -612,3 +612,5 @@ http:
   # ...
   headerField = "X-WebAuth-User"
 ```
+
+{!traefik-for-business-applications.md!}

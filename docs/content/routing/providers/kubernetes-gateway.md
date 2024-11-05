@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.1.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.1.0) of the specification.
+The Kubernetes Gateway API provider supports version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.1.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.2.0/traefik-traefik).
 
 ## Deploying a Gateway
 
@@ -721,6 +721,33 @@ X-Forwarded-Port: 80
 X-Forwarded-Proto: http
 X-Forwarded-Server: traefik-6b66d45748-ns8mt
 X-Real-Ip: 10.42.2.1
+```
+
+## Native Load Balancing
+
+By default, Traefik sends the traffic directly to the pod IPs and reuses the established connections to the backends for performance purposes.
+
+It is possible to override this behavior and configure Traefik to send the traffic to the service IP.
+The Kubernetes service itself does the load balancing to the pods.
+It can be done with the annotation `traefik.io/service.nativelb` on the backend `Service`.
+
+By default, NativeLB is `false`.
+
+!!! info "Default value"
+
+    Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../providers/kubernetes-gateway.md#nativelbbydefault) at the provider level. 
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "true"
+spec:
+[...]
 ```
 
 {!traefik-for-business-applications.md!}

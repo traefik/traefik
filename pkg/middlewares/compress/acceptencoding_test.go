@@ -87,6 +87,12 @@ func Test_getCompressionEncoding(t *testing.T) {
 			supportedEncodings: []string{zstdName, brotliName},
 			expected:           brotliName,
 		},
+		{
+			desc:               "mixed weight",
+			acceptEncoding:     []string{"gzip, br;q=0.9"},
+			supportedEncodings: []string{gzipName, brotliName},
+			expected:           gzipName,
+		},
 	}
 
 	for _, test := range testCases {
@@ -116,10 +122,10 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			desc:   "weight",
 			values: []string{"br;q=1.0, zstd;q=0.9, gzip;q=0.8, *;q=0.1"},
 			expected: []Encoding{
-				{Type: brotliName, Weight: ptr[float64](1)},
-				{Type: zstdName, Weight: ptr(0.9)},
-				{Type: gzipName, Weight: ptr(0.8)},
-				{Type: wildcardName, Weight: ptr(0.1)},
+				{Type: brotliName, Weight: 1},
+				{Type: zstdName, Weight: 0.9},
+				{Type: gzipName, Weight: 0.8},
+				{Type: wildcardName, Weight: 0.1},
 			},
 			assertWeight: assert.True,
 		},
@@ -128,9 +134,9 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			values:             []string{"br;q=1.0, zstd;q=0.9, gzip;q=0.8, *;q=0.1"},
 			supportedEncodings: []string{brotliName, gzipName},
 			expected: []Encoding{
-				{Type: brotliName, Weight: ptr[float64](1)},
-				{Type: gzipName, Weight: ptr(0.8)},
-				{Type: wildcardName, Weight: ptr(0.1)},
+				{Type: brotliName, Weight: 1},
+				{Type: gzipName, Weight: 0.8},
+				{Type: wildcardName, Weight: 0.1},
 			},
 			assertWeight: assert.True,
 		},
@@ -138,10 +144,10 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			desc:   "mixed",
 			values: []string{"zstd,gzip, br;q=1.0, *;q=0"},
 			expected: []Encoding{
-				{Type: brotliName, Weight: ptr[float64](1)},
-				{Type: zstdName},
-				{Type: gzipName},
-				{Type: wildcardName, Weight: ptr[float64](0)},
+				{Type: zstdName, Weight: 1},
+				{Type: gzipName, Weight: 1},
+				{Type: brotliName, Weight: 1},
+				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -150,8 +156,8 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			values:             []string{"zstd,gzip, br;q=1.0, *;q=0"},
 			supportedEncodings: []string{zstdName},
 			expected: []Encoding{
-				{Type: zstdName},
-				{Type: wildcardName, Weight: ptr[float64](0)},
+				{Type: zstdName, Weight: 1},
+				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -159,10 +165,10 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			desc:   "no weight",
 			values: []string{"zstd, gzip, br, *"},
 			expected: []Encoding{
-				{Type: zstdName},
-				{Type: gzipName},
-				{Type: brotliName},
-				{Type: wildcardName},
+				{Type: zstdName, Weight: 1},
+				{Type: gzipName, Weight: 1},
+				{Type: brotliName, Weight: 1},
+				{Type: wildcardName, Weight: 1},
 			},
 			assertWeight: assert.False,
 		},
@@ -171,8 +177,8 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			values:             []string{"zstd, gzip, br, *"},
 			supportedEncodings: []string{"gzip"},
 			expected: []Encoding{
-				{Type: gzipName},
-				{Type: wildcardName},
+				{Type: gzipName, Weight: 1},
+				{Type: wildcardName, Weight: 1},
 			},
 			assertWeight: assert.False,
 		},
@@ -180,9 +186,9 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			desc:   "weight and identity",
 			values: []string{"gzip;q=1.0, identity; q=0.5, *;q=0"},
 			expected: []Encoding{
-				{Type: gzipName, Weight: ptr[float64](1)},
-				{Type: identityName, Weight: ptr(0.5)},
-				{Type: wildcardName, Weight: ptr[float64](0)},
+				{Type: gzipName, Weight: 1},
+				{Type: identityName, Weight: 0.5},
+				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -191,8 +197,8 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			values:             []string{"gzip;q=1.0, identity; q=0.5, *;q=0"},
 			supportedEncodings: []string{"br"},
 			expected: []Encoding{
-				{Type: identityName, Weight: ptr(0.5)},
-				{Type: wildcardName, Weight: ptr[float64](0)},
+				{Type: identityName, Weight: 0.5},
+				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -212,8 +218,4 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			test.assertWeight(t, hasWeight)
 		})
 	}
-}
-
-func ptr[T any](t T) *T {
-	return &t
 }

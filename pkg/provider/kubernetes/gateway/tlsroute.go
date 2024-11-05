@@ -32,6 +32,11 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			Str("tls_route", route.Name).
 			Str("namespace", route.Namespace).Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
@@ -48,11 +53,9 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				accepted := true
-				if !matchListener(listener, route.Namespace, parentRef) {
-					accepted = false
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
+
 				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
@@ -129,7 +132,7 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1alpha2.TL
 		}
 
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTLSRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 		// Routing criteria should be introduced at some point.
 		routerName := makeRouterName("", routeKey)
 
@@ -289,7 +292,7 @@ func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
 			// TODO determine whether the servers needs TLS, from the port?
-			Address: net.JoinHostPort(ba.Address, strconv.Itoa(int(ba.Port))),
+			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
 	return lb, nil

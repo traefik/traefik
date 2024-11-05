@@ -45,7 +45,7 @@ func (b *SmartBuilder) Update(newConfigs map[string]*dynamic.ServersTransport) {
 }
 
 // Build builds an HTTP proxy for the given URL using the ServersTransport with the given name.
-func (b *SmartBuilder) Build(configName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error) {
+func (b *SmartBuilder) Build(configName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error) {
 	serversTransport, err := b.transportManager.Get(configName)
 	if err != nil {
 		return nil, fmt.Errorf("getting ServersTransport: %w", err)
@@ -55,7 +55,7 @@ func (b *SmartBuilder) Build(configName string, targetURL *url.URL, shouldObserv
 	// For the https scheme we cannot guess if the backend communication will use HTTP2,
 	// thus we check if HTTP/2 is disabled to use the fast proxy implementation when this is possible.
 	if targetURL.Scheme == "h2c" || (targetURL.Scheme == "https" && !serversTransport.DisableHTTP2) {
-		return b.proxyBuilder.Build(configName, targetURL, shouldObserve, passHostHeader, flushInterval)
+		return b.proxyBuilder.Build(configName, targetURL, shouldObserve, passHostHeader, preservePath, flushInterval)
 	}
-	return b.fastProxyBuilder.Build(configName, targetURL, passHostHeader)
+	return b.fastProxyBuilder.Build(configName, targetURL, passHostHeader, preservePath)
 }
