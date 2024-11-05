@@ -36,7 +36,8 @@ func TestWebSocketUpgradeCase(t *testing.T) {
 
 		c, _, _ := w.(http.Hijacker).Hijack()
 		// Force answer with "Connection: upgrade" without a big U
-		c.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: upgrade\r\nSec-WebSocket-Accept: " + computeAcceptKey(challengeKey) + "\r\n\n"))
+		_, errW := c.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: upgrade\r\nSec-WebSocket-Accept: " + computeAcceptKey(challengeKey) + "\r\n\n"))
+		require.NoError(t, errW)
 	}))
 
 	defer srv.Close()

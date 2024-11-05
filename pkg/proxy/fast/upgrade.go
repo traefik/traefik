@@ -1,7 +1,6 @@
 package fast
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -100,7 +99,7 @@ func upgradeType(h http.Header) string {
 }
 
 func upgradeTypeFastHTTP(h fasthttpHeader) string {
-	if !bytes.Contains(bytes.ToLower(h.Peek("Connection")), []byte("upgrade")) {
+	if !h.ConnectionUpgrade() {
 		return ""
 	}
 
