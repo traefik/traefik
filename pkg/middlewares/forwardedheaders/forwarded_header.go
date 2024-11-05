@@ -20,6 +20,7 @@ const (
 	xForwardedServer            = "X-Forwarded-Server"
 	xForwardedURI               = "X-Forwarded-Uri"
 	xForwardedMethod            = "X-Forwarded-Method"
+	xForwardedPrefix            = "X-Forwarded-Prefix"
 	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
 	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
 	xRealIP                     = "X-Real-Ip"
@@ -35,6 +36,7 @@ var xHeaders = []string{
 	xForwardedServer,
 	xForwardedURI,
 	xForwardedMethod,
+	xForwardedPrefix,
 	xForwardedTLSClientCert,
 	xForwardedTLSClientCertInfo,
 	xRealIP,
