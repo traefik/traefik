@@ -100,8 +100,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -111,8 +111,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeDNSRR)),
 			},
@@ -126,8 +126,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -137,8 +137,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeDNSRR)),
 			},
@@ -173,7 +173,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
+						"traefik.swarm.network": "barnet",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -183,7 +183,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
+						"traefik.swarm.network": "barnet",
 					}),
 					withEndpointSpec(modeDNSRR)),
 			},
