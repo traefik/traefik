@@ -371,7 +371,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		}
 	}
 
-	if svc.Sticky != nil {
+	if svc.Sticky != nil && svc.Sticky.Cookie != nil {
 		lb.Sticky = &dynamic.Sticky{
 			Cookie: &dynamic.Cookie{
 				Name:     svc.Sticky.Cookie.Name,
