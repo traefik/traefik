@@ -1,0 +1,81 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: sticky-default
+  namespace: default
+spec:
+  weighted:
+    sticky:
+      cookie:
+        httpOnly: true
+        name: cookie
+        secure: true
+        sameSite: none
+        maxAge: 42
+    services:
+      - name: whoami3
+        port: 8443
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: sticky
+  namespace: default
+spec:
+  weighted:
+    sticky:
+      cookie:
+        httpOnly: true
+        name: cookie
+        secure: true
+        sameSite: none
+        maxAge: 42
+        path: /foo
+    services:
+      - name: whoami3
+        port: 8443
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test2.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`traefik-service`)
+      kind: Rule
+      services:
+        - name: sticky
+          kind: TraefikService
+        - name: sticky-default
+          kind: TraefikService
+
+    - match: Host(`k8s-service`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+          sticky:
+            cookie:
+              httpOnly: true
+              name: cookie
+              secure: true
+              sameSite: none
+              maxAge: 42
+              path: /foo
+        - name: whoami2
+          port: 8080
+          sticky:
+            cookie:
+              httpOnly: true
+              name: cookie
+              secure: true
+              sameSite: none
+              maxAge: 42
