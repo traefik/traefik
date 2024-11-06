@@ -228,6 +228,9 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
+`--experimental.abortonpluginfailure`:  
+Defines whether all plugins must be loaded successfully for Traefik to start. (Default: ```false```)
+
 `--experimental.fastproxy`:  
 Enable the FastProxy implementation. (Default: ```false```)
 
