@@ -488,7 +488,7 @@
     [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]
-  requirePluginsToStart = true
+  abortOnPluginFailure = true
   kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]

@@ -228,6 +228,9 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
+`--experimental.abortonpluginfailure`:  
+Defines wether all plugins must be loaded successfully for Traefik to start. (Default: ```false```)
+
 `--experimental.fastproxy`:  
 Enable the FastProxy implementation. (Default: ```false```)
 
@@ -266,9 +269,6 @@ Directory to mount to the wasm guest.
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.
-
-`--experimental.requirepluginstostart`:  
-Require plugins to be loaded successfully to start Traefik. (Default: ```false```)
 
 `--global.checknewversion`:  
 Periodically check if a new version has been released. (Default: ```true```)
