@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/pointer"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -4891,6 +4892,178 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-whoami-without-endpointslice-endpoints-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "Simple Ingress Route with sticky",
+			allowCrossNamespace: true,
+			paths:               []string{"services.yml", "with_sticky.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test2-route-840425136fbd5d85a4ad": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-840425136fbd5d85a4ad",
+							Rule:        "Host(`k8s-service`)",
+						},
+						"default-test2-route-4f06607bbc69f34a4db5": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-4f06607bbc69f34a4db5",
+							Rule:        "Host(`traefik-service`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test2-route-840425136fbd5d85a4ad": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: Int(1),
+									},
+									{
+										Name:   "default-whoami2-8080",
+										Weight: Int(1),
+									},
+								},
+							},
+						},
+						"default-test2-route-4f06607bbc69f34a4db5": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-sticky",
+										Weight: Int(1),
+									},
+									{
+										Name:   "default-sticky-default",
+										Weight: Int(1),
+									},
+								},
+							},
+						},
+						"default-sticky": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer.String("/foo"),
+									},
+								},
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami3-8443",
+										Weight: Int(1),
+									},
+								},
+							},
+						},
+						"default-sticky-default": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer.String("/"),
+									},
+								},
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami3-8443",
+										Weight: Int(1),
+									},
+								},
+							},
+						},
+						"default-whoami2-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer.String("/"),
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer.String("/foo"),
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami3-8443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:8443",
+									},
+									{
+										URL: "http://10.10.0.8:8443",
+									},
+								},
 								PassHostHeader: Bool(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
