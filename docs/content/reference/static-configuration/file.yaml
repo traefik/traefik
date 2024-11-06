@@ -576,6 +576,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+  abortOnPluginFailure: true
   fastProxy:
     debug: true
   kubernetesGateway: true
