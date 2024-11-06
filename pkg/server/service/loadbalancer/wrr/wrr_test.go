@@ -226,7 +226,7 @@ func TestSticky(t *testing.T) {
 			HTTPOnly: true,
 			SameSite: "none",
 			MaxAge:   42,
-			Path:     "/",
+			Path:     func(v string) *string { return &v }("/"),
 		},
 	}, false)
 

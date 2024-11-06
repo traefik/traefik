@@ -675,7 +675,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Name:     "foobar",
 								Secure:   true,
 								HTTPOnly: false,
-								Path:     "/foobar",
+								Path:     func(v string) *string { return &v }("/foobar"),
 							},
 						},
 						Servers: []dynamic.Server{
@@ -1198,7 +1198,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Cookie: &dynamic.Cookie{
 								Name:     "foobar",
 								HTTPOnly: true,
-								Path:     "/foobar",
+								Path:     func(v string) *string { return &v }("/foobar"),
 							},
 						},
 						Servers: []dynamic.Server{

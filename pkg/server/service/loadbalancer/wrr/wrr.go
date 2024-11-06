@@ -80,7 +80,10 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 			httpOnly: sticky.Cookie.HTTPOnly,
 			sameSite: sticky.Cookie.SameSite,
 			maxAge:   sticky.Cookie.MaxAge,
-			path:     sticky.Cookie.Path,
+			path:     "/",
+		}
+		if sticky.Cookie.Path != nil {
+			balancer.stickyCookie.path = *sticky.Cookie.Path
 		}
 	}
 
