@@ -21,25 +21,20 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-var keyGUID = []byte("258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
-
-func computeAcceptKey(challengeKey string) string {
-	h := sha1.New() // #nosec G401 -- (CWE-326) https://datatracker.ietf.org/doc/html/rfc6455#page-54
-	h.Write([]byte(challengeKey))
-	h.Write(keyGUID)
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
 func TestWebSocketUpgradeCase(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		challengeKey := r.Header.Get("Sec-Websocket-Key")
 
-		c, _, _ := w.(http.Hijacker).Hijack()
-		// Force answer with "Connection: upgrade" without a big U
-		_, errW := c.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: upgrade\r\nSec-WebSocket-Accept: " + computeAcceptKey(challengeKey) + "\r\n\n"))
-		require.NoError(t, errW)
-	}))
+		hijacker, ok := w.(http.Hijacker)
+		require.True(t, ok)
 
+		c, _, err := hijacker.Hijack()
+		require.NoError(t, err)
+
+		// Force answer with "Connection: upgrade" in lowercase.
+		_, err = c.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: upgrade\r\nSec-WebSocket-Accept: " + computeAcceptKey(challengeKey) + "\r\n\n"))
+		require.NoError(t, err)
+	}))
 	defer srv.Close()
 
 	proxy := createProxyWithForwarder(t, srv.URL, createConnectionPool(srv.URL, nil))
@@ -725,4 +720,11 @@ func createProxyWithForwarder(t *testing.T, uri string, pool *connPool) *httptes
 	t.Cleanup(srv.Close)
 
 	return srv
+}
+
+func computeAcceptKey(challengeKey string) string {
+	h := sha1.New() // #nosec G401 -- (CWE-326) https://datatracker.ietf.org/doc/html/rfc6455#page-54
+	h.Write([]byte(challengeKey))
+	h.Write([]byte("258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
