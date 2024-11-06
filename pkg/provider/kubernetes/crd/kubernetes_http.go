@@ -248,10 +248,28 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		})
 	}
 
+	var sticky *dynamic.Sticky
+	if tService.Weighted.Sticky != nil && tService.Weighted.Sticky.Cookie != nil {
+		sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{
+				Name:     tService.Weighted.Sticky.Cookie.Name,
+				Secure:   tService.Weighted.Sticky.Cookie.Secure,
+				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
+				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
+				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
+			},
+		}
+		sticky.Cookie.SetDefaults()
+
+		if tService.Weighted.Sticky.Cookie.Path != nil {
+			sticky.Cookie.Path = tService.Weighted.Sticky.Cookie.Path
+		}
+	}
+
 	conf[id] = &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
 			Services: wrrServices,
-			Sticky:   tService.Weighted.Sticky,
+			Sticky:   sticky,
 		},
 	}
 	return nil
@@ -353,7 +371,22 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		}
 	}
 
-	lb.Sticky = svc.Sticky
+	if svc.Sticky != nil && svc.Sticky.Cookie != nil {
+		lb.Sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{
+				Name:     svc.Sticky.Cookie.Name,
+				Secure:   svc.Sticky.Cookie.Secure,
+				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
+				SameSite: svc.Sticky.Cookie.SameSite,
+				MaxAge:   svc.Sticky.Cookie.MaxAge,
+			},
+		}
+		lb.Sticky.Cookie.SetDefaults()
+
+		if svc.Sticky.Cookie.Path != nil {
+			lb.Sticky.Cookie.Path = svc.Sticky.Cookie.Path
+		}
+	}
 
 	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
 	if err != nil {
