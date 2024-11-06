@@ -328,11 +328,11 @@ A Story of key & values
     |----------------------------------------------------------------------|-------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/maxage`"
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/path`"
 
-    | Key (Path)                                                           | Value |
-    |----------------------------------------------------------------------|-------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/path`   | `/`   |
+    | Key (Path)                                                           | Value     |
+    |----------------------------------------------------------------------|-----------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/path`   | `/foobar` |
 
 ### Middleware
 
