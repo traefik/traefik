@@ -229,7 +229,7 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
 `TRAEFIK_EXPERIMENTAL_ABORTONPLUGINFAILURE`:  
-Defines wether all plugins must be loaded successfully for Traefik to start. (Default: ```false```)
+Defines whether all plugins must be loaded successfully for Traefik to start. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_FASTPROXY`:  
 Enable the FastProxy implementation. (Default: ```false```)
