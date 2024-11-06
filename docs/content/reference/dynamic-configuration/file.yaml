@@ -63,6 +63,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            path: foobar
         servers:
           - url: foobar
             weight: 42
@@ -113,6 +114,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            path: foobar
         healthCheck: {}
   middlewares:
     Middleware01:

@@ -281,6 +281,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.sticky.cookie.maxage=42
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.

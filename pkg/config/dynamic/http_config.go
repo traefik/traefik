@@ -175,10 +175,20 @@ type Cookie struct {
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
-	// MaxAge indicates the number of seconds until the cookie expires.
+	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.
 	// When set to zero, the cookie never expires.
 	MaxAge int `json:"maxAge,omitempty" toml:"maxAge,omitempty" yaml:"maxAge,omitempty" export:"true"`
+	// Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
+	// When not provided the cookie will be sent on every request to the domain.
+	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
+	Path *string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+}
+
+// SetDefaults set the default values for a Cookie.
+func (c *Cookie) SetDefaults() {
+	defaultPath := "/"
+	c.Path = &defaultPath
 }
 
 // +k8s:deepcopy-gen=true

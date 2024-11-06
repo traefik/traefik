@@ -228,6 +228,14 @@ A Story of key & values
     |-------------------------------------------------------------------|----------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/name` | `foobar` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/path`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                        | Value     |
+    |-------------------------------------------------------------------|-----------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/path` | `/foobar` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/secure`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -319,6 +327,12 @@ A Story of key & values
     | Key (Path)                                                           | Value |
     |----------------------------------------------------------------------|-------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/path`"
+
+    | Key (Path)                                                           | Value     |
+    |----------------------------------------------------------------------|-----------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/path`   | `/foobar` |
 
 ### Middleware
 

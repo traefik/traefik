@@ -266,6 +266,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/name` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
@@ -284,6 +285,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service04/weighted/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/name` | `foobar` |
+| `traefik/http/services/Service04/weighted/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/secure` | `true` |
 | `traefik/tcp/middlewares/TCPMiddleware01/ipAllowList/sourceRange/0` | `foobar` |
