@@ -286,7 +286,7 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"

@@ -409,7 +409,7 @@ spec:
                                 type: boolean
                               maxAge:
                                 description: |-
-                                  MaxAge indicates the number of seconds until the cookie expires.
+                                  MaxAge defines the number of seconds until the cookie expires.
                                   When set to a negative number, the cookie expires immediately.
                                   When set to zero, the cookie never expires.
                                 type: integer
@@ -418,7 +418,7 @@ spec:
                                 type: string
                               path:
                                 description: |-
-                                  When path is set the cookie will only be sent for requests to the given path or subpaths.
+                                  Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
                                   When not provided the cookie will be sent on every request to the domain.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                 type: string

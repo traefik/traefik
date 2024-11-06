@@ -24,6 +24,8 @@ var _ provider.Provider = (*Provider)(nil)
 
 func Bool(v bool) *bool { return &v }
 
+func String(v string) *string { return &v }
+
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
 		desc                         string
@@ -126,6 +128,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										Name:     "foobar",
 										Secure:   true,
 										HTTPOnly: true,
+										Path:     String("/"),
 									},
 								},
 								Servers: []dynamic.Server{
