@@ -145,6 +145,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		req.Body = io.NopCloser(bytes.NewReader(bodyByte))
+		forwardReq.Method = req.Method
 		forwardReq.Body = io.NopCloser(bytes.NewReader(bodyByte))
 	}
 
