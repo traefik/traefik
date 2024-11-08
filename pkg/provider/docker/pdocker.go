@@ -136,6 +136,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					case event := <-eventsc:
 						if event.Action == "start" ||
 							event.Action == "die" ||
+							event.Action == "kill" ||
+							event.Action == "stop" ||
 							strings.HasPrefix(string(event.Action), "health_status") {
 							startStopHandle(event)
 						}
@@ -166,7 +168,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{Filters: filters.NewArgs(
+		filters.Arg("status", "created"),
+		filters.Arg("status", "restarting"),
+		filters.Arg("status", "running"),
+	)})
+
 	if err != nil {
 		return nil, err
 	}
