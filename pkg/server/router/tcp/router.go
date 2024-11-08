@@ -350,7 +350,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
+			log.WithoutContext().Debugf("Error while peeking first byte: %s", err)
 		}
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.Errorf("Error while Peeking hello: %s", err)
+		log.WithoutContext().Errorf("Error while peeking client hello headers: %s", err)
 		return &clientHello{
 			peeked: getPeeked(br),
 		}, nil
@@ -390,7 +390,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.Errorf("Error while Hello: %s", err)
+		log.WithoutContext().Errorf("Error while peeking client hello bytes: %s", err)
 		return &clientHello{
 			isTLS:  true,
 			peeked: getPeeked(br),
@@ -419,7 +419,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 func getPeeked(br *bufio.Reader) string {
 	peeked, err := br.Peek(br.Buffered())
 	if err != nil {
-		log.Errorf("Could not get anything: %s", err)
+		log.WithoutContext().Errorf("Error while peeking bytes: %s", err)
 		return ""
 	}
 	return string(peeked)
