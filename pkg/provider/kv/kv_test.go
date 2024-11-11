@@ -15,6 +15,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+func pointer[T any](v T) *T { return &v }
+
 func Test_buildConfiguration(t *testing.T) {
 	provider := newProviderMock(mapToPairs(map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0":                                                 "foobar",
@@ -647,13 +649,13 @@ func Test_buildConfiguration(t *testing.T) {
 							Interval:        "foobar",
 							Timeout:         "foobar",
 							Hostname:        "foobar",
-							FollowRedirects: func(v bool) *bool { return &v }(true),
+							FollowRedirects: pointer(true),
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -662,7 +664,7 @@ func Test_buildConfiguration(t *testing.T) {
 				"Service02": {
 					Mirroring: &dynamic.Mirroring{
 						Service:     "foobar",
-						MaxBodySize: func(v int64) *int64 { return &v }(42),
+						MaxBodySize: pointer[int64](42),
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",
@@ -680,11 +682,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Services: []dynamic.WRRService{
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(42),
+								Weight: pointer(42),
 							},
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(42),
+								Weight: pointer(42),
 							},
 						},
 						Sticky: &dynamic.Sticky{
@@ -768,7 +770,7 @@ func Test_buildConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.TCPService{
 				"TCPService01": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
-						TerminationDelay: func(v int) *int { return &v }(42),
+						TerminationDelay: pointer(42),
 						Servers: []dynamic.TCPServer{
 							{Address: "foobar"},
 							{Address: "foobar"},
@@ -780,11 +782,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Services: []dynamic.TCPWRRService{
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(42),
+								Weight: pointer(42),
 							},
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(43),
+								Weight: pointer(43),
 							},
 						},
 					},

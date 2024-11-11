@@ -16,10 +16,6 @@ import (
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
-func Int32(i int32) *int32 {
-	return &i
-}
-
 // LocalhostCert is a PEM-encoded TLS cert
 // for host example.com, www.example.com
 // expiring at Jan 29 16:00:00 2084 GMT.
@@ -117,7 +113,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	connCount := Int32(0)
+	connCount := pointer[int32](0)
 	srv.Config.ConnState = func(conn net.Conn, state http.ConnState) {
 		if state == http.StateNew {
 			atomic.AddInt32(connCount, 1)

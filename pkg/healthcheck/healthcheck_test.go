@@ -278,7 +278,7 @@ func TestNewRequest(t *testing.T) {
 
 			if test.expected.err {
 				require.Error(t, err)
-				assert.Nil(t, nil)
+				assert.Nil(t, req)
 			} else {
 				require.NoError(t, err, "failed to create new backend request")
 				require.NotNil(t, req)
