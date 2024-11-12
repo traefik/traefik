@@ -48,6 +48,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -55,6 +56,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
+				xForwardedPrefix:            "/prefix",
 			},
 		},
 		{
@@ -68,6 +70,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -75,6 +78,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 			},
 		},
 		{
@@ -88,6 +92,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -95,6 +100,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
+				xForwardedPrefix:            "/prefix",
 			},
 		},
 		{
@@ -108,6 +114,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -115,6 +122,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 			},
 		},
 		{
@@ -128,6 +136,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -135,6 +144,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
+				xForwardedPrefix:            "/prefix",
 			},
 		},
 		{
@@ -148,6 +158,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -155,6 +166,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 			},
 		},
 		{
@@ -283,6 +295,7 @@ func TestServeHTTP(t *testing.T) {
 					xForwardedPort,
 					xForwardedTLSClientCert,
 					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
 					xRealIP,
 				},
 				xForwardedProto:             {"foo"},
@@ -293,6 +306,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              {"foo"},
 				xForwardedTLSClientCert:     {"foo"},
 				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
 				xRealIP:                     {"foo"},
 			},
 			expectedHeaders: map[string]string{
@@ -304,6 +318,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              "80",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 				xRealIP:                     "",
 				connection:                  "",
 			},
@@ -321,6 +336,7 @@ func TestServeHTTP(t *testing.T) {
 					xForwardedPort,
 					xForwardedTLSClientCert,
 					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
 					xRealIP,
 				},
 				xForwardedProto:             {"foo"},
@@ -331,6 +347,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              {"foo"},
 				xForwardedTLSClientCert:     {"foo"},
 				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
 				xRealIP:                     {"foo"},
 			},
 			expectedHeaders: map[string]string{
@@ -342,6 +359,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              "foo",
 				xForwardedTLSClientCert:     "foo",
 				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
 				xRealIP:                     "foo",
 				connection:                  "",
 			},
@@ -358,6 +376,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort,
 				xForwardedTLSClientCert,
 				xForwardedTLSClientCertInfo,
+				xForwardedPrefix,
 				xRealIP,
 			},
 			incomingHeaders: map[string][]string{
@@ -370,6 +389,7 @@ func TestServeHTTP(t *testing.T) {
 					xForwardedPort,
 					xForwardedTLSClientCert,
 					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
 					xRealIP,
 				},
 				xForwardedProto:             {"foo"},
@@ -380,6 +400,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              {"foo"},
 				xForwardedTLSClientCert:     {"foo"},
 				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
 				xRealIP:                     {"foo"},
 			},
 			expectedHeaders: map[string]string{
@@ -391,6 +412,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              "80",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 				xRealIP:                     "",
 				connection:                  "",
 			},
@@ -407,6 +429,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort,
 				xForwardedTLSClientCert,
 				xForwardedTLSClientCertInfo,
+				xForwardedPrefix,
 				xRealIP,
 			},
 			incomingHeaders: map[string][]string{
@@ -419,6 +442,7 @@ func TestServeHTTP(t *testing.T) {
 					xForwardedPort,
 					xForwardedTLSClientCert,
 					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
 					xRealIP,
 				},
 				xForwardedProto:             {"foo"},
@@ -429,6 +453,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              {"foo"},
 				xForwardedTLSClientCert:     {"foo"},
 				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
 				xRealIP:                     {"foo"},
 			},
 			expectedHeaders: map[string]string{
@@ -440,6 +465,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedPort:              "foo",
 				xForwardedTLSClientCert:     "foo",
 				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
 				xRealIP:                     "foo",
 				connection:                  "",
 			},
