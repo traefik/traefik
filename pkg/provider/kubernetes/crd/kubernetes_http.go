@@ -205,7 +205,7 @@ type configBuilder struct {
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
 // and adds it to the given conf map.
-func (c *configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
 	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
 
 	if tService.Spec.Weighted != nil {
@@ -219,7 +219,7 @@ func (c *configBuilder) buildTraefikService(ctx context.Context, tService *traef
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
 // It adds it to the given conf map.
-func (c *configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
 	var wrrServices []dynamic.WRRService
 
 	for _, service := range tService.Weighted.Services {
@@ -254,7 +254,7 @@ func (c *configBuilder) buildServicesLB(ctx context.Context, namespace string, t
 
 // buildMirroring creates the configuration for the mirroring service named id, and defined by tService.
 // It adds it to the given conf map.
-func (c *configBuilder) buildMirroring(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
 	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Mirroring.LoadBalancerSpec)
 	if err != nil {
 		return err
@@ -293,7 +293,7 @@ func (c *configBuilder) buildMirroring(ctx context.Context, tService *traefikv1a
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c *configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
 	servers, err := c.loadServers(namespace, svc)
 	if err != nil {
 		return nil, err
@@ -321,7 +321,7 @@ func (c *configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Loa
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c *configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
+func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
 	if serversTransportName == "" {
 		return "", nil
 	}
@@ -340,7 +340,7 @@ func (c *configBuilder) makeServersTransportKey(parentNamespace string, serversT
 	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
 }
 
-func (c *configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
 	strategy := svc.Strategy
 	if strategy == "" {
 		strategy = roundRobinStrategy
@@ -448,7 +448,7 @@ func (c *configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.
 // In addition, if the service is a Kubernetes one,
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
-func (c *configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
+func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
 	namespace := namespaceOrFallback(service, parentNamespace)

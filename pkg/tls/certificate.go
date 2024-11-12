@@ -45,13 +45,6 @@ var (
 	}
 )
 
-// Certificate holds a SSL cert/key pair
-// Certs and Key could be either a file path, or the file content itself.
-type Certificate struct {
-	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
-}
-
 // Certificates defines traefik certificates type
 // Certs and Keys could be either a file path, or the file content itself.
 type Certificates []Certificate
@@ -71,6 +64,49 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	}
 
 	return certs
+}
+
+// String is the method to format the flag's value, part of the flag.Value interface.
+// The String method's output will be used in diagnostics.
+func (c *Certificates) String() string {
+	if len(*c) == 0 {
+		return ""
+	}
+	var result []string
+	for _, certificate := range *c {
+		result = append(result, certificate.CertFile.String()+","+certificate.KeyFile.String())
+	}
+	return strings.Join(result, ";")
+}
+
+// Set is the method to set the flag value, part of the flag.Value interface.
+// Set's argument is a string to be parsed to set the flag.
+// It's a comma-separated list, so we split it.
+func (c *Certificates) Set(value string) error {
+	certificates := strings.Split(value, ";")
+	for _, certificate := range certificates {
+		files := strings.Split(certificate, ",")
+		if len(files) != 2 {
+			return fmt.Errorf("bad certificates format: %s", value)
+		}
+		*c = append(*c, Certificate{
+			CertFile: FileOrContent(files[0]),
+			KeyFile:  FileOrContent(files[1]),
+		})
+	}
+	return nil
+}
+
+// Type is type of the struct.
+func (c *Certificates) Type() string {
+	return "certificates"
+}
+
+// Certificate holds a SSL cert/key pair
+// Certs and Key could be either a file path, or the file content itself.
+type Certificate struct {
+	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
+	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by store name.
@@ -165,42 +201,6 @@ func (c *Certificate) GetTruncatedCertificateName() string {
 	}
 
 	return certName
-}
-
-// String is the method to format the flag's value, part of the flag.Value interface.
-// The String method's output will be used in diagnostics.
-func (c *Certificates) String() string {
-	if len(*c) == 0 {
-		return ""
-	}
-	var result []string
-	for _, certificate := range *c {
-		result = append(result, certificate.CertFile.String()+","+certificate.KeyFile.String())
-	}
-	return strings.Join(result, ";")
-}
-
-// Set is the method to set the flag value, part of the flag.Value interface.
-// Set's argument is a string to be parsed to set the flag.
-// It's a comma-separated list, so we split it.
-func (c *Certificates) Set(value string) error {
-	certificates := strings.Split(value, ";")
-	for _, certificate := range certificates {
-		files := strings.Split(certificate, ",")
-		if len(files) != 2 {
-			return fmt.Errorf("bad certificates format: %s", value)
-		}
-		*c = append(*c, Certificate{
-			CertFile: FileOrContent(files[0]),
-			KeyFile:  FileOrContent(files[1]),
-		})
-	}
-	return nil
-}
-
-// Type is type of the struct.
-func (c *Certificates) Type() string {
-	return "certificates"
 }
 
 // FileOrContent hold a file path or content.
