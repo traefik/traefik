@@ -18,10 +18,10 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func Bool(v bool) *bool { return &v }
+func pointer[T any](v T) *T { return &v }
 
 func TestWebSocketTCPClose(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	errChan := make(chan error, 1)
@@ -61,7 +61,7 @@ func TestWebSocketTCPClose(t *testing.T) {
 }
 
 func TestWebSocketPingPong(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 
 	require.NoError(t, err)
 
@@ -127,7 +127,7 @@ func TestWebSocketPingPong(t *testing.T) {
 }
 
 func TestWebSocketEcho(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	mux := http.NewServeMux()
@@ -193,7 +193,7 @@ func TestWebSocketPassHost(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			f, err := buildProxy(Bool(test.passHost), nil, http.DefaultTransport, nil)
+			f, err := buildProxy(pointer(test.passHost), nil, http.DefaultTransport, nil)
 
 			require.NoError(t, err)
 
@@ -252,7 +252,7 @@ func TestWebSocketPassHost(t *testing.T) {
 }
 
 func TestWebSocketServerWithoutCheckOrigin(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
@@ -293,7 +293,7 @@ func TestWebSocketServerWithoutCheckOrigin(t *testing.T) {
 }
 
 func TestWebSocketRequestWithOrigin(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	upgrader := gorillawebsocket.Upgrader{}
@@ -339,7 +339,7 @@ func TestWebSocketRequestWithOrigin(t *testing.T) {
 }
 
 func TestWebSocketRequestWithQueryParams(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	upgrader := gorillawebsocket.Upgrader{}
@@ -379,7 +379,7 @@ func TestWebSocketRequestWithQueryParams(t *testing.T) {
 }
 
 func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	mux := http.NewServeMux()
@@ -411,7 +411,7 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 }
 
 func TestWebSocketRequestWithEncodedChar(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	upgrader := gorillawebsocket.Upgrader{}
@@ -451,7 +451,7 @@ func TestWebSocketRequestWithEncodedChar(t *testing.T) {
 }
 
 func TestWebSocketUpgradeFailed(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	mux := http.NewServeMux()
@@ -501,7 +501,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 }
 
 func TestForwardsWebsocketTraffic(t *testing.T) {
-	f, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	f, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	mux := http.NewServeMux()
@@ -557,7 +557,7 @@ func TestWebSocketTransferTLSConfig(t *testing.T) {
 	srv := createTLSWebsocketServer()
 	defer srv.Close()
 
-	forwarderWithoutTLSConfig, err := buildProxy(Bool(true), nil, http.DefaultTransport, nil)
+	forwarderWithoutTLSConfig, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	proxyWithoutTLSConfig := createProxyWithForwarder(t, forwarderWithoutTLSConfig, srv.URL)
@@ -576,7 +576,7 @@ func TestWebSocketTransferTLSConfig(t *testing.T) {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	forwarderWithTLSConfig, err := buildProxy(Bool(true), nil, transport, nil)
+	forwarderWithTLSConfig, err := buildProxy(pointer(true), nil, transport, nil)
 	require.NoError(t, err)
 
 	proxyWithTLSConfig := createProxyWithForwarder(t, forwarderWithTLSConfig, srv.URL)
@@ -597,7 +597,7 @@ func TestWebSocketTransferTLSConfig(t *testing.T) {
 	defaultTransport := http.DefaultTransport.(*http.Transport).Clone()
 	defaultTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	forwarderWithTLSConfigFromDefaultTransport, err := buildProxy(Bool(true), nil, defaultTransport, nil)
+	forwarderWithTLSConfigFromDefaultTransport, err := buildProxy(pointer(true), nil, defaultTransport, nil)
 	require.NoError(t, err)
 
 	proxyWithTLSConfigFromDefaultTransport := createProxyWithForwarder(t, forwarderWithTLSConfigFromDefaultTransport, srv.URL)

@@ -317,7 +317,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 		})
 	}
 
-	providerAggregator := aggregator.ProviderAggregator{}
+	providerAggregator := &aggregator.ProviderAggregator{}
 	err := providerAggregator.AddProvider(pvd)
 	assert.NoError(t, err)
 
@@ -499,7 +499,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 	}
 
-	providerAggregator := aggregator.ProviderAggregator{}
+	providerAggregator := &aggregator.ProviderAggregator{}
 	err := providerAggregator.AddProvider(pvd)
 	assert.NoError(t, err)
 
@@ -641,7 +641,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 	}
 
-	providerAggregator := aggregator.ProviderAggregator{}
+	providerAggregator := &aggregator.ProviderAggregator{}
 	err := providerAggregator.AddProvider(pvd)
 	assert.NoError(t, err)
 

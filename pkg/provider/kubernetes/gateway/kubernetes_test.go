@@ -16,6 +16,8 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
+func ptr[T any](v T) *T { return &v }
+
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -536,7 +538,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -622,11 +624,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "service@file",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -682,7 +684,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -746,7 +748,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -801,7 +803,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -856,7 +858,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -916,7 +918,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -926,7 +928,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami2-8080",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -994,11 +996,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 									{
 										Name:   "default-whoami2-8080",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1077,7 +1079,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1087,7 +1089,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1162,7 +1164,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1172,7 +1174,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1241,7 +1243,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1251,7 +1253,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1306,7 +1308,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1366,7 +1368,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1376,7 +1378,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1444,7 +1446,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1690,7 +1692,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1751,7 +1753,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1761,7 +1763,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1829,11 +1831,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-tcp-app-my-tcp-gateway-tcp-1-e3b0c44298fc1c149afb-wrr-0",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 									{
 										Name:   "default-tcp-app-my-tcp-gateway-tcp-1-e3b0c44298fc1c149afb-wrr-1",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1843,7 +1845,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1853,7 +1855,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1919,11 +1921,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "service@file",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -1977,7 +1979,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{{
 									Name:   "default-whoamitcp-9000",
-									Weight: func(i int) *int { return &i }(1),
+									Weight: ptr(1),
 								}},
 							},
 						},
@@ -2039,7 +2041,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2098,7 +2100,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2108,7 +2110,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2174,7 +2176,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2458,7 +2460,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2524,7 +2526,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2581,7 +2583,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2645,7 +2647,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2655,7 +2657,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2731,11 +2733,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "service@file",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2801,7 +2803,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2858,7 +2860,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2915,7 +2917,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -2972,7 +2974,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3029,7 +3031,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3094,7 +3096,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3104,7 +3106,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3173,7 +3175,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3230,11 +3232,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-tls-app-my-gateway-tcp-1-673acf455cb2dab0b43a-wrr-0",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 									{
 										Name:   "default-tls-app-my-gateway-tcp-1-673acf455cb2dab0b43a-wrr-1",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3244,7 +3246,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3254,7 +3256,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3459,7 +3461,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3469,7 +3471,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3479,7 +3481,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3519,7 +3521,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3529,7 +3531,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3633,7 +3635,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3643,7 +3645,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3653,7 +3655,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3693,7 +3695,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3703,7 +3705,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3791,7 +3793,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3801,7 +3803,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3811,7 +3813,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3845,7 +3847,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3855,7 +3857,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3894,7 +3896,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3904,7 +3906,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3940,7 +3942,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -3950,7 +3952,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4026,7 +4028,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4036,7 +4038,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4046,7 +4048,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4087,7 +4089,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4097,7 +4099,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4152,7 +4154,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4162,7 +4164,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4202,7 +4204,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4212,7 +4214,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: ptr(1),
 									},
 								},
 							},
@@ -4437,7 +4439,7 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: nil,
 						},
 					},
@@ -4451,7 +4453,7 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 					},
@@ -4465,13 +4467,13 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 					},
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr("unknown"),
+							Type:  ptr[gatev1alpha2.PathMatchType]("unknown"),
 							Value: pointer.String("/foo/"),
 						},
 					},
@@ -4485,7 +4487,7 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 					},
@@ -4500,14 +4502,14 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 					},
 					{
 						Headers: []gatev1alpha2.HTTPHeaderMatch{
 							{
-								Type:  headerMatchTypePtr(gatev1alpha2.HeaderMatchExact),
+								Type:  ptr[gatev1alpha2.HeaderMatchType](gatev1alpha2.HeaderMatchExact),
 								Name:  "my-header",
 								Value: "foo",
 							},
@@ -4523,12 +4525,12 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 						Headers: []gatev1alpha2.HTTPHeaderMatch{
 							{
-								Type:  headerMatchTypePtr(gatev1alpha2.HeaderMatchExact),
+								Type:  ptr[gatev1alpha2.HeaderMatchType](gatev1alpha2.HeaderMatchExact),
 								Name:  "my-header",
 								Value: "foo",
 							},
@@ -4545,12 +4547,12 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 						Headers: []gatev1alpha2.HTTPHeaderMatch{
 							{
-								Type:  headerMatchTypePtr(gatev1alpha2.HeaderMatchExact),
+								Type:  ptr[gatev1alpha2.HeaderMatchType](gatev1alpha2.HeaderMatchExact),
 								Name:  "my-header",
 								Value: "foo",
 							},
@@ -4567,14 +4569,14 @@ func Test_extractRule(t *testing.T) {
 				Matches: []gatev1alpha2.HTTPRouteMatch{
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
-							Type:  pathMatchTypePtr(gatev1alpha2.PathMatchExact),
+							Type:  ptr[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
 							Value: pointer.String("/foo/"),
 						},
 					},
 					{
 						Headers: []gatev1alpha2.HTTPHeaderMatch{
 							{
-								Type:  headerMatchTypePtr(gatev1alpha2.HeaderMatchExact),
+								Type:  ptr[gatev1alpha2.HeaderMatchType](gatev1alpha2.HeaderMatchExact),
 								Name:  "my-header",
 								Value: "foo",
 							},
@@ -4707,11 +4709,11 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Kind:        kindPtr("Foo"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Kind:        ptr[gatev1alpha2.Kind]("Foo"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 				},
 			},
@@ -4732,11 +4734,11 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Kind:        kindPtr("Gateway"),
-						Group:       groupPtr("foo.com"),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
+						Group:       ptr[gatev1alpha2.Group]("foo.com"),
 					},
 				},
 			},
@@ -4757,10 +4759,10 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 				},
 			},
@@ -4781,10 +4783,10 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Kind:        kindPtr("Gateway"),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
 					},
 				},
 			},
@@ -4805,11 +4807,11 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
-						Kind:        kindPtr("Gateway"),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
 					},
 				},
 			},
@@ -4830,11 +4832,11 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("bar"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
-						Kind:        kindPtr("Gateway"),
+						Namespace:   ptr[gatev1alpha2.Namespace]("bar"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
 					},
 				},
 			},
@@ -4855,10 +4857,10 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Group:       groupPtr(gatev1alpha2.GroupName),
-						Kind:        kindPtr("Gateway"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
 					},
 				},
 			},
@@ -4879,11 +4881,11 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("bar"),
+						SectionName: ptr[gatev1alpha2.SectionName]("bar"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Kind:        kindPtr("Gateway"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 				},
 			},
@@ -4904,10 +4906,10 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("foo"),
+						SectionName: ptr[gatev1alpha2.SectionName]("foo"),
 						Name:        "gateway",
-						Kind:        kindPtr("Gateway"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 				},
 			},
@@ -4928,11 +4930,11 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: gatev1alpha2.CommonRouteSpec{
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
-						SectionName: sectionNamePtr("foo"),
+						SectionName: ptr[gatev1alpha2.SectionName]("foo"),
 						Name:        "gateway",
-						Namespace:   namespacePtr("default"),
-						Kind:        kindPtr("Gateway"),
-						Group:       groupPtr(gatev1alpha2.GroupName),
+						Namespace:   ptr[gatev1alpha2.Namespace]("default"),
+						Kind:        ptr[gatev1alpha2.Kind]("Gateway"),
+						Group:       ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 				},
 			},
@@ -4954,15 +4956,15 @@ func Test_shouldAttach(t *testing.T) {
 				ParentRefs: []gatev1alpha2.ParentRef{
 					{
 						Name:      "gateway2",
-						Namespace: namespacePtr("default"),
-						Kind:      kindPtr("Gateway"),
-						Group:     groupPtr(gatev1alpha2.GroupName),
+						Namespace: ptr[gatev1alpha2.Namespace]("default"),
+						Kind:      ptr[gatev1alpha2.Kind]("Gateway"),
+						Group:     ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 					{
 						Name:      "gateway",
-						Namespace: namespacePtr("default"),
-						Kind:      kindPtr("Gateway"),
-						Group:     groupPtr(gatev1alpha2.GroupName),
+						Namespace: ptr[gatev1alpha2.Namespace]("default"),
+						Kind:      ptr[gatev1alpha2.Kind]("Gateway"),
+						Group:     ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					},
 				},
 			},
@@ -4993,7 +4995,7 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Only listener hostname",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("foo.com"),
 			},
 			want: []gatev1alpha2.Hostname{"foo.com"},
 		},
@@ -5005,7 +5007,7 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Matching hostname",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"foo.com"},
 			want:      []gatev1alpha2.Hostname{"foo.com"},
@@ -5013,7 +5015,7 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Matching hostname with wildcard",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("*.foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("*.foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"*.foo.com"},
 			want:      []gatev1alpha2.Hostname{"*.foo.com"},
@@ -5021,7 +5023,7 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Matching subdomain with listener wildcard",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("*.foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("*.foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"bar.foo.com"},
 			want:      []gatev1alpha2.Hostname{"bar.foo.com"},
@@ -5029,7 +5031,7 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Matching subdomain with route hostname wildcard",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("bar.foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("bar.foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"*.foo.com"},
 			want:      []gatev1alpha2.Hostname{"bar.foo.com"},
@@ -5037,21 +5039,21 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Non matching root domain with listener wildcard",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("*.foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("*.foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"foo.com"},
 		},
 		{
 			desc: "Non matching root domain with route hostname wildcard",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"*.foo.com"},
 		},
 		{
 			desc: "Multiple route hostnames with one matching route hostname",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("*.foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("*.foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"bar.com", "test.foo.com", "test.buz.com"},
 			want:      []gatev1alpha2.Hostname{"test.foo.com"},
@@ -5059,14 +5061,14 @@ func Test_matchingHostnames(t *testing.T) {
 		{
 			desc: "Multiple route hostnames with non matching route hostname",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("*.fuz.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("*.fuz.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"bar.com", "test.foo.com", "test.buz.com"},
 		},
 		{
 			desc: "Multiple route hostnames with multiple matching route hostnames",
 			listener: gatev1alpha2.Listener{
-				Hostname: hostnamePtr("*.foo.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("*.foo.com"),
 			},
 			hostnames: []gatev1alpha2.Hostname{"toto.foo.com", "test.foo.com", "test.buz.com"},
 			want:      []gatev1alpha2.Hostname{"toto.foo.com", "test.foo.com"},
@@ -5097,10 +5099,10 @@ func Test_getAllowedRoutes(t *testing.T) {
 		{
 			desc: "Empty AllowedRoutes",
 			supportedRouteKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 			wantKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 		},
 		{
@@ -5108,12 +5110,12 @@ func Test_getAllowedRoutes(t *testing.T) {
 			listener: gatev1alpha2.Listener{
 				AllowedRoutes: &gatev1alpha2.AllowedRoutes{
 					Kinds: []gatev1alpha2.RouteGroupKind{{
-						Kind: kindTLSRoute, Group: groupPtr("foo"),
+						Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group]("foo"),
 					}},
 				},
 			},
 			supportedRouteKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 			wantErr: true,
 		},
@@ -5127,7 +5129,7 @@ func Test_getAllowedRoutes(t *testing.T) {
 				},
 			},
 			supportedRouteKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 			wantErr: true,
 		},
@@ -5136,12 +5138,12 @@ func Test_getAllowedRoutes(t *testing.T) {
 			listener: gatev1alpha2.Listener{
 				AllowedRoutes: &gatev1alpha2.AllowedRoutes{
 					Kinds: []gatev1alpha2.RouteGroupKind{{
-						Kind: "foo", Group: groupPtr(gatev1alpha2.GroupName),
+						Kind: "foo", Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					}},
 				},
 			},
 			supportedRouteKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 			wantErr: true,
 		},
@@ -5150,15 +5152,15 @@ func Test_getAllowedRoutes(t *testing.T) {
 			listener: gatev1alpha2.Listener{
 				AllowedRoutes: &gatev1alpha2.AllowedRoutes{
 					Kinds: []gatev1alpha2.RouteGroupKind{{
-						Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName),
+						Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName),
 					}},
 				},
 			},
 			supportedRouteKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 			wantKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 		},
 		{
@@ -5166,20 +5168,20 @@ func Test_getAllowedRoutes(t *testing.T) {
 			listener: gatev1alpha2.Listener{
 				AllowedRoutes: &gatev1alpha2.AllowedRoutes{
 					Kinds: []gatev1alpha2.RouteGroupKind{
-						{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
-						{Kind: kindTCPRoute, Group: groupPtr(gatev1alpha2.GroupName)},
-						{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
-						{Kind: kindTCPRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+						{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
+						{Kind: kindTCPRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
+						{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
+						{Kind: kindTCPRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 					},
 				},
 			},
 			supportedRouteKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
-				{Kind: kindTCPRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
+				{Kind: kindTCPRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 			wantKinds: []gatev1alpha2.RouteGroupKind{
-				{Kind: kindTLSRoute, Group: groupPtr(gatev1alpha2.GroupName)},
-				{Kind: kindTCPRoute, Group: groupPtr(gatev1alpha2.GroupName)},
+				{Kind: kindTLSRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
+				{Kind: kindTCPRoute, Group: ptr[gatev1alpha2.Group](gatev1alpha2.GroupName)},
 			},
 		},
 	}
@@ -5215,7 +5217,7 @@ func Test_makeListenerKey(t *testing.T) {
 			listener: gatev1alpha2.Listener{
 				Port:     443,
 				Protocol: gatev1alpha2.HTTPSProtocolType,
-				Hostname: hostnamePtr("www.example.com"),
+				Hostname: ptr[gatev1alpha2.Hostname]("www.example.com"),
 			},
 			expectedKey: "HTTPS|www.example.com|443",
 		},
@@ -5237,27 +5239,3 @@ func Test_makeListenerKey(t *testing.T) {
 		})
 	}
 }
-
-func hostnamePtr(hostname gatev1alpha2.Hostname) *gatev1alpha2.Hostname {
-	return &hostname
-}
-
-func groupPtr(group gatev1alpha2.Group) *gatev1alpha2.Group {
-	return &group
-}
-
-func sectionNamePtr(sectionName gatev1alpha2.SectionName) *gatev1alpha2.SectionName {
-	return &sectionName
-}
-
-func namespacePtr(namespace gatev1alpha2.Namespace) *gatev1alpha2.Namespace {
-	return &namespace
-}
-
-func kindPtr(kind gatev1alpha2.Kind) *gatev1alpha2.Kind {
-	return &kind
-}
-
-func pathMatchTypePtr(p gatev1alpha2.PathMatchType) *gatev1alpha2.PathMatchType { return &p }
-
-func headerMatchTypePtr(h gatev1alpha2.HeaderMatchType) *gatev1alpha2.HeaderMatchType { return &h }

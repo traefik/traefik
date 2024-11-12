@@ -307,7 +307,7 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 	return ip, port, nil
 }
 
-func (p Provider) getIPAddress(ctx context.Context, container dockerData) string {
+func (p *Provider) getIPAddress(ctx context.Context, container dockerData) string {
 	logger := log.FromContext(ctx)
 
 	netNotFound := false

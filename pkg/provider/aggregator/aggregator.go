@@ -67,8 +67,8 @@ type ProviderAggregator struct {
 }
 
 // NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
-func NewProviderAggregator(conf static.Providers) ProviderAggregator {
-	p := ProviderAggregator{
+func NewProviderAggregator(conf static.Providers) *ProviderAggregator {
+	p := &ProviderAggregator{
 		providersThrottleDuration: time.Duration(conf.ProvidersThrottleDuration),
 	}
 
@@ -172,12 +172,12 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 }
 
 // Init the provider.
-func (p ProviderAggregator) Init() error {
+func (p *ProviderAggregator) Init() error {
 	return nil
 }
 
 // Provide calls the provide method of every providers.
-func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+func (p *ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.fileProvider != nil {
 		p.launchProvider(configurationChan, pool, p.fileProvider)
 	}
@@ -197,7 +197,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, po
 	return nil
 }
 
-func (p ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
+func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
 	jsonConf, err := redactor.RemoveCredentials(prd)
 	if err != nil {
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)

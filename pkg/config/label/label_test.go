@@ -13,6 +13,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+func pointer[T any](v T) *T { return &v }
+
 func TestDecodeConfiguration(t *testing.T) {
 	labels := map[string]string{
 		"traefik.http.middlewares.Middleware0.addprefix.prefix":                                    "foobar",
@@ -265,7 +267,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 42},
 					},
 				},
@@ -276,7 +278,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
 					},
 				},
@@ -665,9 +667,9 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: func(v bool) *bool { return &v }(true),
+							FollowRedirects: pointer(true),
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -693,9 +695,9 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: func(v bool) *bool { return &v }(true),
+							FollowRedirects: pointer(true),
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -773,7 +775,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 					},
 				},
 				"Service1": {
@@ -783,7 +785,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 					},
 				},
 			},
@@ -1170,7 +1172,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -1197,7 +1199,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},

@@ -89,7 +89,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	<-errChan
 }
 
-func (p Proxy) dialBackend() (*net.TCPConn, error) {
+func (p *Proxy) dialBackend() (*net.TCPConn, error) {
 	// Dial using directly the TCPAddr for IP based addresses.
 	if p.tcpAddr != nil {
 		return net.DialTCP("tcp", nil, p.tcpAddr)
@@ -106,7 +106,7 @@ func (p Proxy) dialBackend() (*net.TCPConn, error) {
 	return conn.(*net.TCPConn), nil
 }
 
-func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
+func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	_, err := io.Copy(dst, src)
 	errCh <- err
 
