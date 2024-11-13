@@ -15,8 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-func Bool(v bool) *bool       { return &v }
-func String(v string) *string { return &v }
+func pointer[T any](v T) *T { return &v }
 
 func Test_buildConfiguration(t *testing.T) {
 	provider := newProviderMock(mapToPairs(map[string]string{
@@ -385,7 +384,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						ForceSlash: Bool(true),
+						ForceSlash: pointer(true),
 					},
 				},
 				"Middleware00": {
@@ -428,7 +427,7 @@ func Test_buildConfiguration(t *testing.T) {
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
-							CAOptional:         Bool(true),
+							CAOptional:         pointer(true),
 						},
 						TrustForwardHeader: true,
 						AuthResponseHeaders: []string{
@@ -601,14 +600,14 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						SSLRedirect:          Bool(true),
-						SSLTemporaryRedirect: Bool(true),
-						SSLHost:              String("foobar"),
+						SSLRedirect:          pointer(true),
+						SSLTemporaryRedirect: pointer(true),
+						SSLHost:              pointer("foobar"),
 						SSLProxyHeaders: map[string]string{
 							"name1": "foobar",
 							"name0": "foobar",
 						},
-						SSLForceHost:                    Bool(true),
+						SSLForceHost:                    pointer(true),
 						STSSeconds:                      42,
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
@@ -622,7 +621,7 @@ func Test_buildConfiguration(t *testing.T) {
 						ContentSecurityPolicyReportOnly: "foobar",
 						PublicKey:                       "foobar",
 						ReferrerPolicy:                  "foobar",
-						FeaturePolicy:                   String("foobar"),
+						FeaturePolicy:                   pointer("foobar"),
 						PermissionsPolicy:               "foobar",
 						IsDevelopment:                   true,
 					},
@@ -662,13 +661,13 @@ func Test_buildConfiguration(t *testing.T) {
 							Interval:        ptypes.Duration(time.Second),
 							Timeout:         ptypes.Duration(time.Second),
 							Hostname:        "foobar",
-							FollowRedirects: func(v bool) *bool { return &v }(true),
+							FollowRedirects: pointer(true),
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -677,8 +676,8 @@ func Test_buildConfiguration(t *testing.T) {
 				"Service02": {
 					Mirroring: &dynamic.Mirroring{
 						Service:     "foobar",
-						MirrorBody:  func(v bool) *bool { return &v }(true),
-						MaxBodySize: func(v int64) *int64 { return &v }(42),
+						MirrorBody:  pointer(true),
+						MaxBodySize: pointer[int64](42),
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",
@@ -696,11 +695,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Services: []dynamic.WRRService{
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(42),
+								Weight: pointer(42),
 							},
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(42),
+								Weight: pointer(42),
 							},
 						},
 						Sticky: &dynamic.Sticky{
@@ -784,7 +783,7 @@ func Test_buildConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.TCPService{
 				"TCPService01": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
-						TerminationDelay: func(v int) *int { return &v }(42),
+						TerminationDelay: pointer(42),
 						Servers: []dynamic.TCPServer{
 							{Address: "foobar"},
 							{Address: "foobar"},
@@ -796,11 +795,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Services: []dynamic.TCPWRRService{
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(42),
+								Weight: pointer(42),
 							},
 							{
 								Name:   "foobar",
-								Weight: func(v int) *int { return &v }(43),
+								Weight: pointer(43),
 							},
 						},
 					},
