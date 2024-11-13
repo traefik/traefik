@@ -7,23 +7,19 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 ## Configuration Example
 
+You can enable the ZooKeeper provider as detailed below:
+
 ```yaml tab="File (YAML)"
 providers:
-  zooKeeper:
-    endpoints:
-      - "127.0.0.1:2181"
-    rootKey: "traefik"
+  zooKeeper: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.zooKeeper]
-  endpoints = ["127.0.0.1:2181"]
-  rootKey = "traefik"
 ```
 
 ```bash tab="CLI"
---providers.zookeeper.endpoints=127.0.0.1:2181
---providers.zookeeper.rootey=traefik
+--providers.zookeeper=true
 ```
 
 ## Configuration Options
