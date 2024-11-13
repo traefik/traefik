@@ -3,7 +3,7 @@ title: "Traefik EntryPoints Documentation"
 description: "For routing and load balancing in Traefik Proxy, EntryPoints define which port will receive packets and whether in UDP or TCP. Read the technical documentation."
 ---
 
-Opening Connections for Incoming Requests
+Listening for Incoming Connections/Requests
 {: .subtitle }
 
 ### Configuration Example

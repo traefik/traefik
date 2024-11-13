@@ -17,17 +17,15 @@ You can enable the Swarm provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  swarm:
-    endpoint: "tcp://127.0.0.1:2377"
+  swarm: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.swarm]
-  endpoint = "tcp://127.0.0.1:2377"
 ```
 
 ```bash tab="CLI"
---providers.swarm.endpoint=tcp://127.0.0.1:2377
+--providers.swarm=true
 ```
 
 Attach labels to a single service (not containers) while in Swarm mode (in your Docker compose file).
@@ -55,7 +53,7 @@ services:
 | `providers.swarm.useBindPortIP` | Instructs Traefik to use the IP/Port attached to the container's binding instead of its inner network IP/Port. See [here](#usebindportip) for more information |  false   | No   |
 | `providers.swarm.exposedByDefault` | Expose containers by default through Traefik. See [here](./overview.md#restrict-the-scope-of-service-discovery) for additional information |  true    | No   |
 | `providers.swarm.network` | Defines a default docker network to use for connections to all containers. This option can be overridden on a per-container basis with the `traefik.docker.network` label.|  ""    | No   |
-| `providers.swarm.defaultRule` | Defines what routing rule to apply to a container if no rule is defined by a label. See [here](#defaultrule) for more information |  `Host(`{{ normalize .Name }}`)`   | No   |
+| `providers.swarm.defaultRule` | Defines what routing rule to apply to a container if no rule is defined by a label. See [here](#defaultrule) for more information |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
 | `providers.swarm.refreshSeconds` | Defines the polling interval (in seconds) for Swarm Mode. |  `15`   | No   |
 | `providers.swarm.httpClientTimeout` | Defines the client timeout (in seconds) for HTTP connections. If its value is 0, no timeout is set. |  0   | No   |
 | `providers.swarm.watch` | Instructs Traefik to watch Docker events or not. |  True   | No   |
@@ -262,7 +260,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.docker.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.docker.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
 # ...
 ```
 
@@ -385,7 +383,7 @@ On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` 
 as an `extra_host` to the Traefik container, using the `--add-host` flag. For example, to set it to the IP address of
 the bridge interface (`docker0` by default): `--add-host=host.docker.internal:172.17.0.1`
 
-### IPv4 && IPv6
+### IPv4 & IPv6
 
 When using a docker stack that uses IPv6,
 Traefik will use the IPv4 container IP before its IPv6 counterpart.

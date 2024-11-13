@@ -7,22 +7,19 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 ## Configuration Example
 
-You can enable the Redis provider with an endpoint as detailed below:
+You can enable the Redis provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  redis:
-    endpoints:
-      - "127.0.0.1:6379"
+  redis: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.redis]
-  endpoints = ["127.0.0.1:6379"]
 ```
 
 ```bash tab="CLI"
---providers.redis.endpoints=127.0.0.1:6379
+--providers.redis.endpoints=true
 ```
 
 ## Configuration Options

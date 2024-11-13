@@ -16,8 +16,7 @@ Traefik is able to connect to the Workload API to obtain an x509-SVID used to se
 
 ## Configuration Example
 
-Enabling SPIFFE is part of the [static configuration](../../../../getting-started/configuration-overview.md#the-static-configuration).
-It can be defined by using a file (YAML or TOML) or CLI arguments.
+Enabling SPIFFE can be done by using a file (YAML or TOML) or CLI arguments.
 
 ```yaml tab="File (YAML)"
 # Default Servers Transport
@@ -70,7 +69,7 @@ spiffe:
 !!! info "Enabling SPIFFE in ServersTransports"
 
     Enabling SPIFFE does not imply that backend connections are going to use it automatically.
-    Each [ServersTransport](../../../../routing/services/index.md#serverstransport_1) or [TCPServersTransport](../../../../routing/services/index.md#serverstransport_2), that is meant to be secured with SPIFFE, must explicitly enable it (see [SPIFFE with ServersTransport](../../../../routing/services/index.md#spiffe) or [SPIFFE with TCPServersTransport](../../../../routing/services/index.md#spiffe_1)).
+    Each [ServersTransport](../../../routing/services/index.md#serverstransport_1) or [TCPServersTransport](../../../routing/services/index.md#serverstransport_2), that is meant to be secured with SPIFFE, must explicitly enable it (see [SPIFFE with ServersTransport](../../../routing/services/index.md#spiffe) or [SPIFFE with TCPServersTransport](../../../routing/services/index.md#spiffe_1)).
 
 !!! warning "SPIFFE can cause Traefik to stall"
     When using SPIFFE,

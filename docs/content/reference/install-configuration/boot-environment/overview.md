@@ -21,10 +21,11 @@ Traefik offers multiple methods to define static configuration.
 
 Here are the methods available for configuring the Traefik proxy:
 
-- File
-- CLI
-- Environment Variables
-- Helm
+- [File](#file)
+- [Configuration File](#configuration-file)
+- [CLI](#cli)
+- [Environment Variables](#environment-variables)
+- [Helm](#helm)
 
 ## File
 
@@ -67,6 +68,21 @@ log:
   level = "INFO"
 ```
 
+## Configuration File
+
+At startup, Traefik searches for static configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in the following directories:
+
+- `/etc/traefik/`
+- `$XDG_CONFIG_HOME/`
+- `$HOME/.config/`
+- `.` (the current working directory).
+
+You can override this behavior using the `configFile` argument like this:
+
+```bash
+traefik --configFile=foo/bar/myconfigfile.yml
+```
+
 ## CLI
 
 Using the CLI, you can pass static configuration directly as command-line arguments when starting Traefik. 
@@ -96,7 +112,7 @@ TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=":80" TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=":44
 
 When deploying Traefik Proxy using Helm in a Kubernetes cluster, the static configuration is defined in a `values.yaml` file. 
 
-You can find the official Traefik helm chart on [Github](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md)
+You can find the official Traefik Helm chart on [GitHub](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md)
 
 ### Configuration Example
 
