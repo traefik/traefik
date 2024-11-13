@@ -117,8 +117,8 @@ api:
 
 ## Disable the dashboard
 
-By default, when API is enabled, dashboard is enabled.
-If needed, the API can be enabled without the dashboard.
+By default, the Dashboard is enabled when the API is enabled.
+If necessary, the Dashboard can be disabled by using the following option.
 
 ```yaml tab="File (YAML)"
 api:
