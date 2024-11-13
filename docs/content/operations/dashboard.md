@@ -89,8 +89,17 @@ rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 
 ## Insecure Mode
 
-The dashboard is also enabled when API is in [insecure](./api.md#insecure) mode.
-This mode is not recommended and should be used for testing purpose only.
+When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
+at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
+
+This mode is **not** recommended because:
+
+1. Sensitive data is easily accessible on Traefik network
+2. Security features like adding an authentication middleware cannot be used with this mode
+
+It should be used for testing purpose **only**.
+
+To enable the _insecure_ mode, use the following options from [Traefik's API](./api.md#insecure):
 
 ```yaml tab="File (YAML)"
 api:
@@ -105,9 +114,6 @@ api:
 ```bash tab="CLI"
 --api.insecure=true
 ```
-
-When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
-at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
 
 ## Disable the dashboard
 
