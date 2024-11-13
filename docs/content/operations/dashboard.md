@@ -1,9 +1,9 @@
 ---
-title: "Traefik Dashboard Documentation"
+title: "Traefik dashboard documentation"
 description: "The dashboard shows you the current active routes handled by Traefik Proxy in one central place. Read the technical documentation to learn its operations."
 ---
 
-# The Dashboard
+# The dashboard
 
 See What's Going On
 {: .subtitle }
@@ -115,10 +115,10 @@ api:
 --api.insecure=true
 ```
 
-## Disable the Dashboard
+## Disable the dashboard
 
-By default, the Dashboard is enabled when the API is enabled.
-If necessary, the Dashboard can be disabled by using the following option.
+By default, the dashboard is enabled when the API is enabled.
+If necessary, the dashboard can be disabled by using the following option.
 
 ```yaml tab="File (YAML)"
 api:
