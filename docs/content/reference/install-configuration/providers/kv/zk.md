@@ -9,8 +9,6 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 You can enable the ZooKeeper provider as detailed below:
 
-You can enable the ZooKeeper provider as detailed below:
-
 ```yaml tab="File (YAML)"
 providers:
   zooKeeper: {}
