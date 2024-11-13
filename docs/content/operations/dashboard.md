@@ -33,9 +33,8 @@ There are 2 ways to configure and access the dashboard:
 
 This is the **recommended** method.
 
-When enabling [Traefik's API](./api.md)
-in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration),
-it also enables the dashboard.
+Start by enabling the dashboard by using the following option from [Traefik's API](./api.md)
+on the [static configuration](../getting-started/configuration-overview.md#the-static-configuration):
 
 ```yaml tab="File (YAML)"
 api: {}
@@ -112,7 +111,7 @@ at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is m
 
 ## Disable the dashboard
 
-By default, both API and dashboard are disabled.
+By default, when API is enabled, dashboard is enabled.
 If needed, the API can be enabled without the dashboard.
 
 ```yaml tab="File (YAML)"
