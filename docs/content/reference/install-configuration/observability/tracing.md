@@ -12,7 +12,7 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
 
-Please check our dedicated [OTel docs](./metrics/metrics.md#open-telemetry) to learn more.
+Please check our dedicated [OTel docs](./metrics.md#open-telemetry) to learn more.
 
 ## Configuration Example
 
@@ -28,6 +28,12 @@ tracing: {}
 
 ```bash tab="CLI"
 --tracing=true
+```
+
+```yaml tab="Helm Chart Values"
+  tracing:
+    otlp:
+        enabled: true
 ```
 
 ## Configuration Options

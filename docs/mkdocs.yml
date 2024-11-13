@@ -222,10 +222,10 @@ nav:
           - 'Certificate Resolvers':
             - "Overview" : 'reference/install-configuration/tls/certificate-resolvers/cert-resolvers.md'
             - "Let's Encrypt" : 'reference/install-configuration/tls/certificate-resolvers/lets-encrypt.md'
-            - "SPIFFE" : 'reference/install-configuration/tls/certificate-resolvers/spiffe.md'
             - "Tailscale" : 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
+          - "SPIFFE" : 'reference/install-configuration/tls/spiffe.md'
       - 'Observability':
-          - 'Metrics' : 'reference/install-configuration/observability/metrics/metrics.md'
+          - 'Metrics' : 'reference/install-configuration/observability/metrics.md'
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'

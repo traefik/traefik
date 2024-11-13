@@ -7,24 +7,20 @@ description: "Learn how to use Nomad as a provider for configuration discovery i
 
 ## Configuration Example
 
-You can enable the Nomad provider with an endpoint as detailed below:
+You can enable the Nomad provider with as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  nomad:
-    endpoint: 
-      address: http://127.0.0.1:4646
-  
+  nomad: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.nomad]
   [providers.nomad.endpoint]
-    address: http://127.0.0.1:4646
 ```
 
 ```bash tab="CLI"
---providers.nomad.endpoint.address=http://127.0.0.1:4646
+--providers.nomad.endpoint.address=true
 ```
 
 Attaching tags to services:
@@ -49,13 +45,12 @@ service {
 | `providers.nomad.refreshInterval` | Defines the polling interval. This option is ignored when the `watch` option is enabled |  15s     | No   |
 | `providers.nomad.watch` | Enables the watch mode to refresh the configuration on a per-event basis. |  false     | No   |
 | `providers.nomad.throttleDuration` | Defines how often the provider is allowed to handle service events from Nomad. This option is only compatible when the `watch` option is enabled |  0s     | No   |
-| `providers.nomad.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information |  `Host(`{{ normalize .Name }}`)`   | No   |
+| `providers.nomad.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
 | `providers.nomad.constraints` | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  |  ""   | No   |
 | `providers.nomad.exposedByDefault` | Expose Nomad services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#restrict-the-scope-of-service-discovery) for additional information |  true    | No   |
 | `providers.nomad.allowEmptyServices` |  Instructs the provider to create any [servers load balancer](../../../../routing/services/index.md#servers-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers. |  false   | No   |
 | `providers.nomad.prefix` | Defines the prefix for Nomad service tags defining Traefik labels. | `traefik`     | yes   |
 | `providers.nomad.stale` | Instructs Traefik to use stale consistency for Nomad service API reads. See [here](#stale) for more information | false   | No   |
-| `providers.nomad.endpoint` | Defines the endpoint of the Nomad server. | false   | Yes   |
 | `providers.nomad.endpoint.address` | Defines the Address of the Nomad server. | `http://127.0.0.1:4646`  | No   |
 | `providers.nomad.endpoint.token` | Defines a per-request ACL token if Nomad ACLs are enabled. See [here](#token) for more information | ""  | No   |
 | `providers.nomad.endpoint.endpointWaitTime` | Defines a duration for which a `watch` can block. If not provided, the agent default values will be used. | ""  | No   |

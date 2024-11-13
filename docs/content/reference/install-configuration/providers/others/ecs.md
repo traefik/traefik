@@ -7,21 +7,19 @@ description: "Configuration discovery in Traefik is achieved through Providers. 
 
 ## Configuration Example
 
-You can enable the ECS provider with a region as detailed below:
+You can enable the ECS provider with as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  ecs:
-    region: us-east-1
+  ecs: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.ecs]
-  region = "us-east-1"
 ```
 
 ```bash tab="CLI"
---providers.ecs.region="us-east-1"
+--providers.ec=true
 ```
 
 ## Configuration Options
@@ -35,7 +33,7 @@ providers:
 | `providers.ecs.exposedByDefault` | Expose ECS services by default in Traefik. | true  | No   |
 | `providers.ecs.constraints` |  Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  | true  | No   |
 | `providers.ecs.healthyTasksOnly` |  Defines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).  | false  | No   |
-| `providers.ecs.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information. |  `Host(`{{ normalize .Name }}`)`   | No   |
+| `providers.ecs.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```  | No   |
 | `providers.ecs.refreshSeconds` | Defines the polling interval (in seconds).   | 15   | No |
 | `providers.ecs.region` | Defines the region of the ECS instance. See [here](#credentials) for more information.  | ""   | No |
 | `providers.ecs.accessKeyID` | Defines the Access Key ID for the ECS instance. See [here](#credentials) for more information.  | ""   | No |

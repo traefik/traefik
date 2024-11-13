@@ -7,23 +7,19 @@ description: "Use Consul as a provider for configuration discovery in Traefik Pr
 
 ## Configuration Example
 
-You can enable the Consul provider with specific namespaces as detailed below:
+You can enable the Consul provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  consul:
-    namespaces: 
-      - "ns1"
-      - "ns2"
+  consul: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.consul]
-  namespaces = ["ns1", "ns2"]
 ```
 
 ```bash tab="CLI"
---providers.consul.namespaces=ns1,ns2
+--providers.consul.namespaces=true
 ```
 
 Attaching tags to services

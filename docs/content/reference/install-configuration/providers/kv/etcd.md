@@ -7,22 +7,19 @@ description: "Use etcd as a provider for configuration discovery in Traefik Prox
 
 ## Configuration Example
 
-You can enable the etcd provider with an endpoint as detailed below:
+You can enable the etcd provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  etcd:
-    endpoints:
-      - "127.0.0.1:2379"
+  etcd: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.etcd]
-  endpoints = ["127.0.0.1:2379"]
 ```
 
 ```bash tab="CLI"
---providers.etcd.endpoints=127.0.0.1:2379
+--providers.etcd.endpoints=true
 ```
 
 ## Configuration Options 

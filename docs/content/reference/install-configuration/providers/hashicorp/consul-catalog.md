@@ -7,13 +7,11 @@ description: "Learn how to use Consul Catalog as a provider for configuration di
 
 ## Configuration Example
 
-You can enable the Consul Catalog provider with an endpoint as detailed below:
+You can enable the Consul Catalog provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  consulCatalog:
-    endpoint: 
-      address: "127.0.0.1:8500"
+  consulCatalog: {}
 ```
 
 ```toml tab="File (TOML)"
@@ -34,11 +32,12 @@ Attaching tags to services
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
+| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
 | `providers.consulCatalog.refreshInterval` | Defines the polling interval.|  15s    | No   |
 | `providers.consulCatalog.prefix` | Defines the prefix for Consul Catalog tags defining Traefik labels.|  traefik    | yes   |
 | `providers.consulCatalog.requireConsistent` | Forces the read to be fully consistent. See [here](#requireconsistent) for more information.|  false    | yes   |
 | `providers.consulCatalog.exposedByDefault` | Expose Consul Catalog services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#restrict-the-scope-of-service-discovery)| true | no |
-| `providers.consulCatalog.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information |  `Host(`{{ normalize .Name }}`)`   | No   |
+| `providers.consulCatalog.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
 | `providers.consulCatalog.connectAware` | Enable Consul Connect support. If set to `true`, Traefik will be enabled to communicate with Connect services.   | false   | No |
 | `providers.consulCatalog.connectByDefault` | Consider every service as Connect capable by default. If set to true, Traefik will consider every Consul Catalog service to be Connect capable by default. The option can be overridden on an instance basis with the traefik.consulcatalog.connect tag. | false   | No |
 | `providers.consulCatalog.serviceName` | Defines the name of the Traefik service in Consul Catalog. | "traefik"   | No |
