@@ -30,7 +30,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		assets = webui.FS
 	}
 
-	// allow iframes from our domains only
+	// allow iframes from traefik domains only
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
 
@@ -103,7 +103,7 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 	router.Methods(http.MethodGet).
 		PathPrefix(dashboardPath).
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// allow iframes from our domains only
+			// allow iframes from traefik domains only
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
 
