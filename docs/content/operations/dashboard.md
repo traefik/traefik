@@ -1,6 +1,6 @@
 ---
 title: "Traefik Dashboard Documentation"
-description: "The dashboard shows you the current active routes handled by Traefik Proxy in one central place. Read the technical documentation to learn its operations."
+description: "The Dashboard shows you the current active routes handled by Traefik Proxy in one central place. Read the technical documentation to learn its operations."
 ---
 
 # The Dashboard
@@ -8,18 +8,18 @@ description: "The dashboard shows you the current active routes handled by Traef
 See What's Going On
 {: .subtitle }
 
-The dashboard is the central place that shows you the current active routes handled by Traefik.
+The Dashboard is the central place that shows you the current active routes handled by Traefik.
 
 <figure>
     <img src="../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
-    <figcaption>The dashboard in action</figcaption>
+    <figcaption>The Dashboard in action</figcaption>
 </figure>
 
-The dashboard is available at the same location as the [API](./api.md) but on the path `/dashboard/` by default.
+The Dashboard is available at the same location as the [API](./api.md) but on the path `/dashboard/` by default.
 
 !!! warning "The trailing slash `/` in `/dashboard/` is mandatory"
 
-There are 2 ways to configure and access the dashboard:
+There are 2 ways to configure and access the Dashboard:
 
 - [Secure mode (Recommended)](#secure-mode)
 - [Insecure mode](#insecure-mode)
@@ -33,36 +33,19 @@ There are 2 ways to configure and access the dashboard:
 
 This is the **recommended** method.
 
-Start by enabling the dashboard by using the following option from [Traefik's API](./api.md)
+Start by enabling the Dashboard by using the following option from [Traefik's API](./api.md)
 on the [static configuration](../getting-started/configuration-overview.md#the-static-configuration):
 
 ```yaml tab="File (YAML)"
-api:
-  # Dashboard
-  #
-  # Optional
-  # Default: true
-  #
-  dashboard: true
+api: {}
 ```
 
 ```toml tab="File (TOML)"
 [api]
-  # Dashboard
-  #
-  # Optional
-  # Default: true
-  #
-  dashboard = true
 ```
 
 ```bash tab="CLI"
-# Dashboard
-#
-# Optional
-# Default: true
-#
---api.dashboard=true
+--api=true
 ```
 
 Then define a routing configuration on Traefik itself,
@@ -74,7 +57,7 @@ to allow defining:
   like authentication ([basicAuth](../middlewares/http/basicauth.md), [digestAuth](../middlewares/http/digestauth.md),
   [forwardAuth](../middlewares/http/forwardauth.md)) or [whitelisting](../middlewares/http/ipwhitelist.md).
 
-- A [router rule](#dashboard-router-rule) for accessing the dashboard,
+- A [router rule](#dashboard-router-rule) for accessing the Dashboard,
   through Traefik itself (sometimes referred to as "Traefik-ception").
 
 ### Dashboard Router Rule
@@ -87,17 +70,17 @@ We recommend using a "Host Based rule" as ```Host(`traefik.example.com`)``` to m
 or to make sure that the defined rule captures both prefixes:
 
 ```bash tab="Host Rule"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
+# The Dashboard can be accessed on http://traefik.example.com/dashboard/
 rule = "Host(`traefik.example.com`)"
 ```
 
 ```bash tab="Path Prefix Rule"
-# The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
+# The Dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
 rule = "PathPrefix(`/api`, `/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
+# The Dashboard can be accessed on http://traefik.example.com/dashboard/
 rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 ```
 
@@ -106,27 +89,49 @@ rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 
 ## Insecure Mode
 
-This mode is not recommended because it does not allow the use of security features.
+When _insecure_ mode is enabled, one can access the Dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
+at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
 
-To enable the "insecure mode", use the following options from [Traefik's API](./api.md#insecure):
+This mode is **not** recommended because:
+
+1. Sensitive data is easily accessible on Traefik network
+2. Security features like adding an authentication middleware cannot be used with this mode
+
+It should be used for testing purpose **only**.
+
+To enable the _insecure_ mode, use the following options from [Traefik's API](./api.md#insecure):
 
 ```yaml tab="File (YAML)"
 api:
-  dashboard: true
   insecure: true
 ```
 
 ```toml tab="File (TOML)"
 [api]
-  dashboard = true
   insecure = true
 ```
 
 ```bash tab="CLI"
---api.dashboard=true --api.insecure=true
+--api.insecure=true
 ```
 
-You can now access the dashboard on the port `8080` of the Traefik instance,
-at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
+## Disable the Dashboard
+
+By default, the Dashboard is enabled when the API is enabled.
+If necessary, the Dashboard can be disabled by using the following option.
+
+```yaml tab="File (YAML)"
+api:
+  dashboard: false
+```
+
+```toml tab="File (TOML)"
+[api]
+  dashboard = false
+```
+
+```bash tab="CLI"
+--api.dashboard=false
+```
 
 {!traefik-for-business-applications.md!}
