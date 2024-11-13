@@ -115,7 +115,7 @@ api:
 --api.insecure=true
 ```
 
-## Disable the dashboard
+## Disable the Dashboard
 
 By default, the Dashboard is enabled when the API is enabled.
 If necessary, the Dashboard can be disabled by using the following option.
