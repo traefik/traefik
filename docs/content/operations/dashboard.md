@@ -1,9 +1,9 @@
 ---
-title: "Traefik dashboard documentation"
+title: "Traefik Dashboard Documentation"
 description: "The dashboard shows you the current active routes handled by Traefik Proxy in one central place. Read the technical documentation to learn its operations."
 ---
 
-# The dashboard
+# The Dashboard
 
 See What's Going On
 {: .subtitle }
@@ -92,10 +92,7 @@ rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
 at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
 
-This mode is **not** recommended because:
-
-1. Sensitive data is easily accessible on Traefik network
-2. Security features like adding an authentication middleware cannot be used with this mode
+This mode is **not** recommended because it does not allow security features. For example, it is not possible to add an authentication middleware with this mode.
 
 It should be used for testing purpose **only**.
 
@@ -115,7 +112,7 @@ api:
 --api.insecure=true
 ```
 
-## Disable the dashboard
+## Disable The Dashboard
 
 By default, the dashboard is enabled when the API is enabled.
 If necessary, the dashboard can be disabled by using the following option.
