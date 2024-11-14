@@ -92,7 +92,8 @@ rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
 at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
 
-This mode is **not** recommended because it does not allow security features. For example, it is not possible to add an authentication middleware with this mode.
+This mode is **not** recommended because it does not allow security features.
+For example, it is not possible to add an authentication middleware with this mode.
 
 It should be used for testing purpose **only**.
 
