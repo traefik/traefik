@@ -70,7 +70,7 @@ And then define a routing configuration on Traefik itself with the
 
 ### `insecure`
 
-Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`.
+Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`, on path `/api`.
 
 !!! info
     If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
