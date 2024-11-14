@@ -78,12 +78,12 @@ func init() {
 						Interval:        ptypes.Duration(111 * time.Second),
 						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
-						FollowRedirects: boolPtr(true),
+						FollowRedirects: pointer(true),
 						Headers: map[string]string{
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: boolPtr(true),
+					PassHostHeader: pointer(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
 						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
@@ -100,7 +100,7 @@ func init() {
 					Services: []dynamic.WRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 					Sticky: &dynamic.Sticky{
@@ -116,7 +116,7 @@ func init() {
 			"baz": {
 				Mirroring: &dynamic.Mirroring{
 					Service:     "foo",
-					MaxBodySize: int64Ptr(42),
+					MaxBodySize: pointer[int64](42),
 					Mirrors: []dynamic.MirrorService{
 						{
 							Name:    "foo",
@@ -380,7 +380,7 @@ func init() {
 					Services: []dynamic.TCPWRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 				},
@@ -427,7 +427,7 @@ func init() {
 					Services: []dynamic.UDPWRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 				},
@@ -484,7 +484,7 @@ func TestAnonymize_dynamicConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
 func TestSecure_dynamicConfiguration(t *testing.T) {
@@ -501,7 +501,7 @@ func TestSecure_dynamicConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
 func TestDo_staticConfiguration(t *testing.T) {
@@ -950,17 +950,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
-func boolPtr(value bool) *bool {
-	return &value
-}
-
-func intPtr(value int) *int {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
-}
+func pointer[T any](v T) *T { return &v }

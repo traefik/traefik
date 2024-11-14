@@ -13,8 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-func Bool(v bool) *bool       { return &v }
-func String(v string) *string { return &v }
+func pointer[T any](v T) *T { return &v }
 
 func TestDecodeConfiguration(t *testing.T) {
 	labels := map[string]string{
@@ -283,7 +282,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 42},
 						ServersTransport: "foo",
 					},
@@ -295,7 +294,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
 						ServersTransport: "foo",
 					},
@@ -485,7 +484,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						ForceSlash: Bool(true),
+						ForceSlash: pointer(true),
 					},
 				},
 				"Middleware18": {
@@ -561,7 +560,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
-							CAOptional:         Bool(true),
+							CAOptional:         pointer(true),
 						},
 						TrustForwardHeader: true,
 						AuthResponseHeaders: []string{
@@ -615,14 +614,14 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						SSLRedirect:          Bool(true),
-						SSLTemporaryRedirect: Bool(true),
-						SSLHost:              String("foobar"),
+						SSLRedirect:          pointer(true),
+						SSLTemporaryRedirect: pointer(true),
+						SSLHost:              pointer("foobar"),
 						SSLProxyHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
 						},
-						SSLForceHost:                    Bool(true),
+						SSLForceHost:                    pointer(true),
 						STSSeconds:                      42,
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
@@ -636,7 +635,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						ContentSecurityPolicyReportOnly: "foobar",
 						PublicKey:                       "foobar",
 						ReferrerPolicy:                  "foobar",
-						FeaturePolicy:                   String("foobar"),
+						FeaturePolicy:                   pointer("foobar"),
 						PermissionsPolicy:               "foobar",
 						IsDevelopment:                   true,
 					},
@@ -696,9 +695,9 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: func(v bool) *bool { return &v }(true),
+							FollowRedirects: pointer(true),
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -727,9 +726,9 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: func(v bool) *bool { return &v }(true),
+							FollowRedirects: pointer(true),
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -810,7 +809,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						ServersTransport: "foo",
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 					},
 				},
 				"Service1": {
@@ -821,7 +820,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						ServersTransport: "foo",
-						TerminationDelay: func(i int) *int { return &i }(42),
+						TerminationDelay: pointer(42),
 					},
 				},
 			},
@@ -1008,7 +1007,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						ForceSlash: Bool(true),
+						ForceSlash: pointer(true),
 					},
 				},
 				"Middleware18": {
@@ -1092,7 +1091,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
-							CAOptional:         Bool(true),
+							CAOptional:         pointer(true),
 						},
 						TrustForwardHeader: true,
 						AuthResponseHeaders: []string{
@@ -1146,14 +1145,14 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						SSLRedirect:          Bool(true),
-						SSLTemporaryRedirect: Bool(true),
-						SSLHost:              String("foobar"),
+						SSLRedirect:          pointer(true),
+						SSLTemporaryRedirect: pointer(true),
+						SSLHost:              pointer("foobar"),
 						SSLProxyHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
 						},
-						SSLForceHost:                    Bool(true),
+						SSLForceHost:                    pointer(true),
 						STSSeconds:                      42,
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
@@ -1167,7 +1166,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						ContentSecurityPolicyReportOnly: "foobar",
 						PublicKey:                       "foobar",
 						ReferrerPolicy:                  "foobar",
-						FeaturePolicy:                   String("foobar"),
+						FeaturePolicy:                   pointer("foobar"),
 						PermissionsPolicy:               "foobar",
 						IsDevelopment:                   true,
 					},
@@ -1218,7 +1217,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -1247,7 +1246,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: func(v bool) *bool { return &v }(true),
+						PassHostHeader: pointer(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},

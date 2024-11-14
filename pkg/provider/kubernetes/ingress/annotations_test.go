@@ -126,8 +126,8 @@ func Test_parseServiceConfig(t *testing.T) {
 					},
 					ServersScheme:    "protocol",
 					ServersTransport: "foobar@file",
-					PassHostHeader:   Bool(true),
-					NativeLB:         Bool(true),
+					PassHostHeader:   pointer(true),
+					NativeLB:         pointer(true),
 				},
 			},
 		},
@@ -139,7 +139,7 @@ func Test_parseServiceConfig(t *testing.T) {
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
 					Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
-					PassHostHeader: Bool(true),
+					PassHostHeader: pointer(true),
 				},
 			},
 		},
