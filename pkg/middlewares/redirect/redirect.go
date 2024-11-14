@@ -97,7 +97,7 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if m.permanent {
 		status = http.StatusMovedPermanently
-		if req.Method != http.MethodGet {
+		if req.Method != http.MethodGet && req.Method != http.MethodHead  {
 			status = http.StatusPermanentRedirect
 		}
 	}
