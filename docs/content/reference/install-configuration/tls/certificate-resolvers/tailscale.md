@@ -164,3 +164,7 @@ a Tailscale certificate resolver needs to be configured as below.
 
     Defining a certificate resolver does not imply that routers are going to use it automatically.
     Each router or entrypoint that is meant to use the resolver must explicitly [reference](./cert-resolvers.md#acme-certificates) it.
+
+### Tailscale Certificates Renewal
+
+Traefik automatically tracks the expiry date of each Tailscale certificate it fetches and starts to renew a certificate 14 days before its expiry to match the Tailscale daemon renewal policy.
