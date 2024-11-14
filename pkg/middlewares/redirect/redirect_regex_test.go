@@ -151,6 +151,30 @@ func TestRedirectRegexHandler(t *testing.T) {
 			expectedURL:    "https://foo",
 			expectedStatus: http.StatusPermanentRedirect,
 		},
+		{
+			desc: "HTTP to HTTP HEAD",
+			config: dynamic.RedirectRegex{
+				Regex:       `^http://`,
+				Replacement: "https://$1",
+				Permanent:   true,
+			},
+			url:            "http://foo",
+			method:         http.MethodHead,
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "HTTP to HTTP HEAD permanent",
+			config: dynamic.RedirectRegex{
+				Regex:       `^http://`,
+				Replacement: "https://$1",
+				Permanent:   true,
+			},
+			url:            "http://foo",
+			method:         http.MethodHead,
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusMovedPermanently,
+		},
 	}
 
 	for _, test := range testCases {
