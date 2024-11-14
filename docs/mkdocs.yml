@@ -218,10 +218,10 @@ nav:
       - 'EntryPoints': 'reference/install-configuration/entrypoints.md'
       - 'API & Dashboard': 'reference/install-configuration/api-dashboard.md'
       - 'TLS':
-          - 'Introduction': 'reference/install-configuration/tls/overview.md' 
+          - 'Overview': 'reference/install-configuration/tls/overview.md' 
           - 'Certificate Resolvers':
-            - "Overview" : 'reference/install-configuration/tls/certificate-resolvers/cert-resolvers.md'
-            - "Let's Encrypt" : 'reference/install-configuration/tls/certificate-resolvers/lets-encrypt.md'
+            - "Overview" : 'reference/install-configuration/tls/certificate-resolvers/overview.md'
+            - "ACME" : 'reference/install-configuration/tls/certificate-resolvers/acme.md'
             - "Tailscale" : 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
           - "SPIFFE" : 'reference/install-configuration/tls/spiffe.md'
       - 'Observability':

@@ -129,4 +129,8 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 - The usage of [secret](https://kubernetes.io/docs/concepts/configuration/secret/) for sensitive data (TLS certificates and credentials).
 - The structure of the configuration.
 
+## Full Example
+
+For additional information, refer to the [full example](../../../../user-guides/crd-acme/index.md) with Let's Encrypt.
+
 {!traefik-for-business-applications.md!}
