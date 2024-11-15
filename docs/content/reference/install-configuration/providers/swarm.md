@@ -89,13 +89,13 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "unix:///var/run/docker.sock"
          # ...
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
       endpoint = "unix:///var/run/docker.sock"
       # ...
     ```
@@ -113,19 +113,19 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "ssh://traefik@192.168.2.5:2022"
          # ...
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
       endpoint = "ssh://traefik@192.168.2.5:2022"
       # ...
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint=ssh://traefik@192.168.2.5:2022
+    --providers.swarm.endpoint=ssh://traefik@192.168.2.5:2022
     # ...
     ```
 
@@ -135,19 +135,19 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "http://127.0.0.1:2375"
          # ...
     ```
 
     ```toml tab="Static Configuration (TOML)"
-    [providers.docker]
+    [providers.swarm]
       endpoint = "http://127.0.0.1:2375"
       # ...
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint=http://127.0.0.1:2375
+    --providers.swarm.endpoint=http://127.0.0.1:2375
     # ...
     ```
 
@@ -157,35 +157,35 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "tcp://127.0.0.1:2375"
          # ...
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
       endpoint = "tcp://127.0.0.1:2375"
       # ...
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    --providers.swarm.endpoint=tcp://127.0.0.1:2375
     # ...
     ```
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     endpoint: "unix:///var/run/docker.sock"
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   endpoint = "unix:///var/run/docker.sock"
 ```
 
 ```bash tab="CLI"
---providers.docker.endpoint=unix:///var/run/docker.sock
+--providers.swarm.endpoint=unix:///var/run/docker.sock
 ```
 
 ### `useBindPortIP`
@@ -220,19 +220,19 @@ but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that 
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     useBindPortIP: true
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   useBindPortIP = true
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.useBindPortIP=true
+--providers.swarm.useBindPortIP=true
 # ...
 ```
 
@@ -248,19 +248,19 @@ The template has access to all the labels defined on this container with the `La
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.swarm.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
@@ -316,19 +316,19 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     constraints: "Label(`a.label.name`,`foo`)"
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   constraints = "Label(`a.label.name`,`foo`)"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.constraints=Label(`a.label.name`,`foo`)
+--providers.swarm.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
 

@@ -10,35 +10,20 @@ The dashboard is the central place that shows you the current active routes hand
     <figcaption>The dashboard in action</figcaption>
 </figure>
 
-## Configuration Options
-
-The API and the dashboard can be configured:
-
-- In the Helm Chart: You can find the options to customize the Traefik installation
-enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L155).
-- In the Traefik Static Configuration as described below.
-
-| Field      | Description  | Default | Required |
-|:-----------|:---------------------------------|:--------|:---------|
-| `api` | Enable api/dashboard. If the option `api.dashboard` is set to true, this option is by default set to `true` too and should not be explicitly set to `false`. | false     | No      |
-| `api.dashboard` | Enable dashboard | false      | No      |
-| `api.debug` | Enable additional endpoints for debugging and profiling. | false      | No      |
-| `api.disabledashboardad` | Disable the advertisement from the dashboard. | false      | No      |
-| `api.insecure` | Enable the API and the dashboard on the entryPoint named traefik.| false      | No      |
-
 ## Configuration Example
 
 Enable the dashboard:
 
-```yaml
-ingressRoute:
-  dashboard:
-    # Enable the dashboard
-    enabled: true
-    # Expose the dashboard on the outside
-    entryPoints: ["websecure"]
-    # Attach the Basic Authentication middleware
-    middlewares: ["dashboard-auth"]
+```yaml tab="File(YAML)"
+api: {}
+```
+
+```toml tab="File(TOML)"
+api: {}
+```
+
+```cli tab="File(TOML)"
+--api=true
 ```
 
 Expose the dashboard:
@@ -127,6 +112,22 @@ http:
   ]
 ```
 
+## Configuration Options
+
+The API and the dashboard can be configured:
+
+- In the Helm Chart: You can find the options to customize the Traefik installation
+enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L155).
+- In the Traefik Static Configuration as described below.
+
+| Field      | Description  | Default | Required |
+|:-----------|:---------------------------------|:--------|:---------|
+| `api` | Enable api/dashboard. If the option `api.dashboard` is set to true, this option is by default set to `true` too and should not be explicitly set to `false`. | false     | No      |
+| `api.dashboard` | Enable dashboard. | false      | No      |
+| `api.debug` | Enable additional endpoints for debugging and profiling. | false      | No      |
+| `api.disabledashboardad` | Disable the advertisement from the dashboard. | false      | No      |
+| `api.insecure` | Enable the API and the dashboard on the entryPoint named traefik.| false      | No      |
+
 ## Endpoints
 
 All the following endpoints must be accessed with a `GET` HTTP request.
@@ -161,28 +162,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/debug/pprof/symbol`          | See the [pprof Symbol](https://golang.org/pkg/net/http/pprof/#Symbol) Go documentation.     |
 | `/debug/pprof/trace`           | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.       |
 
-## Dashboard Router Rule
-
-The [router rule](../../routing/routers/index.md#rule) defined for Traefik must match the path prefixes `/api` and `/dashboard`.
-
-We recommend using a *Host Based rule* to match everything on the host domain, or to make sure that the defined rule captures both prefixes:
-
-```bash tab="Host Rule"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`)"
-```
-
-```bash tab="Path Prefix Rule"
-# The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
-rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
-```
-
-```bash tab="Combination of Rules"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-```
-
-## More Information
+## Dashboard
 
 The dashboard is available at the same location as the [API](../../operations/api.md) but on the path `/dashboard/` by default.
 
@@ -202,5 +182,26 @@ Then define a routing configuration on Traefik itself, with a router attached to
   [forwardAuth](../../middlewares/http/forwardauth.md)) or [allowlisting](../../middlewares/http/ipallowlist.md).
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard, through Traefik itself (sometimes referred to as "Traefik-ception").
+
+### Dashboard Router Rule
+
+The [router rule](../../routing/routers/index.md#rule) defined for Traefik must match the path prefixes `/api` and `/dashboard`.
+
+We recommend using a *Host Based rule* to match everything on the host domain, or to make sure that the defined rule captures both prefixes:
+
+```bash tab="Host Rule"
+# The dashboard can be accessed on http://traefik.example.com/dashboard/
+rule = "Host(`traefik.example.com`)"
+```
+
+```bash tab="Path Prefix Rule"
+# The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
+rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+```
+
+```bash tab="Combination of Rules"
+# The dashboard can be accessed on http://traefik.example.com/dashboard/
+rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+```
 
 {!traefik-for-business-applications.md!}

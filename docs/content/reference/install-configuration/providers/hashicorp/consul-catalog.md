@@ -80,6 +80,23 @@ and the template has access to all the labels (i.e. tags beginning with the `pre
 
 The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
 
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
+
 ??? info "Default rule and Traefik service"
 
     The exposure of the Traefik container, combined with the default rule mechanism,
