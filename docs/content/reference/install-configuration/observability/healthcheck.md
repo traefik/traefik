@@ -31,7 +31,7 @@ OK: http://:8082/ping
 
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 
-The `entryPoint` where the `/ping` is active can be customized with the `entryPoint` option,
+The entryPoint where the `/ping` is active can be customized with the `entryPoint` option,
 whose default value is `traefik` (port `8080`).
 
 | Path    | Method        | Description                                                                                         |
@@ -59,8 +59,8 @@ ping: {}
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | `ping.entryPoint` | Enables `/ping` on a dedicated EntryPoint. | traefik  | No   |
-| `ping.manualRouting` | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true` | false | No   |
-| `ping.terminatingStatusCode` | Defines the status code form the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
+| `ping.manualRouting` | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true`. | false | No   |
+| `ping.terminatingStatusCode` | Defines the status code for the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
 
 ### `terminatingStatusCode`
 

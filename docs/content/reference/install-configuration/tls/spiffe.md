@@ -30,7 +30,8 @@ spiffe:
     workloadAPIAddr: localhost
 ```
 
-```yaml tab="Override the default Servers Transport"
+```yaml tab="ServerTransport"
+# Override the default Servers Transport on the Services that reference it.
 apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
