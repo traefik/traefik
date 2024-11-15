@@ -53,23 +53,29 @@ type Manager struct {
 	transportManager httputil.TransportManager
 	proxyBuilder     ProxyBuilder
 
-	services       map[string]http.Handler
-	configs        map[string]*runtime.ServiceInfo
-	healthCheckers map[string]*healthcheck.ServiceHealthChecker
-	rand           *rand.Rand // For the initial shuffling of load-balancers.
+	services                map[string]http.Handler
+	configs                 map[string]*runtime.ServiceInfo
+	healthCheckers          map[string]*healthcheck.ServiceHealthChecker
+	rand                    *rand.Rand // For the initial shuffling of load-balancers.
+	externalServiceBuilders []serviceBuilder
+}
+
+type serviceBuilder interface {
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder, externalServiceBuilders ...serviceBuilder) *Manager {
 	return &Manager{
-		routinePool:      routinePool,
-		observabilityMgr: observabilityMgr,
-		transportManager: transportManager,
-		proxyBuilder:     proxyBuilder,
-		services:         make(map[string]http.Handler),
-		configs:          configs,
-		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
-		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
+		routinePool:             routinePool,
+		observabilityMgr:        observabilityMgr,
+		transportManager:        transportManager,
+		proxyBuilder:            proxyBuilder,
+		services:                make(map[string]http.Handler),
+		configs:                 configs,
+		healthCheckers:          make(map[string]*healthcheck.ServiceHealthChecker),
+		rand:                    rand.New(rand.NewSource(time.Now().UnixNano())),
+		externalServiceBuilders: externalServiceBuilders,
 	}
 }
 
@@ -83,6 +89,19 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	handler, ok := m.services[serviceName]
 	if ok {
 		return handler, nil
+	}
+
+	// Must before we get configs to handle services without config
+	for _, builder := range m.externalServiceBuilders {
+		handler, err := builder.BuildHTTP(rootCtx, serviceName)
+		if err != nil {
+			return nil, err
+		}
+		if handler != nil {
+			m.services[serviceName] = handler
+
+			return handler, nil
+		}
 	}
 
 	conf, ok := m.configs[serviceName]
