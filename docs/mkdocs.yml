@@ -193,7 +193,7 @@ nav:
       - 'Maintainers': 'contributing/maintainers.md'
   - 'Reference':
     - 'Install Configuration':
-      - 'Boot Environment': 'reference/install-configuration/boot-environment/overview.md'
+      - 'Boot Environment': 'reference/install-configuration/boot-environment.md'
       - 'Configuration Discovery':
         - 'Overview' : 'reference/install-configuration/providers/overview.md'
         - 'Kubernetes':
@@ -218,7 +218,6 @@ nav:
       - 'EntryPoints': 'reference/install-configuration/entrypoints.md'
       - 'API & Dashboard': 'reference/install-configuration/api-dashboard.md'
       - 'TLS':
-          - 'Overview': 'reference/install-configuration/tls/overview.md' 
           - 'Certificate Resolvers':
             - "Overview" : 'reference/install-configuration/tls/certificate-resolvers/overview.md'
             - "ACME" : 'reference/install-configuration/tls/certificate-resolvers/acme.md'
