@@ -14,11 +14,11 @@ The section below describe how to configure Traefik logs using the static config
 | Field      | Description  | Default | Required |
 |:-----------|:----------------------------|:--------|:---------|
 | `log.filePath` | By default, the logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
-| `log.format` | Log format (`common`or `json`).<br /> The fields displayed with the format `common` cannot be customized. | `common` | No      |
-| `log.level` | Log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, and `PANIC`)| `ERROR` | No      |
+| `log.format` | Log format (`common`or `json`).<br /> The fields displayed with the format `common` cannot be customized. | common | No      |
+| `log.level` | Log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, and `PANIC`)| ERROR | No      |
 | `log.noColor` | When using the format `common`, disables the colorized output. | false      | No      |
 | `log.maxSize` | Maximum size in megabytes of the log file before it gets rotated. | 100MB      | No      |
-| `log.maxAge` | Maximum number of days to retain old log files based on the timestamp encoded in their filename.<br /> A day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc.<br />By default files are not remove based on their age.  |      | Yes      |
+| `log.maxAge` | Maximum number of days to retain old log files based on the timestamp encoded in their filename.<br /> A day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc.<br />By default files are not removed based on their age.  |      | No      |
 | `log.maxBackups` | Maximum number of old log files to retain.<br />The default is to retain all old log files. |       | No      |
 | `log.compress` | Compress log files in gzip after rotation | false | No      |
 
@@ -60,15 +60,15 @@ The section below describes how to configure Traefik access logs using the stati
 | Field      | Description    | Default | Required |
 |:-----------|:--------------------------|:--------|:---------|
 | `accesslog.filePath` | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
-| `accesslog.format` | By default, logs are written using the Common Log Format (CLF).<br />To write logs in JSON, use `json` in the `format` option.<br />If the given format is unsupported, the default (CLF) is used instead.<br />More information about CLF fields [here](#clf-format-fields) | `common` | No      |
+| `accesslog.format` | By default, logs are written using the Common Log Format (CLF).<br />To write logs in JSON, use `json` in the `format` option.<br />If the given format is unsupported, the default (CLF) is used instead.<br />More information about CLF fields [here](#clf-format-fields). | common | No      |
 | `accesslog.bufferingSize` | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| | No      |
 | `accesslog.addInternals` | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
 | `accesslog.filters.statusCodes` | Limit the access logs to requests with a status codes in the specified range. | false      | No      |
 | `accesslog.filters.retryAttempts` | Keep the access logs when at least one retry has happened. | false      | No      |
 | `accesslog.filters.minDuration` | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration))  |      | No      |
-| `accesslog.fields.defaultMode` | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | `keep` | No      |
+| `accesslog.fields.defaultMode` | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | keep | No      |
 | `accesslog.fields.names` | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#available-fields) |      | No      |
-| `accesslog.headers.defaultMode` | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | `drop` | No      |
+| `accesslog.headers.defaultMode` | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
 | `accesslog.headers.names` | Set the headers list to display in the access logs (format `name:mode`) |      | No      |
 
 ### CLF format fields
@@ -92,7 +92,7 @@ Below the fields displayed with the CLF format:
 | `RouterName`  | The name of the Traefik  router.                                                                                                                                    |
 | `ServiceName`    | The name of the Traefik backend.          |
 | `ServiceURL`   | The URL of the Traefik backend.       |
-| `ServiceAddr`    | The IP:port of the Traefik backend (extracted from `ServiceURL`) |
+| `ServiceAddr`    | The IP:port of the Traefik backend (extracted from `ServiceURL`). |
 | `ClientAddr`    | The remote address in its original form (usually IP:port).     |
 | `ClientHost`   | The remote IP address from which the client request was received.     |
 | `ClientPort`            | The remote TCP port from which the client request was received.   |

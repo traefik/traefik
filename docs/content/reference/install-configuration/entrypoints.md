@@ -47,8 +47,8 @@ additionalArguments:
 
 !!! tip 
 
-      In the Helm Chart, the `entryPoints` `web` (port 80), `websecure` (port 443), `traefik` (port 9000) and `metrics` (port 9100) are created by default.
-      The `entryPoints` `web`, `websecure` are exposed by default using a Service.
+      In the Helm Chart, the entryPoints `web` (port 80), `websecure` (port 443), `traefik` (port 9000) and `metrics` (port 9100) are created by default.
+      The entryPoints `web`, `websecure` are exposed by default using a Service.
 
       The default behaviors can be overridden in the Helm Chart.
 
@@ -63,18 +63,18 @@ additionalArguments:
 | `forwardedHeaders.trustedIPs` | Set the IP from where Traefik trusts the forwarded headers information (`X-Forwarded-*`). | | No |
 | `forwardedHeaders.insecure` | Set the insecure mode to always trust the forwarded headers information (`X-Forwarded-*`).<br />We recommend to use this option only for tests purposes, not in production. | false | No |
 | `http.redirections.`<br />`entryPoint.to` | The target element to enable (permanent) redirecting of all incoming requests on an entry point to another one. <br /> The target element, it can be an entry point name (ex: `websecure`), or a port (`:443`). | - | Yes |
-| `http.redirections.`<br />`entryPoint.scheme` | The target scheme to enable (permanent) redirecting of all incoming requests on an entry point to another one changing the scheme. <br /> The target element, it can be an entry point name (ex: `websecure`), or a port (`:443`). | "https" | No |
+| `http.redirections.`<br />`entryPoint.scheme` | The target scheme to enable (permanent) redirecting of all incoming requests on an entry point to another one changing the scheme. <br /> The target element, it can be an entry point name (ex: `websecure`), or a port (`:443`). | https | No |
 | `http.redirections.`<br />`entryPoint.permanent` | Enable permanent redirecting of all incoming requests on an entry point to another one changing the scheme. <br /> The target element, it can be an entry point name (ex: `websecure`), or a port (`:443`). | false | No |
 | `http.redirections.`<br />`entryPoint.priority` | Default priority applied to the routers attached to the `entryPoint`. | MaxInt32-1 (2147483646) | No |
-| `http.encodeQuerySemicolons` | Enable query semicolons encoding <br /> Use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Traefik. <br /> When using this option, the non-encoded semicolons characters in query will be transmitted encoded to the backend.<br /> More information [here](#httpencodequerysemicolons). | false | No |
-| `http.middlewares` | Set the list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.<br />More information [here](#httpmiddlewares) | | No |
+| `http.encodeQuerySemicolons` | Enable query semicolons encoding <br /> Use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Traefik. <br /> When using this option, the non-encoded semicolons characters in query will be transmitted encoded to the backend.<br /> More information [here](#encodequerysemicolons). | false | No |
+| `http.middlewares` | Set the list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point. <br />More information [here](#httpmiddlewares). | | No |
 | `http.tls` | Enable TLS on every router attached to the `entryPoint`. <br /> If no certificate are set, a default self-signed certificate is generates by Traefik. <br /> We recommend to not use self signed certificates in production. | - | No |
-| `http.tls.options` | Apply TLS options on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../../routing/providers/kubernetes-crd.md#kind-tlsoption) | - | No |
-| `http.tls.certResolver` | Apply a certificate resolver on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../install-configuration/tls/certificate-resolvers/overview.md) | - | No |
+| `http.tls.options` | Apply TLS options on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../../routing/providers/kubernetes-crd.md#kind-tlsoption). | - | No |
+| `http.tls.certResolver` | Apply a certificate resolver on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../install-configuration/tls/certificate-resolvers/overview.md). | - | No |
 | `http2.maxConcurrentStreams` | Set the number of concurrent streams per connection that each client is allowed to initiate. <br /> The value must be greater than zero. | 250 | No |
-| `http3` | Enable HTTP/3 protocol on the `entryPoint`. <br /> HTTP/3 requires a TCP `entryPoint`. as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP. In most scenarios, this `entryPoint` is the same as the one used for TLS traffic.<br /> More information [here](#http3--udptls). | - | No |
+| `http3` | Enable HTTP/3 protocol on the `entryPoint`. <br /> HTTP/3 requires a TCP `entryPoint`. as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP. In most scenarios, this `entryPoint` is the same as the one used for TLS traffic.<br /> More information [here](#http3. | - | No |
 | `http3.advertisedPort` | Set the UDP port to advertise as the HTTP/3 authority. <br /> It defaults to the entryPoint's address port. <br /> It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Traefik is listening. | - | No |
-| `proxyProtocol.trustedIPs` | Enable PROXY protocol with Trusted IPs. <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br /> More information [here](#proxyprotocol-and-load-balancers).| 0s (seconds) | No |
+| `proxyProtocol.trustedIPs` | Enable PROXY protocol with Trusted IPs. <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br /> More information [here](#proxyprotocol-and-load-balancers).|  | No |
 | `proxyProtocol.insecure` | Enable PROXY protocol trusting every incoming connection. <br /> Every remote client address will be replaced (`trustedIPs`) won't have any effect). <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br />We recommend to use this option only for tests purposes, not in production.<br /> More information [here](#proxyprotocol-and-load-balancers). | 0s (seconds) | No |
 | `reusePort` | Enable `entryPoints` from the same or different processes listening on the same TCP/UDP port by utilizing the `SO_REUSEPORT` socket option. <br /> It also allows the kernel to act like a load balancer to distribute incoming connections between entry points..<br /> More information [here](#reuseport). | false | No |
 | `transport.`<br />`respondingTimeouts.`<br />`readTimeout` | Set the timeouts for incoming requests to the Traefik instance. This is the maximum duration for reading the entire request, including the body. Setting them has no effect for UDP `entryPoints`.<br /> If zero, no timeout exists. <br />Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).<br />If no units are provided, the value is parsed assuming seconds. | 60s (seconds) | No |
@@ -155,7 +155,7 @@ traefik.ingress.kubernetes.io/router.middlewares: auth@file,default-prefix@kuber
     The entryPoints web, websecure are exposed by default using a Service.
     The default behaviors can be overriddenin the Helm Chart
 
-### http.encodeQuerySemicolons
+### encodeQuerySemicolons
 
 Behavior examples:
 
@@ -166,7 +166,7 @@ Behavior examples:
 | false                 | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
 | true                  | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
 
-### HTTP3 = UDP+TLS
+### HTTP3
 
 As HTTP/3 actually uses UDP, when Traefik is configured with a TCP `entryPoint`
 on port N with HTTP/3 enabled, the underlying HTTP/3 server that is started 

@@ -68,7 +68,7 @@ log:
   level = "INFO"
 ```
 
-## Configuration File
+### Configuration File
 
 At startup, Traefik searches for static configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in the following directories:
 
@@ -94,13 +94,13 @@ traefik \
   --entryPoints.web.address=":80" \
   --entryPoints.websecure.address=":443" \
   --providers.docker \
-  --api.dashboard=true \
+  --api.dashboard \
   --log.level=INFO
 ```
 
 ## Environment Variables
 
-You can also set the static configuration using environment variables. Each option corresponds to an environment variable prefixed with `TRAEFIK_.`
+You can also set the static configuration using environment variables. Each option corresponds to an environment variable prefixed with `TRAEFIK_`.
 
 ### Configuration Example
 
