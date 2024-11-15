@@ -247,7 +247,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "ssh://traefik@192.168.2.5:2022"
          # ...
     ```
@@ -503,7 +503,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.swarm.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.swarm.defaultRule='Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)'
 # ...
 ```
 
