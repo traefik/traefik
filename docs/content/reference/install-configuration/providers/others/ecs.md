@@ -5,174 +5,41 @@ description: "Configuration discovery in Traefik is achieved through Providers. 
 
 # Traefik & AWS ECS
 
-A Story of Labels & Elastic Containers
-{: .subtitle }
+## Configuration Example
 
-Attach labels to your ECS containers and let Traefik do the rest!
-
-## Configuration Examples
-
-??? example "Configuring ECS provider"
-
-    Enabling the ECS provider:
-
-    ```yaml tab="File (YAML)"
-    providers:
-      ecs: {}
-    ```
-
-    ```toml tab="File (TOML)"
-    [providers.ecs]
-    ```
-
-    ```bash tab="CLI"
-    --providers.ecs=true
-    ```
-
-## Policy
-
-Traefik needs the following policy to read ECS information:
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "TraefikECSReadAccess",
-            "Effect": "Allow",
-            "Action": [
-                "ecs:ListClusters",
-                "ecs:DescribeClusters",
-                "ecs:ListTasks",
-                "ecs:DescribeTasks",
-                "ecs:DescribeContainerInstances",
-                "ecs:DescribeTaskDefinition",
-                "ec2:DescribeInstances",
-                "ssm:DescribeInstanceInformation"
-            ],
-            "Resource": [
-                "*"
-            ]
-        }
-    ]
-}
-```
-
-!!! info "ECS Anywhere"
-
-    Please note that the `ssm:DescribeInstanceInformation` action is required for ECS anywhere instances discovery.
-
-## Provider Configuration
-
-### `autoDiscoverClusters`
-
-_Optional, Default=false_
-
-Search for services in cluster list.
-
-- If set to `true` service discovery is enabled for all clusters.
-- If set to `false` service discovery is enabled on configured clusters only.
+You can enable the ECS provider with as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  ecs:
-    autoDiscoverClusters: true
-    # ...
+  ecs: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.ecs]
-  autoDiscoverClusters = true
-  # ...
 ```
 
 ```bash tab="CLI"
---providers.ecs.autoDiscoverClusters=true
-# ...
+--providers.ec=true
 ```
 
-### `ecsAnywhere`
+## Configuration Options
 
-_Optional, Default=false_
-
-Enable ECS Anywhere support.
-
-- If set to `true` service discovery is enabled for ECS Anywhere instances.
-- If set to `false` service discovery is disabled for ECS Anywhere instances.
-
-```yaml tab="File (YAML)"
-providers:
-  ecs:
-    ecsAnywhere: true
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.ecs]
-  ecsAnywhere = true
-  # ...
-```
-
-```bash tab="CLI"
---providers.ecs.ecsAnywhere=true
-# ...
-```
-
-### `clusters`
-
-_Optional, Default=["default"]_
-
-Search for services in cluster list.
-This option is ignored if `autoDiscoverClusters` is set to `true`.
-
-```yaml tab="File (YAML)"
-providers:
-  ecs:
-    clusters:
-      - default
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.ecs]
-  clusters = ["default"]
-  # ...
-```
-
-```bash tab="CLI"
---providers.ecs.clusters=default
-# ...
-```
-
-### `exposedByDefault`
-
-_Optional, Default=true_
-
-Expose ECS services by default in Traefik.
-
-If set to `false`, services that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
-
-```yaml tab="File (YAML)"
-providers:
-  ecs:
-    exposedByDefault: false
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.ecs]
-  exposedByDefault = false
-  # ...
-```
-
-```bash tab="CLI"
---providers.ecs.exposedByDefault=false
-# ...
-```
+| Field | Description                                               | Default              | Required |
+|:------|:----------------------------------------------------------|:---------------------|:---------|
+| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
+| `providers.ecs.autoDiscoverClusters` | Search for services in cluster list. If set to `true` service discovery is enabled for all clusters. |  false  | No   |
+| `providers.ecs.ecsAnywhere` | Enable ECS Anywhere support. |  false    | No   |
+| `providers.ecs.clusters` | Search for services in cluster list. This option is ignored if `autoDiscoverClusters` is set to `true`. |  `["default"]`  | No   |
+| `providers.ecs.exposedByDefault` | Expose ECS services by default in Traefik. | true  | No   |
+| `providers.ecs.constraints` |  Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  | true  | No   |
+| `providers.ecs.healthyTasksOnly` |  Defines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).  | false  | No   |
+| `providers.ecs.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```  | No   |
+| `providers.ecs.refreshSeconds` | Defines the polling interval (in seconds).   | 15   | No |
+| `providers.ecs.region` | Defines the region of the ECS instance. See [here](#credentials) for more information.  | ""   | No |
+| `providers.ecs.accessKeyID` | Defines the Access Key ID for the ECS instance. See [here](#credentials) for more information.  | ""   | No |
+| `providers.ecs.secretAccessKey` | Defines the Secret Access Key for the ECS instance. See [here](#credentials) for more information.  | ""   | No |
 
 ### `constraints`
-
-_Optional, Default=""_
 
 The `constraints` option can be set to an expression that Traefik matches against the container labels (task),
 to determine whether to create any route for that container. 
@@ -214,8 +81,6 @@ as well as the usual boolean logic, as shown in examples below.
     constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
-
 ```yaml tab="File (YAML)"
 providers:
   ecs:
@@ -230,37 +95,13 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.ecs.constraints=Label(`a.label.name`,`foo`)
+--providers.ecs.constraints="Label(`a.label.name`,`foo`)"
 # ...
 ```
 
-### `healthyTasksOnly`
-
-_Optional, Default=false_
-
-Determines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).
-
-```yaml tab="File (YAML)"
-providers:
-  ecs:
-    healthyTasksOnly: true
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.ecs]
-  healthyTasksOnly = true
-  # ...
-```
-
-```bash tab="CLI"
---providers.ecs.healthyTasksOnly=true
-# ...
-```
+For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#restrict-the-scope-of-service-discovery).
 
 ### `defaultRule`
-
-_Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
@@ -283,7 +124,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.ecs.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.ecs.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
@@ -294,33 +135,9 @@ providers:
     In this case, to prevent an infinite loop,
     Traefik adds an internal middleware to refuse the request if it comes from the same router.
 
-### `refreshSeconds`
-
-_Optional, Default=15_
-
-Polling interval (in seconds).
-
-```yaml tab="File (YAML)"
-providers:
-  ecs:
-    refreshSeconds: 15
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.ecs]
-  refreshSeconds = 15
-  # ...
-```
-
-```bash tab="CLI"
---providers.ecs.refreshSeconds=15
-# ...
-```
-
 ### Credentials
 
-_Optional_
+This defines the credentials for the ECS instance
 
 If `region` is not provided, it is resolved from the EC2 metadata endpoint for EC2 tasks.
 In a FARGATE context it is resolved from the `AWS_REGION` environment variable.
@@ -353,3 +170,36 @@ providers:
 --providers.ecs.secretAccessKey="123"
 # ...
 ```
+
+## Policy
+
+Traefik needs the following policy to read ECS information:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "TraefikECSReadAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:ListClusters",
+                "ecs:DescribeClusters",
+                "ecs:ListTasks",
+                "ecs:DescribeTasks",
+                "ecs:DescribeContainerInstances",
+                "ecs:DescribeTaskDefinition",
+                "ec2:DescribeInstances",
+                "ssm:DescribeInstanceInformation"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+```
+
+!!! info "ECS Anywhere"
+
+    Please note that the `ssm:DescribeInstanceInformation` action is required for ECS anywhere instances discovery.
