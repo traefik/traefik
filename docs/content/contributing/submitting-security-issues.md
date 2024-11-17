@@ -8,7 +8,7 @@ description: "Security is a key part of Traefik Proxy. Read the technical docume
 ## Security Advisories
 
 We strongly advise you to join our mailing list to be aware of the latest announcements from our security team.
-You can subscribe sending a mail to security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
+You can subscribe by sending an email to security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
 
 ## CVE
 
