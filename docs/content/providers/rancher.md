@@ -121,7 +121,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.rancher.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.rancher.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
