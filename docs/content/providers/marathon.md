@@ -138,7 +138,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.marathon.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
