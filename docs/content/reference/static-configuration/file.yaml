@@ -418,6 +418,32 @@ log:
   maxAge: 42
   maxBackups: 42
   compress: true
+  otlp:
+    serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 accessLog:
   filePath: foobar
   format: foobar
@@ -439,9 +465,35 @@ accessLog:
         name1: foobar
   bufferingSize: 42
   addInternals: true
+  otlp:
+    serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 tracing:
   serviceName: foobar
-  globalAttributes:
+  resourceAttributes:
     name0: foobar
     name1: foobar
   capturedRequestHeaders:
@@ -477,6 +529,9 @@ tracing:
       headers:
         name0: foobar
         name1: foobar
+  globalAttributes:
+    name0: foobar
+    name1: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
