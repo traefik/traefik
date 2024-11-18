@@ -525,7 +525,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.consulcatalog.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
