@@ -636,6 +636,12 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	}
 
+	if withH2c {
+		handler = h2c.NewHandler(handler, &http2.Server{
+			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
+		})
+	}
+
 	serverHTTP := &http.Server{
 		Handler:        handler,
 		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),

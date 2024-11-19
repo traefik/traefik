@@ -79,6 +79,20 @@ If the given format is unsupported, the default (CLF) is used instead.
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <HTTP_status> <content-length> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
     ```
 
+```yaml tab="File (YAML)"
+accessLog:
+  format: "json"
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  format = "json"
+```
+
+```bash tab="CLI"
+--accesslog.format=json
+```
+
 ### `bufferingSize`
 
 To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.
