@@ -46,6 +46,11 @@ type ProxyBuilder interface {
 	Update(configs map[string]*dynamic.ServersTransport)
 }
 
+// ServiceBuilder is a Service builder.
+type ServiceBuilder interface {
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
+}
+
 // Manager The service manager.
 type Manager struct {
 	routinePool      *safe.Pool
@@ -53,14 +58,15 @@ type Manager struct {
 	transportManager httputil.TransportManager
 	proxyBuilder     ProxyBuilder
 
-	services       map[string]http.Handler
-	configs        map[string]*runtime.ServiceInfo
-	healthCheckers map[string]*healthcheck.ServiceHealthChecker
-	rand           *rand.Rand // For the initial shuffling of load-balancers.
+	services        map[string]http.Handler
+	configs         map[string]*runtime.ServiceInfo
+	healthCheckers  map[string]*healthcheck.ServiceHealthChecker
+	rand            *rand.Rand // For the initial shuffling of load-balancers.
+	serviceBuilders []ServiceBuilder
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder, serviceBuilders ...ServiceBuilder) *Manager {
 	return &Manager{
 		routinePool:      routinePool,
 		observabilityMgr: observabilityMgr,
@@ -70,6 +76,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middl
 		configs:          configs,
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
+		serviceBuilders:  serviceBuilders,
 	}
 }
 
@@ -83,6 +90,19 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	handler, ok := m.services[serviceName]
 	if ok {
 		return handler, nil
+	}
+
+	// Must be before we get configs to handle services without config.
+	for _, builder := range m.serviceBuilders {
+		handler, err := builder.BuildHTTP(rootCtx, serviceName)
+		if err != nil {
+			return nil, err
+		}
+		if handler != nil {
+			m.services[serviceName] = handler
+
+			return handler, nil
+		}
 	}
 
 	conf, ok := m.configs[serviceName]
