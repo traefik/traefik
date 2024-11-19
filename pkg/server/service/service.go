@@ -86,7 +86,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	serviceName = provider.GetQualifiedName(ctx, serviceName)
 	ctx = provider.AddInContext(ctx, serviceName)
 
-	// Must before we get configs to handle services without config
+	// Must be before we get configs to handle services without config.
 	for _, builder := range m.serviceBuilders {
 		handler, err := builder.BuildHTTP(rootCtx, serviceName)
 		if err != nil {
