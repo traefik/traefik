@@ -21,8 +21,7 @@ Traefik offers multiple methods to define static configuration.
 
 Here are the methods available for configuring the Traefik proxy:
 
-- [File](#file)
-- [Configuration File](#configuration-file)
+- [File](#file) 
 - [CLI](#cli)
 - [Environment Variables](#environment-variables)
 - [Helm](#helm)
@@ -125,8 +124,6 @@ ports:
 
 additionalArguments:
   - "--providers.kubernetescrd"
-  - "--entryPoints.web.address=:80"
-  - "--entryPoints.websecure.address=:443"
   - "--api.dashboard=true"
   - "--log.level=INFO"
 ```

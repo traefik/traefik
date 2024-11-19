@@ -19,10 +19,10 @@ api: {}
 ```
 
 ```toml tab="File(TOML)"
-api: {}
+[api]
 ```
 
-```cli tab="File(TOML)"
+```cli tab="CLI"
 --api=true
 ```
 
@@ -122,7 +122,7 @@ enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/
 
 | Field      | Description  | Default | Required |
 |:-----------|:---------------------------------|:--------|:---------|
-| `api` | Enable api/dashboard. If the option `api.dashboard` is set to true, this option is by default set to `true` too and should not be explicitly set to `false`. | false     | No      |
+| `api` | Enable api/dashboard. If the option `api.dashboard` is set to true, this option is by default set to `true` too.| false     | No      |
 | `api.dashboard` | Enable dashboard. | false      | No      |
 | `api.debug` | Enable additional endpoints for debugging and profiling. | false      | No      |
 | `api.disabledashboardad` | Disable the advertisement from the dashboard. | false      | No      |
