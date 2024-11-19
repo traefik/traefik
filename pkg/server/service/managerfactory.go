@@ -76,7 +76,7 @@ func (f *ManagerFactory) Build(configuration *runtime.Configuration) *Manager {
 	if f.api != nil {
 		apiHandler = f.api(configuration)
 	}
-	internalHandlers := NewInternalHandlers(apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
 
+	internalHandlers := NewInternalHandlers(apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
 	return NewManager(configuration.Services, f.metricsRegistry, f.routinesPool, f.roundTripperManager, internalHandlers)
 }

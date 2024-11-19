@@ -34,17 +34,22 @@ import (
 const (
 	defaultHealthCheckInterval = 30 * time.Second
 	defaultHealthCheckTimeout  = 5 * time.Second
-)
 
-const defaultMaxBodySize int64 = -1
+	defaultMaxBodySize int64 = -1
+)
 
 // RoundTripperGetter is a roundtripper getter interface.
 type RoundTripperGetter interface {
 	Get(name string) (http.RoundTripper, error)
 }
 
+// ServiceBuilder is a Service builder.
+type ServiceBuilder interface {
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
+}
+
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter, serviceBuilders ...serviceBuilder) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter, serviceBuilders ...ServiceBuilder) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
@@ -70,11 +75,7 @@ type Manager struct {
 	balancers       map[string]healthcheck.Balancers
 	configs         map[string]*runtime.ServiceInfo
 	rand            *rand.Rand // For the initial shuffling of load-balancers.
-	serviceBuilders []serviceBuilder
-}
-
-type serviceBuilder interface {
-	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
+	serviceBuilders []ServiceBuilder
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
