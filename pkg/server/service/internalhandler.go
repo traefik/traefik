@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-type serviceManager interface {
-	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
-	LaunchHealthCheck(ctx context.Context)
-}
-
 // InternalHandlers is the internal HTTP handlers builder.
 type InternalHandlers struct {
 	api        http.Handler
@@ -21,26 +16,24 @@ type InternalHandlers struct {
 	prometheus http.Handler
 	ping       http.Handler
 	acmeHTTP   http.Handler
-	serviceManager
 }
 
 // NewInternalHandlers creates a new InternalHandlers.
-func NewInternalHandlers(next serviceManager, apiHandler, rest, metricsHandler, pingHandler, dashboard, acmeHTTP http.Handler) *InternalHandlers {
+func NewInternalHandlers(apiHandler, rest, metricsHandler, pingHandler, dashboard, acmeHTTP http.Handler) *InternalHandlers {
 	return &InternalHandlers{
-		api:            apiHandler,
-		dashboard:      dashboard,
-		rest:           rest,
-		prometheus:     metricsHandler,
-		ping:           pingHandler,
-		acmeHTTP:       acmeHTTP,
-		serviceManager: next,
+		api:        apiHandler,
+		dashboard:  dashboard,
+		rest:       rest,
+		prometheus: metricsHandler,
+		ping:       pingHandler,
+		acmeHTTP:   acmeHTTP,
 	}
 }
 
 // BuildHTTP builds an HTTP handler.
 func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error) {
 	if !strings.HasSuffix(serviceName, "@internal") {
-		return m.serviceManager.BuildHTTP(rootCtx, serviceName)
+		return nil, nil
 	}
 
 	internalHandler, err := m.get(serviceName)

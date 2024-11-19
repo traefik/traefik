@@ -503,7 +503,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.swarm.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.swarm.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
