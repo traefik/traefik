@@ -18,9 +18,9 @@ import (
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
 
-type MockForwarder struct{}
+type mockForwarder struct{}
 
-func (MockForwarder) ServeHTTP(http.ResponseWriter, *http.Request) {
+func (mockForwarder) ServeHTTP(http.ResponseWriter, *http.Request) {
 	panic("implement me")
 }
 
@@ -44,14 +44,14 @@ func TestGetLoadBalancer(t *testing.T) {
 					},
 				},
 			},
-			fwd:         &MockForwarder{},
+			fwd:         &mockForwarder{},
 			expectError: true,
 		},
 		{
 			desc:        "Succeeds when there are no servers",
 			serviceName: "test",
 			service:     &dynamic.ServersLoadBalancer{},
-			fwd:         &MockForwarder{},
+			fwd:         &mockForwarder{},
 			expectError: false,
 		},
 		{
@@ -60,7 +60,7 @@ func TestGetLoadBalancer(t *testing.T) {
 			service: &dynamic.ServersLoadBalancer{
 				Sticky: &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 			},
-			fwd:         &MockForwarder{},
+			fwd:         &mockForwarder{},
 			expectError: false,
 		},
 	}
@@ -476,18 +476,18 @@ func Test1xxResponses(t *testing.T) {
 	}
 }
 
-type ExternalServiceBuilderFunc func(rootCtx context.Context, serviceName string) (http.Handler, error)
+type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
 
-func (b ExternalServiceBuilderFunc) BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error) {
-	return b(rootCtx, serviceName)
+func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
+	return s(ctx, serviceName)
 }
 
-type InternalHandler struct{}
+type internalHandler struct{}
 
-func (h InternalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
-func TestManager_ExternalServiceBuilders(t *testing.T) {
-	internalHandler := InternalHandler{}
+func TestManager_ServiceBuilders(t *testing.T) {
+	var internalHandler internalHandler
 
 	manager := NewManager(map[string]*runtime.ServiceInfo{
 		"test@test": {
@@ -499,7 +499,7 @@ func TestManager_ExternalServiceBuilders(t *testing.T) {
 		roundTrippers: map[string]http.RoundTripper{
 			"default@internal": http.DefaultTransport,
 		},
-	}, ExternalServiceBuilderFunc(func(rootCtx context.Context, serviceName string) (http.Handler, error) {
+	}, serviceBuilderFunc(func(rootCtx context.Context, serviceName string) (http.Handler, error) {
 		if strings.HasSuffix(serviceName, "@internal") {
 			return internalHandler, nil
 		}
