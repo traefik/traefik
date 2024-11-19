@@ -55,10 +55,10 @@ func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		roundTripperManager: roundTripperManager,
+		serviceBuilders:     serviceBuilders,
 		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
 		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
-		serviceBuilders:     serviceBuilders,
 	}
 }
 
@@ -68,14 +68,15 @@ type Manager struct {
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	roundTripperManager RoundTripperGetter
+	serviceBuilders     []ServiceBuilder
+
 	// balancers is the map of all Balancers, keyed by service name.
 	// There is one Balancer per service handler, and there is one service handler per reference to a service
 	// (e.g. if 2 routers refer to the same service name, 2 service handlers are created),
 	// which is why there is not just one Balancer per service name.
-	balancers       map[string]healthcheck.Balancers
-	configs         map[string]*runtime.ServiceInfo
-	rand            *rand.Rand // For the initial shuffling of load-balancers.
-	serviceBuilders []ServiceBuilder
+	balancers map[string]healthcheck.Balancers
+	configs   map[string]*runtime.ServiceInfo
+	rand      *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
