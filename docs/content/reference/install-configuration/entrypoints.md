@@ -1,6 +1,6 @@
 ---
 title: "Traefik EntryPoints Documentation"
-description: "For routing and load balancing in Traefik Proxy, EntryPoints define which port will receive packets and whether in UDP or TCP. Read the technical documentation."
+description: "For routing and load balancing in Traefik Proxy, EntryPoints define which port will receive packets and whether they are TCP or UDP. Read the technical documentation."
 ---
 
 Listening for Incoming Connections/Requests
