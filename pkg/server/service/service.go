@@ -34,22 +34,28 @@ import (
 const (
 	defaultHealthCheckInterval = 30 * time.Second
 	defaultHealthCheckTimeout  = 5 * time.Second
-)
 
-const defaultMaxBodySize int64 = -1
+	defaultMaxBodySize int64 = -1
+)
 
 // RoundTripperGetter is a roundtripper getter interface.
 type RoundTripperGetter interface {
 	Get(name string) (http.RoundTripper, error)
 }
 
+// ServiceBuilder is a Service builder.
+type ServiceBuilder interface {
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
+}
+
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter, serviceBuilders ...ServiceBuilder) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		roundTripperManager: roundTripperManager,
+		serviceBuilders:     serviceBuilders,
 		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
 		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -62,6 +68,8 @@ type Manager struct {
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	roundTripperManager RoundTripperGetter
+	serviceBuilders     []ServiceBuilder
+
 	// balancers is the map of all Balancers, keyed by service name.
 	// There is one Balancer per service handler, and there is one service handler per reference to a service
 	// (e.g. if 2 routers refer to the same service name, 2 service handlers are created),
@@ -77,6 +85,17 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 
 	serviceName = provider.GetQualifiedName(ctx, serviceName)
 	ctx = provider.AddInContext(ctx, serviceName)
+
+	// Must be before we get configs to handle services without config.
+	for _, builder := range m.serviceBuilders {
+		handler, err := builder.BuildHTTP(rootCtx, serviceName)
+		if err != nil {
+			return nil, err
+		}
+		if handler != nil {
+			return handler, nil
+		}
+	}
 
 	conf, ok := m.configs[serviceName]
 	if !ok {
