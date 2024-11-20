@@ -32,6 +32,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		allowEmptyServices           bool
 		disableIngressClassLookup    bool
 		disableClusterScopeResources bool
+		defaultRuleSyntax            string
 	}{
 		{
 			desc: "Empty ingresses",
@@ -1097,6 +1098,38 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc:              "Ingress with wildcard host syntax v2",
+			defaultRuleSyntax: "v2",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-foobar-com-bar": {
+							Rule:    "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.foobar.com`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Scheme: "",
+										Port:   "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Ingress with multiple ingressClasses",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1505,6 +1538,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				AllowEmptyServices:           test.allowEmptyServices,
 				DisableIngressClassLookup:    test.disableIngressClassLookup,
 				DisableClusterScopeResources: test.disableClusterScopeResources,
+				DefaultRuleSyntax:            test.defaultRuleSyntax,
 			}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
