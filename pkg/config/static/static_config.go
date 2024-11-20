@@ -297,6 +297,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
+	// Defines the default rule syntax for the Kubernetes Ingress Provider.
+	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
+	if c.Core != nil && c.Providers.KubernetesIngress != nil {
+		c.Providers.KubernetesIngress.DefaultRuleSyntax = c.Core.DefaultRuleSyntax
+	}
+
 	c.initACMEProvider()
 }
 
