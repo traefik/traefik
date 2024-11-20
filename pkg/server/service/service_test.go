@@ -450,6 +450,48 @@ func Test1xxResponses(t *testing.T) {
 	}
 }
 
+type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
+
+func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
+	return s(ctx, serviceName)
+}
+
+type internalHandler struct{}
+
+func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+
+func TestManager_ServiceBuilders(t *testing.T) {
+	var internalHandler internalHandler
+
+	manager := NewManager(map[string]*runtime.ServiceInfo{
+		"test@test": {
+			Service: &dynamic.Service{
+				LoadBalancer: &dynamic.ServersLoadBalancer{},
+			},
+		},
+	}, nil, nil, &RoundTripperManager{
+		roundTrippers: map[string]http.RoundTripper{
+			"default@internal": http.DefaultTransport,
+		},
+	}, serviceBuilderFunc(func(rootCtx context.Context, serviceName string) (http.Handler, error) {
+		if strings.HasSuffix(serviceName, "@internal") {
+			return internalHandler, nil
+		}
+		return nil, nil
+	}))
+
+	h, err := manager.BuildHTTP(context.Background(), "test@internal")
+	require.NoError(t, err)
+	assert.Equal(t, internalHandler, h)
+
+	h, err = manager.BuildHTTP(context.Background(), "test@test")
+	require.NoError(t, err)
+	assert.NotNil(t, h)
+
+	_, err = manager.BuildHTTP(context.Background(), "wrong@test")
+	assert.Error(t, err)
+}
+
 func TestManager_Build(t *testing.T) {
 	testCases := []struct {
 		desc         string
