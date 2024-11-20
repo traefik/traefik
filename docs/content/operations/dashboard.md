@@ -37,32 +37,15 @@ Start by enabling the dashboard by using the following option from [Traefik's AP
 on the [static configuration](../getting-started/configuration-overview.md#the-static-configuration):
 
 ```yaml tab="File (YAML)"
-api:
-  # Dashboard
-  #
-  # Optional
-  # Default: true
-  #
-  dashboard: true
+api: {}
 ```
 
 ```toml tab="File (TOML)"
 [api]
-  # Dashboard
-  #
-  # Optional
-  # Default: true
-  #
-  dashboard = true
 ```
 
 ```bash tab="CLI"
-# Dashboard
-#
-# Optional
-# Default: true
-#
---api.dashboard=true
+--api=true
 ```
 
 Then define a routing configuration on Traefik itself,
@@ -106,27 +89,47 @@ rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashb
 
 ## Insecure Mode
 
-This mode is not recommended because it does not allow the use of security features.
+When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
+at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
 
-To enable the "insecure mode", use the following options from [Traefik's API](./api.md#insecure):
+This mode is **not** recommended because it does not allow security features.
+For example, it is not possible to add an authentication middleware with this mode.
+
+It should be used for testing purpose **only**.
+
+To enable the _insecure_ mode, use the following options from [Traefik's API](./api.md#insecure):
 
 ```yaml tab="File (YAML)"
 api:
-  dashboard: true
   insecure: true
 ```
 
 ```toml tab="File (TOML)"
 [api]
-  dashboard = true
   insecure = true
 ```
 
 ```bash tab="CLI"
---api.dashboard=true --api.insecure=true
+--api.insecure=true
 ```
 
-You can now access the dashboard on the port `8080` of the Traefik instance,
-at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
+## Disable The Dashboard
+
+By default, the dashboard is enabled when the API is enabled.
+If necessary, the dashboard can be disabled by using the following option.
+
+```yaml tab="File (YAML)"
+api:
+  dashboard: false
+```
+
+```toml tab="File (TOML)"
+[api]
+  dashboard = false
+```
+
+```bash tab="CLI"
+--api.dashboard=false
+```
 
 {!traefik-for-business-applications.md!}
