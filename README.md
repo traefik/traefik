@@ -62,7 +62,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)  (wildcard certificates support)
 - Circuit breakers, retry
 - See the magic through its clean web UI
-- Websocket, HTTP/2, gRPC ready
+- WebSocket, HTTP/2, gRPC ready
 - Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
 - Keeps access logs (JSON, CLF)
 - Fast
