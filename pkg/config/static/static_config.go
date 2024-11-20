@@ -299,7 +299,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	// Defines the default rule syntax for the Kubernetes Ingress Provider.
 	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
-	if c.Providers.KubernetesIngress != nil {
+	if c.Core != nil && c.Providers.KubernetesIngress != nil {
 		c.Providers.KubernetesIngress.DefaultRuleSyntax = c.Core.DefaultRuleSyntax
 	}
 
