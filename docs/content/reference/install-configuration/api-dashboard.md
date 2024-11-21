@@ -52,7 +52,40 @@ spec:
     secret: secretName # Kubernetes secret named "secretName"
 ```
 
-```yaml tab="Docker & Swarm"
+```yaml tab="Helm Chart Values (values.yaml)"
+# Create an IngressRoute for the dashboard
+ingressRoute:
+  dashboard:
+    enabled: true
+    # Custom match rule with host domain
+    matchRule: Host(`traefik-dashboard.example.com`)
+    entryPoints: ["websecure"]
+    # Add custom middlewares : authentication and redirection
+    middlewares:
+      - name: traefik-dashboard-auth
+
+# Create the custom middlewares used by the IngressRoute dashboard (can also be created in another way).
+# /!\ Yes, you need to replace "changeme" password with a better one. /!\
+extraObjects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: traefik-dashboard-auth-secret
+    type: kubernetes.io/basic-auth
+    stringData:
+      username: admin
+      password: changeme
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: traefik-dashboard-auth
+    spec:
+      basicAuth:
+        secret: traefik-dashboard-auth-secret
+```
+
+```yaml tab="Docker"
 # Dynamic Configuration
 labels:
   - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
@@ -61,7 +94,7 @@ labels:
   - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-```yaml tab="Docker (Swarm)"
+```yaml tab="Swarm"
 # Dynamic Configuration
 deploy:
   labels:
