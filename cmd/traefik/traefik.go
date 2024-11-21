@@ -189,11 +189,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
+	acmeProviders := initACMEProvider(staticConfiguration, providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
 
 	// Tailscale
 
-	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
+	tsProviders := initTailscaleProviders(staticConfiguration, providerAggregator)
 
 	// Observability
 

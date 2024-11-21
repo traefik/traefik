@@ -92,7 +92,7 @@ For development purposes, you can specify which tests to run by using (only work
 
     Create `tailscale.secret` file in `integration` directory.
     
-    This file need to contains a [Tailscale auth key](https://tailscale.com/kb/1085/auth-keys) 
+    This file needs to contain a [Tailscale auth key](https://tailscale.com/kb/1085/auth-keys) 
     (an ephemeral, but reusable, one is recommended).
 
     Add this section to your tailscale ACLs to auto-approve the routes for the

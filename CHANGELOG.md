@@ -1,3 +1,42 @@
+## [v3.2.1](https://github.com/traefik/traefik/tree/v3.2.1) (2024-11-20)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.0...v3.2.1)
+
+**Bug fixes:**
+- **[k8s/ingress,k8s]** Fix HostRegexp config for rule syntax v2 ([#11288](https://github.com/traefik/traefik/pull/11288) by [kevinpollet](https://github.com/kevinpollet))
+- **[logs]** Change level of peeking first byte error log to DEBUG for Postgres ([#11270](https://github.com/traefik/traefik/pull/11270) by [rtribotte](https://github.com/rtribotte))
+- **[service,fastproxy]** Fix case problem for websocket upgrade ([#11246](https://github.com/traefik/traefik/pull/11246) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[acme,tls]** Document how to use Certificates of cert-manager ([#11053](https://github.com/traefik/traefik/pull/11053) by [mloiseleur](https://github.com/mloiseleur))
+- **[docker/swarm]** Add tips about the use of docker in dynamic configuration for swarm provider ([#11207](https://github.com/traefik/traefik/pull/11207) by [webash](https://github.com/webash))
+- **[middleware]** Add Compress middleware to migration guide ([#11229](https://github.com/traefik/traefik/pull/11229) by [logica0419](https://github.com/logica0419))
+
+**Misc:**
+- Merge branch v2.11 into v3.2 ([#11290](https://github.com/traefik/traefik/pull/11290) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.2 ([#11287](https://github.com/traefik/traefik/pull/11287) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.2 ([#11285](https://github.com/traefik/traefik/pull/11285) by [juliens](https://github.com/juliens))
+- Merge branch v2.11 into v3.2 ([#11268](https://github.com/traefik/traefik/pull/11268) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.14](https://github.com/traefik/traefik/tree/v2.11.14) (2024-11-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.13...v2.11.14)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.20.2 ([#11263](https://github.com/traefik/traefik/pull/11263) by [ldez](https://github.com/ldez))
+- **[logs,server]** Change level of peeking first byte error log to DEBUG ([#11254](https://github.com/traefik/traefik/pull/11254) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,server]** Drop untrusted X-Forwarded-Prefix header ([#11253](https://github.com/traefik/traefik/pull/11253) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Apply keepalive config to h2c entrypoints ([#11276](https://github.com/traefik/traefik/pull/11276) by [davefu113](https://github.com/davefu113))
+- **[service]** Fix internal handlers ServiceBuilder composition ([#11281](https://github.com/traefik/traefik/pull/11281) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[accesslogs]** Update access-logs.md, add examples for accesslog.format ([#11275](https://github.com/traefik/traefik/pull/11275) by [bluepuma77](https://github.com/bluepuma77))
+- Fix the defaultRule CLI examples ([#11282](https://github.com/traefik/traefik/pull/11282) by [kevinpollet](https://github.com/kevinpollet))
+- Fix spelling, grammar, and rephrase sections for clarity in some documentation pages ([#11280](https://github.com/traefik/traefik/pull/11280) by [AntoineDeveloper](https://github.com/AntoineDeveloper))
+- Fix absolute link in the migration guide ([#11269](https://github.com/traefik/traefik/pull/11269) by [kevinpollet](https://github.com/kevinpollet))
+- Add X-Forwarded-Prefix to the migration guide ([#11267](https://github.com/traefik/traefik/pull/11267) by [kevinpollet](https://github.com/kevinpollet))
+- Fix a small typo in entrypoints documentation ([#11261](https://github.com/traefik/traefik/pull/11261) by [quiode](https://github.com/quiode))
+- Add a warning about environment variables casing for static configuration ([#11226](https://github.com/traefik/traefik/pull/11226) by [anchal00](https://github.com/anchal00))
+- Improve documentation on dashboard ([#11220](https://github.com/traefik/traefik/pull/11220) by [mloiseleur](https://github.com/mloiseleur))
+
 ## [v3.2.0](https://github.com/traefik/traefik/tree/v3.2.0) (2024-10-28)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.2.0)
 
