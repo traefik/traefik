@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 
@@ -45,13 +46,6 @@ var (
 	}
 )
 
-// Certificate holds a SSL cert/key pair
-// Certs and Key could be either a file path, or the file content itself.
-type Certificate struct {
-	CertFile types.FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  types.FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
-}
-
 // Certificates defines traefik certificates type
 // Certs and Keys could be either a file path, or the file content itself.
 type Certificates []Certificate
@@ -71,6 +65,13 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	}
 
 	return certs
+}
+
+// Certificate holds a SSL cert/key pair
+// Certs and Key could be either a file path, or the file content itself.
+type Certificate struct {
+	CertFile types.FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
+	KeyFile  types.FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by store name.
@@ -166,31 +167,6 @@ func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
 	return cert, nil
 }
 
-// GetTruncatedCertificateName truncates the certificate name.
-func (c *Certificate) GetTruncatedCertificateName() string {
-	certName := c.CertFile.String()
-
-	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters
-	if !c.CertFile.IsPath() && strings.HasPrefix(certName, certificateHeader) && len(certName) > len(certificateHeader)+50 {
-		certName = strings.TrimPrefix(c.CertFile.String(), certificateHeader)[:50]
-	}
-
-	return certName
-}
-
-// String is the method to format the flag's value, part of the flag.Value interface.
-// The String method's output will be used in diagnostics.
-func (c *Certificates) String() string {
-	if len(*c) == 0 {
-		return ""
-	}
-	var result []string
-	for _, certificate := range *c {
-		result = append(result, certificate.CertFile.String()+","+certificate.KeyFile.String())
-	}
-	return strings.Join(result, ";")
-}
-
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
@@ -209,9 +185,43 @@ func (c *Certificates) Set(value string) error {
 	return nil
 }
 
-// Type is type of the struct.
-func (c *Certificates) Type() string {
-	return "certificates"
+// GetTruncatedCertificateName truncates the certificate name.
+func (c *Certificate) GetTruncatedCertificateName() string {
+	certName := c.CertFile.String()
+
+	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters
+	if !c.CertFile.IsPath() && strings.HasPrefix(certName, certificateHeader) && len(certName) > len(certificateHeader)+50 {
+		certName = strings.TrimPrefix(c.CertFile.String(), certificateHeader)[:50]
+	}
+
+	return certName
+}
+
+// FileOrContent hold a file path or content.
+type FileOrContent string
+
+func (f FileOrContent) String() string {
+	return string(f)
+}
+
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
+func (f FileOrContent) IsPath() bool {
+	_, err := os.Stat(f.String())
+	return err == nil
+}
+
+func (f FileOrContent) Read() ([]byte, error) {
+	var content []byte
+	if f.IsPath() {
+		var err error
+		content, err = os.ReadFile(f.String())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		content = []byte(f)
+	}
+	return content, nil
 }
 
 // VerifyPeerCertificate verifies the chain certificates and their URI.

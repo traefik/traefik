@@ -341,11 +341,7 @@ func (m tcpMiddlewareRepresentation) status() string {
 	return m.Status
 }
 
-type orderedByName interface {
-	orderedWithName
-}
-
-func sortByName[T orderedByName](direction string, results []T) {
+func sortByName[T orderedWithName](direction string, results []T) {
 	// Ascending
 	if direction == ascendantSorting {
 		sort.Slice(results, func(i, j int) bool {
