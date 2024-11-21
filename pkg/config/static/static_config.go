@@ -303,6 +303,36 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesIngress.DefaultRuleSyntax = c.Core.DefaultRuleSyntax
 	}
 
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
+			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableAllChecks instead.")
+
+			if resolver.ACME.DNSChallenge.Propagation == nil {
+				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
+			}
+
+			resolver.ACME.DNSChallenge.Propagation.DisableAllChecks = true
+		}
+
+		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
+			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeCheck instead.")
+
+			if resolver.ACME.DNSChallenge.Propagation == nil {
+				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
+			}
+
+			resolver.ACME.DNSChallenge.Propagation.DelayBeforeCheck = resolver.ACME.DNSChallenge.DelayBeforeCheck
+		}
+	}
+
 	c.initACMEProvider()
 }
 

@@ -499,10 +499,15 @@ certificatesResolvers:
       caServerName: foobar
       dnsChallenge:
         provider: foobar
-        delayBeforeCheck: 42s
         resolvers:
           - foobar
           - foobar
+        propagation:
+          checkAllRNS: true
+          disableANSChecks: true
+          disableAllChecks: true
+          delayBeforeCheck: 42s
+        delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
@@ -526,10 +531,15 @@ certificatesResolvers:
       caServerName: foobar
       dnsChallenge:
         provider: foobar
-        delayBeforeCheck: 42s
         resolvers:
           - foobar
           - foobar
+        propagation:
+          checkAllRNS: true
+          disableANSChecks: true
+          disableAllChecks: true
+          delayBeforeCheck: 42s
+        delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
