@@ -668,6 +668,9 @@ If a container is linked to several networks, be sure to set the proper network 
 otherwise it will randomly pick one (depending on how docker is returning them).
 
 !!! warning
+    The Docker Swarm provider still uses the same per-container mechanism as the Docker provider, so therefore the label still uses the `docker` keyword intentionally.
+
+!!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
 
 #### `traefik.docker.lbswarm`
@@ -680,3 +683,6 @@ Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).
 
 If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
 Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
+
+!!! warning
+    The Docker Swarm provider still uses the same per-container mechanism as the Docker provider, so therefore the label still uses the `docker` keyword intentionally.

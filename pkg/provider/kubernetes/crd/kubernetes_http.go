@@ -396,7 +396,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c *configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
+func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
 	if serversTransportName == "" {
 		return "", nil
 	}
