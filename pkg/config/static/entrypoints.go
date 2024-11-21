@@ -27,14 +27,14 @@ type EntryPoint struct {
 
 // GetAddress strips any potential protocol part of the address field of the
 // entry point, in order to return the actual address.
-func (ep EntryPoint) GetAddress() string {
+func (ep *EntryPoint) GetAddress() string {
 	splitN := strings.SplitN(ep.Address, "/", 2)
 	return splitN[0]
 }
 
 // GetProtocol returns the protocol part of the address field of the entry point.
 // If none is specified, it defaults to "tcp".
-func (ep EntryPoint) GetProtocol() (string, error) {
+func (ep *EntryPoint) GetProtocol() (string, error) {
 	splitN := strings.SplitN(ep.Address, "/", 2)
 	if len(splitN) < 2 {
 		return "tcp", nil

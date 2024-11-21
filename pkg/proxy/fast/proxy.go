@@ -171,7 +171,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if reqUpType != "" {
 		outReq.Header.Set("Connection", "Upgrade")
 		outReq.Header.Set("Upgrade", reqUpType)
-		if reqUpType == "websocket" {
+		if strings.EqualFold(reqUpType, "websocket") {
 			cleanWebSocketHeaders(&outReq.Header)
 		}
 	}
@@ -353,6 +353,7 @@ type fasthttpHeader interface {
 	SetBytesV(key string, value []byte)
 	DelBytes(key []byte)
 	Del(key string)
+	ConnectionUpgrade() bool
 }
 
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.

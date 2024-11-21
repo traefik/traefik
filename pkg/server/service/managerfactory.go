@@ -74,13 +74,12 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 }
 
 // Build creates a service manager.
-func (f *ManagerFactory) Build(configuration *runtime.Configuration) *InternalHandlers {
-	svcManager := NewManager(configuration.Services, f.observabilityMgr, f.routinesPool, f.transportManager, f.proxyBuilder)
-
+func (f *ManagerFactory) Build(configuration *runtime.Configuration) *Manager {
 	var apiHandler http.Handler
 	if f.api != nil {
 		apiHandler = f.api(configuration)
 	}
 
-	return NewInternalHandlers(svcManager, apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
+	internalHandlers := NewInternalHandlers(apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
+	return NewManager(configuration.Services, f.observabilityMgr, f.routinesPool, f.transportManager, f.proxyBuilder, internalHandlers)
 }
