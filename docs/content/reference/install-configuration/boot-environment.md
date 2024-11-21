@@ -7,7 +7,7 @@ description: "Read the official Traefik documentation to get started with config
 
 Traefik Proxy’s configuration is divided into two main categories:
 
-- **Static Configuration**: Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API settings, and logging levels.
+- **Static Configuration**: Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
 - **Dynamic Configuration**: Involves elements that can be updated without restarting Traefik, such as routers, services, and middlewares.
 
 This section focuses on setting up the static configuration, which is essential for Traefik’s initial boot.
@@ -123,8 +123,7 @@ ports:
     exposedPort: 443
 
 additionalArguments:
-  - "--providers.kubernetescrd"
-  - "--api.dashboard=true"
+  - "--providers.kubernetescrd.ingressClass"
   - "--log.level=INFO"
 ```
 

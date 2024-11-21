@@ -109,7 +109,7 @@ providers:
 
 See the dedicated section in [routing](../../../../routing/providers/kubernetes-ingress.md).
 
-### Further
+## Further
 
 To learn more about the various aspects of the Ingress specification that 
 Traefik supports,
