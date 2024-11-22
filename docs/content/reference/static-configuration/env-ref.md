@@ -42,6 +42,9 @@ Access log format: json | common (Default: ```common```)
 `TRAEFIK_API`:  
 Enable api/dashboard. (Default: ```false```)
 
+`TRAEFIK_API_BASEPATH`:  
+Defines the base path where the API and Dashboard will be exposed. (Default: ```/```)
+
 `TRAEFIK_API_DASHBOARD`:  
 Activate dashboard. (Default: ```true```)
 
