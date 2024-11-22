@@ -11,9 +11,14 @@ fi
 git config --global user.email "${TRAEFIKER_EMAIL}"
 git config --global user.name "Traefiker"
 
+# load ssh key
+eval "$(ssh-agent -s)"
+chmod 600 ~/.ssh/traefiker_rsa
+ssh-add ~/.ssh/traefiker_rsa
+
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
-git clone "https://${GITHUB_TOKEN}@github.com/traefik/traefik-library-image.git"
+git clone git@github.com:traefik/traefik-library-image.git
 cd traefik-library-image
 ./updatev2.sh "${VERSION}"
 git add -A
