@@ -89,17 +89,17 @@ type DNSChallenge struct {
 	Resolvers   []string     `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
 	Propagation *Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
 
-	// Deprecated
-	DelayBeforeCheck ptypes.Duration `description:"(DEPRECATED) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
-	// Deprecated
-	DisablePropagationCheck bool `description:"(DEPRECATED) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
+	// Deprecated: please use Propagation.DelayBeforeCheck instead.
+	DelayBeforeCheck ptypes.Duration `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
+	// Deprecated: please use Propagation.DisableAllChecks instead.
+	DisablePropagationCheck bool `description:"(Deprecated) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
 }
 
 type Propagation struct {
-	CheckAllRNS      bool            `description:"Use all the recursive nameservers to check the propagation of the TXT record." json:"checkAllRNS,omitempty" toml:"checkAllRNS,omitempty" yaml:"checkAllRNS,omitempty" export:"true"`
-	DisableANSChecks bool            `description:"Disable the need to await propagation of the TXT record to all authoritative nameservers." json:"disableANSChecks,omitempty" toml:"disableANSChecks,omitempty" yaml:"disableANSChecks,omitempty" export:"true"`
-	DisableAllChecks bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disableAllChecks,omitempty" toml:"disableAllChecks,omitempty" yaml:"disableAllChecks,omitempty" export:"true"`
-	DelayBeforeCheck ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
+	DisableChecks     bool            `description:"Disables the challenge TXT record propagation checks (not recommended)." json:"disableChecks,omitempty" toml:"disableChecks,omitempty" yaml:"disableChecks,omitempty" export:"true"`
+	DisableANSChecks  bool            `description:"Disables the challenge TXT record propagation checks against authoritative nameservers." json:"disableANSChecks,omitempty" toml:"disableANSChecks,omitempty" yaml:"disableANSChecks,omitempty" export:"true"`
+	RequireAllRNS     bool            `description:"Requires the challenge TXT record to be propagated to all recursive nameservers." json:"requireAllRNS,omitempty" toml:"requireAllRNS,omitempty" yaml:"requireAllRNS,omitempty" export:"true"`
+	DelayBeforeChecks ptypes.Duration `description:"Defines the delay before checking the challenge TXT record propagation." json:"delayBeforeChecks,omitempty" toml:"delayBeforeChecks,omitempty" yaml:"delayBeforeChecks,omitempty" export:"true"`
 }
 
 // HTTPChallenge contains HTTP challenge configuration.
@@ -329,7 +329,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		}
 
 		if p.DNSChallenge.Propagation != nil {
-			if p.DNSChallenge.Propagation.CheckAllRNS {
+			if p.DNSChallenge.Propagation.RequireAllRNS {
 				opts = append(opts, dns01.RecursiveNSsPropagationRequirement())
 			}
 
@@ -337,7 +337,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 				opts = append(opts, dns01.DisableAuthoritativeNssPropagationRequirement())
 			}
 
-			opts = append(opts, dns01.PropagationWait(time.Duration(p.DNSChallenge.Propagation.DelayBeforeCheck), p.DNSChallenge.Propagation.DisableAllChecks))
+			opts = append(opts, dns01.PropagationWait(time.Duration(p.DNSChallenge.Propagation.DelayBeforeChecks), p.DNSChallenge.Propagation.DisableChecks))
 		}
 
 		err = client.Challenge.SetDNS01Provider(provider, opts...)

@@ -188,7 +188,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
 								Propagation: &acme.Propagation{
-									DelayBeforeCheck: 123,
+									DelayBeforeChecks: 123,
 								},
 							},
 						},
@@ -248,7 +248,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 								Provider:                "bar",
 								DisablePropagationCheck: true,
 								Propagation: &acme.Propagation{
-									DisableAllChecks: true,
+									DisableChecks: true,
 								},
 							},
 						},

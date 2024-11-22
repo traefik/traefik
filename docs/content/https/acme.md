@@ -496,7 +496,7 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
-#### `propagation.delayBeforeCheck`
+#### `propagation.delayBeforeChecks`
 
 By default, the `provider` verifies the TXT record _before_ letting ACME verify.
 
@@ -512,8 +512,8 @@ certificatesResolvers:
       dnsChallenge:
         # ...
         propagation:
-        # ...
-          delayBeforeCheck: 2s
+          # ...
+          delayBeforeChecks: 2s
 ```
 
 ```toml tab="File (TOML)"
@@ -523,19 +523,19 @@ certificatesResolvers:
     # ...
     [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
       # ...
-      delayBeforeCheck = "2s"
+      delayBeforeChecks = "2s"
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.dnschallenge.propagation.delayBeforeCheck=2s
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.delayBeforeChecks=2s
 ```
 
-#### `propagation.disableAllChecks`
+#### `propagation.disableChecks`
 
-**Not recommended**
+Disables the challenge TXT record propagation checks, before notifying ACME that the DNS challenge is ready. 
 
-Disable the TXT records propagation checks before notifying ACME that the DNS challenge is ready. 
+Please note that disabling checks can prevent the challenge to succeed.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -546,7 +546,7 @@ certificatesResolvers:
         # ...
         propagation:
           # ...
-          disableAllChecks: true
+          disableChecks: true
 ```
 
 ```toml tab="File (TOML)"
@@ -556,21 +556,22 @@ certificatesResolvers:
     # ...
     [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
       # ...
-      disableAllChecks = true
+      disableChecks = true
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.dnschallenge.propagation.disableAllChecks=true
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.disableChecks=true
 ```
 
-#### `propagation.checkAllRNS`
+#### `propagation.requireAllRNS`
 
-Use all the recursive nameservers to check the propagation of the TXT records.
+Requires the challenge TXT record to be propagated to all recursive nameservers.
 
-It can be used to enforce propagation checks by checking all the recursive nameservers instead of only one.
+!!! note
 
-This is important if you are using `propagation.disableANSChecks`.
+    If you have disabled authoritative nameservers checks (with `propagation.disableANSChecks`),
+    it is recommended to check all recursive nameservers instead.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -581,7 +582,7 @@ certificatesResolvers:
         # ...
         propagation:
           # ...
-          checkAllRNS: true
+          requireAllRNS: true
 ```
 
 ```toml tab="File (TOML)"
@@ -591,21 +592,26 @@ certificatesResolvers:
     # ...
     [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
       # ...
-      checkAllRNS = true
+      requireAllRNS = true
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.dnschallenge.propagation.checkAllRNS=true
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.requireAllRNS=true
 ```
 
 #### `propagation.disableANSChecks`
 
-Disable the need to await propagation of the TXT records to all authoritative name servers.
+Disables the challenge TXT record propagation checks against authoritative nameservers.
 
-This option will skip the propagation check on the nameservers of the authority (SOA).
+This option will skip the propagation check against the nameservers of the authority (SOA).
 
 It should be used only if the nameservers of the authority are not reachable.
+
+!!! note
+
+    If you have disabled authoritative nameservers checks,
+    it is recommended to check all recursive nameservers instead.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -614,9 +620,9 @@ certificatesResolvers:
       # ...
       dnsChallenge:
         # ...
-         propagation:
-            # ...
-           disableANSChecks: true
+        propagation:
+          # ...
+          disableANSChecks: true
 ```
 
 ```toml tab="File (TOML)"
@@ -626,7 +632,7 @@ certificatesResolvers:
     # ...
     [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
       # ...
-    disableANSChecks = true
+      disableANSChecks = true
 ```
 
 ```bash tab="CLI"
