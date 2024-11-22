@@ -76,25 +76,25 @@ Certificates' duration in hours. (Default: ```2160```)
 Activate DNS-01 Challenge. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.delaybeforecheck`:  
-(DEPRECATED) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
+(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.disablepropagationcheck`:  
-(DEPRECATED) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+(Deprecated) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.propagation`:  
 DNS propagation checks configuration (Default: ```false```)
 
-`--certificatesresolvers.<name>.acme.dnschallenge.propagation.checkallrns`:  
-Use all the recursive nameservers to check the propagation of the TXT record. (Default: ```false```)
-
-`--certificatesresolvers.<name>.acme.dnschallenge.propagation.delaybeforecheck`:  
-Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
-
-`--certificatesresolvers.<name>.acme.dnschallenge.propagation.disableallchecks`:  
-Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.delaybeforechecks`:  
+Defines the delay before checking the challenge TXT record propagation. (Default: ```0```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.propagation.disableanschecks`:  
-Disable the need to await propagation of the TXT record to all authoritative nameservers. (Default: ```false```)
+Disables the challenge TXT record propagation checks against authoritative nameservers. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.disablechecks`:  
+Disables the challenge TXT record propagation checks (not recommended). (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.requireallrns`:  
+Requires the challenge TXT record to be propagated to all recursive nameservers. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.provider`:  
 Use a DNS-01 based challenge provider rather than HTTPS.

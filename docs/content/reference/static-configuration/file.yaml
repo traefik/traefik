@@ -503,10 +503,10 @@ certificatesResolvers:
           - foobar
           - foobar
         propagation:
-          checkAllRNS: true
+          disableChecks: true
           disableANSChecks: true
-          disableAllChecks: true
-          delayBeforeCheck: 42s
+          requireAllRNS: true
+          delayBeforeChecks: 42s
         delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
@@ -535,10 +535,10 @@ certificatesResolvers:
           - foobar
           - foobar
         propagation:
-          checkAllRNS: true
+          disableChecks: true
           disableANSChecks: true
-          disableAllChecks: true
-          delayBeforeCheck: 42s
+          requireAllRNS: true
+          delayBeforeChecks: 42s
         delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:

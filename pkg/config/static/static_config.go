@@ -319,7 +319,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
 			}
 
-			resolver.ACME.DNSChallenge.Propagation.DisableAllChecks = true
+			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
@@ -329,7 +329,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
 			}
 
-			resolver.ACME.DNSChallenge.Propagation.DelayBeforeCheck = resolver.ACME.DNSChallenge.DelayBeforeCheck
+			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
 	}
 

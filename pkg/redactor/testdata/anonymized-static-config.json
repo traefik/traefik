@@ -370,11 +370,11 @@
         "certificatesDuration": 42,
         "dnsChallenge": {
           "provider": "DNSProvider",
+          "delayBeforeCheck": "42ns",
           "resolvers": [
             "xxxx",
             "xxxx"
           ],
-          "delayBeforeCheck": "42ns",
           "disablePropagationCheck": true
         },
         "httpChallenge": {

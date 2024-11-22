@@ -460,10 +460,10 @@
         delayBeforeCheck = "42s"
         disablePropagationCheck = true
         [certificatesResolvers.CertificateResolver0.acme.dnsChallenge.propagation]
-          checkAllRNS = true
+          disableChecks = true
           disableANSChecks = true
-          disableAllChecks = true
-          delayBeforeCheck = "42s"
+          requireAllRNS = true
+          delayBeforeChecks = "42s"
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
@@ -488,10 +488,10 @@
         delayBeforeCheck = "42s"
         disablePropagationCheck = true
         [certificatesResolvers.CertificateResolver1.acme.dnsChallenge.propagation]
-          checkAllRNS = true
+          disableChecks = true
           disableANSChecks = true
-          disableAllChecks = true
-          delayBeforeCheck = "42s"
+          requireAllRNS = true
+          delayBeforeChecks = "42s"
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
