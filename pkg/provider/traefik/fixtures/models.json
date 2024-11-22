@@ -27,6 +27,11 @@
               ]
             }
           ]
+        },
+        "observability": {
+          "accessLogs": false,
+          "tracing": false,
+          "metrics": false
         }
       }
     }
