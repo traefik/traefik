@@ -37,7 +37,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
 	w.Header().Del("Content-Type")
 
-	if r.URL.Path == "/" {
+	if r.RequestURI == "/" {
 		indexTemplate, err := template.ParseFS(assets, "index.html")
 		if err != nil {
 			log.Error().Err(err).Msg("Unable to parse index template")
@@ -75,10 +75,10 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 
 	// Expose dashboard
 	router.Methods(http.MethodGet).
-		Path(strings.TrimSuffix(dashboardPath, "/")).
+		Path(basePath).
 		HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			prefix := strings.TrimSuffix(req.Header.Get("X-Forwarded-Prefix"), "/")
-			http.Redirect(resp, req, prefix+"/dashboard/", http.StatusFound)
+			http.Redirect(resp, req, prefix+dashboardPath, http.StatusFound)
 		})
 
 	router.Methods(http.MethodGet).
