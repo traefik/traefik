@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-    branches:
-      - 'feat/ci-2'
 
 env:
   GO_VERSION: '1.23'
