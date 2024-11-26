@@ -10,6 +10,7 @@ env:
   CGO_ENABLED: 0
   VERSION: ${{ github.ref_name }}
   TRAEFIKER_EMAIL: "traefiker@traefik.io"
+  CODENAME: mimolette
 
 jobs:
 
@@ -54,8 +55,6 @@ jobs:
           rm webui.tar.gz
 
       - name: Build
-        env:
-          CODENAME: mimolette
         run: |
           go generate
           goreleaser release --clean -p 2 --timeout="90m" --config "$(go run ./internal/release "${{ matrix.os }}")"
