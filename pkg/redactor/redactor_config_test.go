@@ -58,6 +58,11 @@ func init() {
 						},
 					},
 				},
+				Observability: &dynamic.RouterObservabilityConfig{
+					AccessLogs: pointer(true),
+					Tracing:    pointer(true),
+					Metrics:    pointer(true),
+				},
 			},
 		},
 		Services: map[string]*dynamic.Service{
