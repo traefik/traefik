@@ -12,6 +12,10 @@ spec:
   - match: Host(`foo.com`) && PathPrefix(`/bar`)
     kind: Rule
     priority: 12
+    observability:
+      accessLogs: true
+      tracing: true
+      metrics: true
     services:
     - name: whoami
       port: 80

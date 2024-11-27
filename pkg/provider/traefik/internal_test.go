@@ -184,6 +184,11 @@ func Test_createConfiguration(t *testing.T) {
 								},
 							},
 						},
+						Observability: &static.ObservabilityConfig{
+							AccessLogs: false,
+							Tracing:    false,
+							Metrics:    false,
+						},
 					},
 				},
 			},
