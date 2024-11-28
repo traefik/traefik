@@ -110,16 +110,7 @@ func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerNam
 // WrapServiceHandler Wraps metrics service to alice.Constructor.
 func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		m := NewServiceMiddleware(ctx, next, registry, serviceName)
-
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if val := req.Context().Value(observability.DisableMetricsKey); val != nil {
-				next.ServeHTTP(rw, req)
-				return
-			}
-
-			m.ServeHTTP(rw, req)
-		}), nil
+		return NewServiceMiddleware(ctx, next, registry, serviceName), nil
 	}
 }
 
@@ -128,6 +119,11 @@ func (m *metricsMiddleware) GetTracingInformation() (string, string, trace.SpanK
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if val := req.Context().Value(observability.DisableMetricsKey); val != nil {
+		m.next.ServeHTTP(rw, req)
+		return
+	}
+
 	proto := getRequestProtocol(req)
 
 	var labels []string
