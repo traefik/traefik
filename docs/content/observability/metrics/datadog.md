@@ -68,6 +68,7 @@ metrics:
 ```bash tab="CLI"
 --metrics.datadog.addEntryPointsLabels=true
 ```
+
 #### `addRoutersLabels`
 
 _Optional, Default=false_

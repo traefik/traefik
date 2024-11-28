@@ -18,6 +18,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls.domains.1.main: example.com
     traefik.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
     traefik.ingress.kubernetes.io/router.tls.options: foobar
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: "true"
+    traefik.ingress.kubernetes.io/router.observability.metrics: "true"
+    traefik.ingress.kubernetes.io/router.observability.tracing: "true"
 
 spec:
   rules:
