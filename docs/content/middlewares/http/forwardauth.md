@@ -338,6 +338,10 @@ http:
 
 Set the `forwardBody` option to `true` to send Body.
 
+!!! info
+
+    As body is read inside Traefik before forwarding, this breaks streaming.
+
 ```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.forwardBody=true"
