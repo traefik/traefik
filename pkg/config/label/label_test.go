@@ -572,6 +572,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						MaxBodySize: -1,
 					},
 				},
 				"Middleware8": {
@@ -1306,6 +1307,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthResponseHeaders":                     "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthRequestHeaders":                      "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.ForwardBody":                             "false",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.MaxBodySize":                             "0",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CA":                                  "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CAOptional":                          "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Cert":                                "foobar",
