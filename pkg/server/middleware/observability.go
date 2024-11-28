@@ -81,8 +81,9 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		}
 	}
 
-	// Inject context keys to control whether to produce observability metrics further downstream (services, round-tripper).
-	if !o.ShouldAddMetrics(serviceName, observabilityConfig) {
+	// Inject context keys to control whether to produce metrics further downstream (services, round-tripper),
+	// because the router configuration cannot be evaluated during build time for services.
+	if observabilityConfig != nil && observabilityConfig.Metrics != nil && !*observabilityConfig.Metrics {
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				next.ServeHTTP(rw, req.WithContext(context.WithValue(req.Context(), observability.DisableMetricsKey, true)))
