@@ -439,6 +439,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
+						MaxBodySize: -1,
 					},
 				},
 				"Middleware06": {

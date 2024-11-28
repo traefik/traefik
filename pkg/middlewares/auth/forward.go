@@ -54,6 +54,7 @@ type forwardAuth struct {
 	addAuthCookiesToResponse map[string]struct{}
 	headerField              string
 	forwardBody              bool
+	maxBodySize              int64
 }
 
 // NewForward creates a forward auth middleware.
@@ -76,6 +77,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		addAuthCookiesToResponse: addAuthCookiesToResponse,
 		headerField:              config.HeaderField,
 		forwardBody:              config.ForwardBody,
+		maxBodySize:              config.MaxBodySize,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -123,6 +125,26 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 	return fa.name, typeNameForward, trace.SpanKindInternal
 }
 
+var errBodyTooLarge = errors.New("Request body too large")
+
+func (fa *forwardAuth) createBodyByte(req *http.Request) ([]byte, error) {
+	if fa.maxBodySize < 0 {
+		return io.ReadAll(req.Body)
+	}
+	bodyByte := make([]byte, fa.maxBodySize+1)
+	n, err := io.ReadFull(req.Body, bodyByte)
+	if errors.Is(err, io.EOF) {
+		return []byte{}, nil
+	}
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, err
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return bodyByte[:n], nil
+	}
+	return nil, errBodyTooLarge
+}
+
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
@@ -136,11 +158,17 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if fa.forwardBody {
-		bodyByte, err := io.ReadAll(req.Body)
-		if err != nil {
+		bodyByte, err := fa.createBodyByte(req)
+		if errors.Is(err, errBodyTooLarge) {
+			logger.Debug().Msgf("Body size is too big maxBodySize: %d", fa.maxBodySize)
+			observability.SetStatusErrorf(req.Context(), "Error while reading Body: %s", err)
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Write([]byte(errBodyTooLarge.Error()))
+			return
+		}
+		if err != nil && !errors.Is(err, errBodyTooLarge) {
 			logger.Debug().Msgf("Error while reading Body: %s", err)
 			observability.SetStatusErrorf(req.Context(), "Error while reading Body: %s", err)
-
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
 		}

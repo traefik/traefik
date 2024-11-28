@@ -127,7 +127,7 @@ func TestForwardAuthForwardBody(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := dynamic.ForwardAuth{Address: authTs.URL, ForwardBody: true}
+	auth := dynamic.ForwardAuth{Address: authTs.URL, ForwardBody: true, MaxBodySize: int64(len(data))}
 
 	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
@@ -148,6 +148,36 @@ func TestForwardAuthForwardBody(t *testing.T) {
 	err = res.Body.Close()
 	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body))
+}
+
+func TestForwardAuthBodySizeLimit(t *testing.T) {
+	data := []byte("forwardBodyTest")
+	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		forwardedData, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		assert.Equal(t, data, forwardedData)
+		fmt.Fprintln(w, "Success")
+	}))
+	t.Cleanup(authTs.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{Address: authTs.URL, ForwardBody: true, MaxBodySize: int64(len(data) - 1)}
+
+	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(authMiddleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, bytes.NewReader(data))
+
+	res, err := http.DefaultClient.Do(req)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestForwardAuthNotForwardBody(t *testing.T) {
