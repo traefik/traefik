@@ -171,6 +171,7 @@
         addAuthCookiesToResponse = ["foobar", "foobar"]
         headerField = "foobar"
         forwardBody = true
+        maxBodySize = -1
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
