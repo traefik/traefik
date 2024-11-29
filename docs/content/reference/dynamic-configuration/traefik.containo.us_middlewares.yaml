@@ -52,6 +52,9 @@ spec:
                       Prefix is the string to add before the current path in the requested URL.
                       It should include a leading slash (/).
                     type: string
+                    x-kubernetes-validations:
+                    - message: must start with a '/'
+                      rule: self.startsWith('/')
                 type: object
               basicAuth:
                 description: |-
@@ -190,6 +193,7 @@ spec:
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -326,6 +330,10 @@ spec:
                                 description: |-
                                   SameSite defines the same site policy.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                enum:
+                                - none
+                                - lax
+                                - strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -574,6 +582,7 @@ spec:
                       STSSeconds defines the max-age of the Strict-Transport-Security header.
                       If set to 0, the header is not set.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               inFlightReq:
@@ -587,6 +596,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous in-flight request.
                       The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
                     format: int64
+                    minimum: 0
                     type: integer
                   sourceCriterion:
                     description: |-
@@ -604,6 +614,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -638,6 +649,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -669,6 +681,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -836,6 +849,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -889,6 +903,10 @@ spec:
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
+                    enum:
+                    - http
+                    - https
+                    - h2c
                     type: string
                 type: object
               replacePath:
