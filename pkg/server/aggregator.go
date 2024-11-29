@@ -158,7 +158,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 			if !router.DefaultRule && router.RuleSyntax == "" {
 				for modelName, model := range cfg.HTTP.Models {
-					// models can be provided by another provider than the internal one.
+					// models cannot be provided by another provider than the internal one.
 					if !strings.HasSuffix(modelName, "@internal") {
 						continue
 					}
