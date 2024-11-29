@@ -32,6 +32,7 @@ type Route struct {
 	Kind string `json:"kind"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority
+	// +kubebuilder:validation:Minimum=0
 	Priority int `json:"priority,omitempty"`
 	// Services defines the list of Service.
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
@@ -52,6 +53,7 @@ type TLS struct {
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
+	// Deprecated: this reference is not needed.
 	Store *TLSStoreRef `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
@@ -99,12 +101,15 @@ type LoadBalancerSpec struct {
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:validation:XIntOrString
 	Port intstr.IntOrString `json:"port,omitempty"`
 	// Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
+	// +kubebuilder:validation:Enum=http;https;h2c
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
 	// RoundRobin is the only supported value at the moment.
+	// +kubebuilder:validation:Enum=RoundRobin
 	Strategy string `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
 	// By default, passHostHeader is true.
@@ -117,6 +122,7 @@ type LoadBalancerSpec struct {
 	ServersTransport string `json:"serversTransport,omitempty"`
 	// Weight defines the weight and should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).
+	// +kubebuilder:validation:Minimum=0
 	Weight *int `json:"weight,omitempty"`
 	// NativeLB controls, when creating the load-balancer,
 	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.

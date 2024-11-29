@@ -60,6 +60,7 @@ type ContentType struct {
 type AddPrefix struct {
 	// Prefix is the string to add before the current path in the requested URL.
 	// It should include a leading slash (/).
+	// +kubebuilder:validation:XValidation:message="must start with a '/'",rule="self.startsWith('/')"
 	Prefix string `json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 }
 
@@ -154,6 +155,7 @@ type Compress struct {
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
+	// +kubebuilder:validation:Minimum=0
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
 }
 
@@ -262,6 +264,7 @@ type Headers struct {
 	SSLForceHost bool `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
+	// +kubebuilder:validation:Minimum=0
 	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
@@ -350,6 +353,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
 	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
+	// +kubebuilder:validation:Minimum=0
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
@@ -415,6 +419,7 @@ type IPAllowList struct {
 type InFlightReq struct {
 	// Amount defines the maximum amount of allowed simultaneous in-flight request.
 	// The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
+	// +kubebuilder:validation:Minimum=0
 	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
@@ -500,6 +505,7 @@ type RedirectRegex struct {
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/redirectscheme/
 type RedirectScheme struct {
 	// Scheme defines the scheme of the new URL.
+	// +kubebuilder:validation:Enum=http;https;h2c
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
