@@ -80,7 +80,12 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
+<<<<<<< HEAD
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
+=======
+                        More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
+                      minimum: 0
+>>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -150,6 +155,7 @@ spec:
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            minimum: 0
                             type: integer
                         required:
                         - name

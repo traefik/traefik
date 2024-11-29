@@ -27,7 +27,12 @@ type RouteTCP struct {
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rule_1
 	Match string `json:"match"`
 	// Priority defines the router's priority.
+<<<<<<< HEAD
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
+=======
+	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
+	// +kubebuilder:validation:Minimum=0
+>>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
@@ -71,6 +76,7 @@ type ServiceTCP struct {
 	// This can be a reference to a named port.
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	// +kubebuilder:validation:Minimum=0
 	Weight *int `json:"weight,omitempty"`
 	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
 	// it has closed the writing capability of its connection, to close the reading capability as well,
