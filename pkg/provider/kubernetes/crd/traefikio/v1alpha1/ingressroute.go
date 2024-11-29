@@ -141,6 +141,9 @@ type MiddlewareRef struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="EntryPoints",type=string,JSONPath=`.spec.entryPoints`
+// +kubebuilder:printcolumn:name="Rule",type=string,JSONPath=`.spec.routes[*].match`
+// +kubebuilder:printcolumn:name="Middlewares",type=string,JSONPath=`.spec.routes[*].middlewares[*].name`
 
 // IngressRoute is the CRD implementation of a Traefik HTTP Router.
 type IngressRoute struct {

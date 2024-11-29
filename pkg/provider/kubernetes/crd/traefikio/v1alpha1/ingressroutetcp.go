@@ -88,6 +88,7 @@ type ServiceTCP struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="EntryPoints",type=string,JSONPath=`.spec.entryPoints`
 
 // IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
 type IngressRouteTCP struct {
