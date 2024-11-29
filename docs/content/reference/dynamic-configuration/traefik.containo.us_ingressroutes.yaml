@@ -178,6 +178,10 @@ spec:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie

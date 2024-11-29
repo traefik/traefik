@@ -89,6 +89,7 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority
+                      minimum: 0
                       type: integer
                     services:
                       description: |-
@@ -151,6 +152,10 @@ spec:
                             description: |-
                               Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                               It defaults to https when Kubernetes Service port is 443, http otherwise.
+                            enum:
+                            - http
+                            - https
+                            - h2c
                             type: string
                           serversTransport:
                             description: |-
@@ -178,6 +183,10 @@ spec:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie
@@ -190,11 +199,14 @@ spec:
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
                               RoundRobin is the only supported value at the moment.
+                            enum:
+                            - RoundRobin
                             type: string
                           weight:
                             description: |-
                               Weight defines the weight and should only be specified when Name references a TraefikService object
                               (and to be precise, one that embeds a Weighted Round Robin).
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -368,6 +380,7 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v2.11/routing/routers/#priority_1
+                      minimum: 0
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -419,6 +432,7 @@ spec:
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -596,6 +610,7 @@ spec:
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -667,6 +682,9 @@ spec:
                       Prefix is the string to add before the current path in the requested URL.
                       It should include a leading slash (/).
                     type: string
+                    x-kubernetes-validations:
+                    - message: must start with a '/'
+                      rule: self.startsWith('/')
                 type: object
               basicAuth:
                 description: |-
@@ -767,6 +785,7 @@ spec:
                     - type: string
                     description: CheckPeriod is the interval between successive checks
                       of the circuit breaker condition (when in standby state).
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   expression:
                     description: Expression is the condition that triggers the tripped
@@ -786,6 +805,7 @@ spec:
                     description: RecoveryDuration is the duration for which the circuit
                       breaker will try to recover (as soon as it is in recovering
                       state).
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               compress:
@@ -805,6 +825,7 @@ spec:
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -915,6 +936,10 @@ spec:
                         description: |-
                           Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                           It defaults to https when Kubernetes Service port is 443, http otherwise.
+                        enum:
+                        - http
+                        - https
+                        - h2c
                         type: string
                       serversTransport:
                         description: |-
@@ -941,6 +966,10 @@ spec:
                                 description: |-
                                   SameSite defines the same site policy.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                enum:
+                                - none
+                                - lax
+                                - strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -953,11 +982,14 @@ spec:
                         description: |-
                           Strategy defines the load balancing strategy between the servers.
                           RoundRobin is the only supported value at the moment.
+                        enum:
+                        - RoundRobin
                         type: string
                       weight:
                         description: |-
                           Weight defines the weight and should only be specified when Name references a TraefikService object
                           (and to be precise, one that embeds a Weighted Round Robin).
+                        minimum: 0
                         type: integer
                     required:
                     - name
@@ -970,6 +1002,7 @@ spec:
                       as ranges by separating two codes with a dash (500-599),
                       or a combination of the two (404,418,500-599).
                     items:
+                      pattern: ^[-0-9,]+$
                       type: string
                     type: array
                 type: object
@@ -1189,6 +1222,7 @@ spec:
                       STSSeconds defines the max-age of the Strict-Transport-Security header.
                       If set to 0, the header is not set.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               inFlightReq:
@@ -1202,6 +1236,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous in-flight request.
                       The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
                     format: int64
+                    minimum: 0
                     type: integer
                   sourceCriterion:
                     description: |-
@@ -1219,6 +1254,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -1253,6 +1289,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -1284,6 +1321,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -1427,6 +1465,7 @@ spec:
                       Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
                       It defaults to 1.
                     format: int64
+                    minimum: 0
                     type: integer
                   period:
                     anyOf:
@@ -1451,6 +1490,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -1504,6 +1544,10 @@ spec:
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
+                    enum:
+                    - http
+                    - https
+                    - h2c
                     type: string
                 type: object
               replacePath:
@@ -1553,6 +1597,7 @@ spec:
                       If unspecified, requests will be retried immediately.
                       The value of initialInterval should be provided in seconds or as a valid duration format,
                       see https://pkg.go.dev/time#ParseDuration.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
@@ -1644,6 +1689,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:
@@ -1745,6 +1791,7 @@ spec:
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
                       connection to a backend server can be established.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -1753,6 +1800,7 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -1760,6 +1808,7 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -1768,6 +1817,7 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -1776,6 +1826,7 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
@@ -1784,6 +1835,7 @@ spec:
               maxIdleConnsPerHost:
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
                   to keep per-host.
+                minimum: 0
                 type: integer
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
@@ -2143,6 +2195,10 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          enum:
+                          - http
+                          - https
+                          - h2c
                           type: string
                         serversTransport:
                           description: |-
@@ -2169,6 +2225,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -2181,11 +2241,14 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -2237,6 +2300,10 @@ spec:
                     description: |-
                       Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                       It defaults to https when Kubernetes Service port is 443, http otherwise.
+                    enum:
+                    - http
+                    - https
+                    - h2c
                     type: string
                   serversTransport:
                     description: |-
@@ -2263,6 +2330,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -2274,11 +2345,14 @@ spec:
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
                       RoundRobin is the only supported value at the moment.
+                    enum:
+                    - RoundRobin
                     type: string
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object
                       (and to be precise, one that embeds a Weighted Round Robin).
+                    minimum: 0
                     type: integer
                 required:
                 - name
@@ -2346,6 +2420,10 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          enum:
+                          - http
+                          - https
+                          - h2c
                           type: string
                         serversTransport:
                           description: |-
@@ -2372,6 +2450,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -2384,11 +2466,14 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -2413,6 +2498,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -2608,6 +2697,10 @@ spec:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie
@@ -3097,6 +3190,9 @@ spec:
                       Prefix is the string to add before the current path in the requested URL.
                       It should include a leading slash (/).
                     type: string
+                    x-kubernetes-validations:
+                    - message: must start with a '/'
+                      rule: self.startsWith('/')
                 type: object
               basicAuth:
                 description: |-
@@ -3235,6 +3331,7 @@ spec:
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -3371,6 +3468,10 @@ spec:
                                 description: |-
                                   SameSite defines the same site policy.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                enum:
+                                - none
+                                - lax
+                                - strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -3619,6 +3720,7 @@ spec:
                       STSSeconds defines the max-age of the Strict-Transport-Security header.
                       If set to 0, the header is not set.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               inFlightReq:
@@ -3632,6 +3734,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous in-flight request.
                       The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
                     format: int64
+                    minimum: 0
                     type: integer
                   sourceCriterion:
                     description: |-
@@ -3649,6 +3752,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -3683,6 +3787,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -3714,6 +3819,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -3881,6 +3987,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -3934,6 +4041,10 @@ spec:
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
+                    enum:
+                    - http
+                    - https
+                    - h2c
                     type: string
                 type: object
               replacePath:
@@ -4074,6 +4185,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:
@@ -4599,6 +4711,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -4693,6 +4809,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -4802,6 +4922,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -4843,6 +4967,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
