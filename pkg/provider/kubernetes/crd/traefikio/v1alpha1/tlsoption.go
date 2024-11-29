@@ -7,6 +7,8 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="MinVersion",type=string,JSONPath=`.spec.minVersion`
+// +kubebuilder:printcolumn:name="MaxVersion",type=string,JSONPath=`.spec.maxVersion`
 
 // TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
 // More info: https://doc.traefik.io/traefik/v3.2/https/tls/#tls-options

@@ -14,7 +14,14 @@ spec:
     singular: tlsoption
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.minVersion
+      name: MinVersion
+      type: string
+    - jsonPath: .spec.maxVersion
+      name: MaxVersion
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: |-
@@ -112,3 +119,4 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
