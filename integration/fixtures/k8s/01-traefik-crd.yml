@@ -374,6 +374,7 @@ spec:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
+                      Deprecated: this reference is not needed.
                     properties:
                       name:
                         description: |-
@@ -629,6 +630,7 @@ spec:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
+                      Deprecated: this reference is not needed.
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik

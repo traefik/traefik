@@ -64,6 +64,7 @@ type TLS struct {
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
+	// Deprecated: this reference is not needed.
 	Store *TLSStoreRef `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
