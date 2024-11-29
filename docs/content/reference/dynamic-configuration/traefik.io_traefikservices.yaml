@@ -124,6 +124,10 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          enum:
+                          - http
+                          - https
+                          - h2c
                           type: string
                         serversTransport:
                           description: |-
@@ -150,6 +154,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -162,11 +170,14 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -218,6 +229,10 @@ spec:
                     description: |-
                       Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                       It defaults to https when Kubernetes Service port is 443, http otherwise.
+                    enum:
+                    - http
+                    - https
+                    - h2c
                     type: string
                   serversTransport:
                     description: |-
@@ -244,6 +259,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -255,11 +274,14 @@ spec:
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
                       RoundRobin is the only supported value at the moment.
+                    enum:
+                    - RoundRobin
                     type: string
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object
                       (and to be precise, one that embeds a Weighted Round Robin).
+                    minimum: 0
                     type: integer
                 required:
                 - name
@@ -327,6 +349,10 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
+                          enum:
+                          - http
+                          - https
+                          - h2c
                           type: string
                         serversTransport:
                           description: |-
@@ -353,6 +379,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -365,11 +395,14 @@ spec:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             RoundRobin is the only supported value at the moment.
+                          enum:
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -394,6 +427,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
