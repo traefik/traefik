@@ -183,7 +183,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 {
+	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
 		return nil, errNoAvailableServer
 	}
 
