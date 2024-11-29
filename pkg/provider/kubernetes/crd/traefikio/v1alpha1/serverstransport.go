@@ -8,6 +8,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="ServerName",type=string,JSONPath=`.spec.serverName`
 
 // ServersTransport is the CRD implementation of a ServersTransport.
 // If no serversTransport is specified, the default@internal will be used.
