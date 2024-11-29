@@ -67,6 +67,7 @@ type ErrorPage struct {
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
+	// +kubebuilder:validation:items:Pattern=`^[-0-9,]+$`
 	Status []string `json:"status,omitempty"`
 	// StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
 	// For example: "418": 404 or "410-418": 404
@@ -88,10 +89,14 @@ type CircuitBreaker struct {
 	// Expression is the condition that triggers the tripped state.
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
 	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
 	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
 	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
 	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
@@ -207,9 +212,11 @@ type RateLimit struct {
 	Average *int64 `json:"average,omitempty"`
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
+	// +kubebuilder:validation:XIntOrString
 	Period *intstr.IntOrString `json:"period,omitempty"`
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
+	// +kubebuilder:validation:Minimum=0
 	Burst *int64 `json:"burst,omitempty"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
@@ -251,6 +258,8 @@ type Retry struct {
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
 }
 
