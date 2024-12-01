@@ -13,18 +13,23 @@ kind: ConformanceReport
 mode: default
 profiles:
 - core:
-    result: success
+    failedTests:
+    - GatewayInvalidTLSConfiguration
+    result: failure
     statistics:
-      Failed: 0
-      Passed: 12
+      Failed: 1
+      Passed: 11
       Skipped: 0
   name: GATEWAY-GRPC
-  summary: Core tests succeeded.
+  summary: Core tests failed with 1 test failures.
 - core:
-    result: success
+    failedTests:
+    - GatewayInvalidTLSConfiguration
+    - HTTPRouteWeight
+    result: failure
     statistics:
-      Failed: 0
-      Passed: 33
+      Failed: 2
+      Passed: 31
       Skipped: 0
   extended:
     result: success
@@ -56,12 +61,14 @@ profiles:
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestTimeout
   name: GATEWAY-HTTP
-  summary: Core tests succeeded. Extended tests succeeded.
+  summary: Core tests failed with 2 test failures. Extended tests succeeded.
 - core:
-    result: success
+    failedTests:
+    - GatewayInvalidTLSConfiguration
+    result: failure
     statistics:
-      Failed: 0
-      Passed: 11
+      Failed: 1
+      Passed: 10
       Skipped: 0
   name: GATEWAY-TLS
-  summary: Core tests succeeded.
+  summary: Core tests failed with 1 test failures.

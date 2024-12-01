@@ -44,6 +44,8 @@ type TraefikServiceSpec struct {
 	Weighted *WeightedRoundRobin `json:"weighted,omitempty"`
 	// Mirroring defines the Mirroring service configuration.
 	Mirroring *Mirroring `json:"mirroring,omitempty"`
+	// Failover defines the Failover service configuration.
+	Failover *Failover `json:"failover,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -85,4 +87,13 @@ type WeightedRoundRobin struct {
 	// Sticky defines whether sticky sessions are enabled.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
+}
+
+// Failover holds the Failover configuration.
+type Failover struct {
+	// MainService defines the service to which requests will be forwarded by default. A valid and functional healtcheck must be enabled on the service.
+	MainService LoadBalancerSpec `json:"mainService,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	// Fallback service defines service to which requests will be forwarded in case the main service becomes unreachable.
+	FallbackService LoadBalancerSpec     `json:"fallbackService,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	HealthCheck     *dynamic.HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }

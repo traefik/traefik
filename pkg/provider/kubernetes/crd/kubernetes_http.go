@@ -217,6 +217,8 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
 	} else if tService.Spec.Mirroring != nil {
 		return c.buildMirroring(ctx, tService, id, conf)
+	} else if tService.Spec.Failover != nil {
+		return c.buildFailover(ctx, tService, id, conf)
 	}
 
 	return errors.New("unspecified service type")
@@ -310,6 +312,36 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 			Mirrors:     mirrorServices,
 			MirrorBody:  tService.Spec.Mirroring.MirrorBody,
 			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
+		},
+	}
+
+	return nil
+}
+
+// buildFailover creates the configuration for the failvoer service named id, and defined by tService.
+// It adds it to the given conf map.
+func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.MainService)
+	if err != nil {
+		log.Ctx(ctx).Err(err).Msgf("Failed to build main service")
+	}
+	if k8sService != nil {
+		conf[fullNameMain] = k8sService
+	}
+
+	fullNameFallback, k8sServiceFallback, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.FallbackService)
+	if err != nil {
+		return err
+	}
+	if k8sServiceFallback != nil {
+		conf[fullNameFallback] = k8sServiceFallback
+	}
+
+	conf[id] = &dynamic.Service{
+		Failover: &dynamic.Failover{
+			Service:     fullNameMain,
+			Fallback:    fullNameFallback,
+			HealthCheck: tService.Spec.Failover.HealthCheck,
 		},
 	}
 
