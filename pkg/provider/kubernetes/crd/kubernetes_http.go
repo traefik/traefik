@@ -477,10 +477,6 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return nil, err
 	}
 
-	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
-	}
-
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
 			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, sanitizedName)
