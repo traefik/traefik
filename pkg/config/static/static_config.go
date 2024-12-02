@@ -3,6 +3,7 @@ package static
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -145,16 +146,18 @@ type TLSClientConfig struct {
 
 // API holds the API configuration.
 type API struct {
-	Insecure           bool `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	Dashboard          bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
-	Debug              bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
-	DisableDashboardAd bool `description:"Disable ad in the dashboard." json:"disableDashboardAd,omitempty" toml:"disableDashboardAd,omitempty" yaml:"disableDashboardAd,omitempty" export:"true"`
+	BasePath           string `description:"Defines the base path where the API and Dashboard will be exposed." json:"basePath,omitempty" toml:"basePath,omitempty" yaml:"basePath,omitempty" export:"true"`
+	Insecure           bool   `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Dashboard          bool   `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
+	Debug              bool   `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
+	DisableDashboardAd bool   `description:"Disable ad in the dashboard." json:"disableDashboardAd,omitempty" toml:"disableDashboardAd,omitempty" yaml:"disableDashboardAd,omitempty" export:"true"`
 	// TODO: Re-enable statistics
 	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (a *API) SetDefaults() {
+	a.BasePath = "/"
 	a.Dashboard = true
 }
 
@@ -297,6 +300,42 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
+	// Defines the default rule syntax for the Kubernetes Ingress Provider.
+	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
+	if c.Core != nil && c.Providers.KubernetesIngress != nil {
+		c.Providers.KubernetesIngress.DefaultRuleSyntax = c.Core.DefaultRuleSyntax
+	}
+
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
+			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableAllChecks instead.")
+
+			if resolver.ACME.DNSChallenge.Propagation == nil {
+				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
+			}
+
+			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
+		}
+
+		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
+			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeCheck instead.")
+
+			if resolver.ACME.DNSChallenge.Propagation == nil {
+				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
+			}
+
+			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
+		}
+	}
+
 	c.initACMEProvider()
 }
 
@@ -352,6 +391,10 @@ func (c *Configuration) ValidateConfiguration() error {
 		if c.Metrics.OTLP.GRPC != nil && c.Metrics.OTLP.GRPC.TLS != nil && c.Metrics.OTLP.GRPC.Insecure {
 			return errors.New("metrics OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}
+	}
+
+	if c.API != nil && !path.IsAbs(c.API.BasePath) {
+		return errors.New("API basePath must be a valid absolute path")
 	}
 
 	return nil

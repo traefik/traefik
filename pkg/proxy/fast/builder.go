@@ -68,7 +68,7 @@ func (r *ProxyBuilder) Update(newConfigs map[string]*dynamic.ServersTransport) {
 }
 
 // Build builds a new ReverseProxy with the given configuration.
-func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader bool) (http.Handler, error) {
+func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader, preservePath bool) (http.Handler, error) {
 	proxyURL, err := r.proxy(&http.Request{URL: targetURL})
 	if err != nil {
 		return nil, fmt.Errorf("getting proxy: %w", err)
@@ -79,18 +79,13 @@ func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader 
 		return nil, fmt.Errorf("getting ServersTransport: %w", err)
 	}
 
-	var responseHeaderTimeout time.Duration
-	if cfg.ForwardingTimeouts != nil {
-		responseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
-	}
-
 	tlsConfig, err := r.transportManager.GetTLSConfig(cfgName)
 	if err != nil {
 		return nil, fmt.Errorf("getting TLS config: %w", err)
 	}
 
 	pool := r.getPool(cfgName, cfg, tlsConfig, targetURL, proxyURL)
-	return NewReverseProxy(targetURL, proxyURL, r.debug, passHostHeader, responseHeaderTimeout, pool)
+	return NewReverseProxy(targetURL, proxyURL, r.debug, passHostHeader, preservePath, pool)
 }
 
 func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
@@ -106,9 +101,11 @@ func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport,
 
 	idleConnTimeout := 90 * time.Second
 	dialTimeout := 30 * time.Second
+	var responseHeaderTimeout time.Duration
 	if config.ForwardingTimeouts != nil {
 		idleConnTimeout = time.Duration(config.ForwardingTimeouts.IdleConnTimeout)
 		dialTimeout = time.Duration(config.ForwardingTimeouts.DialTimeout)
+		responseHeaderTimeout = time.Duration(config.ForwardingTimeouts.ResponseHeaderTimeout)
 	}
 
 	proxyDialer := newDialer(dialerConfig{
@@ -119,7 +116,7 @@ func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport,
 		ProxyURL:      proxyURL,
 	}, tlsConfig)
 
-	connPool := newConnPool(config.MaxIdleConnsPerHost, idleConnTimeout, func() (net.Conn, error) {
+	connPool := newConnPool(config.MaxIdleConnsPerHost, idleConnTimeout, responseHeaderTimeout, func() (net.Conn, error) {
 		return proxyDialer.Dial("tcp", addrFromURL(targetURL))
 	})
 

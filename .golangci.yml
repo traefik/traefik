@@ -162,8 +162,6 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - execinquery # deprecated
-    - gomnd # deprecated
     - sqlclosecheck # not relevant (SQL)
     - rowserrcheck # not relevant (SQL)
     - cyclop # duplicate of gocyclo
@@ -286,4 +284,18 @@ issues:
     - path: pkg/types/metrics.go
       linters:
         - goconst
+    - path: pkg/tls/certificate.go
+      text: 'the methods of "Certificates" use pointer receiver and non-pointer receiver.'
+      linters:
+        - recvcheck
+    - path: pkg/plugins/middlewarewasm.go
+      text: 'the methods of "wasmMiddlewareBuilder" use pointer receiver and non-pointer receiver.'
+      linters:
+        - recvcheck
 
+output:
+  show-stats: true
+  sort-results: true
+  sort-order:
+    - linter
+    - file

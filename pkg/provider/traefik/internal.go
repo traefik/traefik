@@ -32,7 +32,7 @@ func New(staticCfg static.Configuration) *Provider {
 }
 
 // ThrottleDuration returns the throttle duration.
-func (i Provider) ThrottleDuration() time.Duration {
+func (i *Provider) ThrottleDuration() time.Duration {
 	return 0
 }
 

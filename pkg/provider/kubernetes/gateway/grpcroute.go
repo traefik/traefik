@@ -120,7 +120,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindGRPCRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 
 		matches := routeRule.Matches
 		if len(matches) == 0 {
@@ -166,7 +166,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(conf, routeKey, routeRule, route)
+				router.Service, serviceCondition = p.loadGRPCService(conf, routerName, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -267,7 +267,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 	}
 
 	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
+	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
 	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
 	if errCondition != nil {
@@ -278,20 +278,30 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 }
 
 func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, routerName string, filters []gatev1.GRPCRouteFilter) ([]string, error) {
-	middlewares := make(map[string]*dynamic.Middleware)
+	type namedMiddleware struct {
+		Name   string
+		Config *dynamic.Middleware
+	}
+
+	var middlewares []namedMiddleware
 	for i, filter := range filters {
 		name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
 		switch filter.Type {
 		case gatev1.GRPCRouteFilterRequestHeaderModifier:
-			middlewares[name] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createRequestHeaderModifier(filter.RequestHeaderModifier),
+			})
 
 		case gatev1.GRPCRouteFilterExtensionRef:
 			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
 			if err != nil {
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
-
-			middlewares[name] = middleware
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
+			})
 
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -303,12 +313,11 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	}
 
 	var middlewareNames []string
-	for name, middleware := range middlewares {
-		if middleware != nil {
-			conf.HTTP.Middlewares[name] = middleware
+	for _, m := range middlewares {
+		if m.Config != nil {
+			conf.HTTP.Middlewares[m.Name] = m.Config
 		}
-
-		middlewareNames = append(middlewareNames, name)
+		middlewareNames = append(middlewareNames, m.Name)
 	}
 
 	return middlewareNames, nil

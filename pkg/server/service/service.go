@@ -42,8 +42,13 @@ const (
 
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
-	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
+	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
 	Update(configs map[string]*dynamic.ServersTransport)
+}
+
+// ServiceBuilder is a Service builder.
+type ServiceBuilder interface {
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
 }
 
 // Manager The service manager.
@@ -52,6 +57,7 @@ type Manager struct {
 	observabilityMgr *middleware.ObservabilityMgr
 	transportManager httputil.TransportManager
 	proxyBuilder     ProxyBuilder
+	serviceBuilders  []ServiceBuilder
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -60,12 +66,13 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder, serviceBuilders ...ServiceBuilder) *Manager {
 	return &Manager{
 		routinePool:      routinePool,
 		observabilityMgr: observabilityMgr,
 		transportManager: transportManager,
 		proxyBuilder:     proxyBuilder,
+		serviceBuilders:  serviceBuilders,
 		services:         make(map[string]http.Handler),
 		configs:          configs,
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
@@ -83,6 +90,18 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	handler, ok := m.services[serviceName]
 	if ok {
 		return handler, nil
+	}
+
+	// Must be before we get configs to handle services without config.
+	for _, builder := range m.serviceBuilders {
+		handler, err := builder.BuildHTTP(rootCtx, serviceName)
+		if err != nil {
+			return nil, err
+		}
+		if handler != nil {
+			m.services[serviceName] = handler
+			return handler, nil
+		}
 	}
 
 	conf, ok := m.configs[serviceName]
@@ -338,7 +357,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
 		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
-		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, flushInterval)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}

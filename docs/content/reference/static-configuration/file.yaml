@@ -330,6 +330,7 @@ providers:
       name0: foobar
       name1: foobar
 api:
+  basePath: foobar
   insecure: true
   dashboard: true
   debug: true
@@ -499,10 +500,15 @@ certificatesResolvers:
       caServerName: foobar
       dnsChallenge:
         provider: foobar
-        delayBeforeCheck: 42s
         resolvers:
           - foobar
           - foobar
+        propagation:
+          disableChecks: true
+          disableANSChecks: true
+          requireAllRNS: true
+          delayBeforeChecks: 42s
+        delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
@@ -526,10 +532,15 @@ certificatesResolvers:
       caServerName: foobar
       dnsChallenge:
         provider: foobar
-        delayBeforeCheck: 42s
         resolvers:
           - foobar
           - foobar
+        propagation:
+          disableChecks: true
+          disableANSChecks: true
+          requireAllRNS: true
+          delayBeforeChecks: 42s
+        delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
@@ -576,6 +587,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+  abortOnPluginFailure: true
   fastProxy:
     debug: true
   kubernetesGateway: true
