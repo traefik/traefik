@@ -16,11 +16,10 @@ providers:
 
 ```toml tab="File (TOML)"
 [providers.nomad]
-  [providers.nomad.endpoint]
 ```
 
 ```bash tab="CLI"
---providers.nomad.endpoint.address=true
+--providers.nomad=true
 ```
 
 Attaching tags to services:
@@ -54,10 +53,10 @@ service {
 | `providers.nomad.endpoint.address` | Defines the Address of the Nomad server. | `http://127.0.0.1:4646`  | No   |
 | `providers.nomad.endpoint.token` | Defines a per-request ACL token if Nomad ACLs are enabled. See [here](#token) for more information | ""  | No   |
 | `providers.nomad.endpoint.endpointWaitTime` | Defines a duration for which a `watch` can block. If not provided, the agent default values will be used. | ""  | No   |
-| `providers.nomad.endpoint.tls` | Defines the TLS configuration used for the secure connection to the Nomad APi.  |  N/A   | No   |
-| `providers.nomad.endpoint.tls.ca` | Defines the path to the certificate authority used for the secure connection to the Nomad API, it defaults to the system bundle.  |  N/A   | No   |
-| `providers.nomad.endpoint.tls.cert` | Defines the path to the public certificate used for the secure connection to the Nomad API. When using this option, setting the `key` option is required. |  N/A   | Yes   |
-| `providers.nomad.endpoint.tls.key` | Defines the path to the private key used for the secure connection to the Nomad API. When using this option, setting the `cert` option is required. |  N/A   | Yes   |
+| `providers.nomad.endpoint.tls` | Defines the TLS configuration used for the secure connection to the Nomad APi.  |     | No   |
+| `providers.nomad.endpoint.tls.ca` | Defines the path to the certificate authority used for the secure connection to the Nomad API, it defaults to the system bundle.  |     | No   |
+| `providers.nomad.endpoint.tls.cert` | Defines the path to the public certificate used for the secure connection to the Nomad API. When using this option, setting the `key` option is required. |     | Yes   |
+| `providers.nomad.endpoint.tls.key` | Defines the path to the private key used for the secure connection to the Nomad API. When using this option, setting the `cert` option is required. |     | Yes   |
 | `providers.nomad.endpoint.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by Nomad when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
 ### `namespaces`

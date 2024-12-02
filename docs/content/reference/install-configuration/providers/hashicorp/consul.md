@@ -19,13 +19,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consul.namespaces=true
-```
-
-Attaching tags to services
-
-```yaml
-- traefik.http.routers.my-router.rule=Host(`example.com`)
+--providers.consul=true
 ```
 
 ## Configuration Options

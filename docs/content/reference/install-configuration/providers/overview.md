@@ -64,7 +64,7 @@ Below is the list of the currently supported providers in Traefik.
 | [Etcd](./kv/etcd.md)                                         | KV           | KV                   | `etcd`              |
 | [ZooKeeper](./kv/zk.md)                                      | KV           | KV                   | `zookeeper`         |
 | [Redis](./kv/redis.md)                                       | KV           | KV                   | `redis`             |
-| [HTTP](./others/http.md)                                     | Manual       | JSON format          | `http`              |
+| [HTTP](./others/http.md)                                     | Manual       | JSON/YAML format          | `http`              |
 
 !!! info "More Providers"
 
@@ -123,35 +123,15 @@ spec:
 ```
 
 ```yaml tab="Ingress"
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: add-foo-prefix
-  namespace: appspace
-spec:
-  addPrefix:
-    prefix:
-      - /foo
-
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress
   namespace: appspace
   annotations:
-    # referencing a middleware from Kubernetes CRD provider: 
-    # <middleware-namespace>-<middleware-name>@kubernetescrd
-    "traefik.ingress.kubernetes.io/router.middlewares": appspace-add-foo-prefix@kubernetescrd
+    "traefik.ingress.kubernetes.io/router.middlewares": add-foo-prefix@file
 spec:
-  # ... regular ingress definition
 ```
-
-<!--
-TODO (document TCP VS HTTP dynamic configuration)
--->
-
-## Restrict the Scope of Service Discovery
 
 By default, Traefik creates routes for all detected containers.
 

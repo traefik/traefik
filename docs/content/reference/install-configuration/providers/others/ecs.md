@@ -19,7 +19,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.ec=true
+--providers.ecs=true
 ```
 
 ## Configuration Options

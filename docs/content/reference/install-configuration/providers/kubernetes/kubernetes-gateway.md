@@ -43,30 +43,24 @@ You can enable the `kubernetesGateway` provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  kubernetesGateway:
-    namespaces:
-    - "default"
-    - "production"
-    # ...
+  kubernetesGateway: {}
+  # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesGateway]
-  namespaces = ["default", "production"]
-  # ...
+# ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesgateway.namespaces=default,production
+--providers.kubernetesgateway=true
 ```
 
 ```yaml tab="Helm Chart Values"
 ## Values file
 providers:
-  kubernetesIngress:
-    namespaces:
-      - default
-      - production
+  kubernetesGateway:
+    enabled: true
 ```
 
 ## Configuration Options

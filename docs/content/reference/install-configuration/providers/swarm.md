@@ -59,10 +59,9 @@ services:
 | `providers.swarm.watch` | Instructs Traefik to watch Docker events or not. |  True   | No   |
 | `providers.swarm.constraints` | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  |  ""   | No   |
 | `providers.swarm.allowEmptyServices` |  Instructs the provider to create any [servers load balancer](../../../routing/services/index.md#servers-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers. |  false   | No   |
-| `providers.swarm.tls` | Defines the TLS configuration used for the secure connection to Docker.  |  N/A   | No   |
-| `providers.swarm.tls.ca` | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.  |  N/A   | No   |
-| `providers.swarm.tls.cert` | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required. |  N/A   | Yes   |
-| `providers.swarm.tls.key` | Defines the path to the private key used for the secure connection to Docker. When using this option, setting the `cert` option is required. |  N/A   | Yes   |
+| `providers.swarm.tls.ca` | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.  |     | No   |
+| `providers.swarm.tls.cert` | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required. |     | Yes   |
+| `providers.swarm.tls.key` | Defines the path to the private key used for the secure connection to Docker. When using this option, setting the `cert` option is required. |     | Yes   |
 | `providers.swarm.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by the Docker server when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
 ### `endpoint`

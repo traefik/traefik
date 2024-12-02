@@ -19,7 +19,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.etcd.endpoints=true
+--providers.etcd=true
 ```
 
 ## Configuration Options 
@@ -31,10 +31,10 @@ providers:
 | `providers.etcd.rootKey` | Defines the root key for the configuration. |  `traefik`     | Yes   |
 | `providers.etcd.username` | Defines a username with which to connect to etcd. |  ""   | No   |
 | `providers.etcd.password` | Defines a password for connecting to etcd. |  ""    | No   |
-| `providers.etcd.tls` | Defines the TLS configuration used for the secure connection to etcd. |  N/A    | No   |
-| `providers.etcd.tls.ca` | Defines the path to the certificate authority used for the secure connection to etcd, it defaults to the system bundle.  |  N/A   | No   |
-| `providers.etcd.tls.cert` | Defines the path to the public certificate used for the secure connection to etcd. When using this option, setting the `key` option is required. |  N/A   | Yes   |
-| `providers.etcd.tls.key` | Defines the path to the private key used for the secure connection to etcd. When using this option, setting the `cert` option is required. |  N/A   | Yes   |
+| `providers.etcd.tls` | Defines the TLS configuration used for the secure connection to etcd. |    | No   |
+| `providers.etcd.tls.ca` | Defines the path to the certificate authority used for the secure connection to etcd, it defaults to the system bundle.  |   | No   |
+| `providers.etcd.tls.cert` | Defines the path to the public certificate used for the secure connection to etcd. When using this option, setting the `key` option is required. |  | Yes   |
+| `providers.etcd.tls.key` | Defines the path to the private key used for the secure connection to etcd. When using this option, setting the `cert` option is required. |   | Yes   |
 | `providers.etcd.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by etcd when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
 ## Routing Configuration

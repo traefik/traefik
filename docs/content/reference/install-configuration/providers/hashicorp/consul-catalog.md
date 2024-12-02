@@ -22,7 +22,7 @@ providers:
 --providers.consulcatalog=true
 ```
 
-Attaching tags to services
+Attaching tags to services:
 
 ```yaml
 - traefik.http.routers.my-router.rule=Host(`example.com`)
@@ -55,10 +55,9 @@ Attaching tags to services
 | `providers.consulCatalog.endpoint.httpAuth.username` | Defines the username to use for HTTP Basic Authentication. |  ""    | no   |
 | `providers.consulCatalog.endpoint.httpAuth.password` | Defines the password to use for HTTP Basic Authentication. |  ""    | no   |
 | `providers.consulCatalog.strictChecks` | Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/services/usage/checks#define-initial-health-check-status) are allowed to take on traffic. |  "passing,warning"    | no   |
-| `providers.consulCatalog.tls` | Defines the TLS configuration used for the secure connection to Consul Calatog  |  N/A   | No   |
-| `providers.consulCatalog.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul Calatog, it defaults to the system bundle.  |  N/A   | No   |
-| `providers.consulCatalog.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul Calatog. When using this option, setting the `key` option is required. |  N/A   | Yes   |
-| `providers.consulCatalog.tls.key` | Defines the path to the private key used for the secure connection to Consul Catalog. When using this option, setting the `cert` option is required. |  N/A   | Yes   |
+| `providers.consulCatalog.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul Calatog, it defaults to the system bundle.  |     | No   |
+| `providers.consulCatalog.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul Calatog. When using this option, setting the `key` option is required. |    | Yes   |
+| `providers.consulCatalog.tls.key` | Defines the path to the private key used for the secure connection to Consul Catalog. When using this option, setting the `cert` option is required. |    | Yes   |
 | `providers.consulCatalog.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by Consul Catalog when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 | `providers.consulCatalog.watch` | When set to `true`, watches for Consul changes ([Consul watches checks](https://www.consul.io/docs/dynamic-app-config/watches#checks)). | false   | No   |
 

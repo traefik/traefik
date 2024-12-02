@@ -14,28 +14,22 @@ You can enable the `kubernetesIngress` provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  kubernetesIngress:
-    namespaces:
-      - "default"
-      - "production"
+  kubernetesIngress: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
-  namespaces = ["default", "production"]
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.namespaces=default,production
+--providers.kubernetesingress=true
 ```
 
 ```yaml tab="Helm Chart Values"
 ## Values file
 providers:
   kubernetesIngress:
-    namespaces:
-      - "default"
-      - "production"
+    enabled: true
 ```
 
 The provider then watches for incoming ingresses events, such as the example below,

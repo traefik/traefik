@@ -9,7 +9,7 @@ When using KubernetesCRD as a provider,
 Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
 Traefik Custom Resource Definitions are [listed below](#list-of-resources).
 
-When Traefik is installed using the Helm Chart, by default, the provider `KubernetesCRD` is enabled.
+When Traefik is installed using the Helm Chart, by default, the provider `kubernetesCRD` is enabled.
 
 ## Requirements
 
@@ -32,24 +32,22 @@ You can enable the `kubernetesCRD` provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  kubernetesCRD:
-    allowCrossNamespace: true
+  kubernetesCRD: {}
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  allowCrossNamespace = true
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.allowCrossNamespace=true
+--providers.kubernetescrd=true
 ```
 
 ```yaml tab="Helm Chart Values"
 ## Values file
 providers:
   kubernetesCRD:
-    allowCrossNamespace: true
+    enabled: true
 ```
 
 ## Configuration Options
@@ -87,19 +85,19 @@ Specifically, it may be set to the URL used by `kubectl proxy` to connect to a K
 
 ```yaml tab="File (YAML)"
 providers:
-  kubernetesIngress:
+  kubernetesCRD:
     endpoint: "http://localhost:8080"
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.kubernetesIngress]
+[providers.kubernetesCRD]
   endpoint = "http://localhost:8080"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.endpoint=http://localhost:8080
+--providers.kubernetesCRD.endpoint=http://localhost:8080
 ```
 
 ## Routing Configuration

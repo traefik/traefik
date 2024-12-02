@@ -356,9 +356,9 @@ Traefik Proxy follows [official OpenTelemetry semantic conventions v1.23.1](http
 
 #### HTTP Server
 
-| Metr     | Type      | [Labels](#labels)       | Description   |
+| Metric     | Type      | [Labels](#labels)       | Description   |
 |----------|-----------|-------------------------|------------------|
-| http.server.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
+| `http.server.request.duration`	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
 
 ##### Labels
 
@@ -379,7 +379,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 | Metric    | Type      | [Labels](#labels)    | Description  |
 |-------------------------------|-----------|-----------------|--------|
-| http.client.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP client requests  |
+| `http.client.request.duration`	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP client requests  |
 
 ##### Labels
 
