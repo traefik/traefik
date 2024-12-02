@@ -644,7 +644,7 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 			matcher = "Path"
 		}
 
-		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
+		rules = append(rules, buildRule(matcher, pa.Path))
 	}
 
 	rt.Rule = strings.Join(rules, " && ")
@@ -790,45 +790,6 @@ func makeRouterKeyWithHash(key, rule string) (string, error) {
 	return dupKey, nil
 }
 
-func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
-	var rules []string
-	if len(rule.Host) > 0 {
-		rules = []string{buildHostRule(rule.Host)}
-	}
-
-	if len(pa.Path) > 0 {
-		matcher := defaultPathMatcher
-
-		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == netv1.PathTypeImplementationSpecific {
-			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
-				matcher = rtConfig.Router.PathMatcher
-			}
-		} else if *pa.PathType == netv1.PathTypeExact {
-			matcher = "Path"
-		}
-
-		rules = append(rules, buildRule(matcher, pa.Path))
-	}
-
-	rt := &dynamic.Router{
-		Rule:    strings.Join(rules, " && "),
-		Service: serviceName,
-	}
-
-	if rtConfig != nil && rtConfig.Router != nil {
-		rt.RuleSyntax = rtConfig.Router.RuleSyntax
-		rt.Priority = rtConfig.Router.Priority
-		rt.EntryPoints = rtConfig.Router.EntryPoints
-		rt.Middlewares = rtConfig.Router.Middlewares
-
-		if rtConfig.Router.TLS != nil {
-			rt.TLS = rtConfig.Router.TLS
-		}
-	}
-
-	return rt
-}
-
 func buildRule(matcher string, path string) string {
 	if matcher == "PathPrefix" {
 		// We want to keep the behavior same as https://kubernetes.io/docs/concepts/services-networking/ingress/#examples.
@@ -842,6 +803,8 @@ func buildRule(matcher string, path string) string {
 	return fmt.Sprintf("%s(`%s`)", matcher, path)
 }
 
+// buildPrefixMatchRegex returns a regex that matches the given path and any subpaths.
+// For example, if path is "/v1", the regex will match "/v1" and "/v1/anything", but not "/v12".
 func buildPrefixMatchRegex(path string) string {
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf(prefixMatchRegexTemplate, regexp.QuoteMeta(path))
