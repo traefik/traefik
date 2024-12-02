@@ -13,15 +13,17 @@ You can enable the HTTP provider as detailed below:
 
 ```yaml tab="File (YAML)"
 providers:
-  http: {}
+  http:
+    endpoint: "http://127.0.0.1:9000/api"
 ```
 
 ```toml tab="File (TOML)"
 [providers.http]
+  endpoint = "http://127.0.0.1:9000/api"
 ```
 
 ```bash tab="CLI"
---providers.http=true
+--providers.http.endpoint=http://127.0.0.1:9000/api
 ```
 
 ## Configuration Options
