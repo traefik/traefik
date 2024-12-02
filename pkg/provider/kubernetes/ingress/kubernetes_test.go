@@ -3,8 +3,10 @@ package ingress
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -2034,6 +2036,97 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestPrefixMatchRegex(t *testing.T) {
+	tests := []struct {
+		path        string
+		requestPath string
+		match       bool
+	}{ // The tests are taken from https://kubernetes.io/docs/concepts/services-networking/ingress/#examples
+		{
+			path:        "/foo",
+			requestPath: "/foo",
+			match:       true,
+		},
+		{
+			path:        "/foo",
+			requestPath: "/foo/",
+			match:       true,
+		},
+		{
+			path:        "/foo/",
+			requestPath: "/foo",
+			match:       true,
+		},
+		{
+			path:        "/foo/",
+			requestPath: "/foo/",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bb",
+			requestPath: "/aaa/bbb",
+			match:       false,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbb",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb/",
+			requestPath: "/aaa/bbb",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbb/",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbb/ccc",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbbxyz",
+			match:       false,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbbxyz",
+			match:       false,
+		},
+		{
+			path:        "/",
+			requestPath: "/aaa/ccc",
+			match:       true,
+		},
+		{
+			path:        "/aaa",
+			requestPath: "/aaa/ccc",
+			match:       true,
+		},
+		{
+			path:        "/...",
+			requestPath: "/aaa",
+			match:       false,
+		},
+		{
+			path:        "/...",
+			requestPath: "/.../",
+			match:       true,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("Prefix match case #%d", i), func(t *testing.T) {
+			re := regexp.MustCompile(buildPrefixMatchRegex(tt.path))
+			assert.Equalf(t, tt.match, re.MatchString(tt.requestPath), "Kubernetes prefix matching path=%s, requestPath=%s incorrect", tt.path, tt.requestPath)
 		})
 	}
 }

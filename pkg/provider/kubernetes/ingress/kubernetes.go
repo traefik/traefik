@@ -37,6 +37,7 @@ const (
 	traefikDefaultIngressClass           = "traefik"
 	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
 	defaultPathMatcher                   = "PathPrefix"
+	prefixMatchRegexTemplate             = "^%s(|/.*)$"
 )
 
 // Provider holds configurations of the provider.
@@ -643,7 +644,7 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 			matcher = "Path"
 		}
 
-		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
+		rules = append(rules, buildRule(matcher, pa.Path))
 	}
 
 	rt.Rule = strings.Join(rules, " && ")
@@ -787,6 +788,26 @@ func makeRouterKeyWithHash(key, rule string) (string, error) {
 	dupKey := fmt.Sprintf("%s-%.10x", key, h.Sum(nil))
 
 	return dupKey, nil
+}
+
+func buildRule(matcher string, path string) string {
+	if matcher == "PathPrefix" {
+		// We want to keep the behavior same as https://kubernetes.io/docs/concepts/services-networking/ingress/#examples.
+		// i.e. /v12 should not match /v1 , but traefik's PathPrefix matcher works as a prefix match not the
+		// element by element match as Kubernetes Ingress, so we need to use PathRegexp as a workaround.
+		// Check out TestPrefixMatchRegex() for more examples.
+		path = strings.TrimRight(path, "/")
+		return "PathRegexp(`" + buildPrefixMatchRegex(path) + "`)"
+	}
+
+	return fmt.Sprintf("%s(`%s`)", matcher, path)
+}
+
+// buildPrefixMatchRegex returns a regex that matches the given path and any subpaths.
+// For example, if path is "/v1", the regex will match "/v1" and "/v1/anything", but not "/v12".
+func buildPrefixMatchRegex(path string) string {
+	path = strings.TrimSuffix(path, "/")
+	return fmt.Sprintf(prefixMatchRegexTemplate, regexp.QuoteMeta(path))
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
