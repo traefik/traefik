@@ -1237,8 +1237,6 @@ entryPoints:
 --entryPoints.foo.udp.timeout=10s
 ```
 
-{!traefik-for-business-applications.md!}
-
 ## Systemd Socket Activation
 
 Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
@@ -1260,3 +1258,5 @@ systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypo
 !!! warning "Docker Support"
 
     Socket activation is not supported by Docker but works with Podman containers.
+
+{!traefik-for-business-applications.md!}
