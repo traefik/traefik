@@ -220,6 +220,18 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
 }
 
+func TestBalancerAllServersFenced(t *testing.T) {
+	balancer := New(nil, false)
+
+	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(1), true)
+	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(1), true)
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
+}
+
 func TestSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
