@@ -547,6 +547,7 @@ accesslog:
 ```bash tab="CLI"
 --accesslog.otlp.grpc.endpoint=localhost:4317
 ```
+
 #### `insecure`
 
 _Optional, Default=false_

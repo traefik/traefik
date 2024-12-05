@@ -422,6 +422,7 @@ log:
 ```bash tab="CLI"
 --log.otlp.grpc.endpoint=localhost:4317
 ```
+
 #### `insecure`
 
 _Optional, Default=false_
