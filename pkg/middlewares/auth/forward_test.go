@@ -711,6 +711,36 @@ func TestForwardAuthTracing(t *testing.T) {
 	}
 }
 
+func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
+	relativeUrl := "/index.html"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Location", relativeUrl)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	}))
+	t.Cleanup(server.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address: server.URL,
+	}
+	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+
+	assert.Equal(t, relativeUrl, res.Header.Get("Location"))
+}
+
 type mockTracer struct {
 	embedded.Tracer
 

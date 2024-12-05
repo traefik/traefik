@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -55,6 +56,15 @@ type forwardAuth struct {
 	headerField              string
 	forwardBody              bool
 	maxBodySize              int64
+}
+
+func Location(r *http.Response) (*url.URL, error) {
+	lv := r.Header.Get("Location")
+	if lv == "" {
+		return nil, http.ErrNoLocation
+	}
+
+	return url.Parse(lv)
 }
 
 // NewForward creates a forward auth middleware.
@@ -223,7 +233,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
 		// Grab the location header, if any.
-		redirectURL, err := forwardResponse.Location()
+		redirectURL, err := Location(forwardResponse)
 
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
