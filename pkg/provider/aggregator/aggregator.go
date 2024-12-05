@@ -1,209 +1,219 @@
-package aggregator
+package server
 
 import (
-	"context"
-	"time"
+	"slices"
 
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/file"
-	"github.com/traefik/traefik/v3/pkg/provider/traefik"
-	"github.com/traefik/traefik/v3/pkg/redactor"
-	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
-// throttled defines what kind of config refresh throttling the aggregator should
-// set up for a given provider.
-// If a provider implements throttled, the configuration changes it sends will be
-// taken into account no more often than the frequency inferred from ThrottleDuration().
-// If ThrottleDuration returns zero, no throttling will take place.
-// If throttled is not implemented, the throttling will be set up in accordance
-// with the global providersThrottleDuration option.
-type throttled interface {
-	ThrottleDuration() time.Duration
+func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
+	// TODO: see if we can use DeepCopies inside, so that the given argument is left
+	// untouched, and the modified copy is returned.
+	conf := dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			Models:            make(map[string]*dynamic.Model),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			Models:            make(map[string]*dynamic.TCPModel),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Stores:  make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+		},
+	}
+
+	var defaultTLSOptionProviders []string
+	var defaultTLSStoreProviders []string
+	for pvd, configuration := range configurations {
+		if configuration.HTTP != nil {
+			for routerName, router := range configuration.HTTP.Routers {
+				if len(router.EntryPoints) == 0 {
+					log.Debug().
+						Str(logs.RouterName, routerName).
+						Strs(logs.EntryPointName, defaultEntryPoints).
+						Msg("No entryPoint defined for this router, using the default one(s) instead")
+					router.EntryPoints = defaultEntryPoints
+				}
+
+				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
+			}
+			for middlewareName, middleware := range configuration.HTTP.Middlewares {
+				conf.HTTP.Middlewares[provider.MakeQualifiedName(pvd, middlewareName)] = middleware
+			}
+			for serviceName, service := range configuration.HTTP.Services {
+				conf.HTTP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
+			}
+			for modelName, model := range configuration.HTTP.Models {
+				conf.HTTP.Models[provider.MakeQualifiedName(pvd, modelName)] = model
+			}
+			for serversTransportName, serversTransport := range configuration.HTTP.ServersTransports {
+				conf.HTTP.ServersTransports[provider.MakeQualifiedName(pvd, serversTransportName)] = serversTransport
+			}
+		}
+
+		if configuration.TCP != nil {
+			for routerName, router := range configuration.TCP.Routers {
+				if len(router.EntryPoints) == 0 {
+					log.Debug().
+						Str(logs.RouterName, routerName).
+						Msgf("No entryPoint defined for this TCP router, using the default one(s) instead: %+v", defaultEntryPoints)
+					router.EntryPoints = defaultEntryPoints
+				}
+				conf.TCP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
+			}
+			for middlewareName, middleware := range configuration.TCP.Middlewares {
+				conf.TCP.Middlewares[provider.MakeQualifiedName(pvd, middlewareName)] = middleware
+			}
+			for serviceName, service := range configuration.TCP.Services {
+				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
+			}
+			for modelName, model := range configuration.TCP.Models {
+				conf.TCP.Models[provider.MakeQualifiedName(pvd, modelName)] = model
+			}
+			for serversTransportName, serversTransport := range configuration.TCP.ServersTransports {
+				conf.TCP.ServersTransports[provider.MakeQualifiedName(pvd, serversTransportName)] = serversTransport
+			}
+		}
+
+		if configuration.UDP != nil {
+			for routerName, router := range configuration.UDP.Routers {
+				conf.UDP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
+			}
+			for serviceName, service := range configuration.UDP.Services {
+				conf.UDP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
+			}
+		}
+
+		if configuration.TLS != nil {
+			for _, cert := range configuration.TLS.Certificates {
+				if slices.Contains(cert.Stores, tlsalpn01.ACMETLS1Protocol) && pvd != "tlsalpn.acme" {
+					continue
+				}
+
+				conf.TLS.Certificates = append(conf.TLS.Certificates, cert)
+			}
+
+			for key, store := range configuration.TLS.Stores {
+				if key != tls.DefaultTLSStoreName {
+					key = provider.MakeQualifiedName(pvd, key)
+				} else {
+					defaultTLSStoreProviders = append(defaultTLSStoreProviders, pvd)
+				}
+				conf.TLS.Stores[key] = store
+			}
+
+			for tlsOptionsName, options := range configuration.TLS.Options {
+				if tlsOptionsName != "default" {
+					tlsOptionsName = provider.MakeQualifiedName(pvd, tlsOptionsName)
+				} else {
+					defaultTLSOptionProviders = append(defaultTLSOptionProviders, pvd)
+				}
+
+				conf.TLS.Options[tlsOptionsName] = options
+			}
+		}
+	}
+
+	if len(defaultTLSStoreProviders) > 1 {
+		log.Error().Msgf("Default TLS Store defined in multiple providers: %v", defaultTLSStoreProviders)
+		delete(conf.TLS.Stores, tls.DefaultTLSStoreName)
+	}
+
+	if len(defaultTLSOptionProviders) == 0 {
+		conf.TLS.Options[tls.DefaultTLSConfigName] = tls.DefaultTLSOptions
+	} else if len(defaultTLSOptionProviders) > 1 {
+		log.Error().Msgf("Default TLS Options defined in multiple providers %v", defaultTLSOptionProviders)
+		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
+		// i.e. routers depending on this missing TLS option will fail to initialize as well.
+		delete(conf.TLS.Options, tls.DefaultTLSConfigName)
+	}
+
+	return conf
 }
 
-// maybeThrottledProvide returns the Provide method of the given provider,
-// potentially augmented with some throttling depending on whether and how the
-// provider implements the throttled interface.
-func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration) func(chan<- dynamic.Message, *safe.Pool) error {
-	providerThrottleDuration := defaultDuration
-	if throttled, ok := prd.(throttled); ok {
-		// per-provider throttling
-		providerThrottleDuration = throttled.ThrottleDuration()
-	}
+func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
+	if cfg.HTTP != nil && len(cfg.HTTP.Models) > 0 {
+		rts := make(map[string]*dynamic.Router)
 
-	if providerThrottleDuration == 0 {
-		// throttling disabled
-		return prd.Provide
-	}
+		for name, rt := range cfg.HTTP.Routers {
+			router := rt.DeepCopy()
 
-	return func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-		rc := newRingChannel()
-		pool.GoCtx(func(ctx context.Context) {
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case msg := <-rc.out():
-					configurationChan <- msg
-					time.Sleep(providerThrottleDuration)
+			if !router.DefaultRule && router.RuleSyntax == "" {
+				for _, model := range cfg.HTTP.Models {
+					router.RuleSyntax = model.DefaultRuleSyntax
+					break
 				}
 			}
-		})
 
-		return prd.Provide(rc.in(), pool)
-	}
-}
+			eps := router.EntryPoints
+			router.EntryPoints = nil
 
-// ProviderAggregator aggregates providers.
-type ProviderAggregator struct {
-	internalProvider          provider.Provider
-	fileProvider              provider.Provider
-	providers                 []provider.Provider
-	providersThrottleDuration time.Duration
-}
+			for _, epName := range eps {
+				m, ok := cfg.HTTP.Models[epName+"@internal"]
+				if ok {
+					cp := router.DeepCopy()
 
-// NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
-func NewProviderAggregator(conf static.Providers) *ProviderAggregator {
-	p := &ProviderAggregator{
-		providersThrottleDuration: time.Duration(conf.ProvidersThrottleDuration),
-	}
+					cp.EntryPoints = []string{epName}
 
-	if conf.File != nil {
-		p.quietAddProvider(conf.File)
-	}
+					if cp.TLS == nil {
+						cp.TLS = m.TLS
+					}
 
-	if conf.Docker != nil {
-		p.quietAddProvider(conf.Docker)
-	}
+					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
-	if conf.Swarm != nil {
-		p.quietAddProvider(conf.Swarm)
-	}
+					rtName := name
+					if len(eps) > 1 {
+						rtName = epName + "-" + name
+					}
+					rts[rtName] = cp
+				} else {
+					router.EntryPoints = append(router.EntryPoints, epName)
 
-	if conf.Rest != nil {
-		p.quietAddProvider(conf.Rest)
-	}
-
-	if conf.KubernetesIngress != nil {
-		p.quietAddProvider(conf.KubernetesIngress)
-	}
-
-	if conf.KubernetesCRD != nil {
-		p.quietAddProvider(conf.KubernetesCRD)
-	}
-
-	if conf.KubernetesGateway != nil {
-		p.quietAddProvider(conf.KubernetesGateway)
-	}
-
-	if conf.Ecs != nil {
-		p.quietAddProvider(conf.Ecs)
-	}
-
-	if conf.ConsulCatalog != nil {
-		for _, pvd := range conf.ConsulCatalog.BuildProviders() {
-			p.quietAddProvider(pvd)
+					rts[name] = router
+				}
+			}
 		}
+
+		cfg.HTTP.Routers = rts
 	}
 
-	if conf.Nomad != nil {
-		for _, pvd := range conf.Nomad.BuildProviders() {
-			p.quietAddProvider(pvd)
+	if cfg.TCP == nil || len(cfg.TCP.Models) == 0 {
+		return cfg
+	}
+
+	tcpRouters := make(map[string]*dynamic.TCPRouter)
+
+	for name, rt := range cfg.TCP.Routers {
+		router := rt.DeepCopy()
+
+		if router.RuleSyntax == "" {
+			for _, model := range cfg.TCP.Models {
+				router.RuleSyntax = model.DefaultRuleSyntax
+				break
+			}
 		}
+
+		tcpRouters[name] = router
 	}
 
-	if conf.Consul != nil {
-		for _, pvd := range conf.Consul.BuildProviders() {
-			p.quietAddProvider(pvd)
-		}
-	}
+	cfg.TCP.Routers = tcpRouters
 
-	if conf.Etcd != nil {
-		p.quietAddProvider(conf.Etcd)
-	}
-
-	if conf.ZooKeeper != nil {
-		p.quietAddProvider(conf.ZooKeeper)
-	}
-
-	if conf.Redis != nil {
-		p.quietAddProvider(conf.Redis)
-	}
-
-	if conf.HTTP != nil {
-		p.quietAddProvider(conf.HTTP)
-	}
-
-	return p
-}
-
-func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
-	err := p.AddProvider(provider)
-	if err != nil {
-		log.Error().Err(err).Msgf("Error while initializing provider %T", provider)
-	}
-}
-
-// AddProvider adds a provider in the providers map.
-func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
-	err := provider.Init()
-	if err != nil {
-		return err
-	}
-
-	switch provider.(type) {
-	case *file.Provider:
-		p.fileProvider = provider
-	case *traefik.Provider:
-		p.internalProvider = provider
-	default:
-		p.providers = append(p.providers, provider)
-	}
-
-	return nil
-}
-
-// Init the provider.
-func (p *ProviderAggregator) Init() error {
-	return nil
-}
-
-// Provide calls the provide method of every providers.
-func (p *ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	if p.fileProvider != nil {
-		p.launchProvider(configurationChan, pool, p.fileProvider)
-	}
-
-	for _, prd := range p.providers {
-		safe.Go(func() {
-			p.launchProvider(configurationChan, pool, prd)
-		})
-	}
-
-	// internal provider must be the last because we use it to know if all the providers are loaded.
-	// ConfigurationWatcher will wait for this requiredProvider before applying configurations.
-	if p.internalProvider != nil {
-		p.launchProvider(configurationChan, pool, p.internalProvider)
-	}
-
-	return nil
-}
-
-func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
-	jsonConf, err := redactor.RemoveCredentials(prd)
-	if err != nil {
-		log.Debug().Err(err).Msgf("Cannot marshal the provider configuration %T", prd)
-	}
-
-	log.Info().Msgf("Starting provider %T", prd)
-	log.Debug().RawJSON("config", []byte(jsonConf)).Msgf("%T provider configuration", prd)
-
-	if err := maybeThrottledProvide(prd, p.providersThrottleDuration)(configurationChan, pool); err != nil {
-		log.Error().Err(err).Msgf("Cannot start the provider %T", prd)
-		return
-	}
+	return cfg
 }
