@@ -530,7 +530,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
 
 ??? info "`forwardedHeaders.connection`"
-    
+
     As per RFC7230, Traefik respects the Connection options from the client request.
     By doing so, it removes any header field(s) listed in the request Connection header and the Connection header field itself when empty.
     The removal happens as soon as the request is handled by Traefik,

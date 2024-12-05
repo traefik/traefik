@@ -2,6 +2,7 @@ package server
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
@@ -156,7 +157,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 			router := rt.DeepCopy()
 
 			if !router.DefaultRule && router.RuleSyntax == "" {
-				for _, model := range cfg.HTTP.Models {
+				for modelName, model := range cfg.HTTP.Models {
+					// models cannot be provided by another provider than the internal one.
+					if !strings.HasSuffix(modelName, "@internal") {
+						continue
+					}
 					router.RuleSyntax = model.DefaultRuleSyntax
 					break
 				}

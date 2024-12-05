@@ -5,10 +5,10 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 
 # Traefik & Kubernetes with Gateway API
 
-The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/) 
+The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specification from the Kubernetes Special Interest Groups (SIGs).
 
-This provider supports Standard version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.0) of the Gateway API specification. 
+This provider supports Standard version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.0) of the Gateway API specification.
 
 It fully supports all HTTP core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
@@ -54,9 +54,9 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 ## Routing Configuration
 
-When using the Kubernetes Gateway API provider, Traefik uses the Gateway API CRDs to retrieve its routing configuration. 
-Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/), 
-and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Traefik documentation. 
+When using the Kubernetes Gateway API provider, Traefik uses the Gateway API CRDs to retrieve its routing configuration.
+Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/),
+and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Traefik documentation.
 
 ## Provider Configuration
 
