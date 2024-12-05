@@ -173,6 +173,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.name":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.secure":             "true",
+		"traefik.http.services.Service0.loadbalancer.sticky.cookie.path":               "/foobar",
 		"traefik.http.services.Service0.loadbalancer.serversTransport":                 "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name1":        "foobar",
@@ -673,6 +674,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Name:     "foobar",
 								Secure:   true,
 								HTTPOnly: false,
+								Path:     func(v string) *string { return &v }("/foobar"),
 							},
 						},
 						Servers: []dynamic.Server{
@@ -1195,6 +1197,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Cookie: &dynamic.Cookie{
 								Name:     "foobar",
 								HTTPOnly: true,
+								Path:     func(v string) *string { return &v }("/foobar"),
 							},
 						},
 						Servers: []dynamic.Server{
@@ -1432,6 +1435,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.MaxAge":             "0",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Path":               "/foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ServersTransport":                 "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
