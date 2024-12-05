@@ -58,7 +58,7 @@ ingressRoute:
   dashboard:
     enabled: true
     # Custom match rule with host domain
-    matchRule: Host(`traefik-dashboard.example.com`)
+    matchRule: Host(`traefik.example.com`)
     entryPoints: ["websecure"]
     # Add custom middlewares : authentication and redirection
     middlewares:
@@ -155,7 +155,7 @@ enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/
 
 | Field      | Description  | Default | Required |
 |:-----------|:---------------------------------|:--------|:---------|
-| `api` | Enable api/dashboard. If the option `api.dashboard` is set to true, this option is by default set to `true` too.| false     | No      |
+| `api` | Enable api/dashboard. When set to `true`, its sub option `api.dashboard` is also set to true.| false     | No      |
 | `api.dashboard` | Enable dashboard. | false      | No      |
 | `api.debug` | Enable additional endpoints for debugging and profiling. | false      | No      |
 | `api.disabledashboardad` | Disable the advertisement from the dashboard. | false      | No      |
@@ -197,30 +197,25 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 
 ## Dashboard
 
-The dashboard is available at the same location as the [API](../../operations/api.md) but on the path `/dashboard/` by default.
+The dashboard is available at the same location as the [API](../../operations/api.md), but by default on the path  `/dashboard/`.
 
 !!! note
 
-    - The trailing slash `/` in `/dashboard/` is mandatory.
-    This limitation can be mitigated using the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md)
+    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
+	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
-    - There is also a redirect of the path `/` to the path `/dashboard/`,
-    but one should not rely on that property as it is bound to change,
-    and it might make for confusing routing rules anyway.
+To securely access the dashboard, you need to define a routing configuration within Traefik. This involves setting up a router attached to the service `api@internal`, which allows you to:
 
-Then define a routing configuration on Traefik itself, with a router attached to the service `api@internal` to allow defining:
-
-- One or more security features through [middlewares](../../middlewares/overview.md)
-  like authentication ([basicAuth](../../middlewares/http/basicauth.md), [digestAuth](../../middlewares/http/digestauth.md),
+- Implement security features using [middlewares](../../middlewares/overview.md), such as authentication ([basicAuth](../../middlewares/http/basicauth.md), [digestAuth](../../middlewares/http/digestauth.md),
   [forwardAuth](../../middlewares/http/forwardauth.md)) or [allowlisting](../../middlewares/http/ipallowlist.md).
 
-- A [router rule](#dashboard-router-rule) for accessing the dashboard, through Traefik itself (sometimes referred to as "Traefik-ception").
+- Define a [router rule](#dashboard-router-rule) for accessing the dashboard through Traefik.
 
 ### Dashboard Router Rule
 
-The [router rule](../../routing/routers/index.md#rule) defined for Traefik must match the path prefixes `/api` and `/dashboard`.
-
-We recommend using a *Host Based rule* to match everything on the host domain, or to make sure that the defined rule captures both prefixes:
+To ensure proper access to the dashboard, the [router rule](../../routing/routers/index.md#rule) you define must match requests intended for the `/api` and `/dashboard` paths. 
+We recommend using either a *Host-based rule* to match all requests on the desired domain or explicitly defining a rule that includes both path prefixes. 
+Here are some examples:
 
 ```bash tab="Host Rule"
 # The dashboard can be accessed on http://traefik.example.com/dashboard/

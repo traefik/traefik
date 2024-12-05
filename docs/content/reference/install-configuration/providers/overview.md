@@ -92,7 +92,7 @@ http:
 Using the add-foo-prefix middleware from other providers:
 
 ```yaml tab="Docker & Swarm"
-your-container: #
+your-container:
   image: your-docker-image
 
   labels:

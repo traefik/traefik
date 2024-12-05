@@ -36,16 +36,16 @@ Attaching tags to services:
 | `providers.consulCatalog.refreshInterval` | Defines the polling interval.|  15s    | No   |
 | `providers.consulCatalog.prefix` | Defines the prefix for Consul Catalog tags defining Traefik labels.|  traefik    | yes   |
 | `providers.consulCatalog.requireConsistent` | Forces the read to be fully consistent. See [here](#requireconsistent) for more information.|  false    | yes   |
-| `providers.consulCatalog.exposedByDefault` | Expose Consul Catalog services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#restrict-the-scope-of-service-discovery)| true | no |
-| `providers.consulCatalog.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
+| `providers.consulCatalog.exposedByDefault` | Expose Consul Catalog services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#restrict-the-scope-of-service-discovery). | true | no |
+| `providers.consulCatalog.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
 | `providers.consulCatalog.connectAware` | Enable Consul Connect support. If set to `true`, Traefik will be enabled to communicate with Connect services.   | false   | No |
 | `providers.consulCatalog.connectByDefault` | Consider every service as Connect capable by default. If set to true, Traefik will consider every Consul Catalog service to be Connect capable by default. The option can be overridden on an instance basis with the traefik.consulcatalog.connect tag. | false   | No |
 | `providers.consulCatalog.serviceName` | Defines the name of the Traefik service in Consul Catalog. | "traefik"   | No |
 | `providers.consulCatalog.constraints` | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information. | ""   | No |
-| `providers.consulCatalog.namespaces` | Defines the namespaces to query. See [here](#namespaces) for more information |  ""     | no   |
+| `providers.consulCatalog.namespaces` | Defines the namespaces to query. See [here](#namespaces) for more information. |  ""     | no   |
 | `providers.consulCatalog.stale` | Instruct Traefik to use stale consistency for catalog reads. |  false    | no   |
 | `providers.consulCatalog.cache` | Instruct Traefik to use local agent caching for catalog reads. |  false    | no   |
-| `providers.consulCatalog.endpoint` | Defines the Consul server endpoint. |  N/A    | yes   |
+| `providers.consulCatalog.endpoint` | Defines the Consul server endpoint. |  -    | yes   |
 | `providers.consulCatalog.endpoint.address` | Defines the address of the Consul server. |  127.0.0.1:8500    | no   |
 | `providers.consulCatalog.endpoint.scheme` | Defines the URI scheme for the Consul server. |  ""   | no   |
 | `providers.consulCatalog.endpoint.datacenter` | Defines the datacenter to use. If not provided in Traefik, Consul uses the default agent datacenter. |  ""   | no   |
@@ -55,9 +55,9 @@ Attaching tags to services:
 | `providers.consulCatalog.endpoint.httpAuth.username` | Defines the username to use for HTTP Basic Authentication. |  ""    | no   |
 | `providers.consulCatalog.endpoint.httpAuth.password` | Defines the password to use for HTTP Basic Authentication. |  ""    | no   |
 | `providers.consulCatalog.strictChecks` | Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/services/usage/checks#define-initial-health-check-status) are allowed to take on traffic. |  "passing,warning"    | no   |
-| `providers.consulCatalog.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul Calatog, it defaults to the system bundle.  |     | No   |
-| `providers.consulCatalog.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul Calatog. When using this option, setting the `key` option is required. |    | Yes   |
-| `providers.consulCatalog.tls.key` | Defines the path to the private key used for the secure connection to Consul Catalog. When using this option, setting the `cert` option is required. |    | Yes   |
+| `providers.consulCatalog.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul Calatog, it defaults to the system bundle.  |  ""   | No   |
+| `providers.consulCatalog.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul Calatog. When using this option, setting the `key` option is required. | "" | Yes   |
+| `providers.consulCatalog.tls.key` | Defines the path to the private key used for the secure connection to Consul Catalog. When using this option, setting the `cert` option is required. | ""   | Yes   |
 | `providers.consulCatalog.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by Consul Catalog when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 | `providers.consulCatalog.watch` | When set to `true`, watches for Consul changes ([Consul watches checks](https://www.consul.io/docs/dynamic-app-config/watches#checks)). | false   | No   |
 

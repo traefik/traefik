@@ -12,8 +12,6 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
 
-Please check our dedicated [OTel docs](./metrics.md#open-telemetry) to learn more.
-
 ## Configuration Example
 
 To enable the tracing:
@@ -40,7 +38,7 @@ tracing: {}
 
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `tracing.addInternals` | Enables tracing for internal resources (e.g.: `ping@internals`). | false      | No      |
+| `tracing.addInternals` | Enables tracing for internal resources (e.g.: `ping@internal`). | false      | No      |
 | `tracing.serviceName` | Service name used in selected backend. | "traefik"      | No      |
 | `tracing.sampleRate` | The proportion of requests to trace, specified between 0.0 and 1.0. | 1.0      | No      |
 | `tracing.globalAttributes` | Applies a list of shared key:value attributes on all spans. | {}      | No      |
@@ -56,7 +54,7 @@ tracing: {}
 | `tracing.otlp.http.tls.insecureskipverify` |If `insecureSkipVerify` is `true`, the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.  | false | Yes      |
 | `tracing.otlp.grpc` | This instructs the exporter to send tracing to the OpenTelemetry Collector using gRPC. | false | No      |
 | `tracing.otlp.grpc.endpoint` | Address of the OpenTelemetry Collector to send tracing to.<br /> Format="`<host>:<port>`" | "localhost:4317"      | Yes      |
-| `tracing.otlp.grpc.headers` | Additional headers sent with tracing by the exporter to the OpenTelemetry Collector. |       | No      |
+| `tracing.otlp.grpc.headers` | Additional headers sent with tracing by the exporter to the OpenTelemetry Collector. |   {}    | No      |
 | `tracing.otlp.grpc.insecure` |Allows exporter to send tracing to the OpenTelemetry Collector without using a secured protocol.  | false | Yes      |
 | `tracing.otlp.grpc.tls.ca` | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. | ""  | No      |
 | `tracing.otlp.grpc.tls.cert` | Path to the public certificate used for the secure connection to the OpenTelemetry Collector. When using this option, setting the `key` option is required. | ""      | No      |

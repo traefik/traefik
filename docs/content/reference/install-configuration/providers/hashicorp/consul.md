@@ -27,16 +27,16 @@ providers:
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.consul.endpoints` | Defines the endpoint to access Consul. |  `127.0.0.1:8500`     | yes   |
-| `providers.consul.rootKey` | Defines the root key of the configuration. |  traefik     | yes   |
+| `providers.consul.endpoints` | Defines the endpoint to access Consul. |  "127.0.0.1:8500"     | yes   |
+| `providers.consul.rootKey` | Defines the root key of the configuration. |  "traefik"     | yes   |
 | `providers.consul.namespaces` | Defines the namespaces to query. See [here](#namespaces) for more information |  ""     | no   |
 | `providers.consul.username` | Defines a username to connect to Consul with. |  ""     | no   |
 | `providers.consul.password` | Defines a password with which to connect to Consul. |  ""     | no   |
 | `providers.consul.token` | Defines a token with which to connect to Consul. |  ""     | no   |
-| `providers.consul.tls` | Defines the TLS configuration used for the secure connection to Consul  |  N/A   | No   |
-| `providers.consul.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul, it defaults to the system bundle.  |  N/A   | No   |
-| `providers.consul.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul. When using this option, setting the `key` option is required. |  N/A   | Yes   |
-| `providers.consul.tls.key` | Defines the path to the private key used for the secure connection to Consul. When using this option, setting the `cert` option is required. |  N/A   | Yes   |
+| `providers.consul.tls` | Defines the TLS configuration used for the secure connection to Consul  |  -   | No   |
+| `providers.consul.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul, it defaults to the system bundle.  |  -   | Yes   |
+| `providers.consul.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul. When using this option, setting the `key` option is required. |  -  | Yes   |
+| `providers.consul.tls.key` | Defines the path to the private key used for the secure connection to Consul. When using this option, setting the `cert` option is required. |  -   | Yes   |
 | `providers.consul.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by Consul when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
 ### `namespaces`

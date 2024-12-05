@@ -5,7 +5,7 @@ description: "Automatic Certificate Management Environment using Let's Encrypt."
 
 ## Configuration Example
 
-Below is an example of a basic configuration for ACME in Traefik. See the [Let's Encrypt Section](#configuration-examples) for more advanced examples.
+Below is an example of a basic configuration for ACME in Traefik.
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -52,7 +52,7 @@ certificatesResolvers:
 ```
 
 ```yaml tab="Helm Chart Values"
-# Traefik entryPoints configuration for HTTP and HTTPS
+# Traefik entryPoints configuration for HTTP and HTTPS.
 entryPoints:
   web:
     address: ":80"
@@ -63,9 +63,9 @@ certificatesResolvers:
   myresolver:
     acme:
       email: "your-email@example.com"
-      storage: "/data/acme.json"       # Path to store the certificate information
+      storage: "/data/acme.json"       # Path to store the certificate information.
       httpChallenge:
-        # Entry point to use during the ACME HTTP-01 challenge
+        # Entry point to use during the ACME HTTP-01 challenge.
         entryPoint: "web"
 ```
 
@@ -75,23 +75,23 @@ ACME certificate resolvers have the following configuration options:
 
 | Field   | Description  | Default    | Required |
 |:------------------|:--------------------|:-----------------------------------------------|:---------|
-| `acme.email` | Email address used for registration. |   | Yes      |
+| `acme.email` | Email address used for registration. | ""  | Yes      |
 | `acme.caServer` | CA server to use. | https://acme-v02.api.letsencrypt.org/directory | No       |
-| `acme.preferredChain`  | Preferred chain to use. If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used. |   | No  |
-| `acme.keyType` | KeyType to use. | RSA4096  | No       |
-| `acme.eab` | Enable external account binding.|   | No  |
-| `acme.eab.kid` | Key identifier from External CA. | No   | |
-| `acme.eab.hmacEncoded`  | HMAC key from External CA, should be in Base64 URL Encoding without padding format.  |        | No    |
-| `acme.certificatesDuration`  | The certificates' duration in hours, exclusively used to determine renewal dates. | 2160      | No       |
-| `acme.dnsChallenge`  | Enable DNS-01 challenge. More information [here](#dnschallenge)   |       | No       |
-| `acme.dnsChallenge.provider`    | DNS provider to use.  |      | No   |
-| `acme.dnsChallenge.delayBeforeCheck`  | By default, the provider will verify the TXT DNS challenge record before letting ACME verify. If `delayBeforeCheck` is greater than zero, this check is delayed for the configured duration in seconds. Useful if internal networks block external DNS queries. |       | No  |
-| `acme.dnsChallenge.resolvers` | DNS servers to resolve the FQDN authority.   |    | No       |
-| `acme.dnsChallenge.disablePropagationCheck`  | Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready.   |     | No       |
-| `acme.httpChallenge`    | Enable HTTP-01 challenge. More information [here](#httpchallenge)   |    | No   |
-| `acme.httpChallenge.entryPoint`  | EntryPoint to use for the HTTP-01 challenges. Must be reachable by Let's Encrypt through port 80 |    | Yes      |
-| `acme.tlsChallenge` | Enable TLS-ALPN-01 challenge. Traefik must be reachable by Let's Encrypt through port 443. More information [here](#tlschallenge) |        | No       |
-| `acme.storage`  | File path used for certificates storage.  |     | Yes      |
+| `acme.preferredChain`  | Preferred chain to use. If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used. | ""  | No  |
+| `acme.keyType` | KeyType to use. | "RSA4096"  | No       |
+| `acme.eab` | Enable external account binding.| ""  | No  |
+| `acme.eab.kid` | Key identifier from External CA. |  | No |
+| `acme.eab.hmacEncoded`  | HMAC key from External CA, should be in Base64 URL Encoding without padding format.  | "" | No    |
+| `acme.certificatesDuration`  | The certificates' duration in hours, exclusively used to determine renewal dates. | 2160  | No       |
+| `acme.dnsChallenge`  | Enable DNS-01 challenge. More information [here](#dnschallenge).   | - | No       |
+| `acme.dnsChallenge.provider`    | DNS provider to use.  |  | No   |
+| `acme.dnsChallenge.delayBeforeCheck`  | By default, the provider will verify the TXT DNS challenge record before letting ACME verify. If `delayBeforeCheck` is greater than zero, this check is delayed for the configured duration in seconds. Useful if internal networks block external DNS queries. |   | No  |
+| `acme.dnsChallenge.resolvers` | DNS servers to resolve the FQDN authority.   |   | No       |
+| `acme.dnsChallenge.disablePropagationCheck`  | Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready.   |  | No       |
+| `acme.httpChallenge`    | Enable HTTP-01 challenge. More information [here](#httpchallenge).   |  | No   |
+| `acme.httpChallenge.entryPoint`  | EntryPoint to use for the HTTP-01 challenges. Must be reachable by Let's Encrypt through port 80 |  ""  | Yes      |
+| `acme.tlsChallenge` | Enable TLS-ALPN-01 challenge. Traefik must be reachable by Let's Encrypt through port 443. More information [here](#tlschallenge). | -  | No   |
+| `acme.storage`  | File path used for certificates storage.  |   "acme.json"   | Yes      |
 
 ## Automatic Certificate Renewal
 

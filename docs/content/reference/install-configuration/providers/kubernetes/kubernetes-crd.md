@@ -58,7 +58,7 @@ providers:
 | `providers.kubernetesCRD.endpoint` | Server endpoint URL.<br />More information [here](#endpoint). | "" | No |
 | `providers.kubernetesCRD.token` | Bearer token used for the Kubernetes client configuration. | "" | No |
 | `providers.kubernetesCRD.certAuthFilePath` | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | "" | No |
-| `providers.kubernetesCRD.namespaces` | Array of namespaces to watch.<br />If left empty, watch all namespaces. | | No |
+| `providers.kubernetesCRD.namespaces` | Array of namespaces to watch.<br />If left empty, watch all namespaces. | {} | No |
 | `providers.kubernetesCRD.labelselector` | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""  | No |
 | `providers.kubernetesCRD.ingressClass` | Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `traefik` are processed. | ""  | No |
 | `providers.kubernetesCRD.throttleDuration` | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s | No |
@@ -125,7 +125,6 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 
 - The usage of `name` **and** `namespace` to refer to another Kubernetes resource.
 - The usage of [secret](https://kubernetes.io/docs/concepts/configuration/secret/) for sensitive data (TLS certificates and credentials).
-- The structure of the configuration.
 
 ## Full Example
 

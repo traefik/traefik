@@ -165,6 +165,18 @@ a Tailscale certificate resolver needs to be configured as below.
     Defining a certificate resolver does not imply that routers are going to use it automatically.
     Each router or entrypoint that is meant to use the resolver must explicitly [reference](../../../../routing/routers/index.md#certresolver) it.
 
-### Tailscale Certificates Renewal
+## Domain Definition
+
+A certificate resolver requests certificates for a set of domain names inferred from routers, according to the following:
+
+- If the router has a `tls.domains` option set, then the certificate resolver derives this router domain name from the main option of `tls.domains`.
+
+- Otherwise, the certificate resolver derives the domain name from any `Host()` or `HostSNI()` matchers in the router's rule.
+
+!!! info "Tailscale Domain Format"
+
+    A domain is only considered if it is a Tailscale-specific one—that is, in the form `machine-name.domains-alias.ts.net`.
+
+## Tailscale Certificates Renewal
 
 Traefik automatically tracks the expiry date of each Tailscale certificate it fetches and starts to renew a certificate 14 days before its expiry to match the Tailscale daemon renewal policy.

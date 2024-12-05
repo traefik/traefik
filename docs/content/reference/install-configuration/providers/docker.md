@@ -42,20 +42,20 @@ services:
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.docker.endpoint` | Specifies the Docker API endpoint. See [here](#endpoint) for more information|  `unix:///var/run/docker.sock`     | Yes   |
-| `providers.docker.username` | Defines the username for Basic HTTP authentication. This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.|  " "    | No   |
-| `providers.docker.password` | Defines the password for Basic HTTP authentication. This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.|  " "    | No   |
+| `providers.docker.endpoint` | Specifies the Docker API endpoint. See [here](#endpoint) for more information|  "unix:///var/run/docker.sock"     | Yes   |
+| `providers.docker.username` | Defines the username for Basic HTTP authentication. This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.|  ""    | No   |
+| `providers.docker.password` | Defines the password for Basic HTTP authentication. This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.|  ""    | No   |
 | `providers.docker.useBindPortIP` | Instructs Traefik to use the IP/Port attached to the container's binding instead of its inner network IP/Port. See [here](#usebindportip) for more information |  false   | No   |
 | `providers.docker.exposedByDefault` | Expose containers by default through Traefik. See [here](./overview.md#restrict-the-scope-of-service-discovery) for additional information |  true    | No   |
 | `providers.docker.network` | Defines a default docker network to use for connections to all containers. This option can be overridden on a per-container basis with the `traefik.docker.network` label.|  ""    | No   |
-| `providers.docker.defaultRule` | Defines what routing rule to apply to a container if no rule is defined by a label. See [here](#defaultrule) for more information |  ```"Host(`{{ normalize .Name }}`)"```  | No   |
+| `providers.docker.defaultRule` | Defines what routing rule to apply to a container if no rule is defined by a label. See [here](#defaultrule) for more information. |  ```"Host(`{{ normalize .Name }}`)"```  | No   |
 | `providers.docker.httpClientTimeout` | Defines the client timeout (in seconds) for HTTP connections. If its value is 0, no timeout is set. |  0   | No   |
 | `providers.docker.watch` | Instructs Traefik to watch Docker events or not. |  True   | No   |
 | `providers.docker.constraints` | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  |  ""   | No   |
 | `providers.docker.allowEmptyServices` |  Instructs the provider to create any [servers load balancer](../../../routing/services/index.md#servers-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers. |  false   | No   |
-| `providers.docker.tls.ca` | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.  |     | No   |
-| `providers.docker.tls.cert` | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required. |     | Yes   |
-| `providers.docker.tls.key` | Defines the path to the private key used for the secure connection to Docker. When using this option, setting the `cert` option is required. |     | Yes   |
+| `providers.docker.tls.ca` | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.  |  ""   | No   |
+| `providers.docker.tls.cert` | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required. |   ""  | Yes   |
+| `providers.docker.tls.key` | Defines the path to the private key used for the secure connection to Docker. When using this option, setting the `cert` option is required. |  ""   | Yes   |
 | `providers.docker.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by the Docker server when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
 ### `endpoint`
@@ -372,7 +372,7 @@ the IP address of the host is resolved as follows:
 
 On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` to be defined, it should be provided
 as an `extra_host` to the Traefik container, using the `--add-host` flag. For example, to set it to the IP address of
-the bridge interface (`docker0` by default): `--add-host=host.docker.internal:172.17.0.1`
+the bridge interface (`docker0` by default): `--add-host=host.docker.internal:172.17.0.1`.
 
 ### IPv4 & IPv6
 

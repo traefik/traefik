@@ -1,6 +1,6 @@
 ---
 title: "Traefik Metrics Overview"
-description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
+description: "Traefik Proxy supports these metrics backend systems: OpenTelemetry, Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
 ---
 
 # Metrics
@@ -19,10 +19,9 @@ and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
 ## Open Telemetry
 
-### Helm Chart Configuration
+!!! info "Default protocol"
 
-Traefik can be configured to provide metrics in the OpenTelemetry format using the Helm Chart values.
-To know more about the Helm Chart options, refer to the [Helm Chart](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) (Find options `metrics.otlp`).
+    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318/v1/metrics.
 
 ### Configuration Example
 
@@ -54,15 +53,16 @@ metrics:
       enabled: true
 ```
 
-!!! info "Default protocol"
+!!! tip "Helm Chart Configuration"
 
-    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318/v1/metrics.
+    Traefik can be configured to provide metrics in the OpenTelemetry format using the Helm Chart values.
+    To know more about the Helm Chart options, refer to the [Helm Chart](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) (Find options `metrics.otlp`).
 
 ### Configuration Options
 
 | Field     | Description | Default | Required |
 |:-----------|---------------|:--------|:---------|
-| `metrics.addInternals` | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
+| `metrics.addInternals` | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
 | `metrics.otlp.addEntryPointsLabels` | Enable metrics on entry points. | true      | No      |
 | `metrics.otlp.addRoutersLabels` | Enable metrics on routers. | false      | No      |
 | `metrics.otlp.addServicesLabels` | Enable metrics on services.| true      | No      |
@@ -70,18 +70,18 @@ metrics:
 | `metrics.otlp.pushInterval` | Interval at which metrics are sent to the OpenTelemetry Collector. | 10s      | No      |
 | `metrics.otlp.http` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | null/false      | No      |
 | `metrics.otlp.http.endpoint` | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`" | "http://localhost:4318/v1/metrics"      | Yes      |
-| `metrics.otlp.http.headers` | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector. |       | No      |
+| `metrics.otlp.http.headers` | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector. |  -  | No      |
 | `metrics.otlp.http.tls.ca` | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle. | ""  | No      |
 | `metrics.otlp.http.tls.cert` | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | ""      | No      |
-| `metrics.otlp.http.tls.key` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | ""null/false ""     | No      |
+| `metrics.otlp.http.tls.key` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | null/false     | No      |
 | `metrics.otlp.http.tls.insecureskipverify` | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.  | false | Yes      |
 | `metrics.otlp.grpc` | This instructs the exporter to send metrics to the OpenTelemetry Collector using gRPC. | null/false | No      |
 | `metrics.otlp.grpc.endpoint` | Address of the OpenTelemetry Collector to send metrics to.<br /> Format="`<host>:<port>`" | "localhost:4317"      | Yes      |
-| `metrics.otlp.grpc.headers` | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector. |       | No      |
+| `metrics.otlp.grpc.headers` | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector. |    -   | No      |
 | `metrics.otlp.http.grpc.insecure` |Allows exporter to send metrics to the OpenTelemetry Collector without using a secured protocol.  | false | Yes      |
-| `metrics.otlp.grpc.tls.ca` | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle. | ""  | No      |
-| `metrics.otlp.grpc.tls.cert` | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | ""      | No      |
-| `metrics.otlp.grpc.tls.key` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | ""null/false ""     | No      |
+| `metrics.otlp.grpc.tls.ca` | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle. | -  | No      |
+| `metrics.otlp.grpc.tls.cert` | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | -  | No      |
+| `metrics.otlp.grpc.tls.key` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | null/false     | No      |
 | `metrics.otlp.grpc.tls.insecureskipverify` | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.  | false | Yes      |
 
 ## Vendors
@@ -110,13 +110,13 @@ metrics:
 
 | Field | Description      | Default              | Required |
 |:------|:-------------------------------|:---------------------|:---------|
-| `metrics.addInternals` | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
+| `metrics.addInternals` | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
 | `datadog.address` | Defines the address for the exporter to send metrics to datadog-agent. More information [here](#address)|  `127.0.0.1:8125`     | Yes   |
 | `datadog.addEntryPointsLabels` | Enable metrics on entry points. |  true   | No   |
 | `datadog.addRoutersLabels` | Enable metrics on routers. |  false   | No   |
 | `datadog.addServicesLabels` | Enable metrics on services. |  true   | No   |
 | `datadog.pushInterval` | Defines the interval used by the exporter to push metrics to datadog-agent. |  10s   | No   |
-| `datadog.prefix` | Defines the prefix to use for metrics collection. |  traefik   | No   |
+| `datadog.prefix` | Defines the prefix to use for metrics collection. |  "traefik"   | No   |
 
 ##### `address`
 
@@ -168,16 +168,16 @@ metrics:
 
 | Field      | Description      | Default | Required |
 |:-----------|-------------------------|:--------|:---------|
-| `metrics.addInternals` | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
+| `metrics.addInternal` | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
 | `metrics.influxDB2.addEntryPointsLabels` | Enable metrics on entry points. | true      | No      |
 | `metrics.influxDB2.addRoutersLabels` | Enable metrics on routers. | false      | No      |
 | `metrics.influxDB2.addServicesLabels` | Enable metrics on services.| true      | No      |
-| `metrics.influxDB2.additionalLabels` | Additional labels (InfluxDB tags) on all metrics. | \{\}]  | No      |
+| `metrics.influxDB2.additionalLabels` | Additional labels (InfluxDB tags) on all metrics. | - | No      |
 | `metrics.influxDB2.pushInterval` | The interval used by the exporter to push metrics to InfluxDB server. | 10s      | No      |
 | `metrics.influxDB2.address` | Address of the InfluxDB v2 instance. | "http://localhost:8086"     | Yes      |
-| `metrics.influxDB2.token` | Token with which to connect to InfluxDB v2. | ""      | Yes      |
-| `metrics.influxDB2.org` | Organisation where metrics will be stored. | ""      | Yes      |
-| `metrics.influxDB2.bucket` | Bucket where metrics will be stored. | ""      | Yes      |
+| `metrics.influxDB2.token` | Token with which to connect to InfluxDB v2. | - | Yes      |
+| `metrics.influxDB2.org` | Organisation where metrics will be stored. | -  | Yes      |
+| `metrics.influxDB2.bucket` | Bucket where metrics will be stored. | -  | Yes      |
 
 ### Prometheus
 
@@ -220,7 +220,7 @@ metrics:
 | `metrics.prometheus.buckets` | Buckets for latency metrics. |"0.100000, 0.300000, 1.200000, 5.000000"  | No      |
 | `metrics.prometheus.manualRouting` | Set to _true_, it disables the default internal router in order to allow creating a custom router for the `prometheus@internal` service. | false    | No      |
 | `metrics.prometheus.entryPoint` | Traefik Entrypoint name used to expose metrics. | "traefik"     | No      |
-| `metrics.prometheus.headerLabels` | Defines the extra labels for the `requests_total` metrics.<br />More information [here](#headerlabels). |       | Yes      |
+| `metrics.prometheus.headerLabels` | Defines extra labels extracted from request headers for the `requests_total` metrics.<br />More information [here](#headerlabels). |       | Yes      |
 
 ##### headerLabels
 
@@ -228,7 +228,7 @@ Defines the extra labels for the `requests_total` metrics, and for each of them,
 If the header is not present in the request it will be added nonetheless with an empty value.
 The label must be a valid label name for Prometheus metrics, otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
 
-!!! "How to provide the `Host` header value">
+!!! note "How to provide the `Host` header value"
       The `Host` header is never present in the Header map of a request, as per go documentation says:
 
       ```Golang
@@ -236,7 +236,7 @@ The label must be a valid label name for Prometheus metrics, otherwise, the Prom
       // Request.Host field and removed from the Header map.
       ```
 
-        As a workaround, to obtain the Host of a request as a label, use instead the `X-Forwarded-Host` header.
+      As a workaround, to obtain the Host of a request as a label, use instead the `X-Forwarded-Host` header.
 
 ###### Configuration Example
 

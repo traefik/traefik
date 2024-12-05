@@ -210,7 +210,7 @@ nav:
           - 'Redis': 'reference/install-configuration/providers/kv/redis.md'
           - 'Consul': 'reference/install-configuration/providers/kv/consul.md'
           - 'etcd': 'reference/install-configuration/providers/kv/etcd.md'
-          - 'ZK' : 'reference/install-configuration/providers/kv/zk.md'
+          - 'ZooKeeper' : 'reference/install-configuration/providers/kv/zk.md'
         - 'Others':
           - 'File': 'reference/install-configuration/providers/others/file.md'
           - 'ECS': 'reference/install-configuration/providers/others/ecs.md'

@@ -38,7 +38,7 @@ whose default value is `traefik` (port `8080`).
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
 | `/ping` | `GET`, `HEAD` | An endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 
-## Configuration Example
+### Configuration Example
 
 To enable the API handler:
 
@@ -54,7 +54,7 @@ ping: {}
 --ping=true
 ```
 
-## Configuration Options
+### Configuration Options
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
@@ -62,7 +62,7 @@ ping: {}
 | `ping.manualRouting` | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true`. | false | No   |
 | `ping.terminatingStatusCode` | Defines the status code for the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
 
-### `terminatingStatusCode`
+#### `terminatingStatusCode`
 
 During the period in which Traefik is gracefully shutting down, the ping handler
 returns a `503` status code by default.  
