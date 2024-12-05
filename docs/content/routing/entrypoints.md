@@ -530,7 +530,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
 
 ??? info "`forwardedHeaders.connection`"
-    
+
     As per RFC7230, Traefik respects the Connection options from the client request.
     By doing so, it removes any header field(s) listed in the request Connection header and the Connection header field itself when empty.
     The removal happens as soon as the request is handled by Traefik,
@@ -1237,6 +1237,8 @@ entryPoints:
 --entryPoints.foo.udp.timeout=10s
 ```
 
+{!traefik-for-business-applications.md!}
+
 ## Systemd Socket Activation
 
 Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
@@ -1258,5 +1260,3 @@ systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypo
 !!! warning "Docker Support"
 
     Socket activation is not supported by Docker but works with Podman containers.
-
-{!traefik-for-business-applications.md!}
