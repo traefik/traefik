@@ -37,12 +37,10 @@ jobs:
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5
         env:
+        # Ensure cache consistency on Linux, see https://github.com/actions/setup-go/pull/383
           ImageOS: ${{ matrix.os }}
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: Install go releaser
-        run: go install github.com/goreleaser/goreleaser/v2@latest
 
       - name: Artifact webui
         uses: actions/download-artifact@v4
@@ -54,10 +52,16 @@ jobs:
           tar xvf webui.tar.gz
           rm webui.tar.gz
 
-      - name: Build
-        run: |
-          go generate
-          goreleaser release --clean -p 2 --timeout="90m" --config "$(go run ./internal/release "${{ matrix.os }}")"
+      - name: Go generate
+        run: go generate
+
+      - name: Build with goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          # 'latest', 'nightly', or a semver
+          version: '~> v2'
+          args: release --clean --timeout="90m" --config "$(go run ./internal/release "${{ matrix.os }}")"
 
       - name: Artifact binaries
         uses: actions/upload-artifact@v4
@@ -87,7 +91,7 @@ jobs:
           TRAEFIKER_RSA: ${{ secrets.TRAEFIKER_RSA }}
         run: |
           mkdir -p ~/.ssh
-          echo ${TRAEFIKER_RSA} | base64 --decode > ~/.ssh/traefiker_rsa
+          echo "${TRAEFIKER_RSA}" | base64 --decode > ~/.ssh/traefiker_rsa
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
