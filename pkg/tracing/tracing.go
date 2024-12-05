@@ -13,7 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -38,7 +38,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 
 	if backend == nil {
 		log.Debug().Msg("Could not initialize tracing, using OpenTelemetry by default")
-		defaultBackend := &opentelemetry.Config{}
+		defaultBackend := &types.OTelTracing{}
 		backend = defaultBackend
 	}
 
