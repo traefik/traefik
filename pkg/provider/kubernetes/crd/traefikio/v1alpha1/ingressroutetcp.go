@@ -32,6 +32,7 @@ type RouteTCP struct {
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
+	// +kubebuilder:validation:Enum=v3;v2
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
@@ -71,6 +72,7 @@ type ServiceTCP struct {
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:validation:XIntOrString
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
 	// +kubebuilder:validation:Minimum=0
