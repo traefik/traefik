@@ -257,6 +257,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 				if addr.Type == corev1.NodeInternalIP {
 					servers = append(servers, dynamic.TCPServer{
 						Address: net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort))),
+						TLS:     svc.TLS,
 					})
 				}
 			}
@@ -272,6 +273,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.TCPServer{
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
+			TLS:     svc.TLS,
 		})
 	} else {
 		nativeLB := p.NativeLBByDefault
@@ -284,7 +286,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 			}
 
-			return []dynamic.TCPServer{{Address: address}}, nil
+			return []dynamic.TCPServer{{Address: address, TLS: svc.TLS}}, nil
 		}
 
 		endpointSlices, err := client.GetEndpointSlicesForService(namespace, svc.Name)
@@ -318,6 +320,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 					addresses[address] = struct{}{}
 					servers = append(servers, dynamic.TCPServer{
 						Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
+						TLS:     svc.TLS,
 					})
 				}
 			}
