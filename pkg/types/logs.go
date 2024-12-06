@@ -1,6 +1,22 @@
 package types
 
-import "github.com/traefik/paerser/types"
+import (
+	"context"
+	"fmt"
+	"net"
+	"net/url"
+
+	"github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	otelsdk "go.opentelemetry.io/otel/sdk/log"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/encoding/gzip"
+)
 
 const (
 	// AccessLogKeep is the keep string value.
@@ -14,10 +30,9 @@ const (
 const (
 	// CommonFormat is the common logging format (CLF).
 	CommonFormat string = "common"
-
-	// JSONFormat is the JSON logging format.
-	JSONFormat string = "json"
 )
+
+const OTelTraefikServiceName = "traefik"
 
 // TraefikLog holds the configuration settings for the traefik logger.
 type TraefikLog struct {
@@ -30,6 +45,8 @@ type TraefikLog struct {
 	MaxAge     int    `description:"Maximum number of days to retain old log files based on the timestamp encoded in their filename." json:"maxAge,omitempty" toml:"maxAge,omitempty" yaml:"maxAge,omitempty" export:"true"`
 	MaxBackups int    `description:"Maximum number of old log files to retain." json:"maxBackups,omitempty" toml:"maxBackups,omitempty" yaml:"maxBackups,omitempty" export:"true"`
 	Compress   bool   `description:"Determines if the rotated log files should be compressed using gzip." json:"compress,omitempty" toml:"compress,omitempty" yaml:"compress,omitempty" export:"true"`
+
+	OTLP *OTelLog `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -46,6 +63,8 @@ type AccessLog struct {
 	Fields        *AccessLogFields  `description:"AccessLogFields." json:"fields,omitempty" toml:"fields,omitempty" yaml:"fields,omitempty" export:"true"`
 	BufferingSize int64             `description:"Number of access log lines to process in a buffered way." json:"bufferingSize,omitempty" toml:"bufferingSize,omitempty" yaml:"bufferingSize,omitempty" export:"true"`
 	AddInternals  bool              `description:"Enables access log for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+
+	OTLP *OTelLog `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -127,4 +146,124 @@ func checkFieldHeaderValue(value, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// OTelLog provides configuration settings for the open-telemetry logger.
+type OTelLog struct {
+	ServiceName        string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ResourceAttributes map[string]string `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty"`
+	GRPC               *OTelGRPC         `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP               *OTelHTTP         `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (o *OTelLog) SetDefaults() {
+	o.ServiceName = OTelTraefikServiceName
+	o.HTTP = &OTelHTTP{}
+	o.HTTP.SetDefaults()
+}
+
+// NewLoggerProvider creates a new OpenTelemetry logger provider.
+func (o *OTelLog) NewLoggerProvider() (*otelsdk.LoggerProvider, error) {
+	var (
+		err      error
+		exporter otelsdk.Exporter
+	)
+	if o.GRPC != nil {
+		exporter, err = o.buildGRPCExporter()
+	} else {
+		exporter, err = o.buildHTTPExporter()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("setting up exporter: %w", err)
+	}
+
+	attr := []attribute.KeyValue{
+		semconv.ServiceNameKey.String(o.ServiceName),
+		semconv.ServiceVersionKey.String(version.Version),
+	}
+
+	for k, v := range o.ResourceAttributes {
+		attr = append(attr, attribute.String(k, v))
+	}
+
+	res, err := resource.New(context.Background(),
+		resource.WithAttributes(attr...),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+		resource.WithOSType(),
+		resource.WithProcessCommandArgs(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("building resource: %w", err)
+	}
+
+	// Register the trace provider to allow the global logger to access it.
+	bp := otelsdk.NewBatchProcessor(exporter)
+	loggerProvider := otelsdk.NewLoggerProvider(
+		otelsdk.WithResource(res),
+		otelsdk.WithProcessor(bp),
+	)
+
+	return loggerProvider, nil
+}
+
+func (o *OTelLog) buildHTTPExporter() (*otlploghttp.Exporter, error) {
+	endpoint, err := url.Parse(o.HTTP.Endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("invalid collector endpoint %q: %w", o.HTTP.Endpoint, err)
+	}
+
+	opts := []otlploghttp.Option{
+		otlploghttp.WithEndpoint(endpoint.Host),
+		otlploghttp.WithHeaders(o.HTTP.Headers),
+		otlploghttp.WithCompression(otlploghttp.GzipCompression),
+	}
+
+	if endpoint.Scheme == "http" {
+		opts = append(opts, otlploghttp.WithInsecure())
+	}
+
+	if endpoint.Path != "" {
+		opts = append(opts, otlploghttp.WithURLPath(endpoint.Path))
+	}
+
+	if o.HTTP.TLS != nil {
+		tlsConfig, err := o.HTTP.TLS.CreateTLSConfig(context.Background())
+		if err != nil {
+			return nil, fmt.Errorf("creating TLS client config: %w", err)
+		}
+
+		opts = append(opts, otlploghttp.WithTLSClientConfig(tlsConfig))
+	}
+
+	return otlploghttp.New(context.Background(), opts...)
+}
+
+func (o *OTelLog) buildGRPCExporter() (*otlploggrpc.Exporter, error) {
+	host, port, err := net.SplitHostPort(o.GRPC.Endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("invalid collector endpoint %q: %w", o.GRPC.Endpoint, err)
+	}
+
+	opts := []otlploggrpc.Option{
+		otlploggrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
+		otlploggrpc.WithHeaders(o.GRPC.Headers),
+		otlploggrpc.WithCompressor(gzip.Name),
+	}
+
+	if o.GRPC.Insecure {
+		opts = append(opts, otlploggrpc.WithInsecure())
+	}
+
+	if o.GRPC.TLS != nil {
+		tlsConfig, err := o.GRPC.TLS.CreateTLSConfig(context.Background())
+		if err != nil {
+			return nil, fmt.Errorf("creating TLS client config: %w", err)
+		}
+
+		opts = append(opts, otlploggrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
+	}
+
+	return otlploggrpc.New(context.Background(), opts...)
 }

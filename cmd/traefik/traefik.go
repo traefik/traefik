@@ -90,7 +90,9 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	setupLogger(staticConfiguration)
+	if err := setupLogger(staticConfiguration); err != nil {
+		return fmt.Errorf("setting up logger: %w", err)
+	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
