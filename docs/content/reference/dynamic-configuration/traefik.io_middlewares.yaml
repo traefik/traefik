@@ -180,6 +180,8 @@ spec:
                   responseCode:
                     description: ResponseCode is the status code that the circuit
                       breaker will return while it is in the open state.
+                    maximum: 599
+                    minimum: 100
                     type: integer
                 type: object
               compress:
@@ -217,6 +219,7 @@ spec:
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -987,6 +990,7 @@ spec:
                       The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
                       one needs to define a Period larger than a second.
                     format: int64
+                    minimum: 0
                     type: integer
                   burst:
                     description: |-
@@ -1120,6 +1124,7 @@ spec:
                   attempts:
                     description: Attempts defines how many times the request should
                       be retried.
+                    minimum: 0
                     type: integer
                   initialInterval:
                     anyOf:

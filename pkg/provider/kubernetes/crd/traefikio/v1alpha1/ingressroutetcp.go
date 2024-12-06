@@ -35,7 +35,12 @@ type RouteTCP struct {
 >>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
+<<<<<<< HEAD
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
+=======
+	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
+	// +kubebuilder:validation:Enum=v3;v2
+>>>>>>> 703a80a2a (self review after rebase)
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
@@ -75,6 +80,7 @@ type ServiceTCP struct {
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:validation:XIntOrString
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
 	// +kubebuilder:validation:Minimum=0

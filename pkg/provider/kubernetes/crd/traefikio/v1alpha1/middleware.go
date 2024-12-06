@@ -94,6 +94,8 @@ type CircuitBreaker struct {
 	// +kubebuilder:validation:XIntOrString
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
+	// +kubebuilder:validation:Minimum=100
+	// +kubebuilder:validation:Maximum=599
 	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
@@ -199,6 +201,7 @@ type RateLimit struct {
 	// It defaults to 0, which means no rate limiting.
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
 	// one needs to define a Period larger than a second.
+	// +kubebuilder:validation:Minimum=0
 	Average *int64 `json:"average,omitempty"`
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
@@ -227,6 +230,7 @@ type Compress struct {
 	IncludedContentTypes []string `json:"includedContentTypes,omitempty"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
+	// +kubebuilder:validation:Minimum=0
 	MinResponseBodyBytes *int `json:"minResponseBodyBytes,omitempty"`
 	// Encodings defines the list of supported compression algorithms.
 	Encodings []string `json:"encodings,omitempty"`
@@ -242,6 +246,7 @@ type Compress struct {
 // More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
+	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
