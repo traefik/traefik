@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/containous/alice"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
@@ -64,7 +65,11 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	start := time.Now()
 	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
-	req = req.WithContext(tracingCtx)
+	// Associate the request context with the logger.
+	logger := log.Ctx(tracingCtx).With().Ctx(tracingCtx).Logger()
+	loggerCtx := logger.WithContext(tracingCtx)
+
+	req = req.WithContext(loggerCtx)
 
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 

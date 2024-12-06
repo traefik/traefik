@@ -39,6 +39,60 @@ Keep access logs with status codes in the specified range.
 `TRAEFIK_ACCESSLOG_FORMAT`:  
 Access log format: json | common (Default: ```common```)
 
+`TRAEFIK_ACCESSLOG_OTLP`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC`:  
+gRPC configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_ENDPOINT`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_ACCESSLOG_OTLP_GRPC_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP`:  
+HTTP configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP_ENDPOINT`:  
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_ACCESSLOG_OTLP_HTTP_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_ACCESSLOG_OTLP_RESOURCEATTRIBUTES_<NAME>`:  
+Defines additional resource attributes (key:value).
+
+`TRAEFIK_ACCESSLOG_OTLP_SERVICENAME`:  
+Set the name for this service. (Default: ```traefik```)
+
 `TRAEFIK_API`:  
 Enable api/dashboard. (Default: ```false```)
 
@@ -332,6 +386,60 @@ Maximum size in megabytes of the log file before it gets rotated. (Default: ```0
 
 `TRAEFIK_LOG_NOCOLOR`:  
 When using the 'common' format, disables the colorized output. (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP_GRPC`:  
+gRPC configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP_GRPC_ENDPOINT`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`TRAEFIK_LOG_OTLP_GRPC_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_LOG_OTLP_GRPC_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP_GRPC_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_LOG_OTLP_GRPC_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_LOG_OTLP_GRPC_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP_GRPC_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_LOG_OTLP_HTTP`:  
+HTTP configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP_HTTP_ENDPOINT`:  
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`TRAEFIK_LOG_OTLP_HTTP_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_LOG_OTLP_HTTP_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_LOG_OTLP_HTTP_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_LOG_OTLP_HTTP_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_LOG_OTLP_HTTP_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_LOG_OTLP_RESOURCEATTRIBUTES_<NAME>`:  
+Defines additional resource attributes (key:value).
+
+`TRAEFIK_LOG_OTLP_SERVICENAME`:  
+Set the name for this service. (Default: ```traefik```)
 
 `TRAEFIK_METRICS_ADDINTERNALS`:  
 Enables metrics for internal services (ping, dashboard, etc...). (Default: ```false```)
@@ -1138,7 +1246,7 @@ Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
 Defines the allowed SPIFFE trust domain.
 
 `TRAEFIK_TRACING`:  
-OpenTracing configuration. (Default: ```false```)
+Tracing configuration. (Default: ```false```)
 
 `TRAEFIK_TRACING_ADDINTERNALS`:  
 Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
@@ -1150,7 +1258,7 @@ Request headers to add as attributes for server and client spans.
 Response headers to add as attributes for server and client spans.
 
 `TRAEFIK_TRACING_GLOBALATTRIBUTES_<NAME>`:  
-Defines additional attributes (key:value) on all spans.
+(Deprecated) Defines additional resource attributes (key:value).
 
 `TRAEFIK_TRACING_OTLP`:  
 Settings for OpenTelemetry. (Default: ```false```)
@@ -1200,6 +1308,9 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_TRACING_OTLP_HTTP_TLS_KEY`:  
 TLS key
 
+`TRAEFIK_TRACING_RESOURCEATTRIBUTES_<NAME>`:  
+Defines additional resource attributes (key:value).
+
 `TRAEFIK_TRACING_SAFEQUERYPARAMS`:  
 Query params to not redact.
 
@@ -1207,4 +1318,4 @@ Query params to not redact.
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `TRAEFIK_TRACING_SERVICENAME`:  
-Set the name for this service. (Default: ```traefik```)
+Sets the name for this service. (Default: ```traefik```)
