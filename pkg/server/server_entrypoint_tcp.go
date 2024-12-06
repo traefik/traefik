@@ -48,14 +48,7 @@ const (
 var (
 	clientConnectionStates   = map[string]*connState{}
 	clientConnectionStatesMu = sync.RWMutex{}
-
-	socketActivationListeners map[string]net.Listener
 )
-
-func init() {
-	// Populates pre-defined socketActivationListeners by socket activation.
-	populateSocketActivationListeners()
-}
 
 type connState struct {
 	State            string
@@ -204,7 +197,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3Server, err := newHTTP3Server(ctx, config, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
@@ -476,13 +469,14 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 	var err error
 
 	// if we have predefined listener from socket activation
-	if ln, ok := socketActivationListeners[name]; ok {
-		listener = ln
-	} else {
-		if len(socketActivationListeners) > 0 {
-			log.Warn().Str("name", name).Msg("Unable to find socket activation listener for entryPoint")
+	if socketActivation.isEnabled() {
+		listener, err = socketActivation.getListener(name)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
 		}
+	}
 
+	if listener == nil {
 		listenConfig := newListenConfig(config)
 		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
 		if err != nil {
