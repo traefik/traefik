@@ -108,8 +108,8 @@ func (i *InfluxDB2) SetDefaults() {
 
 // OTLP contains specific configuration used by the OpenTelemetry Metrics exporter.
 type OTLP struct {
-	GRPC *OtelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	HTTP *OtelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	GRPC *OTelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP *OTelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	AddEntryPointsLabels bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddRoutersLabels     bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
@@ -121,14 +121,14 @@ type OTLP struct {
 
 // SetDefaults sets the default values.
 func (o *OTLP) SetDefaults() {
-	o.HTTP = &OtelHTTP{}
+	o.HTTP = &OTelHTTP{}
 	o.HTTP.SetDefaults()
 
 	o.AddEntryPointsLabels = true
 	o.AddServicesLabels = true
 	o.ExplicitBoundaries = []float64{.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10}
 	o.PushInterval = types.Duration(10 * time.Second)
-	o.ServiceName = "traefik"
+	o.ServiceName = OTelTraefikServiceName
 }
 
 // Statistics provides options for monitoring request and response stats.
@@ -139,29 +139,4 @@ type Statistics struct {
 // SetDefaults sets the default values.
 func (s *Statistics) SetDefaults() {
 	s.RecentErrors = 10
-}
-
-// OtelGRPC provides configuration settings for the gRPC open-telemetry.
-type OtelGRPC struct {
-	Endpoint string            `description:"Sets the gRPC endpoint (host:port) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Insecure bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	TLS      *ClientTLS        `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	Headers  map[string]string `description:"Headers sent with payload." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
-}
-
-// SetDefaults sets the default values.
-func (c *OtelGRPC) SetDefaults() {
-	c.Endpoint = "localhost:4317"
-}
-
-// OtelHTTP provides configuration settings for the HTTP open-telemetry.
-type OtelHTTP struct {
-	Endpoint string            `description:"Sets the HTTP endpoint (scheme://host:port/path) of the collector." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	TLS      *ClientTLS        `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	Headers  map[string]string `description:"Headers sent with payload." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
-}
-
-// SetDefaults sets the default values.
-func (c *OtelHTTP) SetDefaults() {
-	c.Endpoint = "https://localhost:4318"
 }

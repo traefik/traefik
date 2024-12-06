@@ -502,14 +502,17 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 	return false
 }
 
+//
+
 type tracing struct {
-	SpanNameLimit *int           `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty"`
-	Jaeger        map[string]any `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Zipkin        map[string]any `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Datadog       map[string]any `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Instana       map[string]any `json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Haystack      map[string]any `json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Elastic       map[string]any `json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	SpanNameLimit    *int              `json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty"`
+	GlobalAttributes map[string]string `json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
+	Jaeger           map[string]any    `json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Zipkin           map[string]any    `json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Datadog          map[string]any    `json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Instana          map[string]any    `json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Haystack         map[string]any    `json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Elastic          map[string]any    `json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 func (t *tracing) deprecationNotice(logger zerolog.Logger) bool {
@@ -521,6 +524,14 @@ func (t *tracing) deprecationNotice(logger zerolog.Logger) bool {
 		incompatible = true
 		logger.Error().Msg("SpanNameLimit option for Tracing has been removed in v3, as Span names are now of a fixed length." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.2/migration/v2-to-v3/#tracing")
+	}
+
+	if t.GlobalAttributes != nil {
+		log.Warn().Msgf("tracing.globalAttributes option is now deprecated, please use tracing.resourceAttributes instead.")
+
+		logger.Error().Msg("`tracing.globalAttributes` option has been deprecated in v3.3, and will be removed in the next major version." +
+			"Please use the `tracing.resourceAttributes` option instead." +
+			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v3/#tracing-global-attributes")
 	}
 
 	if t.Jaeger != nil {

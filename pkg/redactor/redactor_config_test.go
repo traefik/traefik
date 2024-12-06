@@ -30,7 +30,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -831,6 +830,25 @@ func TestDo_staticConfiguration(t *testing.T) {
 		MaxAge:     3,
 		MaxBackups: 4,
 		Compress:   true,
+		OTLP: &types.OTelLog{
+			ServiceName: "foobar",
+			ResourceAttributes: map[string]string{
+				"foobar": "foobar",
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			HTTP: &types.OTelHTTP{
+				Endpoint: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+		},
 	}
 
 	config.AccessLog = &types.AccessLog{
@@ -854,18 +872,46 @@ func TestDo_staticConfiguration(t *testing.T) {
 			},
 		},
 		BufferingSize: 42,
+		OTLP: &types.OTelLog{
+			ServiceName: "foobar",
+			ResourceAttributes: map[string]string{
+				"foobar": "foobar",
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			HTTP: &types.OTelHTTP{
+				Endpoint: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+		},
 	}
 
 	config.Tracing = &static.Tracing{
 		ServiceName: "myServiceName",
+		ResourceAttributes: map[string]string{
+			"foobar": "foobar",
+		},
 		GlobalAttributes: map[string]string{
 			"foobar": "foobar",
 		},
 		SampleRate: 42,
-		OTLP: &opentelemetry.Config{
-			HTTP: &types.OtelHTTP{
+		OTLP: &types.OTelTracing{
+			HTTP: &types.OTelHTTP{
 				Endpoint: "foobar",
-				TLS:      nil,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
 				Headers: map[string]string{
 					"foobar": "foobar",
 				},
