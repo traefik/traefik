@@ -28,9 +28,11 @@ type RouteTCP struct {
 	Match string `json:"match"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
+	// +kubebuilder:validation:Minimum=0
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
+	// +kubebuilder:validation:Enum=v3;v2
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
@@ -51,6 +53,7 @@ type TLSTCP struct {
 	Options *ObjectReference `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
+	// Deprecated: this reference is not needed.
 	Store *ObjectReference `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
@@ -69,8 +72,10 @@ type ServiceTCP struct {
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:validation:XIntOrString
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	// +kubebuilder:validation:Minimum=0
 	Weight *int `json:"weight,omitempty"`
 	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
 	// it has closed the writing capability of its connection, to close the reading capability as well,

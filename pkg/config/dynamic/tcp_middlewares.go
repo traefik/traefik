@@ -19,6 +19,7 @@ type TCPMiddleware struct {
 type TCPInFlightConn struct {
 	// Amount defines the maximum amount of allowed simultaneous connections.
 	// The middleware closes the connection if there are already amount connections opened.
+	// +kubebuilder:validation:Minimum=0
 	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 }
 
