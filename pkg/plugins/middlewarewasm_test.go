@@ -32,7 +32,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		expected    string
 	}{
 		{
-			desc: "mounts one path",
+			desc: "mounts path",
 			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
 				t.Helper()
 
@@ -50,7 +50,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 			expected: "content_test",
 		},
 		{
-			desc: "mounts two path",
+			desc: "mounts src to dest",
 			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
 				t.Helper()
 
