@@ -381,6 +381,32 @@
   maxAge = 42
   maxBackups = 42
   compress = true
+  [log.otlp]
+    serviceName = "foobar"
+    [log.otlp.resourceAttributes]
+      name0 = "foobar"
+      name1 = "foobar"
+    [log.otlp.grpc]
+      endpoint = "foobar"
+      insecure = true
+      [log.otlp.grpc.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [log.otlp.grpc.headers]
+        name0 = "foobar"
+        name1 = "foobar"
+    [log.otlp.http]
+      endpoint = "foobar"
+      [log.otlp.http.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [log.otlp.http.headers]
+        name0 = "foobar"
+        name1 = "foobar"
 
 [accessLog]
   filePath = "foobar"
@@ -401,6 +427,32 @@
       [accessLog.fields.headers.names]
         name0 = "foobar"
         name1 = "foobar"
+  [accessLog.otlp]
+    serviceName = "foobar"
+    [accessLog.otlp.resourceAttributes]
+      name0 = "foobar"
+      name1 = "foobar"
+    [accessLog.otlp.grpc]
+      endpoint = "foobar"
+      insecure = true
+      [accessLog.otlp.grpc.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [accessLog.otlp.grpc.headers]
+        name0 = "foobar"
+        name1 = "foobar"
+    [accessLog.otlp.http]
+      endpoint = "foobar"
+      [accessLog.otlp.http.tls]
+        ca = "foobar"
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [accessLog.otlp.http.headers]
+        name0 = "foobar"
+        name1 = "foobar"
 
 [tracing]
   serviceName = "foobar"
@@ -409,7 +461,7 @@
   safeQueryParams = ["foobar", "foobar"]
   sampleRate = 42.0
   addInternals = true
-  [tracing.globalAttributes]
+  [tracing.resourceAttributes]
     name0 = "foobar"
     name1 = "foobar"
   [tracing.otlp]
@@ -434,6 +486,9 @@
       [tracing.otlp.http.headers]
         name0 = "foobar"
         name1 = "foobar"
+  [tracing.globalAttributes]
+    name0 = "foobar"
+    name1 = "foobar"
 
 [hostResolver]
   cnameFlattening = true
