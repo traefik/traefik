@@ -14,7 +14,17 @@ spec:
     singular: ingressroutetcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.entryPoints
+      name: EntryPoints
+      type: string
+    - jsonPath: .spec.routes[*].match
+      name: Rule
+      type: string
+    - jsonPath: .spec.routes[*].middlewares[*].name
+      name: Middlewares
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
@@ -245,3 +255,4 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
