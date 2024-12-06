@@ -61,7 +61,6 @@ jobs:
           GORELEASER_CONFIG_FILE_PATH=$(go run ./internal/release "${{ matrix.os }}")
           echo "GORELEASER_CONFIG_FILE_PATH=$GORELEASER_CONFIG_FILE_PATH" >> $GITHUB_ENV
 
-
       - name: Build with goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
