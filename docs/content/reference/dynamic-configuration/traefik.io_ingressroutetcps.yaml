@@ -127,6 +127,8 @@ spec:
                               version:
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                maximum: 2
+                                minimum: 1
                                 type: integer
                             type: object
                           serversTransport:
@@ -162,6 +164,9 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
+                      enum:
+                      - v3
+                      - v2
                       type: string
                   required:
                   - match

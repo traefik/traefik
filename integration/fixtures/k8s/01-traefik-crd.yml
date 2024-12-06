@@ -512,6 +512,8 @@ spec:
                               version:
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                maximum: 2
+                                minimum: 1
                                 type: integer
                             type: object
                           serversTransport:
@@ -547,6 +549,9 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
+                      enum:
+                      - v3
+                      - v2
                       type: string
                   required:
                   - match
@@ -927,6 +932,8 @@ spec:
                   responseCode:
                     description: ResponseCode is the status code that the circuit
                       breaker will return while it is in the open state.
+                    maximum: 599
+                    minimum: 100
                     type: integer
                 type: object
               compress:
@@ -964,6 +971,7 @@ spec:
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -1720,6 +1728,7 @@ spec:
                       The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
                       one needs to define a Period larger than a second.
                     format: int64
+                    minimum: 0
                     type: integer
                   burst:
                     description: |-
@@ -1853,6 +1862,7 @@ spec:
                   attempts:
                     description: Attempts defines how many times the request should
                       be retried.
+                    minimum: 0
                     type: integer
                   initialInterval:
                     anyOf:
@@ -2194,6 +2204,7 @@ spec:
                   the protocol and operating system. Network protocols or operating
                   systems that do not support keep-alives ignore this field. If negative,
                   keep-alive probes are disabled.
+                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 x-kubernetes-int-or-string: true
               dialTimeout:
                 anyOf:
@@ -2201,6 +2212,7 @@ spec:
                 - type: string
                 description: DialTimeout is the amount of time to wait until a connection
                   to a backend server can be established.
+                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 x-kubernetes-int-or-string: true
               terminationDelay:
                 anyOf:
@@ -2209,6 +2221,7 @@ spec:
                 description: TerminationDelay defines the delay to wait before fully
                   terminating the connection, after one connected peer has closed
                   its writing capability.
+                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
                 x-kubernetes-int-or-string: true
               tls:
                 description: TLS defines the TLS configuration
