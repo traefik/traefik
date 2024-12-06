@@ -34,9 +34,12 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		{
 			desc: "mounts one path",
 			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+				t.Helper()
+
 				tempDir := t.TempDir()
 				filePath := path.Join(tempDir, "hello.txt")
-				os.WriteFile(filePath, []byte("content_test"), 0644)
+				err := os.WriteFile(filePath, []byte("content_test"), 0o644)
+				require.NoError(t, err)
 
 				return Settings{Mounts: []string{
 						tempDir,
@@ -49,9 +52,12 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		{
 			desc: "mounts two path",
 			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+				t.Helper()
+
 				tempDir := t.TempDir()
 				filePath := path.Join(tempDir, "hello.txt")
-				os.WriteFile(filePath, []byte("content_test"), 0644)
+				err := os.WriteFile(filePath, []byte("content_test"), 0o644)
+				require.NoError(t, err)
 
 				return Settings{Mounts: []string{
 						tempDir + ":/tmp",
@@ -64,6 +70,8 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		{
 			desc: "one env",
 			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+				t.Helper()
+
 				envs := []string{"PLUGIN_TEST"}
 				return Settings{Envs: envs}, map[string]interface{}{
 					"envs": envs,
@@ -74,6 +82,8 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		{
 			desc: "two env",
 			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+				t.Helper()
+
 				envs := []string{"PLUGIN_TEST", "PLUGIN_TEST_B"}
 				return Settings{Envs: envs}, map[string]interface{}{
 					"envs": envs,
@@ -84,7 +94,6 @@ func TestSettingsWithoutSocket(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -108,5 +117,4 @@ func TestSettingsWithoutSocket(t *testing.T) {
 			assert.Equal(t, test.expected, rw.Body.String())
 		})
 	}
-
 }
