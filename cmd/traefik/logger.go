@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	stdlog "log"
 	"os"
@@ -20,12 +21,13 @@ func init() {
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
 
-func setupLogger(staticConfiguration *static.Configuration) {
+func setupLogger(staticConfiguration *static.Configuration) error {
 	// configure log format
 	w := getLogWriter(staticConfiguration)
 
 	// configure log level
 	logLevel := getLogLevel(staticConfiguration)
+	zerolog.SetGlobalLevel(logLevel)
 
 	// create logger
 	logCtx := zerolog.New(w).With().Timestamp()
@@ -34,8 +36,16 @@ func setupLogger(staticConfiguration *static.Configuration) {
 	}
 
 	log.Logger = logCtx.Logger().Level(logLevel)
+
+	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
+		var err error
+		log.Logger, err = logs.SetupOTelLogger(log.Logger, staticConfiguration.Log.OTLP)
+		if err != nil {
+			return fmt.Errorf("setting up OpenTelemetry logger: %w", err)
+		}
+	}
+
 	zerolog.DefaultContextLogger = &log.Logger
-	zerolog.SetGlobalLevel(logLevel)
 
 	// Global logrus replacement (related to lib like go-rancher-metadata, docker, etc.)
 	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
@@ -43,11 +53,16 @@ func setupLogger(staticConfiguration *static.Configuration) {
 	// configure default standard log.
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
+
+	return nil
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
-	var w io.Writer = os.Stdout
+	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
+		return io.Discard
+	}
 
+	var w io.Writer = os.Stdout
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
 		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 		w = &lumberjack.Logger{
