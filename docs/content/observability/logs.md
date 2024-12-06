@@ -183,7 +183,7 @@ log:
 
 ## OpenTelemetry
 
-To enable the OpenTelemetry Logger for access logs:
+To enable the OpenTelemetry Logger for logs:
 
 ```yaml tab="File (YAML)"
 log:
