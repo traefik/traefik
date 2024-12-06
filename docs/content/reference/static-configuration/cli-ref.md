@@ -1246,7 +1246,7 @@ Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
 Defines the allowed SPIFFE trust domain.
 
 `--tracing`:  
-OpenTracing configuration. (Default: ```false```)
+Tracing configuration. (Default: ```false```)
 
 `--tracing.addinternals`:  
 Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
