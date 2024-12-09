@@ -56,6 +56,7 @@ type forwardAuth struct {
 	headerField              string
 	forwardBody              bool
 	maxBodySize              int64
+	preserveLocationHeader   bool
 }
 
 func Location(r *http.Response) (*url.URL, error) {
@@ -88,6 +89,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		headerField:              config.HeaderField,
 		forwardBody:              config.ForwardBody,
 		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
+		preserveLocationHeader:   config.PreserveLocationHeader,
 	}
 
 	if config.MaxBodySize != nil {
@@ -232,8 +234,13 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
+		var redirectURL *url.URL
 		// Grab the location header, if any.
-		redirectURL, err := Location(forwardResponse)
+		if fa.preserveLocationHeader {
+			redirectURL, err = Location(forwardResponse)
+		} else {
+			redirectURL, err = forwardResponse.Location()
+		}
 
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {

@@ -725,7 +725,8 @@ func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
 	})
 
 	auth := dynamic.ForwardAuth{
-		Address: server.URL,
+		Address:                server.URL,
+		PreserveLocationHeader: true,
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
