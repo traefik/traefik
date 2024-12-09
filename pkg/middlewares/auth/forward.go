@@ -163,7 +163,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			logger.Debug().Msgf("Body size is too big maxBodySize: %d", fa.maxBodySize)
 			observability.SetStatusErrorf(req.Context(), "Error while reading Body: %s", err)
 			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte(errBodyTooLarge.Error()))
+			_, err = rw.Write([]byte(errBodyTooLarge.Error()))
+			if err != nil {
+				logger.Error().Err(err).Msg("Unable to write error message")
+			}
 			return
 		}
 		if err != nil && !errors.Is(err, errBodyTooLarge) {
