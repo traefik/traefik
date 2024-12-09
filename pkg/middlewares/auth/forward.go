@@ -53,6 +53,7 @@ type forwardAuth struct {
 	authRequestHeaders       []string
 	addAuthCookiesToResponse map[string]struct{}
 	headerField              string
+	preserveLocationHeader   bool
 }
 
 func Location(r *http.Response) (*url.URL, error) {
@@ -83,6 +84,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		authRequestHeaders:       config.AuthRequestHeaders,
 		addAuthCookiesToResponse: addAuthCookiesToResponse,
 		headerField:              config.HeaderField,
+		preserveLocationHeader:   config.PreserveLocationHeader,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -199,8 +201,13 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
+		var redirectURL *url.URL
 		// Grab the location header, if any.
-		redirectURL, err := Location(forwardResponse)
+		if fa.preserveLocationHeader {
+			redirectURL, err = Location(forwardResponse)
+		} else {
+			redirectURL, err = forwardResponse.Location()
+		}
 
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
