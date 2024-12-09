@@ -65,7 +65,9 @@ func TestListTasks(t *testing.T) {
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
-			p := SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
+
 			dockerData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
@@ -233,7 +235,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 
 			dockerClient := &fakeServicesClient{services: test.services, tasks: test.tasks, dockerVersion: test.dockerVersion, networks: test.networks}
 
-			p := SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
 
 			serviceDockerData, err := p.listServices(context.Background(), dockerClient)
 			assert.NoError(t, err)
@@ -351,7 +354,8 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
-			p := SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
 
 			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)

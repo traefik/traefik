@@ -1,8 +1,10 @@
 package docker
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/label"
 )
 
@@ -11,36 +13,79 @@ const (
 	labelDockerComposeService = "com.docker.compose.service"
 )
 
-// configuration Contains information from the labels that are globals (not related to the dynamic configuration)
+// configuration contains information from the labels that are globals (not related to the dynamic configuration)
 // or specific to the provider.
 type configuration struct {
-	Enable bool
-	Docker specificConfiguration
-	Swarm  specificConfiguration
-}
-
-type specificConfiguration struct {
+	Enable  bool
 	Network string
 	LBSwarm bool
 }
 
-func (p *Shared) extractLabels(container dockerData) (configuration, error) {
-	conf := configuration{
-		Enable: p.ExposedByDefault,
-		Docker: specificConfiguration{
-			Network: p.Network,
-		},
-		Swarm: specificConfiguration{
-			Network: p.Network,
-		},
+type labelConfiguration struct {
+	Enable bool
+	Docker *specificConfiguration
+	Swarm  *specificConfiguration
+}
+
+type specificConfiguration struct {
+	Network *string
+	LBSwarm bool
+}
+
+func (p *Shared) extractDockerLabels(container dockerData) (configuration, error) {
+	conf := labelConfiguration{Enable: p.ExposedByDefault}
+	if err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable"); err != nil {
+		return configuration{}, fmt.Errorf("decoding docker labels: %w", err)
 	}
 
-	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable", "traefik.swarm.")
-	if err != nil {
-		return configuration{}, err
+	network := p.Network
+	if conf.Docker != nil && conf.Docker.Network != nil {
+		network = *conf.Docker.Network
 	}
 
-	return conf, nil
+	return configuration{
+		Enable:  conf.Enable,
+		Network: network,
+	}, nil
+}
+
+func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error) {
+	conf := labelConfiguration{Enable: p.ExposedByDefault}
+	if err := label.Decode(container.Labels, &conf, "traefik.enable", "traefik.docker.", "traefik.swarm."); err != nil {
+		return configuration{}, fmt.Errorf("decoding swarm labels: %w", err)
+	}
+
+	if conf.Docker != nil && conf.Swarm != nil {
+		return configuration{}, errors.New("both Docker and Swarm labels are defined")
+	}
+
+	if conf.Docker != nil {
+		log.Warn().Msg("Labels traefik.docker.* for Swarm provider are deprecated. Please use traefik.swarm.* labels instead")
+
+		network := p.Network
+		if conf.Docker.Network != nil {
+			network = *conf.Docker.Network
+		}
+		return configuration{
+			Enable:  conf.Enable,
+			Network: network,
+			LBSwarm: conf.Docker.LBSwarm,
+		}, nil
+	}
+
+	if conf.Swarm == nil {
+		return configuration{}, nil
+	}
+
+	network := p.Network
+	if conf.Swarm.Network != nil {
+		network = *conf.Swarm.Network
+	}
+	return configuration{
+		Enable:  conf.Enable,
+		Network: network,
+		LBSwarm: conf.Swarm.LBSwarm,
+	}, nil
 }
 
 // getStringMultipleStrict get multiple string values associated to several labels.
