@@ -327,7 +327,7 @@ func TestOpenTelemetry(t *testing.T) {
 			var cfg types.OTLP
 			(&cfg).SetDefaults()
 			cfg.AddRoutersLabels = true
-			cfg.HTTP = &types.OtelHTTP{
+			cfg.HTTP = &types.OTelHTTP{
 				Endpoint: ts.URL,
 			}
 			cfg.PushInterval = ptypes.Duration(10 * time.Millisecond)
