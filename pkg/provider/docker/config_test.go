@@ -405,17 +405,15 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					DefaultRule:      test.defaultRule,
 				},
 			}
+			require.NoError(t, p.Init())
 
-			err := p.Init()
-			require.NoError(t, err)
+			builder := NewDynConfBuilder(p.Shared, nil, false)
 
 			for i := range len(test.containers) {
 				var err error
-				test.containers[i].ExtraConf, err = p.extractLabels(test.containers[i])
+				test.containers[i].ExtraConf, err = builder.extractLabels(test.containers[i])
 				require.NoError(t, err)
 			}
-
-			builder := NewDynConfBuilder(p.Shared, nil)
 
 			configuration := builder.build(context.Background(), test.containers)
 
@@ -3662,16 +3660,15 @@ func TestDynConfBuilder_build(t *testing.T) {
 			}
 			p.Constraints = test.constraints
 
-			err := p.Init()
-			require.NoError(t, err)
+			require.NoError(t, p.Init())
+
+			builder := NewDynConfBuilder(p.Shared, nil, false)
 
 			for i := range len(test.containers) {
 				var err error
-				test.containers[i].ExtraConf, err = p.extractLabels(test.containers[i])
+				test.containers[i].ExtraConf, err = builder.extractLabels(test.containers[i])
 				require.NoError(t, err)
 			}
-
-			builder := NewDynConfBuilder(p.Shared, nil)
 
 			configuration := builder.build(context.Background(), test.containers)
 
@@ -3843,7 +3840,7 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 			builder := NewDynConfBuilder(Shared{
 				Network:       "testnet",
 				UseBindPortIP: true,
-			}, nil)
+			}, nil, false)
 
 			actualIP, actualPort, actualError := builder.getIPPort(context.Background(), dData, test.serverPort)
 			if test.expected.error {
@@ -3956,12 +3953,12 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 
 			dData := parseContainer(test.container)
 
-			dData.ExtraConf.Docker.Network = conf.Network
+			dData.ExtraConf.Network = conf.Network
 			if len(test.network) > 0 {
-				dData.ExtraConf.Docker.Network = test.network
+				dData.ExtraConf.Network = test.network
 			}
 
-			builder := NewDynConfBuilder(conf, nil)
+			builder := NewDynConfBuilder(conf, nil, false)
 
 			actual := builder.getIPAddress(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
@@ -3995,7 +3992,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 		{
 			service: swarmService(
 				serviceLabels(map[string]string{
-					"traefik.docker.network": "barnet",
+					"traefik.swarm.network": "barnet",
 				}),
 				withEndpointSpec(modeVIP),
 				withEndpoint(
@@ -4019,12 +4016,13 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 
-			p := &SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
 
 			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
-			builder := NewDynConfBuilder(p.Shared, nil)
+			builder := NewDynConfBuilder(p.Shared, nil, false)
 			actual := builder.getIPAddress(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})

@@ -648,13 +648,10 @@ You can tell Traefik to consider (or not) the container by setting `traefik.enab
 
 This option overrides the value of `exposedByDefault`.
 
-#### `traefik.docker.network`
-
-!!! warning
-    `traefik.docker.network` is deprecated, use `traefik.swarm.network` instead.
+#### `traefik.swarm.network`
 
 ```yaml
-- "traefik.docker.network=mynetwork"
+- "traefik.swarm.network=mynetwork"
 ```
 
 Overrides the default docker network to use for connections to the container.
@@ -665,10 +662,7 @@ otherwise it will randomly pick one (depending on how docker is returning them).
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
 
-#### `traefik.docker.lbswarm`
-
-!!! warning
-    `traefik.docker.lbswarm` is deprecated, use `traefik.swarm.network` instead.
+#### `traefik.swarm.lbswarm`
 
 ```yaml
 - "traefik.docker.lbswarm=true"
