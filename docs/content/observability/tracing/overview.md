@@ -92,29 +92,29 @@ tracing:
 --tracing.sampleRate=0.2
 ```
 
-#### `globalAttributes`
+#### `resourceAttributes`
 
 _Optional, Default=empty_
 
-Applies a list of shared key:value attributes on all spans.
+Defines additional resource attributes to be sent to the collector.
 
 ```yaml tab="File (YAML)"
 tracing:
-  globalAttributes:
+  resourceAttributes:
     attr1: foo
     attr2: bar
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.globalAttributes]
+  [tracing.resourceAttributes]
     attr1 = "foo"
     attr2 = "bar"
 ```
 
 ```bash tab="CLI"
---tracing.globalAttributes.attr1=foo
---tracing.globalAttributes.attr2=bar
+--tracing.resourceAttributes.attr1=foo
+--tracing.resourceAttributes.attr2=bar
 ```
 
 #### `capturedRequestHeaders`

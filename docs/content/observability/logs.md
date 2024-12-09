@@ -181,4 +181,401 @@ log:
 --log.compress=true
 ```
 
+## OpenTelemetry
+
+To enable the OpenTelemetry Logger for logs:
+
+```yaml tab="File (YAML)"
+log:
+  otlp: {}
+```
+
+```toml tab="File (TOML)"
+[log.otlp]
+```
+
+```bash tab="CLI"
+--log.otlp=true
+```
+
+!!! info "Default protocol"
+
+    The OpenTelemetry Logger exporter will export logs to the collector using HTTPS by default to https://localhost:4318/v1/logs, see the [gRPC Section](#grpc-configuration) to use gRPC.
+
+### HTTP configuration
+
+_Optional_
+
+This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http: {}
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http]
+```
+
+```bash tab="CLI"
+--log.otlp.http=true
+```
+
+#### `endpoint`
+
+_Optional, Default="`https://localhost:4318/v1/logs`", Format="`<scheme>://<host>:<port><path>`"_
+
+URL of the OpenTelemetry Collector to send logs to.
+
+!!! info "Insecure mode"
+
+    To disable TLS, use `http://` instead of `https://` in the `endpoint` configuration.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http:
+      endpoint: https://collector:4318/v1/logs
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http]
+  endpoint = "https://collector:4318/v1/logs"
+```
+
+```bash tab="CLI"
+--log.otlp.http.endpoint=https://collector:4318/v1/logs
+```
+
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with logs by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http.headers]
+  foo = "bar"
+  baz = "buz"
+```
+
+```bash tab="CLI"
+--log.otlp.http.headers.foo=bar --log.otlp.http.headers.baz=buz
+```
+
+#### `tls`
+
+_Optional_
+
+Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector.
+
+##### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to the OpenTelemetry Collector,
+it defaults to the system bundle.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http:
+      tls:
+        ca: path/to/ca.crt
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http.tls]
+  ca = "path/to/ca.crt"
+```
+
+```bash tab="CLI"
+--log.otlp.http.tls.ca=path/to/ca.crt
+```
+
+##### `cert`
+
+_Optional_
+
+`cert` is the path to the public certificate used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `key` option is required.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--log.otlp.http.tls.cert=path/to/foo.cert
+--log.otlp.http.tls.key=path/to/foo.key
+```
+
+##### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--log.otlp.http.tls.cert=path/to/foo.cert
+--log.otlp.http.tls.key=path/to/foo.key
+```
+
+##### `insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is `true`,
+the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    http:
+      tls:
+        insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[log.otlp.http.tls]
+  insecureSkipVerify = true
+```
+
+```bash tab="CLI"
+--log.otlp.http.tls.insecureSkipVerify=true
+```
+
+### gRPC configuration
+
+_Optional_
+
+This instructs the exporter to send logs to the OpenTelemetry Collector using gRPC.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc: {}
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc]
+```
+
+```bash tab="CLI"
+--log.otlp.grpc=true
+```
+
+#### `endpoint`
+
+_Required, Default="localhost:4317", Format="`<host>:<port>`"_
+
+Address of the OpenTelemetry Collector to send logs to.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      endpoint: localhost:4317
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc]
+  endpoint = "localhost:4317"
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.endpoint=localhost:4317
+```
+
+#### `insecure`
+
+_Optional, Default=false_
+
+Allows exporter to send logs to the OpenTelemetry Collector without using a secured protocol.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      insecure: true
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc]
+  insecure = true
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.insecure=true
+```
+
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with logs by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc.headers]
+  foo = "bar"
+  baz = "buz"
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.headers.foo=bar --log.otlp.grpc.headers.baz=buz
+```
+
+#### `tls`
+
+_Optional_
+
+Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector.
+
+##### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to the OpenTelemetry Collector,
+it defaults to the system bundle.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      tls:
+        ca: path/to/ca.crt
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc.tls]
+  ca = "path/to/ca.crt"
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.tls.ca=path/to/ca.crt
+```
+
+##### `cert`
+
+_Optional_
+
+`cert` is the path to the public certificate used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `key` option is required.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.tls.cert=path/to/foo.cert
+--log.otlp.grpc.tls.key=path/to/foo.key
+```
+
+##### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.tls.cert=path/to/foo.cert
+--log.otlp.grpc.tls.key=path/to/foo.key
+```
+
+##### `insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is `true`,
+the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    grpc:
+      tls:
+        insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[log.otlp.grpc.tls]
+  insecureSkipVerify = true
+```
+
+```bash tab="CLI"
+--log.otlp.grpc.tls.insecureSkipVerify=true
+```
+
 {!traefik-for-business-applications.md!}
