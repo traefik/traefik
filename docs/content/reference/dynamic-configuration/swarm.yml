@@ -1,4 +1,3 @@
 - "traefik.enable=true"
-- "traefik.docker.network=foobar" # DEPRECATED: Use `traefik.swarm.network` instead
-- "traefik.docker.lbswarm=true" # DEPRECATED: Use `traefik.swarm.lbswarm` instead
-
+- "traefik.swarm.network=foobar"
+- "traefik.swarm.lbswarm=true"

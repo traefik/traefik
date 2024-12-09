@@ -82,7 +82,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 			}
 			defer func() { _ = dockerClient.Close() }()
 
-			builder := NewDynConfBuilder(p.Shared, dockerClient)
+			builder := NewDynConfBuilder(p.Shared, dockerClient, true)
 
 			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
@@ -200,7 +200,7 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 			continue
 		}
 
-		if dData.ExtraConf.Swarm.LBSwarm || dData.ExtraConf.Docker.LBSwarm {
+		if dData.ExtraConf.LBSwarm {
 			if len(dData.NetworkSettings.Networks) > 0 {
 				dockerDataList = append(dockerDataList, dData)
 			}
@@ -229,12 +229,9 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 		NetworkSettings: networkSettings{},
 	}
 
-	extraConf, err := p.extractLabels(dData)
+	extraConf, err := p.extractSwarmLabels(dData)
 	if err != nil {
 		return dockerData{}, err
-	}
-	if extraConf.Docker.LBSwarm {
-		logger.Warn().Msgf("Labels `traefik.docker.*` for Docker Swarm are deprecated. Please use `traefik.swarm.*` labels instead")
 	}
 	dData.ExtraConf = extraConf
 
@@ -242,7 +239,7 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 		return dData, nil
 	}
 	if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
-		if dData.ExtraConf.Swarm.LBSwarm || dData.ExtraConf.Docker.LBSwarm {
+		if dData.ExtraConf.LBSwarm {
 			logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
 		}
 	} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
