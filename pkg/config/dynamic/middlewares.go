@@ -251,7 +251,7 @@ type ForwardAuth struct {
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
-	// PreserveLocationHeader defines whether to forward the Location header to the client as is or prefix it with the domain name of the proxy
+	// PreserveLocationHeader defines whether to forward the Location header to the client as is or prefix it with the domain name of the AuthServer
 	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty" toml:"preserveLocationHeader,omitempty" yaml:"preserveLocationHeader,omitempty" export:"true"`
 }
 
