@@ -70,7 +70,7 @@ And then define a routing configuration on Traefik itself with the
 
 ### `insecure`
 
-Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`.
+Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`, on path `/api`.
 
 !!! info
     If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
@@ -174,3 +174,5 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/debug/pprof/profile`         | See the [pprof Profile](https://golang.org/pkg/net/http/pprof/#Profile) Go documentation.   |
 | `/debug/pprof/symbol`          | See the [pprof Symbol](https://golang.org/pkg/net/http/pprof/#Symbol) Go documentation.     |
 | `/debug/pprof/trace`           | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.       |
+
+{!traefik-for-business-applications.md!}

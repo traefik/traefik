@@ -29,7 +29,7 @@ func isPostgres(br *bufio.Reader) (bool, error) {
 		if err != nil {
 			var opErr *net.OpError
 			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-				log.Error().Err(err).Msg("Error while Peeking first byte")
+				log.Debug().Err(err).Msg("Error while peeking first bytes")
 			}
 			return false, err
 		}

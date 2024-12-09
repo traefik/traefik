@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -813,10 +811,10 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
-	assert.Regexp(t, regexp.MustCompile(`\d*`), result[RequestCount], formatErrMessage)
+	assert.Regexp(t, `\d*`, result[RequestCount], formatErrMessage)
 	assert.Equal(t, resultExpected[RouterName], result[RouterName], formatErrMessage)
 	assert.Equal(t, resultExpected[ServiceURL], result[ServiceURL], formatErrMessage)
-	assert.Regexp(t, regexp.MustCompile(`\d*ms`), result[Duration], formatErrMessage)
+	assert.Regexp(t, `\d*ms`, result[Duration], formatErrMessage)
 }
 
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
@@ -954,8 +952,14 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 	req = req.WithContext(reqContext)
 
 	chain := alice.New()
+
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return recovery.New(context.Background(), next)
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			defer func() {
+				_ = recover() // ignore the stream backend panic to avoid the test to fail.
+			}()
+			next.ServeHTTP(rw, req)
+		}), nil
 	})
 	chain = chain.Append(capture.Wrap)
 	chain = chain.Append(WrapHandler(logger))

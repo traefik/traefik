@@ -1,10 +1,10 @@
 ---
 
-!!! question "Using Traefik OSS in Production? Consider Adding Advanced Capabilities."
+!!! question "Using Traefik OSS in Production?"
 
-    Add API Gateway or API Management capabilities seamlessly to your existing Traefik deployments. 
-    No rip and replace. No learning curve.
+    If you are using Traefik at work, consider adding enterprise-grade API gateway capabilities or commercial support for Traefik OSS.
 
-    - [Explore our API Gateway](https://traefik.io/traefik-hub-api-gateway/) ([Watch the Demo Video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc))
-    - [Explore our API Management](https://traefik.io/traefik-hub/)
-    - [Get 24/7/365 Commercial Support for Traefik OSS](https://info.traefik.io/request-commercial-support)
+    - [Watch our API Gateway Demo Video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc)
+    - [Request 24/7/365 OSS Support](https://info.traefik.io/request-commercial-support?cta=doc)
+
+    Adding API Gateway capabilities to Traefik OSS is fast and seamless. There's no rip and replace and all configurations remain intact. See it in action via [this short video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc).
