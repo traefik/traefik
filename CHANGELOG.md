@@ -1,3 +1,10 @@
+## [v2.11.15](https://github.com/traefik/traefik/tree/v2.11.15) (2024-12-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.14...v2.11.15)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.20.4 ([#11295](https://github.com/traefik/traefik/pull/11295) by [ldez](https://github.com/ldez))
+- **[http3]** Update github.com/quic-go/quic-go to v0.48.2 ([#11320](https://github.com/traefik/traefik/pull/11320) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.2.1](https://github.com/traefik/traefik/tree/v3.2.1) (2024-11-20)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.0...v3.2.1)
 
