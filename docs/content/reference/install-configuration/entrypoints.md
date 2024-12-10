@@ -47,7 +47,7 @@ additionalArguments:
 
 !!! tip 
 
-      In the Helm Chart, the entryPoints `web` (port 80), `websecure` (port 443), `traefik` (port 9000) and `metrics` (port 9100) are created by default.
+      In the Helm Chart, the entryPoints `web` (port 80), `websecure` (port 443), `traefik` (port 8080) and `metrics` (port 9100) are created by default.
       The entryPoints `web`, `websecure` are exposed by default using a Service.
 
       The default behaviors can be overridden in the Helm Chart.
