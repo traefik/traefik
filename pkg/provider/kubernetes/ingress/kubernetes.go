@@ -293,6 +293,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
+				rt.Observability = rtConfig.Router.Observability
 			}
 
 			p.applyRouterTransform(ctxIngress, rt, ingress)
@@ -619,10 +620,8 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 		rt.Priority = rtConfig.Router.Priority
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
-
-		if rtConfig.Router.TLS != nil {
-			rt.TLS = rtConfig.Router.TLS
-		}
+		rt.TLS = rtConfig.Router.TLS
+		rt.Observability = rtConfig.Router.Observability
 	}
 
 	var rules []string

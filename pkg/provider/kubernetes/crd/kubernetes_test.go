@@ -1688,6 +1688,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: pointer(true),
+								Tracing:    pointer(true),
+								Metrics:    pointer(true),
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
