@@ -14,7 +14,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/docker/cli v27.1.1+incompatible
-	github.com/docker/docker v27.1.1+incompatible
+	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0

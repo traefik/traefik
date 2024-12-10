@@ -1430,6 +1430,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
+		"traefik.HTTP.Services.Service0.LoadBalancer.server.Fenced":                    "false",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
@@ -1450,6 +1451,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",
+		"traefik.HTTP.Services.Service1.LoadBalancer.server.Fenced":                    "false",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ServersTransport":                 "foobar",
 
