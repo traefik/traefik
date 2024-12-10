@@ -6,9 +6,9 @@ FileName = "traefik_changelog.md"
 
 # example new bugfix v2.11.14
 CurrentRef = "v2.11"
-PreviousRef = "v2.11.13"
+PreviousRef = "v2.11.14"
 BaseBranch = "v2.11"
-FutureCurrentRefName = "v2.11.14"
+FutureCurrentRefName = "v2.11.15"
 
 ThresholdPreviousRef = 10
 ThresholdCurrentRef = 10
