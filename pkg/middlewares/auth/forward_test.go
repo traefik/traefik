@@ -712,10 +712,10 @@ func TestForwardAuthTracing(t *testing.T) {
 }
 
 func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
-	relativeUrl := "/index.html"
+	relativeURL := "/index.html"
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Location", relativeUrl)
+		w.Header().Set("Location", relativeURL)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	}))
 	t.Cleanup(server.Close)
@@ -739,7 +739,7 @@ func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-	assert.Equal(t, relativeUrl, res.Header.Get("Location"))
+	assert.Equal(t, relativeURL, res.Header.Get("Location"))
 }
 
 type mockTracer struct {
