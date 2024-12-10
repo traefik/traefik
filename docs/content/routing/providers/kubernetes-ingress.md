@@ -288,6 +288,30 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/router.tls.options: foobar@file
     ```
 
+??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: true
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.metrics: true
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.tracing: true
+    ```
+
 #### On Service
 
 ??? info "`traefik.ingress.kubernetes.io/service.nativelb`"

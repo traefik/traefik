@@ -1,4 +1,4 @@
-package opentelemetry
+package types
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -18,26 +17,26 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
 
-// Config provides configuration settings for the open-telemetry tracer.
-type Config struct {
-	GRPC *types.OtelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	HTTP *types.OtelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+// OTelTracing provides configuration settings for the open-telemetry tracer.
+type OTelTracing struct {
+	GRPC *OTelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP *OTelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (c *Config) SetDefaults() {
-	c.HTTP = &types.OtelHTTP{}
+func (c *OTelTracing) SetDefaults() {
+	c.HTTP = &OTelHTTP{}
 	c.HTTP.SetDefaults()
 }
 
 // Setup sets up the tracer.
-func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error) {
+func (c *OTelTracing) Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -87,7 +86,7 @@ func (c *Config) Setup(serviceName string, sampleRate float64, globalAttributes 
 	return tracerProvider.Tracer("github.com/traefik/traefik"), &tpCloser{provider: tracerProvider}, err
 }
 
-func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
+func (c *OTelTracing) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	endpoint, err := url.Parse(c.HTTP.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", c.HTTP.Endpoint, err)
@@ -119,7 +118,7 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	return otlptrace.New(context.Background(), otlptracehttp.NewClient(opts...))
 }
 
-func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
+func (c *OTelTracing) setupGRPCExporter() (*otlptrace.Exporter, error) {
 	host, port, err := net.SplitHostPort(c.GRPC.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", c.GRPC.Endpoint, err)

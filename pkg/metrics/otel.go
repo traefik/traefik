@@ -237,7 +237,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 	return meterProvider, nil
 }
 
-func newHTTPExporter(ctx context.Context, config *types.OtelHTTP) (sdkmetric.Exporter, error) {
+func newHTTPExporter(ctx context.Context, config *types.OTelHTTP) (sdkmetric.Exporter, error) {
 	endpoint, err := url.Parse(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
@@ -269,7 +269,7 @@ func newHTTPExporter(ctx context.Context, config *types.OtelHTTP) (sdkmetric.Exp
 	return otlpmetrichttp.New(ctx, opts...)
 }
 
-func newGRPCExporter(ctx context.Context, config *types.OtelGRPC) (sdkmetric.Exporter, error) {
+func newGRPCExporter(ctx context.Context, config *types.OTelGRPC) (sdkmetric.Exporter, error) {
 	host, port, err := net.SplitHostPort(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
