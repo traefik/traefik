@@ -42,7 +42,7 @@ func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Re
 }
 
 // BuildEPChain an observability middleware chain by entry point.
-func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, resourceName string, observabilityConfig *dynamic.RouterObservabilityConfig) alice.Chain {
+func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) alice.Chain {
 	chain := alice.New()
 
 	if o == nil {
@@ -50,33 +50,31 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 	}
 
 	if o.accessLoggerMiddleware != nil || o.metricsRegistry != nil && (o.metricsRegistry.IsEpEnabled() || o.metricsRegistry.IsRouterEnabled() || o.metricsRegistry.IsSvcEnabled()) {
-		if o.ShouldAddAccessLogs(resourceName, observabilityConfig) || o.ShouldAddMetrics(resourceName, observabilityConfig) {
+		if o.ShouldAddAccessLogs(serviceName, observabilityConfig) || o.ShouldAddMetrics(serviceName, observabilityConfig) {
 			chain = chain.Append(capture.Wrap)
 		}
 	}
 
-	// As the Entry point observability middleware ensures that the tracing is added to the request and logger context,
-	// it needs to be added before the access log middleware to ensure that the trace ID is logged.
-	if o.tracer != nil && o.ShouldAddTracing(resourceName, observabilityConfig) {
-		chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
-	}
-
-	if o.accessLoggerMiddleware != nil && o.ShouldAddAccessLogs(resourceName, observabilityConfig) {
+	if o.accessLoggerMiddleware != nil && o.ShouldAddAccessLogs(serviceName, observabilityConfig) {
 		chain = chain.Append(accesslog.WrapHandler(o.accessLoggerMiddleware))
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
 		})
 	}
 
+	if o.tracer != nil && o.ShouldAddTracing(serviceName, observabilityConfig) {
+		chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
+	}
+
 	// Semantic convention server metrics handler.
-	if o.semConvMetricRegistry != nil && o.ShouldAddMetrics(resourceName, observabilityConfig) {
+	if o.metricsRegistry != nil && o.metricsRegistry.IsEpEnabled() && o.ShouldAddMetrics(serviceName, observabilityConfig) {
 		chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
 	}
 
-	if o.metricsRegistry != nil && o.metricsRegistry.IsEpEnabled() && o.ShouldAddMetrics(resourceName, observabilityConfig) {
+	if o.metricsRegistry != nil && o.metricsRegistry.IsEpEnabled() && o.ShouldAddMetrics(serviceName, observabilityConfig) {
 		metricsHandler := mmetrics.WrapEntryPointHandler(ctx, o.metricsRegistry, entryPointName)
 
-		if o.tracer != nil && o.ShouldAddTracing(resourceName, observabilityConfig) {
+		if o.tracer != nil && o.ShouldAddTracing(serviceName, observabilityConfig) {
 			chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 		} else {
 			chain = chain.Append(metricsHandler)
