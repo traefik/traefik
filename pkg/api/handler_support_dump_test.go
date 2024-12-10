@@ -3,6 +3,7 @@ package api
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -29,14 +30,16 @@ func TestHandler_SupportDump(t *testing.T) {
 			confStatic: static.Configuration{API: &static.API{}, Global: &static.Global{}},
 			confDyn:    runtime.Configuration{},
 			validate: func(t *testing.T, files map[string][]byte) {
+				t.Helper()
+
 				require.Contains(t, files, "static-config.json")
 				require.Contains(t, files, "runtime-config.json")
 				require.Contains(t, files, "version.json")
 
 				// Verify version.json contains version information
-				assert.Contains(t, string(files["version.json"]), `"Version":"dev"`)
+				assert.Contains(t, string(files["version.json"]), `"version":"dev"`)
 
-				assert.Equal(t, `{"global":{},"api":{}}`, string(files["static-config.json"]))
+				assert.JSONEq(t, `{"global":{},"api":{}}`, string(files["static-config.json"]))
 				assert.Equal(t, `{}`, string(files["runtime-config.json"]))
 			},
 		},
@@ -63,12 +66,14 @@ func TestHandler_SupportDump(t *testing.T) {
 				},
 			},
 			validate: func(t *testing.T, files map[string][]byte) {
+				t.Helper()
+
 				require.Contains(t, files, "static-config.json")
 				require.Contains(t, files, "runtime-config.json")
 				require.Contains(t, files, "version.json")
 
 				// Verify version.json contains version information
-				assert.Contains(t, string(files["version.json"]), `"Version":"dev"`)
+				assert.Contains(t, string(files["version.json"]), `"version":"dev"`)
 
 				// Verify static config contains entry points
 				assert.Contains(t, string(files["static-config.json"]), `"entryPoints":{"web":{"address":":80","http":{}}}`)
@@ -81,7 +86,6 @@ func TestHandler_SupportDump(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -117,7 +121,7 @@ func extractTarGz(r io.Reader) (map[string][]byte, error) {
 	tr := tar.NewReader(gzr)
 	for {
 		header, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
