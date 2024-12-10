@@ -1,3 +1,17 @@
+## [v3.2.2](https://github.com/traefik/traefik/tree/v3.2.2) (2024-12-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.1...v3.2.2)
+
+**Bug fixes:**
+- **[docker,docker/swarm]** Rename traefik.docker.* labels for Docker Swarm to traefik.swarm.* ([#11247](https://github.com/traefik/traefik/pull/11247) by [anchal00](https://github.com/anchal00))
+- **[k8s/gatewayapi]** Update sigs.k8s.io/gateway-api to v1.2.1 ([#11314](https://github.com/traefik/traefik/pull/11314) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Fix WASM settings ([#11321](https://github.com/traefik/traefik/pull/11321) by [juliens](https://github.com/juliens))
+- **[rules]** Fix models mechanism for default rule syntax ([#11300](https://github.com/traefik/traefik/pull/11300) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Move callout to the entrypoint page footer ([#11305](https://github.com/traefik/traefik/pull/11305) by [kevinpollet](https://github.com/kevinpollet))
+- Fix incorrect links in v3 migration sections ([#11297](https://github.com/traefik/traefik/pull/11297) by [kevinpollet](https://github.com/kevinpollet))
+- New Install Reference Documentation ([#11213](https://github.com/traefik/traefik/pull/11213) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
 ## [v2.11.15](https://github.com/traefik/traefik/tree/v2.11.15) (2024-12-06)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.14...v2.11.15)
 
