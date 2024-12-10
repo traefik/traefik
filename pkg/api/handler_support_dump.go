@@ -5,11 +5,11 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/version"
 	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
@@ -28,9 +28,9 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 	}
 
 	tVersion, err := json.Marshal(struct {
-		Version   string
-		Codename  string
-		StartDate time.Time
+		Version   string    `json:"version"`
+		Codename  string    `json:"codename"`
+		StartDate time.Time `json:"startDate"`
 	}{
 		Version:   version.Version,
 		Codename:  version.Codename,
@@ -76,7 +76,7 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 func addFile(tw *tar.Writer, name string, content []byte) error {
 	header := &tar.Header{
 		Name:    name,
-		Mode:    0600,
+		Mode:    0o600,
 		Size:    int64(len(content)),
 		ModTime: time.Now(),
 	}
