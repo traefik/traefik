@@ -117,7 +117,6 @@ accessLog:
 # Configuring a buffer of 100 lines
 --accesslog.filepath=/path/to/access.log
 --accesslog.bufferingsize=100
-```
 ### Filtering
 
 To filter logs, you can specify a set of filters which are logically "OR-connected".
