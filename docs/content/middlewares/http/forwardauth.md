@@ -336,6 +336,8 @@ http:
 
 ### `forwardBody`
 
+_Optional, Default=false_
+
 Set the `forwardBody` option to `true` to send Body.
 
 !!! info
@@ -380,8 +382,11 @@ http:
 
 ### `maxBodySize`
 
-Set the `maxBodySize` to limit Body size. If body is bigger than this, return 400. Default is -1, which means no limit.
+_Optional, Default=-1_
 
+Set the `maxBodySize` to limit the body size in bytes.
+If body is bigger than this, it returns a 401 (unauthorized).
+Default is `-1`, which means no limit.
 
 ```yaml tab="Docker & Swarm"
 labels:

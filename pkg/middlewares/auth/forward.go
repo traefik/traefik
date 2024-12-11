@@ -23,12 +23,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const typeNameForward = "ForwardAuth"
+
 const (
 	xForwardedURI    = "X-Forwarded-Uri"
 	xForwardedMethod = "X-Forwarded-Method"
 )
-
-const typeNameForward = "ForwardAuth"
 
 // hopHeaders Hop-by-hop headers to be removed in the authentication request.
 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
@@ -77,7 +77,11 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		addAuthCookiesToResponse: addAuthCookiesToResponse,
 		headerField:              config.HeaderField,
 		forwardBody:              config.ForwardBody,
-		maxBodySize:              config.MaxBodySize,
+		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
+	}
+
+	if config.MaxBodySize != nil {
+		fa.maxBodySize = *config.MaxBodySize
 	}
 
 	// Ensure our request client does not follow redirects
@@ -125,32 +129,12 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 	return fa.name, typeNameForward, trace.SpanKindInternal
 }
 
-var errBodyTooLarge = errors.New("Request body too large")
-
-func (fa *forwardAuth) createBodyByte(req *http.Request) ([]byte, error) {
-	if fa.maxBodySize < 0 {
-		return io.ReadAll(req.Body)
-	}
-	bodyByte := make([]byte, fa.maxBodySize+1)
-	n, err := io.ReadFull(req.Body, bodyByte)
-	if errors.Is(err, io.EOF) {
-		return []byte{}, nil
-	}
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
-		return nil, err
-	}
-	if errors.Is(err, io.ErrUnexpectedEOF) {
-		return bodyByte[:n], nil
-	}
-	return nil, errBodyTooLarge
-}
-
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
 	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
-		logger.Debug().Msgf("Error calling %s. Cause %s", fa.address, err)
+		logger.Debug().Err(err).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
 
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -158,25 +142,27 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if fa.forwardBody {
-		bodyByte, err := fa.createBodyByte(req)
+		bodyBytes, err := fa.readBodyBytes(req)
 		if errors.Is(err, errBodyTooLarge) {
-			logger.Debug().Msgf("Body size is too big maxBodySize: %d", fa.maxBodySize)
-			observability.SetStatusErrorf(req.Context(), "Error while reading Body: %s", err)
-			rw.WriteHeader(http.StatusBadRequest)
-			_, err = rw.Write([]byte(errBodyTooLarge.Error()))
-			if err != nil {
-				logger.Error().Err(err).Msg("Unable to write error message")
-			}
+			logger.Debug().Msgf("Request body is too large, maxBodySize: %d", fa.maxBodySize)
+
+			observability.SetStatusErrorf(req.Context(), "Request body is too large, maxBodySize: %d", fa.maxBodySize)
+			rw.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		if err != nil && !errors.Is(err, errBodyTooLarge) {
-			logger.Debug().Msgf("Error while reading Body: %s", err)
+		if err != nil {
+			logger.Debug().Err(err).Msg("Error while reading body")
+
 			observability.SetStatusErrorf(req.Context(), "Error while reading Body: %s", err)
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		req.Body = io.NopCloser(bytes.NewReader(bodyByte))
-		forwardReq.Body = io.NopCloser(bytes.NewReader(bodyByte))
+
+		// bodyBytes is nil when the request has no body.
+		if bodyBytes != nil {
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			forwardReq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		}
 	}
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
@@ -196,7 +182,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		logger.Debug().Msgf("Error calling %s. Cause: %s", fa.address, forwardErr)
+		logger.Debug().Err(forwardErr).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -206,7 +192,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	body, readError := io.ReadAll(forwardResponse.Body)
 	if readError != nil {
-		logger.Debug().Msgf("Error reading body %s. Cause: %s", fa.address, readError)
+		logger.Debug().Err(readError).Msgf("Error reading body %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error reading body %s. Cause: %s", fa.address, readError)
 
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -241,7 +227,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
-				logger.Debug().Msgf("Error reading response location header %s. Cause: %s", fa.address, err)
+				logger.Debug().Err(err).Msgf("Error reading response location header %s", fa.address)
 				observability.SetStatusErrorf(req.Context(), "Error reading response location header %s. Cause: %s", fa.address, err)
 
 				rw.WriteHeader(http.StatusInternalServerError)
@@ -315,6 +301,27 @@ func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.
 
 		return nil
 	}
+}
+
+var errBodyTooLarge = errors.New("request body too large")
+
+func (fa *forwardAuth) readBodyBytes(req *http.Request) ([]byte, error) {
+	if fa.maxBodySize < 0 {
+		return io.ReadAll(req.Body)
+	}
+
+	body := make([]byte, fa.maxBodySize+1)
+	n, err := io.ReadFull(req.Body, body)
+	if errors.Is(err, io.EOF) {
+		return nil, nil
+	}
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, fmt.Errorf("reading body bytes: %w", err)
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return body[:n], nil
+	}
+	return nil, errBodyTooLarge
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
