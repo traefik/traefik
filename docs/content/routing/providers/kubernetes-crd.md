@@ -982,7 +982,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 As explained in the section about [Sticky sessions](../../services/#sticky-sessions), for stickiness to work all the way,
 it must be specified at each load-balancing level.
 
-When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) status endpoints to detect and mark servers as fenced.
+When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
 Fenced servers can still process requests tied to sticky cookies, while they are terminating.
 
 For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
