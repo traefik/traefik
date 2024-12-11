@@ -9,6 +9,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/ip"
 )
 
+// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
+const ForwardAuthDefaultMaxBodySize int64 = -1
+
 // +k8s:deepcopy-gen=true
 
 // Middleware holds the Middleware configuration.
@@ -251,6 +254,15 @@ type ForwardAuth struct {
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+	// ForwardBody defines whether to send the request body to the authentication server.
+	ForwardBody bool `json:"forwardBody,omitempty" toml:"forwardBody,omitempty" yaml:"forwardBody,omitempty" export:"true"`
+	// MaxBodySize defines the maximum body size in bytes allowed to be forwarded to the authentication server.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+}
+
+func (f *ForwardAuth) SetDefaults() {
+	defaultMaxBodySize := ForwardAuthDefaultMaxBodySize
+	f.MaxBodySize = &defaultMaxBodySize
 }
 
 // +k8s:deepcopy-gen=true
