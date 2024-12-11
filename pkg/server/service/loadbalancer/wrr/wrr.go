@@ -64,7 +64,7 @@ type Balancer struct {
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
 	updaters []func(bool)
-	// fenced is the list of terminating yet still serving child services
+	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
 }
 
@@ -143,7 +143,6 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 		b.status[childName] = struct{}{}
 	} else {
 		delete(b.status, childName)
-		delete(b.fenced, childName)
 	}
 
 	upAfter := len(b.status) > 0
@@ -199,7 +198,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		heap.Push(b, handler)
 		if _, ok := b.status[handler.name]; ok {
 			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler
+				// do not select a fenced handler.
 				break
 			}
 		}
