@@ -1,10 +1,11 @@
 package k8s
 
 import (
-	"k8s.io/api/discovery/v1"
+	v1 "k8s.io/api/discovery/v1"
+	"k8s.io/utils/ptr"
 )
 
-// EndpointServing returns true if the endpoint is still serving the service, regardless of its ready status.
+// EndpointServing returns true if the endpoint is still serving the service.
 func EndpointServing(endpoint v1.Endpoint) bool {
-	return endpoint.Conditions.Ready != nil && (*endpoint.Conditions.Ready || (endpoint.Conditions.Serving != nil && *endpoint.Conditions.Serving))
+	return ptr.Deref(endpoint.Conditions.Ready, false) || ptr.Deref(endpoint.Conditions.Serving, false)
 }

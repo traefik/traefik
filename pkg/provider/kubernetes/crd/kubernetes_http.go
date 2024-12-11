@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -557,7 +558,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 				addresses[address] = struct{}{}
 				servers = append(servers, dynamic.Server{
 					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
-					Fenced: !*endpoint.Conditions.Ready,
+					Fenced: ptr.Deref(endpoint.Conditions.Serving, false),
 				})
 			}
 		}
