@@ -111,6 +111,30 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     traefik.http.routers.myrouter.tls.options=foobar
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.accesslogs=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.metrics=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.tracing=true
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
