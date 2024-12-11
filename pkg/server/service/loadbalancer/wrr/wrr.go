@@ -143,7 +143,6 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 		b.status[childName] = struct{}{}
 	} else {
 		delete(b.status, childName)
-		delete(b.fenced, childName)
 	}
 
 	upAfter := len(b.status) > 0
