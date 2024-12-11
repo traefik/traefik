@@ -18,7 +18,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    pointer("test"),
 				},
 			},
 		},
@@ -35,7 +35,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    pointer("test"),
 				},
 			},
 		},
@@ -52,7 +52,7 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    ptr("test"),
+				Error:    pointer("test"),
 			},
 		},
 	}
@@ -67,14 +67,10 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    ptr("test"),
+				Error:    pointer("test"),
 			},
 		},
 	}
 
 	assert.Equal(t, expected, actual)
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

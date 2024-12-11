@@ -223,8 +223,8 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 func TestBalancerAllServersFenced(t *testing.T) {
 	balancer := New(nil, false)
 
-	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(1), true)
-	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(1), true)
+	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
+	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -354,37 +354,37 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.ResponseRecorder.WriteHeader(statusCode)
 }
 
-// TestSticky_Fenced checks that fenced node receive traffic if their sticky cookie matches
+// TestSticky_Fenced checks that fenced node receive traffic if their sticky cookie matches.
 func TestSticky_Fenced(t *testing.T) {
-	balancer := New(&dynamic.Sticky{
-		Cookie: &dynamic.Cookie{Name: "test"},
-	}, false)
+	balancer := New(&dynamic.Sticky{Cookie: &dynamic.Cookie{Name: "test"}}, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), pointer(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), pointer(1), false)
 
 	balancer.Add("fenced", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "fenced")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), true)
+	}), pointer(1), true)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
+	stickyReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	stickyReq.AddCookie(&http.Cookie{Name: "test", Value: "fenced"})
+
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req2 := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.AddCookie(&http.Cookie{Name: "test", Value: "fenced"})
+
 	for range 4 {
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
+		balancer.ServeHTTP(recorder, stickyReq)
 		balancer.ServeHTTP(recorder, req)
-		balancer.ServeHTTP(recorder, req2)
 	}
 
 	assert.Equal(t, 4, recorder.save["fenced"])
