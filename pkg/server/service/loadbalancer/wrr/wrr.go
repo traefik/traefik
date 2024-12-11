@@ -64,12 +64,15 @@ type Balancer struct {
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
 	updaters []func(bool)
+	// fenced is the list of terminating yet still serving child services.
+	fenced map[string]struct{}
 }
 
 // New creates a new load balancer.
 func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
+		fenced:           make(map[string]struct{}),
 		handlerMap:       make(map[string]*namedHandler),
 		wantsHealthCheck: wantHealthCheck,
 	}
@@ -179,7 +182,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 {
+	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
 		return nil, errNoAvailableServer
 	}
 
@@ -194,7 +197,10 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 
 		heap.Push(b, handler)
 		if _, ok := b.status[handler.name]; ok {
-			break
+			if _, ok := b.fenced[handler.name]; !ok {
+				// do not select a fenced handler.
+				break
+			}
 		}
 	}
 
@@ -255,7 +261,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -271,6 +277,9 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
 	h.deadline = b.curDeadline + 1/h.weight
 	heap.Push(b, h)
 	b.status[name] = struct{}{}
+	if fenced {
+		b.fenced[name] = struct{}{}
+	}
 	b.handlerMap[name] = h
 	b.handlerMap[hash(name)] = h
 	b.handlersMu.Unlock()
