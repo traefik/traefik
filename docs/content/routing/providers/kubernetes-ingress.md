@@ -391,6 +391,11 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.sticky.cookie.path: /foobar
     ```
 
+## Stickiness and load-balancing
+
+When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
+Fenced servers can still process requests tied to sticky cookies, while they are terminating.
+
 ## Path Types on Kubernetes 1.18+
 
 If the Kubernetes cluster version is 1.18+,

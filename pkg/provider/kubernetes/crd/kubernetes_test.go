@@ -4783,6 +4783,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 									{
+										URL:    "http://10.10.0.3:80",
+										Fenced: true,
+									},
+									{
+										URL:    "http://10.10.0.4:80",
+										Fenced: true,
+									},
+									{
 										URL: "http://10.10.0.5:80",
 									},
 									{

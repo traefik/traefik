@@ -257,6 +257,7 @@ type Server struct {
 	URL          string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
 	Weight       *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" label:"weight" export:"true"`
 	PreservePath bool   `json:"preservePath,omitempty" toml:"preservePath,omitempty" yaml:"preservePath,omitempty" label:"-" export:"true"`
+	Fenced       bool   `json:"fenced,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 	Scheme       string `json:"-" toml:"-" yaml:"-" file:"-"`
 	Port         string `json:"-" toml:"-" yaml:"-" file:"-"`
 }
