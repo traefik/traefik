@@ -354,7 +354,7 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.ResponseRecorder.WriteHeader(statusCode)
 }
 
-// TestSticky_Fenced checks that fenced node reveive traffic if their sticky cookie matches
+// TestSticky_Fenced checks that fenced node receive traffic if their sticky cookie matches
 func TestSticky_Fenced(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{Name: "test"},
