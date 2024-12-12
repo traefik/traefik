@@ -201,6 +201,8 @@ http:
           - foobar
           - foobar
         headerField: foobar
+        forwardBody: true
+        maxBodySize: 42
     Middleware11:
       grpcWeb:
         allowOrigins:

@@ -334,6 +334,98 @@ http:
     addAuthCookiesToResponse = ["Session-Cookie", "State-Cookie"]
 ```
 
+### `forwardBody`
+
+_Optional, Default=false_
+
+Set the `forwardBody` option to `true` to send Body.
+
+!!! info
+
+    As body is read inside Traefik before forwarding, this breaks streaming.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.forwardBody=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    forwardBody: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.forwardBody=true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        forwardBody: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    forwardBody = true
+```
+
+### `maxBodySize`
+
+_Optional, Default=-1_
+
+Set the `maxBodySize` to limit the body size in bytes.
+If body is bigger than this, it returns a 401 (unauthorized).
+Default is `-1`, which means no limit.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.maxBodySize=1000"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    forwardBody: true
+    maxBodySize: 1000
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.maxBodySize=1000"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        maxBodySize: 1000
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    forwardBody = true
+    maxBodySize = 1000
+```
+
 ### `tls`
 
 _Optional_
