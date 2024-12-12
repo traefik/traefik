@@ -790,6 +790,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		AuthRequestHeaders:       auth.AuthRequestHeaders,
 		AddAuthCookiesToResponse: auth.AddAuthCookiesToResponse,
 		ForwardBody:              auth.ForwardBody,
+		PreserveLocationHeader:   auth.PreserveLocationHeader,
 	}
 	forwardAuth.SetDefaults()
 
