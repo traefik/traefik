@@ -90,16 +90,16 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
+	staticConfiguration.SetEffectiveConfiguration()
+	if err := staticConfiguration.ValidateConfiguration(); err != nil {
+		return err
+	}
+
 	if err := setupLogger(staticConfiguration); err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
-
-	staticConfiguration.SetEffectiveConfiguration()
-	if err := staticConfiguration.ValidateConfiguration(); err != nil {
-		return err
-	}
 
 	log.Info().Str("version", version.Version).
 		Msgf("Traefik version %s built on %s", version.Version, version.BuildDate)
