@@ -35,11 +35,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	defaultMirrorBody        = true
-	defaultMaxBodySize int64 = -1
-)
-
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
 	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
@@ -221,12 +216,12 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	mirrorBody := defaultMirrorBody
+	mirrorBody := dynamic.MirroringDefaultMirrorBody
 	if config.MirrorBody != nil {
 		mirrorBody = *config.MirrorBody
 	}
 
-	maxBodySize := defaultMaxBodySize
+	maxBodySize := dynamic.MirroringDefaultMaxBodySize
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
