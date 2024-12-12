@@ -90,7 +90,7 @@ func (s *K8sConformanceSuite) SetupSuite() {
 
 	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/k8s-conformance/00-experimental-v1.2.0.yml"),
+		k3s.WithManifest("./fixtures/k8s-conformance/00-experimental-v1.2.1.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/k8s-conformance/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
