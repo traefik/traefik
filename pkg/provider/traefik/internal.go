@@ -223,6 +223,12 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 	}
 
 	for name, ep := range i.staticCfg.EntryPoints {
+		if defaultRuleSyntax != "" {
+			cfg.TCP.Models[name] = &dynamic.TCPModel{
+				DefaultRuleSyntax: defaultRuleSyntax,
+			}
+		}
+
 		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" {
 			continue
 		}
@@ -250,16 +256,6 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 		m.DefaultRuleSyntax = defaultRuleSyntax
 
 		cfg.HTTP.Models[name] = m
-
-		if cfg.TCP == nil {
-			continue
-		}
-
-		mTCP := &dynamic.TCPModel{
-			DefaultRuleSyntax: defaultRuleSyntax,
-		}
-
-		cfg.TCP.Models[name] = mTCP
 	}
 }
 

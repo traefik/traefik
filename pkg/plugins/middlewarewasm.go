@@ -83,7 +83,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	config := wazero.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
 	for _, env := range b.settings.Envs {
-		config.WithEnv(env, os.Getenv(env))
+		config = config.WithEnv(env, os.Getenv(env))
 	}
 
 	if len(b.settings.Mounts) > 0 {
@@ -97,14 +97,14 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 			parts := strings.Split(prefix, ":")
 			switch {
 			case len(parts) == 1:
-				withDir(parts[0], parts[0])
+				fsConfig = withDir(parts[0], parts[0])
 			case len(parts) == 2:
-				withDir(parts[0], parts[1])
+				fsConfig = withDir(parts[0], parts[1])
 			default:
 				return nil, nil, fmt.Errorf("invalid directory %q", mount)
 			}
 		}
-		config.WithFSConfig(fsConfig)
+		config = config.WithFSConfig(fsConfig)
 	}
 
 	opts := []handler.Option{
