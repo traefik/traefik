@@ -91,6 +91,10 @@ entryPoints:
       advertisedPort: 42
     udp:
       timeout: 42s
+    observability:
+      accessLogs: true
+      tracing: true
+      metrics: true
 providers:
   providersThrottleDuration: 42s
   docker:

@@ -183,6 +183,22 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
+					if cp.Observability == nil {
+						cp.Observability = &dynamic.RouterObservabilityConfig{}
+					}
+
+					if cp.Observability.AccessLogs == nil {
+						cp.Observability.AccessLogs = m.Observability.AccessLogs
+					}
+
+					if cp.Observability.Tracing == nil {
+						cp.Observability.Tracing = m.Observability.Tracing
+					}
+
+					if cp.Observability.Metrics == nil {
+						cp.Observability.Metrics = m.Observability.Metrics
+					}
+
 					rtName := name
 					if len(eps) > 1 {
 						rtName = epName + "-" + name
