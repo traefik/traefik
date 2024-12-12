@@ -14,16 +14,9 @@ import (
 )
 
 func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
-	anonStatic, err := redactor.Anonymize(h.staticConfig)
+	staticConfig, err := redactor.Anonymize(h.staticConfig)
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("anonymizing static configuration")
-		writeError(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	staticConfig, err := json.Marshal(anonStatic)
-	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("marshaling static configuration")
+		log.Ctx(request.Context()).Error().Err(err).Msg("anonymizing and marshaling static configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -68,7 +61,7 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if err := addFile(tw, "static-config.json", staticConfig); err != nil {
+	if err := addFile(tw, "static-config.json", []byte(staticConfig)); err != nil {
 		log.Ctx(request.Context()).Error().Err(err).Msg("adding static configuration file")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
