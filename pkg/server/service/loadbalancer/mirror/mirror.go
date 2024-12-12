@@ -191,9 +191,9 @@ func (c contextStopPropagation) Done() <-chan struct{} {
 	return make(chan struct{})
 }
 
-// ReusableRequest keeps in memory the body of the given request,
+// reusableRequest keeps in memory the body of the given request,
 // so that the request can be fully cloned by each mirror.
-type ReusableRequest struct {
+type reusableRequest struct {
 	req  *http.Request
 	body []byte
 }
@@ -202,12 +202,12 @@ var errBodyTooLarge = errors.New("request body too large")
 
 // if the returned error is errBodyTooLarge, newReusableRequest also returns the
 // bytes that were already consumed from the request's body.
-func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*ReusableRequest, []byte, error) {
+func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*reusableRequest, []byte, error) {
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
 	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
-		return &ReusableRequest{req: req}, nil, nil
+		return &reusableRequest{req: req}, nil, nil
 	}
 
 	// unbounded body size
@@ -216,7 +216,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 		if err != nil {
 			return nil, nil, err
 		}
-		return &ReusableRequest{
+		return &reusableRequest{
 			req:  req,
 			body: body,
 		}, nil, nil
@@ -233,7 +233,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	// we got an ErrUnexpectedEOF, which means there was less than maxBodySize data to read,
 	// which permits us sending also to all the mirrors later.
 	if errors.Is(err, io.ErrUnexpectedEOF) {
-		return &ReusableRequest{
+		return &reusableRequest{
 			req:  req,
 			body: body[:n],
 		}, nil, nil
@@ -243,7 +243,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	return nil, body[:n], errBodyTooLarge
 }
 
-func (rr ReusableRequest) clone(ctx context.Context) *http.Request {
+func (rr reusableRequest) clone(ctx context.Context) *http.Request {
 	req := rr.req.Clone(ctx)
 
 	if rr.body != nil {
