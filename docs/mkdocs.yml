@@ -52,6 +52,7 @@ markdown_extensions:
       use_pygments: false # hljs is used instead of pygment for TOML highlighting support
   - pymdownx.smartsymbols
   - pymdownx.superfences
+  - pymdownx.tabbed
   - pymdownx.tasklist
   - pymdownx.snippets:
       check_paths: true
@@ -190,13 +191,45 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
-  - 'References':
-      - 'Static Configuration':
-          - 'Overview': 'reference/static-configuration/overview.md'
-          - 'File': 'reference/static-configuration/file.md'
-          - 'CLI': 'reference/static-configuration/cli.md'
-          - 'Environment variables': 'reference/static-configuration/env.md'
-      - 'Dynamic Configuration':
+  - 'Reference':
+    - 'Install Configuration':
+      - 'Boot Environment': 'reference/install-configuration/boot-environment.md'
+      - 'Configuration Discovery':
+        - 'Overview' : 'reference/install-configuration/providers/overview.md'
+        - 'Kubernetes':
+          - 'Kubernetes Gateway API' : 'reference/install-configuration/providers/kubernetes/kubernetes-gateway.md'
+          - 'Kubernetes CRD' : 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
+          - 'Kubernetes Ingress' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress.md'
+        - 'Docker': 'reference/install-configuration/providers/docker.md'
+        - 'Swarm': 'reference/install-configuration/providers/swarm.md'
+        - 'Hashicorp':
+          - 'Nomad': "reference/install-configuration/providers/hashicorp/nomad.md"
+          - 'Consul': 'reference/install-configuration/providers/hashicorp/consul.md'
+          - 'Consul Catalog': 'reference/install-configuration/providers/hashicorp/consul-catalog.md'
+        - 'KV Stores': 
+          - 'Redis': 'reference/install-configuration/providers/kv/redis.md'
+          - 'Consul': 'reference/install-configuration/providers/kv/consul.md'
+          - 'etcd': 'reference/install-configuration/providers/kv/etcd.md'
+          - 'ZooKeeper' : 'reference/install-configuration/providers/kv/zk.md'
+        - 'Others':
+          - 'File': 'reference/install-configuration/providers/others/file.md'
+          - 'ECS': 'reference/install-configuration/providers/others/ecs.md'
+          - 'HTTP': 'reference/install-configuration/providers/others/http.md'
+      - 'EntryPoints': 'reference/install-configuration/entrypoints.md'
+      - 'API & Dashboard': 'reference/install-configuration/api-dashboard.md'
+      - 'TLS':
+          - 'Certificate Resolvers':
+            - "Overview" : 'reference/install-configuration/tls/certificate-resolvers/overview.md'
+            - "ACME" : 'reference/install-configuration/tls/certificate-resolvers/acme.md'
+            - "Tailscale" : 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
+          - "SPIFFE" : 'reference/install-configuration/tls/spiffe.md'
+      - 'Observability':
+          - 'Metrics' : 'reference/install-configuration/observability/metrics.md'
+          - 'Tracing': 'reference/install-configuration/observability/tracing.md'
+          - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
+          - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
+      # - 'Options List':  'reference/install-configuration/cli-options-list.md' -- Todo
+    - 'Dynamic Configuration':
         - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Swarm': 'reference/dynamic-configuration/swarm.md'
