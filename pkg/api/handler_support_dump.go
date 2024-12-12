@@ -13,17 +13,19 @@ import (
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
-func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getSupportDump(rw http.ResponseWriter, req *http.Request) {
+	logger := log.Ctx(req.Context())
+
 	staticConfig, err := redactor.Anonymize(h.staticConfig)
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("anonymizing and marshaling static configuration")
+		logger.Error().Err(err).Msg("Unable to anonymize and marshal static configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	runtimeConfig, err := json.Marshal(h.runtimeConfiguration)
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("marshaling runtime configuration")
+		logger.Error().Err(err).Msg("Unable to marshal runtime configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -38,7 +40,7 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 		StartDate: version.StartDate,
 	})
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("marshaling version")
+		logger.Error().Err(err).Msg("Unable to marshal version")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -46,29 +48,29 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 	rw.Header().Set("Content-Type", "application/gzip")
 	rw.Header().Set("Content-Disposition", "attachment; filename=support-dump.tar.gz")
 
-	// Create gzip writer
+	// Create gzip writer.
 	gw := gzip.NewWriter(rw)
 	defer gw.Close()
 
-	// Create tar writer
+	// Create tar writer.
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
 
-	// Add configuration files to the archive
+	// Add configuration files to the archive.
 	if err := addFile(tw, "version.json", tVersion); err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("adding version file")
+		logger.Error().Err(err).Msg("Unable to archive version file")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := addFile(tw, "static-config.json", []byte(staticConfig)); err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("adding static configuration file")
+		logger.Error().Err(err).Msg("Unable to archive static configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := addFile(tw, "runtime-config.json", runtimeConfig); err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Msg("adding runtime configuration file")
+		logger.Error().Err(err).Msg("Unable to archive runtime configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -83,11 +85,11 @@ func addFile(tw *tar.Writer, name string, content []byte) error {
 	}
 
 	if err := tw.WriteHeader(header); err != nil {
-		return fmt.Errorf("failed to write tar header: %w", err)
+		return fmt.Errorf("writing tar header: %w", err)
 	}
 
 	if _, err := tw.Write(content); err != nil {
-		return fmt.Errorf("failed to write tar content: %w", err)
+		return fmt.Errorf("writing tar content: %w", err)
 	}
 
 	return nil

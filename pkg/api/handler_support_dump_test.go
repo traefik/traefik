@@ -99,7 +99,7 @@ func TestHandler_SupportDump(t *testing.T) {
 			assert.Equal(t, "application/gzip", resp.Header.Get("Content-Type"))
 			assert.Equal(t, `attachment; filename=support-dump.tar.gz`, resp.Header.Get("Content-Disposition"))
 
-			// Extract and validate the tar.gz contents
+			// Extract and validate the tar.gz contents.
 			files, err := extractTarGz(resp.Body)
 			require.NoError(t, err)
 
