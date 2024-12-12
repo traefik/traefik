@@ -1107,6 +1107,11 @@ func (in *Route) DeepCopyInto(out *Route) {
 		*out = make([]MiddlewareRef, len(*in))
 		copy(*out, *in)
 	}
+	if in.Observability != nil {
+		in, out := &in.Observability, &out.Observability
+		*out = new(dynamic.RouterObservabilityConfig)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
