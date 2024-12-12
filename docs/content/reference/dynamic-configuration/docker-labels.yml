@@ -41,6 +41,7 @@
 - "traefik.http.middlewares.middleware10.forwardauth.forwardbody=true"
 - "traefik.http.middlewares.middleware10.forwardauth.headerfield=foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.maxbodysize=42"
+- "traefik.http.middlewares.middleware10.forwardauth.preservelocationheader=true"
 - "traefik.http.middlewares.middleware10.forwardauth.tls.ca=foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.tls.caoptional=true"
 - "traefik.http.middlewares.middleware10.forwardauth.tls.cert=foobar"
