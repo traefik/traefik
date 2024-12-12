@@ -308,6 +308,23 @@ services:
 
 ## OpenTelemetry
 
+!!! warning "Experimental Feature"
+
+    The OpenTelemetry access logs feature is currently experimental and must be explicitly enabled in the experimental section prior to use.
+    
+    ```yaml tab="File (YAML)"
+    experimental:
+      otlpLogs: true
+    ```
+    
+    ```toml tab="File (TOML)"
+    [experimental.otlpLogs]
+    ```
+    
+    ```bash tab="CLI"
+    --experimental.otlpLogs=true
+    ```
+
 To enable the OpenTelemetry Logger for access logs:
 
 ```yaml tab="File (YAML)"

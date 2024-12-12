@@ -313,7 +313,7 @@ Timeout defines how long to wait on an idle session before releasing the related
 Defines whether all plugins must be loaded successfully for Traefik to start. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_FASTPROXY`:  
-Enable the FastProxy implementation. (Default: ```false```)
+Enables the FastProxy implementation. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_FASTPROXY_DEBUG`:  
 Enable debug mode for the FastProxy implementation. (Default: ```false```)
@@ -335,6 +335,9 @@ Environment variables to forward to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_MOUNTS`:  
 Directory to mount to the wasm guest.
+
+`TRAEFIK_EXPERIMENTAL_OTLPLOGS`:  
+Enables the OpenTelemetry logs integration. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
