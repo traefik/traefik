@@ -9,20 +9,28 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
-	staticConfig, err := json.Marshal(h.staticConfig)
+	anonStatic, err := redactor.Anonymize(h.staticConfig)
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
+		log.Ctx(request.Context()).Error().Err(err).Msg("anonymizing static configuration")
+		writeError(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	staticConfig, err := json.Marshal(anonStatic)
+	if err != nil {
+		log.Ctx(request.Context()).Error().Err(err).Msg("marshaling static configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	runtimeConfig, err := json.Marshal(h.runtimeConfiguration)
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
+		log.Ctx(request.Context()).Error().Err(err).Msg("marshaling runtime configuration")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -37,7 +45,7 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 		StartDate: version.StartDate,
 	})
 	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
+		log.Ctx(request.Context()).Error().Err(err).Msg("marshaling version")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -55,19 +63,19 @@ func (h Handler) supportDump(rw http.ResponseWriter, request *http.Request) {
 
 	// Add configuration files to the archive
 	if err := addFile(tw, "version.json", tVersion); err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
+		log.Ctx(request.Context()).Error().Err(err).Msg("adding version file")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := addFile(tw, "static-config.json", staticConfig); err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
+		log.Ctx(request.Context()).Error().Err(err).Msg("adding static configuration file")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := addFile(tw, "runtime-config.json", runtimeConfig); err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
+		log.Ctx(request.Context()).Error().Err(err).Msg("adding runtime configuration file")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
