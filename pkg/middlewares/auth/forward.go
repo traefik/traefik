@@ -59,15 +59,6 @@ type forwardAuth struct {
 	preserveLocationHeader   bool
 }
 
-func Location(r *http.Response) (*url.URL, error) {
-	lv := r.Header.Get("Location")
-	if lv == "" {
-		return nil, http.ErrNoLocation
-	}
-
-	return url.Parse(lv)
-}
-
 // NewForward creates a forward auth middleware.
 func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAuth, name string) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeNameForward)
@@ -234,14 +225,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
-		var redirectURL *url.URL
-		// Grab the location header, if any.
-		if fa.preserveLocationHeader {
-			redirectURL, err = Location(forwardResponse)
-		} else {
-			redirectURL, err = forwardResponse.Location()
-		}
-
+		redirectURL, err := fa.redirectURL(forwardResponse)
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
 				logger.Debug().Err(err).Msgf("Error reading response location header %s", fa.address)
@@ -297,6 +281,20 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	fa.next.ServeHTTP(middlewares.NewResponseModifier(rw, req, fa.buildModifier(authCookies)), req)
+}
+
+func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, error) {
+	if fa.preserveLocationHeader {
+		// Preserve the Location header if it exists.
+		lv := forwardResponse.Header.Get("Location")
+		if lv == "" {
+			return nil, http.ErrNoLocation
+		}
+
+		return url.Parse(lv)
+	}
+
+	return forwardResponse.Location()
 }
 
 func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {

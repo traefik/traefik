@@ -707,9 +707,9 @@ http:
 
 ### `preserveLocationHeader`
 
-_Optional_
+_Optional, Default=false_
 
-`preserveLocationHeader` defines whether to forward the Location header to the client as is or prefix it with the domain name of the AuthServer
+`preserveLocationHeader` defines whether to forward the Location header to the client as is or prefix it with the domain name of the AuthServer.
 
 ```yaml tab="Docker & Swarm"
 labels:
