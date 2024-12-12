@@ -8,6 +8,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type contextKey int
+
+// DisableMetricsKey is a context key used to disable the metrics.
+const DisableMetricsKey contextKey = iota
+
 // SetStatusErrorf flags the span as in error and log an event.
 func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
 	if span := trace.SpanFromContext(ctx); span != nil {
