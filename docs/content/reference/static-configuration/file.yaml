@@ -649,6 +649,7 @@ experimental:
   abortOnPluginFailure: true
   fastProxy:
     debug: true
+  otlplogs: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar

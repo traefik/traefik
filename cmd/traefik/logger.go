@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	stdlog "log"
@@ -22,6 +23,14 @@ func init() {
 }
 
 func setupLogger(staticConfiguration *static.Configuration) error {
+	// Validate that the experimental flag is set up at this point,
+	// rather than validating the static configuration before the setupLogger call.
+	// This ensures that validation messages are not logged using an un-configured logger.
+	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil &&
+		(staticConfiguration.Experimental == nil || !staticConfiguration.Experimental.OTLPLogs) {
+		return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
+	}
+
 	// configure log format
 	w := getLogWriter(staticConfiguration)
 
