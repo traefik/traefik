@@ -356,7 +356,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
+		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil)
 		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
@@ -364,14 +364,14 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		// Prevents from enabling observability for internal resources.
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 		}
 
 		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
 			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
@@ -382,11 +382,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			}
 		}
 
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) {
 			proxy = observability.NewService(ctx, serviceName, proxy)
 		}
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
 			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
 			// to re-target the request to it.
 			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
