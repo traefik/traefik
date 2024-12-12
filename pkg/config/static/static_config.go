@@ -387,12 +387,20 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	if c.AccessLog != nil && c.AccessLog.OTLP != nil {
+		if c.Experimental == nil || !c.Experimental.OTLPLogs {
+			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP access logging")
+		}
+
 		if c.AccessLog.OTLP.GRPC != nil && c.AccessLog.OTLP.GRPC.TLS != nil && c.AccessLog.OTLP.GRPC.Insecure {
 			return errors.New("access logs OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}
 	}
 
 	if c.Log != nil && c.Log.OTLP != nil {
+		if c.Experimental == nil || !c.Experimental.OTLPLogs {
+			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
+		}
+
 		if c.Log.OTLP.GRPC != nil && c.Log.OTLP.GRPC.TLS != nil && c.Log.OTLP.GRPC.Insecure {
 			return errors.New("logs OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}
