@@ -14,7 +14,7 @@ RUN apk --no-cache --no-progress add \
     ruby-json \
     zlib-dev
 
-RUN gem install nokogiri --version 1.15.3 --no-document -- --use-system-libraries
+RUN gem install nokogiri --version 1.16.8 --no-document -- --use-system-libraries
 RUN gem install html-proofer --version 5.0.7 --no-document -- --use-system-libraries
 
 # After Ruby, some NodeJS YAY!
