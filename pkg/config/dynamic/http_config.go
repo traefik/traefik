@@ -21,6 +21,11 @@ const (
 
 	// DefaultFlushInterval is the default value for the ResponseForwarding flush interval.
 	DefaultFlushInterval = ptypes.Duration(100 * time.Millisecond)
+
+	// MirroringDefaultMirrorBody is the Mirroring.MirrorBody option default value.
+	MirroringDefaultMirrorBody = true
+	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
+	MirroringDefaultMaxBodySize int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
@@ -100,9 +105,9 @@ type Mirroring struct {
 
 // SetDefaults Default values for a WRRService.
 func (m *Mirroring) SetDefaults() {
-	defaultMirrorBody := true
+	defaultMirrorBody := MirroringDefaultMirrorBody
 	m.MirrorBody = &defaultMirrorBody
-	var defaultMaxBodySize int64 = -1
+	defaultMaxBodySize := MirroringDefaultMaxBodySize
 	m.MaxBodySize = &defaultMaxBodySize
 }
 
