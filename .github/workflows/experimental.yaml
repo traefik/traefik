@@ -12,34 +12,25 @@ env:
 
 jobs:
 
+  build-webui:
+    if: github.repository == 'traefik/traefik'
+    uses: ./.github/workflows/template-webui.yaml
+
   experimental:
     if: github.repository == 'traefik/traefik'
     name: Build experimental image on branch
     runs-on: ubuntu-latest
 
     steps:
-
-      # https://github.com/marketplace/actions/checkout
       - name: Check out code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: webui/.nvmrc
-          cache: yarn
-          cache-dependency-path: webui/yarn.lock
-
-      - name: Build webui
-        working-directory: ./webui
-        run: |
-          yarn install
-          yarn build
-
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5
+        env:
+          ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -60,6 +51,16 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Artifact webui
+        uses: actions/download-artifact@v4
+        with:
+          name: webui.tar.gz
+
+      - name: Untar webui
+        run: |
+          tar xvf webui.tar.gz
+          rm webui.tar.gz
 
       - name: Build docker experimental image
         env:
