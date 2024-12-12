@@ -370,6 +370,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.MaxBodySize != nil {
+		in, out := &in.MaxBodySize, &out.MaxBodySize
+		*out = new(int64)
+		**out = **in
+	}
 	return
 }
 

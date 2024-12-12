@@ -3960,7 +3960,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
-								Address: "test.com",
+								Address:     "test.com",
+								MaxBodySize: pointer(int64(-1)),
 								TLS: &dynamic.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
