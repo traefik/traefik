@@ -407,19 +407,49 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 		return fmt.Errorf("cannot get service %s, received error: %w", p.IngressEndpoint.PublishedService, err)
 	}
 
-	if exists && service.Status.LoadBalancer.Ingress == nil {
-		// service exists, but has no Load Balancer status
-		log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
-		return nil
-	}
-
 	if !exists {
 		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
 	}
 
-	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
-	if err != nil {
-		return err
+	var ingresses []netv1.IngressLoadBalancerIngress
+
+	switch service.Spec.Type {
+	case corev1.ServiceTypeLoadBalancer:
+		// Use the Load Balancer status
+		if service.Status.LoadBalancer.Ingress == nil {
+			// service exists, but has no Load Balancer status
+			log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
+			return nil
+		}
+
+		ingresses, err = convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
+		if err != nil {
+			return err
+		}
+
+	case corev1.ServiceTypeClusterIP:
+		// Use the ExternalIPs of the service
+		for _, ip := range service.Spec.ExternalIPs {
+			ingresses = append(ingresses, netv1.IngressLoadBalancerIngress{IP: ip})
+		}
+
+	case corev1.ServiceTypeNodePort:
+		// Use the ExternalIPs of the nodes
+		nodes, _, err := k8sClient.GetNodes()
+		if err != nil {
+			return fmt.Errorf("cannot get nodes: %w", err)
+		}
+
+		for _, node := range nodes {
+			for _, address := range node.Status.Addresses {
+				if address.Type == corev1.NodeExternalIP {
+					ingresses = append(ingresses, netv1.IngressLoadBalancerIngress{IP: address.Address})
+				}
+			}
+		}
+
+	default:
+		return fmt.Errorf("unsupported service type: %s", service.Spec.Type)
 	}
 
 	return k8sClient.UpdateIngressStatus(ing, ingresses)
