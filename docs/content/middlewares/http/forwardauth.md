@@ -705,4 +705,46 @@ http:
   headerField = "X-WebAuth-User"
 ```
 
+### `preserveLocationHeader`
+
+_Optional, Default=false_
+
+`preserveLocationHeader` defines whether to forward the `Location` header to the client as is or prefix it with the domain name of the authentication server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.preserveLocationHeader=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    # ...
+    preserveLocationHeader: true
+```
+
+```json tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.preserveLocationHeader=true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        # ...
+        preserveLocationHeader: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares.test-auth.forwardAuth]
+  # ...
+  preserveLocationHeader = true
+```
+
+
 {!traefik-for-business-applications.md!}
