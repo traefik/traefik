@@ -258,6 +258,8 @@ type ForwardAuth struct {
 	ForwardBody bool `json:"forwardBody,omitempty" toml:"forwardBody,omitempty" yaml:"forwardBody,omitempty" export:"true"`
 	// MaxBodySize defines the maximum body size in bytes allowed to be forwarded to the authentication server.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+	// PreserveLocationHeader defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server.
+	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty" toml:"preserveLocationHeader,omitempty" yaml:"preserveLocationHeader,omitempty" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {

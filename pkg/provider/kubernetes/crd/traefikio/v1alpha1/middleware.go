@@ -165,6 +165,8 @@ type ForwardAuth struct {
 	ForwardBody bool `json:"forwardBody,omitempty"`
 	// MaxBodySize defines the maximum body size in bytes allowed to be forwarded to the authentication server.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// PreserveLocationHeader defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server.
+	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty"`
 }
 
 // ClientTLS holds the client TLS configuration.
