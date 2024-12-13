@@ -711,7 +711,7 @@ func TestForwardAuthTracing(t *testing.T) {
 	}
 }
 
-func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
+func TestForwardAuthPreserveLocationHeader(t *testing.T) {
 	relativeURL := "/index.html"
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -720,10 +720,7 @@ func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	auth := dynamic.ForwardAuth{
 		Address:                server.URL,
 		PreserveLocationHeader: true,
@@ -737,8 +734,8 @@ func TestForwardAuthSendsTheExactLocationHeaderFromAuthServer(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	assert.Equal(t, relativeURL, res.Header.Get("Location"))
 }
 

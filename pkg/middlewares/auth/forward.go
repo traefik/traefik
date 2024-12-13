@@ -284,17 +284,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, error) {
-	if fa.preserveLocationHeader {
-		// Preserve the Location header if it exists.
-		lv := forwardResponse.Header.Get("Location")
-		if lv == "" {
-			return nil, http.ErrNoLocation
-		}
-
-		return url.Parse(lv)
+	if !fa.preserveLocationHeader {
+		return forwardResponse.Location()
 	}
 
-	return forwardResponse.Location()
+	// Preserve the Location header if it exists.
+	if lv := forwardResponse.Header.Get("Location"); lv != "" {
+		return url.Parse(lv)
+	}
+	return nil, http.ErrNoLocation
 }
 
 func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {

@@ -1246,7 +1246,7 @@ spec:
                   preserveLocationHeader:
                     description: PreserveLocationHeader defines whether to forward
                       the Location header to the client as is or prefix it with the
-                      domain name of the AuthServer.
+                      domain name of the authentication server.
                     type: boolean
                   tls:
                     description: TLS defines the configuration used to secure the
