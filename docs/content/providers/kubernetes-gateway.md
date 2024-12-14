@@ -5,7 +5,7 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 
 # Traefik & Kubernetes with Gateway API
 
-The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/) 
+The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specification from the Kubernetes Special Interest Groups (SIGs).
 
 This provider supports Standard version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.0) of the Gateway API specification. 
@@ -20,7 +20,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 !!! info "Helm Chart"
 
-    When using the Traefik [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you. 
+    When using the Traefik [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
     The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L130).
 
 1. Install/update the Kubernetes Gateway API CRDs.
@@ -38,7 +38,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
     ```
 
 3. Deploy Traefik and enable the `kubernetesGateway` provider in the static configuration as detailed below:
-
+       
        ```yaml tab="File (YAML)"
        providers:
          kubernetesGateway: {}
@@ -54,9 +54,9 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 ## Routing Configuration
 
-When using the Kubernetes Gateway API provider, Traefik uses the Gateway API CRDs to retrieve its routing configuration. 
-Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/), 
-and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Traefik documentation. 
+When using the Kubernetes Gateway API provider, Traefik uses the Gateway API CRDs to retrieve its routing configuration.
+Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/),
+and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Traefik documentation.
 
 ## Provider Configuration
 

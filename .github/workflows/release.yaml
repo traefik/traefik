@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  GO_VERSION: '1.23'
+  CGO_ENABLED: 0
+  VERSION: ${{ github.ref_name }}
+  TRAEFIKER_EMAIL: "traefiker@traefik.io"
+  CODENAME: munster
+
+jobs:
+
+  build-webui:
+    if: github.ref_type == 'tag'
+    uses: ./.github/workflows/template-webui.yaml
+
+  build:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ linux-amd64, linux-386, linux-arm, linux-arm64, linux-ppc64le, linux-s390x, linux-riscv64, darwin, windows-amd64, windows-arm64, windows-386, freebsd, openbsd ]
+    needs:
+      - build-webui
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        env:
+          # Ensure cache consistency on Linux, see https://github.com/actions/setup-go/pull/383
+          ImageOS: ${{ matrix.os }}
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Artifact webui
+        uses: actions/download-artifact@v4
+        with:
+          name: webui.tar.gz
+
+      - name: Untar webui
+        run: |
+          tar xvf webui.tar.gz
+          rm webui.tar.gz
+
+      - name: Go generate
+        run: go generate
+
+
+      - name: Generate goreleaser file
+        run: |
+          GORELEASER_CONFIG_FILE_PATH=$(go run ./internal/release "${{ matrix.os }}")
+          echo "GORELEASER_CONFIG_FILE_PATH=$GORELEASER_CONFIG_FILE_PATH" >> $GITHUB_ENV
+
+      - name: Build with goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          # 'latest', 'nightly', or a semver
+          version: '~> v2'
+          args: release --clean --timeout="90m" --config "${{ env.GORELEASER_CONFIG_FILE_PATH }}"
+
+      - name: Artifact binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-binaries
+          path: |
+            dist/**/*_checksums.txt
+            dist/**/*.tar.gz
+            dist/**/*.zip
+          retention-days: 1
+
+  release:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve the secret and decode it to a file
+        env:
+          TRAEFIKER_RSA: ${{ secrets.TRAEFIKER_RSA }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${TRAEFIKER_RSA}" | base64 --decode > ~/.ssh/traefiker_rsa
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: "*-binaries"
+          merge-multiple: true
+
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat dist/**/*_checksums.txt >> "dist/traefik_${VERSION}_checksums.txt"
+          rm dist/**/*_checksums.txt
+          tar cfz "dist/traefik-${VERSION}.src.tar.gz" \
+            --exclude-vcs \
+            --exclude .idea \
+            --exclude .travis \
+            --exclude .semaphoreci \
+            --exclude .github \
+            --exclude dist .
+          
+          chown -R "$(id -u)":"$(id -g)" dist/
+          gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${VERSION} --notes ${VERSION}
+          
+          ./script/deploy.sh
+

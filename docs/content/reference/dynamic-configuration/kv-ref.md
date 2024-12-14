@@ -48,7 +48,10 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeadersRegex` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/forwardBody` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/headerField` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/maxBodySize` | `42` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/preserveLocationHeader` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/cert` | `foobar` |
@@ -173,6 +176,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router0/entryPoints/1` | `foobar` |
 | `traefik/http/routers/Router0/middlewares/0` | `foobar` |
 | `traefik/http/routers/Router0/middlewares/1` | `foobar` |
+| `traefik/http/routers/Router0/observability/accessLogs` | `true` |
+| `traefik/http/routers/Router0/observability/metrics` | `true` |
+| `traefik/http/routers/Router0/observability/tracing` | `true` |
 | `traefik/http/routers/Router0/priority` | `42` |
 | `traefik/http/routers/Router0/rule` | `foobar` |
 | `traefik/http/routers/Router0/ruleSyntax` | `foobar` |
@@ -189,6 +195,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router1/entryPoints/1` | `foobar` |
 | `traefik/http/routers/Router1/middlewares/0` | `foobar` |
 | `traefik/http/routers/Router1/middlewares/1` | `foobar` |
+| `traefik/http/routers/Router1/observability/accessLogs` | `true` |
+| `traefik/http/routers/Router1/observability/metrics` | `true` |
+| `traefik/http/routers/Router1/observability/tracing` | `true` |
 | `traefik/http/routers/Router1/priority` | `42` |
 | `traefik/http/routers/Router1/rule` | `foobar` |
 | `traefik/http/routers/Router1/ruleSyntax` | `foobar` |

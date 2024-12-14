@@ -235,6 +235,30 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     - "traefik.http.routers.myrouter.tls.options=foobar"
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.accesslogs=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.metrics=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.tracing=true"
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
@@ -656,10 +680,10 @@ You can tell Traefik to consider (or not) the container by setting `traefik.enab
 
 This option overrides the value of `exposedByDefault`.
 
-#### `traefik.docker.network`
+#### `traefik.swarm.network`
 
 ```yaml
-- "traefik.docker.network=mynetwork"
+- "traefik.swarm.network=mynetwork"
 ```
 
 Overrides the default docker network to use for connections to the container.
@@ -668,12 +692,9 @@ If a container is linked to several networks, be sure to set the proper network 
 otherwise it will randomly pick one (depending on how docker is returning them).
 
 !!! warning
-    The Docker Swarm provider still uses the same per-container mechanism as the Docker provider, so therefore the label still uses the `docker` keyword intentionally.
-
-!!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
 
-#### `traefik.docker.lbswarm`
+#### `traefik.swarm.lbswarm`
 
 ```yaml
 - "traefik.docker.lbswarm=true"
@@ -683,6 +704,3 @@ Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).
 
 If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
 Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
-
-!!! warning
-    The Docker Swarm provider still uses the same per-container mechanism as the Docker provider, so therefore the label still uses the `docker` keyword intentionally.

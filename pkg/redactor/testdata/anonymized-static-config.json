@@ -315,7 +315,17 @@
     "maxSize": 5,
     "maxAge": 3,
     "maxBackups": 4,
-    "compress": true
+    "compress": true,
+    "otlp": {
+      "serviceName": "foobar",
+      "grpc": {
+        "endpoint": "xxxx",
+        "insecure": true
+      },
+      "http": {
+        "endpoint": "xxxx"
+      }
+    }
   },
   "accessLog": {
     "filePath": "xxxx",
@@ -340,18 +350,35 @@
         }
       }
     },
-    "bufferingSize": 42
+    "bufferingSize": 42,
+    "otlp": {
+      "serviceName": "foobar",
+      "grpc": {
+        "endpoint": "xxxx",
+        "insecure": true
+      },
+      "http": {
+        "endpoint": "xxxx"
+      }
+    }
   },
   "tracing": {
     "serviceName": "myServiceName",
-    "globalAttributes": {
+    "resourceAttributes": {
       "foobar": "foobar"
     },
     "sampleRate": 42,
     "otlp": {
+      "grpc": {
+        "endpoint": "xxxx",
+        "insecure": true
+      },
       "http": {
         "endpoint": "xxxx"
       }
+    },
+    "globalAttributes": {
+      "foobar": "foobar"
     }
   },
   "hostResolver": {
@@ -370,11 +397,11 @@
         "certificatesDuration": 42,
         "dnsChallenge": {
           "provider": "DNSProvider",
-          "delayBeforeCheck": "42ns",
           "resolvers": [
             "xxxx",
             "xxxx"
           ],
+          "delayBeforeCheck": "42ns",
           "disablePropagationCheck": true
         },
         "httpChallenge": {

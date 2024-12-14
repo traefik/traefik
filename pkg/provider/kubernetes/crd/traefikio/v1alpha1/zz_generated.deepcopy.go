@@ -266,6 +266,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.MaxBodySize != nil {
+		in, out := &in.MaxBodySize, &out.MaxBodySize
+		*out = new(int64)
+		**out = **in
+	}
 	return
 }
 
@@ -1101,6 +1106,11 @@ func (in *Route) DeepCopyInto(out *Route) {
 		in, out := &in.Middlewares, &out.Middlewares
 		*out = make([]MiddlewareRef, len(*in))
 		copy(*out, *in)
+	}
+	if in.Observability != nil {
+		in, out := &in.Observability, &out.Observability
+		*out = new(dynamic.RouterObservabilityConfig)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }
