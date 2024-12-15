@@ -11,7 +11,10 @@ import (
 	"strings"
 	"time"
 
+	stdlog "log"
+
 	"github.com/rs/zerolog/log"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -29,6 +32,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
+		ErrorLog:      stdlog.New(logrus.StandardLogger().Writer(), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
 }
