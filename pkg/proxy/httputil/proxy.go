@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	stdlog "log"
+
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http/httpguts"
 )
@@ -29,6 +31,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
+		ErrorLog:      stdlog.New(log.Logger, "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
 }
