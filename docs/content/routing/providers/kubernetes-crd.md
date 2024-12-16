@@ -48,7 +48,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.2
+              image: traefik:v3.3
               args:
                 - --log.level=DEBUG
                 - --api
