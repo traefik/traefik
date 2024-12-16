@@ -1,3 +1,19 @@
+## [v3.2.3](https://github.com/traefik/traefik/tree/v3.2.3) (2024-12-16)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.2...v3.2.3)
+
+**Documentation:**
+- Update reference install documentation with current chart default ([#11332](https://github.com/traefik/traefik/pull/11332) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v2.11 into v3.2 ([#11346](https://github.com/traefik/traefik/pull/11346) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.2 ([#11337](https://github.com/traefik/traefik/pull/11337) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.16](https://github.com/traefik/traefik/tree/v2.11.16) (2024-12-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.15...v2.11.16)
+
+**Bug fixes:**
+- **[server]** Update golang.org/x dependencies ([#11336](https://github.com/traefik/traefik/pull/11336) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.2.2](https://github.com/traefik/traefik/tree/v3.2.2) (2024-12-10)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.1...v3.2.2)
 
