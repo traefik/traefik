@@ -1,3 +1,9 @@
+## [v2.11.16](https://github.com/traefik/traefik/tree/v2.11.16) (2024-12-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.15...v2.11.16)
+
+**Bug fixes:**
+- **[server]** Update golang.org/x dependencies ([#11336](https://github.com/traefik/traefik/pull/11336) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.15](https://github.com/traefik/traefik/tree/v2.11.15) (2024-12-06)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.14...v2.11.15)
 
