@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	ptypes "github.com/traefik/paerser/types"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
@@ -262,4 +264,45 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 	}
 
 	return nil
+}
+
+type PassiveHealthChecker struct {
+	mu          sync.Mutex
+	Failures    []time.Time
+	maxFail     int
+	failTimeout ptypes.Duration
+}
+
+func NewPassiveHealthChecker(maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
+	return &PassiveHealthChecker{
+		Failures:    []time.Time{},
+		maxFail:     maxFail,
+		failTimeout: failTimeout,
+	}
+}
+
+func (r *PassiveHealthChecker) AllowRequest() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Clean up old Failures outside the sliding window
+	now := time.Now()
+	threshold := now.Add(time.Duration(-r.failTimeout))
+	var filteredFailures []time.Time
+
+	for _, t := range r.Failures {
+		if t.After(threshold) {
+			filteredFailures = append(filteredFailures, t)
+		}
+	}
+	r.Failures = filteredFailures
+
+	// Check if Failures exceed maxFail
+	return len(r.Failures) < r.maxFail
+}
+
+func (r *PassiveHealthChecker) RecordFailure() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.Failures = append(r.Failures, time.Now())
 }
