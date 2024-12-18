@@ -18,6 +18,7 @@ type namedHandler struct {
 	name     string
 	weight   float64
 	deadline float64
+	headers  map[string]string
 }
 
 type stickyCookie struct {
@@ -26,7 +27,6 @@ type stickyCookie struct {
 	httpOnly bool
 	sameSite string
 	maxAge   int
-	path     string
 }
 
 func convertSameSite(sameSite string) http.SameSite {
@@ -83,10 +83,6 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 			httpOnly: sticky.Cookie.HTTPOnly,
 			sameSite: sticky.Cookie.SameSite,
 			maxAge:   sticky.Cookie.MaxAge,
-			path:     "/",
-		}
-		if sticky.Cookie.Path != nil {
-			balancer.stickyCookie.path = *sticky.Cookie.Path
 		}
 	}
 
@@ -178,12 +174,12 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 
 var errNoAvailableServer = errors.New("no available server")
 
-func (b *Balancer) nextServer() (*namedHandler, error) {
+func (b *Balancer) nextServer() (*namedHandler, map[string]string, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
 	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
-		return nil, errNoAvailableServer
+		return nil, nil, errNoAvailableServer
 	}
 
 	var handler *namedHandler
@@ -205,7 +201,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 
 	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
-	return handler, nil
+	return handler, handler.headers, nil
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -233,7 +229,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	server, err := b.nextServer()
+	server, headers, err := b.nextServer()
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
@@ -243,11 +239,16 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Set custom headers
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
 	if b.stickyCookie != nil {
 		cookie := &http.Cookie{
 			Name:     b.stickyCookie.name,
 			Value:    hash(server.name),
-			Path:     b.stickyCookie.path,
+			Path:     "/",
 			HttpOnly: b.stickyCookie.httpOnly,
 			Secure:   b.stickyCookie.secure,
 			SameSite: convertSameSite(b.stickyCookie.sameSite),
@@ -261,7 +262,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool, headers map[string]string) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -271,7 +272,7 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{Handler: handler, name: name, weight: float64(w), headers: headers}
 
 	b.handlersMu.Lock()
 	h.deadline = b.curDeadline + 1/h.weight
