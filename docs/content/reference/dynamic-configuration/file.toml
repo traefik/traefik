@@ -110,10 +110,16 @@
         [[http.services.Service04.weighted.services]]
           name = "foobar"
           weight = 42
+          [http.services.Service04.weighted.services.headers]
+            name0 = "foobar"
+            name1 = "foobar"
 
         [[http.services.Service04.weighted.services]]
           name = "foobar"
           weight = 42
+          [http.services.Service04.weighted.services.headers]
+            name0 = "foobar"
+            name1 = "foobar"
         [http.services.Service04.weighted.sticky]
           [http.services.Service04.weighted.sticky.cookie]
             name = "foobar"
