@@ -154,6 +154,19 @@
     allowEmptyServices = true
     nativeLBByDefault = true
     disableClusterScopeResources = true
+  [providers.knative]
+    endpoint = "foobar"
+    token = "foobar"
+    certAuthFilePath = "foobar"
+    disablePassHostHeaders = true
+    namespaces = ["foobar", "foobar"]
+    loadBalancerIP = "foobar"
+    loadBalancerDomain = "foobar"
+    loadBalancerDomainInternal = "foobar"
+    labelSelector = "foobar"
+    ingressClass = "foobar"
+    allowCrossNamespace = true
+    throttleDuration = "42s"
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
