@@ -142,7 +142,8 @@ This defines the credentials for the ECS instance
 If `region` is not provided, it is resolved from the EC2 metadata endpoint for EC2 tasks.
 In a FARGATE context it is resolved from the `AWS_REGION` environment variable.
 
-If `accessKeyID` and `secretAccessKey` are not provided, credentials are resolved in the following order:
+If `accessKeyID` and `secretAccessKey` are not provided, the credentials will be resolved in the order specified by the 
+[default credential chain of AWS SDK for Go V2](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials):
 
 - Using the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
 - Using shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
