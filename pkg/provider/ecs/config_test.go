@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	ecstypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -31,10 +32,10 @@ func TestDefaultRule(t *testing.T) {
 					id("1"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("10.0.0.1"),
 						mPorts(
-							mPort(0, 1337, "TCP"),
+							mPort(0, 1337, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -89,10 +90,10 @@ func TestDefaultRule(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -149,10 +150,10 @@ func TestDefaultRule(t *testing.T) {
 						"traefik.domain": "foo.bar",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -207,10 +208,10 @@ func TestDefaultRule(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -259,10 +260,10 @@ func TestDefaultRule(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -311,10 +312,10 @@ func TestDefaultRule(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -406,10 +407,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.test": "",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -445,10 +446,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.services.test": "",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -484,10 +485,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.services.test": "",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -521,10 +522,10 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -578,10 +579,10 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -589,10 +590,10 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test2"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -665,10 +666,10 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -677,10 +678,10 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -739,10 +740,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -800,10 +801,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.service":                       "Service1",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -858,10 +859,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -917,10 +918,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -977,10 +978,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service2.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1044,10 +1045,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.service": "Service1",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1103,10 +1104,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1117,10 +1118,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1163,10 +1164,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1177,10 +1178,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1191,10 +1192,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1237,10 +1238,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1251,10 +1252,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1313,10 +1314,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1379,10 +1380,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1393,10 +1394,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1462,10 +1463,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1476,10 +1477,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1539,10 +1540,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1553,10 +1554,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1567,10 +1568,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "40",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.3"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1633,10 +1634,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1647,10 +1648,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1704,10 +1705,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1718,10 +1719,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1732,10 +1733,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foobar.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.3"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1792,10 +1793,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1807,10 +1808,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1868,10 +1869,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1881,10 +1882,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -1947,10 +1948,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.wrong.label": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2007,10 +2008,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.port":   "80",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(80, 8080, "tcp"),
+							mPort(80, 8080, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2066,7 +2067,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.url": "http://1.2.3.4:5678",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
 							mPort(80, 8080, "tcp"),
@@ -2126,7 +2127,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.preservepath": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
 							mPort(80, 8080, "tcp"),
@@ -2187,7 +2188,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.port": "1234",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
 							mPort(80, 8080, "tcp"),
@@ -2227,7 +2228,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.scheme": "https",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
 							mPort(80, 8080, "tcp"),
@@ -2267,10 +2268,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.port":   "8040",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(80, 8080, "tcp"),
+							mPort(80, 8080, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2331,11 +2332,11 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service2.LoadBalancer.server.port": "4444",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(4444, 32123, "tcp"),
-							mPort(4445, 32124, "tcp"),
+							mPort(4444, 32123, ecstypes.TransportProtocolTcp),
+							mPort(4445, 32124, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2408,10 +2409,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service2.LoadBalancer.server.port": "8080",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2472,7 +2473,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(),
 					),
@@ -2509,7 +2510,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(),
 					),
@@ -2546,10 +2547,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.enable": "false",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2585,11 +2586,11 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.enable": "false",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
-						mHealthStatus("UNHEALTHY"),
+						mHealthStatus(ecstypes.HealthStatusUnhealthy),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2625,10 +2626,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.enable": "false",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNamePending),
+						mState(ec2types.InstanceStateNamePending),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2664,10 +2665,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tags": "foo",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2704,10 +2705,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tags": "foo",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2765,10 +2766,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Test.middlewares":                "Middleware1",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2836,10 +2837,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.routers.Test.middlewares":                        "Middleware1",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2898,10 +2899,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.routers.foo.tls":  "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -2953,10 +2954,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.routers.foo.entrypoints": "mydns",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "udp"),
+							mPort(0, 80, ecstypes.TransportProtocolUdp),
 						),
 					),
 				),
@@ -3007,10 +3008,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.routers.foo.tls": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -3058,10 +3059,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(80, 8080, "tcp"),
+							mPort(80, 8080, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -3116,10 +3117,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.services.foo.loadbalancer.server.port": "80",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(80, 8080, "udp"),
+							mPort(80, 8080, ecstypes.TransportProtocolUdp),
 						),
 					),
 				),
@@ -3172,10 +3173,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -3188,10 +3189,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -3268,10 +3269,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.services.foo.loadbalancer.server.port": "8080",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -3318,10 +3319,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(80, 8080, "tcp"),
+							mPort(80, 8080, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
@@ -3369,10 +3370,10 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foobar, fiibar",
 					}),
 					iMachine(
-						mState(ec2.InstanceStateNameRunning),
+						mState(ec2types.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(0, 80, "tcp"),
+							mPort(0, 80, ecstypes.TransportProtocolTcp),
 						),
 					),
 				),
