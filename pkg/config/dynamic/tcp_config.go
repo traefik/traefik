@@ -93,7 +93,8 @@ type TCPServersLoadBalancer struct {
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
 	// Deprecated: use ServersTransport to configure the TerminationDelay instead.
-	TerminationDelay *int `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	TerminationDelay *int                  `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	HealthCheck      *TCPServerHealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" export:"true"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -168,4 +169,18 @@ func (t *TCPServersTransport) SetDefaults() {
 	t.DialTimeout = ptypes.Duration(30 * time.Second)
 	t.DialKeepAlive = ptypes.Duration(15 * time.Second)
 	t.TerminationDelay = ptypes.Duration(100 * time.Millisecond)
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPServer holds a TCP Server configuration.
+type TCPServerHealthCheck struct {
+	Address          string          `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
+	Port             string          `json:"-" toml:"-" yaml:"-"`
+	TLS              bool            `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	ServersTransport string          `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Interval         ptypes.Duration `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
+	Timeout          ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Payload          string          `json:"payload,omitempty" toml:"payload,omitempty" yaml:"payload,omitempty" export:"true"`
+	Expected         string          `json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty" export:"true"`
 }

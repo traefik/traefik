@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -18,9 +19,10 @@ import (
 
 // Manager is the TCPHandlers factory.
 type Manager struct {
-	dialerManager *tcp.DialerManager
-	configs       map[string]*runtime.TCPServiceInfo
-	rand          *rand.Rand // For the initial shuffling of load-balancers.
+	dialerManager  *tcp.DialerManager
+	configs        map[string]*runtime.TCPServiceInfo
+	rand           *rand.Rand // For the initial shuffling of load-balancers.
+	healthCheckers map[string]*healthcheck.ServiceTCPHealthChecker
 }
 
 // NewManager creates a new manager.
@@ -62,6 +64,8 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 			conf.LoadBalancer.ServersTransport = provider.GetQualifiedName(ctx, conf.LoadBalancer.ServersTransport)
 		}
 
+		healthCheckTargets := make(map[string]*net.TCPAddr, len(conf.LoadBalancer.Servers))
+
 		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			srvLogger := logger.With().
 				Int(logs.ServerIndex, index).
@@ -91,8 +95,26 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
+			tcpAddr, err := net.ResolveTCPAddr("tcp", server.Address)
+			if err != nil {
+				srvLogger.Error().Err(err).Msg("Failed to resolve TCP address")
+				continue
+			}
+			healthCheckTargets[server.Address] = tcpAddr
+
 			loadBalancer.AddServer(handler)
 			logger.Debug().Msg("Creating TCP server")
+		}
+
+		if conf.LoadBalancer.HealthCheck != nil {
+			m.healthCheckers[serviceName] = healthcheck.NewServiceTCPHealthChecker(
+				m.dialerManager,
+				nil,
+				conf.LoadBalancer.HealthCheck,
+				loadBalancer,
+				conf,
+				healthCheckTargets,
+				serviceQualifiedName)
 		}
 
 		return loadBalancer, nil
