@@ -254,7 +254,7 @@ entryPoints:
 
 ```toml tab="File (TOML)"
 [entryPoints.foo]
-  [entryPoints.foo.allowACMEByPass]
+  [entryPoints.foo]
     allowACMEByPass = true
 ```
 
