@@ -4796,12 +4796,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL:    "http://10.10.0.4:80",
 										Fenced: true,
 									},
-									{
-										URL: "http://10.10.0.5:80",
-									},
-									{
-										URL: "http://10.10.0.6:80",
-									},
 								},
 								PassHostHeader: pointer(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
