@@ -69,7 +69,7 @@ require (
 	go.elastic.co/apm/v2 v2.4.8
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // No tag on the repo.
 	golang.org/x/mod v0.21.0
-	golang.org/x/net v0.30.0
+	golang.org/x/net v0.33.0
 	golang.org/x/text v0.21.0
 	golang.org/x/time v0.7.0
 	golang.org/x/tools v0.25.0
