@@ -1,3 +1,9 @@
+## [v3.3.0-rc2](https://github.com/traefik/traefik/tree/v3.3.0-rc2) (2024-12-20)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.0-rc1...v3.3.0-rc2)
+
+**Bug fixes:**
+- **[k8s/ingress,k8s/crd]** Fix fenced server status computation ([#11361](https://github.com/traefik/traefik/pull/11361) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.0-rc1](https://github.com/traefik/traefik/tree/v3.3.0-rc1) (2024-12-16)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.3.0-rc1)
 
