@@ -175,11 +175,12 @@ func (t *TCPServersTransport) SetDefaults() {
 
 // TCPServer holds a TCP Server configuration.
 type TCPServerHealthCheck struct {
-	Address  string          `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
-	Port     string          `json:"-" toml:"-" yaml:"-"`
-	TLS      bool            `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
-	Interval ptypes.Duration `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
-	Timeout  ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
-	Payload  string          `json:"payload,omitempty" toml:"payload,omitempty" yaml:"payload,omitempty" export:"true"`
-	Expected string          `json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty" export:"true"`
+	Address          string          `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
+	Port             string          `json:"-" toml:"-" yaml:"-"`
+	TLS              bool            `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	ServersTransport string          `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Interval         ptypes.Duration `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
+	Timeout          ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Payload          string          `json:"payload,omitempty" toml:"payload,omitempty" yaml:"payload,omitempty" export:"true"`
+	Expected         string          `json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty" export:"true"`
 }

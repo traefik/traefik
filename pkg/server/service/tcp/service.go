@@ -108,6 +108,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 		if conf.LoadBalancer.HealthCheck != nil {
 			m.healthCheckers[serviceName] = healthcheck.NewServiceTCPHealthChecker(
+				m.dialerManager,
 				nil,
 				conf.LoadBalancer.HealthCheck,
 				loadBalancer,
