@@ -271,7 +271,7 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 	if loadBalancer.Servers[0].URL != nil {
 		loadBalancer.Servers[0].Port = ""
 		loadBalancer.Servers[0].Scheme = ""
-		return
+		return nil
 	}
 
 	serverPort := loadBalancer.Servers[0].Port
