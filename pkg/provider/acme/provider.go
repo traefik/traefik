@@ -508,6 +508,11 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						logger := rootLogger.With().Str(logs.RouterName, routerName).Str(logs.Rule, route.Rule).Logger()
 						ctxRouter := logger.WithContext(ctx)
 
+						if len(route.TLS.Store) > 0 && route.TLS.Store != traefiktls.DefaultTLSStoreName {
+							logger.Error().Msg("Router with certificate resolver can only use default store.")
+							continue
+						}
+
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
 							for _, domain := range domains {
@@ -543,6 +548,11 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						logger := rootLogger.With().Str(logs.RouterName, routerName).Str(logs.Rule, route.Rule).Logger()
 						ctxRouter := logger.WithContext(ctx)
+
+						if len(route.TLS.Store) > 0 && route.TLS.Store != traefiktls.DefaultTLSStoreName {
+							logger.Error().Msg("Router with certificate resolver can only use default store.")
+							continue
+						}
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
