@@ -57,6 +57,7 @@ In Traefik, certificates are grouped together in certificates stores, which are 
 tls:
   stores:
     default: {}
+    mystore: {}
 ```
 
 ```toml tab="File (TOML)"
@@ -64,12 +65,8 @@ tls:
 
 [tls.stores]
   [tls.stores.default]
+  [tls.stores.mystore]
 ```
-
-!!! important "Restriction"
-
-    Any store definition other than the default one (named `default`) will be ignored,
-    and there is therefore only one globally available TLS store.
 
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
 
@@ -82,6 +79,10 @@ tls:
       keyFile: /path/to/domain.key
       stores:
         - default
+    - certFile: /path/to/second-domain.cert
+      keyFile: /path/to/second-domain.key
+      stores:
+        - mystore
     # Note that since no store is defined,
     # the certificate below will be stored in the `default` store.
     - certFile: /path/to/other-domain.cert
@@ -97,15 +98,16 @@ tls:
   stores = ["default"]
 
 [[tls.certificates]]
+  certFile = "/path/to/second-domain.cert"
+  keyFile = "/path/to/second-domain.key"
+  stores = ["mystore"]
+
+[[tls.certificates]]
   # Note that since no store is defined,
   # the certificate below will be stored in the `default` store.
   certFile = "/path/to/other-domain.cert"
   keyFile = "/path/to/other-domain.key"
 ```
-
-!!! important "Restriction"
-
-    The `stores` list will actually be ignored and automatically set to `["default"]`.
 
 ### Default Certificate
 

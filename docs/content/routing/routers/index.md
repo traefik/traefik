@@ -877,6 +877,69 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 !!! warning "Double Wildcard Certificates"
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
 
+#### `store`
+
+You can specify the `store` for a particular [tls.stores](../../https/tls#certificates-stores) where the certificate will be searched. If not specified, `default` is used.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  routers:
+    routerbar:
+      rule: "Host(`www.example.com`)"
+      tls:
+        store: mystore
+tls:
+  stores:
+    mystore: {}
+  certificates:
+    - certFile: /path/to/www.example.com.cert
+      keyFile: /path/to/www.example.com.key
+      stores:
+        - mystore
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.routers]
+  [http.routers.routerbar]
+    rule = "Host(`www.example.com`)" 
+  [http.routers.routerbar.tls]
+    store = "mystore"
+
+[tls.stores]
+  [tls.stores.mystore]
+  [[tls.certificates]]
+    certFile = "/path/to/domain.cert"
+    keyFile = "/path/to/domain.key"
+    stores = ["default"]
+
+```
+
+!!! warning "Selecting a certificate for a wildcard domain from a specific store"
+
+If your rule uses a regular expression with `HostRegexp()`, for example, for wildcard domains, to correctly select the certificate in your `store`, you should specify the correct SNI in the `Host()` rule using the OR operator `||`.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  routers:
+    routerbar:
+      rule: "HostRegexp(`^.+\.example\.com$`) || Host(`*.example.com`)"
+      tls:
+        store: mystore
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.routers]
+  [http.routers.routerbar]
+    rule = "HostRegexp(`^.+\.example\.com$`) || Host(`*.example.com`)"
+  [http.routers.routerbar.tls]
+    store = "mystore"
+
+```
+
 ### Observability
 
 The Observability section defines a per router behavior regarding access-logs, metrics or tracing.
