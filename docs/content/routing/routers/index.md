@@ -918,7 +918,7 @@ tls:
 
 !!! warning "Selecting a certificate for a wildcard domain from a specific store"
 
-If your rule uses a regular expression with `HostRegexp()`, for example, for wildcard domains, to correctly select the certificate in your `store`, you should specify the correct SNI in the `Host()` rule using the OR operator `||`.
+If your rule uses a regular expression with `HostRegexp()` for example for wildcard domains to correctly select the certificate in your `store` you should specify the correct SNI in the `Host()` rule using the OR operator `||`.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
