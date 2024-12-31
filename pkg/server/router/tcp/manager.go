@@ -140,6 +140,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 		}
 
+		tlsStoreName := traefiktls.DefaultTLSStoreName
+		if len(routerHTTPConfig.TLS.Store) > 0 && routerHTTPConfig.TLS.Store != traefiktls.DefaultTLSStoreName {
+			tlsStoreName = routerHTTPConfig.TLS.Store
+		}
+
 		domains, err := httpmuxer.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
@@ -185,7 +190,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// Even though the error is seemingly ignored (aside from logging it),
 		// we actually rely later on the fact that a tls config is nil (which happens when an error is returned) to take special steps
 		// when assigning a handler to a route.
-		tlsConf, tlsConfErr := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
+		tlsConf, tlsConfErr := m.tlsManager.Get(tlsStoreName, tlsOptionsName)
 		if tlsConfErr != nil {
 			// Note: we do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
 			logger.Error().Err(tlsConfErr).Send()
