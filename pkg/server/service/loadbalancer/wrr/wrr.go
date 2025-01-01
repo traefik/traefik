@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"context"
 	"errors"
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"hash/fnv"
 	"net/http"
 	"strconv"
@@ -15,9 +16,11 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name     string
-	weight   float64
-	deadline float64
+	name                    string
+	weight                  float64
+	deadline                float64
+	wantsPassiveHealthCheck bool
+	passiveHealthChecker    *healthcheck.PassiveHealthChecker
 }
 
 type stickyCookie struct {
@@ -66,6 +69,16 @@ type Balancer struct {
 	updaters []func(bool)
 	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
+}
+
+type CustomResponseWriter struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+func (w *CustomResponseWriter) WriteHeader(statusCode int) {
+	w.StatusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
 // New creates a new load balancer.
@@ -208,6 +221,42 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	return handler, nil
 }
 
+func (b *Balancer) nextServerExcluding(handlerName string) (*namedHandler, error) {
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
+
+	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+		return nil, errNoAvailableServer
+	}
+
+	var handler *namedHandler
+	for {
+		// Pick handler with closest deadline.
+		handler = heap.Pop(b).(*namedHandler)
+
+		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
+		b.curDeadline = handler.deadline
+		handler.deadline += 1 / handler.weight
+
+		heap.Push(b, handler)
+
+		if _, ok := b.status[handler.name]; !ok {
+			continue
+		}
+		if _, ok := b.fenced[handler.name]; ok {
+			continue
+		}
+		if handler.name == handlerName {
+			continue
+		}
+
+		break
+	}
+
+	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
+	return handler, nil
+}
+
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if b.stickyCookie != nil {
 		cookie, err := req.Cookie(b.stickyCookie.name)
@@ -256,12 +305,33 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.SetCookie(w, cookie)
 	}
 
-	server.ServeHTTP(w, req)
+	customWriter := &CustomResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
+	if server.wantsPassiveHealthCheck {
+		if !server.passiveHealthChecker.AllowRequest() {
+			server, err = b.nextServerExcluding(server.name)
+			if err != nil {
+				if errors.Is(err, errNoAvailableServer) {
+					http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
+				} else {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+				return
+			}
+		}
+
+	}
+
+	server.ServeHTTP(customWriter, req)
+	if server.wantsPassiveHealthCheck {
+		if customWriter.StatusCode >= 500 && customWriter.StatusCode <= 599 {
+			server.passiveHealthChecker.RecordFailure()
+		}
+	}
 }
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool, wantsPassiveHealthCheck bool, pHealthChecker *healthcheck.PassiveHealthChecker) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -271,7 +341,13 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{
+		Handler:                 handler,
+		name:                    name,
+		weight:                  float64(w),
+		wantsPassiveHealthCheck: wantsPassiveHealthCheck,
+		passiveHealthChecker:    pHealthChecker,
+	}
 
 	b.handlersMu.Lock()
 	h.deadline = b.curDeadline + 1/h.weight
