@@ -57,6 +57,13 @@ type ServiceHealthChecker struct {
 	serviceName string
 }
 
+type PassiveHealthChecker struct {
+	mu          sync.Mutex
+	Failures    []time.Time
+	maxFail     int
+	failTimeout ptypes.Duration
+}
+
 func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL, serviceName string) *ServiceHealthChecker {
 	logger := log.Ctx(ctx)
 
@@ -266,13 +273,6 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 	return nil
 }
 
-type PassiveHealthChecker struct {
-	mu          sync.Mutex
-	Failures    []time.Time
-	maxFail     int
-	failTimeout ptypes.Duration
-}
-
 func NewPassiveHealthChecker(maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
 	return &PassiveHealthChecker{
 		Failures:    []time.Time{},
@@ -281,28 +281,29 @@ func NewPassiveHealthChecker(maxFail int, failTimeout ptypes.Duration) *PassiveH
 	}
 }
 
-func (r *PassiveHealthChecker) AllowRequest() bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (p *PassiveHealthChecker) AllowRequest() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	// Clean up old Failures outside the sliding window
 	now := time.Now()
-	threshold := now.Add(time.Duration(-r.failTimeout))
+	threshold := now.Add(time.Duration(-p.failTimeout))
 	var filteredFailures []time.Time
 
-	for _, t := range r.Failures {
+	for _, t := range p.Failures {
 		if t.After(threshold) {
 			filteredFailures = append(filteredFailures, t)
 		}
 	}
-	r.Failures = filteredFailures
+	p.Failures = filteredFailures
 
 	// Check if Failures exceed maxFail
-	return len(r.Failures) < r.maxFail
+	return len(p.Failures) < p.maxFail
 }
 
-func (r *PassiveHealthChecker) RecordFailure() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.Failures = append(r.Failures, time.Now())
+func (p *PassiveHealthChecker) RecordFailure() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.Failures = append(p.Failures, time.Now())
 }

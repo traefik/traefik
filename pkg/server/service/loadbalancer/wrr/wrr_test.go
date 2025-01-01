@@ -410,7 +410,7 @@ func TestPassiveHealthCheck(t *testing.T) {
 	t.Run("Test health check failure threshold", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 
-		// Using the weights I set, it should hit the unhealthy service thrice
+		// Using the weights set, it should hit the unhealthy service thrice
 		for i := 1; i <= 4; i++ {
 			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 		}
@@ -429,7 +429,7 @@ func TestPassiveHealthCheck(t *testing.T) {
 	t.Run("Fail over to healthy service after failures", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 
-		for i := 1; i <= 4; i++ {
+		for i := 0; i < 4; i++ {
 			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 		}
 

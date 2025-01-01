@@ -221,6 +221,42 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	return handler, nil
 }
 
+func (b *Balancer) nextServerExcluding(handlerName string) (*namedHandler, error) {
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
+
+	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+		return nil, errNoAvailableServer
+	}
+
+	var handler *namedHandler
+	for {
+		// Pick handler with closest deadline.
+		handler = heap.Pop(b).(*namedHandler)
+
+		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
+		b.curDeadline = handler.deadline
+		handler.deadline += 1 / handler.weight
+
+		heap.Push(b, handler)
+
+		if _, ok := b.status[handler.name]; !ok {
+			continue
+		}
+		if _, ok := b.fenced[handler.name]; ok {
+			continue
+		}
+		if handler.name == handlerName {
+			continue
+		}
+
+		break
+	}
+
+	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
+	return handler, nil
+}
+
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if b.stickyCookie != nil {
 		cookie, err := req.Cookie(b.stickyCookie.name)
@@ -272,7 +308,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	customWriter := &CustomResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
 	if server.wantsPassiveHealthCheck {
 		if !server.passiveHealthChecker.AllowRequest() {
-			server, err = b.nextServer()
+			server, err = b.nextServerExcluding(server.name)
 			if err != nil {
 				if errors.Is(err, errNoAvailableServer) {
 					http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
@@ -286,8 +322,10 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	server.ServeHTTP(customWriter, req)
-	if customWriter.StatusCode >= 500 && customWriter.StatusCode <= 599 {
-		server.passiveHealthChecker.RecordFailure()
+	if server.wantsPassiveHealthCheck {
+		if customWriter.StatusCode >= 500 && customWriter.StatusCode <= 599 {
+			server.passiveHealthChecker.RecordFailure()
+		}
 	}
 }
 
