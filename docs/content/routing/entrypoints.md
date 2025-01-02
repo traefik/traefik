@@ -254,8 +254,7 @@ entryPoints:
 
 ```toml tab="File (TOML)"
 [entryPoints.foo]
-  [entryPoints.foo.allowACMEByPass]
-    allowACMEByPass = true
+  allowACMEByPass = true
 ```
 
 ```bash tab="CLI"
