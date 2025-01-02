@@ -52,7 +52,7 @@ require (
 	github.com/quic-go/quic-go v0.48.2
 	github.com/rs/zerolog v1.29.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spiffe/go-spiffe/v2 v2.1.1
+	github.com/spiffe/go-spiffe/v2 v2.4.0
 	github.com/stealthrocket/wasi-go v0.8.0
 	github.com/stealthrocket/wazergo v0.19.1
 	github.com/stretchr/testify v1.9.0
@@ -339,7 +339,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.0.0-20241101135610-76a0cfc1a773 // indirect
 	github.com/yandex-cloud/go-sdk v0.0.0-20241101143304-947cf519f6bd // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	github.com/zeebo/errs v1.2.2 // indirect
+	github.com/zeebo/errs v1.3.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.14 // indirect
@@ -371,7 +371,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/ns1/ns1-go.v2 v2.12.2 // indirect
-	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240423202451-8948a665c108 // indirect
