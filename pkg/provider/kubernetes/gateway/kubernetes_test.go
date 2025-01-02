@@ -2303,6 +2303,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ServerName: "whoami",
 							RootCAs: []types.FileOrContent{
 								"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
+								"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
 							},
 						},
 					},
