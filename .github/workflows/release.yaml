@@ -92,6 +92,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Artifact webui
+        uses: actions/download-artifact@v4
+        with:
+          name: webui.tar.gz
+
+      - name: Untar webui
+        run: |
+          tar xvf webui.tar.gz
+          rm webui.tar.gz
+
       - name: Retrieve the secret and decode it to a file
         env:
           TRAEFIKER_RSA: ${{ secrets.TRAEFIKER_RSA }}

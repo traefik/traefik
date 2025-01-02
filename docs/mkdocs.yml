@@ -27,7 +27,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: 'Traefik Labs • Copyright &copy; 2016-2024'
+copyright: 'Traefik Labs • Copyright &copy; 2016-2025'
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
