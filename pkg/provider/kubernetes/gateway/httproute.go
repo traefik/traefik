@@ -519,7 +519,7 @@ func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.Ba
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if caCertRef.Group != groupCore || caCertRef.Kind != "ConfigMap" {
+		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || caCertRef.Kind != "ConfigMap" {
 			continue
 		}
 
