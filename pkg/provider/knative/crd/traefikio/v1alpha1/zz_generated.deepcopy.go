@@ -4,7 +4,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2024 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -142,6 +142,11 @@ func (in *KnativeRoute) DeepCopyInto(out *KnativeRoute) {
 		in, out := &in.Middlewares, &out.Middlewares
 		*out = make([]traefikiov1alpha1.MiddlewareRef, len(*in))
 		copy(*out, *in)
+	}
+	if in.Observability != nil {
+		in, out := &in.Observability, &out.Observability
+		*out = new(dynamic.RouterObservabilityConfig)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }

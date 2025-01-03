@@ -42,6 +42,9 @@ type KnativeRoute struct {
 	// Middlewares defines the list of references to Middleware resources.
 	// More info: https://doc.traefik.io/traefik/v3.2/routing/providers/kubernetes-crd/#kind-middleware
 	Middlewares []traefikv1alpha1.MiddlewareRef `json:"middlewares,omitempty"`
+	// Observability defines the observability configuration for a router.
+	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#observability
+	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty"`
 }
 
 // ServiceKnativeSpec LoadBalancerSpec defines the desired state of LoadBalancer.

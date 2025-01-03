@@ -181,10 +181,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factory.Networking().V1alpha1().Certificates().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
 
 		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod,
 			traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(matchesLabelSelector))
@@ -194,10 +190,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
-		_, err = factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
