@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	stdlog "log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -11,7 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -29,6 +32,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
+		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
 }
