@@ -112,6 +112,50 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with foo entrypoint, tls encryption to service",
+			paths: []string{"tcp/services.yml", "tcp/with_tls_service.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										TLS:     true,
+									},
+									{
+										Address: "10.10.0.2:8000",
+										TLS:     true,
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple Ingress Route, with foo entrypoint and middleware",
 			paths: []string{"tcp/services.yml", "tcp/with_middleware.yml"},
 			expected: &dynamic.Configuration{
@@ -4750,12 +4794,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 									{
 										URL:    "http://10.10.0.4:80",
 										Fenced: true,
-									},
-									{
-										URL: "http://10.10.0.5:80",
-									},
-									{
-										URL: "http://10.10.0.6:80",
 									},
 								},
 								PassHostHeader: pointer(true),
