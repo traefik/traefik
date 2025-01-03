@@ -3,7 +3,9 @@ package provider
 import (
 	"bytes"
 	"context"
+	"maps"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"text/template"
@@ -13,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls"
-	"golang.org/x/exp/maps"
 )
 
 // Merge merges multiple configurations.
@@ -384,7 +385,7 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
+					Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, slices.Collect(maps.Keys(configuration.Services)))
 				continue
 			}
 
@@ -406,7 +407,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
 			loggerRouter.
-				Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
+				Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, slices.Collect(maps.Keys(configuration.Services)))
 			continue
 		}
 
@@ -453,7 +454,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
-					Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, maps.Keys(configuration.Services))
+					Errorf("Router %s cannot be linked automatically with multiple Services: %q", routerName, slices.Collect(maps.Keys(configuration.Services)))
 				continue
 			}
 
