@@ -70,6 +70,8 @@ require (
 	github.com/valyala/fasthttp v1.55.0
 	github.com/vulcand/oxy/v2 v2.0.0
 	github.com/vulcand/predicate v1.2.0
+	go.elastic.co/apm/module/apmot/v2 v2.4.8
+	go.elastic.co/apm/v2 v2.4.8
 	go.opentelemetry.io/collector/pdata v1.10.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.53.0
 	go.opentelemetry.io/otel v1.29.0

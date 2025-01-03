@@ -139,6 +139,9 @@ linters-settings:
       - name: unreachable-code
       - name: redefines-builtin-id
   gomoddirectives:
+    tool-forbidden: true
+    toolchain-pattern: 'go1\.\d+\.\d+$'
+    go-version-pattern: '^1\.\d+(\.0)?$'
     replace-allow-list:
       - github.com/abbot/go-http-auth
       - github.com/gorilla/mux
