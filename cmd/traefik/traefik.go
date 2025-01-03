@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	stdlog "log"
+	"maps"
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -48,7 +50,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"golang.org/x/exp/maps"
 )
 
 func main() {
@@ -232,8 +233,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	pluginLogger := log.Ctx(ctx).With().Logger()
 	hasPlugins := staticConfiguration.Experimental != nil && (staticConfiguration.Experimental.Plugins != nil || staticConfiguration.Experimental.LocalPlugins != nil)
 	if hasPlugins {
-		pluginsList := maps.Keys(staticConfiguration.Experimental.Plugins)
-		pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
+		pluginsList := slices.Collect(maps.Keys(staticConfiguration.Experimental.Plugins))
+		pluginsList = append(pluginsList, slices.Collect(maps.Keys(staticConfiguration.Experimental.LocalPlugins))...)
 
 		pluginLogger = pluginLogger.With().Strs("plugins", pluginsList).Logger()
 		pluginLogger.Info().Msg("Loading plugins...")
