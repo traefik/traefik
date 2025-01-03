@@ -247,6 +247,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
+		if err := p.updateIngressStatus(ingress, client); err != nil {
+			logger.Error().Err(err).Msg("Error while updating ingress status")
+		}
+
 		rtConfig, err := parseRouterConfig(ingress.Annotations)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse annotations")
@@ -305,10 +309,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		routers := map[string][]*dynamic.Router{}
 
 		for _, rule := range ingress.Spec.Rules {
-			if err := p.updateIngressStatus(ingress, client); err != nil {
-				logger.Error().Err(err).Msg("Error while updating ingress status")
-			}
-
 			if rule.HTTP == nil {
 				continue
 			}
@@ -411,39 +411,62 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
 	}
 
-	var ingresses []netv1.IngressLoadBalancerIngress
+	var ingressStatus []netv1.IngressLoadBalancerIngress
 
 	switch service.Spec.Type {
 	case corev1.ServiceTypeLoadBalancer:
-		// Use the Load Balancer status
 		if service.Status.LoadBalancer.Ingress == nil {
 			// service exists, but has no Load Balancer status
 			log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
 			return nil
 		}
 
-		ingresses, err = convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
+		ingressStatus, err = convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
 		if err != nil {
-			return err
+			return fmt.Errorf("converting ingress loadbalancer status: %w", err)
 		}
 
 	case corev1.ServiceTypeClusterIP:
-		// Use the ExternalIPs of the service
+		var ports []netv1.IngressPortStatus
+		for _, port := range service.Spec.Ports {
+			ports = append(ports, netv1.IngressPortStatus{
+				Port:     port.Port,
+				Protocol: port.Protocol,
+			})
+		}
+
 		for _, ip := range service.Spec.ExternalIPs {
-			ingresses = append(ingresses, netv1.IngressLoadBalancerIngress{IP: ip})
+			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+				IP:    ip,
+				Ports: ports,
+			})
 		}
 
 	case corev1.ServiceTypeNodePort:
-		// Use the ExternalIPs of the nodes
+		if p.DisableClusterScopeResources {
+			return errors.New("node port service type is not supported when cluster scope resources lookup is disabled")
+		}
+
 		nodes, _, err := k8sClient.GetNodes()
 		if err != nil {
-			return fmt.Errorf("cannot get nodes: %w", err)
+			return fmt.Errorf("getting nodes: %w", err)
+		}
+
+		var ports []netv1.IngressPortStatus
+		for _, port := range service.Spec.Ports {
+			ports = append(ports, netv1.IngressPortStatus{
+				Port:     port.NodePort,
+				Protocol: port.Protocol,
+			})
 		}
 
 		for _, node := range nodes {
 			for _, address := range node.Status.Addresses {
 				if address.Type == corev1.NodeExternalIP {
-					ingresses = append(ingresses, netv1.IngressLoadBalancerIngress{IP: address.Address})
+					ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+						IP:    address.Address,
+						Ports: ports,
+					})
 				}
 			}
 		}
@@ -452,7 +475,7 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 		return fmt.Errorf("unsupported service type: %s", service.Spec.Type)
 	}
 
-	return k8sClient.UpdateIngressStatus(ing, ingresses)
+	return k8sClient.UpdateIngressStatus(ing, ingressStatus)
 }
 
 func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
