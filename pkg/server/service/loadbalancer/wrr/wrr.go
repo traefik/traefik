@@ -18,6 +18,7 @@ type namedHandler struct {
 	name     string
 	weight   float64
 	deadline float64
+	headers  map[string]string
 }
 
 type stickyCookie struct {
@@ -178,12 +179,12 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 
 var errNoAvailableServer = errors.New("no available server")
 
-func (b *Balancer) nextServer() (*namedHandler, error) {
+func (b *Balancer) nextServer() (*namedHandler, map[string]string, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
 	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
-		return nil, errNoAvailableServer
+		return nil, nil, errNoAvailableServer
 	}
 
 	var handler *namedHandler
@@ -205,7 +206,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 
 	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
-	return handler, nil
+	return handler, handler.headers, nil
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -233,7 +234,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	server, err := b.nextServer()
+	server, headers, err := b.nextServer()
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
@@ -241,6 +242,11 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
+	}
+
+	// Set custom headers
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 
 	if b.stickyCookie != nil {
@@ -261,7 +267,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool, headers map[string]string) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -271,7 +277,7 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{Handler: handler, name: name, weight: float64(w), headers: headers}
 
 	b.handlersMu.Lock()
 	h.deadline = b.curDeadline + 1/h.weight
