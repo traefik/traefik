@@ -31,17 +31,22 @@ endpoints:
       - 10.10.0.2
     conditions:
       ready: true
+      serving: true
+      terminating: false
   - addresses:
       - 10.10.0.3
       - 10.10.0.4
     conditions:
       ready: false
       serving: true
+      terminating: true
   - addresses:
       - 10.10.0.5
       - 10.10.0.6
     conditions:
-      ready: true
+      ready: false
+      serving: false
+      terminating: true
 
 ---
 apiVersion: traefik.io/v1alpha1

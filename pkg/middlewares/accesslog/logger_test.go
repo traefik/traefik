@@ -892,7 +892,7 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	t.Helper()
 
-	file, err := os.CreateTemp("", "testlogger")
+	file, err := os.CreateTemp(t.TempDir(), "testlogger")
 	require.NoError(t, err, "failed to create temp file")
 
 	original := os.Stdout

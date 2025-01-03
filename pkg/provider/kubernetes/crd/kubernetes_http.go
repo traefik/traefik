@@ -559,7 +559,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 				addresses[address] = struct{}{}
 				servers = append(servers, dynamic.Server{
 					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
-					Fenced: ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
 				})
 			}
 		}
