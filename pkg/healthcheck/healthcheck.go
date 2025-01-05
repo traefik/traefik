@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
@@ -96,53 +97,61 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 	ticker := time.NewTicker(shc.interval)
 	defer ticker.Stop()
+	wg := new(sync.WaitGroup)
+	wg.Add(len(shc.targets))
+	for proxyName := range shc.targets {
+		go shc.LaunchTargetHealthCheck(ctx, proxyName, ticker.C, wg)
+	}
+	wg.Wait()
+}
 
+func (shc *ServiceHealthChecker) LaunchTargetHealthCheck(ctx context.Context, proxyName string, intervalTick <-chan time.Time, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
-		case <-ticker.C:
-			for proxyName, target := range shc.targets {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				up := true
-				serverUpMetricValue := float64(1)
-
-				if err := shc.executeHealthCheck(ctx, shc.config, target); err != nil {
-					// The context is canceled when the dynamic configuration is refreshed.
-					if errors.Is(err, context.Canceled) {
-						return
-					}
-
-					log.Ctx(ctx).Warn().
-						Str("targetURL", target.String()).
-						Err(err).
-						Msg("Health check failed.")
-
-					up = false
-					serverUpMetricValue = float64(0)
-				}
-
-				shc.balancer.SetStatus(ctx, proxyName, up)
-
-				statusStr := runtime.StatusDown
-				if up {
-					statusStr = runtime.StatusUp
-				}
-
-				shc.info.UpdateServerStatus(target.String(), statusStr)
-
-				shc.metrics.ServiceServerUpGauge().
-					With("service", shc.serviceName, "url", target.String()).
-					Set(serverUpMetricValue)
-			}
+		case <-intervalTick:
+			shc.targetHealthCheck(ctx, proxyName)
 		}
 	}
+}
+
+func (shc *ServiceHealthChecker) targetHealthCheck(ctx context.Context, proxyName string) bool {
+	target := shc.targets[proxyName]
+
+	up := true
+	serverUpMetricValue := float64(1)
+
+	if err := shc.executeHealthCheck(ctx, shc.config, target); err != nil {
+		// The context is canceled when the dynamic configuration is refreshed.
+		if errors.Is(err, context.Canceled) {
+			return false
+		}
+
+		log.Ctx(ctx).Warn().
+			Str("targetURL", target.String()).
+			Err(err).
+			Msg("Health check failed.")
+
+		up = false
+		serverUpMetricValue = float64(0)
+	}
+
+	shc.balancer.SetStatus(ctx, proxyName, up)
+
+	statusStr := runtime.StatusDown
+	if up {
+		statusStr = runtime.StatusUp
+	}
+
+	shc.info.UpdateServerStatus(target.String(), statusStr)
+
+	shc.metrics.ServiceServerUpGauge().
+		With("service", shc.serviceName, "url", target.String()).
+		Set(serverUpMetricValue)
+	return up
 }
 
 func (shc *ServiceHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.ServerHealthCheck, target *url.URL) error {
