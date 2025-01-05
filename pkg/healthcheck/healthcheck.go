@@ -48,6 +48,7 @@ type ServiceHealthChecker struct {
 	config   *dynamic.ServerHealthCheck
 	interval time.Duration
 	timeout  time.Duration
+	recheck  time.Duration
 
 	metrics metricsHealthCheck
 
@@ -106,14 +107,51 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 }
 
 func (shc *ServiceHealthChecker) LaunchTargetHealthCheck(ctx context.Context, proxyName string, intervalTick <-chan time.Time, wg *sync.WaitGroup) {
-	defer wg.Done()
+	endRecheck := make(chan time.Time)
+	recheckActive := false
+	defer func() {
+		close(endRecheck)
+		wg.Done()
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
-		case <-intervalTick:
-			shc.targetHealthCheck(ctx, proxyName)
+		case tick := <-intervalTick:
+			// every healthcheck should create a new recheck goroutine (if required)
+			// previous recheck goroutine should be ended before proceeding
+			if recheckActive {
+				endRecheck <- tick
+				recheckActive = false
+			}
+			up := shc.targetHealthCheck(ctx, proxyName)
+			if !up && shc.recheck != 0 { // if recheck value is zero consider feature disabled
+				recheckActive = true
+				go func() {
+					recheckTicker := time.NewTicker(shc.recheck)
+					defer func() {
+						recheckActive = false
+						recheckTicker.Stop()
+					}()
+					for {
+						select {
+						case <-ctx.Done():
+							return
+						case <-endRecheck:
+							// starting new healthcheck, end current recheck
+							return
+						case <-recheckTicker.C:
+							up := shc.targetHealthCheck(ctx, proxyName)
+							if up {
+								// target now healthy switch to interval
+								return
+							}
+						}
+					}
+				}()
+			}
 		}
 	}
 }
