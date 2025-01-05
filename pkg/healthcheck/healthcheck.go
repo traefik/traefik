@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
@@ -47,6 +48,7 @@ type ServiceHealthChecker struct {
 	config   *dynamic.ServerHealthCheck
 	interval time.Duration
 	timeout  time.Duration
+	recheck  time.Duration
 
 	metrics metricsHealthCheck
 
@@ -96,53 +98,98 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 	ticker := time.NewTicker(shc.interval)
 	defer ticker.Stop()
+	wg := new(sync.WaitGroup)
+	wg.Add(len(shc.targets))
+	for proxyName := range shc.targets {
+		go shc.LaunchTargetHealthCheck(ctx, proxyName, ticker.C, wg)
+	}
+	wg.Wait()
+}
+
+func (shc *ServiceHealthChecker) LaunchTargetHealthCheck(ctx context.Context, proxyName string, intervalTick <-chan time.Time, wg *sync.WaitGroup) {
+	endRecheck := make(chan time.Time)
+	recheckActive := false
+	defer func() {
+		close(endRecheck)
+		wg.Done()
+	}()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
-		case <-ticker.C:
-			for proxyName, target := range shc.targets {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				up := true
-				serverUpMetricValue := float64(1)
-
-				if err := shc.executeHealthCheck(ctx, shc.config, target); err != nil {
-					// The context is canceled when the dynamic configuration is refreshed.
-					if errors.Is(err, context.Canceled) {
-						return
+		case tick := <-intervalTick:
+			// every healthcheck should create a new recheck goroutine (if required)
+			// previous recheck goroutine should be ended before proceeding
+			if recheckActive {
+				endRecheck <- tick
+				recheckActive = false
+			}
+			up := shc.targetHealthCheck(ctx, proxyName)
+			if !up && shc.recheck != 0 { // if recheck value is zero consider feature disabled
+				recheckActive = true
+				go func() {
+					recheckTicker := time.NewTicker(shc.recheck)
+					defer func() {
+						recheckActive = false
+						recheckTicker.Stop()
+					}()
+					for {
+						select {
+						case <-ctx.Done():
+							return
+						case <-endRecheck:
+							// starting new healthcheck, end current recheck
+							return
+						case <-recheckTicker.C:
+							up := shc.targetHealthCheck(ctx, proxyName)
+							if up {
+								// target now healthy switch to interval
+								return
+							}
+						}
 					}
-
-					log.Ctx(ctx).Warn().
-						Str("targetURL", target.String()).
-						Err(err).
-						Msg("Health check failed.")
-
-					up = false
-					serverUpMetricValue = float64(0)
-				}
-
-				shc.balancer.SetStatus(ctx, proxyName, up)
-
-				statusStr := runtime.StatusDown
-				if up {
-					statusStr = runtime.StatusUp
-				}
-
-				shc.info.UpdateServerStatus(target.String(), statusStr)
-
-				shc.metrics.ServiceServerUpGauge().
-					With("service", shc.serviceName, "url", target.String()).
-					Set(serverUpMetricValue)
+				}()
 			}
 		}
 	}
+}
+
+func (shc *ServiceHealthChecker) targetHealthCheck(ctx context.Context, proxyName string) bool {
+	target := shc.targets[proxyName]
+
+	up := true
+	serverUpMetricValue := float64(1)
+
+	if err := shc.executeHealthCheck(ctx, shc.config, target); err != nil {
+		// The context is canceled when the dynamic configuration is refreshed.
+		if errors.Is(err, context.Canceled) {
+			return false
+		}
+
+		log.Ctx(ctx).Warn().
+			Str("targetURL", target.String()).
+			Err(err).
+			Msg("Health check failed.")
+
+		up = false
+		serverUpMetricValue = float64(0)
+	}
+
+	shc.balancer.SetStatus(ctx, proxyName, up)
+
+	statusStr := runtime.StatusDown
+	if up {
+		statusStr = runtime.StatusUp
+	}
+
+	shc.info.UpdateServerStatus(target.String(), statusStr)
+
+	shc.metrics.ServiceServerUpGauge().
+		With("service", shc.serviceName, "url", target.String()).
+		Set(serverUpMetricValue)
+	return up
 }
 
 func (shc *ServiceHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.ServerHealthCheck, target *url.URL) error {
