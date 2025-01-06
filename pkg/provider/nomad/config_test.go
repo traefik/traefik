@@ -1552,6 +1552,62 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
+			desc: "one service with label port",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+					},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://1.2.3.4:5678",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
 			desc: "one service with label port on two services",
 			items: []item{
 				{

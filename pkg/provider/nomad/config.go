@@ -251,6 +251,12 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		return errors.New("address is missing")
 	}
 
+	if loadBalancer.Servers[0].URL != "" {
+		loadBalancer.Servers[0].Port = ""
+		loadBalancer.Servers[0].Scheme = ""
+		return nil
+	}
+
 	port := lb.Servers[0].Port
 	lb.Servers[0].Port = ""
 
