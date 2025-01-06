@@ -258,6 +258,12 @@ func (p *Provider) addServer(instance ecsInstance, loadBalancer *dynamic.Servers
 		loadBalancer.Servers = []dynamic.Server{server}
 	}
 
+	if loadBalancer.Servers[0].URL != "" {
+		loadBalancer.Servers[0].Port = ""
+		loadBalancer.Servers[0].Scheme = ""
+		return nil
+	}
+
 	serverPort := loadBalancer.Servers[0].Port
 	loadBalancer.Servers[0].Port = ""
 
