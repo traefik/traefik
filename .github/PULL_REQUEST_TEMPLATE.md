@@ -3,11 +3,11 @@ PLEASE READ THIS MESSAGE.
 
 Documentation fixes or enhancements:
 - for Traefik v2: use branch v2.11
-- for Traefik v3: use branch v3.2
+- for Traefik v3: use branch v3.3
 
 Bug fixes:
 - for Traefik v2: use branch v2.11
-- for Traefik v3: use branch v3.2
+- for Traefik v3: use branch v3.3
 
 Enhancements:
 - for Traefik v2: we only accept bug fixes
