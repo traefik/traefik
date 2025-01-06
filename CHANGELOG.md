@@ -1,3 +1,39 @@
+## [v3.3.0](https://github.com/traefik/traefik/tree/v3.3.0) (2025-01-06)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.3.0)
+
+**Enhancements:**
+- **[acme]** Add options to control ACME propagation checks ([#11241](https://github.com/traefik/traefik/pull/11241) by [ldez](https://github.com/ldez))
+- **[api]** Add support dump API endpoint ([#11328](https://github.com/traefik/traefik/pull/11328) by [mmatur](https://github.com/mmatur))
+- **[http]** Set Host header in HTTP provider request ([#11237](https://github.com/traefik/traefik/pull/11237) by [nikonhub](https://github.com/nikonhub))
+- **[k8s/crd,k8s]** Make the IngressRoute kind optional ([#11177](https://github.com/traefik/traefik/pull/11177) by [skirtan1](https://github.com/skirtan1))
+- **[k8s/ingress,sticky-session,k8s/crd,k8s]** Support serving endpoints ([#11121](https://github.com/traefik/traefik/pull/11121) by [BZValoche](https://github.com/BZValoche))
+- **[logs,accesslogs]** OpenTelemetry Logs and Access Logs ([#11319](https://github.com/traefik/traefik/pull/11319) by [rtribotte](https://github.com/rtribotte))
+- **[logs,accesslogs]** Add experimental flag for OTLP logs integration ([#11335](https://github.com/traefik/traefik/pull/11335) by [kevinpollet](https://github.com/kevinpollet))
+- **[metrics,tracing,accesslogs]** Manage observability at entrypoint and router level ([#11308](https://github.com/traefik/traefik/pull/11308) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,authentication]** Add an option to preserve the ForwardAuth Server Location header ([#11318](https://github.com/traefik/traefik/pull/11318) by [Nelwhix](https://github.com/Nelwhix))
+- **[middleware,authentication]** Only calculate basic auth hashes once for concurrent requests ([#11143](https://github.com/traefik/traefik/pull/11143) by [michelheusschen](https://github.com/michelheusschen))
+- **[middleware,authentication]** Send request body to authorization server for forward auth ([#11097](https://github.com/traefik/traefik/pull/11097) by [kyo-ke](https://github.com/kyo-ke))
+- **[plugins]** Add AbortOnPluginFailure option to abort startup on plugin load failure ([#11228](https://github.com/traefik/traefik/pull/11228) by [bmagic](https://github.com/bmagic))
+- **[sticky-session]** Configurable path for sticky cookies ([#11166](https://github.com/traefik/traefik/pull/11166) by [IIpragmaII](https://github.com/IIpragmaII))
+- **[webui,api]** Configurable API &amp; Dashboard base path ([#11250](https://github.com/traefik/traefik/pull/11250) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[k8s/ingress,k8s/crd]** Fix fenced server status computation ([#11361](https://github.com/traefik/traefik/pull/11361) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Prepare release v3.3.0-rc2 ([#11362](https://github.com/traefik/traefik/pull/11362) by [rtribotte](https://github.com/rtribotte))
+- Prepare Release v3.3.0-rc1 ([#11349](https://github.com/traefik/traefik/pull/11349) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v3.2 into v3.3 ([#11402](https://github.com/traefik/traefik/pull/11402) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.2 into v3.3 ([#11393](https://github.com/traefik/traefik/pull/11393) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.2 into v3.3 ([#11389](https://github.com/traefik/traefik/pull/11389) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.2 into v3.3 ([#11367](https://github.com/traefik/traefik/pull/11367) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.2 into master ([#11340](https://github.com/traefik/traefik/pull/11340) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.2 into master ([#11293](https://github.com/traefik/traefik/pull/11293) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.2 into master ([#11239](https://github.com/traefik/traefik/pull/11239) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.2 into master ([#11187](https://github.com/traefik/traefik/pull/11187) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.2.4](https://github.com/traefik/traefik/tree/v3.2.4) (2025-01-06)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.3...v3.2.4)
 
