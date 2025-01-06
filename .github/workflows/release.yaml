@@ -15,11 +15,11 @@ env:
 jobs:
 
   build-webui:
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     uses: ./.github/workflows/template-webui.yaml
 
   build:
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
 
     strategy:
@@ -80,7 +80,7 @@ jobs:
           retention-days: 1
 
   release:
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
 
     needs:
