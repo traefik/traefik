@@ -179,12 +179,12 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 
 var errNoAvailableServer = errors.New("no available server")
 
-func (b *Balancer) nextServer() (*namedHandler, map[string]string, error) {
+func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
 	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
-		return nil, nil, errNoAvailableServer
+		return nil, errNoAvailableServer
 	}
 
 	var handler *namedHandler
@@ -206,7 +206,7 @@ func (b *Balancer) nextServer() (*namedHandler, map[string]string, error) {
 	}
 
 	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
-	return handler, handler.headers, nil
+	return handler, nil
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -222,6 +222,11 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			handler, ok := b.handlerMap[cookie.Value]
 			b.handlersMu.RUnlock()
 
+			// Set custom headers
+			for key, value := range handler.headers {
+				req.Header.Set(key, value)
+			}
+
 			if ok && handler != nil {
 				b.handlersMu.RLock()
 				_, isHealthy := b.status[handler.name]
@@ -234,7 +239,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	server, headers, err := b.nextServer()
+	server, err := b.nextServer()
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
@@ -245,7 +250,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Set custom headers
-	for key, value := range headers {
+	for key, value := range server.headers {
 		req.Header.Set(key, value)
 	}
 
