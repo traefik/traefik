@@ -23,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v2/cmd"
 	"github.com/traefik/traefik/v2/cmd/healthcheck"
 	cmdVersion "github.com/traefik/traefik/v2/cmd/version"
+	_ "github.com/traefik/traefik/v2/init"
 	tcli "github.com/traefik/traefik/v2/pkg/cli"
 	"github.com/traefik/traefik/v2/pkg/collector"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
