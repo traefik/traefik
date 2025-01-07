@@ -1,3 +1,9 @@
+## [v3.2.5](https://github.com/traefik/traefik/tree/v3.2.5) (2025-01-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.2.4...v3.2.5)
+
+**Bug fixes:**
+- **[websocket,server]** Disable http2 connect setting for websocket by default ([#11408](https://github.com/traefik/traefik/pull/11408) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.3.0](https://github.com/traefik/traefik/tree/v3.3.0) (2025-01-06)
 [All Commits](https://github.com/traefik/traefik/compare/v3.2.0-rc1...v3.3.0)
 
