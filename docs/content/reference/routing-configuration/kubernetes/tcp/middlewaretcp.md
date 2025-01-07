@@ -46,4 +46,4 @@ spec:
       namespace: foo
 ```
 
-More information about available TCP middlewares in the dedicated [middlewares section](../../http/middlewares/overview.md).
+More information about available TCP middlewares in the dedicated [middlewares section](../../tcp/middlewares/overview.md).
