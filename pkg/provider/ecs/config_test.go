@@ -2063,7 +2063,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.scheme": "http://1.2.3.4:5678",
+						"traefik.http.services.Service1.LoadBalancer.server.url": "http://1.2.3.4:5678",
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
@@ -2109,6 +2109,46 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one container with label url and port",
+			containers: []ecsInstance{
+				instance(
+					name("Test"),
+					labels(map[string]string{
+						"traefik.http.services.Service1.LoadBalancer.server.url":  "http://1.2.3.4:5678",
+						"traefik.http.services.Service1.LoadBalancer.server.port": "1234",
+					}),
+					iMachine(
+						mState(ec2.InstanceStateNameRunning),
+						mPrivateIP("127.0.0.1"),
+						mPorts(
+							mPort(80, 8080, "tcp"),
+						),
+					),
+				),
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{

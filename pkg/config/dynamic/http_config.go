@@ -274,13 +274,9 @@ type Server struct {
 	Weight       *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" label:"weight" export:"true"`
 	PreservePath bool   `json:"preservePath,omitempty" toml:"preservePath,omitempty" yaml:"preservePath,omitempty" label:"-" export:"true"`
 	Fenced       bool   `json:"fenced,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
-	Scheme       string `json:"-" toml:"-" yaml:"-" file:"-"`
-	Port         string `json:"-" toml:"-" yaml:"-" file:"-"`
-}
-
-// SetDefaults Default values for a Server.
-func (s *Server) SetDefaults() {
-	s.Scheme = "http"
+	// Scheme can only be defined with label Providers.
+	Scheme string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
+	Port   string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
