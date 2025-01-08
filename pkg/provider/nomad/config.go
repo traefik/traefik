@@ -241,14 +241,21 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 	}
 
 	if len(lb.Servers) == 0 {
-		server := dynamic.Server{}
-		server.SetDefaults()
-
-		lb.Servers = []dynamic.Server{server}
+		lb.Servers = []dynamic.Server{{}}
 	}
 
 	if i.Address == "" {
 		return errors.New("address is missing")
+	}
+
+	if lb.Servers[0].URL != "" && (lb.Servers[0].Scheme != "" || lb.Servers[0].Port != "") {
+		return errors.New("defining scheme or port is not allowed when URL is defined")
+	}
+
+	if lb.Servers[0].URL != "" {
+		lb.Servers[0].Port = ""
+		lb.Servers[0].Scheme = ""
+		return nil
 	}
 
 	port := lb.Servers[0].Port
@@ -264,6 +271,10 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 
 	scheme := lb.Servers[0].Scheme
 	lb.Servers[0].Scheme = ""
+	if scheme == "" {
+		scheme = "http"
+	}
+
 	lb.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(i.Address, port))
 
 	return nil
