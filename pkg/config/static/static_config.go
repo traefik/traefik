@@ -331,7 +331,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
-			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeCheck instead.")
+			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
 
 			if resolver.ACME.DNSChallenge.Propagation == nil {
 				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
