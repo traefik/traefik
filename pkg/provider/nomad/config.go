@@ -248,13 +248,10 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		return errors.New("address is missing")
 	}
 
-	if lb.Servers[0].URL != "" && (lb.Servers[0].Scheme != "" || lb.Servers[0].Port != "") {
-		return errors.New("defining scheme or port is not allowed when URL is defined")
-	}
-
 	if lb.Servers[0].URL != "" {
-		lb.Servers[0].Port = ""
-		lb.Servers[0].Scheme = ""
+		if lb.Servers[0].Scheme != "" || lb.Servers[0].Port != "" {
+			return errors.New("defining scheme or port is not allowed when URL is defined")
+		}
 		return nil
 	}
 

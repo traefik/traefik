@@ -265,13 +265,10 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 		loadBalancer.Servers = []dynamic.Server{{}}
 	}
 
-	if loadBalancer.Servers[0].URL != "" && (loadBalancer.Servers[0].Scheme != "" || loadBalancer.Servers[0].Port != "") {
-		return errors.New("defining scheme or port is not allowed when URL is defined")
-	}
-
 	if loadBalancer.Servers[0].URL != "" {
-		loadBalancer.Servers[0].Port = ""
-		loadBalancer.Servers[0].Scheme = ""
+		if loadBalancer.Servers[0].Scheme != "" || loadBalancer.Servers[0].Port != "" {
+			return errors.New("defining scheme or port is not allowed when URL is defined")
+		}
 		return nil
 	}
 
