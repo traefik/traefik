@@ -654,12 +654,10 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						Servers: []dynamic.Server{
 							{
-								URL:    "foobar",
-								Scheme: "http",
+								URL: "foobar",
 							},
 							{
-								URL:    "foobar",
-								Scheme: "http",
+								URL: "foobar",
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
