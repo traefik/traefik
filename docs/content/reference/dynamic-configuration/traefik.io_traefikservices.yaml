@@ -258,10 +258,6 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
-                          enum:
-                          - http
-                          - https
-                          - h2c
                           type: string
                         serversTransport:
                           description: |-
@@ -382,10 +378,6 @@ spec:
                     description: |-
                       Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                       It defaults to https when Kubernetes Service port is 443, http otherwise.
-                    enum:
-                    - http
-                    - https
-                    - h2c
                     type: string
                   serversTransport:
                     description: |-
@@ -582,10 +574,6 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
-                          enum:
-                          - http
-                          - https
-                          - h2c
                           type: string
                         serversTransport:
                           description: |-

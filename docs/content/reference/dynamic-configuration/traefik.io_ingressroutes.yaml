@@ -101,12 +101,8 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-<<<<<<< HEAD
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority
-=======
-                        More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority
-                      minimum: 0
->>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
+                      maximum: 9223372036854775000
                       type: integer
                     services:
                       description: |-
@@ -237,10 +233,6 @@ spec:
                             description: |-
                               Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                               It defaults to https when Kubernetes Service port is 443, http otherwise.
-                            enum:
-                            - http
-                            - https
-                            - h2c
                             type: string
                           serversTransport:
                             description: |-
@@ -374,7 +366,6 @@ spec:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
-                      Deprecated: this reference is not needed.
                     properties:
                       name:
                         description: |-
