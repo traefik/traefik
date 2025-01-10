@@ -32,12 +32,8 @@ type Route struct {
 	// +kubebuilder:validation:Enum=Rule
 	Kind string `json:"kind,omitempty"`
 	// Priority defines the router's priority.
-<<<<<<< HEAD
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority
-=======
-	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority
-	// +kubebuilder:validation:Minimum=0
->>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
+	// +kubebuilder:validation:Maximum=9223372036854774807
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax
@@ -64,7 +60,6 @@ type TLS struct {
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
-	// Deprecated: this reference is not needed.
 	Store *TLSStoreRef `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
@@ -116,7 +111,6 @@ type LoadBalancerSpec struct {
 	Port intstr.IntOrString `json:"port,omitempty"`
 	// Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
-	// +kubebuilder:validation:Enum=http;https;h2c
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
 	// RoundRobin is the only supported value at the moment.

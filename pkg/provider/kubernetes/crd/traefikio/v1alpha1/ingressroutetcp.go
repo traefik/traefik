@@ -27,20 +27,12 @@ type RouteTCP struct {
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rule_1
 	Match string `json:"match"`
 	// Priority defines the router's priority.
-<<<<<<< HEAD
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
-=======
-	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
-	// +kubebuilder:validation:Minimum=0
->>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
+	// +kubebuilder:validation:Maximum=9223372036854774807
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
-<<<<<<< HEAD
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
-=======
-	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
 	// +kubebuilder:validation:Enum=v3;v2
->>>>>>> 703a80a2a (self review after rebase)
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
@@ -61,7 +53,6 @@ type TLSTCP struct {
 	Options *ObjectReference `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
-	// Deprecated: this reference is not needed.
 	Store *ObjectReference `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
