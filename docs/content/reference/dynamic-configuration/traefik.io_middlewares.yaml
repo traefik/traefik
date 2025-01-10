@@ -155,7 +155,7 @@ spec:
                     - type: string
                     description: CheckPeriod is the interval between successive checks
                       of the circuit breaker condition (when in standby state).
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   expression:
                     description: Expression is the condition that triggers the tripped
@@ -175,7 +175,7 @@ spec:
                     description: RecoveryDuration is the duration for which the circuit
                       breaker will try to recover (as soon as it is in recovering
                       state).
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   responseCode:
                     description: ResponseCode is the status code that the circuit
@@ -396,10 +396,6 @@ spec:
                         description: |-
                           Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                           It defaults to https when Kubernetes Service port is 443, http otherwise.
-                        enum:
-                        - http
-                        - https
-                        - h2c
                         type: string
                       serversTransport:
                         description: |-
@@ -1082,10 +1078,6 @@ spec:
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
-                    enum:
-                    - http
-                    - https
-                    - h2c
                     type: string
                 type: object
               replacePath:
@@ -1136,7 +1128,7 @@ spec:
                       If unspecified, requests will be retried immediately.
                       The value of initialInterval should be provided in seconds or as a valid duration format,
                       see https://pkg.go.dev/time#ParseDuration.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:

@@ -101,12 +101,8 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-<<<<<<< HEAD
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority
-=======
-                        More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority
-                      minimum: 0
->>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
+                      maximum: 9223372036854775000
                       type: integer
                     services:
                       description: |-
@@ -237,10 +233,6 @@ spec:
                             description: |-
                               Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                               It defaults to https when Kubernetes Service port is 443, http otherwise.
-                            enum:
-                            - http
-                            - https
-                            - h2c
                             type: string
                           serversTransport:
                             description: |-
@@ -374,7 +366,6 @@ spec:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
-                      Deprecated: this reference is not needed.
                     properties:
                       name:
                         description: |-
@@ -481,12 +472,8 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-<<<<<<< HEAD
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
-=======
-                        More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#priority_1
-                      minimum: 0
->>>>>>> 43425b221 (Improve CEL validation on IngressCRD resources)
+                      maximum: 9223372036854775000
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -568,14 +555,10 @@ spec:
                     syntax:
                       description: |-
                         Syntax defines the router's rule syntax.
-<<<<<<< HEAD
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
-=======
-                        More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#rulesyntax_1
                       enum:
                       - v3
                       - v2
->>>>>>> 703a80a2a (self review after rebase)
                       type: string
                   required:
                   - match
@@ -639,7 +622,6 @@ spec:
                     description: |-
                       Store defines the reference to the TLSStore, that will be used to store certificates.
                       Please note that only `default` TLSStore can be used.
-                      Deprecated: this reference is not needed.
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik
@@ -931,7 +913,7 @@ spec:
                     - type: string
                     description: CheckPeriod is the interval between successive checks
                       of the circuit breaker condition (when in standby state).
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   expression:
                     description: Expression is the condition that triggers the tripped
@@ -951,7 +933,7 @@ spec:
                     description: RecoveryDuration is the duration for which the circuit
                       breaker will try to recover (as soon as it is in recovering
                       state).
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   responseCode:
                     description: ResponseCode is the status code that the circuit
@@ -1172,10 +1154,6 @@ spec:
                         description: |-
                           Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                           It defaults to https when Kubernetes Service port is 443, http otherwise.
-                        enum:
-                        - http
-                        - https
-                        - h2c
                         type: string
                       serversTransport:
                         description: |-
@@ -1858,10 +1836,6 @@ spec:
                     type: string
                   scheme:
                     description: Scheme defines the scheme of the new URL.
-                    enum:
-                    - http
-                    - https
-                    - h2c
                     type: string
                 type: object
               replacePath:
@@ -1912,7 +1886,7 @@ spec:
                       If unspecified, requests will be retried immediately.
                       The value of initialInterval should be provided in seconds or as a valid duration format,
                       see https://pkg.go.dev/time#ParseDuration.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
@@ -2116,7 +2090,7 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -2124,7 +2098,7 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -2133,7 +2107,7 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -2142,7 +2116,7 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
@@ -2242,7 +2216,7 @@ spec:
                   the protocol and operating system. Network protocols or operating
                   systems that do not support keep-alives ignore this field. If negative,
                   keep-alive probes are disabled.
-                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                 x-kubernetes-int-or-string: true
               dialTimeout:
                 anyOf:
@@ -2250,7 +2224,7 @@ spec:
                 - type: string
                 description: DialTimeout is the amount of time to wait until a connection
                   to a backend server can be established.
-                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                 x-kubernetes-int-or-string: true
               terminationDelay:
                 anyOf:
@@ -2259,7 +2233,7 @@ spec:
                 description: TerminationDelay defines the delay to wait before fully
                   terminating the connection, after one connected peer has closed
                   its writing capability.
-                pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                 x-kubernetes-int-or-string: true
               tls:
                 description: TLS defines the TLS configuration
@@ -2781,10 +2755,6 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
-                          enum:
-                          - http
-                          - https
-                          - h2c
                           type: string
                         serversTransport:
                           description: |-
@@ -2905,10 +2875,6 @@ spec:
                     description: |-
                       Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                       It defaults to https when Kubernetes Service port is 443, http otherwise.
-                    enum:
-                    - http
-                    - https
-                    - h2c
                     type: string
                   serversTransport:
                     description: |-
@@ -3105,10 +3071,6 @@ spec:
                           description: |-
                             Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
                             It defaults to https when Kubernetes Service port is 443, http otherwise.
-                          enum:
-                          - http
-                          - https
-                          - h2c
                           type: string
                         serversTransport:
                           description: |-
