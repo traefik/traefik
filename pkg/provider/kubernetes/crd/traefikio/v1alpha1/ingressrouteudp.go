@@ -30,8 +30,10 @@ type ServiceUDP struct {
 	Namespace string `json:"namespace,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
+	// +kubebuilder:validation:XIntOrString
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	// +kubebuilder:validation:Minimum=0
 	Weight *int `json:"weight,omitempty"`
 	// NativeLB controls, when creating the load-balancer,
 	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
