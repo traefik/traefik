@@ -53,7 +53,7 @@ type ServersTransportSpec struct {
 // ForwardingTimeouts holds the timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
 	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
-	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	// +kubebuilder:validation:Pattern="^[0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$"
 	// +kubebuilder:validation:XIntOrString
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
 	// ResponseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
