@@ -72,7 +72,7 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -80,7 +80,7 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -89,7 +89,7 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -98,7 +98,7 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
