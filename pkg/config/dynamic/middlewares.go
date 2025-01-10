@@ -588,7 +588,6 @@ type RedirectRegex struct {
 // More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/redirectscheme/
 type RedirectScheme struct {
 	// Scheme defines the scheme of the new URL.
-	// +kubebuilder:validation:Enum=http;https;h2c
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
