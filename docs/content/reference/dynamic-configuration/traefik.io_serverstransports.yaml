@@ -63,7 +63,7 @@ spec:
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
                       connection to a backend server can be established.
-                    pattern: ^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$
+                    pattern: ^[0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h)?$
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
