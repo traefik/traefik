@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -85,8 +86,9 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			desc:       "should send configured headers",
 			statusCode: http.StatusOK,
 			headers: map[string]string{
-				"Foo": "bar",
-				"Bar": "baz",
+				"Foo":  "bar",
+				"Bar":  "baz",
+				"Host": "localhost",
 			},
 			expData: []byte("{}"),
 			expErr:  require.NoError,
@@ -105,7 +107,11 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 				handlerCalled = true
 
 				for k, v := range test.headers {
-					assert.Equal(t, v, req.Header.Get(k))
+					if strings.EqualFold(k, "Host") {
+						assert.Equal(t, v, req.Host)
+					} else {
+						assert.Equal(t, v, req.Header.Get(k))
+					}
 				}
 
 				rw.WriteHeader(test.statusCode)

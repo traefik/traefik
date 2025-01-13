@@ -25,6 +25,10 @@ http:
             sans:
               - foobar
               - foobar
+      observability:
+        accessLogs: true
+        tracing: true
+        metrics: true
     Router1:
       entryPoints:
         - foobar
@@ -48,6 +52,10 @@ http:
             sans:
               - foobar
               - foobar
+      observability:
+        accessLogs: true
+        tracing: true
+        metrics: true
   services:
     Service01:
       failover:
@@ -63,6 +71,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            path: foobar
         servers:
           - url: foobar
             weight: 42
@@ -113,6 +122,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            path: foobar
         healthCheck: {}
   middlewares:
     Middleware01:
@@ -199,6 +209,9 @@ http:
           - foobar
           - foobar
         headerField: foobar
+        forwardBody: true
+        maxBodySize: 42
+        preserveLocationHeader: true
     Middleware11:
       grpcWeb:
         allowOrigins:

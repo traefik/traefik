@@ -13,9 +13,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -60,7 +62,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
-			if route.Kind != "Rule" {
+			if len(route.Kind) > 0 && route.Kind != "Rule" {
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
 				continue
 			}
@@ -112,12 +114,13 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			r := &dynamic.Router{
-				Middlewares: mds,
-				Priority:    route.Priority,
-				RuleSyntax:  route.Syntax,
-				EntryPoints: ingressRoute.Spec.EntryPoints,
-				Rule:        route.Match,
-				Service:     serviceName,
+				Middlewares:   mds,
+				Priority:      route.Priority,
+				RuleSyntax:    route.Syntax,
+				EntryPoints:   ingressRoute.Spec.EntryPoints,
+				Rule:          route.Match,
+				Service:       serviceName,
+				Observability: route.Observability,
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -248,10 +251,28 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		})
 	}
 
+	var sticky *dynamic.Sticky
+	if tService.Weighted.Sticky != nil && tService.Weighted.Sticky.Cookie != nil {
+		sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{
+				Name:     tService.Weighted.Sticky.Cookie.Name,
+				Secure:   tService.Weighted.Sticky.Cookie.Secure,
+				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
+				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
+				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
+			},
+		}
+		sticky.Cookie.SetDefaults()
+
+		if tService.Weighted.Sticky.Cookie.Path != nil {
+			sticky.Cookie.Path = tService.Weighted.Sticky.Cookie.Path
+		}
+	}
+
 	conf[id] = &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
 			Services: wrrServices,
-			Sticky:   tService.Weighted.Sticky,
+			Sticky:   sticky,
 		},
 	}
 	return nil
@@ -353,7 +374,22 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		}
 	}
 
-	lb.Sticky = svc.Sticky
+	if svc.Sticky != nil && svc.Sticky.Cookie != nil {
+		lb.Sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{
+				Name:     svc.Sticky.Cookie.Name,
+				Secure:   svc.Sticky.Cookie.Secure,
+				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
+				SameSite: svc.Sticky.Cookie.SameSite,
+				MaxAge:   svc.Sticky.Cookie.MaxAge,
+			},
+		}
+		lb.Sticky.Cookie.SetDefaults()
+
+		if svc.Sticky.Cookie.Path != nil {
+			lb.Sticky.Cookie.Path = svc.Sticky.Cookie.Path
+		}
+	}
 
 	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
 	if err != nil {
@@ -511,7 +547,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+			if !k8s.EndpointServing(endpoint) {
 				continue
 			}
 
@@ -522,7 +558,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 				addresses[address] = struct{}{}
 				servers = append(servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
 				})
 			}
 		}
