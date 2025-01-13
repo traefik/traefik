@@ -22,6 +22,11 @@
               ]
             }
           ]
+        },
+        "observability": {
+          "accessLogs": true,
+          "tracing": true,
+          "metrics": true
         }
       }
     },
@@ -330,7 +335,8 @@
               ]
             }
           ]
-        }
+        },
+        "observability": {}
       }
     },
     "serversTransports": {

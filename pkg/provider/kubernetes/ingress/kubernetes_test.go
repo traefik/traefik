@@ -24,6 +24,8 @@ var _ provider.Provider = (*Provider)(nil)
 
 func pointer[T any](v T) *T { return &v }
 
+func String(v string) *string { return &v }
+
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
 		desc                         string
@@ -113,6 +115,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								},
 								Options: "foobar",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: pointer(true),
+								Tracing:    pointer(true),
+								Metrics:    pointer(true),
+							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -127,6 +134,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										Name:     "foobar",
 										Secure:   true,
 										HTTPOnly: true,
+										Path:     String("/"),
 									},
 								},
 								Servers: []dynamic.Server{
@@ -1518,6 +1526,46 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with endpoint conditions",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+									{
+										URL:    "http://10.10.0.3:8080",
+										Fenced: true,
+									},
+									{
+										URL:    "http://10.10.0.4:8080",
+										Fenced: true,
 									},
 								},
 							},

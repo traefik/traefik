@@ -20,6 +20,10 @@
         [[http.routers.Router0.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [http.routers.Router0.observability]
+        accessLogs = true
+        tracing = true
+        metrics = true
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -38,6 +42,10 @@
         [[http.routers.Router1.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [http.routers.Router1.observability]
+        accessLogs = true
+        tracing = true
+        metrics = true
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -55,6 +63,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            path = "foobar"
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
@@ -112,6 +121,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            path = "foobar"
         [http.services.Service04.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
@@ -172,6 +182,9 @@
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
         headerField = "foobar"
+        forwardBody = true
+        maxBodySize = 42
+        preserveLocationHeader = true
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"

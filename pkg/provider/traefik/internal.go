@@ -237,6 +237,14 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			Middlewares: ep.HTTP.Middlewares,
 		}
 
+		if ep.Observability != nil {
+			m.Observability = dynamic.RouterObservabilityConfig{
+				AccessLogs: &ep.Observability.AccessLogs,
+				Tracing:    &ep.Observability.Tracing,
+				Metrics:    &ep.Observability.Metrics,
+			}
+		}
+
 		if ep.HTTP.TLS != nil {
 			m.TLS = &dynamic.RouterTLSConfig{
 				Options:      ep.HTTP.TLS.Options,
