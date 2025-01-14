@@ -24,13 +24,13 @@
 			"service": "default-test-route-6b204d94623b3df4370c",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
+			"tls": {
+				"options": "default-mytlsoption"
+			},
 			"observability": {
 				"accessLogs": true,
 				"tracing": true,
 				"metrics": true
-			},
-			"tls": {
-				"options": "default-mytlsoption"
 			},
 			"status": "enabled",
 			"using": [
