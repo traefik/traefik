@@ -234,7 +234,8 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 		}
 
 		httpModel := &dynamic.Model{
-			Middlewares: ep.HTTP.Middlewares,
+			DefaultRuleSyntax: defaultRuleSyntax,
+			Middlewares:       ep.HTTP.Middlewares,
 		}
 
 		if ep.Observability != nil {
@@ -252,8 +253,6 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 				Domains:      ep.HTTP.TLS.Domains,
 			}
 		}
-
-		httpModel.DefaultRuleSyntax = defaultRuleSyntax
 
 		cfg.HTTP.Models[name] = httpModel
 	}
