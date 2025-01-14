@@ -1,3 +1,18 @@
+## [v3.3.2](https://github.com/traefik/traefik/tree/v3.3.2) (2025-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.1...v3.3.2)
+
+**Bug fixes:**
+- **[fastproxy]** Do not read response body for HEAD requests ([#11442](https://github.com/traefik/traefik/pull/11442) by [kevinpollet](https://github.com/kevinpollet))
+- **[metrics,tracing,accesslogs]** Fix observability configuration on EntryPoints ([#11446](https://github.com/traefik/traefik/pull/11446) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Set content-type when serving webui index ([#11428](https://github.com/traefik/traefik/pull/11428) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[acme]** Fix deprecated dnsChallenge propagation logging and documentation ([#11433](https://github.com/traefik/traefik/pull/11433) by [thomscode](https://github.com/thomscode))
+- **[acme]** Add missing trailing s to propagation.delayBeforeCheck option ([#11417](https://github.com/traefik/traefik/pull/11417) by [jspiers](https://github.com/jspiers))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11419](https://github.com/traefik/traefik/pull/11419) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.1](https://github.com/traefik/traefik/tree/v3.3.1) (2025-01-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.0...v3.3.1)
 
