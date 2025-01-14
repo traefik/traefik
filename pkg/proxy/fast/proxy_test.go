@@ -278,6 +278,34 @@ func TestPreservePath(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestHeadRequest(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+
+		assert.Equal(t, http.MethodHead, req.Method)
+
+		rw.Header().Set("Content-Length", "42")
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL, err := url.JoinPath(server.URL)
+	require.NoError(t, err)
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodHead, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
 func newCertificate(t *testing.T, domain string) *tls.Certificate {
 	t.Helper()
 
