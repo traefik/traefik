@@ -25,8 +25,6 @@ kube::codegen::gen_client \
     --with-watch \
     --input-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd" \
     --output-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
-    --input-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/knative/crd" \
-    --output-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/knative/crd/generated" \
     --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
     --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
 
