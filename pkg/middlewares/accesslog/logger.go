@@ -24,6 +24,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type key string
@@ -207,6 +208,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		Request: request{
 			headers: req.Header,
 		},
+	}
+
+	if span := trace.SpanFromContext(req.Context()); span != nil {
+		spanContext := span.SpanContext()
+		logDataTable.Core[TraceID] = spanContext.TraceID().String()
+		logDataTable.Core[SpanID] = spanContext.SpanID().String()
 	}
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
