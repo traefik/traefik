@@ -8,10 +8,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	traefikclientset "github.com/traefik/traefik/v3/pkg/provider/knative/crd/generated/clientset/versioned"
-	"github.com/traefik/traefik/v3/pkg/provider/knative/crd/generated/informers/externalversions"
-	traefikinformers "github.com/traefik/traefik/v3/pkg/provider/knative/crd/generated/informers/externalversions"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/knative/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,19 +53,15 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
-
-	GetIngressRoutes() []*traefikv1alpha1.IngressRouteKnative
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
 type clientWrapper struct {
 	csKnativeNetworking *knativenetworkingclientset.Clientset
 	csKube              *kclientset.Clientset
-	csCrd               traefikclientset.Interface
 
 	factoriesKnativeNetworking map[string]knativenetworkinginformers.SharedInformerFactory
 	factoriesKube              map[string]kinformers.SharedInformerFactory
-	factoriesCrd               map[string]externalversions.SharedInformerFactory
 
 	labelSelector labels.Selector
 
@@ -83,29 +75,20 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 		return nil, err
 	}
 
-	csCrd, err := traefikclientset.NewForConfig(c)
-	if err != nil {
-		return nil, err
-	}
-
 	csKube, err := kclientset.NewForConfig(c)
 	if err != nil {
 		return nil, err
 	}
 
-	return newClientImpl(csKnativeNetworking, csKube, csCrd), nil
+	return newClientImpl(csKnativeNetworking, csKube), nil
 }
 
-func newClientImpl(csKnativeNetworking *knativenetworkingclientset.Clientset, csKube *kclientset.Clientset,
-	csCrd traefikclientset.Interface,
-) *clientWrapper {
+func newClientImpl(csKnativeNetworking *knativenetworkingclientset.Clientset, csKube *kclientset.Clientset) *clientWrapper {
 	return &clientWrapper{
 		csKnativeNetworking:        csKnativeNetworking,
 		csKube:                     csKube,
-		csCrd:                      csCrd,
 		factoriesKnativeNetworking: make(map[string]knativenetworkinginformers.SharedInformerFactory),
 		factoriesKube:              make(map[string]kinformers.SharedInformerFactory),
-		factoriesCrd:               make(map[string]traefikinformers.SharedInformerFactory),
 	}
 }
 
@@ -182,13 +165,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod,
-			traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(matchesLabelSelector))
-		_, err = factoryCrd.Traefik().V1alpha1().IngressRouteKnatives().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -204,22 +180,15 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 
 		c.factoriesKube[ns] = factoryKube
-		c.factoriesCrd[ns] = factoryCrd
 		c.factoriesKnativeNetworking[ns] = factory
 	}
 
 	for _, ns := range namespaces {
 		c.factoriesKnativeNetworking[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
-		c.factoriesCrd[ns].Start(stopCh)
 	}
 
 	for _, ns := range namespaces {
-		for t, ok := range c.factoriesCrd[ns].WaitForCacheSync(stopCh) {
-			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
-			}
-		}
 		for t, ok := range c.factoriesKnativeNetworking[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
@@ -311,20 +280,6 @@ func (c *clientWrapper) GetKnativeIngressRoute(namespace, name string) (*knative
 	ingress, err := c.factoriesKnativeNetworking[c.lookupNamespace(namespace)].Networking().V1alpha1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return ingress, exist, err
-}
-
-func (c *clientWrapper) GetIngressRoutes() []*traefikv1alpha1.IngressRouteKnative {
-	var result []*traefikv1alpha1.IngressRouteKnative
-
-	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRouteKnatives().Lister().List(labels.Everything())
-		if err != nil {
-			log.Error().Err(err).Msgf("Failed to list ingress routes in namespace %s", ns)
-		}
-		result = append(result, ings...)
-	}
-
-	return result
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.

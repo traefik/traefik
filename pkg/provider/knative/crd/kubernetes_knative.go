@@ -9,38 +9,26 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikknativev1alpha1 "github.com/traefik/traefik/v3/pkg/provider/knative/crd/traefikio/v1alpha1"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 )
 
-const revisionHeaderName = "revision-tag"
-
-func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
+func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},
 		Services:    map[string]*dynamic.Service{},
 	}
 
-	// address ingress routes configuration for knatives
-	for _, ingressRoute := range client.GetIngressRoutes() {
-		logger := log.Ctx(ctx).With().Str("ingressknative", ingressRoute.Name).Str("namespace",
+	for _, ingressRoute := range client.GetKnativeIngressRoutes() {
+		logger := log.Ctx(ctx).With().Str("KNativeIngress", ingressRoute.Name).Str("namespace",
 			ingressRoute.Namespace).Logger()
 
-		// TODO keep the name ingressClass?
 		if !shouldProcessIngress(p.IngressClass, ingressRoute.Annotations[annotationKubernetesIngressClass]) {
 			continue
-		}
-
-		err := getTLSHTTP(ctx, ingressRoute, client, tlsConfigs)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error configuring TLS")
 		}
 
 		ingressName := ingressRoute.Name
@@ -53,100 +41,44 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			allowCrossNamespace: p.AllowCrossNamespace,
 		}
 
-		for _, route := range ingressRoute.Spec.Routes {
-			if route.Kind != "Rule" {
-				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
+		serviceKey, err := makeServiceKey(ingressRoute.Namespace, ingressName)
+		if err != nil {
+			logger.Error().Err(err).Send()
+			continue
+		}
+
+		serviceName := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
+
+		knativeResult := cb.buildKnativeService(ctx, ingressRoute, conf.Middlewares, conf.Services, serviceName)
+
+		for _, result := range knativeResult {
+			if result.Err != nil {
+				logger.Error().Err(result.Err).Send()
 				continue
 			}
 
-			if len(route.Match) == 0 {
-				logger.Error().Msg("Empty match rule")
-				continue
+			var hosts []string
+			var mds []string
+			for _, host := range result.Hosts {
+				hosts = append(hosts, fmt.Sprintf("Host(`%v`)", host))
+			}
+			match := fmt.Sprintf("(%v)", strings.Join(hosts, " || "))
+
+			if result.Middleware != "" {
+				mds = append(mds, result.Middleware)
 			}
 
-			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
-			if err != nil {
-				logger.Error().Err(err).Msg("Failed to create middleware keys")
-				continue
+			r := &dynamic.Router{
+				Middlewares: mds,
+				Rule:        match,
+				Service:     result.ServiceKey,
 			}
-
-			serviceKey, err := makeServiceKey(route.Match, ingressName)
-			if err != nil {
-				logger.Error().Err(err).Send()
-				continue
-			}
-
-			serviceName := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
-
-			knativeIngressRoute, _, err := client.GetKnativeIngressRoute(ingressRoute.Namespace, route.Services[0].Name)
-			if err != nil {
-				logger.Error().Err(err).Msgf("Cannot get IngressRoute %q", route.Services[0].Name)
-				continue
-			}
-			knativeResult := cb.buildKnativeService(ctx, knativeIngressRoute, conf.Middlewares, conf.Services,
-				serviceName)
-			for _, result := range knativeResult {
-				if result.Err != nil {
-					logger.Error().Err(result.Err).Send()
-					continue
-				}
-
-				match := route.Match
-				if result.Tag != "" {
-					match = fmt.Sprintf("(%s) && Header(`%s`, `%s`)", match, revisionHeaderName, result.Tag)
-				}
-				if result.Middleware != "" {
-					mds = append(mds, result.Middleware)
-				}
-
-				r := &dynamic.Router{
-					Middlewares:   mds,
-					Priority:      route.Priority,
-					RuleSyntax:    route.Syntax,
-					EntryPoints:   ingressRoute.Spec.EntryPoints,
-					Rule:          match,
-					Service:       result.ServiceKey,
-					Observability: route.Observability,
-				}
-
-				if ingressRoute.Spec.TLS != nil {
-					r.TLS = &dynamic.RouterTLSConfig{
-						CertResolver: ingressRoute.Spec.TLS.CertResolver,
-						Domains:      ingressRoute.Spec.TLS.Domains,
-					}
-
-					if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
-						tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
-						// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
-						ns := ingressRoute.Spec.TLS.Options.Namespace
-						if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
-							if len(ns) == 0 {
-								ns = ingressRoute.Namespace
-							}
-							tlsOptionsName = provider.Normalize(makeID(ns, tlsOptionsName))
-						} else if len(ns) > 0 {
-							logger.
-								Warn().Str("TLSOption", ingressRoute.Spec.TLS.Options.Name).
-								Msgf("Namespace %q is ignored in cross-provider context", ns)
-						}
-
-						if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, ns) {
-							logger.Error().Msgf("TLSOption %s/%s is not in the IngressRoute namespace %s",
-								ns, ingressRoute.Spec.TLS.Options.Name, ingressRoute.Namespace)
-							continue
-						}
-
-						r.TLS.Options = tlsOptionsName
-					}
-				}
-				conf.Routers[provider.Normalize(makeID(result.Tag, result.ServiceKey))] = r
-			}
-
-			err = p.updateKnativeIngressStatus(client, knativeIngressRoute)
-			if err != nil {
-				logger.Error().Err(err).Msgf("error %v", err)
-				return nil
-			}
+			conf.Routers[provider.Normalize(result.ServiceKey)] = r
+		}
+		err = p.updateKnativeIngressStatus(client, ingressRoute)
+		if err != nil {
+			logger.Error().Err(err).Msgf("error %v", err)
+			return nil
 		}
 	}
 	return conf
@@ -157,30 +89,9 @@ type configBuilder struct {
 	allowCrossNamespace bool
 }
 
-// getTLSHTTP mutates tlsConfigs.
-func getTLSHTTP(ctx context.Context, ingressRoute *traefikknativev1alpha1.IngressRouteKnative, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
-	if ingressRoute.Spec.TLS == nil {
-		return nil
-	}
-	if ingressRoute.Spec.TLS.SecretName == "" {
-		log.Ctx(ctx).Debug().Msg("No secret name provided")
-		return nil
-	}
-
-	configKey := ingressRoute.Namespace + "/" + ingressRoute.Spec.TLS.SecretName
-	if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
-		tlsConf, err := getTLS(k8sClient, ingressRoute.Spec.TLS.SecretName, ingressRoute.Namespace)
-		if err != nil {
-			return err
-		}
-
-		tlsConfigs[configKey] = tlsConf
-	}
-
-	return nil
-}
-
-func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string, service traefikknativev1alpha1.ServiceKnativeSpec) (*dynamic.Service, error) {
+func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string,
+	service traefikv1alpha1.Service,
+) (*dynamic.Service, error) {
 	servers, err := c.loadKnativeServers(namespace, service)
 	if err != nil {
 		return nil, err
@@ -206,35 +117,13 @@ func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string, ser
 		}
 	}
 
-	if service.Sticky != nil && service.Sticky.Cookie != nil {
-		lb.Sticky = &dynamic.Sticky{
-			Cookie: &dynamic.Cookie{
-				Name:     service.Sticky.Cookie.Name,
-				Secure:   service.Sticky.Cookie.Secure,
-				HTTPOnly: service.Sticky.Cookie.HTTPOnly,
-				SameSite: service.Sticky.Cookie.SameSite,
-				MaxAge:   service.Sticky.Cookie.MaxAge,
-			},
-		}
-		lb.Sticky.Cookie.SetDefaults()
-
-		if service.Sticky.Cookie.Path != nil {
-			lb.Sticky.Cookie.Path = service.Sticky.Cookie.Path
-		}
-	}
-
-	lb.ServersTransport, err = c.makeServersTransportKey(namespace, service.ServersTransport)
-	if err != nil {
-		return nil, err
-	}
-
 	return &dynamic.Service{
 		LoadBalancer: lb,
 	}, nil
 }
 
 func (c configBuilder) loadKnativeServers(namespace string,
-	svc traefikknativev1alpha1.ServiceKnativeSpec,
+	svc traefikv1alpha1.Service,
 ) ([]dynamic.Server, error) {
 	strategy := ""
 	if strategy == "" {
@@ -304,50 +193,9 @@ func makeServiceKey(rule, ingressName string) (string, error) {
 	return key, nil
 }
 
-func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string,
-	middlewares []traefikv1alpha1.MiddlewareRef,
-) ([]string, error) {
-	var mds []string
-
-	for _, mi := range middlewares {
-		name := mi.Name
-
-		if !p.AllowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
-			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-			// if the provider namespace kubernetescrd is used,
-			// we don't allow this format to avoid cross namespace references.
-			return nil, fmt.Errorf("invalid reference to middleware %s: with crossnamespace disallowed, the namespace field needs to be explicitly specified", mi.Name)
-		}
-
-		if strings.Contains(name, providerNamespaceSeparator) {
-			if len(mi.Namespace) > 0 {
-				log.Ctx(ctx).
-					Warn().Str(logs.MiddlewareName, mi.Name).
-					Msgf("namespace %q is ignored in cross-provider context", mi.Namespace)
-			}
-
-			mds = append(mds, name)
-			continue
-		}
-
-		ns := ingRouteNamespace
-		if len(mi.Namespace) > 0 {
-			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteNamespace, mi.Namespace) {
-				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRoute namespace %s", mi.Namespace, mi.Name, ingRouteNamespace)
-			}
-
-			ns = mi.Namespace
-		}
-
-		mds = append(mds, provider.Normalize(makeID(ns, name)))
-	}
-
-	return mds, nil
-}
-
 type ServiceResult struct {
 	ServiceKey string
-	Tag        string
+	Hosts      []string
 	Middleware string
 	Err        error
 }
@@ -359,22 +207,12 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 		Str("namespace", ingressRoute.Namespace).Logger()
 	var results []*ServiceResult
 
-	for index, route := range ingressRoute.Spec.Rules {
+	for _, route := range ingressRoute.Spec.Rules {
 		var (
-			tag            string
 			tagServiceName string
 			headers        string
 		)
 
-		// If the tag is defined as part of knative traffic split, it will be appended as prefix to hosts.
-		// This is only for tag based routing,
-		// hosts with tags as prefixes are populated from second element in the rules.
-		if len(route.Hosts) > 0 && index != 0 {
-			index := strings.Index(route.Hosts[0], ingressRoute.Name)
-			if index != -1 {
-				tag = route.Hosts[0][:index-1] // -1 to remove the trailing - character
-			}
-		}
 		if route.HTTP == nil {
 			logger.Warn().Msgf("No HTTP rule defined for Knative service %s", ingressRoute.Name)
 			continue
@@ -382,11 +220,12 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 
 		for _, pathroute := range route.HTTP.Paths {
 			for _, service := range pathroute.Splits {
-				balancerServerHTTP, err := c.createKnativeLoadBalancerServerHTTP(service.ServiceNamespace,
-					traefikknativev1alpha1.ServiceKnativeSpec{
+				balancerServerHTTP, err := c.createKnativeLoadBalancerServerHTTP(service.ServiceNamespace, traefikv1alpha1.Service{
+					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
 						Name: service.ServiceName,
 						Port: service.ServicePort,
-					})
+					},
+				})
 				if err != nil {
 					logger.Err(err).Str("serviceName", service.ServiceName).Str("servicePort",
 						service.ServicePort.String()).Msgf("Cannot create service: %v", err)
@@ -408,7 +247,7 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 					tagServiceName = serviceKey
 					continue
 				}
-				tagServiceName = provider.Normalize(makeID(tag, serviceName))
+				tagServiceName = serviceName
 				srv := dynamic.WRRService{Name: serviceKey}
 				srv.SetDefaults()
 				if service.Percent != 0 {
@@ -424,7 +263,7 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 				// results = append(results, ServiceResult{serviceName, tag, nil})
 			}
 		}
-		results = append(results, &ServiceResult{tagServiceName, tag, headers, nil})
+		results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, nil})
 	}
 	return results
 }
@@ -437,11 +276,6 @@ func makeID(s1, s2 string) string {
 		return s1
 	}
 	return fmt.Sprintf("%s-%s", s1, s2)
-}
-
-func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace string) bool {
-	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
-	return allowCrossNamespace || parentNamespace == namespace
 }
 
 func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knativenetworkingv1alpha1.Ingress) error {
@@ -469,23 +303,4 @@ func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knati
 		return client.UpdateKnativeIngressStatus(ingressRoute)
 	}
 	return nil
-}
-
-func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
-	if serversTransportName == "" {
-		return "", nil
-	}
-
-	if !c.allowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
-		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-		// if the provider namespace kubernetescrd is used,
-		// we don't allow this format to avoid cross namespace references.
-		return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
-	}
-
-	if strings.Contains(serversTransportName, providerNamespaceSeparator) {
-		return serversTransportName, nil
-	}
-
-	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
 }

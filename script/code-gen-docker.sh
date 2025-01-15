@@ -32,7 +32,7 @@ docker run --rm \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" \
            controller-gen crd:crdVersions=v1 \
-           paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...,./pkg/provider/knative/crd/traefikio/v1alpha1/...} \
+           paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...} \
            output:dir=./docs/content/reference/dynamic-configuration/
 
 echo "Concatenate the CRD definitions for publication and integration tests ..."
