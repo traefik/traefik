@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const delta float64 = 1e-10
@@ -409,6 +410,8 @@ func TestLoggerJSON(t *testing.T) {
 				"time":                    assertNotEmpty(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
+				TraceID:                   assertNotEmpty(),
+				SpanID:                    assertNotEmpty(),
 			},
 		},
 		{
@@ -452,6 +455,8 @@ func TestLoggerJSON(t *testing.T) {
 				"time":                    assertNotEmpty(),
 				StartLocal:                assertNotEmpty(),
 				StartUTC:                  assertNotEmpty(),
+				TraceID:                   assertNotEmpty(),
+				SpanID:                    assertNotEmpty(),
 			},
 		},
 		{
@@ -627,6 +632,8 @@ func TestLogger_AbortedRequest(t *testing.T) {
 		"downstream_Content-Type":      assertString("text/plain"),
 		"downstream_Transfer-Encoding": assertString("chunked"),
 		"downstream_Cache-Control":     assertString("no-cache"),
+		TraceID:                        assertNotEmpty(),
+		SpanID:                         assertNotEmpty(),
 	}
 
 	config := &types.AccessLog{
@@ -944,6 +951,10 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 			}},
 		}
 	}
+
+	tracer := noop.Tracer{}
+	spanCtx, _ := tracer.Start(req.Context(), "test")
+	req = req.WithContext(spanCtx)
 
 	chain := alice.New()
 	chain = chain.Append(capture.Wrap)
