@@ -113,8 +113,14 @@ http:
         services:
           - name: foobar
             weight: 42
+            headers:
+              name0: foobar
+              name1: foobar
           - name: foobar
             weight: 42
+            headers:
+              name0: foobar
+              name1: foobar
         sticky:
           cookie:
             name: foobar
