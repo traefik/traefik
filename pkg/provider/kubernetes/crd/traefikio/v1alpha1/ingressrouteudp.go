@@ -11,7 +11,7 @@ type IngressRouteUDPSpec struct {
 	Routes []RouteUDP `json:"routes"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.2/routing/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 }

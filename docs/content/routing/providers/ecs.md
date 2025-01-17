@@ -111,6 +111,30 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     traefik.http.routers.myrouter.tls.options=foobar
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.accesslogs=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.metrics=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.tracing=true
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
@@ -265,6 +289,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     
     ```yaml
     traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+    
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"

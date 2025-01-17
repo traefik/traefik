@@ -1732,6 +1732,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: pointer(true),
+								Tracing:    pointer(true),
+								Metrics:    pointer(true),
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3157,8 +3162,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Route with kind not of a rule type (empty kind) is ignored",
-			paths: []string{"services.yml", "with_wrong_rule_kind.yml"},
+			desc:  "Route with empty kind is allowed",
+			paths: []string{"services.yml", "with_empty_rule_kind.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3172,9 +3177,33 @@ func TestLoadIngressRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-02719a68b11e915a4b23": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-02719a68b11e915a4b23",
+							Rule:        "/prefix",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-02719a68b11e915a4b23": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
@@ -3930,7 +3959,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
-								Address: "test.com",
+								Address:     "test.com",
+								MaxBodySize: pointer(int64(-1)),
 								TLS: &dynamic.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
@@ -4758,10 +4788,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 									{
-										URL: "http://10.10.0.5:80",
+										URL:    "http://10.10.0.3:80",
+										Fenced: true,
 									},
 									{
-										URL: "http://10.10.0.6:80",
+										URL:    "http://10.10.0.4:80",
+										Fenced: true,
 									},
 								},
 								PassHostHeader: pointer(true),
@@ -4910,6 +4942,178 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-whoami-without-endpointslice-endpoints-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "Simple Ingress Route with sticky",
+			allowCrossNamespace: true,
+			paths:               []string{"services.yml", "with_sticky.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test2-route-840425136fbd5d85a4ad": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-840425136fbd5d85a4ad",
+							Rule:        "Host(`k8s-service`)",
+						},
+						"default-test2-route-4f06607bbc69f34a4db5": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-4f06607bbc69f34a4db5",
+							Rule:        "Host(`traefik-service`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test2-route-840425136fbd5d85a4ad": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+									{
+										Name:   "default-whoami2-8080",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-test2-route-4f06607bbc69f34a4db5": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-sticky",
+										Weight: pointer(1),
+									},
+									{
+										Name:   "default-sticky-default",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-sticky": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer("/foo"),
+									},
+								},
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami3-8443",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-sticky-default": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer("/"),
+									},
+								},
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami3-8443",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami2-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer("/"),
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "cookie",
+										Secure:   true,
+										HTTPOnly: true,
+										SameSite: "none",
+										MaxAge:   42,
+										Path:     pointer("/foo"),
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami3-8443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:8443",
+									},
+									{
+										URL: "http://10.10.0.8:8443",
+									},
+								},
 								PassHostHeader: pointer(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
