@@ -212,7 +212,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     services:
       traefik:
-         image: traefik:v3.2 # The official v3 Traefik docker image
+         image: traefik:v3.3 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -247,7 +247,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "ssh://traefik@192.168.2.5:2022"
          # ...
     ```

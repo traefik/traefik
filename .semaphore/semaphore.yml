@@ -1,63 +1,13 @@
 version: v1.0
-name: Traefik
+name: Traefik Release - deprecated
 agent:
   machine:
-    type: e1-standard-4
-    os_image: ubuntu2004
-
-fail_fast:
-  stop:
-    when: "branch != 'master'"
-
-auto_cancel:
-  queued:
-    when: "branch != 'master'"
-  running:
-    when: "branch != 'master'"
-
-global_job_config:
-  prologue:
-    commands:
-      - curl -sSfL https://raw.githubusercontent.com/ldez/semgo/master/godownloader.sh | sudo sh -s -- -b "/usr/local/bin"
-      - sudo semgo go1.23
-      - export "GOPATH=$(go env GOPATH)"
-      - export "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/traefik/${SEMAPHORE_PROJECT_NAME}"
-      - export "PATH=${GOPATH}/bin:${PATH}"
-      - mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"
-      - export GOPROXY=https://proxy.golang.org,direct
-      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.62.0
-      - curl -sSfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131bb2cca8900e/raw/goreleaser.sh | bash -s -- -b "${GOPATH}/bin"
-      - checkout
-      - cache restore traefik-$(checksum go.sum)
-
+    type: f1-standard-2
+    os_image: ubuntu2204
 blocks:
-  - name: Release
-    dependencies: []
-    run:
-      when: "tag =~ '.*'"
+  - name: 'Do nothing'
     task:
-      agent:
-        machine:
-          type: e1-standard-8
-          os_image: ubuntu2004
-      secrets:
-        - name: traefik
-      env_vars:
-        - name: GH_VERSION
-          value: 2.32.1
-        - name: CODENAME
-          value: "munster"
-      prologue:
-        commands:
-          - export VERSION=${SEMAPHORE_GIT_TAG_NAME}
-          - curl -sSL -o /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz
-          - tar -zxvf /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz -C /tmp
-          - sudo mv /tmp/gh_${GH_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh
-          - sudo rm -rf ~/.phpbrew ~/.kerl ~/.sbt ~/.nvm ~/.npm ~/.kiex /usr/lib/jvm /opt/az /opt/firefox /usr/lib/google-cloud-sdk ~/.rbenv ~/.pip_download_cache # Remove unnecessary data.
-          - sudo service docker stop && sudo umount /var/lib/docker && sudo service docker start # Unmounts the docker disk and the whole system disk is usable.
       jobs:
-        - name: Release
+        - name: 'Do nothing'
           commands:
-            - make release-packages
-            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
-            - ./script/deploy.sh
+            - echo "Do nothing"

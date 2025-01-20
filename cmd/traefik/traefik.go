@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"io"
 	stdlog "log"
+	"maps"
 	"net/http"
 	"os"
 	"os/signal"
-	"sort"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"github.com/traefik/traefik/v3/cmd"
 	"github.com/traefik/traefik/v3/cmd/healthcheck"
 	cmdVersion "github.com/traefik/traefik/v3/cmd/version"
+	_ "github.com/traefik/traefik/v3/init"
 	tcli "github.com/traefik/traefik/v3/pkg/cli"
 	"github.com/traefik/traefik/v3/pkg/collector"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -48,7 +50,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"golang.org/x/exp/maps"
 )
 
 func main() {
@@ -90,7 +91,9 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	setupLogger(staticConfiguration)
+	if err := setupLogger(staticConfiguration); err != nil {
+		return fmt.Errorf("setting up logger: %w", err)
+	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
@@ -230,8 +233,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	pluginLogger := log.Ctx(ctx).With().Logger()
 	hasPlugins := staticConfiguration.Experimental != nil && (staticConfiguration.Experimental.Plugins != nil || staticConfiguration.Experimental.LocalPlugins != nil)
 	if hasPlugins {
-		pluginsList := maps.Keys(staticConfiguration.Experimental.Plugins)
-		pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
+		pluginsList := slices.Collect(maps.Keys(staticConfiguration.Experimental.Plugins))
+		pluginsList = append(pluginsList, slices.Collect(maps.Keys(staticConfiguration.Experimental.LocalPlugins))...)
 
 		pluginLogger = pluginLogger.With().Strs("plugins", pluginsList).Logger()
 		pluginLogger.Info().Msg("Loading plugins...")
@@ -425,7 +428,7 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 		}
 	}
 
-	sort.Strings(defaultEntryPoints)
+	slices.Sort(defaultEntryPoints)
 	return defaultEntryPoints
 }
 
@@ -566,7 +569,7 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 }
 
 func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
-	sort.Strings(certificate.DNSNames)
+	slices.Sort(certificate.DNSNames)
 
 	labels := []string{
 		"cn", certificate.Subject.CommonName,

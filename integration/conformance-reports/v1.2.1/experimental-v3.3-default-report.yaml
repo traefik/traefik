@@ -1,14 +1,14 @@
 apiVersion: gateway.networking.k8s.io/v1
 date: '-'
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.2.0
+gatewayAPIVersion: v1.2.1
 implementation:
   contact:
   - '@traefik/maintainers'
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.2
+  version: v3.3
 kind: ConformanceReport
 mode: default
 profiles:

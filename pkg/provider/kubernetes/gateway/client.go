@@ -757,7 +757,7 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	for _, policy := range policies {
 		for _, ref := range policy.Spec.TargetRefs {
 			// The policy does not target the service.
-			if ref.Group != groupCore || ref.Kind != kindService || string(ref.Name) != serviceName {
+			if (ref.Group != "" && ref.Group != groupCore) || ref.Kind != kindService || string(ref.Name) != serviceName {
 				continue
 			}
 
