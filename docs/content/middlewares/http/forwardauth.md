@@ -747,4 +747,46 @@ http:
 ```
 
 
+### `preserveRequestMethod`
+
+_Optional, Default=false_
+
+`preserveRequestMethod` defines whether to preserve the original request `method` while forwarding the request to the authentication server. By default, if it set to `false`, the request method is changed to `GET` when it reaches the authentication server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    # ...
+    preserveRequestMethod: true
+```
+
+```json tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        # ...
+        preserveRequestMethod: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares.test-auth.forwardAuth]
+  # ...
+  preserveRequestMethod = true
+```
+
+
 {!traefik-for-business-applications.md!}
