@@ -167,6 +167,8 @@ type ForwardAuth struct {
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 	// PreserveLocationHeader defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server.
 	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty"`
+	// PreserveRequestMethod defines whether to preserve the original request method while forwarding the request to the authentication server.
+	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty"`
 }
 
 // ClientTLS holds the client TLS configuration.
