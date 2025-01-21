@@ -52,6 +52,16 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: root-ca6
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVM2
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: mtls1
   namespace: foo
 
@@ -83,6 +93,16 @@ data:
   tls.key: VEVTVEtFWTM=
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: root-ca-as-config-map
+  namespace: foo
+
+data:
+  ca.crt: "TESTROOTCASFROMCONFIGMAP"
+
+---
 apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
@@ -102,6 +122,9 @@ spec:
     - root-ca3
     - root-ca4
     - allcerts
+  rootCAs:
+    - configMapRef: root-ca-as-config-map
+    - secretRef: root-ca6
   certificatesSecrets:
     - mtls1
     - mtls2

@@ -31,6 +31,8 @@ type ServersTransportSpec struct {
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables SSL certificate verification.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+	// RootCAs gives you the option to use secrets or config maps to store CAs
+	RootCAs []RootCAs `json:"rootCAs,omitempty"`
 	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
@@ -72,6 +74,14 @@ type ForwardingTimeouts struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RootCAs holds the reference to the secret or config map that stores the CA
+type RootCAs struct {
+	SecretRef    *string `json:"secretRef,omitempty"`
+	ConfigMapRef *string `json:"configMapRef,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
