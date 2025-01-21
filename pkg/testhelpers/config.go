@@ -53,6 +53,17 @@ func WithServiceName(serviceName string) func(*dynamic.Router) {
 	}
 }
 
+// WithObservability is a helper to create a configuration.
+func WithObservability() func(*dynamic.Router) {
+	return func(r *dynamic.Router) {
+		r.Observability = &dynamic.RouterObservabilityConfig{
+			AccessLogs: pointer(true),
+			Metrics:    pointer(true),
+			Tracing:    pointer(true),
+		}
+	}
+}
+
 // WithLoadBalancerServices is a helper to create a configuration.
 func WithLoadBalancerServices(opts ...func(service *dynamic.ServersLoadBalancer) string) func(*dynamic.HTTPConfiguration) {
 	return func(c *dynamic.HTTPConfiguration) {
@@ -149,3 +160,5 @@ func WithSticky(cookieName string) func(*dynamic.ServersLoadBalancer) {
 		}
 	}
 }
+
+func pointer[T any](v T) *T { return &v }

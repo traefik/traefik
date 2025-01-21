@@ -265,13 +265,13 @@ Subject alternative names.
 Default TLS options for the routers linked to the entry point.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_ACCESSLOGS`:  
- (Default: ```true```)
+ (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_METRICS`:  
- (Default: ```true```)
+ (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_TRACING`:  
- (Default: ```true```)
+ (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)

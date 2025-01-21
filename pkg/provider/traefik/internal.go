@@ -240,9 +240,9 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 
 		if ep.Observability != nil {
 			httpModel.Observability = dynamic.RouterObservabilityConfig{
-				AccessLogs: &ep.Observability.AccessLogs,
-				Tracing:    &ep.Observability.Tracing,
-				Metrics:    &ep.Observability.Metrics,
+				AccessLogs: ep.Observability.AccessLogs,
+				Tracing:    ep.Observability.Tracing,
+				Metrics:    ep.Observability.Metrics,
 			}
 		}
 
