@@ -50,6 +50,7 @@ type Client interface {
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetNodes() ([]*corev1.Node, bool, error)
+	GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error)
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -224,6 +225,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -476,6 +481,17 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
+}
+
+// GetConfigMap returns the named config map from the given namespace.
+func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, false, fmt.Errorf("failed to get config map %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	configMap, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(name)
+	exist, err := translateNotFoundError(err)
+	return configMap, exist, err
 }
 
 func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
