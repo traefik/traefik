@@ -166,3 +166,11 @@ type ObservabilityConfig struct {
 	Tracing    *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
 	Metrics    *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
 }
+
+// SetDefaults sets the default values.
+func (o *ObservabilityConfig) SetDefaults() {
+	defaultValue := true
+	o.AccessLogs = &defaultValue
+	o.Tracing = &defaultValue
+	o.Metrics = &defaultValue
+}
