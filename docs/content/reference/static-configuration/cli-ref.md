@@ -265,13 +265,13 @@ HTTP/3 configuration. (Default: ```false```)
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `--entrypoints.<name>.observability.accesslogs`:  
- (Default: ```true```)
+ (Default: ```false```)
 
 `--entrypoints.<name>.observability.metrics`:  
- (Default: ```true```)
+ (Default: ```false```)
 
 `--entrypoints.<name>.observability.tracing`:  
- (Default: ```true```)
+ (Default: ```false```)
 
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
