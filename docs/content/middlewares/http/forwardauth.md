@@ -751,7 +751,7 @@ http:
 
 _Optional, Default=false_
 
-`preserveRequestMethod` defines whether to preserve the original request `method` while forwarding the request to the authentication server. By default, if it set to `false`, the request method is changed to `GET` when it reaches the authentication server.
+`preserveRequestMethod` defines whether to preserve the original request method while forwarding the request to the authentication server. By default, when this option is set to `false`, incoming requests are always forwarded as `GET` requests to the authentication server.
 
 ```yaml tab="Docker & Swarm"
 labels:
