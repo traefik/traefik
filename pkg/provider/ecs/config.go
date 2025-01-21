@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	ecstypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -161,12 +161,12 @@ func (p *Provider) filterInstance(ctx context.Context, instance ecsInstance) boo
 		return false
 	}
 
-	if strings.ToLower(instance.machine.state) != ec2.InstanceStateNameRunning {
+	if instance.machine.state != ec2types.InstanceStateNameRunning {
 		logger.Debug().Msgf("Filtering ecs instance with an incorrect state %s (%s) (state = %s)", instance.Name, instance.ID, instance.machine.state)
 		return false
 	}
 
-	if instance.machine.healthStatus == "UNHEALTHY" {
+	if instance.machine.healthStatus == ecstypes.HealthStatusUnhealthy {
 		logger.Debug().Msgf("Filtering unhealthy ecs instance %s (%s)", instance.Name, instance.ID)
 		return false
 	}
@@ -300,9 +300,9 @@ func (p *Provider) getIPPort(instance ecsInstance, serverPort string) (string, s
 func getPort(instance ecsInstance, serverPort string) string {
 	if len(serverPort) > 0 {
 		for _, port := range instance.machine.ports {
-			containerPort := strconv.FormatInt(port.containerPort, 10)
+			containerPort := strconv.FormatInt(int64(port.containerPort), 10)
 			if serverPort == containerPort {
-				return strconv.FormatInt(port.hostPort, 10)
+				return strconv.FormatInt(int64(port.hostPort), 10)
 			}
 		}
 
@@ -311,7 +311,7 @@ func getPort(instance ecsInstance, serverPort string) string {
 
 	var ports []nat.Port
 	for _, port := range instance.machine.ports {
-		natPort, err := nat.NewPort(port.protocol, strconv.FormatInt(port.hostPort, 10))
+		natPort, err := nat.NewPort(string(port.protocol), strconv.FormatInt(int64(port.hostPort), 10))
 		if err != nil {
 			continue
 		}
