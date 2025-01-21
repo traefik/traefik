@@ -110,7 +110,7 @@ func (o *ObservabilityMgr) ShouldAddAccessLogs(serviceName string, observability
 		return false
 	}
 
-	return observabilityConfig == nil || observabilityConfig.AccessLogs != nil && *observabilityConfig.AccessLogs
+	return observabilityConfig == nil || observabilityConfig.AccessLogs == nil || *observabilityConfig.AccessLogs
 }
 
 // ShouldAddMetrics returns whether the metrics should be enabled for the given resource and the observability config.
@@ -127,7 +127,7 @@ func (o *ObservabilityMgr) ShouldAddMetrics(serviceName string, observabilityCon
 		return false
 	}
 
-	return observabilityConfig == nil || observabilityConfig.Metrics != nil && *observabilityConfig.Metrics
+	return observabilityConfig == nil || observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
 }
 
 // ShouldAddTracing returns whether the tracing should be enabled for the given serviceName and the observability config.
@@ -144,7 +144,7 @@ func (o *ObservabilityMgr) ShouldAddTracing(serviceName string, observabilityCon
 		return false
 	}
 
-	return observabilityConfig == nil || observabilityConfig.Tracing != nil && *observabilityConfig.Tracing
+	return observabilityConfig == nil || observabilityConfig.Tracing == nil || *observabilityConfig.Tracing
 }
 
 // MetricsRegistry is an accessor to the metrics registry.
