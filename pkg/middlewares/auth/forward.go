@@ -57,6 +57,7 @@ type forwardAuth struct {
 	forwardBody              bool
 	maxBodySize              int64
 	preserveLocationHeader   bool
+	preserveRequestMethod    bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -81,6 +82,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		forwardBody:              config.ForwardBody,
 		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
 		preserveLocationHeader:   config.PreserveLocationHeader,
+		preserveRequestMethod:    config.PreserveRequestMethod,
 	}
 
 	if config.MaxBodySize != nil {
@@ -166,6 +168,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 			forwardReq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
+	}
+
+	if fa.preserveRequestMethod {
+		forwardReq.Method = req.Method
 	}
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
