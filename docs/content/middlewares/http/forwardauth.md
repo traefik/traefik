@@ -746,7 +746,6 @@ http:
   preserveLocationHeader = true
 ```
 
-
 ### `preserveRequestMethod`
 
 _Optional, Default=false_
