@@ -134,10 +134,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								},
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "foobar",
-										Secure:   true,
-										HTTPOnly: true,
-										Path:     pointer("/"),
+										Name:        "foobar",
+										Secure:      true,
+										HTTPOnly:    true,
+										Path:        pointer("/"),
+										Partitioned: true,
 									},
 								},
 								Servers: []dynamic.Server{

@@ -5016,12 +5016,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "cookie",
-										Secure:   true,
-										HTTPOnly: true,
-										SameSite: "none",
-										MaxAge:   42,
-										Path:     pointer("/foo"),
+										Name:        "cookie",
+										Secure:      true,
+										HTTPOnly:    true,
+										SameSite:    "none",
+										MaxAge:      42,
+										Path:        pointer("/foo"),
+										Partitioned: true,
 									},
 								},
 								Services: []dynamic.WRRService{
@@ -5036,12 +5037,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "cookie",
-										Secure:   true,
-										HTTPOnly: true,
-										SameSite: "none",
-										MaxAge:   42,
-										Path:     pointer("/"),
+										Name:        "cookie",
+										Secure:      true,
+										HTTPOnly:    true,
+										SameSite:    "none",
+										MaxAge:      42,
+										Path:        pointer("/"),
+										Partitioned: true,
 									},
 								},
 								Services: []dynamic.WRRService{
@@ -5056,12 +5058,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "cookie",
-										Secure:   true,
-										HTTPOnly: true,
-										SameSite: "none",
-										MaxAge:   42,
-										Path:     pointer("/"),
+										Name:        "cookie",
+										Secure:      true,
+										HTTPOnly:    true,
+										SameSite:    "none",
+										MaxAge:      42,
+										Path:        pointer("/"),
+										Partitioned: true,
 									},
 								},
 								Servers: []dynamic.Server{
@@ -5082,12 +5085,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "cookie",
-										Secure:   true,
-										HTTPOnly: true,
-										SameSite: "none",
-										MaxAge:   42,
-										Path:     pointer("/foo"),
+										Name:        "cookie",
+										Secure:      true,
+										HTTPOnly:    true,
+										SameSite:    "none",
+										MaxAge:      42,
+										Path:        pointer("/foo"),
+										Partitioned: true,
 									},
 								},
 								Servers: []dynamic.Server{

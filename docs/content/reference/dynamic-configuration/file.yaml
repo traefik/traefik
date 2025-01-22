@@ -69,6 +69,7 @@ http:
             name: foobar
             secure: true
             httpOnly: true
+            partitioned: true
             sameSite: foobar
             maxAge: 42
             path: foobar
@@ -120,6 +121,7 @@ http:
             name: foobar
             secure: true
             httpOnly: true
+            partitioned: true
             sameSite: foobar
             maxAge: 42
             path: foobar

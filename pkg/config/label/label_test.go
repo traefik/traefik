@@ -1475,6 +1475,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.MaxAge":             "0",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Path":               "/foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Partitioned":        "false",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ServersTransport":                 "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
