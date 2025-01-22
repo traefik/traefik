@@ -746,7 +746,6 @@ http:
   preserveLocationHeader = true
 ```
 
-
 ### `preserveRequestMethod`
 
 _Optional, Default=false_
@@ -787,6 +786,5 @@ http:
   # ...
   preserveRequestMethod = true
 ```
-
 
 {!traefik-for-business-applications.md!}
