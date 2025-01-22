@@ -117,7 +117,7 @@ func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace
 		return t.tracer
 	}
 
-	return t.TracerProvider.Tracer(name, options...)
+	return otel.GetTracerProvider().Tracer(name, options...)
 }
 
 // Tracer is trace.Tracer with additional properties.
