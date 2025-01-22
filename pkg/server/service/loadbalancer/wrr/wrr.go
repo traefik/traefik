@@ -21,12 +21,13 @@ type namedHandler struct {
 }
 
 type stickyCookie struct {
-	name     string
-	secure   bool
-	httpOnly bool
-	sameSite string
-	maxAge   int
-	path     string
+	name        string
+	secure      bool
+	httpOnly    bool
+	partitioned bool
+	sameSite    string
+	maxAge      int
+	path        string
 }
 
 func convertSameSite(sameSite string) http.SameSite {
@@ -78,12 +79,13 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
-			name:     sticky.Cookie.Name,
-			secure:   sticky.Cookie.Secure,
-			httpOnly: sticky.Cookie.HTTPOnly,
-			sameSite: sticky.Cookie.SameSite,
-			maxAge:   sticky.Cookie.MaxAge,
-			path:     "/",
+			name:        sticky.Cookie.Name,
+			secure:      sticky.Cookie.Secure,
+			httpOnly:    sticky.Cookie.HTTPOnly,
+			partitioned: sticky.Cookie.Partitioned,
+			sameSite:    sticky.Cookie.SameSite,
+			maxAge:      sticky.Cookie.MaxAge,
+			path:        "/",
 		}
 		if sticky.Cookie.Path != nil {
 			balancer.stickyCookie.path = *sticky.Cookie.Path
@@ -245,13 +247,14 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	if b.stickyCookie != nil {
 		cookie := &http.Cookie{
-			Name:     b.stickyCookie.name,
-			Value:    hash(server.name),
-			Path:     b.stickyCookie.path,
-			HttpOnly: b.stickyCookie.httpOnly,
-			Secure:   b.stickyCookie.secure,
-			SameSite: convertSameSite(b.stickyCookie.sameSite),
-			MaxAge:   b.stickyCookie.maxAge,
+			Name:        b.stickyCookie.name,
+			Value:       hash(server.name),
+			Path:        b.stickyCookie.path,
+			HttpOnly:    b.stickyCookie.httpOnly,
+			Secure:      b.stickyCookie.secure,
+			Partitioned: b.stickyCookie.partitioned,
+			SameSite:    convertSameSite(b.stickyCookie.sameSite),
+			MaxAge:      b.stickyCookie.maxAge,
 		}
 		http.SetCookie(w, cookie)
 	}

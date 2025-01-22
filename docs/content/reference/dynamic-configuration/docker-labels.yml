@@ -203,6 +203,7 @@
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.path=foobar"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.samesite=foobar"
 - "traefik.http.services.service02.loadbalancer.sticky.cookie.secure=true"
+- "traefik.http.services.service02.loadbalancer.sticky.cookie.partitioned=true"
 - "traefik.http.services.service02.loadbalancer.server.port=foobar"
 - "traefik.http.services.service02.loadbalancer.server.preservepath=true"
 - "traefik.http.services.service02.loadbalancer.server.scheme=foobar"

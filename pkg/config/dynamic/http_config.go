@@ -188,6 +188,9 @@ type Cookie struct {
 	Secure bool `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty" export:"true"`
 	// HTTPOnly defines whether the cookie can be accessed by client-side APIs, such as JavaScript.
 	HTTPOnly bool `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
+	// Partitioned defines whether the cookie should be put to partitioned storage per top-level site when CHIPS is supported.
+	// More info: https://developer.mozilla.org/en-US/docs/Web/Privacy/Privacy_sandbox/Partitioned_cookies
+	Partitioned bool `json:"partitioned,omitempty" toml:"partitioned,omitempty" yaml:"partitioned,omitempty" export:"true"`
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
