@@ -379,3 +379,23 @@ func TestTracing(t *testing.T) {
 		})
 	}
 }
+
+func TestTracerProvider(t *testing.T) {
+	t.Parallel()
+
+	tracer := Tracer{}
+	provider := TracerProvider{tracer: &tracer}
+
+	got := provider.Tracer("github.com/traefik/traefik")
+	if got != &tracer {
+		t.Errorf("expect TracerProvider.Tracer() to return Traefik tracer, but got %v", got)
+	}
+
+	got = provider.Tracer("other")
+	if got == nil {
+		t.Error("expect TracerProvider.Tracer() to return aonother tracer, but got nil")
+	}
+	if got == &tracer {
+		t.Error("expect TracerProvider.Tracer() to return aonother tracer, but got Traefik tracer")
+	}
+}
