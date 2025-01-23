@@ -117,7 +117,7 @@ func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace
 		return t.tracer
 	}
 
-	return otel.GetTracerProvider().Tracer(name, options...)
+	return t.TracerProvider.Tracer(name, options...)
 }
 
 // Tracer is trace.Tracer with additional properties.
@@ -151,7 +151,7 @@ func (t *Tracer) Start(ctx context.Context, spanName string, opts ...trace.SpanS
 
 	spanCtx, span := t.Tracer.Start(ctx, spanName, opts...)
 
-	wrappedSpan := &Span{Span: span, tracerProvider: &TracerProvider{tracer: t}}
+	wrappedSpan := &Span{Span: span, tracerProvider: &TracerProvider{TracerProvider: span.TracerProvider(), tracer: t}}
 
 	return trace.ContextWithSpan(spanCtx, wrappedSpan), wrappedSpan
 }
