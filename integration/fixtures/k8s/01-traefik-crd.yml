@@ -1248,6 +1248,11 @@ spec:
                       the Location header to the client as is or prefix it with the
                       domain name of the authentication server.
                     type: boolean
+                  preserveRequestMethod:
+                    description: PreserveRequestMethod defines whether to preserve
+                      the original request method while forwarding the request to
+                      the authentication server.
+                    type: boolean
                   tls:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
