@@ -23,7 +23,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/consul/api v1.26.1
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-multierror v1.1.1
@@ -31,7 +31,7 @@ require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/hashicorp/nomad/api v0.0.0-20231213195942-64e3dca9274b // No tag on the repo.
 	github.com/http-wasm/http-wasm-host-go v0.7.0
-	github.com/influxdata/influxdb-client-go/v2 v2.7.0
+	github.com/influxdata/influxdb-client-go/v2 v2.9.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
 	github.com/klauspost/compress v1.17.11-0.20240927175842-8e14b1b5a913 // Required to have the content-type fix: https://github.com/klauspost/compress/pull/1011
 	github.com/kvtools/consul v1.0.2
@@ -103,7 +103,7 @@ require (
 	k8s.io/client-go v0.31.1
 	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // No tag on the repo.
-	knative.dev/networking v0.0.0-20240925061159-939600981bda
+	knative.dev/networking v0.0.0-20241022012959-60e29ff520dc
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.18.0
 	sigs.k8s.io/gateway-api v1.2.1
@@ -126,7 +126,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.29 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.22 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.23 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.13 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.6 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
@@ -239,7 +239,7 @@ require (
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/infobloxopen/infoblox-go-client v1.1.1 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.1-0.20220621161143-b0104c826a24 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -365,6 +365,7 @@ require (
 	golang.org/x/exp v0.0.0-20241210194714-1829a127f884 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/api v0.214.0 // indirect
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697 // indirect
@@ -377,10 +378,18 @@ require (
 	gopkg.in/ns1/ns1-go.v2 v2.13.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	knative.dev/pkg v0.0.0-20240924202102-28b58b842f1a // indirect
+	knative.dev/pkg v0.0.0-20241021183759-9b9d535af5ad // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
+)
+
+require (
+	github.com/blendle/zapdriver v1.3.1 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/openzipkin/zipkin-go v0.4.3 // indirect
+	go.opencensus.io v0.24.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 )
 
 // Containous forks

@@ -924,6 +924,12 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KNATIVE_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KNATIVE_ENTRYPOINTS`:  
+entrypoint for Knative. (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_KNATIVE_ENTRYPOINTSINTERNAL`:  
+entrypoint for Knative svc.cluster.local domain.
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 

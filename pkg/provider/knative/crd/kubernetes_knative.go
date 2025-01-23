@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -14,6 +16,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
+)
+
+const (
+	knativeNamespaceHeader       = "Knative-Serving-Namespace"
+	knativeServingRevisionHeader = "Knative-Serving-Revision"
+	httpsProtocol                = "https"
+	httpProtocol                 = "http"
 )
 
 func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client) *dynamic.HTTPConfiguration {
@@ -27,19 +36,13 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 		logger := log.Ctx(ctx).With().Str("KNativeIngress", ingressRoute.Name).Str("namespace",
 			ingressRoute.Namespace).Logger()
 
-		if !shouldProcessIngress(p.IngressClass, ingressRoute.Annotations[annotationKubernetesIngressClass]) {
+		if !(traefikDefaultIngressClass == ingressRoute.Annotations[annotationKubernetesIngressClass]) {
+			logger.Debug().Msgf("Skipping Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
 			continue
 		}
 
-		ingressName := ingressRoute.Name
-		if len(ingressName) == 0 {
-			ingressName = ingressRoute.GenerateName
-		}
-
-		cb := configBuilder{
-			client:              client,
-			allowCrossNamespace: p.AllowCrossNamespace,
-		}
+		ingressName := getIngressName(ingressRoute)
+		cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace}
 
 		serviceKey, err := makeServiceKey(ingressRoute.Namespace, ingressName)
 		if err != nil {
@@ -48,35 +51,42 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 		}
 
 		serviceName := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
-
 		knativeResult := cb.buildKnativeService(ctx, ingressRoute, conf.Middlewares, conf.Services, serviceName)
 
 		for _, result := range knativeResult {
+
+			var entrypoints []string
+
+			if result.Visibility == knativenetworkingv1alpha1.IngressVisibilityClusterLocal {
+				if p.EntrypointsInternal == nil {
+					continue // skip route creation as no internal entrypoints are defined for cluster local visibility
+				}
+				entrypoints = p.EntrypointsInternal
+			} else {
+				entrypoints = p.Entrypoints
+			}
+
 			if result.Err != nil {
 				logger.Error().Err(result.Err).Send()
 				continue
 			}
 
-			var hosts []string
-			var mds []string
-			for _, host := range result.Hosts {
-				hosts = append(hosts, fmt.Sprintf("Host(`%v`)", host))
-			}
-			match := fmt.Sprintf("(%v)", strings.Join(hosts, " || "))
-
-			if result.Middleware != "" {
-				mds = append(mds, result.Middleware)
-			}
+			match := buildMatchRule(result.Hosts, result.Path)
+			mds := append([]string{}, result.Middleware...)
 
 			r := &dynamic.Router{
 				Middlewares: mds,
 				Rule:        match,
 				Service:     result.ServiceKey,
 			}
+
+			if entrypoints != nil {
+				r.EntryPoints = entrypoints
+			}
+
 			conf.Routers[provider.Normalize(result.ServiceKey)] = r
 		}
-		err = p.updateKnativeIngressStatus(client, ingressRoute)
-		if err != nil {
+		if err := p.updateKnativeIngressStatus(client, ingressRoute); err != nil {
 			logger.Error().Err(err).Msgf("error %v", err)
 			return nil
 		}
@@ -125,6 +135,7 @@ func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string,
 func (c configBuilder) loadKnativeServers(namespace string,
 	svc traefikv1alpha1.Service,
 ) ([]dynamic.Server, error) {
+	logger := log.With().Logger()
 	strategy := ""
 	if strategy == "" {
 		strategy = "RoundRobin"
@@ -135,14 +146,19 @@ func (c configBuilder) loadKnativeServers(namespace string,
 
 	serverlessservice, exists, err := c.client.GetServerlessService(namespace, svc.Name)
 	if err != nil {
-		return nil, err
+		logger.Info().Msgf("Unable to find serverlessservice, trying to find service %s/%s", namespace, svc.Name)
 	}
 
-	if !exists {
-		return nil, fmt.Errorf("serverless service not found %s/%s", namespace, svc.Name)
+	//if !exists {
+	//	return nil, fmt.Errorf("serverless service not found %s/%s", namespace, svc.Name)
+	//}
+
+	serviceName := svc.Name
+	if exists {
+		serviceName = serverlessservice.Status.ServiceName
 	}
 
-	service, exists, err := c.client.GetService(namespace, serverlessservice.Status.ServiceName)
+	service, exists, err := c.client.GetService(namespace, serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -162,25 +178,24 @@ func (c configBuilder) loadKnativeServers(namespace string,
 	if portSpec == nil {
 		return nil, errors.New("service port not found")
 	}
-
+	logger.Info().Msgf("portSpec is %v", portSpec)
+	logger.Info().Msgf("service is %v", service)
 	var servers []dynamic.Server
 	if service.Spec.ClusterIP != "" {
-		if svc.Port == intstr.FromInt32(80) {
-			servers = append(servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s:%d", "http", service.Spec.ClusterIP, portSpec.Port),
-			})
-		} else if svc.Port == intstr.FromInt32(443) {
-			servers = append(servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s:%d", "https", service.Spec.ClusterIP, portSpec.Port),
-			})
+		logger.Info().Msgf("cluster Ip %v", service.Spec.ClusterIP)
+		protocol, err := parseServiceProtocol(portSpec.Name, portSpec.Port)
+		if err != nil {
+			return nil, err
 		}
-	}
-	return servers, nil
-}
 
-func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
-	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
+		hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))
+		servers = append(servers, dynamic.Server{
+			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+		})
+		logger.Info().Msgf("servers %v", servers)
+	}
+	logger.Info().Msgf("returned servers %v", servers)
+	return servers, nil
 }
 
 func makeServiceKey(rule, ingressName string) (string, error) {
@@ -196,7 +211,9 @@ func makeServiceKey(rule, ingressName string) (string, error) {
 type ServiceResult struct {
 	ServiceKey string
 	Hosts      []string
-	Middleware string
+	Middleware []string
+	Path       string
+	Visibility knativenetworkingv1alpha1.IngressVisibility
 	Err        error
 }
 
@@ -207,18 +224,23 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 		Str("namespace", ingressRoute.Namespace).Logger()
 	var results []*ServiceResult
 
-	for _, route := range ingressRoute.Spec.Rules {
-		var (
-			tagServiceName string
-			headers        string
-		)
+	for ruleIndex, route := range ingressRoute.Spec.Rules {
 
 		if route.HTTP == nil {
 			logger.Warn().Msgf("No HTTP rule defined for Knative service %s", ingressRoute.Name)
 			continue
 		}
 
-		for _, pathroute := range route.HTTP.Paths {
+		for pathIndex, pathroute := range route.HTTP.Paths {
+
+			var (
+				tagServiceName string
+			)
+
+			//Append pre-headers if any
+			headers := c.buildHeaders(middleware, serviceName, ruleIndex, pathIndex, pathroute.AppendHeaders)
+			path := pathroute.Path
+
 			for _, service := range pathroute.Splits {
 				balancerServerHTTP, err := c.createKnativeLoadBalancerServerHTTP(service.ServiceNamespace, traefikv1alpha1.Service{
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
@@ -235,10 +257,10 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 				serviceKey := fmt.Sprintf("%s-%s-%d", service.ServiceNamespace, service.ServiceName,
 					int32(service.ServicePort.IntValue()))
 				conf[serviceKey] = balancerServerHTTP
-				if len(route.HTTP.Paths) == 1 && len(pathroute.Splits) == 1 {
+				if len(pathroute.Splits) == 1 {
 					if len(service.AppendHeaders) > 0 {
-						headers = provider.Normalize(makeID(serviceKey, "AppendHeader"))
-						middleware[headers] = &dynamic.Middleware{
+						headers = append(headers, provider.Normalize(makeID(serviceKey, "KnativeHeader")))
+						middleware[headers[len(headers)-1]] = &dynamic.Middleware{
 							Headers: &dynamic.Headers{
 								CustomRequestHeaders: service.AppendHeaders,
 							},
@@ -262,8 +284,9 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 				conf[tagServiceName].Weighted.Services = append(conf[tagServiceName].Weighted.Services, srv)
 				// results = append(results, ServiceResult{serviceName, tag, nil})
 			}
+			results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, path, route.Visibility, nil})
 		}
-		results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, nil})
+		//results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, path, nil})
 	}
 	return results
 }
@@ -279,6 +302,8 @@ func makeID(s1, s2 string) string {
 }
 
 func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knativenetworkingv1alpha1.Ingress) error {
+	log.Ctx(context.Background()).Debug().Msgf("Updating status for Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
+	log.Ctx(context.Background()).Debug().Msgf("ingressRoute.GetStatus() %v", ingressRoute.GetStatus())
 	if ingressRoute.GetStatus() == nil ||
 		!ingressRoute.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
 		ingressRoute.GetGeneration() != ingressRoute.GetStatus().ObservedGeneration {
@@ -303,4 +328,55 @@ func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knati
 		return client.UpdateKnativeIngressStatus(ingressRoute)
 	}
 	return nil
+}
+
+// parseServiceProtocol parses the scheme, port name, and number to determine the correct protocol.
+// an error is returned if the scheme provided is invalid.
+func parseServiceProtocol(portName string, portNumber int32) (string, error) {
+	switch portName {
+	case httpProtocol, httpsProtocol, "h2c":
+		return portName, nil
+	case "http2":
+		return "h2c", nil
+	case "":
+		if portNumber == 443 || strings.HasPrefix(portName, httpsProtocol) {
+			return httpsProtocol, nil
+		}
+		return httpProtocol, nil
+	}
+
+	return "", fmt.Errorf("invalid scheme %q specified", portName)
+}
+
+func getIngressName(ingressRoute *knativenetworkingv1alpha1.Ingress) string {
+	if len(ingressRoute.Name) == 0 {
+		return ingressRoute.GenerateName
+	}
+	return ingressRoute.Name
+}
+
+func buildMatchRule(hosts []string, path string) string {
+	var hostRules []string
+	for _, host := range hosts {
+		hostRules = append(hostRules, fmt.Sprintf("Host(`%v`)", host))
+	}
+	match := fmt.Sprintf("(%v)", strings.Join(hostRules, " || "))
+	if len(path) > 0 {
+		match += fmt.Sprintf(" && PathPrefix(`%v`)", path)
+	}
+	return match
+}
+
+func (c configBuilder) buildHeaders(middleware map[string]*dynamic.Middleware, serviceName string, ruleIndex, pathIndex int, appendHeaders map[string]string) []string {
+	var headers []string
+	if appendHeaders != nil {
+		headerID := provider.Normalize(makeID(serviceName, fmt.Sprintf("PreHeader-%d-%d", ruleIndex, pathIndex)))
+		headers = append(headers, headerID)
+		middleware[headers[len(headers)-1]] = &dynamic.Middleware{
+			Headers: &dynamic.Headers{
+				CustomRequestHeaders: appendHeaders,
+			},
+		}
+	}
+	return headers
 }
