@@ -186,7 +186,7 @@
 			"service": "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-e3b0c44298fc1c149afb-wrr",
 			"rule": "HostSNI(`foo.bar`)",
 			"ruleSyntax": "v3",
-			"priority": 18,
+			"priority": 7,
 			"tls": {
 				"passthrough": true
 			},
