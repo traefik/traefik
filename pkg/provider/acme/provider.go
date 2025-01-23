@@ -374,7 +374,7 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 		return nil, fmt.Errorf("creating client TLS config: %w", err)
 	}
 
-	return &http.Client{
+	client := &http.Client{
 		Timeout: 2 * time.Minute,
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
@@ -386,7 +386,19 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 			ResponseHeaderTimeout: 30 * time.Second,
 			TLSClientConfig:       tlsConfig,
 		},
-	}, nil
+	}
+
+	timeout := os.Getenv("LEGO_HTTP_CLIENT_RESPONSE_HEADER_TIMEOUT")
+	if timeout != "" {
+		duration, err := time.ParseDuration(timeout)
+		if err != nil {
+			return nil, fmt.Errorf("parsing LEGO_HTTP_CLIENT_RESPONSE_HEADER_TIMEOUT: %w", err)
+		}
+
+		client.Transport.(*http.Transport).ResponseHeaderTimeout = duration
+	}
+
+	return client, nil
 }
 
 func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
