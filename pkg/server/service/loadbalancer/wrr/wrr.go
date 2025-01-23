@@ -18,6 +18,7 @@ type namedHandler struct {
 	name     string
 	weight   float64
 	deadline float64
+	headers  map[string]string
 }
 
 type stickyCookie struct {
@@ -221,6 +222,11 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			handler, ok := b.handlerMap[cookie.Value]
 			b.handlersMu.RUnlock()
 
+			// Set custom headers
+			for key, value := range handler.headers {
+				req.Header.Set(key, value)
+			}
+
 			if ok && handler != nil {
 				b.handlersMu.RLock()
 				_, isHealthy := b.status[handler.name]
@@ -243,6 +249,11 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Set custom headers
+	for key, value := range server.headers {
+		req.Header.Set(key, value)
+	}
+
 	if b.stickyCookie != nil {
 		cookie := &http.Cookie{
 			Name:     b.stickyCookie.name,
@@ -261,7 +272,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool, headers map[string]string) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -271,7 +282,7 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{Handler: handler, name: name, weight: float64(w), headers: headers}
 
 	b.handlersMu.Lock()
 	h.deadline = b.curDeadline + 1/h.weight

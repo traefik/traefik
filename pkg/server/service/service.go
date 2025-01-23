@@ -253,7 +253,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.Add(service.Name, serviceHandler, service.Weight, false)
+		balancer.Add(service.Name, serviceHandler, service.Weight, false, service.Headers)
 
 		if config.HealthCheck == nil {
 			continue
@@ -392,7 +392,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy, _ = capture.Wrap(proxy)
 		}
 
-		lb.Add(proxyName, proxy, server.Weight, server.Fenced)
+		lb.Add(proxyName, proxy, server.Weight, server.Fenced, nil)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
