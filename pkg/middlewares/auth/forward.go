@@ -137,7 +137,12 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
+	forwardReqMethod := http.MethodGet
+	if fa.preserveRequestMethod {
+		forwardReqMethod = req.Method
+	}
+
+	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, fa.address, nil)
 	if err != nil {
 		logger.Debug().Err(err).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
@@ -168,10 +173,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 			forwardReq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
-	}
-
-	if fa.preserveRequestMethod {
-		forwardReq.Method = req.Method
 	}
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
