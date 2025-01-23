@@ -201,6 +201,15 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
+!!! Configuring the "`ResponseHeaderTimeout`"
+
+   If the client faces timeout of the type `net/http: timeout awaiting response headers` while this is expected as the ACME server is up,
+   it is possible to increase the timeout.
+
+    ```bash
+    LEGO_HTTP_CLIENT_RESPONSE_HEADER_TIMEOUT="120s"
+    ```
+
 ### `httpChallenge`
 
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
