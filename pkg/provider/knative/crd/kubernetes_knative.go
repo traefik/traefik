@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	knativeNamespaceHeader       = "Knative-Serving-Namespace"
-	knativeServingRevisionHeader = "Knative-Serving-Revision"
-	httpsProtocol                = "https"
-	httpProtocol                 = "http"
+	httpsProtocol = "https"
+	httpProtocol  = "http"
+	h2cProtocol   = "h2c"
+	http2Protocol = "http2"
 )
 
 func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client) *dynamic.HTTPConfiguration {
@@ -149,10 +149,6 @@ func (c configBuilder) loadKnativeServers(namespace string,
 		logger.Info().Msgf("Unable to find serverlessservice, trying to find service %s/%s", namespace, svc.Name)
 	}
 
-	//if !exists {
-	//	return nil, fmt.Errorf("serverless service not found %s/%s", namespace, svc.Name)
-	//}
-
 	serviceName := svc.Name
 	if exists {
 		serviceName = serverlessservice.Status.ServiceName
@@ -178,23 +174,19 @@ func (c configBuilder) loadKnativeServers(namespace string,
 	if portSpec == nil {
 		return nil, errors.New("service port not found")
 	}
-	logger.Info().Msgf("portSpec is %v", portSpec)
-	logger.Info().Msgf("service is %v", service)
 	var servers []dynamic.Server
 	if service.Spec.ClusterIP != "" {
 		logger.Info().Msgf("cluster Ip %v", service.Spec.ClusterIP)
 		protocol, err := parseServiceProtocol(portSpec.Name, portSpec.Port)
 		if err != nil {
-			return nil, err
+			protocol = httpProtocol //default to http
 		}
 
 		hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))
 		servers = append(servers, dynamic.Server{
 			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 		})
-		logger.Info().Msgf("servers %v", servers)
 	}
-	logger.Info().Msgf("returned servers %v", servers)
 	return servers, nil
 }
 
@@ -334,10 +326,10 @@ func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knati
 // an error is returned if the scheme provided is invalid.
 func parseServiceProtocol(portName string, portNumber int32) (string, error) {
 	switch portName {
-	case httpProtocol, httpsProtocol, "h2c":
+	case httpProtocol, httpsProtocol:
 		return portName, nil
-	case "http2":
-		return "h2c", nil
+	case http2Protocol, h2cProtocol:
+		return h2cProtocol, nil
 	case "":
 		if portNumber == 443 || strings.HasPrefix(portName, httpsProtocol) {
 			return httpsProtocol, nil
