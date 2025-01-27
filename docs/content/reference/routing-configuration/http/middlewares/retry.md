@@ -3,7 +3,7 @@ title: "Traefik HTTP Retry Documentation"
 description: "Configure Traefik Proxy's HTTP Retry middleware, so you can retry requests to a backend server until it succeeds. Read the technical documentation."
 ---
 
-The `retry` middleware reissues requests a given number of times to a backend server if that server does not reply.  
+The `retry` middleware retries requests a given number of times to a backend server if that server does not reply.  
 As soon as the server answers, the middleware stops retrying, regardless of the response status.
 
 The Retry middleware has an optional configuration to enable an exponential backoff.
@@ -53,7 +53,7 @@ labels:
 - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
 ```
 
-## Configuration Option
+## Configuration Options
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
