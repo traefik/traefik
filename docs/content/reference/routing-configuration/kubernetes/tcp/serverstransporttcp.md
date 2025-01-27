@@ -3,7 +3,7 @@ title : 'ServersTransportTCP'
 description : 'Understand the service routing configuration for the Kubernetes ServerTransportTCP & Traefik CRD'
 ---
 
-`ServersTransportTCP` is the CRD implementation of [ServersTransportTCP](./serverstransporttcp.md).
+`ServersTransportTCP` is the CRD implementation of [ServersTransportTCP](../../tcp/serverstransport.md).
 
 Before creating `ServersTransportTCP` objects, you need to apply the Traefik Kubernetes CRDs to your Kubernetes cluster.
 
@@ -57,10 +57,10 @@ spec:
 | Field                                |  Description                    | Default                                   | Required |
 |-------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
 | `dialTimeout`                         | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists. | 30s | No |
-| `dialKeepAlive`                       | The interval between keep-alive probes for an active network connection.<br />If this option is set to zero, keep-alive probes are sent with a default value (currently 15 seconds),<br />if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field.<br />If negative, keep-alive probes are turned off.| | No |
-| `terminationDelay`     | Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.| | No |
+| `dialKeepAlive`                       | The interval between keep-alive probes for an active network connection.<br />If this option is set to zero, keep-alive probes are sent with a default value (currently 15 seconds),<br />if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field.<br />If negative, keep-alive probes are turned off.| 15s | No |
+| `terminationDelay`     | Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.| 100ms | No |
 | `tls.serverName`                      | ServerName used to contact the server. | "" | No |
-| `tls.insecureSkipVerify`              | Controls whether the server's certificate chain and host name is verified. | "" | No |
+| `tls.insecureSkipVerify`              | Controls whether the server's certificate chain and host name is verified. | false | No |
 | `tls.peerCertURI`                     | Defines the URI used to match against SAN URIs during the server's certificate verification. | "" | No |
 | `tls.rootCAsSecrets`                  | Defines the set of root certificate authorities to use when verifying server certificates.<br />The CA secret must contain a base64 encoded certificate under either a `tls.ca` or a `ca.crt` key.| "" | No |
 | `tls.certificatesSecrets`             | Certificates to present to the server for mTLS.| "" | No |
