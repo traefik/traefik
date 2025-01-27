@@ -3,7 +3,7 @@ title: "Traefik StripPrefixRegex Documentation"
 description: "In Traefik Proxy's HTTP middleware, StripPrefixRegex removes prefixes from paths before forwarding requests, using regex. Read the technical documentation."
 ---
 
-The `stripPrefixRegex` middleware strips the matching path prefix and stores it in a `X-Forwarded-Prefix` header.
+The `stripPrefixRegex` middleware strips the matching path prefix and stores it in an `X-Forwarded-Prefix` header.
 
 !!! tip
 
@@ -11,11 +11,46 @@ The `stripPrefixRegex` middleware strips the matching path prefix and stores it 
 
 ## Configuration Example
 
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-stripprefixregex:
+      stripPrefixRegex:
+        regex:
+          - "/foo/[a-z0-9]+/[0-9]+/"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-stripprefixregex.stripPrefixRegex]
+    regex = ["/foo/[a-z0-9]+/[0-9]+/"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-stripprefixregex
+spec:
+  stripPrefixRegex:
+    regex:
+      - "/foo/[a-z0-9]+/[0-9]+/"
+```
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+```
+
 ## Configuration Options
 
 | Field                        | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `regex` | List of regular expressions to match the path prefix from the request URL.<br /> For instance, `/products` also matches `/products/shoes` and `/products/shirts`.<br />oOre information [here](#regex). | | No |
+| `regex` | List of regular expressions to match the path prefix from the request URL.<br /> For instance, `/products` also matches `/products/shoes` and `/products/shirts`.<br />More information [here](#regex). | | No |
 
 ### regex
 
