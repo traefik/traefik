@@ -8,8 +8,7 @@ when it is not set by the backend.
 
 !!! info
 
-    The scope of the Content-Type middleware is the MIME type detection done by the core of Traefik (the server part).  
-    Therefore, it has no effect against any other `Content-Type` header modifications (e.g.: in another middleware such as compress).
+    The `contentType` middleware only applies when Traefik detects the MIME type. If any middleware (such as Headers or Compress) sets the `contentType` header at any point in the chain, the `contentType` middleware has no effect.
 
 ## Configuration Examples
 
@@ -25,7 +24,6 @@ http:
 # Enable auto-detection
 [http.middlewares]
   [http.middlewares.autodetect.contentType]
-
 
 ```yaml tab="Kubernetes"
 # Enable auto-detection
