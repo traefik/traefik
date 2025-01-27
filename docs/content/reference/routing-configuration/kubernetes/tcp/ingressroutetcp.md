@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes IngressRouteTCP"
-description: "An IngressRouteTCP is a Traefik CRD is in charge of connecting incoming requests to the Services that can handle them in TCP."
+description: "An IngressRouteTCP is a Traefik CRD is in charge of connecting incoming TCP connections to the Services that can handle them."
 ---
 
 `IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../../tcp/router/rules-and-priority.md).
@@ -10,7 +10,7 @@ Before creating `IngressRouteTCP` objects, you need to apply the Traefik Kuberne
 This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 
 !!! note "General"
-    If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
+    If both HTTP routers and TCP routers are connected to the same EntryPoint, the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ## Configuration Example
 
@@ -30,7 +30,7 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 | `routes[n].services[n].proxyProtocol.version` | Defines the [PROXY protocol](../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) version. |  | |
 | `routes[n].services[n].serversTransport`      | Defines the [ServersTransportTCP](./serverstransporttcp.md).<br />The `ServersTransport` namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace. |  | |
 | `routes[n].services[n].nativeLB`              | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
-| `routes[n].services[n].nodePortLB`            | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is. | false | no |
+| `routes[n].services[n].nodePortLB`            | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is `NodePort`. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. | false | no |
 | `tls`                               | Defines [TLS](../../../install-configuration/tls/certificate-resolvers/overview.md) certificate configuration. |  | No |
 | `tls.secretName`                    | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace). | "" | No |
 | `tls.options`                       | Defines the reference to a [TLSOption](../http/tlsoption.md). | "" | No |
@@ -50,7 +50,7 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 
 ##### Healthcheck
 
-As the healthchech cannot be done using the usual Kubernetes livenessprobe and readinessprobe, the `IngressRouteTC`P brings an option to check the ExternalName Service health.
+As the healthchech cannot be done using the usual Kubernetes livenessprobe and readinessprobe, the `IngressRouteTCP` brings an option to check the ExternalName Service health.
 
 ##### Port Definition
 
