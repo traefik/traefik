@@ -6,15 +6,12 @@ description: "Traefik Proxy's HTTP RateLimit middleware ensures Services receive
 The `rateLimit` middleware ensures that services will receive a *fair* amount of requests, and allows you to define what fair is.
 
 It is based on a [token bucket](https://en.wikipedia.org/wiki/Token_bucket) implementation.
-
+In this analogy, the `average` and `period` parameters define the **rate** at which the bucket refills, and the `burst` is the size (volume) of the bucket
 
 ## Rate and Burst
 
 The rate is defined by dividing `average` by `period`.
 For a rate below 1 req/s, define a `period` larger than a second
-
-The middleware is based on a [token bucket](https://en.wikipedia.org/wiki/Token_bucket) implementation.
-In this analogy, the `average` and `period` parameters define the **rate** at which the bucket refills, and the `burst` is the size (volume) of the bucket
 
 ```yaml tab="File(YAML)"
 apiVersion: traefik.io/v1alpha1
@@ -31,7 +28,7 @@ spec:
 In the example above, the middleware allows up to 100 connections in parallel (`burst`).
 Each connection consumes a token, once the 100 tokens are consumed, the other ones are blocked until at least one token is available in the bucket.
 
-When the bucket is not full, on token is generated every 10 seconds (6 every 1 minutes (`period` / `average`))
+When the bucket is not full, one token is generated every 10 seconds (6 every 1 minutes (`period` / `average`))
 
 ## Configuration Example
 
