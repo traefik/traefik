@@ -28,7 +28,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 | [DigestAuth](digestauth.md)               | Adds Digest Authentication                        | Security, Authentication    |
 | [Errors](errorpages.md)                   | Defines custom error pages                        | Request Lifecycle           |
 | [ForwardAuth](forwardauth.md)             | Delegates Authentication                          | Security, Authentication    |
-| [GrpcWeb](grpcweb.md)                     | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Reqyest                    |
+| [GrpcWeb](grpcweb.md)                     | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Request                   |
 | [Headers](headers.md)                     | Adds / Updates headers                            | Security                    |
 | [IPAllowList](ipallowlist.md)             | Limits the allowed client IPs                     | Security, Request lifecycle |
 | [InFlightReq](inflightreq.md)             | Limits the number of simultaneous connections     | Security, Request lifecycle |
