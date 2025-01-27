@@ -3,8 +3,6 @@ title: "Traefik RedirectRegex Documentation"
 description: "In Traefik Proxy's HTTP middleware, RedirectRegex redirecting clients to different locations. Read the technical documentation."
 ---
 
-
-
 ## Configuration Examples
 
 ```yaml tab="File (YAML)"
