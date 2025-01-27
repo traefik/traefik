@@ -40,7 +40,7 @@ spec:
 | `routes[n].services[n].port`        | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.| "" | No |
 | `routes[n].services[n].weight`      | Defines the weight to apply to the server load balancing | "" | No |
 | `routes[n].services[n].nativeLB`    | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
-| `routes[n].services[n].nodePortLB`  | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is | false | No 
+| `routes[n].services[n].nodePortLB`  | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. | false | No  |
 
 ### routes.services
 
@@ -50,7 +50,7 @@ spec:
 
 ##### Healthcheck
 
-As the healthchech cannot be done using the usual Kubernetes livenessprobe and readinessprobe, the `IngressRouteTC`P brings an option to check the ExternalName Service health.
+As the healthchech cannot be done using the usual Kubernetes livenessprobe and readinessprobe, the `IngressRouteUDP` brings an option to check the ExternalName Service health.
 
 ##### Port Definition
 
