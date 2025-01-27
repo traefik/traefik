@@ -113,3 +113,5 @@ The following request properties are provided to the forward-auth target endpoin
 | Host              | X-Forwarded-Host       |
 | Request URI       | X-Forwarded-Uri        |
 | Source IP-Address | X-Forwarded-For        |
+
+{!traefik-for-business-applications.md!}

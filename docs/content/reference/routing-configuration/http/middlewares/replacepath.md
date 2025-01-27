@@ -3,10 +3,10 @@ title: "Traefik ReplacePath Documentation"
 description: "In Traefik Proxy's HTTP middleware, ReplacePath updates paths before forwarding requests. Read the technical documentation."
 ---
 
-The `replacePath1 middleware will:
+The `replacePath` middleware will:
 
 - Replace the actual path with the specified one.
-- Store the original path in a `X-Replaced-Path` header
+- Store the original path in an `X-Replaced-Path` header
 
 ## Configuration Examples
 
@@ -34,7 +34,7 @@ metadata:
   name: test-replacepath
 spec:
   replacePath:
-    path: /foo
+    path: "/foo"
 ```
 
 ```yaml tab="Docker & Swarm"
@@ -48,7 +48,7 @@ labels:
 - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
-## Configuration Option
+## Configuration Options
 
 | Field | Description |
 |:------|:------------|
