@@ -1,17 +1,17 @@
 ---
 title: "Traefik HTTP Services Documentation"
-description: "Learn how to configure routing and load balancing in Traefik Proxy to reach Services, which handle incoming requests. Read the technical documentation."
+description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 --- 
 
 ## Servers
 
-Servers declare a single instance of your program. The `url` option point to a specific instance.
+Servers declare a single instance of your program.
 
 ### Configuration Options
 
 | Field | Description                                 | Required |
 |----------|------------------------------------------|----------|
-|`url`| Points to a specific instance. | No |
+|`url`| Points to a specific instance. | Yes for File provider, No for [Docker provider](../../other-providers/docker.md) |
 |`weight`| Allows for weighted load balancing on the servers. | No |
 |`preservePath`| Allows to preserve the URL path. | No |
 
@@ -51,36 +51,32 @@ http:
             preservePath: true
 ```
 
-## Load Balancing
+## Load Balancer
 
 The load balancers are able to load balance the requests between multiple instances of your programs.
 
-Each service has a load-balancer, even if there is only one server to forward traffic to. For now, only round robin load balancing is supported.
-
 The example below declares a service with two servers (with load balancing):
 
-???+ "Load Balancing -- Using the File Provider"
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    my-service:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-2/"
+```
 
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        my-service:
-          loadBalancer:
-            servers:
-            - url: "http://private-ip-server-1/"
-            - url: "http://private-ip-server-2/"
-    ```
-
-    ```toml tab="TOML"
-      ## Dynamic configuration
-      [http.services]
-        [http.services.my-service.loadBalancer]
-          [[http.services.my-service.loadBalancer.servers]]
-            url = "http://private-ip-server-1/"
-          [[http.services.my-service.loadBalancer.servers]]
-            url = "http://private-ip-server-2/"
-    ```
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.my-service.loadBalancer]
+    [[http.services.my-service.loadBalancer.servers]]
+      url = "http://private-ip-server-1/"
+    [[http.services.my-service.loadBalancer.servers]]
+      url = "http://private-ip-server-2/"
+```
 
 ## Weighted Round Robin (WRR)
 
@@ -90,7 +86,7 @@ This strategy is only available to load balance between services and not between
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-ingress.md) providers.
+    This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-ingress.md) providers. To load balance between servers based on weights, the Load Balancer service should be used instead.
 
 ```yaml tab="File (YAML)"
 
@@ -138,7 +134,7 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-#### Health Check
+### Health Check
 
 HealthCheck enables automatic self-healthcheck for this service, i.e. whenever one of its children is reported as down, this service becomes aware of it, and takes it into account (i.e. it ignores the down child) when running the load-balancing algorithm. In addition, if the parent of this service also has HealthCheck enabled, this service reports to its parent any status change.
 
