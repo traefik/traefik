@@ -3,8 +3,6 @@ title: "Traefik Chain Middleware Documentation"
 description: "The HTTP chain middleware lets you define reusable combinations of other middleware, to reuse the same groups. Read the technical documentation."
 ---
 
-![Chain](../../../../assets/img/middleware/chain.png)
-
 The `chain` middleware enables you to define reusable combinations of other pieces of middleware.
 It makes it effortless to reuse the same groups
 
@@ -164,4 +162,4 @@ labels:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| `middlewares`  | List of middlewares to chain.<br /> The middlewares have to be in the same namespace as the `chain` middleware. |  | Yes |
+| `middlewares`  | List of middlewares to chain.<br /> The middlewares have to be in the same namespace as the `chain` middleware. | [] | Yes |
