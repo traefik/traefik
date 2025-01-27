@@ -3,9 +3,7 @@ title: "Traefik Compress Documentation"
 description: "Traefik Proxy's HTTP middleware lets you compress responses before sending them to the client. Read the technical documentation."
 ---
 
-![Compress](../../../../assets/img/middleware/compress.png)
-
-The `compress` middleware compresses response. It supports Gzip and Brotli compression
+The `compress` middleware compresses response. It supports Gzip, Brotli and Zstandard compression
 
 ## Configuration Examples
 
@@ -49,6 +47,7 @@ labels:
 | Field                        | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 |`excludedContentTypes` | List of content types to compare the `Content-Type` header of the incoming requests and responses before compressing. <br /> The responses with content types defined in `excludedContentTypes` are not compressed. <br /> Content types are compared in a case-insensitive, whitespace-ignored manner. <br /> **The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.** | "" | No |
+|`defaultEncoding` | specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`). | "" | No |
 |`encodings` | Specifies the list of supported compression encodings. At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip). The order of the list also sets the priority, the top entry has the highest priority. | zstd, br, gzip | No |
 | `includedContentTypes` | List of content types to compare the `Content-Type` header of the responses before compressing. <br /> The responses with content types defined in `includedContentTypes` are compressed. <br /> Content types are compared in a case-insensitive, whitespace-ignored manner.<br /> **The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.** | "" | No |
 | `minResponseBodyBytes` | `Minimum amount of bytes a response body must have to be compressed. <br />Responses smaller than the specified values will **not** be compressed. | 1024 | No |
@@ -59,7 +58,7 @@ The activation of compression, and the compression method choice rely (among oth
 
 Responses are compressed when the following criteria are all met:
 
-- The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
+- The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br`, and/or `zstd` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
 If the `Accept-Encoding` request header is absent, the response won't be encoded.
 If it is present, but its value is the empty string, then compression is turned off.
 - The response is not already compressed, that is the `Content-Encoding` response header is not already set.
