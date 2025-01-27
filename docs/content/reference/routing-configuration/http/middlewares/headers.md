@@ -297,3 +297,5 @@ It allows all origins that contain any match of a regular expression in the `acc
     Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
     When defining a regular expression within YAML, any escaped character needs to be escaped twice: `example\.com` needs to be written as `example\\.com`.
+
+{!traefik-for-business-applications.md!}
