@@ -7,7 +7,15 @@ description: "In Traefik Proxy, the HTTP headers middleware manages the headers 
 
 The Headers middleware manages the headers of requests and responses.
 
-A set of forwarded headers are automatically added by default. See the [FAQ](../../../../getting-started/faq.md#what-are-the-forwarded-headers-when-proxying-http-requests) for more information.
+By default, the following headers are automatically added when proxying requests:
+
+| Property                  | HTTP Header                |
+|---------------------------|----------------------------|
+| Client's IP               | X-Forwarded-For, X-Real-Ip |
+| Host                      | X-Forwarded-Host           |
+| Port                      | X-Forwarded-Port           |
+| Protocol                  | X-Forwarded-Proto          |
+| Proxy Server's Hostname   | X-Forwarded-Server         |
 
 ## Configuration Examples
 
@@ -239,36 +247,36 @@ labels:
 
     The detailed documentation for security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
-Field                         | Description                                       | Default   | Required
------------------------------ | ------------------------------------------------- | --------- | --------
-`customRequestHeaders`          | Lists the header names and values for requests.  | | No
-`customResponseHeaders`         | Lists the header names and values for responses. |  | No
-`accessControlAllowCredentials` | Indicates if the request can include user credentials.| false     | No
-`accessControlAllowHeaders`     | Specifies allowed request header names.          | | No
-`accessControlAllowMethods`     | Specifies allowed request methods.               | | No
-`accessControlAllowOriginList`  | Specifies allowed origins. More information [here](#accesscontrolalloworiginlist)      | None      | No
-`accessControlAllowOriginListRegex` | Allows origins matching regex. More information [here](#accesscontrolalloworiginlistregex)            | None      | No
-`accessControlExposeHeaders`    | Specifies which headers are safe to expose to the API of a CORS API specification.       |      | No
-`accessControlMaxAge`           | Time (in seconds) to cache preflight requests.   | 0         | No
-`addVaryHeader`                | used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header. | false     | No
-`allowedHosts`                  | Lists allowed domain names.                      | None      | No
-`hostsProxyHeaders`             | Specifies header keys for proxied hostname.      | None      | No
-`sslProxyHeaders`               | Defines a set of header keys with associated values that would indicate a valid HTTPS request. It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).        |      | No
-`stsSeconds`                    | Max age for `Strict-Transport-Security` header.    | 0         | No
-`stsIncludeSubdomains`          | If set to `true`, the `includeSubDomains` directive is appended to the `Strict-Transport-Security` header.    | false     | No
-`stsPreload`                    | Adds preload flag to STS header.                 | false     | No
-`forceSTSHeader`                | Adds STS header for HTTP connections.            | false     | No
-`frameDeny`                     | Set `frameDeny` to `true` to add the `X-Frame-Options` header with the value of `DENY`.                | false     | No
-`customFrameOptionsValue`       | allows the `X-Frame-Options` header value to be set with a custom value. This overrides the `FrameDeny` option.  |      | No
-`contentTypeNosniff`            | Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with the value `nosniff`.  | false     | No
-`browserXssFilter`              | Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.  | false     | No
-`customBrowserXSSValue`         | allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the `BrowserXssFilter` option.   | | No
-`contentSecurityPolicy`         | allows the `Content-Security-Policy` header value to be set with a custom value.           | | No
-`contentSecurityPolicyReportOnly` | allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.    |    | No
-`publicKey`                     | Implements HPKP for certificate pinning.         | | No
-`referrerPolicy`                | Controls forwarding of `Referer` header.         | | No
-`permissionsPolicy`             | allows sites to control browser features.                   | None      | No
-`isDevelopment`                 | Set `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options. Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.    | false     | No
+| Field                         | Description                                       | Default   | Required |
+| ----------------------------- | ------------------------------------------------- | --------- | -------- |
+| `customRequestHeaders`          | Lists the header names and values for requests.  | [] | No |
+| `customResponseHeaders`         | Lists the header names and values for responses. | [] | No |
+| `accessControlAllowCredentials` | Indicates if the request can include user credentials.| false     | No |
+| `accessControlAllowHeaders`     | Specifies allowed request header names.          | [] | No |
+| `accessControlAllowMethods`     | Specifies allowed request methods.               | [] | No |
+| `accessControlAllowOriginList`  | Specifies allowed origins. More information [here](#accesscontrolalloworiginlist)      | []      | No |
+| `accessControlAllowOriginListRegex` | Allows origins matching regex. More information [here](#accesscontrolalloworiginlistregex)            | []      | No |
+| `accessControlExposeHeaders`    | Specifies which headers are safe to expose to the API of a CORS API specification.       |  []    | No |
+| `accessControlMaxAge`           | Time (in seconds) to cache preflight requests.   | 0         | No |
+| `addVaryHeader`                | used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header. | false     | No |
+| `allowedHosts`                  | Lists allowed domain names.                      | []      | No |
+| `hostsProxyHeaders`             | Specifies header keys for proxied hostname.      | []      | No |
+| `sslProxyHeaders`               | Defines a set of header keys with associated values that would indicate a valid HTTPS request. It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).        |   {}   | No |
+| `stsSeconds`                    | Max age for `Strict-Transport-Security` header.    | 0         | No |
+| `stsIncludeSubdomains`          | If set to `true`, the `includeSubDomains` directive is appended to the `Strict-Transport-Security` header.    | false     | No |
+| `stsPreload`                    | Adds preload flag to STS header.                 | false     | No |
+| `forceSTSHeader`                | Adds STS header for HTTP connections.            | false     | No |
+| `frameDeny`                     | Set `frameDeny` to `true` to add the `X-Frame-Options` header with the value of `DENY`.                | false     | No |
+| `customFrameOptionsValue`       | allows the `X-Frame-Options` header value to be set with a custom value. This overrides the `FrameDeny` option.  |    ""  | No |
+| `contentTypeNosniff`            | Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with the value `nosniff`.  | false     | No |
+| `browserXssFilter`              | Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.  | false     | No |
+| `customBrowserXSSValue`         | allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the `BrowserXssFilter` option.   | false | No |
+| `contentSecurityPolicy`         | allows the `Content-Security-Policy` header value to be set with a custom value.           | false | No |
+| `contentSecurityPolicyReportOnly` | allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.    |   ""  | No |
+| `publicKey`                     | Implements HPKP for certificate pinning.         |  "" | No |
+| `referrerPolicy`                | Controls forwarding of `Referer` header.         | "" | No |
+| `permissionsPolicy`             | allows sites to control browser features.                   | ""      | No |
+| `isDevelopment`                 | Set `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options. Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.    | false     | No |
 
 ### `accessControlAllowOriginList`
 
