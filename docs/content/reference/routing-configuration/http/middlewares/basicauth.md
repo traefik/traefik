@@ -88,7 +88,7 @@ The option `users` supports Kubernetes secrets.
 
 - If both `users` and `usersFile` are provided, the two are merged. 
 The contents of `usersFile` have precedence over the values in `users`.
-- For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+- Because referencing a file path isn’t feasible on Kubernetes, the `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the secret field.
 
 #### Passwords format
 
