@@ -3,11 +3,11 @@ title: "Traefik StripPrefix Documentation"
 description: "In Traefik Proxy's HTTP middleware, StripPrefix removes prefixes from paths before forwarding requests. Read the technical documentation."
 ---
 
-The `stripPrefix` middleware strips the matching path prefix and stores it in a `X-Forwarded-Prefix` header.
+The `stripPrefix` middleware strips the matching path prefix and stores it in an `X-Forwarded-Prefix` header.
 
 !!! tip
 
-    Use a `StripPrefix` middleware if your backend listens on the root path (`/`) but should be exposed on a specific prefix
+    Use a `StripPrefix` middleware if your backend listens on the root path (`/`) but should be exposed on a specific prefix.
 
 ## Configuration Examples
 
@@ -57,4 +57,6 @@ labels:
 
 | Field                        | Description           | Default | Required |
 |:-----------------------------|:--------------------------------------------------------------|:--------|:---------|
-| `prefixes` | List of prefixes to strip from the request URL.<br />If your backend is serving assets (for example, images or JavaScript files), it can use the `X-Forwarded-Prefix` header to construct relative URLs. | | No |
+| `prefixes` | List of prefixes to strip from the request URL.<br />If your backend is serving assets (for example, images or JavaScript files), it can use the `X-Forwarded-Prefix` header to construct relative URLs. | [] | No |
+
+{!traefik-for-business-applications.md!}
