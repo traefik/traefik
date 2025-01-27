@@ -1,6 +1,6 @@
 ---
 title: "Traefik TCP Services Documentation"
-description: "Learn how to configure routing and load balancing in Traefik Proxy to reach TCP Services, which handle incoming requests. Read the technical documentation."
+description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 --- 
 
 ## General
