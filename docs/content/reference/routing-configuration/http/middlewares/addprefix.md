@@ -51,4 +51,4 @@ labels:
 
 | Field  | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `prefix` | String to add **before** the current path in the requested URL. It should include a leading slash (`/`). | | Yes |
+| `prefix` | String to add **before** the current path in the requested URL. It should include a leading slash (`/`). | "" | Yes |
