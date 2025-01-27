@@ -3,6 +3,7 @@ title: "Traefik DigestAuth Documentation"
 description: "Traefik Proxy's HTTP DigestAuth middleware restricts access to your services to known users. Read the technical documentation."
 ---
 
+![DigestAuth](../../../../assets/img/middleware/digestauth.png)
 
 The `DigestAuth` middleware grants access to services to authorized users only.
 
@@ -55,22 +56,32 @@ labels:
 
 | Field      | Description    | Default | Required |
 |:-----------|:---------------------------------------------------------------------------------|:--------|:---------|
-| `users` | Array of authorized users. Each user must be declared using the `name:realm:encoded-password` format.<br /> The option `users` supports Kubernetes secrets.<br />(More information [here](#users))| ""      | No      |
-| `usersFile` | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:realm:encoded-password`. (More information [here](#usersfile)) | ""      | No      |
+| `users` | Array of authorized users. Each user must be declared using the `name:realm:encoded-password` format.<br /> The option `users` supports Kubernetes secrets.<br />(More information [here](#users--usersfile))| []  | No      |
+| `usersFile` | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:realm:encoded-password`. (More information [here](#users--usersfile)) | ""      | No      |
 | `realm` | Allow customizing the realm for the authentication.| "traefik"      | No      |
 | `headerField` | Allow defining a header field to store the authenticated user.| ""      | No      |
 | `removeHeader` | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
 
-### users
+### Passwords format
 
-- If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
-- For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+Passwords must be hashed using MD5, SHA1, or BCrypt.
+Use `htpasswd` to generate the passwords.
 
-### usersFile
+### users & usersFile
 
-- If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
-- For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+- If both `users` and `usersFile` are provided, they are merged. The contents of `usersFile` have precedence over the values in users.
+- Because referencing a file path isn’t feasible on Kubernetes, the `users` & `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the `secret` field.
 
-#### Passwords format
+#### Kubernetes Secrets
 
-Use `htdigest` to generate passwords.
+The option `users` supports Kubernetes secrets.
+
+!!! note "Kubernetes `kubernetes.io/basic-auth` secret type"
+
+    Kubernetes supports a special `kubernetes.io/basic-auth` secret type.
+    This secret must contain two keys: `username` and `password`.
+
+    Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
+    You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
+
+{!traefik-for-business-applications.md!}
