@@ -314,8 +314,8 @@ http:
 [http.services]
   [http.services.mirrored-api]
     [http.services.mirrored-api.mirroring]
-      [http.services.mirrored-api.mirroring.healthCheck]
       service = "appv1"
+      [http.services.mirrored-api.mirroring.healthCheck]
     [[http.services.mirrored-api.mirroring.mirrors]]
       name = "appv2"
       percent = 10
