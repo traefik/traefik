@@ -3,7 +3,7 @@ title: "Kubernetes MiddlewareTCP"
 description: "Learn how to configure a Traefik Proxy Kubernetes Middleware to reach TCP Services, which handle incoming requests. Read the technical documentation."
 ---
 
-`MiddlewareTCP` is the CRD implementation of a [Traefik TCP middleware](../../http/middlewares/overview.md).
+`MiddlewareTCP` is the CRD implementation of a [Traefik TCP middleware](../../tcp/middlewares/overview.md).
 
 Before creating `MiddlewareTCP` objects, you need to apply the Traefik Kubernetes CRDs to your Kubernetes cluster.
 
