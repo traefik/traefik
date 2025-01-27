@@ -3,7 +3,7 @@ title: "Traefik RedirectScheme Documentation"
 description: "In Traefik Proxy's HTTP middleware, RedirectScheme redirects clients to different schemes/ports. Read the technical documentation."
 ---
 
-The RedirectScheme middleware redirects the request if the request scheme is different from the configured scheme.
+The `RedirectScheme` middleware redirects the request if the request scheme is different from the configured scheme.
 
 !!! warning "When behind another reverse-proxy"
 
