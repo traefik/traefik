@@ -19,7 +19,6 @@ One circuit breaker instance can be open while the other remains closed: their s
 
 This is the expected behavior, we want you to be able to define what makes a service healthy without having to declare a circuit breaker for each route.
 
-
 ## Configuration Examples
 
 ```yaml tab="File (YAML)"
@@ -113,9 +112,9 @@ Here is the list of supported operators:
 The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.  
 This behavior cannot be configured.
 
-## Status
+## State
 
-There are three possible status for your circuit breaker:
+There are three possible state for your circuit breaker:
 
 - `Closed` (your service operates normally).
 - `Open` (the fallback mechanism takes over your service).
