@@ -5,57 +5,6 @@ description: "In Traefik Proxy, a router is in charge of connecting incoming req
 
 A router is in charge of connecting incoming requests to the services that can handle them. To customize the connection, Traefik allows you to define your matching rules and [prioritize](#priority-calculation) the routes.
 
-??? note "Entry Points"
-    
-    If not specified, HTTP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../../../install-configuration/entrypoints.md#asdefault).
-    If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
-    
-    ??? example "Listens to Every EntryPoint"
-    
-        ```yaml tab="File (YAML)"
-        ## Dynamic configuration
-        http:
-          routers:
-            Router-1:
-              # By default, routers listen to every EntryPoints.
-              rule: "Host(`example.com`)"
-              service: "service-1"
-        ```
-    
-        ```toml tab="File (TOML)"
-        ## Dynamic configuration
-        [http.routers]
-          [http.routers.Router-1]
-            # By default, routers listen to every EntryPoints.
-            rule = "Host(`example.com`)"
-            service = "service-1"
-        ```
-    
-    ??? example "Listens to Specific EntryPoints"
-    
-        ```yaml tab="File (YAML)"
-        ## Dynamic configuration
-        http:
-          routers:
-            Router-1:
-              # won't listen to entry point web
-              entryPoints:
-                - "websecure"
-                - "other"
-              rule: "Host(`example.com`)"
-              service: "service-1"
-        ```
-    
-        ```toml tab="File (TOML)"
-        ## Dynamic configuration
-        [http.routers]
-          [http.routers.Router-1]
-            # won't listen to entry point web
-            entryPoints = ["websecure", "other"]
-            rule = "Host(`example.com`)"
-            service = "service-1"
-        ```
-
 ## Rules
 
 Rules are a set of matchers configured with values, that determine if a particular request matches a specific criteria. 
