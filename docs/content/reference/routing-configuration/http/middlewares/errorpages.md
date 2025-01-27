@@ -20,11 +20,11 @@ http:
           - "501"
           - "503"
           - "505-599"
-        service: serviceError
+        service: error-handler-service
         query: "/{status}.html"
 
   services:
-    # ... definition of error-handler-service and my-service
+    # ... definition of the error-handler-service
 ```
 
 ```toml tab="File (TOML)"
@@ -32,11 +32,11 @@ http:
 [http.middlewares]
   [http.middlewares.test-errors.errors]
     status = ["500","501","503","505-599"]
-    service = "serviceError"
+    service = "error-handler-service"
     query = "/{status}.html"
 
 [http.services]
-  # ... definition of error-handler-service and my-service
+  # ... definition of the error-handler-service
 ```
 
 ```yaml tab="Kubernetes"
@@ -53,7 +53,7 @@ spec:
       - "505-599"
     query: /{status}.html
     service:
-      name: whoami
+      name: error-handler-service
       port: 80
 ```
 
@@ -61,14 +61,14 @@ spec:
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
+  - "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
   - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```yaml tab="Consul Catalog"
 # Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
 - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-- "traefik.http.middlewares.test-errors.errors.service=serviceError"
+- "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
@@ -76,7 +76,7 @@ labels:
 
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `status` | Defines which status or range of statuses should result in an error page.< br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | ""      | No      | 
+| `status` | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
 | `service` | The Kubernetes Service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
 | `query` | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
 
@@ -84,7 +84,10 @@ labels:
 
 By default, the client `Host` header value is forwarded to the configured error service.
 To forward the `Host` value corresponding to the configured error service URL, 
-the `passHostHeader` option must be set to `false`.
+the [`passHostHeader`](../../../../routing/services/index.md#pass-host-header) option must be set to `false`.
+
+!!!info "Kubernetes"
+    When specifying a service in Kubernetes (e.g., in an IngressRoute), you need to reference the `name`, `namespace`, and `port` of your Kubernetes Service resource. For example, `my-service.my-namespace@kubernetescrd` (or `my-service.my-namespace@kubernetescrd:80`) ensures that requests go to the correct service and port.
 
 ### query
 
