@@ -67,10 +67,15 @@ labels:
 | `headerField` | Allow defining a header field to store the authenticated user.| ""      | No      |
 | `removeHeader` | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
 
-### users
+### Passwords format
 
-- If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
-- For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+Passwords must be hashed using MD5, SHA1, or BCrypt.
+Use `htpasswd` to generate the passwords.
+
+### users & usersFile
+
+- If both `users` and `usersFile` are provided, they are merged. The contents of `usersFile` have precedence over the values in users.
+- Because referencing a file path isn’t feasible on Kubernetes, the `users` & `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the `secret` field.
 
 #### Kubernetes Secrets
 
@@ -83,16 +88,5 @@ The option `users` supports Kubernetes secrets.
 
     Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
     You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
-
-### usersFile
-
-- If both `users` and `usersFile` are provided, the two are merged. 
-The contents of `usersFile` have precedence over the values in `users`.
-- Because referencing a file path isn’t feasible on Kubernetes, the `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the secret field.
-
-#### Passwords format
-
-Passwords must be hashed using MD5, SHA1, or BCrypt.
-Use `htpasswd` to generate the passwords.
 
 {!traefik-for-business-applications.md!}
