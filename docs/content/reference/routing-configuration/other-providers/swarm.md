@@ -448,10 +448,10 @@ More information about available middlewares in the dedicated [middlewares secti
         # ...
         deploy:
         labels:
-        # Declaring a middleware
-        - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
-        # Referencing a middleware
-        - traefik.http.routers.my-container.middlewares=my-redirect
+          # Declaring a middleware
+          - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+          # Referencing a middleware
+          - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
