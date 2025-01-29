@@ -70,7 +70,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [tls](../http/tls/overview.md) for more information.
     
     ```yaml
-    traefik.http.routers.myrouter>.tls=true
+    traefik.http.routers.myrouter.tls=true
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.certresolver`"
@@ -101,6 +101,24 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     
     ```yaml
     traefik.http.routers.myrouter.tls.options=foobar
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+    
+    ```yaml
+     "traefik.http.routers.myrouter.observability.accesslogs=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+    
+    ```yaml
+     "traefik.http.routers.myrouter.observability.metrics=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+    
+    ```yaml
+     "traefik.http.routers.myrouter.observability.tracing=true"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
@@ -251,6 +269,12 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+
+    ```yaml
+     "traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
 
     ```yaml
@@ -397,7 +421,7 @@ You can declare TCP Routers and/or Services using labels.
     See [priority](../tcp/router/rules-and-priority.md#priority) for more information.
 
     ```yaml
-    traefik.tcp.routers.myrouter.priority=42
+    traefik.tcp.routers.mytcprouter.priority=42
     ```
 
 #### TCP Services
@@ -418,6 +442,14 @@ You can declare TCP Routers and/or Services using labels.
     traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.weight`"
+
+    Overrides the default weight.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.server.weight=42
+    ```
+    
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
         
     See [PROXY protocol](../tcp/service.md#proxy-protocol) for more information.
@@ -450,6 +482,28 @@ You can declare UDP Routers and/or Services using tags.
 
     If you declare a UDP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no UDP Router/Service is defined).
     You can declare both a UDP Router/Service and an HTTP Router/Service for the same elastic service (but you have to do so manually).
+
+#### TCP Middleware
+
+You can declare pieces of middleware using tags starting with `traefik.tcp.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
+
+For example, to declare a middleware [`InFlightConn`](../tcp/middlewares/inflightconn.md) named `test-inflightconn`, you'd write `traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10`.
+
+More information about available middlewares in the dedicated [middlewares section](../tcp/middlewares/overview.md).
+
+??? example "Declaring and Referencing a Middleware"
+    
+    ```yaml
+    # ...
+    # Declaring a middleware
+    traefik.tcp.middlewares.test-inflightconn.amount=10
+    # Referencing a middleware
+    traefik.tcp.routers.my-service.middlewares=test-inflightconn
+    ```
+
+!!! warning "Conflicts in Declaration"
+
+    If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
 #### UDP Routers
 

@@ -1,6 +1,6 @@
 ---
 title: "Traefik Docker Swarm Routing Documentation"
-description: "This guide will teach you how to attach labels to your containers, to route traffic and load balance with Traefik and Docker."
+description: "This guide will teach you how to attach labels to your containers, to route traffic and load balance with Traefik and Docker Swarm."
 ---
 
 # Traefik & Docker Swarm
@@ -132,7 +132,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
     labels:
       - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
       # service myservice gets automatically assigned to router myproxy
-      - "traefik.http.services.myservice.loadbalancer.server.port=80"
+      - "traefik.http.services.myservice.loadbalancer.server.port=8080"
     ```
 
 ??? example "Automatic service creation and assignment with labels"
@@ -225,6 +225,24 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     - "traefik.http.routers.myrouter.tls.options=foobar"
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.accesslogs=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.metrics=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.tracing=true"
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../http/router/rules-and-priority.md#priority-calculation) for more information.
@@ -261,6 +279,14 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.weight`"
+
+    Overrides the default weight.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.server.weight=42
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
@@ -376,6 +402,12 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
 
     ```yaml
@@ -416,10 +448,10 @@ More information about available middlewares in the dedicated [middlewares secti
         # ...
         deploy:
         labels:
-        # Declaring a middleware
-        - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
-            # Referencing a middleware
-            - traefik.http.routers.my-container.middlewares=my-redirect
+          # Declaring a middleware
+          - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+          # Referencing a middleware
+          - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
@@ -564,6 +596,28 @@ You can declare TCP Routers and/or Services using labels.
     ```yaml
     - "traefik.tcp.services.<service_name>.loadbalancer.serverstransport=foobar@file"
     ```
+
+#### TCP Middleware
+
+You can declare pieces of middleware using tags starting with `traefik.tcp.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
+
+For example, to declare a middleware [`InFlightConn`](../tcp/middlewares/inflightconn.md) named `test-inflightconn`, you'd write `traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10`.
+
+More information about available middlewares in the dedicated [middlewares section](../tcp/middlewares/overview.md).
+
+??? example "Declaring and Referencing a Middleware"
+    
+    ```yaml
+    # ...
+    # Declaring a middleware
+    traefik.tcp.middlewares.test-inflightconn.amount=10
+    # Referencing a middleware
+    traefik.tcp.routers.my-service.middlewares=test-inflightconn
+    ```
+
+!!! warning "Conflicts in Declaration"
+
+    If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
 ### UDP
 
