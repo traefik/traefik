@@ -26,13 +26,16 @@ const (
 	StatusClientClosedRequestText = "Client Closed Request"
 )
 
+// errorLogger is a logger instance used to log proxy errors.
+var errorLogger = stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0)
+
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
 		Director:      directorBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
-		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ErrorLog:      errorLogger,
 		ErrorHandler:  ErrorHandler,
 	}
 }
