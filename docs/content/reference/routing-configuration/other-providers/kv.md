@@ -23,6 +23,14 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
     |--------------------------------------|----------------------------|
     | `traefik/http/routers/myrouter/rule` | ```Host(`example.com`)```  |
 
+??? info "`traefik/http/routers/<router_name>/ruleSyntax`"
+
+    See [rule](../http/router/rules-and-priority.md#rulesyntax) for more information.
+    
+    | Key (Path)                           | Value                      |
+    |--------------------------------------|----------------------------|
+    | `traefik/http/routers/myrouter/ruleSyntax` | `v3`  |
+
 ??? info "`traefik/http/routers/<router_name>/entrypoints`"
 
     See [entry points](../../install-configuration/entrypoints.md) for more information.
@@ -91,6 +99,30 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
     |---------------------------------------------|----------|
     | `traefik/http/routers/myrouter/tls/options` | `foobar` |
 
+??? info "`traefik/http/routers/<router_name>/observability/accesslogs`"
+
+    The accessLogs option controls whether the router will produce access-logs.
+      
+    | Key (Path)                                               | Value  |
+    |----------------------------------------------------------|--------|
+    | `traefik/http/routers/myrouter/observability/accesslogs` | `true` |
+
+??? info "`traefik/http/routers/<router_name>/observability/metrics`"
+
+    The metrics option controls whether the router will produce metrics.
+
+    | Key (Path)                                            | Value  |
+    |-------------------------------------------------------|--------|
+    | `traefik/http/routers/myrouter/observability/metrics` | `true` |
+
+??? info "`traefik/http/routers/<router_name>/observability/tracing`"
+
+    The tracing option controls whether the router will produce traces.
+    
+    | Key (Path)                                            | Value  |
+    |-------------------------------------------------------|--------|
+    | `traefik/http/routers/myrouter/observability/tracing` | `true` |
+
 ??? info "`traefik/http/routers/<router_name>/priority`"
 
     See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information.
@@ -110,6 +142,22 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
     | Key (Path)                                                      | Value                                   |
     |-----------------------------------------------------------------|-----------------------------------------|
     | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/servers/<n>/preservePath`"
+
+    See [servers](../http/load-balancing/service.md#servers) for more information.
+
+    | Key (Path)                                                      | Value                                   |
+    |-----------------------------------------------------------------|-----------------------------------------|
+    | `traefik/http/services/myservice/loadbalancer/servers/0/preservePath`    | `true` |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/servers/<n>/weight`"
+
+    See [servers](../http/load-balancing/service.md#servers) for more information.
+
+    | Key (Path)                                                      | Value                                   |
+    |-----------------------------------------------------------------|-----------------------------------------|
+    | `traefik/http/services/myservice/loadbalancer/servers/0/weight`    | `1` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/serverstransport`"
 
@@ -216,6 +264,12 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
     |-------------------------------------------------------------------|----------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/name` | `foobar` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/path`"
+
+    | Key (Path)                                                        | Value     |
+    |-------------------------------------------------------------------|-----------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/path` | `/foobar` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/secure`"
 
     | Key (Path)                                                          | Value  |
@@ -299,6 +353,30 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
     | Key (Path)                                                           | Value |
     |----------------------------------------------------------------------|-------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
+
+??? info "`traefik/http/services/<service_name>/failover/fallback`"
+
+    See [Failover](../http/load-balancing/service.md#failover) for more information
+
+    | Key (Path)                                                           | Value |
+    |----------------------------------------------------------------------|-------|
+    | `traefik/http/services/<service_name>/failover/fallback` | `backup`  |
+
+??? info "`traefik/http/services/<service_name>/failover/healthcheck`"
+
+    See [Failover](../http/load-balancing/service.md#failover) for more information
+
+    | Key (Path)                                                           | Value |
+    |----------------------------------------------------------------------|-------|
+    | `traefik/http/services/<service_name>/failover/healthcheck` | `{}`  |
+
+??? info "`traefik/http/services/<service_name>/failover/service`"
+
+    See [Failover](../http/load-balancing/service.md#failover) for more information
+
+    | Key (Path)                                                           | Value |
+    |----------------------------------------------------------------------|-------|
+    | `traefik/http/services/<service_name>/failover/service` | `main`  |
 
 ### Middleware
 
@@ -396,7 +474,7 @@ You can declare TCP Routers and/or Services using KV.
 
     | Key (Path)                               | Value |
     |------------------------------------------|-------|
-    | `traefik/tcp/routers/myrouter/priority`  | `42`  |
+    | `traefik/tcp/routers/mytcprouter/priority`  | `42`  |
 
 #### TCP Services
 
@@ -408,6 +486,14 @@ You can declare TCP Routers and/or Services using KV.
     |--------------------------------------------------------------------|------------------|
     | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/address` | `xx.xx.xx.xx:xx` |
     
+??? info "`traefik/tcp/services/<service_name>/loadbalancer/servers/<n>/tls`"
+
+    See [servers](../tcp/service.md#servers-load-balancer) for more information.
+
+    | Key (Path)                                                         | Value            |
+    |--------------------------------------------------------------------|------------------|
+    | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/tls` | `true` |
+
 ??? info "`traefik/tcp/services/<service_name>/loadbalancer/proxyprotocol/version`"
 
     See [PROXY protocol](../tcp/service.md#proxy-protocol) for more information.
@@ -436,3 +522,25 @@ You can declare TCP Routers and/or Services using KV.
     | Key (Path)                                                       | Value |
     |------------------------------------------------------------------|-------|
     | `traefik/tcp/services/<service_name>/weighted/services/0/weight` | `42`  |
+
+#### TCP Middleware
+
+You can declare pieces of middleware using tags starting with `traefik/tcp/middlewares/{name-of-your-choice}.`, followed by the middleware type/options.
+
+For example, to declare a middleware [`InFlightConn`](../tcp/middlewares/inflightconn.md) named `test-inflightconn`, you'd write `traefik/tcp/middlewares/test-inflightconn/inflightconn/amount=10`.
+
+More information about available middlewares in the dedicated [middlewares section](../tcp/middlewares/overview.md).
+
+??? example "Declaring and Referencing a Middleware"
+    
+    ```bash
+    # ...
+    # Declaring a middleware
+    traefik/tcp/middlewares/test-inflightconn/amount=10
+    # Referencing a middleware
+    traefik/tcp/routers.my-service/middlewares=test-inflightconn
+    ```
+
+!!! warning "Conflicts in Declaration"
+
+    If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.

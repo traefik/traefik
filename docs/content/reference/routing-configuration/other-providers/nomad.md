@@ -39,6 +39,14 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     traefik.http.routers.myrouter.rule=Host(`example.com`)
     ```
 
+??? info "`traefik.http.routers.<router_name>.ruleSyntax`"
+    
+    See [ruleSyntax](../http/router/rules-and-priority.md#rulesyntax) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.ruleSyntax=v3
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
 
     See [entry points](../../install-configuration/entrypoints.md) for more information.
@@ -109,6 +117,30 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     traefik.http.routers.myrouter.priority=42
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+    
+    The accessLogs option controls whether the router will produce access-logs.
+    
+    ```yaml
+     "traefik.http.routers.myrouter.observability.accesslogs=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+    
+    The metrics option controls whether the router will produce metrics.
+
+    ```yaml
+     "traefik.http.routers.myrouter.observability.metrics=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+    
+    The tracing option controls whether the router will produce traces.
+
+    ```yaml
+     "traefik.http.routers.myrouter.observability.tracing=true"
+    ```
+    
 ### Services
 
 To update the configuration of the Service automatically attached to the service,
@@ -132,6 +164,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
 
     ```yaml
     traefik.http.services.myservice.loadbalancer.server.scheme=http
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.weight`"
+
+    Overrides the default weight.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.server.weight=42
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
@@ -239,6 +279,12 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
 
     ```yaml
@@ -318,6 +364,22 @@ You can declare TCP Routers and/or Services using tags.
 
     ```yaml
     traefik.tcp.routers.mytcprouter.rule=HostSNI(`example.com`)
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.ruleSyntax`"
+    
+    configure the rule syntax to be used for parsing the rule on a per-router basis.
+    
+    ```yaml
+    traefik.tcp.routers.mytcprouter.ruleSyntax=v3
+    ```
+    
+??? info "`traefik.tcp.routers.<router_name>.priority`"
+
+    See [priority](../tcp/router/rules-and-priority.md#priority) for more information.
+
+    ```yaml
+    traefik.tcp.routers.myrouter.priority=42
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.service`"
@@ -426,6 +488,28 @@ You can declare UDP Routers and/or Services using tags.
 
     If you declare a UDP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no UDP Router/Service is defined).
     You can declare both a UDP Router/Service and an HTTP Router/Service for the same Nomad service (but you have to do so manually).
+
+#### TCP Middleware
+
+You can declare pieces of middleware using tags starting with `traefik.tcp.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
+
+For example, to declare a middleware [`InFlightConn`](../tcp/middlewares/inflightconn.md) named `test-inflightconn`, you'd write `traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10`.
+
+More information about available middlewares in the dedicated [middlewares section](../tcp/middlewares/overview.md).
+
+??? example "Declaring and Referencing a Middleware"
+    
+    ```yaml
+    # ...
+    # Declaring a middleware
+    traefik.tcp.middlewares.test-inflightconn.amount=10
+    # Referencing a middleware
+    traefik.tcp.routers.my-service.middlewares=test-inflightconn
+    ```
+
+!!! warning "Conflicts in Declaration"
+
+    If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
 #### UDP Routers
 
