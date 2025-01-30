@@ -38,7 +38,7 @@ services:
 Start your `reverse-proxy` with the following command:
 
 ```shell
-docker-compose up -d reverse-proxy
+docker compose up -d reverse-proxy
 ```
 
 You can open a browser and go to `http://localhost:8080/api/rawdata` to see Traefik's API rawdata (you'll go back there once you have launched a service in step 2).
@@ -68,7 +68,7 @@ The above defines `whoami`: a web service that outputs information about the mac
 Start the `whoami` service with the following command:
 
 ```shell
-docker-compose up -d whoami
+docker compose up -d whoami
 ```
 
 Browse `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new container and updated its own configuration.
@@ -92,7 +92,7 @@ IP: 172.27.0.3
 Run more instances of your `whoami` service with the following command:
 
 ```shell
-docker-compose up -d --scale whoami=2
+docker compose up -d --scale whoami=2
 ```
 
 Browse to `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new instance of the container.
