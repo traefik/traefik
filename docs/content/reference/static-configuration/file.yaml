@@ -171,6 +171,27 @@ providers:
     allowEmptyServices: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
+  knative:
+    endpoint: foobar
+    token: foobar
+    certAuthFilePath: foobar
+    disablePassHostHeaders: true
+    namespaces:
+      - foobar
+      - foobar
+    loadBalancerIP: foobar
+    loadBalancerDomain: foobar
+    loadBalancerDomainInternal: foobar
+    labelSelector: foobar
+    ingressClass: foobar
+    allowCrossNamespace: true
+    entrypoints:
+      - foobar
+      - foobar
+    entrypointsInternal:
+      - foobar
+      - foobar
+    throttleDuration: 42s
   kubernetesGateway:
     endpoint: foobar
     token: foobar
