@@ -3,7 +3,12 @@ package crd
 import (
 	"context"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
+	corev1 "k8s.io/api/core/v1"
 	"os"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -80,6 +85,64 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 	return client, err
 }
 
+func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
+	}
+	if !exists {
+		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
+	}
+
+	cert, key, err := getCertificateBlocks(secret, namespace, secretName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.CertAndStores{
+		Certificate: tls.Certificate{
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
+		},
+	}, nil
+}
+
+func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
+	var missingEntries []string
+
+	tlsCrtData, tlsCrtExists := secret.Data["tls.crt"]
+	if !tlsCrtExists {
+		missingEntries = append(missingEntries, "tls.crt")
+	}
+
+	tlsKeyData, tlsKeyExists := secret.Data["tls.key"]
+	if !tlsKeyExists {
+		missingEntries = append(missingEntries, "tls.key")
+	}
+
+	if len(missingEntries) > 0 {
+		return "", "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
+			namespace, secretName, strings.Join(missingEntries, ", "))
+	}
+
+	cert := string(tlsCrtData)
+	if cert == "" {
+		missingEntries = append(missingEntries, "tls.crt")
+	}
+
+	key := string(tlsKeyData)
+	if key == "" {
+		missingEntries = append(missingEntries, "tls.key")
+	}
+
+	if len(missingEntries) > 0 {
+		return "", "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
+			namespace, secretName, strings.Join(missingEntries, ", "))
+	}
+
+	return cert, key, nil
+}
+
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
@@ -124,8 +187,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
+					tlsConfigs := make(map[string]*tls.CertAndStores)
 					conf := &dynamic.Configuration{
-						HTTP: p.loadKnativeIngressRouteConfiguration(context.Background(), k8sClient),
+						HTTP: p.loadKnativeIngressRouteConfiguration(context.Background(), k8sClient, tlsConfigs),
+					}
+
+					if len(tlsConfigs) > 0 {
+						conf.TLS = &dynamic.TLSConfiguration{}
+						conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
 					}
 
 					confHash, err := hashstructure.Hash(conf, nil)
@@ -191,4 +260,19 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
+	var secretNames []string
+	for secretName := range tlsConfigs {
+		secretNames = append(secretNames, secretName)
+	}
+	sort.Strings(secretNames)
+
+	var configs []*tls.CertAndStores
+	for _, secretName := range secretNames {
+		configs = append(configs, tlsConfigs[secretName])
+	}
+
+	return configs
 }

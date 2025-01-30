@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"net"
 	"strconv"
 	"strings"
@@ -25,7 +26,8 @@ const (
 	http2Protocol = "http2"
 )
 
-func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client) *dynamic.HTTPConfiguration {
+func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client,
+	tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},
@@ -35,6 +37,8 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 	for _, ingressRoute := range client.GetKnativeIngressRoutes() {
 		logger := log.Ctx(ctx).With().Str("KNativeIngress", ingressRoute.Name).Str("namespace",
 			ingressRoute.Namespace).Logger()
+
+		err := getTLSHTTP(ctx, ingressRoute, client, tlsConfigs)
 
 		if !(traefikDefaultIngressClass == ingressRoute.Annotations[annotationKubernetesIngressClass]) {
 			logger.Debug().Msgf("Skipping Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
@@ -83,7 +87,6 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			if entrypoints != nil {
 				r.EntryPoints = entrypoints
 			}
-
 			conf.Routers[provider.Normalize(result.ServiceKey)] = r
 		}
 		if err := p.updateKnativeIngressStatus(client, ingressRoute); err != nil {
@@ -176,10 +179,9 @@ func (c configBuilder) loadKnativeServers(namespace string,
 	}
 	var servers []dynamic.Server
 	if service.Spec.ClusterIP != "" {
-		logger.Info().Msgf("cluster Ip %v", service.Spec.ClusterIP)
 		protocol, err := parseServiceProtocol(portSpec.Name, portSpec.Port)
 		if err != nil {
-			protocol = httpProtocol //default to http
+			return nil, err
 		}
 
 		hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))
@@ -225,11 +227,17 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 
 		for pathIndex, pathroute := range route.HTTP.Paths {
 
-			var (
-				tagServiceName string
-			)
+			var tagServiceName string
 
 			//Append pre-headers if any
+			//appendHeaders := make(map[string]string)
+			//if pathroute.AppendHeaders != nil {
+			//	for key, value := range pathroute.AppendHeaders {
+			//		appendHeaders[key] = value
+			//	}
+			//}
+			//appendHeaders[header.HashKey] = hash
+			//pathroute.Headers[header.HashKey] = knativenetworkingv1alpha1.HeaderMatch{Exact: header.HashValueOverride}
 			headers := c.buildHeaders(middleware, serviceName, ruleIndex, pathIndex, pathroute.AppendHeaders)
 			path := pathroute.Path
 
@@ -316,7 +324,6 @@ func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knati
 
 		ingressRoute.Status.MarkNetworkConfigured()
 		ingressRoute.Status.ObservedGeneration = ingressRoute.GetGeneration()
-
 		return client.UpdateKnativeIngressStatus(ingressRoute)
 	}
 	return nil
@@ -360,15 +367,39 @@ func buildMatchRule(hosts []string, path string) string {
 }
 
 func (c configBuilder) buildHeaders(middleware map[string]*dynamic.Middleware, serviceName string, ruleIndex, pathIndex int, appendHeaders map[string]string) []string {
-	var headers []string
-	if appendHeaders != nil {
-		headerID := provider.Normalize(makeID(serviceName, fmt.Sprintf("PreHeader-%d-%d", ruleIndex, pathIndex)))
-		headers = append(headers, headerID)
-		middleware[headers[len(headers)-1]] = &dynamic.Middleware{
-			Headers: &dynamic.Headers{
-				CustomRequestHeaders: appendHeaders,
-			},
+	if appendHeaders == nil {
+		return nil
+	}
+
+	headerID := provider.Normalize(makeID(serviceName, fmt.Sprintf("PreHeader-%d-%d", ruleIndex, pathIndex)))
+	middleware[headerID] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomRequestHeaders: appendHeaders,
+		},
+	}
+
+	return []string{headerID}
+}
+
+// getTLSHTTP mutates tlsConfigs.
+func getTLSHTTP(ctx context.Context, ingressRoute *knativenetworkingv1alpha1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+	if ingressRoute.Spec.TLS != nil {
+		for _, tls := range ingressRoute.Spec.TLS {
+			if tls.SecretName == "" {
+				log.Ctx(ctx).Debug().Msg("No secret name provided")
+				continue
+			}
+
+			configKey := ingressRoute.Namespace + "/" + tls.SecretName
+			if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
+				tlsConf, err := getTLS(k8sClient, tls.SecretName, ingressRoute.Namespace)
+				if err != nil {
+					return err
+				}
+
+				tlsConfigs[configKey] = tlsConf
+			}
 		}
 	}
-	return headers
+	return nil
 }
