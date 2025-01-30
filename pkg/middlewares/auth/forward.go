@@ -57,6 +57,7 @@ type forwardAuth struct {
 	forwardBody              bool
 	maxBodySize              int64
 	preserveLocationHeader   bool
+	preserveRequestMethod    bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -81,6 +82,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		forwardBody:              config.ForwardBody,
 		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
 		preserveLocationHeader:   config.PreserveLocationHeader,
+		preserveRequestMethod:    config.PreserveRequestMethod,
 	}
 
 	if config.MaxBodySize != nil {
@@ -135,7 +137,12 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
+	forwardReqMethod := http.MethodGet
+	if fa.preserveRequestMethod {
+		forwardReqMethod = req.Method
+	}
+
+	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, fa.address, nil)
 	if err != nil {
 		logger.Debug().Err(err).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
