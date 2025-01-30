@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/tls"
 	"net"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
@@ -27,7 +27,8 @@ const (
 )
 
 func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client,
-	tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
+	tlsConfigs map[string]*tls.CertAndStores,
+) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},
@@ -39,6 +40,10 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			ingressRoute.Namespace).Logger()
 
 		err := getTLSHTTP(ctx, ingressRoute, client, tlsConfigs)
+		if err != nil {
+			logger.Error().Err(err).Send()
+			continue
+		}
 
 		if !(traefikDefaultIngressClass == ingressRoute.Annotations[annotationKubernetesIngressClass]) {
 			logger.Debug().Msgf("Skipping Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
@@ -58,7 +63,6 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 		knativeResult := cb.buildKnativeService(ctx, ingressRoute, conf.Middlewares, conf.Services, serviceName)
 
 		for _, result := range knativeResult {
-
 			var entrypoints []string
 
 			if result.Visibility == knativenetworkingv1alpha1.IngressVisibilityClusterLocal {
@@ -219,25 +223,13 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 	var results []*ServiceResult
 
 	for ruleIndex, route := range ingressRoute.Spec.Rules {
-
 		if route.HTTP == nil {
 			logger.Warn().Msgf("No HTTP rule defined for Knative service %s", ingressRoute.Name)
 			continue
 		}
 
 		for pathIndex, pathroute := range route.HTTP.Paths {
-
 			var tagServiceName string
-
-			//Append pre-headers if any
-			//appendHeaders := make(map[string]string)
-			//if pathroute.AppendHeaders != nil {
-			//	for key, value := range pathroute.AppendHeaders {
-			//		appendHeaders[key] = value
-			//	}
-			//}
-			//appendHeaders[header.HashKey] = hash
-			//pathroute.Headers[header.HashKey] = knativenetworkingv1alpha1.HeaderMatch{Exact: header.HashValueOverride}
 			headers := c.buildHeaders(middleware, serviceName, ruleIndex, pathIndex, pathroute.AppendHeaders)
 			path := pathroute.Path
 
@@ -282,11 +274,9 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 					conf[tagServiceName] = &dynamic.Service{Weighted: &dynamic.WeightedRoundRobin{}}
 				}
 				conf[tagServiceName].Weighted.Services = append(conf[tagServiceName].Weighted.Services, srv)
-				// results = append(results, ServiceResult{serviceName, tag, nil})
 			}
 			results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, path, route.Visibility, nil})
 		}
-		//results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, path, nil})
 	}
 	return results
 }

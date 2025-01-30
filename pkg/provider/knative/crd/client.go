@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	kerror "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kinformers "k8s.io/client-go/informers"
@@ -26,7 +26,6 @@ const resyncPeriod = 10 * time.Minute
 
 type resourceEventHandler struct {
 	ev chan<- interface{}
-	//probe *status.Prober
 }
 
 func (reh *resourceEventHandler) OnAdd(obj interface{}, isInInitialList bool) {
@@ -38,12 +37,6 @@ func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
 }
 
 func (reh *resourceEventHandler) OnDelete(obj interface{}) {
-	//if _, ok := obj.(*corev1.Pod); ok {
-	//	reh.probe.CancelPodProbing(obj)
-	//}
-	//if ingress, ok := obj.(*knativenetworkingv1alpha1.Ingress); ok {
-	//	reh.probe.CancelIngressProbing(ingress)
-	//}
 	eventHandlerFunc(reh.ev, obj)
 }
 
@@ -348,12 +341,4 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 		}
 	}
 	return false
-}
-
-func combineFunc(functions ...func(interface{})) func(interface{}) {
-	return func(obj interface{}) {
-		for _, f := range functions {
-			f(obj)
-		}
-	}
 }

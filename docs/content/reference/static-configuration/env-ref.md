@@ -900,6 +900,12 @@ Kubernetes disable PassHost Headers. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KNATIVE_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`TRAEFIK_PROVIDERS_KNATIVE_ENTRYPOINTS`:  
+Entry points for Knative. (default: ["traefik"])
+
+`TRAEFIK_PROVIDERS_KNATIVE_ENTRYPOINTSINTERNAL`:  
+Entry points for Knative.
+
 `TRAEFIK_PROVIDERS_KNATIVE_INGRESSCLASS`:  
 Value of networking.knative.dev/ingress.class annotation to watch for.
 
@@ -923,12 +929,6 @@ Ingress refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KNATIVE_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
-
-`TRAEFIK_PROVIDERS_KNATIVE_ENTRYPOINTS`:  
-entrypoint for Knative. (Default: ```traefik```)
-
-`TRAEFIK_PROVIDERS_KNATIVE_ENTRYPOINTSINTERNAL`:  
-entrypoint for Knative svc.cluster.local domain.
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)

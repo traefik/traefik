@@ -166,6 +166,8 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
     allowCrossNamespace = true
+    entrypoints = ["foobar", "foobar"]
+    entrypointsInternal = ["foobar", "foobar"]
     throttleDuration = "42s"
   [providers.kubernetesGateway]
     endpoint = "foobar"

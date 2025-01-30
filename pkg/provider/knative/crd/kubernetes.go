@@ -3,9 +3,6 @@ package crd
 import (
 	"context"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
-	corev1 "k8s.io/api/core/v1"
 	"os"
 	"sort"
 	"strings"
@@ -19,6 +16,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 )
