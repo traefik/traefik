@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
 
       - name: Avoid generating webui
         run: touch webui/static/index.html
