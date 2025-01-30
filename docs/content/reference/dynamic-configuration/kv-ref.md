@@ -288,8 +288,12 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service03/mirroring/mirrors/1/percent` | `42` |
 | `traefik/http/services/Service03/mirroring/service` | `foobar` |
 | `traefik/http/services/Service04/weighted/healthCheck` | `` |
+| `traefik/http/services/Service04/weighted/services/0/headers/name0` | `foobar` |
+| `traefik/http/services/Service04/weighted/services/0/headers/name1` | `foobar` |
 | `traefik/http/services/Service04/weighted/services/0/name` | `foobar` |
 | `traefik/http/services/Service04/weighted/services/0/weight` | `42` |
+| `traefik/http/services/Service04/weighted/services/1/headers/name0` | `foobar` |
+| `traefik/http/services/Service04/weighted/services/1/headers/name1` | `foobar` |
 | `traefik/http/services/Service04/weighted/services/1/name` | `foobar` |
 | `traefik/http/services/Service04/weighted/services/1/weight` | `42` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/httpOnly` | `true` |
