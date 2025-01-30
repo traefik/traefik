@@ -102,6 +102,7 @@ require (
 	k8s.io/apimachinery v0.31.1
 	k8s.io/client-go v0.31.1
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // No tag on the repo.
+	knative.dev/networking v0.0.0-20241022012959-60e29ff520dc
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.18.0
 	sigs.k8s.io/gateway-api v1.2.1
@@ -178,7 +179,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dnsimple/dnsimple-go v1.7.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/exoscale/egoscale/v3 v3.1.7 // indirect
 	github.com/fatih/color v1.17.0 // indirect
@@ -357,28 +358,38 @@ require (
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.0 // indirect
-	go.uber.org/zap v1.26.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.4.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20241210194714-1829a127f884 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/api v0.214.0 // indirect
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
-	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.16 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/ns1/ns1-go.v2 v2.13.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20240423202451-8948a665c108 // indirect
+	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
+	knative.dev/pkg v0.0.0-20241021183759-9b9d535af5ad // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
+)
+
+require (
+	github.com/blendle/zapdriver v1.3.1 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/openzipkin/zipkin-go v0.4.3 // indirect
+	go.opencensus.io v0.24.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 )
 
 // Containous forks
@@ -391,3 +402,6 @@ replace (
 // ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
 // tencentcloud uses monorepo with multimodule but the go.mod files are incomplete.
 exclude github.com/tencentcloud/tencentcloud-sdk-go v3.0.83+incompatible
+
+// Replace to handle new wasmexport in official go and wazergo for http calls.
+replace github.com/http-wasm/http-wasm-host-go => github.com/traefik/http-wasm-host-go v0.0.0-20240618100324-3c53dcaa1a70
