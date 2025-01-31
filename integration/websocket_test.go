@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
+	"golang.org/x/net/http2"
 	"golang.org/x/net/websocket"
 )
 
@@ -449,6 +450,44 @@ func (s *WebsocketSuite) TestSSLhttp2() {
 	_, msg, err := conn.ReadMessage()
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "OK", string(msg))
+}
+
+func (s *WebsocketSuite) TestSettingEnableConnectProtocol() {
+	file := s.adaptFile("fixtures/websocket/config_https.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: "http://127.0.0.1",
+	})
+
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
+
+	// Wait for traefik.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
+
+	// Add client self-signed cert.
+	roots := x509.NewCertPool()
+	certContent, err := os.ReadFile("./resources/tls/local.cert")
+	require.NoError(s.T(), err)
+
+	roots.AppendCertsFromPEM(certContent)
+
+	// Open a connection to inspect SettingsFrame.
+	conn, err := tls.Dial("tcp", "127.0.0.1:8000", &tls.Config{
+		RootCAs:    roots,
+		NextProtos: []string{"h2"},
+	})
+	require.NoError(s.T(), err)
+
+	framer := http2.NewFramer(nil, conn)
+	frame, err := framer.ReadFrame()
+	require.NoError(s.T(), err)
+
+	fr, ok := frame.(*http2.SettingsFrame)
+	require.True(s.T(), ok)
+
+	_, ok = fr.Value(http2.SettingEnableConnectProtocol)
+	assert.False(s.T(), ok)
 }
 
 func (s *WebsocketSuite) TestHeaderAreForwarded() {

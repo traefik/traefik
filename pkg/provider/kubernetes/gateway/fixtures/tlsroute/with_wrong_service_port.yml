@@ -36,16 +36,16 @@ spec:
             group: ""
       allowedRoutes:
         kinds:
-          - kind: TCPRoute
+          - kind: TLSRoute
             group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
 ---
-kind: TCPRoute
+kind: TLSRoute
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: tcp-app-1
+  name: tls-app-1
   namespace: default
 spec:
   parentRefs:

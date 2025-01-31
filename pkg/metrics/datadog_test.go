@@ -64,6 +64,18 @@ func TestDatadog_parseDatadogAddress(t *testing.T) {
 			expNetwork: "unix",
 			expAddress: "/path/to/datadog.socket",
 		},
+		{
+			desc:       "unixgram address",
+			address:    "unixgram:///path/to/datadog.socket",
+			expNetwork: "unixgram",
+			expAddress: "/path/to/datadog.socket",
+		},
+		{
+			desc:       "unixstream address",
+			address:    "unixstream:///path/to/datadog.socket",
+			expNetwork: "unixstream",
+			expAddress: "/path/to/datadog.socket",
+		},
 	}
 
 	for _, test := range tests {

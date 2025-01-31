@@ -40,24 +40,43 @@ spec:
   type: ClusterIP
 
 ---
-apiVersion: v1
-kind: Endpoints
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: service1
+  name: service1-abc
   namespace: testing
-subsets:
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - name: http-admin
+    port: 8079
+    protocol: TCP
+endpoints:
   - addresses:
-      - ip: 10.0.0.1
-        nodeName: admin.whoami.service1
-    ports:
-      - name: http-admin
-        port: 8079
-        protocol: TCP
+      - 10.0.0.1
+    conditions:
+      ready: true
+    nodeName: admin.whoami.service1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-def
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+endpoints:
   - addresses:
-      - ip: 10.0.0.1
-        nodeName: whoami.service1
-    #        targetRef:
-    ports:
-      - name: http
-        port: 8080
-        protocol: TCP
+      - 10.0.0.1
+    conditions:
+      ready: true
+    nodeName: whoami.service1

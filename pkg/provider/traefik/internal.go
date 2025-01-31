@@ -32,7 +32,7 @@ func New(staticCfg static.Configuration) *Provider {
 }
 
 // ThrottleDuration returns the throttle duration.
-func (i Provider) ThrottleDuration() time.Duration {
+func (i *Provider) ThrottleDuration() time.Duration {
 	return 0
 }
 
@@ -91,15 +91,27 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 }
 
 func (i *Provider) acme(cfg *dynamic.Configuration) {
-	var eps []string
+	allowACMEByPass := map[string]bool{}
+	for name, ep := range i.staticCfg.EntryPoints {
+		allowACMEByPass[name] = ep.AllowACMEByPass
+	}
 
+	var eps []string
+	var epsByPass []string
 	uniq := map[string]struct{}{}
 	for _, resolver := range i.staticCfg.CertificatesResolvers {
 		if resolver.ACME != nil && resolver.ACME.HTTPChallenge != nil && resolver.ACME.HTTPChallenge.EntryPoint != "" {
-			if _, ok := uniq[resolver.ACME.HTTPChallenge.EntryPoint]; !ok {
-				eps = append(eps, resolver.ACME.HTTPChallenge.EntryPoint)
-				uniq[resolver.ACME.HTTPChallenge.EntryPoint] = struct{}{}
+			if _, ok := uniq[resolver.ACME.HTTPChallenge.EntryPoint]; ok {
+				continue
 			}
+			uniq[resolver.ACME.HTTPChallenge.EntryPoint] = struct{}{}
+
+			if allowByPass, ok := allowACMEByPass[resolver.ACME.HTTPChallenge.EntryPoint]; ok && allowByPass {
+				epsByPass = append(epsByPass, resolver.ACME.HTTPChallenge.EntryPoint)
+				continue
+			}
+
+			eps = append(eps, resolver.ACME.HTTPChallenge.EntryPoint)
 		}
 	}
 
@@ -113,6 +125,17 @@ func (i *Provider) acme(cfg *dynamic.Configuration) {
 		}
 
 		cfg.HTTP.Routers["acme-http"] = rt
+		cfg.HTTP.Services["acme-http"] = &dynamic.Service{}
+	}
+
+	if len(epsByPass) > 0 {
+		rt := &dynamic.Router{
+			Rule:        "PathPrefix(`/.well-known/acme-challenge/`)",
+			EntryPoints: epsByPass,
+			Service:     "acme-http@internal",
+		}
+
+		cfg.HTTP.Routers["acme-http-bypass"] = rt
 		cfg.HTTP.Services["acme-http"] = &dynamic.Service{}
 	}
 }
@@ -200,12 +223,26 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 	}
 
 	for name, ep := range i.staticCfg.EntryPoints {
+		if defaultRuleSyntax != "" {
+			cfg.TCP.Models[name] = &dynamic.TCPModel{
+				DefaultRuleSyntax: defaultRuleSyntax,
+			}
+		}
+
 		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" {
 			continue
 		}
 
 		m := &dynamic.Model{
 			Middlewares: ep.HTTP.Middlewares,
+		}
+
+		if ep.Observability != nil {
+			m.Observability = dynamic.RouterObservabilityConfig{
+				AccessLogs: &ep.Observability.AccessLogs,
+				Tracing:    &ep.Observability.Tracing,
+				Metrics:    &ep.Observability.Metrics,
+			}
 		}
 
 		if ep.HTTP.TLS != nil {
@@ -219,16 +256,6 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 		m.DefaultRuleSyntax = defaultRuleSyntax
 
 		cfg.HTTP.Models[name] = m
-
-		if cfg.TCP == nil {
-			continue
-		}
-
-		mTCP := &dynamic.TCPModel{
-			DefaultRuleSyntax: defaultRuleSyntax,
-		}
-
-		cfg.TCP.Models[name] = mTCP
 	}
 }
 

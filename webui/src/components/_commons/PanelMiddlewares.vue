@@ -817,6 +817,22 @@
               </div>
             </div>
           </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - contentSecurityPolicyReportOnly -->
+          <q-card-section v-if="middleware.headers">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">
+                  Content Security Policy (Report Only)
+                </div>
+                <q-chip
+                  dense
+                  class="app-chip app-chip-green"
+                >
+                  {{ exData(middleware).contentSecurityPolicyReportOnly }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - publicKey -->
           <q-card-section v-if="middleware.headers">
             <div class="row items-start no-wrap">

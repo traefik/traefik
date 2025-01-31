@@ -319,7 +319,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			res := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
 
-			if test.certContents != nil && len(test.certContents) > 0 {
+			if len(test.certContents) > 0 {
 				req.TLS = buildTLSWith(test.certContents)
 			}
 
@@ -541,7 +541,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			res := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
 
-			if test.certContents != nil && len(test.certContents) > 0 {
+			if len(test.certContents) > 0 {
 				req.TLS = buildTLSWith(test.certContents)
 			}
 

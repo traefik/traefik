@@ -89,7 +89,11 @@ spec:
       kind: Gateway
       group: gateway.networking.k8s.io
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: whoami
           port: 80
           weight: 1

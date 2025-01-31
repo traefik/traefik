@@ -1,6 +1,6 @@
 ---
 title: "Traefik Docker DNS Challenge Documentation"
-description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the tehnical documentation."
+description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the technical documentation."
 ---
 
 # Docker-compose with Let's Encrypt: DNS Challenge
@@ -186,3 +186,5 @@ environment:
   - "OVH_APPLICATION_SECRET_FILE=/run/secrets/ovh_application_secret"
   - "OVH_CONSUMER_KEY_FILE=/run/secrets/ovh_consumer_key"
 ```
+
+{!traefik-for-business-applications.md!}

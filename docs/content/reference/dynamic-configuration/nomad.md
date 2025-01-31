@@ -8,7 +8,7 @@ description: "View the reference for performing dynamic configurations with Trae
 Dynamic configuration with Nomad Service Discovery
 {: .subtitle }
 
-The labels are case insensitive.
+The labels are case-insensitive.
 
 ```yaml
 --8<-- "content/reference/dynamic-configuration/nomad.yml"

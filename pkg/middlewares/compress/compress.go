@@ -8,18 +8,21 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
+	"github.com/klauspost/compress/zstd"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/compress/brotli"
 	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "Compress"
 
-// DefaultMinSize is the default minimum size (in bytes) required to enable compression.
+// defaultMinSize is the default minimum size (in bytes) required to enable compression.
 // See https://github.com/klauspost/compress/blob/9559b037e79ad673c71f6ef7c732c00949014cd2/gzhttp/compress.go#L47.
-const DefaultMinSize = 1024
+const defaultMinSize = 1024
+
+var defaultSupportedEncodings = []string{zstdName, brotliName, gzipName}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -28,10 +31,12 @@ type compress struct {
 	excludes        []string
 	includes        []string
 	minSize         int
+	encodings       []string
 	defaultEncoding string
 
 	brotliHandler http.Handler
 	gzipHandler   http.Handler
+	zstdHandler   http.Handler
 }
 
 // New creates a new compress middleware.
@@ -62,9 +67,21 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		includes = append(includes, mediaType)
 	}
 
-	minSize := DefaultMinSize
+	minSize := defaultMinSize
 	if conf.MinResponseBodyBytes > 0 {
 		minSize = conf.MinResponseBodyBytes
+	}
+
+	if len(conf.Encodings) == 0 {
+		return nil, errors.New("at least one encoding must be specified")
+	}
+	for _, encoding := range conf.Encodings {
+		if !slices.Contains(defaultSupportedEncodings, encoding) {
+			return nil, fmt.Errorf("unsupported encoding: %s", encoding)
+		}
+	}
+	if conf.DefaultEncoding != "" && !slices.Contains(conf.Encodings, conf.DefaultEncoding) {
+		return nil, fmt.Errorf("unsupported default encoding: %s", conf.DefaultEncoding)
 	}
 
 	c := &compress{
@@ -73,11 +90,18 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		excludes:        excludes,
 		includes:        includes,
 		minSize:         minSize,
+		encodings:       conf.Encodings,
 		defaultEncoding: conf.DefaultEncoding,
 	}
 
 	var err error
-	c.brotliHandler, err = c.newBrotliHandler()
+
+	c.zstdHandler, err = c.newZstdHandler(name)
+	if err != nil {
+		return nil, err
+	}
+
+	c.brotliHandler, err = c.newBrotliHandler(name)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +149,13 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	c.chooseHandler(getCompressionType(acceptEncoding, c.defaultEncoding), rw, req)
+	c.chooseHandler(getCompressionEncoding(acceptEncoding, c.defaultEncoding, c.encodings), rw, req)
 }
 
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {
 	switch typ {
+	case zstdName:
+		c.zstdHandler.ServeHTTP(rw, req)
 	case brotliName:
 		c.brotliHandler.ServeHTTP(rw, req)
 	case gzipName:
@@ -166,18 +192,34 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 	return wrapper(c.next), nil
 }
 
-func (c *compress) newBrotliHandler() (http.Handler, error) {
-	cfg := brotli.Config{MinSize: c.minSize}
+func (c *compress) newBrotliHandler(middlewareName string) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
 	if len(c.includes) > 0 {
 		cfg.IncludedContentTypes = c.includes
 	} else {
 		cfg.ExcludedContentTypes = c.excludes
 	}
 
-	wrapper, err := brotli.NewWrapper(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("new brotli wrapper: %w", err)
+	newBrotliWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
+		return brotli.NewWriter(rw), brotliName, nil
+	}
+	return NewCompressionHandler(cfg, newBrotliWriter, c.next)
+}
+
+func (c *compress) newZstdHandler(middlewareName string) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
+	if len(c.includes) > 0 {
+		cfg.IncludedContentTypes = c.includes
+	} else {
+		cfg.ExcludedContentTypes = c.excludes
 	}
 
-	return wrapper(c.next), nil
+	newZstdWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
+		writer, err := zstd.NewWriter(rw)
+		if err != nil {
+			return nil, "", fmt.Errorf("creating zstd writer: %w", err)
+		}
+		return writer, zstdName, nil
+	}
+	return NewCompressionHandler(cfg, newZstdWriter, c.next)
 }

@@ -7,6 +7,7 @@ import (
 	"hash/fnv"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -149,7 +150,11 @@ func (p *Provider) fetchConfigurationData() ([]byte, error) {
 	}
 
 	for k, v := range p.Headers {
-		req.Header.Set(k, v)
+		if strings.EqualFold(k, "Host") {
+			req.Host = v
+		} else {
+			req.Header.Set(k, v)
+		}
 	}
 
 	res, err := p.httpClient.Do(req)

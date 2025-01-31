@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,13 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
+func pointer[T any](v T) *T { return &v }
+
 func TestGetLoadBalancer(t *testing.T) {
 	sm := Manager{
-		roundTripperManager: newRtMock(),
+		transportManager: &transportManagerMock{},
 	}
 
 	testCases := []struct {
@@ -40,14 +44,14 @@ func TestGetLoadBalancer(t *testing.T) {
 					},
 				},
 			},
-			fwd:         &MockForwarder{},
+			fwd:         &forwarderMock{},
 			expectError: true,
 		},
 		{
 			desc:        "Succeeds when there are no servers",
 			serviceName: "test",
 			service:     &dynamic.ServersLoadBalancer{},
-			fwd:         &MockForwarder{},
+			fwd:         &forwarderMock{},
 			expectError: false,
 		},
 		{
@@ -56,7 +60,7 @@ func TestGetLoadBalancer(t *testing.T) {
 			service: &dynamic.ServersLoadBalancer{
 				Sticky: &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 			},
-			fwd:         &MockForwarder{},
+			fwd:         &forwarderMock{},
 			expectError: false,
 		},
 	}
@@ -79,11 +83,8 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	sm := NewManager(nil, nil, nil, transportManagerMock{}, pb)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
@@ -139,7 +140,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			desc:        "Load balances between the two servers",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
-				PassHostHeader: Bool(true),
+				PassHostHeader: boolPtr(true),
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -236,7 +237,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
-				PassHostHeader: func(v bool) *bool { return &v }(true),
+				PassHostHeader: pointer(true),
 				Servers: []dynamic.Server{
 					{
 						URL: serverPassHost.URL,
@@ -254,7 +255,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			desc:        "PassHost doesn't pass the host instead of the IP",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
-				PassHostHeader: Bool(false),
+				PassHostHeader: pointer(false),
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 				Servers: []dynamic.Server{
 					{
@@ -359,11 +360,8 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	sm := NewManager(nil, nil, nil, &transportManagerMock{}, pb)
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
@@ -452,6 +450,48 @@ func Test1xxResponses(t *testing.T) {
 	}
 }
 
+type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
+
+func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
+	return s(ctx, serviceName)
+}
+
+type internalHandler struct{}
+
+func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+
+func TestManager_ServiceBuilders(t *testing.T) {
+	var internalHandler internalHandler
+
+	manager := NewManager(map[string]*runtime.ServiceInfo{
+		"test@test": {
+			Service: &dynamic.Service{
+				LoadBalancer: &dynamic.ServersLoadBalancer{},
+			},
+		},
+	}, nil, nil, &TransportManager{
+		roundTrippers: map[string]http.RoundTripper{
+			"default@internal": http.DefaultTransport,
+		},
+	}, nil, serviceBuilderFunc(func(rootCtx context.Context, serviceName string) (http.Handler, error) {
+		if strings.HasSuffix(serviceName, "@internal") {
+			return internalHandler, nil
+		}
+		return nil, nil
+	}))
+
+	h, err := manager.BuildHTTP(context.Background(), "test@internal")
+	require.NoError(t, err)
+	assert.Equal(t, internalHandler, h)
+
+	h, err = manager.BuildHTTP(context.Background(), "test@test")
+	require.NoError(t, err)
+	assert.NotNil(t, h)
+
+	_, err = manager.BuildHTTP(context.Background(), "wrong@test")
+	assert.Error(t, err)
+}
+
 func TestManager_Build(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -499,11 +539,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, nil, nil, &RoundTripperManager{
-				roundTrippers: map[string]http.RoundTripper{
-					"default@internal": http.DefaultTransport,
-				},
-			})
+			manager := NewManager(test.configs, nil, nil, &transportManagerMock{}, nil)
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
@@ -526,30 +562,30 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 		},
 	}
 
-	manager := NewManager(services, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	manager := NewManager(services, nil, nil, &transportManagerMock{}, nil)
 
 	_, err := manager.BuildHTTP(context.Background(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 
-func Bool(v bool) *bool { return &v }
+func boolPtr(v bool) *bool { return &v }
 
-type MockForwarder struct{}
+type forwarderMock struct{}
 
-func (MockForwarder) ServeHTTP(http.ResponseWriter, *http.Request) {
+func (forwarderMock) ServeHTTP(http.ResponseWriter, *http.Request) {
 	panic("not available")
 }
 
-type rtMock struct{}
+type transportManagerMock struct{}
 
-func newRtMock() RoundTripperGetter {
-	return &rtMock{}
+func (t transportManagerMock) GetRoundTripper(_ string) (http.RoundTripper, error) {
+	return &http.Transport{}, nil
 }
 
-func (r *rtMock) Get(_ string) (http.RoundTripper, error) {
-	return http.DefaultTransport, nil
+func (t transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
+	return nil, nil
+}
+
+func (t transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
+	return &dynamic.ServersTransport{}, nil
 }

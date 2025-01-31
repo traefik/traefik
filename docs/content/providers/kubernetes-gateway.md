@@ -5,103 +5,58 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 
 # Traefik & Kubernetes with Gateway API
 
-The Kubernetes Gateway API, The Experimental Way.
-{: .subtitle }
-
-Gateway API is the evolution of Kubernetes APIs that relate to `Services`, such as `Ingress`.
-The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
-
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
-specifications from the Kubernetes Special Interest Groups (SIGs).
+specification from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports Gateway API [v1.0.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.0.0) specification.
+This provider supports Standard version [v1.2.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.1) of the Gateway API specification. 
 
-!!! warning "Enabling The Experimental Kubernetes Gateway Provider"
+It fully supports all HTTP core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
-    Since this provider is still experimental, it needs to be activated in the experimental section of the static configuration.
-
-    ```yaml tab="File (YAML)"
-    experimental:
-      kubernetesGateway: true
-
-    providers:
-      kubernetesGateway: {}
-      #...
-    ```
-
-    ```toml tab="File (TOML)"
-    [experimental]
-      kubernetesGateway = true
-
-    [providers.kubernetesGateway]
-    #...
-    ```
-
-    ```bash tab="CLI"
-    --experimental.kubernetesgateway=true --providers.kubernetesgateway=true #...
-    ```
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.2.1/traefik-traefik).
 
 ## Requirements
 
 {!kubernetes-requirements.md!}
 
-!!! tip "All Steps for a Successful Deployment"
+!!! info "Helm Chart"
 
-    * Add/update the Kubernetes Gateway API [definitions](../reference/dynamic-configuration/kubernetes-gateway.md#definitions).
-    * Add/update the [RBAC](../reference/dynamic-configuration/kubernetes-gateway.md#rbac) for the Traefik custom resources.
-    * Add all needed Kubernetes Gateway API [resources](../reference/dynamic-configuration/kubernetes-gateway.md#resources).
+    When using the Traefik [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
+    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L130).
 
-## Examples
+1. Install/update the Kubernetes Gateway API CRDs.
 
-??? example "Kubernetes Gateway Provider Basic Example"
-
-    ```yaml tab="Gateway API"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-simple-https.yml"
+    ```bash
+    # Install Gateway API CRDs from the Standard channel.
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
     ```
 
-    ```yaml tab="Whoami Service"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-whoami-svc.yml"
+2. Install the additional Traefik RBAC required for Gateway API.
+
+    ```bash
+    # Install Traefik RBACs.
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.3/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
-    ```yaml tab="Traefik Service"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-traefik-lb-svc.yml"
-    ```
+3. Deploy Traefik and enable the `kubernetesGateway` provider in the static configuration as detailed below:
+       
+       ```yaml tab="File (YAML)"
+       providers:
+         kubernetesGateway: {}
+       ```
 
-    ```yaml tab="Gateway API CRDs"
-    # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/gateway.networking.k8s.io_gatewayclasses.yaml"
-    --8<-- "content/reference/dynamic-configuration/gateway.networking.k8s.io_gateways.yaml"
-    --8<-- "content/reference/dynamic-configuration/gateway.networking.k8s.io_httproutes.yaml"
-    ```
+       ```toml tab="File (TOML)"
+       [providers.kubernetesGateway]
+       ```
 
-    ```yaml tab="RBAC"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml"
-    ```
+       ```bash tab="CLI"
+       --providers.kubernetesgateway=true
+       ```
 
-The Kubernetes Gateway API project provides several guides on how to use the APIs.
-These guides can help you to go further than the example above.
-The [getting started guide](https://gateway-api.sigs.k8s.io/guides/) details how to install the CRDs from their repository.
+## Routing Configuration
 
-For now, the Traefik Gateway Provider can be used while following the below guides:
-
-* [Simple Gateway](https://gateway-api.sigs.k8s.io/guides/simple-gateway/)
-* [HTTP routing](https://gateway-api.sigs.k8s.io/guides/http-routing/)
-* [TLS](https://gateway-api.sigs.k8s.io/guides/tls/)
-
-## Resource Configuration
-
-When using Kubernetes Gateway API as a provider, Traefik uses Kubernetes
-[Custom Resource Definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
-to retrieve its routing configuration.
-
-All concepts can be found in the official API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/).
-Traefik implements the following resources:
-
-* `GatewayClass` defines a set of Gateways that share a common configuration and behaviour.
-* `Gateway` describes how traffic can be translated to Services within the cluster.
-* `HTTPRoute` defines HTTP rules for mapping requests from a Gateway to Kubernetes Services.
-* `TCPRoute` defines TCP rules for mapping requests from a Gateway to Kubernetes Services.
-* `TLSRoute` defines TLS rules for mapping requests from a Gateway to Kubernetes Services.
+When using the Kubernetes Gateway API provider, Traefik uses the Gateway API CRDs to retrieve its routing configuration.
+Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/),
+and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Traefik documentation.
 
 ## Provider Configuration
 
@@ -314,6 +269,15 @@ providers:
 --providers.kubernetesgateway.experimentalchannel=true
 ```
 
+!!! info "Experimental Channel"
+
+    When enabling experimental channel resources support, the experimental CRDs (Custom Resource Definitions) needs to be deployed too.
+
+    ```bash
+    # Install Gateway API CRDs from the Experimental channel.
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+    ```
+
 ### `labelselector`
 
 _Optional, Default: ""_
@@ -338,6 +302,30 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesgateway.labelselector="app=traefik"
+```
+
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the `traefik.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-gateway.md#native-load-balancing).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.nativeLBByDefault=true
 ```
 
 ### `throttleDuration`

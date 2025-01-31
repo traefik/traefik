@@ -87,7 +87,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "foo", &static.EntryPoint{
 		Address:          "127.0.0.1:0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -151,7 +151,7 @@ func TestHTTP30RTT(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "foo", &static.EntryPoint{
 		Address:          "127.0.0.1:8090",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},

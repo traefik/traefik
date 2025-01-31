@@ -17,7 +17,7 @@ or the list of [confirmed bugs](https://github.com/traefik/traefik/labels/kind%2
 
 ## How We Prioritize
 
-We wish we could review every pull request right away, but because it's a time consuming operation, it's not always possible.
+We wish we could review every pull request right away, but because it's a time-consuming operation, it's not always possible.
 
 The PRs we are able to handle the fastest are:
 
@@ -54,6 +54,7 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Keep "allows edit from maintainer" checked.
     * Use semantic line breaks for documentation.
     * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
+    * Ensure that the dependencies in the `go.mod` file reference a tag. If referencing a tag is not possible, add a comment explaining why.
 * Pass the validation check.
 * Pass all tests.
 * Receive 2 approving reviews from maintainers.
@@ -89,6 +90,9 @@ in short, it looks like this:
 You must run these local verifications before you submit your pull request to predict the pass or failure of continuous integration.
 Your PR will not be reviewed until these are green on the CI.
 
+* `make generate`
+* `make generate-crd`
+* `make test-gateway-api-conformance`
 * `make validate`
 * `make pull-images`
 * `make test`
@@ -126,7 +130,7 @@ This label can be used when:
 Traefik Proxy is made by the community for the community,
 as such the goal is to engage the community to make Traefik the best reverse proxy available.
 Part of this goal is maintaining a lean codebase and ensuring code velocity.
-unfortunately, this means that sometimes we will not be able to merge a pull request.
+Unfortunately, this means that sometimes we will not be able to merge a pull request.
 
 Because we respect the work you did, you will always be told why we are closing your pull request.
 If you do not agree with our decision, do not worry; closed pull requests are effortless to recreate,

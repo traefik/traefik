@@ -394,6 +394,10 @@ This overrides the `BrowserXssFilter` option.
 
 The `contentSecurityPolicy` option allows the `Content-Security-Policy` header value to be set with a custom value.
 
+### `contentSecurityPolicyReportOnly`
+
+The `contentSecurityPolicyReportOnly` option allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.
+
 ### `publicKey`
 
 The `publicKey` implements HPKP to prevent MITM attacks with forged certificates.

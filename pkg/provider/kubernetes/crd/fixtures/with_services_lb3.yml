@@ -1,32 +1,42 @@
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami5
+  name: whoami5-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami5
 
-subsets:
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
   - addresses:
-      - ip: 10.10.0.3
-      - ip: 10.10.0.4
-    ports:
-      - name: web
-        port: 8080
+      - 10.10.0.3
+      - 10.10.0.4
+    conditions:
+      ready: true
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami4
+  name: whoami4-abc
   namespace: default
+  labels:
+    kubernetes.io/service-name: whoami4
 
-subsets:
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-      - ip: 10.10.0.2
-    ports:
-      - name: web
-        port: 8080
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1

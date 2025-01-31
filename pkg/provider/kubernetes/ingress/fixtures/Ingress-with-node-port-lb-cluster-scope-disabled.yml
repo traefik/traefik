@@ -1,0 +1,45 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+  - host: traefik.tchouk
+    http:
+      paths:
+      - path: /bar
+        backend:
+          service:
+            name: service1
+            port:
+              number: 8080
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/service.nodeportlb: "true"
+
+spec:
+  ports:
+    - port: 8080
+      nodePort: 32456
+  clusterIP: 10.0.0.1
+  type: NodePort
+  externalName: traefik.wtf
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: traefik-node
+status:
+  addresses:
+    - type: InternalIP
+      address: 172.16.4.4

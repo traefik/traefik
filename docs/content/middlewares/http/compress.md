@@ -10,7 +10,7 @@ Compress Allows Compressing Responses before Sending them to the Client
 
 ![Compress](../../assets/img/middleware/compress.png)
 
-The Compress middleware supports gzip and Brotli compression.
+The Compress middleware supports Gzip, Brotli and Zstandard compression.
 The activation of compression, and the compression method choice rely (among other things) on the request's `Accept-Encoding` header.
 
 ## Configuration Examples
@@ -54,8 +54,8 @@ http:
 
     Responses are compressed when the following criteria are all met:
 
-    * The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
-    If the `Accept-Encoding` request header is absent, the response won't be encoded.
+    * The `Accept-Encoding` request header contains `gzip`, and/or `*`, and/or `br`, and/or `zstd` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
+    If the `Accept-Encoding` request header is absent and no [defaultEncoding](#defaultencoding) is configured, the response won't be encoded.
     If it is present, but its value is the empty string, then compression is disabled.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
     * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes), or is one among the [includedContentTypes options](#includedcontenttypes).
@@ -254,4 +254,49 @@ http:
 [http.middlewares]
   [http.middlewares.test-compress.compress]
     defaultEncoding = "gzip"
+```
+
+### `encodings`
+
+_Optional, Default="zstd, br, gzip"_
+
+`encodings` specifies the list of supported compression encodings.
+At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip).
+The order of the list also sets the priority, the top entry has the highest priority.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.encodings=zstd,br"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    encodings:
+      - zstd
+      - br
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.encodings=zstd,br"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        encodings:
+          - zstd
+          - br
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    encodings = ["zstd","br"]
 ```

@@ -65,6 +65,32 @@ func (s *SimpleSuite) TestSimpleDefaultConfig() {
 	require.NoError(s.T(), err)
 }
 
+func (s *SimpleSuite) TestSimpleFastProxy() {
+	var callCount int
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		assert.Contains(s.T(), req.Header, "X-Traefik-Fast-Proxy")
+		callCount++
+	}))
+	defer srv1.Close()
+
+	file := s.adaptFile("fixtures/simple_fastproxy.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/", time.Second)
+	require.NoError(s.T(), err)
+
+	assert.GreaterOrEqual(s.T(), 1, callCount)
+}
+
 func (s *SimpleSuite) TestWithWebConfig() {
 	s.cmdTraefik(withConfigFile("fixtures/simple_web.toml"))
 
@@ -1004,8 +1030,13 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	_, err = rand.Read(body5)
 	require.NoError(s.T(), err)
 
-	verifyBody := func(req *http.Request) {
+	// forceOkResponse is used to avoid errors when Content-Length is set but no body is received
+	verifyBody := func(req *http.Request, canBodyBeEmpty bool) (forceOkResponse bool) {
 		b, _ := io.ReadAll(req.Body)
+		if canBodyBeEmpty && req.Header.Get("NoBody") == "true" {
+			require.Empty(s.T(), b)
+			return true
+		}
 		switch req.Header.Get("Size") {
 		case "20":
 			require.Equal(s.T(), body20, b)
@@ -1014,20 +1045,25 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 		default:
 			s.T().Fatal("Size header not present")
 		}
+		return false
 	}
 
 	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		verifyBody(req)
+		verifyBody(req, false)
 		atomic.AddInt32(&count, 1)
 	}))
 
 	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		verifyBody(req)
+		if verifyBody(req, true) {
+			rw.WriteHeader(http.StatusOK)
+		}
 		atomic.AddInt32(&countMirror1, 1)
 	}))
 
 	mirror2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		verifyBody(req)
+		if verifyBody(req, true) {
+			rw.WriteHeader(http.StatusOK)
+		}
 		atomic.AddInt32(&countMirror2, 1)
 	}))
 
@@ -1104,6 +1140,28 @@ func (s *SimpleSuite) TestMirrorWithBody() {
 	assert.Equal(s.T(), int32(10), countTotal)
 	assert.Equal(s.T(), int32(0), val1)
 	assert.Equal(s.T(), int32(0), val2)
+
+	atomic.StoreInt32(&count, 0)
+	atomic.StoreInt32(&countMirror1, 0)
+	atomic.StoreInt32(&countMirror2, 0)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithoutBody", bytes.NewBuffer(body20))
+	require.NoError(s.T(), err)
+	req.Header.Set("Size", "20")
+	req.Header.Set("NoBody", "true")
+	for range 10 {
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+	}
+
+	countTotal = atomic.LoadInt32(&count)
+	val1 = atomic.LoadInt32(&countMirror1)
+	val2 = atomic.LoadInt32(&countMirror2)
+
+	assert.Equal(s.T(), int32(10), countTotal)
+	assert.Equal(s.T(), int32(1), val1)
+	assert.Equal(s.T(), int32(5), val2)
 }
 
 func (s *SimpleSuite) TestMirrorCanceled() {
@@ -1382,7 +1440,7 @@ func (s *SimpleSuite) TestDebugLog() {
 
 	req, err := http.NewRequest(http.MethodGet, "http://localhost:8000/whoami", http.NoBody)
 	require.NoError(s.T(), err)
-	req.Header.Set("Autorization", "Bearer ThisIsABearerToken")
+	req.Header.Set("Authorization", "Bearer ThisIsABearerToken")
 
 	response, err := http.DefaultClient.Do(req)
 	require.NoError(s.T(), err)
@@ -1478,4 +1536,64 @@ func (s *SimpleSuite) TestDenyFragment() {
 	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusBadRequest, resp.StatusCode)
+}
+
+func (s *SimpleSuite) TestMaxHeaderBytes() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	listener, err := net.Listen("tcp", "127.0.0.1:9000")
+	require.NoError(s.T(), err)
+
+	ts := &httptest.Server{
+		Listener: listener,
+		Config: &http.Server{
+			Handler:        handler,
+			MaxHeaderBytes: 1.25 * 1024 * 1024, // 1.25 MB
+		},
+	}
+	ts.Start()
+	defer ts.Close()
+
+	// The test server and traefik config file both specify a max request header size of 1.25 MB.
+	file := s.adaptFile("fixtures/simple_max_header_size.toml", struct {
+		TestServer string
+	}{ts.URL})
+
+	s.traefikCmd(withConfigFile(file))
+
+	testCases := []struct {
+		name           string
+		headerSize     int
+		expectedStatus int
+	}{
+		{
+			name:           "1.25MB header",
+			headerSize:     int(1.25 * 1024 * 1024),
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "1.5MB header",
+			headerSize:     int(1.5 * 1024 * 1024),
+			expectedStatus: http.StatusRequestHeaderFieldsTooLarge,
+		},
+		{
+			name:           "500KB header",
+			headerSize:     int(500 * 1024),
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.name, func() {
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Large-Header", strings.Repeat("A", test.headerSize))
+
+			err = try.Request(req, 2*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
 }

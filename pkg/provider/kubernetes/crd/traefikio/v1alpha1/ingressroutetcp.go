@@ -13,24 +13,24 @@ type IngressRouteTCPSpec struct {
 	Routes []RouteTCP `json:"routes"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// TLS defines the TLS configuration on a layer 4 / TCP Route.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#tls_1
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#tls_1
 	TLS *TLSTCP `json:"tls,omitempty"`
 }
 
 // RouteTCP holds the TCP route configuration.
 type RouteTCP struct {
 	// Match defines the router's rule.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rule_1
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rule_1
 	Match string `json:"match"`
 	// Priority defines the router's priority.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#priority_1
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax_1
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
@@ -39,7 +39,7 @@ type RouteTCP struct {
 }
 
 // TLSTCP holds the TLS configuration for an IngressRouteTCP.
-// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#tls_1
+// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#tls_1
 type TLSTCP struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretName string `json:"secretName,omitempty"`
@@ -47,17 +47,17 @@ type TLSTCP struct {
 	Passthrough bool `json:"passthrough,omitempty"`
 	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
 	// If not defined, the `default` TLSOption is used.
-	// More info: https://doc.traefik.io/traefik/v3.0/https/tls/#tls-options
+	// More info: https://doc.traefik.io/traefik/v3.3/https/tls/#tls-options
 	Options *ObjectReference `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
 	Store *ObjectReference `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.0/https/acme/#certificate-resolvers
+	// More info: https://doc.traefik.io/traefik/v3.3/https/acme/#certificate-resolvers
 	CertResolver string `json:"certResolver,omitempty"`
 	// Domains defines the list of domains that will be used to issue certificates.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#domains
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#domains
 	Domains []types.Domain `json:"domains,omitempty"`
 }
 
@@ -77,10 +77,10 @@ type ServiceTCP struct {
 	// hence fully terminating the connection.
 	// It is a duration in milliseconds, defaulting to 100.
 	// A negative value means an infinite deadline (i.e. the reading capability is never closed).
-	// Deprecated: TerminationDelay is not supported APIVersion traefik.io/v1, please use ServersTransport to configure the TerminationDelay instead.
+	// Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
 	TerminationDelay *int `json:"terminationDelay,omitempty"`
 	// ProxyProtocol defines the PROXY protocol configuration.
-	// More info: https://doc.traefik.io/traefik/v3.0/routing/services/#proxy-protocol
+	// More info: https://doc.traefik.io/traefik/v3.3/routing/services/#proxy-protocol
 	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
 	// ServersTransport defines the name of ServersTransportTCP resource to use.
 	// It allows to configure the transport between Traefik and your servers.
@@ -93,6 +93,11 @@ type ServiceTCP struct {
 	// The Kubernetes Service itself does load-balance to the pods.
 	// By default, NativeLB is false.
 	NativeLB *bool `json:"nativeLB,omitempty"`
+	// NodePortLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+	// By default, NodePortLB is false.
+	NodePortLB bool `json:"nodePortLB,omitempty"`
 }
 
 // +genclient

@@ -35,10 +35,17 @@ rules:
       - ""
     resources:
       - services
-      - endpoints
       - secrets
+      - nodes
     verbs:
       - get
+      - list
+      - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
       - list
       - watch
   - apiGroups:
@@ -58,6 +65,23 @@ rules:
       - ingresses/status
     verbs:
       - update
+  - apiGroups:
+      - traefik.io
+    resources:
+      - middlewares
+      - middlewaretcps
+      - ingressroutes
+      - traefikservices
+      - ingressroutetcps
+      - ingressrouteudps
+      - tlsoptions
+      - tlsstores
+      - serverstransports
+      - serverstransporttcps
+    verbs:
+      - get
+      - list
+      - watch
 ```
 
 !!! info "You can find the reference for this file [there](../../reference/dynamic-configuration/kubernetes-crd/#rbac)."
@@ -130,7 +154,7 @@ spec:
       serviceAccountName: traefik-account
       containers:
         - name: traefik
-          image: traefik:v3.0
+          image: traefik:v3.3
           args:
             - --api.insecure
             - --providers.kubernetesingress

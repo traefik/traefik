@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"io"
 	"net"
@@ -17,10 +18,13 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
+	"golang.org/x/net/http2"
 )
 
 func TestShutdownHijacked(t *testing.T) {
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		conn, _, err := rw.(http.Hijacker).Hijack()
 		require.NoError(t, err)
@@ -34,7 +38,9 @@ func TestShutdownHijacked(t *testing.T) {
 }
 
 func TestShutdownHTTP(t *testing.T) {
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second)
@@ -72,7 +78,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(5 * time.Second)
 	epConfig.RespondingTimeouts.WriteTimeout = ptypes.Duration(5 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
 		// there seems to be shenanigans related to properly cleaning up file descriptors
 		Address:          "127.0.0.1:0",
@@ -159,7 +165,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -167,7 +173,9 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -196,7 +204,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -204,7 +212,9 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -236,7 +246,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxRequests = 3
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -244,7 +254,9 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -282,7 +294,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxTime = ptypes.Duration(time.Millisecond)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -290,7 +302,9 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router := &tcprouter.Router{}
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -317,4 +331,54 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	require.True(t, resp.Close)
 	err = resp.Body.Close()
 	require.NoError(t, err)
+}
+
+func TestKeepAliveH2c(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.KeepAliveMaxRequests = 1
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), "", &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	conn, err := startEntrypoint(entryPoint, router)
+	require.NoError(t, err)
+
+	http2Transport := &http2.Transport{
+		AllowHTTP: true,
+		DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+			return conn, nil
+		},
+	}
+
+	client := &http.Client{Transport: http2Transport}
+
+	resp, err := client.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	require.False(t, resp.Close)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	_, err = client.Get("http://" + entryPoint.listener.Addr().String())
+	require.Error(t, err)
+	// Unlike HTTP/1, where we can directly check `resp.Close`, HTTP/2 uses a different
+	// mechanism: it sends a GOAWAY frame when the connection is closing.
+	// We can only check the error type. The error received should be poll.ErrClosed from
+	// the `internal/poll` package, but we cannot directly reference the error type due to
+	// package restrictions. Since this error message ("use of closed network connection")
+	// is distinct and specific, we rely on its consistency, assuming it is stable and unlikely
+	// to change.
+	require.Contains(t, err.Error(), "use of closed network connection")
 }

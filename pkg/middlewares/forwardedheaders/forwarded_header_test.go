@@ -12,15 +12,16 @@ import (
 
 func TestServeHTTP(t *testing.T) {
 	testCases := []struct {
-		desc            string
-		insecure        bool
-		trustedIps      []string
-		incomingHeaders map[string][]string
-		remoteAddr      string
-		expectedHeaders map[string]string
-		tls             bool
-		websocket       bool
-		host            string
+		desc              string
+		insecure          bool
+		trustedIps        []string
+		connectionHeaders []string
+		incomingHeaders   map[string][]string
+		remoteAddr        string
+		expectedHeaders   map[string]string
+		tls               bool
+		websocket         bool
+		host              string
 	}{
 		{
 			desc:            "all Empty",
@@ -47,6 +48,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -54,6 +56,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
+				xForwardedPrefix:            "/prefix",
 			},
 		},
 		{
@@ -67,6 +70,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -74,6 +78,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 			},
 		},
 		{
@@ -87,6 +92,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -94,6 +100,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
+				xForwardedPrefix:            "/prefix",
 			},
 		},
 		{
@@ -107,6 +114,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -114,6 +122,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 			},
 		},
 		{
@@ -127,6 +136,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -134,6 +144,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
+				xForwardedPrefix:            "/prefix",
 			},
 		},
 		{
@@ -147,6 +158,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            {"GET"},
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
+				xForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -154,6 +166,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
 			},
 		},
 		{
@@ -269,6 +282,210 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedServer: "foo.com:8080",
 			},
 		},
+		{
+			desc:     "Untrusted: Connection header has no effect on X- forwarded headers",
+			insecure: false,
+			incomingHeaders: map[string][]string{
+				connection: {
+					xForwardedProto,
+					xForwardedFor,
+					xForwardedURI,
+					xForwardedMethod,
+					xForwardedHost,
+					xForwardedPort,
+					xForwardedTLSClientCert,
+					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
+					xRealIP,
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "http",
+				xForwardedFor:               "",
+				xForwardedURI:               "",
+				xForwardedMethod:            "",
+				xForwardedHost:              "",
+				xForwardedPort:              "80",
+				xForwardedTLSClientCert:     "",
+				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
+				xRealIP:                     "",
+				connection:                  "",
+			},
+		},
+		{
+			desc:     "Trusted (insecure): Connection header has no effect on X- forwarded headers",
+			insecure: true,
+			incomingHeaders: map[string][]string{
+				connection: {
+					xForwardedProto,
+					xForwardedFor,
+					xForwardedURI,
+					xForwardedMethod,
+					xForwardedHost,
+					xForwardedPort,
+					xForwardedTLSClientCert,
+					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
+					xRealIP,
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "foo",
+				xForwardedFor:               "foo",
+				xForwardedURI:               "foo",
+				xForwardedMethod:            "foo",
+				xForwardedHost:              "foo",
+				xForwardedPort:              "foo",
+				xForwardedTLSClientCert:     "foo",
+				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
+				xRealIP:                     "foo",
+				connection:                  "",
+			},
+		},
+		{
+			desc:     "Untrusted and Connection: Connection header has no effect on X- forwarded headers",
+			insecure: false,
+			connectionHeaders: []string{
+				xForwardedProto,
+				xForwardedFor,
+				xForwardedURI,
+				xForwardedMethod,
+				xForwardedHost,
+				xForwardedPort,
+				xForwardedTLSClientCert,
+				xForwardedTLSClientCertInfo,
+				xForwardedPrefix,
+				xRealIP,
+			},
+			incomingHeaders: map[string][]string{
+				connection: {
+					xForwardedProto,
+					xForwardedFor,
+					xForwardedURI,
+					xForwardedMethod,
+					xForwardedHost,
+					xForwardedPort,
+					xForwardedTLSClientCert,
+					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
+					xRealIP,
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "http",
+				xForwardedFor:               "",
+				xForwardedURI:               "",
+				xForwardedMethod:            "",
+				xForwardedHost:              "",
+				xForwardedPort:              "80",
+				xForwardedTLSClientCert:     "",
+				xForwardedTLSClientCertInfo: "",
+				xForwardedPrefix:            "",
+				xRealIP:                     "",
+				connection:                  "",
+			},
+		},
+		{
+			desc:     "Trusted (insecure) and Connection: Connection header has no effect on X- forwarded headers",
+			insecure: true,
+			connectionHeaders: []string{
+				xForwardedProto,
+				xForwardedFor,
+				xForwardedURI,
+				xForwardedMethod,
+				xForwardedHost,
+				xForwardedPort,
+				xForwardedTLSClientCert,
+				xForwardedTLSClientCertInfo,
+				xForwardedPrefix,
+				xRealIP,
+			},
+			incomingHeaders: map[string][]string{
+				connection: {
+					xForwardedProto,
+					xForwardedFor,
+					xForwardedURI,
+					xForwardedMethod,
+					xForwardedHost,
+					xForwardedPort,
+					xForwardedTLSClientCert,
+					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
+					xRealIP,
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "foo",
+				xForwardedFor:               "foo",
+				xForwardedURI:               "foo",
+				xForwardedMethod:            "foo",
+				xForwardedHost:              "foo",
+				xForwardedPort:              "foo",
+				xForwardedTLSClientCert:     "foo",
+				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
+				xRealIP:                     "foo",
+				connection:                  "",
+			},
+		},
+		{
+			desc: "Connection: one remove, and one passthrough header",
+			connectionHeaders: []string{
+				"foo",
+			},
+			incomingHeaders: map[string][]string{
+				connection: {
+					"foo",
+				},
+				"Foo": {"bar"},
+				"Bar": {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				"Bar": "foo",
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -299,7 +516,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps,
+			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders,
 				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
 
@@ -379,6 +596,77 @@ func Test_isWebsocketRequest(t *testing.T) {
 			ok := isWebsocketRequest(req)
 
 			test.assert(t, ok)
+		})
+	}
+}
+
+func TestConnection(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		reqHeaders        map[string]string
+		connectionHeaders []string
+		expected          http.Header
+	}{
+		{
+			desc: "simple remove",
+			reqHeaders: map[string]string{
+				"Foo":      "bar",
+				connection: "foo",
+			},
+			expected: http.Header{},
+		},
+		{
+			desc: "remove and upgrade",
+			reqHeaders: map[string]string{
+				upgrade:    "test",
+				"Foo":      "bar",
+				connection: "upgrade,foo",
+			},
+			expected: http.Header{
+				upgrade:    []string{"test"},
+				connection: []string{"Upgrade"},
+			},
+		},
+		{
+			desc: "no remove",
+			reqHeaders: map[string]string{
+				"Foo":      "bar",
+				connection: "fii",
+			},
+			expected: http.Header{
+				"Foo": []string{"bar"},
+			},
+		},
+		{
+			desc: "no remove because connection header pass through",
+			reqHeaders: map[string]string{
+				"Foo":      "bar",
+				connection: "Foo",
+			},
+			connectionHeaders: []string{"Foo"},
+			expected: http.Header{
+				"Foo":      []string{"bar"},
+				connection: []string{"Foo"},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, nil)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)
+
+			for k, v := range test.reqHeaders {
+				req.Header.Set(k, v)
+			}
+
+			forwarded.removeConnectionHeaders(req)
+
+			assert.Equal(t, test.expected, req.Header)
 		})
 	}
 }

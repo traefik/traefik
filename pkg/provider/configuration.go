@@ -3,8 +3,9 @@ package provider
 import (
 	"bytes"
 	"context"
+	"maps"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 	"text/template"
 	"unicode"
@@ -79,7 +80,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 	for key := range configurations {
 		sortedKeys = append(sortedKeys, key)
 	}
-	sort.Strings(sortedKeys)
+	slices.Sort(sortedKeys)
 
 	for _, root := range sortedKeys {
 		conf := configurations[root]
@@ -422,7 +423,7 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.Error().
-					Msg("Could not define the service name for the router: too many services")
+					Msgf("Router %s cannot be linked automatically with multiple Services: %q", routerName, slices.Collect(maps.Keys(configuration.Services)))
 				continue
 			}
 
@@ -444,8 +445,8 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
-			loggerRouter.
-				Error().Msg("Could not define the service name for the router: too many services")
+			loggerRouter.Error().
+				Msgf("Router %s cannot be linked automatically with multiple Services: %q", routerName, slices.Collect(maps.Keys(configuration.Services)))
 			continue
 		}
 
@@ -493,7 +494,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.Error().
-					Msg("Could not define the service name for the router: too many services")
+					Msgf("Router %s cannot be linked automatically with multiple Services: %q", routerName, slices.Collect(maps.Keys(configuration.Services)))
 				continue
 			}
 

@@ -10,5 +10,5 @@ spec:
 
   routes:
     - services:
-        - name: whoamiudp-without-endpoints-subsets
+        - name: whoamiudp-without-endpointslice-endpoints
           port: 8000

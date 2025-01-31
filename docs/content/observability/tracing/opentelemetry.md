@@ -5,6 +5,8 @@ description: "Traefik supports several tracing backends, including OpenTelemetry
 
 # OpenTelemetry
 
+Traefik Proxy follows [official OpenTelemetry semantic conventions v1.26.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md).
+
 To enable the OpenTelemetry tracer:
 
 ```yaml tab="File (YAML)"
@@ -23,7 +25,7 @@ tracing:
 
 !!! info "Default protocol"
 
-    The OpenTelemetry trace exporter will export traces to the collector using HTTP by default to https://localhost:4318/v1/traces, see the [gRPC Section](#grpc-configuration) to use gRPC.
+    The OpenTelemetry trace exporter will export traces to the collector using HTTPS by default to https://localhost:4318/v1/traces, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 !!! info "Trace sampling"
 
@@ -70,25 +72,29 @@ tracing:
 
 #### `endpoint`
 
-_Required, Default="http://localhost:4318/v1/traces", Format="`<scheme>://<host>:<port><path>`"_
+_Optional, Default="https://localhost:4318/v1/traces", Format="`<scheme>://<host>:<port><path>`"_
 
 URL of the OpenTelemetry Collector to send spans to.
+
+!!! info "Insecure mode"
+
+    To disable TLS, use `http://` instead of `https://` in the `endpoint` configuration.
 
 ```yaml tab="File (YAML)"
 tracing:
   otlp:
     http:
-      endpoint: http://localhost:4318/v1/traces
+      endpoint: https://collector:4318/v1/traces
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.otlp.http]
-    endpoint = "http://localhost:4318/v1/traces"
+    endpoint = "https://collector:4318/v1/traces"
 ```
 
 ```bash tab="CLI"
---tracing.otlp.http.endpoint=http://localhost:4318/v1/traces
+--tracing.otlp.http.endpoint=https://collector:4318/v1/traces
 ```
 
 #### `headers`

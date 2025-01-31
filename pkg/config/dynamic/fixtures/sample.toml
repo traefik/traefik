@@ -330,6 +330,7 @@
         browserXssFilter = true
         customBrowserXSSValue = "foobar"
         contentSecurityPolicy = "foobar"
+        contentSecurityPolicyReportOnly = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
         isDevelopment = true

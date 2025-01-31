@@ -3,6 +3,7 @@ package static
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -27,7 +28,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/nomad"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
-	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -68,7 +68,7 @@ type Configuration struct {
 
 	Log       *types.TraefikLog `description:"Traefik log settings." json:"log,omitempty" toml:"log,omitempty" yaml:"log,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	AccessLog *types.AccessLog  `description:"Access log settings." json:"accessLog,omitempty" toml:"accessLog,omitempty" yaml:"accessLog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	Tracing   *Tracing          `description:"OpenTracing configuration." json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Tracing   *Tracing          `description:"Tracing configuration." json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." json:"hostResolver,omitempty" toml:"hostResolver,omitempty" yaml:"hostResolver,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
@@ -145,16 +145,18 @@ type TLSClientConfig struct {
 
 // API holds the API configuration.
 type API struct {
-	Insecure           bool `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	Dashboard          bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
-	Debug              bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
-	DisableDashboardAd bool `description:"Disable ad in the dashboard." json:"disableDashboardAd,omitempty" toml:"disableDashboardAd,omitempty" yaml:"disableDashboardAd,omitempty" export:"true"`
+	BasePath           string `description:"Defines the base path where the API and Dashboard will be exposed." json:"basePath,omitempty" toml:"basePath,omitempty" yaml:"basePath,omitempty" export:"true"`
+	Insecure           bool   `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Dashboard          bool   `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
+	Debug              bool   `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
+	DisableDashboardAd bool   `description:"Disable ad in the dashboard." json:"disableDashboardAd,omitempty" toml:"disableDashboardAd,omitempty" yaml:"disableDashboardAd,omitempty" export:"true"`
 	// TODO: Re-enable statistics
 	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (a *API) SetDefaults() {
+	a.BasePath = "/"
 	a.Dashboard = true
 }
 
@@ -197,20 +199,26 @@ func (a *LifeCycle) SetDefaults() {
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
-	ServiceName             string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	GlobalAttributes        map[string]string `description:"Defines additional attributes (key:value) on all spans." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
-	CapturedRequestHeaders  []string          `description:"Request headers to add as attributes for server and client spans." json:"capturedRequestHeaders,omitempty" toml:"capturedRequestHeaders,omitempty" yaml:"capturedRequestHeaders,omitempty" export:"true"`
-	CapturedResponseHeaders []string          `description:"Response headers to add as attributes for server and client spans." json:"capturedResponseHeaders,omitempty" toml:"capturedResponseHeaders,omitempty" yaml:"capturedResponseHeaders,omitempty" export:"true"`
-	SampleRate              float64           `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
-	AddInternals            bool              `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+	ServiceName             string             `description:"Sets the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ResourceAttributes      map[string]string  `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty" export:"true"`
+	CapturedRequestHeaders  []string           `description:"Request headers to add as attributes for server and client spans." json:"capturedRequestHeaders,omitempty" toml:"capturedRequestHeaders,omitempty" yaml:"capturedRequestHeaders,omitempty" export:"true"`
+	CapturedResponseHeaders []string           `description:"Response headers to add as attributes for server and client spans." json:"capturedResponseHeaders,omitempty" toml:"capturedResponseHeaders,omitempty" yaml:"capturedResponseHeaders,omitempty" export:"true"`
+	SafeQueryParams         []string           `description:"Query params to not redact." json:"safeQueryParams,omitempty" toml:"safeQueryParams,omitempty" yaml:"safeQueryParams,omitempty" export:"true"`
+	SampleRate              float64            `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	AddInternals            bool               `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+	OTLP                    *types.OTelTracing `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
-	OTLP *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	// Deprecated: please use ResourceAttributes instead.
+	GlobalAttributes map[string]string `description:"(Deprecated) Defines additional resource attributes (key:value)." json:"globalAttributes,omitempty" toml:"globalAttributes,omitempty" yaml:"globalAttributes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (t *Tracing) SetDefaults() {
 	t.ServiceName = "traefik"
 	t.SampleRate = 1.0
+
+	t.OTLP = &types.OTelTracing{}
+	t.OTLP.SetDefaults()
 }
 
 // Providers contains providers configuration.
@@ -263,6 +271,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
+		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
+	}
+
 	if c.Providers.Docker != nil {
 		if c.Providers.Docker.HTTPClientTimeout < 0 {
 			c.Providers.Docker.HTTPClientTimeout = 0
@@ -279,14 +291,8 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	// Disable Gateway API provider if not enabled in experimental.
-	if c.Experimental == nil || !c.Experimental.KubernetesGateway {
-		c.Providers.KubernetesGateway = nil
-	}
-
 	// Configure Gateway API provider
 	if c.Providers.KubernetesGateway != nil {
-		log.Debug().Msg("Experimental Kubernetes Gateway provider has been activated")
 		entryPoints := make(map[string]gateway.Entrypoint)
 		for epName, entryPoint := range c.EntryPoints {
 			entryPoints[epName] = gateway.Entrypoint{Address: entryPoint.GetAddress(), HasHTTPTLSConf: entryPoint.HTTP.TLS != nil}
@@ -297,6 +303,42 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
+	}
+
+	// Defines the default rule syntax for the Kubernetes Ingress Provider.
+	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
+	if c.Core != nil && c.Providers.KubernetesIngress != nil {
+		c.Providers.KubernetesIngress.DefaultRuleSyntax = c.Core.DefaultRuleSyntax
+	}
+
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
+			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableAllChecks instead.")
+
+			if resolver.ACME.DNSChallenge.Propagation == nil {
+				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
+			}
+
+			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
+		}
+
+		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
+			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
+
+			if resolver.ACME.DNSChallenge.Propagation == nil {
+				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
+			}
+
+			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
+		}
 	}
 
 	c.initACMEProvider()
@@ -319,7 +361,6 @@ func (c *Configuration) initACMEProvider() {
 
 // ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
-	var acmeEmail string
 	for name, resolver := range c.CertificatesResolvers {
 		if resolver.ACME != nil && resolver.Tailscale != nil {
 			return fmt.Errorf("unable to initialize certificates resolver %q, as ACME and Tailscale providers are mutually exclusive", name)
@@ -332,11 +373,6 @@ func (c *Configuration) ValidateConfiguration() error {
 		if len(resolver.ACME.Storage) == 0 {
 			return fmt.Errorf("unable to initialize certificates resolver %q with no storage location for the certificates", name)
 		}
-
-		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
-			return fmt.Errorf("unable to initialize certificates resolver %q, as all ACME resolvers must use the same email", name)
-		}
-		acmeEmail = resolver.ACME.Email
 	}
 
 	if c.Core != nil {
@@ -350,6 +386,26 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
+	if c.AccessLog != nil && c.AccessLog.OTLP != nil {
+		if c.Experimental == nil || !c.Experimental.OTLPLogs {
+			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP access logging")
+		}
+
+		if c.AccessLog.OTLP.GRPC != nil && c.AccessLog.OTLP.GRPC.TLS != nil && c.AccessLog.OTLP.GRPC.Insecure {
+			return errors.New("access logs OTLP GRPC: TLS and Insecure options are mutually exclusive")
+		}
+	}
+
+	if c.Log != nil && c.Log.OTLP != nil {
+		if c.Experimental == nil || !c.Experimental.OTLPLogs {
+			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
+		}
+
+		if c.Log.OTLP.GRPC != nil && c.Log.OTLP.GRPC.TLS != nil && c.Log.OTLP.GRPC.Insecure {
+			return errors.New("logs OTLP GRPC: TLS and Insecure options are mutually exclusive")
+		}
+	}
+
 	if c.Tracing != nil && c.Tracing.OTLP != nil {
 		if c.Tracing.OTLP.GRPC != nil && c.Tracing.OTLP.GRPC.TLS != nil && c.Tracing.OTLP.GRPC.Insecure {
 			return errors.New("tracing OTLP GRPC: TLS and Insecure options are mutually exclusive")
@@ -360,6 +416,10 @@ func (c *Configuration) ValidateConfiguration() error {
 		if c.Metrics.OTLP.GRPC != nil && c.Metrics.OTLP.GRPC.TLS != nil && c.Metrics.OTLP.GRPC.Insecure {
 			return errors.New("metrics OTLP GRPC: TLS and Insecure options are mutually exclusive")
 		}
+	}
+
+	if c.API != nil && !path.IsAbs(c.API.BasePath) {
+		return errors.New("API basePath must be a valid absolute path")
 	}
 
 	return nil

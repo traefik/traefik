@@ -16,7 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -95,7 +95,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			currentSpan.SetAttributes(attribute.String("traefik.middleware.name", r.name))
 			// Only add the attribute "http.resend_count" defined by semantic conventions starting from second attempt.
 			if attempts > 1 {
-				currentSpan.SetAttributes(semconv.HTTPResendCount(attempts - 1))
+				currentSpan.SetAttributes(semconv.HTTPRequestResendCount(attempts - 1))
 			}
 
 			req = req.WithContext(tracingCtx)

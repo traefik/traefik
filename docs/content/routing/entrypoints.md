@@ -233,6 +233,34 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
+### AllowACMEByPass
+
+_Optional, Default=false_
+
+`allowACMEByPass` determines whether a user defined router can handle ACME TLS or HTTP challenges instead of the Traefik dedicated one.
+This option can be used when a Traefik instance has one or more certificate resolvers configured,
+but is also used to route challenges connections/requests to services that could also initiate their own ACME challenges.
+
+??? info "No Certificate Resolvers configured"
+
+    It is not necessary to use the `allowACMEByPass' option certificate option if no certificate resolver is defined.
+    In fact, Traefik will automatically allow ACME TLS or HTTP requests to be handled by custom routers in this case, since there can be no concurrency with its own challenge handlers.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    allowACMEByPass: true
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  allowACMEByPass = true
+```
+
+```bash tab="CLI"
+--entryPoints.name.allowACMEByPass=true
+```
+
 ### ReusePort
 
 _Optional, Default=false_
@@ -500,6 +528,40 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     --entryPoints.web.forwardedHeaders.insecure
     ```
 
+??? info "`forwardedHeaders.connection`"
+    
+    As per RFC7230, Traefik respects the Connection options from the client request.
+    By doing so, it removes any header field(s) listed in the request Connection header and the Connection header field itself when empty.
+    The removal happens as soon as the request is handled by Traefik,
+    thus the removed headers are not available when the request passes through the middleware chain.
+    The `connection` option lists the Connection headers allowed to passthrough the middleware chain before their removal.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        forwardedHeaders:
+          connection:
+            - foobar
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.forwardedHeaders]
+          connection = ["foobar"]
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.forwardedHeaders.connection=foobar
+    ```
+
 ### Transport
 
 #### `respondingTimeouts`
@@ -516,7 +578,7 @@ Setting them has no effect for UDP entryPoints.
     If zero, no timeout exists.  
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
     If no units are provided, the value is parsed assuming seconds.
-    We strongly suggest to adapt this value accordingly to the your needs.
+    We strongly suggest adapting this value accordingly to your needs.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -1172,6 +1234,128 @@ entryPoints:
 ```bash tab="CLI"
 --entryPoints.foo.address=:8000/udp
 --entryPoints.foo.udp.timeout=10s
+```
+
+## Systemd Socket Activation
+
+Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
+
+When a socket activation file descriptor name matches an EntryPoint name, the corresponding file descriptor will be used as the TCP/UDP listener for the matching EntryPoint.
+
+```bash
+systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypoints.web --entrypoints.websecure
+```
+
+!!! warning "EntryPoint Address"
+
+    When a socket activation file descriptor name matches an EntryPoint name its address configuration is ignored. For support UDP routing, address must have /udp suffix (--entrypoints.my-udp-entrypoint.address=/udp)
+
+!!! warning "Docker Support"
+
+    Socket activation is not supported by Docker but works with Podman containers.
+
+!!! warning "Multiple listeners in socket file"
+
+    Each systemd socket file must contain only one Listen directive, except in the case of HTTP/3, where the file must include both ListenStream and ListenDatagram directives. To set up TCP and UDP listeners on the same port, use multiple socket files with different entrypoints names.
+
+## Observability Options
+
+This section is dedicated to options to control observability for an EntryPoint.
+
+!!! info "Note that you must first enable access-logs, tracing, and/or metrics."
+
+!!! warning "AddInternals option"
+
+    By default, and for any type of signals (access-logs, metrics and tracing),
+    Traefik disables observability for internal resources.
+    The observability options described below cannot interfere with the `AddInternals` ones,
+    and will be ignored.
+
+    For instance, if a router exposes the `api@internal` service and `metrics.AddInternals` is false,
+    it will never produces metrics, even if the EntryPoint observability configuration enables metrics.
+
+### AccessLogs
+
+_Optional, Default=true_
+
+AccessLogs defines whether a router attached to this EntryPoint produces access-logs by default.
+Nonetheless, a router defining its own observability configuration will opt-out from this default.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    observability:
+      accessLogs: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.observability]
+      accessLogs = false
+```
+
+```bash tab="CLI"
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.observability.accessLogs=false
+```
+
+### Metrics
+
+_Optional, Default=true_
+
+Metrics defines whether a router attached to this EntryPoint produces metrics by default.
+Nonetheless, a router defining its own observability configuration will opt-out from this default.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    observability:
+      metrics: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.observability]
+      metrics = false
+```
+
+```bash tab="CLI"
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.observability.metrics=false
+```
+
+### Tracing
+
+_Optional, Default=true_
+
+Tracing defines whether a router attached to this EntryPoint produces traces by default.
+Nonetheless, a router defining its own observability configuration will opt-out from this default.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    observability:
+      tracing: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.observability]
+      tracing = false
+```
+
+```bash tab="CLI"
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.observability.tracing=false
 ```
 
 {!traefik-for-business-applications.md!}

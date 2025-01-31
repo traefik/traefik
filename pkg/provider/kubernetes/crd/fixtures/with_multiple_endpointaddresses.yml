@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-svc-multiple-endpointaddresses
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 80
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-svc-multiple-endpointaddresses-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-svc-multiple-endpointaddresses
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+  - addresses:
+      - 10.10.0.3
+      - 10.10.0.4
+    conditions:
+      ready: false
+      serving: true
+      terminating: true
+  - addresses:
+      - 10.10.0.5
+      - 10.10.0.6
+    conditions:
+      ready: false
+      serving: false
+      terminating: true
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      services:
+        - name: whoami-svc-multiple-endpointaddresses
+          port: 80

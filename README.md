@@ -35,7 +35,8 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://doc.traefik.io/traefik/).
+:warning: When migrating to a new major version of Traefik, please refer to the [migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
+
 
 ## Overview
 
@@ -61,7 +62,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)  (wildcard certificates support)
 - Circuit breakers, retry
 - See the magic through its clean web UI
-- Websocket, HTTP/2, gRPC ready
+- WebSocket, HTTP/2, gRPC ready
 - Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
 - Keeps access logs (JSON, CLF)
 - Fast
@@ -87,7 +88,7 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation of Traefik v2 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
+You can find the complete documentation of Traefik v3 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
 
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 

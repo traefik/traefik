@@ -33,7 +33,11 @@ metadata:
   namespace: default
 spec:
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: whoami
           port: 80
           weight: 1

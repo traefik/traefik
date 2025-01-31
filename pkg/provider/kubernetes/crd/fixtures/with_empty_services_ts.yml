@@ -30,7 +30,7 @@ metadata:
 spec:
   weighted:
     services:
-      - name: whoami-without-endpoints-subsets
+      - name: whoami-without-endpointslice-endpoints
         weight: 1
         port: 80
 
@@ -43,10 +43,10 @@ metadata:
 
 spec:
   mirroring:
-    name: whoami-without-endpoints-subsets
+    name: whoami-without-endpointslice-endpoints
     port: 80
     mirrors:
-      - name: whoami-without-endpoints-subsets
+      - name: whoami-without-endpointslice-endpoints
         port: 80
       - name: test-weighted
         kind: TraefikService
@@ -61,5 +61,5 @@ metadata:
 spec:
   errors:
     service:
-      name: whoami-without-endpoints-subsets
+      name: whoami-without-endpointslice-endpoints
       port: 80

@@ -28,6 +28,10 @@
     service = "mirrorWithMaxBody"
     rule = "Path(`/whoamiWithMaxBody`)"
 
+  [http.routers.router3]
+    service = "mirrorWithoutBody"
+    rule = "Path(`/whoamiWithoutBody`)"
+
 
 [http.services]
   [http.services.mirror.mirroring]
@@ -46,6 +50,16 @@
     name = "mirror1"
     percent = 10
   [[http.services.mirrorWithMaxBody.mirroring.mirrors]]
+    name = "mirror2"
+    percent = 50
+
+  [http.services.mirrorWithoutBody.mirroring]
+    service = "service1"
+    mirrorBody = false
+  [[http.services.mirrorWithoutBody.mirroring.mirrors]]
+    name = "mirror1"
+    percent = 10
+  [[http.services.mirrorWithoutBody.mirroring.mirrors]]
     name = "mirror2"
     percent = 50
 

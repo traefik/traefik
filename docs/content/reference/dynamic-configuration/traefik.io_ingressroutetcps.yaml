@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.1
   name: ingressroutetcps.traefik.io
 spec:
   group: traefik.io
@@ -43,7 +43,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.3/routing/entrypoints/
                   Default: all.
                 items:
                   type: string
@@ -56,7 +56,7 @@ spec:
                     match:
                       description: |-
                         Match defines the router's rule.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rule_1
+                        More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rule_1
                       type: string
                     middlewares:
                       description: Middlewares defines the list of references to MiddlewareTCP
@@ -80,7 +80,7 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#priority_1
+                        More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -103,6 +103,13 @@ spec:
                               The Kubernetes Service itself does load-balance to the pods.
                               By default, NativeLB is false.
                             type: boolean
+                          nodePortLB:
+                            description: |-
+                              NodePortLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+                              It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+                              By default, NodePortLB is false.
+                            type: boolean
                           port:
                             anyOf:
                             - type: integer
@@ -114,7 +121,7 @@ spec:
                           proxyProtocol:
                             description: |-
                               ProxyProtocol defines the PROXY protocol configuration.
-                              More info: https://doc.traefik.io/traefik/v3.0/routing/services/#proxy-protocol
+                              More info: https://doc.traefik.io/traefik/v3.3/routing/services/#proxy-protocol
                             properties:
                               version:
                                 description: Version defines the PROXY Protocol version
@@ -134,7 +141,7 @@ spec:
                               hence fully terminating the connection.
                               It is a duration in milliseconds, defaulting to 100.
                               A negative value means an infinite deadline (i.e. the reading capability is never closed).
-                              Deprecated: TerminationDelay is not supported APIVersion traefik.io/v1, please use ServersTransport to configure the TerminationDelay instead.
+                              Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
                             type: integer
                           tls:
                             description: TLS determines whether to use TLS when dialing
@@ -152,7 +159,7 @@ spec:
                     syntax:
                       description: |-
                         Syntax defines the router's rule syntax.
-                        More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#rulesyntax_1
+                        More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
                       type: string
                   required:
                   - match
@@ -161,18 +168,18 @@ spec:
               tls:
                 description: |-
                   TLS defines the TLS configuration on a layer 4 / TCP Route.
-                  More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#tls_1
+                  More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#tls_1
                 properties:
                   certResolver:
                     description: |-
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
-                      More info: https://doc.traefik.io/traefik/v3.0/https/acme/#certificate-resolvers
+                      More info: https://doc.traefik.io/traefik/v3.3/https/acme/#certificate-resolvers
                     type: string
                   domains:
                     description: |-
                       Domains defines the list of domains that will be used to issue certificates.
-                      More info: https://doc.traefik.io/traefik/v3.0/routing/routers/#domains
+                      More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#domains
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -191,7 +198,7 @@ spec:
                     description: |-
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
-                      More info: https://doc.traefik.io/traefik/v3.0/https/tls/#tls-options
+                      More info: https://doc.traefik.io/traefik/v3.3/https/tls/#tls-options
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik

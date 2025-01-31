@@ -66,9 +66,8 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	clientIP := wl.strategy.GetIP(req)
 	err := wl.whiteLister.IsAuthorized(clientIP)
 	if err != nil {
-		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
-		logger.Debug().Msg(msg)
-		observability.SetStatusErrorf(req.Context(), msg)
+		logger.Debug().Msgf("Rejecting IP %s: %v", clientIP, err)
+		observability.SetStatusErrorf(req.Context(), "Rejecting IP %s: %v", clientIP, err)
 		reject(ctx, rw)
 		return
 	}

@@ -5,6 +5,8 @@ import (
 	"io/fs"
 )
 
+// Files starting with . and _ are excluded by default
+//
 //go:embed static
 var assets embed.FS
 

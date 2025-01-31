@@ -76,7 +76,7 @@ func NewMuxer() (*Muxer, error) {
 
 // Match returns the handler of the first route matching the connection metadata,
 // and whether the match is exactly from the rule HostSNI(*).
-func (m Muxer) Match(meta ConnData) (tcp.Handler, bool) {
+func (m *Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 	for _, route := range m.routes {
 		if route.matchers.match(meta) {
 			return route.handler, route.catchAll

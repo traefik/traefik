@@ -16,9 +16,9 @@ import (
 type UDPEntryPoints map[string]*UDPEntryPoint
 
 // NewUDPEntryPoints returns all the UDP entry points, keyed by name.
-func NewUDPEntryPoints(cfg static.EntryPoints) (UDPEntryPoints, error) {
+func NewUDPEntryPoints(config static.EntryPoints) (UDPEntryPoints, error) {
 	entryPoints := make(UDPEntryPoints)
-	for entryPointName, entryPoint := range cfg {
+	for entryPointName, entryPoint := range config {
 		protocol, err := entryPoint.GetProtocol()
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
@@ -28,7 +28,7 @@ func NewUDPEntryPoints(cfg static.EntryPoints) (UDPEntryPoints, error) {
 			continue
 		}
 
-		ep, err := NewUDPEntryPoint(entryPoint)
+		ep, err := NewUDPEntryPoint(entryPoint, entryPointName)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -85,14 +85,33 @@ type UDPEntryPoint struct {
 }
 
 // NewUDPEntryPoint returns a UDP entry point.
-func NewUDPEntryPoint(cfg *static.EntryPoint) (*UDPEntryPoint, error) {
-	listenConfig := newListenConfig(cfg)
-	listener, err := udp.Listen(listenConfig, "udp", cfg.GetAddress(), time.Duration(cfg.UDP.Timeout))
-	if err != nil {
-		return nil, err
+func NewUDPEntryPoint(config *static.EntryPoint, name string) (*UDPEntryPoint, error) {
+	var listener *udp.Listener
+	var err error
+
+	timeout := time.Duration(config.UDP.Timeout)
+
+	// if we have predefined connections from socket activation
+	if socketActivation.isEnabled() {
+		if conn, err := socketActivation.getConn(name); err == nil {
+			listener, err = udp.ListenPacketConn(conn, timeout)
+			if err != nil {
+				log.Warn().Err(err).Str("name", name).Msg("Unable to create socket activation listener")
+			}
+		} else {
+			log.Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
+		}
 	}
 
-	return &UDPEntryPoint{listener: listener, switcher: &udp.HandlerSwitcher{}, transportConfiguration: cfg.Transport}, nil
+	if listener == nil {
+		listenConfig := newListenConfig(config)
+		listener, err = udp.Listen(listenConfig, "udp", config.GetAddress(), timeout)
+		if err != nil {
+			return nil, fmt.Errorf("error creating listener: %w", err)
+		}
+	}
+
+	return &UDPEntryPoint{listener: listener, switcher: &udp.HandlerSwitcher{}, transportConfiguration: config.Transport}, nil
 }
 
 // Start commences the listening for ep.

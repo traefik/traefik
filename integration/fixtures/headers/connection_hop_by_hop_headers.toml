@@ -1,0 +1,37 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+# Limiting the Logs to Specific Fields
+[accessLog]
+  format = "json"
+  filePath = "access.log"
+
+  [accessLog.fields.headers.names]
+    "Foo" = "keep"
+    "Bar" = "keep"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+  [entryPoints.web.forwardedHeaders]
+    insecure = true
+    connection = ["Foo"]
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`test.localhost`)"
+    service = "service1"
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "http://127.0.0.1:9000"

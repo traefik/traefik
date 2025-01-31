@@ -39,7 +39,11 @@ spec:
   hostnames:
     - "example.org"
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: whoami
           port: 80
           weight: 1

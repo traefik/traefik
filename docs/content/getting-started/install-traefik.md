@@ -16,12 +16,12 @@ You can install Traefik with the following flavors:
 
 Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with one sample configuration file:
 
-* [YAML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.yml)
-* [TOML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.toml)
+* [YAML](https://raw.githubusercontent.com/traefik/traefik/v3.3/traefik.sample.yml)
+* [TOML](https://raw.githubusercontent.com/traefik/traefik/v3.3/traefik.sample.toml)
 
 ```shell
 docker run -d -p 8080:8080 -p 80:80 \
-    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v3.0
+    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v3.3
 ```
 
 For more details, go to the [Docker provider documentation](../providers/docker.md)
@@ -29,7 +29,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 !!! tip
 
     * Prefer a fixed version than the latest that could be an unexpected version.
-    ex: `traefik:v3.0`
+    ex: `traefik:v3.3`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
     * Any orchestrator using docker images can fetch the official Traefik docker image.
 
@@ -98,38 +98,6 @@ helm install traefik traefik/traefik
     additionalArguments:
       - "--log.level=DEBUG"
     ```
-
-### Exposing the Traefik dashboard
-
-This Helm chart does not expose the Traefik dashboard by default, for security concerns.
-Thus, there are multiple ways to expose the dashboard.
-For instance, the dashboard access could be achieved through a port-forward:
-
-```shell
-kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 9000:9000
-```
-
-It can then be reached at: `http://127.0.0.1:9000/dashboard/`
-
-Another way would be to apply your own configuration, for instance,
-by defining and applying an IngressRoute CRD (`kubectl apply -f dashboard.yaml`):
-
-```yaml
-# dashboard.yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: dashboard
-spec:
-  entryPoints:
-    - web
-  routes:
-    - match: Host(`traefik.localhost`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
-      kind: Rule
-      services:
-        - name: api@internal
-          kind: TraefikService
-```
 
 ## Use the Binary Distribution
 

@@ -7,6 +7,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -20,6 +21,11 @@ const (
 
 	// DefaultFlushInterval is the default value for the ResponseForwarding flush interval.
 	DefaultFlushInterval = ptypes.Duration(100 * time.Millisecond)
+
+	// MirroringDefaultMirrorBody is the Mirroring.MirrorBody option default value.
+	MirroringDefaultMirrorBody = true
+	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
+	MirroringDefaultMaxBodySize int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
@@ -35,11 +41,12 @@ type HTTPConfiguration struct {
 
 // +k8s:deepcopy-gen=true
 
-// Model is a set of default router's values.
+// Model holds model configuration.
 type Model struct {
-	Middlewares       []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	TLS               *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	DefaultRuleSyntax string           `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	Middlewares       []string                  `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS               *RouterTLSConfig          `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Observability     RouterObservabilityConfig `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	DefaultRuleSyntax string                    `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -56,14 +63,15 @@ type Service struct {
 
 // Router holds the router configuration.
 type Router struct {
-	EntryPoints []string         `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
-	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	Service     string           `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Rule        string           `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
-	RuleSyntax  string           `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
-	Priority    int              `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
-	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	DefaultRule bool             `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	EntryPoints   []string                   `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Middlewares   []string                   `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Service       string                     `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Rule          string                     `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	RuleSyntax    string                     `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
+	Priority      int                        `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
+	TLS           *RouterTLSConfig           `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Observability *RouterObservabilityConfig `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	DefaultRule   bool                       `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -77,9 +85,19 @@ type RouterTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
+// RouterObservabilityConfig holds the observability configuration for a router.
+type RouterObservabilityConfig struct {
+	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	Tracing    *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	Metrics    *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // Mirroring holds the Mirroring configuration.
 type Mirroring struct {
 	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	MirrorBody  *bool           `json:"mirrorBody,omitempty" toml:"mirrorBody,omitempty" yaml:"mirrorBody,omitempty" export:"true"`
 	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
 	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty" export:"true"`
 	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
@@ -87,7 +105,9 @@ type Mirroring struct {
 
 // SetDefaults Default values for a WRRService.
 func (m *Mirroring) SetDefaults() {
-	var defaultMaxBodySize int64 = -1
+	defaultMirrorBody := MirroringDefaultMirrorBody
+	m.MirrorBody = &defaultMirrorBody
+	defaultMaxBodySize := MirroringDefaultMaxBodySize
 	m.MaxBodySize = &defaultMaxBodySize
 }
 
@@ -128,12 +148,26 @@ type WeightedRoundRobin struct {
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+
+	// Status defines an HTTP status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific HTTP status to be returned.
+	Status *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	// GRPCStatus defines a GRPC status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific GRPC status to be returned.
+	GRPCStatus *GRPCStatus `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // SetDefaults Default values for a WRRService.
 func (w *WRRService) SetDefaults() {
 	defaultWeight := 1
 	w.Weight = &defaultWeight
+}
+
+// +k8s:deepcopy-gen=true
+
+type GRPCStatus struct {
+	Code codes.Code `json:"code,omitempty" toml:"code,omitempty" yaml:"code,omitempty" export:"true"`
+	Msg  string     `json:"msg,omitempty" toml:"msg,omitempty" yaml:"msg,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -157,10 +191,20 @@ type Cookie struct {
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
-	// MaxAge indicates the number of seconds until the cookie expires.
+	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.
 	// When set to zero, the cookie never expires.
 	MaxAge int `json:"maxAge,omitempty" toml:"maxAge,omitempty" yaml:"maxAge,omitempty" export:"true"`
+	// Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
+	// When not provided the cookie will be sent on every request to the domain.
+	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
+	Path *string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+}
+
+// SetDefaults set the default values for a Cookie.
+func (c *Cookie) SetDefaults() {
+	defaultPath := "/"
+	c.Path = &defaultPath
 }
 
 // +k8s:deepcopy-gen=true
@@ -226,15 +270,13 @@ func (r *ResponseForwarding) SetDefaults() {
 
 // Server holds the server configuration.
 type Server struct {
-	URL    string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
-	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" label:"weight"`
-	Scheme string `json:"-" toml:"-" yaml:"-" file:"-"`
-	Port   string `json:"-" toml:"-" yaml:"-" file:"-"`
-}
-
-// SetDefaults Default values for a Server.
-func (s *Server) SetDefaults() {
-	s.Scheme = "http"
+	URL          string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty"`
+	Weight       *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+	PreservePath bool   `json:"preservePath,omitempty" toml:"preservePath,omitempty" yaml:"preservePath,omitempty" export:"true"`
+	Fenced       bool   `json:"fenced,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+	// Scheme can only be defined with label Providers.
+	Scheme string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
+	Port   string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -250,7 +292,7 @@ type ServerHealthCheck struct {
 	Interval        ptypes.Duration   `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	Timeout         ptypes.Duration   `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	FollowRedirects *bool             `json:"followRedirects" toml:"followRedirects" yaml:"followRedirects" export:"true"`
+	FollowRedirects *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers         map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 }
 

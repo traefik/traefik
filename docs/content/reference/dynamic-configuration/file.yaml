@@ -25,6 +25,10 @@ http:
             sans:
               - foobar
               - foobar
+      observability:
+        accessLogs: true
+        tracing: true
+        metrics: true
     Router1:
       entryPoints:
         - foobar
@@ -48,6 +52,10 @@ http:
             sans:
               - foobar
               - foobar
+      observability:
+        accessLogs: true
+        tracing: true
+        metrics: true
   services:
     Service01:
       failover:
@@ -63,11 +71,14 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            path: foobar
         servers:
           - url: foobar
             weight: 42
+            preservePath: true
           - url: foobar
             weight: 42
+            preservePath: true
         healthCheck:
           scheme: foobar
           mode: foobar
@@ -89,6 +100,7 @@ http:
     Service03:
       mirroring:
         service: foobar
+        mirrorBody: true
         maxBodySize: 42
         mirrors:
           - name: foobar
@@ -110,6 +122,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            path: foobar
         healthCheck: {}
   middlewares:
     Middleware01:
@@ -152,6 +165,9 @@ http:
           - foobar
           - foobar
         minResponseBodyBytes: 42
+        encodings:
+          - foobar
+          - foobar
         defaultEncoding: foobar
     Middleware07:
       contentType:
@@ -192,6 +208,11 @@ http:
         addAuthCookiesToResponse:
           - foobar
           - foobar
+        headerField: foobar
+        forwardBody: true
+        maxBodySize: 42
+        preserveLocationHeader: true
+        preserveRequestMethod: true
     Middleware11:
       grpcWeb:
         allowOrigins:
@@ -242,6 +263,7 @@ http:
         browserXssFilter: true
         customBrowserXSSValue: foobar
         contentSecurityPolicy: foobar
+        contentSecurityPolicyReportOnly: foobar
         publicKey: foobar
         referrerPolicy: foobar
         permissionsPolicy: foobar
@@ -261,6 +283,7 @@ http:
           excludedIPs:
             - foobar
             - foobar
+          ipv6Subnet: 42
         rejectStatusCode: 42
     Middleware14:
       ipWhiteList:
@@ -272,6 +295,7 @@ http:
           excludedIPs:
             - foobar
             - foobar
+          ipv6Subnet: 42
     Middleware15:
       inFlightReq:
         amount: 42
@@ -281,6 +305,7 @@ http:
             excludedIPs:
               - foobar
               - foobar
+            ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
     Middleware16:
@@ -327,6 +352,7 @@ http:
             excludedIPs:
               - foobar
               - foobar
+            ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
     Middleware19:

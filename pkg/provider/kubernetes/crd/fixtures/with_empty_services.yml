@@ -13,5 +13,5 @@ spec:
       kind: Rule
       priority: 12
       services:
-        - name: whoami-without-endpoints-subsets
+        - name: whoami-without-endpointslice-endpoints
           port: 80

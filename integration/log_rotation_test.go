@@ -24,7 +24,7 @@ const traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
 // Log rotation integration test suite.
 type LogRotationSuite struct{ BaseSuite }
 
-func TestLogRorationSuite(t *testing.T) {
+func TestLogRotationSuite(t *testing.T) {
 	suite.Run(t, new(LogRotationSuite))
 }
 

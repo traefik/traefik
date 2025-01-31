@@ -13,9 +13,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -51,15 +53,16 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		}
 
 		cb := configBuilder{
-			client:                    client,
-			allowCrossNamespace:       p.AllowCrossNamespace,
-			allowExternalNameServices: p.AllowExternalNameServices,
-			allowEmptyServices:        p.AllowEmptyServices,
-			NativeLBByDefault:         p.NativeLBByDefault,
+			client:                       client,
+			allowCrossNamespace:          p.AllowCrossNamespace,
+			allowExternalNameServices:    p.AllowExternalNameServices,
+			allowEmptyServices:           p.AllowEmptyServices,
+			nativeLBByDefault:            p.NativeLBByDefault,
+			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
-			if route.Kind != "Rule" {
+			if len(route.Kind) > 0 && route.Kind != "Rule" {
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
 				continue
 			}
@@ -111,12 +114,13 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			r := &dynamic.Router{
-				Middlewares: mds,
-				Priority:    route.Priority,
-				RuleSyntax:  route.Syntax,
-				EntryPoints: ingressRoute.Spec.EntryPoints,
-				Rule:        route.Match,
-				Service:     serviceName,
+				Middlewares:   mds,
+				Priority:      route.Priority,
+				RuleSyntax:    route.Syntax,
+				EntryPoints:   ingressRoute.Spec.EntryPoints,
+				Rule:          route.Match,
+				Service:       serviceName,
+				Observability: route.Observability,
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -199,11 +203,12 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 }
 
 type configBuilder struct {
-	client                    Client
-	allowCrossNamespace       bool
-	allowExternalNameServices bool
-	allowEmptyServices        bool
-	NativeLBByDefault         bool
+	client                       Client
+	allowCrossNamespace          bool
+	allowExternalNameServices    bool
+	allowEmptyServices           bool
+	nativeLBByDefault            bool
+	disableClusterScopeResources bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -246,10 +251,28 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		})
 	}
 
+	var sticky *dynamic.Sticky
+	if tService.Weighted.Sticky != nil && tService.Weighted.Sticky.Cookie != nil {
+		sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{
+				Name:     tService.Weighted.Sticky.Cookie.Name,
+				Secure:   tService.Weighted.Sticky.Cookie.Secure,
+				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
+				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
+				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
+			},
+		}
+		sticky.Cookie.SetDefaults()
+
+		if tService.Weighted.Sticky.Cookie.Path != nil {
+			sticky.Cookie.Path = tService.Weighted.Sticky.Cookie.Path
+		}
+	}
+
 	conf[id] = &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
 			Services: wrrServices,
-			Sticky:   tService.Weighted.Sticky,
+			Sticky:   sticky,
 		},
 	}
 	return nil
@@ -288,6 +311,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		Mirroring: &dynamic.Mirroring{
 			Service:     fullNameMain,
 			Mirrors:     mirrorServices,
+			MirrorBody:  tService.Spec.Mirroring.MirrorBody,
 			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
 		},
 	}
@@ -306,6 +330,36 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb.SetDefaults()
 	lb.Servers = servers
 
+	if svc.HealthCheck != nil {
+		lb.HealthCheck = &dynamic.ServerHealthCheck{
+			Scheme:   svc.HealthCheck.Scheme,
+			Path:     svc.HealthCheck.Path,
+			Method:   svc.HealthCheck.Method,
+			Status:   svc.HealthCheck.Status,
+			Port:     svc.HealthCheck.Port,
+			Hostname: svc.HealthCheck.Hostname,
+			Headers:  svc.HealthCheck.Headers,
+		}
+		lb.HealthCheck.SetDefaults()
+
+		if svc.HealthCheck.FollowRedirects != nil {
+			lb.HealthCheck.FollowRedirects = svc.HealthCheck.FollowRedirects
+		}
+		if svc.HealthCheck.Mode != "http" {
+			lb.HealthCheck.Mode = svc.HealthCheck.Mode
+		}
+		if svc.HealthCheck.Interval != nil {
+			if err := lb.HealthCheck.Interval.Set(svc.HealthCheck.Interval.String()); err != nil {
+				return nil, err
+			}
+		}
+		if svc.HealthCheck.Timeout != nil {
+			if err := lb.HealthCheck.Timeout.Set(svc.HealthCheck.Timeout.String()); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
 	if lb.PassHostHeader == nil {
@@ -320,7 +374,22 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		}
 	}
 
-	lb.Sticky = svc.Sticky
+	if svc.Sticky != nil && svc.Sticky.Cookie != nil {
+		lb.Sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{
+				Name:     svc.Sticky.Cookie.Name,
+				Secure:   svc.Sticky.Cookie.Secure,
+				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
+				SameSite: svc.Sticky.Cookie.SameSite,
+				MaxAge:   svc.Sticky.Cookie.MaxAge,
+			},
+		}
+		lb.Sticky.Cookie.SetDefaults()
+
+		if svc.Sticky.Cookie.Path != nil {
+			lb.Sticky.Cookie.Path = svc.Sticky.Cookie.Path
+		}
+	}
 
 	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
 	if err != nil {
@@ -330,7 +399,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c *configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
+func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
 	if serversTransportName == "" {
 		return "", nil
 	}
@@ -379,7 +448,10 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return nil, err
 	}
 
-	var servers []dynamic.Server
+	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
+		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
+	}
+
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
 			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, sanitizedName)
@@ -392,12 +464,10 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port)))
 
-		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-		}), nil
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, nil
 	}
 
-	nativeLB := c.NativeLBByDefault
+	nativeLB := c.nativeLBByDefault
 	if svc.NativeLB != nil {
 		nativeLB = *svc.NativeLB
 	}
@@ -415,27 +485,58 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
 	}
 
-	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
-	if endpointsErr != nil {
-		return nil, endpointsErr
-	}
-	if !endpointsExists {
-		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
-	}
+	var servers []dynamic.Server
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		if c.disableClusterScopeResources {
+			return nil, errors.New("nodes lookup is disabled")
+		}
 
-	if len(endpoints.Subsets) == 0 && !c.allowEmptyServices {
-		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
-	}
+		nodes, nodesExists, nodesErr := c.client.GetNodes()
+		if nodesErr != nil {
+			return nil, nodesErr
+		}
+		if !nodesExists || len(nodes) == 0 {
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", namespace, sanitizedName)
+		}
 
-	for _, subset := range endpoints.Subsets {
-		var port int32
-		for _, p := range subset.Ports {
-			if svcPort.Name == p.Name {
-				port = p.Port
-				break
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, node := range nodes {
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == corev1.NodeInternalIP {
+					hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort)))
+
+					servers = append(servers, dynamic.Server{
+						URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+					})
+				}
 			}
 		}
 
+		if len(servers) == 0 {
+			return nil, fmt.Errorf("no servers were generated for service %s in namespace", sanitizedName)
+		}
+
+		return servers, nil
+	}
+
+	endpointSlices, err := c.client.GetEndpointSlicesForService(namespace, sanitizedName)
+	if err != nil {
+		return nil, fmt.Errorf("getting endpointslices: %w", err)
+	}
+
+	addresses := map[string]struct{}{}
+	for _, endpointSlice := range endpointSlices {
+		var port int32
+		for _, p := range endpointSlice.Ports {
+			if svcPort.Name == *p.Name {
+				port = *p.Port
+				break
+			}
+		}
 		if port == 0 {
 			continue
 		}
@@ -445,13 +546,27 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			return nil, err
 		}
 
-		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+		for _, endpoint := range endpointSlice.Endpoints {
+			if !k8s.EndpointServing(endpoint) {
+				continue
+			}
 
-			servers = append(servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-			})
+			for _, address := range endpoint.Addresses {
+				if _, ok := addresses[address]; ok {
+					continue
+				}
+
+				addresses[address] = struct{}{}
+				servers = append(servers, dynamic.Server{
+					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+				})
+			}
 		}
+	}
+
+	if len(servers) == 0 && !c.allowEmptyServices {
+		return nil, fmt.Errorf("no servers found for %s/%s", namespace, sanitizedName)
 	}
 
 	return servers, nil

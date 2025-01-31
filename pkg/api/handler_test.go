@@ -38,7 +38,7 @@ func TestHandler_RawData(t *testing.T) {
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
 							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",

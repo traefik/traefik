@@ -20,6 +20,10 @@
         [[http.routers.Router0.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [http.routers.Router0.observability]
+        accessLogs = true
+        tracing = true
+        metrics = true
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -38,6 +42,10 @@
         [[http.routers.Router1.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [http.routers.Router1.observability]
+        accessLogs = true
+        tracing = true
+        metrics = true
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -55,14 +63,17 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            path = "foobar"
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
           weight = 42
+          preservePath = true
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
           weight = 42
+          preservePath = true
         [http.services.Service02.loadBalancer.healthCheck]
           scheme = "foobar"
           mode = "foobar"
@@ -82,6 +93,7 @@
     [http.services.Service03]
       [http.services.Service03.mirroring]
         service = "foobar"
+        mirrorBody = true
         maxBodySize = 42
 
         [[http.services.Service03.mirroring.mirrors]]
@@ -109,6 +121,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            path = "foobar"
         [http.services.Service04.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
@@ -143,6 +156,7 @@
         excludedContentTypes = ["foobar", "foobar"]
         includedContentTypes = ["foobar", "foobar"]
         minResponseBodyBytes = 42
+        encodings = ["foobar", "foobar"]
         defaultEncoding = "foobar"
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]
@@ -167,6 +181,11 @@
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
+        headerField = "foobar"
+        forwardBody = true
+        maxBodySize = 42
+        preserveLocationHeader = true
+        preserveRequestMethod = true
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
@@ -198,6 +217,7 @@
         browserXssFilter = true
         customBrowserXSSValue = "foobar"
         contentSecurityPolicy = "foobar"
+        contentSecurityPolicyReportOnly = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
         permissionsPolicy = "foobar"
@@ -223,12 +243,14 @@
         [http.middlewares.Middleware13.ipAllowList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
     [http.middlewares.Middleware14]
       [http.middlewares.Middleware14.ipWhiteList]
         sourceRange = ["foobar", "foobar"]
         [http.middlewares.Middleware14.ipWhiteList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
     [http.middlewares.Middleware15]
       [http.middlewares.Middleware15.inFlightReq]
         amount = 42
@@ -238,6 +260,7 @@
           [http.middlewares.Middleware15.inFlightReq.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
     [http.middlewares.Middleware16]
       [http.middlewares.Middleware16.passTLSClientCert]
         pem = true
@@ -282,6 +305,7 @@
           [http.middlewares.Middleware18.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
     [http.middlewares.Middleware19]
       [http.middlewares.Middleware19.redirectRegex]
         regex = "foobar"

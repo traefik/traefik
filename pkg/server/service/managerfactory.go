@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/api"
 	"github.com/traefik/traefik/v3/pkg/api/dashboard"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
@@ -17,7 +18,8 @@ import (
 type ManagerFactory struct {
 	observabilityMgr *middleware.ObservabilityMgr
 
-	roundTripperManager *RoundTripperManager
+	transportManager *TransportManager
+	proxyBuilder     ProxyBuilder
 
 	api              func(configuration *runtime.Configuration) http.Handler
 	restHandler      http.Handler
@@ -30,22 +32,26 @@ type ManagerFactory struct {
 }
 
 // NewManagerFactory creates a new ManagerFactory.
-func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, observabilityMgr *middleware.ObservabilityMgr, roundTripperManager *RoundTripperManager, acmeHTTPHandler http.Handler) *ManagerFactory {
+func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, observabilityMgr *middleware.ObservabilityMgr, transportManager *TransportManager, proxyBuilder ProxyBuilder, acmeHTTPHandler http.Handler) *ManagerFactory {
 	factory := &ManagerFactory{
-		observabilityMgr:    observabilityMgr,
-		routinesPool:        routinesPool,
-		roundTripperManager: roundTripperManager,
-		acmeHTTPHandler:     acmeHTTPHandler,
+		observabilityMgr: observabilityMgr,
+		routinesPool:     routinesPool,
+		transportManager: transportManager,
+		proxyBuilder:     proxyBuilder,
+		acmeHTTPHandler:  acmeHTTPHandler,
 	}
 
 	if staticConfiguration.API != nil {
 		apiRouterBuilder := api.NewBuilder(staticConfiguration)
 
 		if staticConfiguration.API.Dashboard {
-			factory.dashboardHandler = dashboard.Handler{}
+			factory.dashboardHandler = dashboard.Handler{BasePath: staticConfiguration.API.BasePath}
 			factory.api = func(configuration *runtime.Configuration) http.Handler {
 				router := apiRouterBuilder(configuration).(*mux.Router)
-				dashboard.Append(router, nil)
+				if err := dashboard.Append(router, staticConfiguration.API.BasePath, nil); err != nil {
+					log.Error().Err(err).Msg("Error appending dashboard to API router")
+				}
+
 				return router
 			}
 		} else {
@@ -72,13 +78,12 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 }
 
 // Build creates a service manager.
-func (f *ManagerFactory) Build(configuration *runtime.Configuration) *InternalHandlers {
-	svcManager := NewManager(configuration.Services, f.observabilityMgr, f.routinesPool, f.roundTripperManager)
-
+func (f *ManagerFactory) Build(configuration *runtime.Configuration) *Manager {
 	var apiHandler http.Handler
 	if f.api != nil {
 		apiHandler = f.api(configuration)
 	}
 
-	return NewInternalHandlers(svcManager, apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
+	internalHandlers := NewInternalHandlers(apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
+	return NewManager(configuration.Services, f.observabilityMgr, f.routinesPool, f.transportManager, f.proxyBuilder, internalHandlers)
 }

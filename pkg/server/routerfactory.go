@@ -21,8 +21,9 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP []string
-	entryPointsUDP []string
+	entryPointsTCP  []string
+	entryPointsUDP  []string
+	allowACMEByPass map[string]bool
 
 	managerFactory *service.ManagerFactory
 
@@ -40,9 +41,20 @@ type RouterFactory struct {
 func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager,
 	observabilityMgr *middleware.ObservabilityMgr, pluginBuilder middleware.PluginsBuilder, dialerManager *tcp.DialerManager,
 ) *RouterFactory {
+	handlesTLSChallenge := false
+	for _, resolver := range staticConfiguration.CertificatesResolvers {
+		if resolver.ACME != nil && resolver.ACME.TLSChallenge != nil {
+			handlesTLSChallenge = true
+			break
+		}
+	}
+
+	allowACMEByPass := map[string]bool{}
 	var entryPointsTCP, entryPointsUDP []string
-	for name, cfg := range staticConfiguration.EntryPoints {
-		protocol, err := cfg.GetProtocol()
+	for name, ep := range staticConfiguration.EntryPoints {
+		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
+
+		protocol, err := ep.GetProtocol()
 		if err != nil {
 			// Should never happen because Traefik should not start if protocol is invalid.
 			log.Error().Err(err).Msg("Invalid protocol")
@@ -63,6 +75,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		tlsManager:       tlsManager,
 		pluginBuilder:    pluginBuilder,
 		dialerManager:    dialerManager,
+		allowACMEByPass:  allowACMEByPass,
 	}
 }
 
@@ -94,6 +107,12 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager)
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
+
+	for ep, r := range routersTCP {
+		if allowACMEByPass, ok := f.allowACMEByPass[ep]; ok && allowACMEByPass {
+			r.EnableACMETLSPassthrough()
+		}
+	}
 
 	// UDP
 	svcUDPManager := udpsvc.NewManager(rtConf)

@@ -2,22 +2,29 @@ package metrics
 
 import (
 	"context"
+	"net"
 	"strings"
 	"time"
 
 	"github.com/go-kit/kit/metrics/dogstatsd"
+	"github.com/go-kit/kit/util/conn"
+	gokitlog "github.com/go-kit/log"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
+const (
+	unixAddressPrefix         = "unix://"
+	unixAddressDatagramPrefix = "unixgram://"
+	unixAddressStreamPrefix   = "unixstream://"
+)
+
 var (
 	datadogClient         *dogstatsd.Dogstatsd
 	datadogLoopCancelFunc context.CancelFunc
 )
-
-const unixAddressPrefix = "unix://"
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
@@ -58,9 +65,10 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		config.Prefix = defaultMetricsPrefix
 	}
 
-	datadogClient = dogstatsd.New(config.Prefix+".", logs.NewGoKitWrapper(log.Logger.With().Str(logs.MetricsProviderName, "datadog").Logger()))
+	datadogLogger := logs.NewGoKitWrapper(log.Logger.With().Str(logs.MetricsProviderName, "datadog").Logger())
+	datadogClient = dogstatsd.New(config.Prefix+".", datadogLogger)
 
-	initDatadogClient(ctx, config)
+	initDatadogClient(ctx, config, datadogLogger)
 
 	registry := &standardRegistry{
 		configReloadsCounter:           datadogClient.NewCounter(ddConfigReloadsName, 1.0),
@@ -101,7 +109,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	return registry
 }
 
-func initDatadogClient(ctx context.Context, config *types.Datadog) {
+func initDatadogClient(ctx context.Context, config *types.Datadog, logger gokitlog.LoggerFunc) {
 	network, address := parseDatadogAddress(config.Address)
 
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
@@ -110,8 +118,36 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 		ticker := time.NewTicker(time.Duration(config.PushInterval))
 		defer ticker.Stop()
 
-		datadogClient.SendLoop(ctx, ticker.C, network, address)
+		dialer := func(network, address string) (net.Conn, error) {
+			switch network {
+			case "unix":
+				// To mimic the Datadog client when the network is unix we will try to guess the UDS type.
+				newConn, err := net.Dial("unixgram", address)
+				if err != nil && strings.Contains(err.Error(), "protocol wrong type for socket") {
+					return net.Dial("unix", address)
+				}
+				return newConn, err
+
+			case "unixgram":
+				return net.Dial("unixgram", address)
+
+			case "unixstream":
+				return net.Dial("unix", address)
+
+			default:
+				return net.Dial(network, address)
+			}
+		}
+		datadogClient.WriteLoop(ctx, ticker.C, conn.NewManager(dialer, network, address, time.After, logger))
 	})
+}
+
+// StopDatadog stops the Datadog metrics pusher.
+func StopDatadog() {
+	if datadogLoopCancelFunc != nil {
+		datadogLoopCancelFunc()
+		datadogLoopCancelFunc = nil
+	}
 }
 
 func parseDatadogAddress(address string) (string, string) {
@@ -122,6 +158,12 @@ func parseDatadogAddress(address string) (string, string) {
 	case strings.HasPrefix(address, unixAddressPrefix):
 		network = "unix"
 		addr = address[len(unixAddressPrefix):]
+	case strings.HasPrefix(address, unixAddressDatagramPrefix):
+		network = "unixgram"
+		addr = address[len(unixAddressDatagramPrefix):]
+	case strings.HasPrefix(address, unixAddressStreamPrefix):
+		network = "unixstream"
+		addr = address[len(unixAddressStreamPrefix):]
 	case address != "":
 		addr = address
 	default:
@@ -129,12 +171,4 @@ func parseDatadogAddress(address string) (string, string) {
 	}
 
 	return network, addr
-}
-
-// StopDatadog stops the Datadog metrics pusher.
-func StopDatadog() {
-	if datadogLoopCancelFunc != nil {
-		datadogLoopCancelFunc()
-		datadogLoopCancelFunc = nil
-	}
 }

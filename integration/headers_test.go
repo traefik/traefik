@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -18,6 +19,11 @@ type HeadersSuite struct{ BaseSuite }
 
 func TestHeadersSuite(t *testing.T) {
 	suite.Run(t, new(HeadersSuite))
+}
+
+func (s *HeadersSuite) TearDownTest() {
+	s.displayTraefikLogFile(traefikTestLogFile)
+	_ = os.Remove(traefikTestAccessLogFile)
 }
 
 func (s *HeadersSuite) TestSimpleConfiguration() {
@@ -60,6 +66,53 @@ func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
+}
+
+func (s *HeadersSuite) TestConnectionHopByHop() {
+	file := s.adaptFile("fixtures/headers/connection_hop_by_hop_headers.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, found := r.Header["X-Forwarded-For"]
+		assert.True(s.T(), found)
+		xHost, found := r.Header["X-Forwarded-Host"]
+		assert.True(s.T(), found)
+		assert.Equal(s.T(), "localhost", xHost[0])
+
+		_, found = r.Header["Foo"]
+		assert.False(s.T(), found)
+		_, found = r.Header["Bar"]
+		assert.False(s.T(), found)
+	})
+
+	listener, err := net.Listen("tcp", "127.0.0.1:9000")
+	require.NoError(s.T(), err)
+
+	ts := &httptest.Server{
+		Listener: listener,
+		Config:   &http.Server{Handler: handler},
+	}
+	ts.Start()
+	defer ts.Close()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "test.localhost"
+	req.Header = http.Header{
+		"Connection":       {"Foo,Bar,X-Forwarded-For,X-Forwarded-Host"},
+		"Foo":              {"bar"},
+		"Bar":              {"foo"},
+		"X-Forwarded-Host": {"localhost"},
+	}
+
+	err = try.Request(req, time.Second, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+
+	accessLog, err := os.ReadFile(traefikTestAccessLogFile)
+	require.NoError(s.T(), err)
+
+	assert.Contains(s.T(), string(accessLog), "\"request_Foo\":\"bar\"")
+	assert.NotContains(s.T(), string(accessLog), "\"request_Bar\":\"\"")
 }
 
 func (s *HeadersSuite) TestCorsResponses() {

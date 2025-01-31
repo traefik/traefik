@@ -50,35 +50,41 @@ spec:
   clusterIP: 10.0.0.1
 
 ---
-kind: Endpoints
-apiversion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: service1
+  name: service1-abc
   namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
 
-subsets:
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
   - addresses:
-      - ip: 10.30.0.1
-    ports:
-      - port: 8080
-  - addresses:
-      - ip: 10.41.0.1
-    ports:
-      - port: 8080
+      - 10.30.0.1
+      - 10.41.0.1
+    conditions:
+      ready: true
 
 ---
-kind: Endpoints
-apiversion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: service2
+  name: service2-abc
   namespace: testing
+  labels:
+    kubernetes.io/service-name: service2
 
-subsets:
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-    ports:
-      - port: 8080
-  - addresses:
-      - ip: 10.21.0.1
-    ports:
-      - port: 8080
+      - 10.10.0.1
+      - 10.21.0.1
+    conditions:
+      ready: true

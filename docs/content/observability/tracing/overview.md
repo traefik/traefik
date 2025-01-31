@@ -85,36 +85,36 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    sampleRate = 0.2
+  sampleRate = 0.2
 ```
 
 ```bash tab="CLI"
 --tracing.sampleRate=0.2
 ```
 
-#### `globalAttributes`
+#### `resourceAttributes`
 
 _Optional, Default=empty_
 
-Applies a list of shared key:value attributes on all spans.
+Defines additional resource attributes to be sent to the collector.
 
 ```yaml tab="File (YAML)"
 tracing:
-  globalAttributes:
+  resourceAttributes:
     attr1: foo
     attr2: bar
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-    [tracing.globalAttributes]
-      attr1 = "foo"
-      attr2 = "bar"
+  [tracing.resourceAttributes]
+    attr1 = "foo"
+    attr2 = "bar"
 ```
 
 ```bash tab="CLI"
---tracing.globalAttributes.attr1=foo
---tracing.globalAttributes.attr2=bar
+--tracing.resourceAttributes.attr1=foo
+--tracing.resourceAttributes.attr2=bar
 ```
 
 #### `capturedRequestHeaders`
@@ -132,7 +132,7 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    capturedRequestHeaders = ["X-CustomHeader"]
+  capturedRequestHeaders = ["X-CustomHeader"]
 ```
 
 ```bash tab="CLI"
@@ -154,9 +154,32 @@ tracing:
 
 ```toml tab="File (TOML)"
 [tracing]
-    capturedResponseHeaders = ["X-CustomHeader"]
+  capturedResponseHeaders = ["X-CustomHeader"]
 ```
 
 ```bash tab="CLI"
 --tracing.capturedResponseHeaders[0]=X-CustomHeader
+```
+
+#### `safeQueryParams`
+
+_Optional, Default={}_
+
+By default, all query parameters are redacted.
+Defines the list of query parameters to not redact.
+
+```yaml tab="File (YAML)"
+tracing:
+  safeQueryParams:
+    - bar
+    - buz
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  safeQueryParams = ["bar", "buz"]
+```
+
+```bash tab="CLI"
+--tracing.safeQueryParams=bar,buz
 ```

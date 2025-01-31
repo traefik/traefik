@@ -43,9 +43,21 @@ const capturedData key = "capturedData"
 // It satisfies the alice.Constructor type.
 func Wrap(next http.Handler) (http.Handler, error) {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		c := &Capture{}
-		newRW, newReq := c.renew(rw, req)
-		next.ServeHTTP(newRW, newReq)
+		capt, err := FromContext(req.Context())
+		if err != nil {
+			c := &Capture{}
+			newRW, newReq := c.renew(rw, req)
+			next.ServeHTTP(newRW, newReq)
+			return
+		}
+
+		if capt.NeedsReset(rw) {
+			newRW, newReq := capt.renew(rw, req)
+			next.ServeHTTP(newRW, newReq)
+			return
+		}
+
+		next.ServeHTTP(rw, req)
 	}), nil
 }
 

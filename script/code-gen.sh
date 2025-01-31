@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2046
 
 set -e -o pipefail
 
+# shellcheck disable=SC1091 # Cannot check source of this file
 source /go/src/k8s.io/code-generator/kube_codegen.sh
 
 git config --global --add safe.directory "/go/src/${PROJECT_MODULE}"

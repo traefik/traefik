@@ -29,10 +29,16 @@ which in turn will create the resulting routers, services, handlers, etc.
           - ""
         resources:
           - services
-          - endpoints
           - secrets
         verbs:
           - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
+        verbs:
           - list
           - watch
       - apiGroups:
@@ -124,7 +130,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.0
+              image: traefik:v3.3
               args:
                 - --entryPoints.web.address=:80
                 - --providers.kubernetesingress
@@ -223,10 +229,18 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/router.priority: "42"
     ```
 
+??? info "`traefik.ingress.kubernetes.io/router.rulesyntax`"
+
+    See [rule syntax](../routers/index.md#rulesyntax) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/router.pathmatcher`"
 
     Overrides the default router rule type used for a path.
-    Only path-related matcher name can be specified: `Path`, `PathPrefix`.
+    Only path-related matcher name should be specified: `Path`, `PathPrefix` or `PathRegexp`.
 
     Default `PathPrefix`
 
@@ -274,6 +288,30 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/router.tls.options: foobar@file
     ```
 
+??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: true
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.metrics: true
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.tracing: true
+    ```
+
 #### On Service
 
 ??? info "`traefik.ingress.kubernetes.io/service.nativelb`"
@@ -285,6 +323,16 @@ which in turn will create the resulting routers, services, handlers, etc.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.nativelb: "true"
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/service.nodeportlb`"
+
+    Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+    It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+    By default, NodePortLB is false.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.nodeportlb: "true"
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
@@ -359,6 +407,19 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
     ```
 
+??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.path`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.sticky.cookie.path: /foobar
+    ```
+
+## Stickiness and load-balancing
+
+When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
+Fenced servers can still process requests tied to sticky cookies, while they are terminating.
+
 ## Path Types on Kubernetes 1.18+
 
 If the Kubernetes cluster version is 1.18+,
@@ -417,8 +478,15 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
@@ -512,7 +580,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.0
+              image: traefik:v3.3
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls
@@ -602,8 +670,15 @@ For more options, please refer to the available [annotations](#on-ingress).
           - ""
         resources:
           - services
-          - endpoints
           - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - discovery.k8s.io
+        resources:
+          - endpointslices
         verbs:
           - get
           - list
@@ -698,7 +773,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.0
+              image: traefik:v3.3
               args:
                 - --entryPoints.websecure.address=:443
                 - --providers.kubernetesingress

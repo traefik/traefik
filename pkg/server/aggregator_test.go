@@ -9,6 +9,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
+func pointer[T any](v T) *T { return &v }
+
 func Test_mergeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -558,9 +560,10 @@ func Test_applyModel(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"test": {
-							EntryPoints: []string{"websecure"},
-							Middlewares: []string{"test"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							EntryPoints:   []string{"websecure"},
+							Middlewares:   []string{"test"},
+							TLS:           &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{},
 						},
 					},
 					Middlewares: make(map[string]*dynamic.Middleware),
@@ -569,6 +572,60 @@ func Test_applyModel(t *testing.T) {
 						"websecure@internal": {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "with model, one entry point with observability",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: dynamic.RouterObservabilityConfig{
+								AccessLogs: pointer(true),
+								Tracing:    pointer(true),
+								Metrics:    pointer(true),
+							},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure"},
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: pointer(true),
+								Tracing:    pointer(true),
+								Metrics:    pointer(true),
+							},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: dynamic.RouterObservabilityConfig{
+								AccessLogs: pointer(true),
+								Tracing:    pointer(true),
+								Metrics:    pointer(true),
+							},
 						},
 					},
 				},
@@ -601,6 +658,11 @@ func Test_applyModel(t *testing.T) {
 							EntryPoints: []string{"websecure"},
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{CertResolver: "router"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: nil,
+								Tracing:    nil,
+								Metrics:    nil,
+							},
 						},
 					},
 					Middlewares: make(map[string]*dynamic.Middleware),
@@ -640,9 +702,10 @@ func Test_applyModel(t *testing.T) {
 							EntryPoints: []string{"web"},
 						},
 						"websecure-test": {
-							EntryPoints: []string{"websecure"},
-							Middlewares: []string{"test"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							EntryPoints:   []string{"websecure"},
+							Middlewares:   []string{"test"},
+							TLS:           &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{},
 						},
 					},
 					Middlewares: make(map[string]*dynamic.Middleware),

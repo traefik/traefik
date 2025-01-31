@@ -96,6 +96,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			return clientConnectionStates
 		}))
 	}
+
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -113,7 +114,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			OpenConnectionsGauge().
 			With("entrypoint", entryPointName, "protocol", "TCP")
 
-		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, openConnectionsGauge)
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, entryPointName, config, hostResolverConfig, openConnectionsGauge)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -169,31 +170,34 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
+func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker(openConnectionsGauge)
 
-	listener, err := buildListener(ctx, configuration)
+	listener, err := buildListener(ctx, name, config)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
-	rt := &tcprouter.Router{}
+	rt, err := tcprouter.NewRouter()
+	if err != nil {
+		return nil, fmt.Errorf("error preparing tcp router: %w", err)
+	}
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator)
+	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
+	httpsServer, err := createHTTPServer(ctx, listener, config, false, reqDecorator)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3Server, err := newHTTP3Server(ctx, configuration, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
@@ -206,7 +210,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 	return &TCPEntryPoint{
 		listener:               listener,
 		switcher:               tcpSwitcher,
-		transportConfiguration: configuration.Transport,
+		transportConfiguration: config.Transport,
 		tracker:                tracker,
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
@@ -460,17 +464,30 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
-func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listenConfig := newListenConfig(entryPoint)
-	listener, err := listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
-	if err != nil {
-		return nil, fmt.Errorf("error opening listener: %w", err)
+func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
+	var listener net.Listener
+	var err error
+
+	// if we have predefined listener from socket activation
+	if socketActivation.isEnabled() {
+		listener, err = socketActivation.getListener(name)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
+		}
+	}
+
+	if listener == nil {
+		listenConfig := newListenConfig(config)
+		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("error opening listener: %w", err)
+		}
 	}
 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
-	if entryPoint.ProxyProtocol != nil {
-		listener, err = buildProxyProtocolListener(ctx, entryPoint, listener)
+	if config.ProxyProtocol != nil {
+		listener, err = buildProxyProtocolListener(ctx, config, listener)
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
@@ -494,24 +511,31 @@ type connectionTracker struct {
 
 // AddConnection add a connection in the tracked connections list.
 func (c *connectionTracker) AddConnection(conn net.Conn) {
+	defer c.syncOpenConnectionGauge()
+
 	c.connsMu.Lock()
 	c.conns[conn] = struct{}{}
 	c.connsMu.Unlock()
-
-	if c.openConnectionsGauge != nil {
-		c.openConnectionsGauge.Add(1)
-	}
 }
 
 // RemoveConnection remove a connection from the tracked connections list.
 func (c *connectionTracker) RemoveConnection(conn net.Conn) {
+	defer c.syncOpenConnectionGauge()
+
 	c.connsMu.Lock()
 	delete(c.conns, conn)
 	c.connsMu.Unlock()
+}
 
-	if c.openConnectionsGauge != nil {
-		c.openConnectionsGauge.Add(-1)
+// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
+func (c *connectionTracker) syncOpenConnectionGauge() {
+	if c.openConnectionsGauge == nil {
+		return
 	}
+
+	c.connsMu.RLock()
+	c.openConnectionsGauge.Set(float64(len(c.conns)))
+	c.connsMu.RUnlock()
 }
 
 func (c *connectionTracker) isEmpty() bool {
@@ -580,6 +604,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
+		configuration.ForwardedHeaders.Connection,
 		next)
 	if err != nil {
 		return nil, err
@@ -594,23 +619,24 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = contenttype.DisableAutoDetection(handler)
 
+	debugConnection := os.Getenv(debugConnectionEnv) != ""
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
+	}
+
 	if withH2c {
 		handler = h2c.NewHandler(handler, &http2.Server{
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 		})
 	}
 
-	debugConnection := os.Getenv(debugConnectionEnv) != ""
-	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
-	}
-
 	serverHTTP := &http.Server{
-		Handler:      handler,
-		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		Handler:        handler,
+		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {

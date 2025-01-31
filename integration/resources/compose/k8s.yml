@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   server:
-    image: rancher/k3s:v1.20.15-k3s1
+    image: rancher/k3s:v1.21.14-k3s1
     privileged: true
     command:
       - server
@@ -26,7 +26,7 @@ services:
       - ./fixtures/k8s:/var/lib/rancher/k3s/server/manifests
 
   node:
-    image: rancher/k3s:v1.20.15-k3s1
+    image: rancher/k3s:v1.21.14-k3s1
     privileged: true
     environment:
       K3S_TOKEN: somethingtotallyrandom

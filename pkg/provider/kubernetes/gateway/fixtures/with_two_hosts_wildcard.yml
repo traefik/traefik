@@ -37,7 +37,11 @@ spec:
     - "foo.com"
     - "*.foo.com"
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: whoami
           port: 80
           weight: 1

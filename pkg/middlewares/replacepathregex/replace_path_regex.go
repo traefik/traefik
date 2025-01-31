@@ -62,8 +62,8 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		var err error
 		req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 		if err != nil {
-			middlewares.GetLogger(context.Background(), rp.name, typeName).Error().Err(err).Send()
-			observability.SetStatusErrorf(req.Context(), err.Error())
+			middlewares.GetLogger(context.Background(), rp.name, typeName).Error().Msgf("Unable to unescape url raw path %q: %v", req.URL.RawPath, err)
+			observability.SetStatusErrorf(req.Context(), "Unable to unescape url raw path %q: %v", req.URL.RawPath, err)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
