@@ -106,15 +106,16 @@ func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
 		for {
 			select {
 			case <-ctx.Done():
-				// Stop handling events because Traefik is shutting down
 				return
-			default:
-			}
 
-			select {
-			case <-ctx.Done():
-				return
 			case object := <-s.saveDataChan:
+				select {
+				case <-ctx.Done():
+					// Stop handling events because Traefik is shutting down.
+					return
+				default:
+				}
+
 				data, err := json.MarshalIndent(object, "", "  ")
 				if err != nil {
 					logger.Error(err)
