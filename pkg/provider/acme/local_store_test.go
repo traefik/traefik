@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 func TestLocalStore_GetAccount(t *testing.T) {
@@ -45,7 +47,7 @@ func TestLocalStore_GetAccount(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			s := NewLocalStore(test.filename)
+			s := NewLocalStore(test.filename, safe.NewPool(context.Background()))
 
 			account, err := s.GetAccount("test")
 			require.NoError(t, err)
@@ -58,7 +60,7 @@ func TestLocalStore_GetAccount(t *testing.T) {
 func TestLocalStore_SaveAccount(t *testing.T) {
 	acmeFile := filepath.Join(t.TempDir(), "acme.json")
 
-	s := NewLocalStore(acmeFile)
+	s := NewLocalStore(acmeFile, safe.NewPool(context.Background()))
 
 	email := "some@email.com"
 
