@@ -31,7 +31,7 @@ Our starting point is the docker-compose configuration file, to start the k3s cl
 You can start it with:
 
 ```bash
-docker-compose -f k3s.yml up
+docker compose -f k3s.yml up
 ```
 
 ```yaml

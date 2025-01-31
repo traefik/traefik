@@ -1,3 +1,52 @@
+## [v3.3.3](https://github.com/traefik/traefik/tree/v3.3.3) (2025-01-31)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.2...v3.3.3)
+
+**Bug fixes:**
+- **[api]** Do not create observability model by default ([#11476](https://github.com/traefik/traefik/pull/11476) by [rtribotte](https://github.com/rtribotte))
+- **[fastproxy]** Fix content-length header assertion ([#11498](https://github.com/traefik/traefik/pull/11498) by [kevinpollet](https://github.com/kevinpollet))
+- **[fastproxy]** Handle responses without content length header ([#11458](https://github.com/traefik/traefik/pull/11458) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/crd,k8s]** Add missing headerField in Middleware CRD ([#11499](https://github.com/traefik/traefik/pull/11499) by [jspdown](https://github.com/jspdown))
+- **[tracing,accesslogs]** Bring back TraceID and SpanID fields in access logs ([#11450](https://github.com/traefik/traefik/pull/11450) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11502](https://github.com/traefik/traefik/pull/11502) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.3 ([#11491](https://github.com/traefik/traefik/pull/11491) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.20](https://github.com/traefik/traefik/tree/v2.11.20) (2025-01-31)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.19...v2.11.20)
+
+**Bug fixes:**
+- **[acme]** Graceful shutdown for ACME JSON write operation ([#11497](https://github.com/traefik/traefik/pull/11497) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- Change docker-compose to docker compose ([#11496](https://github.com/traefik/traefik/pull/11496) by [khai-pi](https://github.com/khai-pi))
+
+## [v2.11.19](https://github.com/traefik/traefik/tree/v2.11.19) (2025-01-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.18...v2.11.19)
+
+**Bug fixes:**
+- **[middleware]** Changing log message when client cert is not available to debug ([#11453](https://github.com/traefik/traefik/pull/11453) by [Nelwhix](https://github.com/Nelwhix))
+- **[service]** Do not create a logger instance for each proxy ([#11487](https://github.com/traefik/traefik/pull/11487) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Fix auto refresh not clearing on component unmount ([#11477](https://github.com/traefik/traefik/pull/11477) by [DoubleREW](https://github.com/DoubleREW))
+
+**Documentation:**
+- Remove awesome.traefik.io reference in documentation section ([#11435](https://github.com/traefik/traefik/pull/11435) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.3.2](https://github.com/traefik/traefik/tree/v3.3.2) (2025-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.1...v3.3.2)
+
+**Bug fixes:**
+- **[fastproxy]** Do not read response body for HEAD requests ([#11442](https://github.com/traefik/traefik/pull/11442) by [kevinpollet](https://github.com/kevinpollet))
+- **[metrics,tracing,accesslogs]** Fix observability configuration on EntryPoints ([#11446](https://github.com/traefik/traefik/pull/11446) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Set content-type when serving webui index ([#11428](https://github.com/traefik/traefik/pull/11428) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[acme]** Fix deprecated dnsChallenge propagation logging and documentation ([#11433](https://github.com/traefik/traefik/pull/11433) by [thomscode](https://github.com/thomscode))
+- **[acme]** Add missing trailing s to propagation.delayBeforeCheck option ([#11417](https://github.com/traefik/traefik/pull/11417) by [jspiers](https://github.com/jspiers))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11419](https://github.com/traefik/traefik/pull/11419) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.1](https://github.com/traefik/traefik/tree/v3.3.1) (2025-01-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.0...v3.3.1)
 

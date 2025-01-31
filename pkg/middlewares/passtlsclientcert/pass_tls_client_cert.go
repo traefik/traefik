@@ -151,7 +151,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates))
 		} else {
-			logger.Warn().Msg("Tried to extract a certificate on a request without mutual TLS")
+			logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
 		}
 	}
 
@@ -160,7 +160,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates)
 			req.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
 		} else {
-			logger.Warn().Msg("Tried to extract a certificate on a request without mutual TLS")
+			logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
 		}
 	}
 

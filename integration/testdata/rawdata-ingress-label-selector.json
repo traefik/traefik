@@ -8,6 +8,11 @@
 			"rule": "PathPrefix(`/api`)",
 			"ruleSyntax": "v3",
 			"priority": 9223372036854775806,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -25,6 +30,11 @@
 			"rule": "PathPrefix(`/`)",
 			"ruleSyntax": "v3",
 			"priority": 9223372036854775805,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -37,6 +47,11 @@
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"priority": 44,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"web"

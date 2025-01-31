@@ -321,7 +321,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
-			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableAllChecks instead.")
+			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
 			if resolver.ACME.DNSChallenge.Propagation == nil {
 				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}

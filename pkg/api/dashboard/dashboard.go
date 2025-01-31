@@ -29,13 +29,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		assets = webui.FS
 	}
 
-	// allow iframes from traefik domains only
+	// Allow iframes from traefik domains only.
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
-
-	// The content type must be guessed by the file server.
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
-	w.Header().Del("Content-Type")
 
 	if r.RequestURI == "/" {
 		indexTemplate, err := template.ParseFS(assets, "index.html")
@@ -44,6 +40,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 		apiPath := strings.TrimSuffix(h.BasePath, "/") + "/api/"
 		if err = indexTemplate.Execute(w, indexTemplateData{APIUrl: apiPath}); err != nil {
@@ -54,6 +52,10 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	// The content type must be guessed by the file server.
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+	w.Header().Del("Content-Type")
 
 	http.FileServerFS(assets).ServeHTTP(w, r)
 }
@@ -84,13 +86,11 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 	router.Methods(http.MethodGet).
 		Path(dashboardPath).
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// allow iframes from our domains only
+			// Allow iframes from our domains only.
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
 
-			// The content type must be guessed by the file server.
-			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
-			w.Header().Del("Content-Type")
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 			apiPath := strings.TrimSuffix(basePath, "/") + "/api/"
 			if err = indexTemplate.Execute(w, indexTemplateData{APIUrl: apiPath}); err != nil {
@@ -103,7 +103,7 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 	router.Methods(http.MethodGet).
 		PathPrefix(dashboardPath).
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// allow iframes from traefik domains only
+			// Allow iframes from traefik domains only.
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
 
@@ -113,5 +113,6 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 
 			http.StripPrefix(dashboardPath, http.FileServerFS(assets)).ServeHTTP(w, r)
 		})
+
 	return nil
 }
