@@ -125,7 +125,6 @@ func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
 					logger.Error(err)
 				}
 			}
-
 		}
 	})
 }
