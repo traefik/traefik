@@ -114,6 +114,10 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
+	if container.Status != "running" && p.AllowEmptyServices {
+		return nil
+	}
+
 	if container.Health != "" && container.Health != dockertypes.Healthy {
 		return nil
 	}
@@ -136,6 +140,10 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 		configuration.Services[serviceName] = &dynamic.UDPService{
 			LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 		}
+	}
+
+	if container.Status != "running" && p.AllowEmptyServices {
+		return nil
 	}
 
 	if container.Health != "" && container.Health != dockertypes.Healthy {
@@ -162,6 +170,10 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
+	}
+
+	if container.Status != "running" && p.AllowEmptyServices {
+		return nil
 	}
 
 	if container.Health != "" && container.Health != dockertypes.Healthy {
@@ -262,10 +274,14 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.Server{}
-		server.SetDefaults()
+		loadBalancer.Servers = []dynamic.Server{{}}
+	}
 
-		loadBalancer.Servers = []dynamic.Server{server}
+	if loadBalancer.Servers[0].URL != "" {
+		if loadBalancer.Servers[0].Scheme != "" || loadBalancer.Servers[0].Port != "" {
+			return errors.New("defining scheme or port is not allowed when URL is defined")
+		}
+		return nil
 	}
 
 	serverPort := loadBalancer.Servers[0].Port
@@ -280,8 +296,13 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 		return errors.New("port is missing")
 	}
 
-	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(ip, port))
+	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
+	if scheme == "" {
+		scheme = "http"
+	}
+
+	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(ip, port))
 
 	return nil
 }
