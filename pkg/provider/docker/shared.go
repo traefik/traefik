@@ -36,7 +36,7 @@ type Shared struct {
 	defaultRuleTpl *template.Template
 }
 
-func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
+func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string, inspectNonRunningContainers bool) dockerData {
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
@@ -45,7 +45,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 
 	// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
 	// We register only container which are running
-	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
+	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && (containerInspected.ContainerJSONBase.State.Running || inspectNonRunningContainers) {
 		return parseContainer(containerInspected)
 	}
 
@@ -61,6 +61,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 		dData.ID = container.ContainerJSONBase.ID
 		dData.Name = container.ContainerJSONBase.Name
 		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
+		dData.Status = container.ContainerJSONBase.State.Status
 		dData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
