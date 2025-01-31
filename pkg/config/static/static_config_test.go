@@ -77,11 +77,6 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
 					},
-					Observability: &ObservabilityConfig{
-						AccessLogs: true,
-						Tracing:    true,
-						Metrics:    true,
-					},
 				}},
 				Providers: &Providers{},
 			},
@@ -126,11 +121,6 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					HTTP3: nil,
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
-					},
-					Observability: &ObservabilityConfig{
-						AccessLogs: true,
-						Tracing:    true,
-						Metrics:    true,
 					},
 				}},
 				Providers: &Providers{},
@@ -187,11 +177,6 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					HTTP3: nil,
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
-					},
-					Observability: &ObservabilityConfig{
-						AccessLogs: true,
-						Tracing:    true,
-						Metrics:    true,
 					},
 				}},
 				Providers: &Providers{},
@@ -252,11 +237,6 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					HTTP3: nil,
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
-					},
-					Observability: &ObservabilityConfig{
-						AccessLogs: true,
-						Tracing:    true,
-						Metrics:    true,
 					},
 				}},
 				Providers: &Providers{},

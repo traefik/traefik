@@ -8,6 +8,11 @@
 			"rule": "PathPrefix(`/api`)",
 			"ruleSyntax": "v3",
 			"priority": 9223372036854775806,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -25,6 +30,11 @@
 			"rule": "PathPrefix(`/`)",
 			"ruleSyntax": "v3",
 			"priority": 9223372036854775805,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -38,6 +48,11 @@
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
 			"ruleSyntax": "v3",
 			"priority": 100008,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"web"
@@ -52,6 +67,11 @@
 			"ruleSyntax": "v3",
 			"priority": 100008,
 			"tls": {},
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"websecure"
