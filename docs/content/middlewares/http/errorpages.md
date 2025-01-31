@@ -14,7 +14,7 @@ The Errors middleware returns a custom page in lieu of the default, according to
 
 !!! important
 
-    The error page itself is _not_ hosted by Traefik.
+    The error page itself is _not_ hosted by Traefik (however, you may consider using a solution like [error-pages](https://github.com/tarampampam/error-pages) to serve them).
 
 ## Configuration Examples
 
