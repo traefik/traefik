@@ -126,6 +126,8 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 	res := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(res)
 
+	res.Reset()
+
 	res.Header.SetNoDefaultContentType(true)
 
 	for {
@@ -216,7 +218,7 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
-	hasContentLength := res.Header.Peek("Content-Length") != nil
+	hasContentLength := len(res.Header.Peek("Content-Length")) > 0
 
 	if hasContentLength && res.Header.ContentLength() == 0 {
 		return nil
