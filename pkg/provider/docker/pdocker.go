@@ -165,7 +165,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{
+		All: true,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +175,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 	var inspectedContainers []dockerData
 	// get inspect containers
 	for _, c := range containerList {
-		dData := inspectContainers(ctx, dockerClient, c.ID)
+		dData := inspectContainers(ctx, dockerClient, c.ID, p.AllowEmptyServices)
 		if len(dData.Name) == 0 {
 			continue
 		}
