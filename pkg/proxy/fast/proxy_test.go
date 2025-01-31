@@ -307,8 +307,6 @@ func TestHeadRequest(t *testing.T) {
 }
 
 func TestNoContentLengthResponse(t *testing.T) {
-	t.Skip("Waiting for a fix")
-
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
 
