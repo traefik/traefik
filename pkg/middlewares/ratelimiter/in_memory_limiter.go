@@ -15,7 +15,7 @@ type InMemoryRateLimiter struct {
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
 	// For now it is somewhat arbitrarily set to 1/(2*rate).
 	maxDelay time.Duration
-	// each rate limiter for a given source is stored in the buckets ttlmap.
+	// Each rate limiter for a given source is stored in the buckets ttlmap.
 	// To keep this ttlmap constrained in size,
 	// each ratelimiter is "garbage collected" when it is considered expired.
 	// It is considered expired after it hasn't been used for ttl seconds.

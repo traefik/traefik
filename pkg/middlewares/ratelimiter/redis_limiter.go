@@ -74,18 +74,13 @@ func injectClient(r *RedisLimiter, client redisrate.Rediser) *RedisLimiter {
 }
 
 func (r *RedisLimiter) Allow(ctx context.Context, source string) (Result, error) {
-	res, err := r.evaluateScript(
-		ctx,
-		source,
-	)
+	res, err := r.evaluateScript(ctx, source)
 	if err != nil {
 		return Result{}, err
 	}
 
 	if !res.Ok {
-		return Result{
-			Ok: false,
-		}, nil
+		return Result{Ok: false}, nil
 	}
 
 	if res.Delay > r.maxDelay {

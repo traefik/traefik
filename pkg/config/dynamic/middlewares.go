@@ -547,7 +547,7 @@ type RateLimit struct {
 
 // +k8s:deepcopy-gen=true
 
-// Redis is a group of options for redis.
+// Redis is the Redis configuration.
 type Redis struct {
 	Endpoints      []string         `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
 	TLS            *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`

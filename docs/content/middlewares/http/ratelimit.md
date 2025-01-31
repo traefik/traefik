@@ -499,7 +499,7 @@ http:
 
 ### `redis`
 
-Using `redis` to store the tokens in token bucket algorithm. If none are set, the default is to use the in-memory of traefik to store the tokens.
+Enables distributed rate limit using `redis` to store the tokens. If not set, Traefik's in-memory storage is used by default.
 
 #### `redis.endpoints`
 
@@ -551,7 +551,7 @@ http:
 
 _Optional, Default=""_
 
-`username` is the username used to authenticate with the Redis server.
+Specifies the username used to authenticate with the Redis server.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -595,7 +595,7 @@ http:
 
 _Optional, Default=""_
 
-`password` is the password to authenticate against the Redis server.
+Specifies the password to authenticate against the Redis server.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -639,7 +639,7 @@ http:
 
 _Optional, Default=0_
 
-Defines the database to be selected after connecting to the Redis.
+Defines the database to select after connecting to the Redis.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -733,7 +733,7 @@ http:
 _Optional_
 
 `cert` is the path to the public certificate used for the secure connection to Redis.
-When using this option, setting the `key` option is required.
+When this option is set, the `key` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
