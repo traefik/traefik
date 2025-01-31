@@ -496,6 +496,11 @@ spec:
                     description: ForwardBody defines whether to send the request body
                       to the authentication server.
                     type: boolean
+                  headerField:
+                    description: |-
+                      HeaderField defines a header field to store the authenticated user.
+                      More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/forwardauth/#headerfield
+                    type: string
                   maxBodySize:
                     description: MaxBodySize defines the maximum body size in bytes
                       allowed to be forwarded to the authentication server.
