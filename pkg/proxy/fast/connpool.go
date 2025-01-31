@@ -126,8 +126,6 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 	res := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(res)
 
-	res.Reset()
-
 	res.Header.SetNoDefaultContentType(true)
 
 	for {
@@ -181,7 +179,6 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 			}
 
 			res.Reset()
-			res.Header.Reset()
 			res.Header.SetNoDefaultContentType(true)
 
 			continue
