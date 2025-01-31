@@ -499,7 +499,7 @@ spec:
                   headerField:
                     description: |-
                       HeaderField defines a header field to store the authenticated user.
-                      More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/forwardauth/#headerfield
+                      More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/forwardauth/#headerfield
                     type: string
                   maxBodySize:
                     description: MaxBodySize defines the maximum body size in bytes
