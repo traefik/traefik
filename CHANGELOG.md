@@ -1,3 +1,12 @@
+## [v2.11.20](https://github.com/traefik/traefik/tree/v2.11.20) (2025-01-31)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.19...v2.11.20)
+
+**Bug fixes:**
+- **[acme]** Graceful shutdown for ACME JSON write operation ([#11497](https://github.com/traefik/traefik/pull/11497) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- Change docker-compose to docker compose ([#11496](https://github.com/traefik/traefik/pull/11496) by [khai-pi](https://github.com/khai-pi))
+
 ## [v2.11.19](https://github.com/traefik/traefik/tree/v2.11.19) (2025-01-29)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.18...v2.11.19)
 
