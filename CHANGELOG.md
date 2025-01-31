@@ -1,3 +1,14 @@
+## [v2.11.19](https://github.com/traefik/traefik/tree/v2.11.19) (2025-01-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.18...v2.11.19)
+
+**Bug fixes:**
+- **[middleware]** Changing log message when client cert is not available to debug ([#11453](https://github.com/traefik/traefik/pull/11453) by [Nelwhix](https://github.com/Nelwhix))
+- **[service]** Do not create a logger instance for each proxy ([#11487](https://github.com/traefik/traefik/pull/11487) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Fix auto refresh not clearing on component unmount ([#11477](https://github.com/traefik/traefik/pull/11477) by [DoubleREW](https://github.com/DoubleREW))
+
+**Documentation:**
+- Remove awesome.traefik.io reference in documentation section ([#11435](https://github.com/traefik/traefik/pull/11435) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.2](https://github.com/traefik/traefik/tree/v3.3.2) (2025-01-14)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.1...v3.3.2)
 
