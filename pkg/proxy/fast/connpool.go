@@ -179,7 +179,6 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 			}
 
 			res.Reset()
-			res.Header.Reset()
 			res.Header.SetNoDefaultContentType(true)
 
 			continue
@@ -216,13 +215,29 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
-	if res.Header.ContentLength() == 0 {
+	hasContentLength := len(res.Header.Peek("Content-Length")) > 0
+
+	if hasContentLength && res.Header.ContentLength() == 0 {
 		return nil
 	}
 
 	// When a body is not allowed for a given status code the body is ignored.
 	// The connection will be marked as broken by the next Peek in the readloop.
 	if !isBodyAllowedForStatus(res.StatusCode()) {
+		return nil
+	}
+
+	if !hasContentLength {
+		b := c.bufferPool.Get()
+		if b == nil {
+			b = make([]byte, bufferSize)
+		}
+		defer c.bufferPool.Put(b)
+
+		if _, err := io.CopyBuffer(r.RW, c.br, b); err != nil {
+			return err
+		}
+
 		return nil
 	}
 

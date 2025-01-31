@@ -18,6 +18,8 @@ import (
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
+func pointer[T any](v T) *T { return &v }
+
 func Test_createConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc      string
@@ -185,9 +187,9 @@ func Test_createConfiguration(t *testing.T) {
 							},
 						},
 						Observability: &static.ObservabilityConfig{
-							AccessLogs: false,
-							Tracing:    false,
-							Metrics:    false,
+							AccessLogs: pointer(false),
+							Tracing:    pointer(false),
+							Metrics:    pointer(false),
 						},
 					},
 				},
