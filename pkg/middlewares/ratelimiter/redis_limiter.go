@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/redisrate"
 	"golang.org/x/time/rate"
 )
 
@@ -24,7 +23,7 @@ type RedisLimiter struct {
 	period  ptypes.Duration
 	logger  *zerolog.Logger
 	ttl     int
-	rClient redisrate.Rediser
+	rClient Rediser
 }
 
 func NewRedisLimiter(
@@ -68,7 +67,7 @@ func NewRedisLimiter(
 	return limiter, nil
 }
 
-func injectClient(r *RedisLimiter, client redisrate.Rediser) *RedisLimiter {
+func injectClient(r *RedisLimiter, client Rediser) *RedisLimiter {
 	r.rClient = client
 	return r
 }
@@ -114,7 +113,7 @@ func (r *RedisLimiter) evaluateScript(ctx context.Context, key string) (*Result,
 	rate := r.rate / 1000000
 	t := time.Now().UnixMicro()
 	params := []interface{}{float64(rate), r.burst, r.ttl, t, r.maxDelay.Microseconds()}
-	v, err := redisrate.AllowTokenBucketScript.Run(ctx, r.rClient, []string{redisPrefix + key}, params...).Result()
+	v, err := AllowTokenBucketScript.Run(ctx, r.rClient, []string{redisPrefix + key}, params...).Result()
 	if err != nil {
 		return nil, err
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/redisrate"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -147,7 +146,7 @@ func TestRateLimitRedis(t *testing.T) {
 			require.NoError(t, err)
 			l := h.(*rateLimiter)
 			limiter := l.limiter.(*RedisLimiter)
-			l.limiter = injectClient(l.limiter.(*RedisLimiter), redisrate.NewMockRedisClient(limiter.ttl))
+			l.limiter = injectClient(l.limiter.(*RedisLimiter), NewMockRedisClient(limiter.ttl))
 			h = l
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)

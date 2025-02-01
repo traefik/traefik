@@ -1,4 +1,4 @@
-package redisrate
+package ratelimiter
 
 import (
 	"context"
