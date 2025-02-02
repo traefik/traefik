@@ -52,13 +52,25 @@ func (s *DepthStrategy) GetIP(req *http.Request) string {
 		return ""
 	}
 
-	ip := strings.TrimSpace(xffs[len(xffs)-s.Depth])
+	// Extract and clean up the IP
+	rawIP := xffs[len(xffs)-s.Depth]
+	ip := cleanupIP(rawIP)
 
 	if s.IPv6Subnet != nil {
 		return getIPv6SubnetIP(ip, *s.IPv6Subnet)
 	}
 
 	return ip
+}
+
+// cleanupIP removes port if present and trims spaces
+func cleanupIP(rawIP string) string {
+	trimmedIP := strings.TrimSpace(rawIP)
+	ip, _, err := net.SplitHostPort(trimmedIP)
+	if err == nil {
+		return ip // IP without port
+	}
+	return trimmedIP // Return as-is if no port is found
 }
 
 // PoolStrategy is a strategy based on an IP Checker.
