@@ -75,7 +75,9 @@ func TestRateLimitRedis(t *testing.T) {
 		{
 			desc: "lower than 1/s",
 			config: dynamic.RateLimit{
-				// Average: 5, // Bug on gopher-lua on parsing the string to number "5e-07" => 0.0000005
+				// Bug on gopher-lua on parsing the string to number "5e-07" => 0.0000005
+				// See https://github.com/yuin/gopher-lua/issues/491
+				// Average: 5,
 				Average: 1,
 				Period:  ptypes.Duration(10 * time.Second),
 			},
@@ -86,7 +88,9 @@ func TestRateLimitRedis(t *testing.T) {
 		{
 			desc: "lower than 1/s, longer",
 			config: dynamic.RateLimit{
-				// Average: 5, // Bug on gopher-lua on parsing the operand "5e-07" => 0.0000005
+				// Bug on gopher-lua on parsing the string to number "5e-07" => 0.0000005
+				// See https://github.com/yuin/gopher-lua/issues/491
+				// Average: 5,
 				Average: 1,
 				Period:  ptypes.Duration(10 * time.Second),
 			},
