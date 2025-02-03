@@ -20,8 +20,9 @@ import (
 // rwWithUpgrade contains a ResponseWriter and an upgradeHandler,
 // used to upgrade the connection (e.g. Websockets).
 type rwWithUpgrade struct {
-	RW      http.ResponseWriter
-	Upgrade upgradeHandler
+	ReqMethod string
+	RW        http.ResponseWriter
+	Upgrade   upgradeHandler
 }
 
 // conn is an enriched net.Conn.
@@ -178,7 +179,6 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 			}
 
 			res.Reset()
-			res.Header.Reset()
 			res.Header.SetNoDefaultContentType(true)
 
 			continue
@@ -211,13 +211,33 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 
 	r.RW.WriteHeader(res.StatusCode())
 
-	if res.Header.ContentLength() == 0 {
+	if noResponseBodyExpected(r.ReqMethod) {
+		return nil
+	}
+
+	hasContentLength := len(res.Header.Peek("Content-Length")) > 0
+
+	if hasContentLength && res.Header.ContentLength() == 0 {
 		return nil
 	}
 
 	// When a body is not allowed for a given status code the body is ignored.
 	// The connection will be marked as broken by the next Peek in the readloop.
 	if !isBodyAllowedForStatus(res.StatusCode()) {
+		return nil
+	}
+
+	if !hasContentLength {
+		b := c.bufferPool.Get()
+		if b == nil {
+			b = make([]byte, bufferSize)
+		}
+		defer c.bufferPool.Put(b)
+
+		if _, err := io.CopyBuffer(r.RW, c.br, b); err != nil {
+			return err
+		}
+
 		return nil
 	}
 
@@ -444,8 +464,8 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 	c.releaseConn(newConn)
 }
 
-// isBodyAllowedForStatus reports whether a given response status code
-// permits a body. See RFC 7230, section 3.3.
+// isBodyAllowedForStatus reports whether a given response status code permits a body.
+// See RFC 7230, section 3.3.
 // From https://github.com/golang/go/blame/master/src/net/http/transfer.go#L459
 func isBodyAllowedForStatus(status int) bool {
 	switch {
@@ -457,4 +477,10 @@ func isBodyAllowedForStatus(status int) bool {
 		return false
 	}
 	return true
+}
+
+// noResponseBodyExpected reports whether a given request method permits a body.
+// From https://github.com/golang/go/blame/master/src/net/http/transfer.go#L250
+func noResponseBodyExpected(requestMethod string) bool {
+	return requestMethod == "HEAD"
 }

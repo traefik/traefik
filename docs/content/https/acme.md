@@ -503,7 +503,7 @@ certificatesResolvers:
 
 By default, the `provider` verifies the TXT record _before_ letting ACME verify.
 
-You can delay this operation by specifying a delay (in seconds) with `delayBeforeCheck` (value must be greater than zero).
+You can delay this operation by specifying a delay (in seconds) with `delayBeforeChecks` (value must be greater than zero).
 
 This option is useful when internal networks block external DNS queries.
 
