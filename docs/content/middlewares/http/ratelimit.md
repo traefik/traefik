@@ -784,7 +784,7 @@ http:
 _Optional_
 
 `key` is the path to the private key used for the secure connection to Redis.
-When using this option, setting the `cert` option is required.
+When this option is set, the `cert` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -881,11 +881,11 @@ http:
 
 _Optional, Default=10_
 
-Base number of socket connections.
+Defines the base number of socket connections.
 
-Default is 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+By default, there are 10 connections per available CPU as reported by `runtime.GOMAXPROCS`.
 
-If there is not enough connections in the pool, new connections will be allocated in excess of `redis.poolSize`, you can limit it through `redis.maxActiveConns`.
+If there are not enough connections in the pool, new connections will be allocated beyond `redis.poolSize`. You can limit this using `redis.maxActiveConns`.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -927,9 +927,9 @@ http:
 
 _Optional, Default=0_
 
-Minimum number of idle connections which is useful when establishing new connection is slow.
+Defines the minimum number of idle connections, which is useful when establishing new connections is slow.
 
-Default is 0. the idle connections are not closed by default.
+The default value is 0. By default, idle connections are not closed.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -971,9 +971,9 @@ http:
 
 _Optional, Default=0_
 
-Maximum number of connections allocated by the pool at a given time.
+Defines the maximum number of connections the pool can allocate at a given time.
 
-When zero, there is no limit on the number of connections in the pool.
+When set to `0`, there is no limit on the number of connections in the pool.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1015,11 +1015,11 @@ http:
 
 _Optional, Default=0_
 
-Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
+Defines the timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
 
 -   `0` - default timeout (3 seconds).
--   `-1` - no timeout (block indefinitely).
--   `-2` - disables SetReadDeadline calls completely.
+-   `-1` - no timeout (blocks indefinitely).
+-   `-2` - disables `SetReadDeadline` calls completely.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1065,8 +1065,8 @@ Timeout for socket writes. If reached, commands will fail
 with a timeout instead of blocking. Supported values:
 
 -   `0` - default timeout (3 seconds).
--   `-1` - no timeout (block indefinitely).
--   `-2` - disables SetWriteDeadline calls completely.
+-   `-1` - no timeout (blocks indefinitely).
+-   `-2` - disables `SetWriteDeadline` calls completely.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1114,8 +1114,8 @@ Default is 5 seconds.
 Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
 
 -   `0` - default timeout (5 seconds).
--   `-1` - no timeout (block indefinitely).
--   `-2` - disables SetReadDeadline calls completely.
+-   `-1` - no timeout (blocks indefinitely).
+-   `-2` - disables `SetReadDeadline` calls completely.
 
 ```yaml tab="Docker & Swarm"
 labels:
