@@ -67,7 +67,7 @@ export default function PaginationMixin (opts = {}) {
         this.fetchMore()
       }
     },
-    beforeDestroy () {
+    beforeUnmount () {
       clearInterval(this.pollingInterval)
     }
   }

@@ -1,7 +1,7 @@
-FROM node:20.14
+FROM node:22.9-alpine3.20
 # Current Active LTS release according to (https://nodejs.org/en/about/releases/)
 
-ENV WEBUI_DIR /src/webui
+ENV WEBUI_DIR=/src/webui
 RUN mkdir -p $WEBUI_DIR
 
 COPY package.json $WEBUI_DIR/

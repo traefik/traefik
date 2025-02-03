@@ -230,7 +230,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				return u, nil
 			}
 
-			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL), false)
+			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL), false, false)
 			require.NoError(t, err)
 
 			reverseProxyServer := httptest.NewServer(reverseProxy)
@@ -250,6 +250,100 @@ func TestProxyFromEnvironment(t *testing.T) {
 			assert.True(t, proxyCalled)
 		})
 	}
+}
+
+func TestPreservePath(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+		assert.Equal(t, "/base/foo/bar", req.URL.Path)
+		assert.Equal(t, "/base/foo%2Fbar", req.URL.RawPath)
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL, err := url.JoinPath(server.URL, "base")
+	require.NoError(t, err)
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/foo%2Fbar", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+func TestHeadRequest(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+
+		assert.Equal(t, http.MethodHead, req.Method)
+
+		rw.Header().Set("Content-Length", "42")
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL, err := url.JoinPath(server.URL)
+	require.NoError(t, err)
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodHead, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+func TestNoContentLengthResponse(t *testing.T) {
+	backendListener, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = backendListener.Close()
+	})
+
+	go func() {
+		t.Helper()
+
+		conn, err := backendListener.Accept()
+		require.NoError(t, err)
+
+		_, err = conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\nfoo"))
+		require.NoError(t, err)
+
+		// CloseWrite the connection to signal the end of the response.
+		if v, ok := conn.(interface{ CloseWrite() error }); ok {
+			err = v.CloseWrite()
+			require.NoError(t, err)
+		}
+	}()
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL := "http://" + backendListener.Addr().String()
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, "foo", res.Body.String())
 }
 
 func newCertificate(t *testing.T, domain string) *tls.Certificate {

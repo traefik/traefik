@@ -23,7 +23,7 @@ func TestEscapedPath(t *testing.T) {
 		roundTrippers: map[string]http.RoundTripper{"default": &http.Transport{}},
 	}
 
-	p, err := NewProxyBuilder(transportManager, nil).Build("default", testhelpers.MustParseURL(srv.URL), false, true, 0)
+	p, err := NewProxyBuilder(transportManager, nil).Build("default", testhelpers.MustParseURL(srv.URL), false, true, false, 0)
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(http.HandlerFunc(p.ServeHTTP))

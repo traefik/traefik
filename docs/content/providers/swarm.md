@@ -212,7 +212,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     services:
       traefik:
-         image: traefik:v3.2 # The official v3 Traefik docker image
+         image: traefik:v3.3 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -247,7 +247,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "ssh://traefik@192.168.2.5:2022"
          # ...
     ```
@@ -455,7 +455,10 @@ _Optional, Default=""_
 
 Defines a default docker network to use for connections to all containers.
 
-This option can be overridden on a per-container basis with the `traefik.docker.network` label.
+This option can be overridden on a per-container basis with the `traefik.docker.network` [routing label](../routing/providers/swarm.md#traefikdockernetwork).
+
+!!! warning
+    The Docker Swarm provider still uses the same per-container mechanism as the Docker provider, so therefore the label still uses the `docker` keyword intentionally.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -500,7 +503,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.swarm.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.swarm.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 

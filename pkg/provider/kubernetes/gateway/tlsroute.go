@@ -32,6 +32,11 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			Str("tls_route", route.Name).
 			Str("namespace", route.Namespace).Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1alpha2.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
@@ -48,11 +53,9 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				accepted := true
-				if !matchListener(listener, route.Namespace, parentRef) {
-					accepted = false
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
+
 				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
@@ -119,9 +122,11 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1alpha2.TL
 			continue
 		}
 
+		rule, priority := hostSNIRule(hostnames)
 		router := dynamic.TCPRouter{
 			RuleSyntax:  "v3",
-			Rule:        hostSNIRule(hostnames),
+			Rule:        rule,
+			Priority:    priority,
 			EntryPoints: []string{listener.EPName},
 			TLS: &dynamic.RouterTCPTLSConfig{
 				Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
@@ -129,7 +134,7 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1alpha2.TL
 		}
 
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTLSRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 		// Routing criteria should be introduced at some point.
 		routerName := makeRouterName("", routeKey)
 
@@ -295,7 +300,9 @@ func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute
 	return lb, nil
 }
 
-func hostSNIRule(hostnames []gatev1.Hostname) string {
+func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
+	var priority int
+
 	rules := make([]string, 0, len(hostnames))
 	uniqHostnames := map[gatev1.Hostname]struct{}{}
 
@@ -304,14 +311,21 @@ func hostSNIRule(hostnames []gatev1.Hostname) string {
 			continue
 		}
 
+		host := string(hostname)
+		wildcard := strings.Count(host, "*")
+
+		thisPriority := len(hostname) - wildcard
+
+		if priority < thisPriority {
+			priority = thisPriority
+		}
+
 		if _, exists := uniqHostnames[hostname]; exists {
 			continue
 		}
 
-		host := string(hostname)
 		uniqHostnames[hostname] = struct{}{}
 
-		wildcard := strings.Count(host, "*")
 		if wildcard == 0 {
 			rules = append(rules, fmt.Sprintf("HostSNI(`%s`)", host))
 			continue
@@ -322,8 +336,8 @@ func hostSNIRule(hostnames []gatev1.Hostname) string {
 	}
 
 	if len(hostnames) == 0 || len(rules) == 0 {
-		return "HostSNI(`*`)"
+		return "HostSNI(`*`)", 0
 	}
 
-	return strings.Join(rules, " || ")
+	return strings.Join(rules, " || "), priority
 }

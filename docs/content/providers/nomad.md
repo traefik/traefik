@@ -432,7 +432,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.nomad.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.nomad.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
