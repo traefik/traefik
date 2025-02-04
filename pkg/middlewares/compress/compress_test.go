@@ -322,6 +322,29 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 			},
 			reqContentType: "application/grpc",
 		},
+		{
+			desc: "Ignoring text/event-stream with no option",
+			conf: dynamic.Compress{
+				Encodings: defaultSupportedEncodings,
+			},
+			reqContentType: "text/event-stream",
+		},
+		{
+			desc: "Ignoring text/event-stream with exclude option",
+			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
+				ExcludedContentTypes: []string{"application/json"},
+			},
+			reqContentType: "text/event-stream",
+		},
+		{
+			desc: "Ignoring text/event-stream with include option",
+			conf: dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
+				IncludedContentTypes: []string{"application/json"},
+			},
+			reqContentType: "text/event-stream",
+		},
 	}
 
 	for _, test := range testCases {
