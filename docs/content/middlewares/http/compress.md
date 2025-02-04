@@ -65,7 +65,7 @@ http:
 
 ### `excludedContentTypes`
 
-_Optional, Default=""_ 
+_Optional, Default=""_
 
 `excludedContentTypes` specifies a list of content types to compare the `Content-Type` header of the incoming requests and responses before compressing.
 
@@ -73,7 +73,7 @@ The responses with content types defined in `excludedContentTypes` are not compr
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
-!!! info 
+!!! info
 
     The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.
 
@@ -82,9 +82,9 @@ Content types are compared in a case-insensitive, whitespace-ignored manner.
     If the `Content-Type` header is not defined, or empty, the compress middleware will automatically [detect](https://mimesniff.spec.whatwg.org/) a content type.
     It will also set the `Content-Type` header according to the detected MIME type.
 
-!!! info "gRPC"
+!!! info "gRPC and SSE"
 
-    Note that `application/grpc` is never compressed.
+    Note that `application/grpc` and `text/event-stream` are never compressed.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -127,7 +127,7 @@ _Optional, Default=""_
 
 `includedContentTypes` specifies a list of content types to compare the `Content-Type` header of the responses before compressing.
 
-The responses with content types defined in `includedContentTypes` are compressed. 
+The responses with content types defined in `includedContentTypes` are compressed.
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
