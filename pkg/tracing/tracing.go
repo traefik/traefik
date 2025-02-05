@@ -44,7 +44,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
+	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.ResourceAttributes)
 	if err != nil {
 		return nil, nil, err
 	}
