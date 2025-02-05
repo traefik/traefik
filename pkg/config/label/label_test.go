@@ -53,6 +53,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware7.forwardauth.trustforwardheader":                      "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.forwardbody":                             "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.maxbodysize":                             "42",
+		"traefik.http.middlewares.Middleware7.forwardauth.preserveRequestMethod":                   "true",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowcredentials":               "true",
 		"traefik.http.middlewares.Middleware8.headers.allowedhosts":                                "foobar, fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":                   "X-foobar, X-fiibar",
@@ -171,6 +172,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "1s",
+		"traefik.http.services.Service0.loadbalancer.server.url":                       "foobar",
+		"traefik.http.services.Service0.loadbalancer.server.preservepath":              "true",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.name":               "foobar",
@@ -191,6 +194,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "1s",
+		"traefik.http.services.Service1.loadbalancer.server.url":                       "foobar",
+		"traefik.http.services.Service1.loadbalancer.server.preservepath":              "true",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
@@ -574,8 +579,9 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						ForwardBody: true,
-						MaxBodySize: pointer(int64(42)),
+						ForwardBody:           true,
+						MaxBodySize:           pointer(int64(42)),
+						PreserveRequestMethod: true,
 					},
 				},
 				"Middleware8": {
@@ -683,8 +689,10 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						Servers: []dynamic.Server{
 							{
-								Scheme: "foobar",
-								Port:   "8080",
+								URL:          "foobar",
+								PreservePath: true,
+								Scheme:       "foobar",
+								Port:         "8080",
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
@@ -714,8 +722,10 @@ func TestDecodeConfiguration(t *testing.T) {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
-								Scheme: "foobar",
-								Port:   "8080",
+								URL:          "foobar",
+								PreservePath: true,
+								Scheme:       "foobar",
+								Port:         "8080",
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
@@ -1118,8 +1128,9 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						ForwardBody: true,
-						MaxBodySize: pointer(int64(42)),
+						ForwardBody:           true,
+						MaxBodySize:           pointer(int64(42)),
+						PreserveRequestMethod: true,
 					},
 				},
 				"Middleware8": {
@@ -1218,8 +1229,10 @@ func TestEncodeConfiguration(t *testing.T) {
 						},
 						Servers: []dynamic.Server{
 							{
-								Scheme: "foobar",
-								Port:   "8080",
+								URL:          "foobar",
+								PreservePath: true,
+								Scheme:       "foobar",
+								Port:         "8080",
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
@@ -1247,8 +1260,10 @@ func TestEncodeConfiguration(t *testing.T) {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
-								Scheme: "foobar",
-								Port:   "8080",
+								URL:          "foobar",
+								PreservePath: true,
+								Scheme:       "foobar",
+								Port:         "8080",
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
@@ -1330,6 +1345,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Key":                                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TrustForwardHeader":                      "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.PreserveLocationHeader":                  "false",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.PreserveRequestMethod":                   "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowCredentials":               "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowHeaders":                   "X-foobar, X-fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":                   "GET, PUT",
@@ -1454,6 +1470,8 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Timeout":              "1000000000",
 		"traefik.HTTP.Services.Service0.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
+		"traefik.HTTP.Services.Service0.LoadBalancer.server.URL":                       "foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.server.PreservePath":              "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
@@ -1474,6 +1492,8 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Timeout":              "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
+		"traefik.HTTP.Services.Service1.LoadBalancer.server.URL":                       "foobar",
+		"traefik.HTTP.Services.Service1.LoadBalancer.server.PreservePath":              "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ServersTransport":                 "foobar",

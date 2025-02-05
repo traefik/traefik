@@ -739,6 +739,63 @@ func TestForwardAuthPreserveLocationHeader(t *testing.T) {
 	assert.Equal(t, relativeURL, res.Header.Get("Location"))
 }
 
+func TestForwardAuthPreserveRequestMethod(t *testing.T) {
+	testCases := []struct {
+		name                          string
+		preserveRequestMethod         bool
+		originalReqMethod             string
+		expectedReqMethodInAuthServer string
+	}{
+		{
+			name:                          "preserve request method",
+			preserveRequestMethod:         true,
+			originalReqMethod:             http.MethodPost,
+			expectedReqMethodInAuthServer: http.MethodPost,
+		},
+		{
+			name:                          "do not preserve request method",
+			preserveRequestMethod:         false,
+			originalReqMethod:             http.MethodPost,
+			expectedReqMethodInAuthServer: http.MethodGet,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			reqReachesAuthServer := false
+			authServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				reqReachesAuthServer = true
+				assert.Equal(t, test.expectedReqMethodInAuthServer, req.Method)
+			}))
+			t.Cleanup(authServer.Close)
+
+			reqReachesNextServer := false
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				reqReachesNextServer = true
+				assert.Equal(t, test.originalReqMethod, r.Method)
+			})
+
+			auth := dynamic.ForwardAuth{
+				Address:               authServer.URL,
+				PreserveRequestMethod: test.preserveRequestMethod,
+			}
+
+			middleware, err := NewForward(context.Background(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewServer(middleware)
+			t.Cleanup(ts.Close)
+
+			req := testhelpers.MustNewRequest(test.originalReqMethod, ts.URL, nil)
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.True(t, reqReachesAuthServer)
+			assert.True(t, reqReachesNextServer)
+		})
+	}
+}
+
 type mockTracer struct {
 	embedded.Tracer
 

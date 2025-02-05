@@ -746,5 +746,45 @@ http:
   preserveLocationHeader = true
 ```
 
+### `preserveRequestMethod`
+
+_Optional, Default=false_
+
+`preserveRequestMethod` defines whether to preserve the original request method while forwarding the request to the authentication server. By default, when this option is set to `false`, incoming requests are always forwarded as `GET` requests to the authentication server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    # ...
+    preserveRequestMethod: true
+```
+
+```json tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        # ...
+        preserveRequestMethod: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares.test-auth.forwardAuth]
+  # ...
+  preserveRequestMethod = true
+```
 
 {!traefik-for-business-applications.md!}
