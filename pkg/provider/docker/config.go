@@ -114,6 +114,10 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
+	if container.Status != "running" && p.AllowEmptyServices {
+		return nil
+	}
+
 	if container.Health != "" && container.Health != dockertypes.Healthy {
 		return nil
 	}
@@ -136,6 +140,10 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 		configuration.Services[serviceName] = &dynamic.UDPService{
 			LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 		}
+	}
+
+	if container.Status != "running" && p.AllowEmptyServices {
+		return nil
 	}
 
 	if container.Health != "" && container.Health != dockertypes.Healthy {
@@ -162,6 +170,10 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
+	}
+
+	if container.Status != "running" && p.AllowEmptyServices {
+		return nil
 	}
 
 	if container.Health != "" && container.Health != dockertypes.Healthy {
