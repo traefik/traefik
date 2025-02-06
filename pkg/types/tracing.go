@@ -36,7 +36,7 @@ func (c *OTelTracing) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *OTelTracing) Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error) {
+func (c *OTelTracing) Setup(serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -55,7 +55,7 @@ func (c *OTelTracing) Setup(serviceName string, sampleRate float64, globalAttrib
 		semconv.ServiceVersionKey.String(version.Version),
 	}
 
-	for k, v := range globalAttributes {
+	for k, v := range resourceAttributes {
 		attr = append(attr, attribute.String(k, v))
 	}
 
