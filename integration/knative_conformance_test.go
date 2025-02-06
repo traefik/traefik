@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"flag"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -140,6 +141,11 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 
 	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
+
+	err = flag.CommandLine.Set("ingressendpoint", "http://"+k3sContainerIP)
+	if err != nil {
+		return
+	}
 
 	ingress.RunConformance(s.T())
 }

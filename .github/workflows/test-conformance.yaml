@@ -50,13 +50,4 @@ jobs:
 
       - name: Run e2e Tests
         run: |
-          set -x
-
-          # Exclude the control-plane node, which doesn't seem to expose the nodeport service.
-          IPS=( $(kubectl get nodes -lkubernetes.io/hostname!=kind-control-plane -ojsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}') )
-
-          # Run the tests tagged as e2e on the KinD cluster.
-          go test -race -count=1 -parallel=1 -short -timeout=20m ${{ matrix.test-suite }} \
-             --ingressendpoint="${IPS[0]}" \
-             --ingressClass=traefik.ingress.networking.knative.dev \
-             --cluster-suffix=$CLUSTER_SUFFIX
+          make test-knative-conformance
