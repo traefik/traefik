@@ -146,6 +146,5 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 	if err != nil {
 		return
 	}
-
 	ingress.RunConformance(s.T())
 }
