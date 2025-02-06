@@ -25,7 +25,7 @@ import (
 
 // Backend is an abstraction for tracking backend (OpenTelemetry, ...).
 type Backend interface {
-	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error)
+	Setup(serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error)
 }
 
 // NewTracing Creates a Tracing.
@@ -44,7 +44,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
+	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.ResourceAttributes)
 	if err != nil {
 		return nil, nil, err
 	}
