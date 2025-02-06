@@ -45,7 +45,13 @@ var (
 	kNativeConformanceTraefikVersion = flag.String("kNativeConformanceTraefikVersion", "dev", "specify the Traefik version for the K8s Gateway API conformance report")
 )
 
-const tailscaleSecretFilePath = "tailscale.secret"
+const (
+	k3sImage                = "docker.io/rancher/k3s:v1.29.3-k3s1"
+	traefikImage            = "traefik/traefik:latest"
+	traefikDeployment       = "deployments/traefik"
+	traefikNamespace        = "traefik"
+	tailscaleSecretFilePath = "tailscale.secret"
+)
 
 type composeConfig struct {
 	Services map[string]composeService `yaml:"services"`
