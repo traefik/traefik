@@ -25,7 +25,7 @@ import (
 
 // Backend is an abstraction for tracking backend (OpenTelemetry, ...).
 type Backend interface {
-	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error)
+	Setup(serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error)
 }
 
 // NewTracing Creates a Tracing.
