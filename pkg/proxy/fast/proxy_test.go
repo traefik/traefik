@@ -306,7 +306,7 @@ func TestHeadRequest(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
-func TestNoContentLengthResponse(t *testing.T) {
+func TestNoContentLength(t *testing.T) {
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
 
@@ -344,6 +344,45 @@ func TestNoContentLengthResponse(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t, "foo", res.Body.String())
+}
+
+func TestTransferEncodingChunked(t *testing.T) {
+	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		flusher, ok := rw.(http.Flusher)
+		require.True(t, ok)
+
+		for i := range 3 {
+			_, err := rw.Write([]byte(fmt.Sprintf("chunk %d\n", i)))
+			require.NoError(t, err)
+
+			flusher.Flush()
+		}
+	}))
+	t.Cleanup(backendServer.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(backendServer.URL), true, true)
+	require.NoError(t, err)
+
+	proxyServer := httptest.NewServer(proxyHandler)
+	t.Cleanup(proxyServer.Close)
+
+	req, err := http.NewRequest(http.MethodGet, proxyServer.URL, http.NoBody)
+	require.NoError(t, err)
+
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, []string{"chunked"}, res.TransferEncoding)
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, "chunk 0\nchunk 1\nchunk 2\n", string(body))
 }
 
 func newCertificate(t *testing.T, domain string) *tls.Certificate {
