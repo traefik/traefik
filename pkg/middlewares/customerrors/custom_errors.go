@@ -105,7 +105,22 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// check the recorder code against the configured http status code ranges
 	code := catcher.getCode()
-	logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
+
+	originalCode := code
+
+	// Check if we need to rewrite the status code
+	for _, rsc := range c.rewriteStatus {
+		if rsc.fromCodes.Contains(code) {
+			code = rsc.toCode
+			break
+		}
+	}
+
+	if code != originalCode {
+		logger.Debug().Msgf("Caught HTTP Status Code %d (rewritten to %d), returning error page", originalCode, code)
+	} else {
+		logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
+	}
 
 	var query string
 	if len(c.backendQuery) > 0 {
@@ -120,13 +135,6 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		observability.SetStatusErrorf(req.Context(), "Unable to create error page request: %v", err)
 		http.Error(rw, http.StatusText(code), code)
 		return
-	}
-
-	// Check if we need to rewrite the status code
-	for _, rsc := range c.rewriteStatus {
-		if rsc.fromCodes.Contains(code) {
-			code = rsc.toCode
-		}
 	}
 
 	utils.CopyHeaders(pageReq.Header, req.Header)
