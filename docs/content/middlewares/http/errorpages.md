@@ -127,3 +127,16 @@ The table below lists all the available variables and their associated values.
 |------------|--------------------------------------------------------------------|
 | `{status}` | The response status code.                                          |
 | `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
+
+### `rewriteStatus`
+
+An optional mapping of status codes to be rewritten. If you have a service returning a 418, you may want to return a 404 for example.
+You can map single status codes or even status code ranges to another code. The range-syntax is the same as for the `status`-option.
+
+Here is an example:
+
+```yml
+rewriteStatus:
+  "500-503": 500
+  "418": 404
+```
