@@ -37,6 +37,12 @@ type customErrors struct {
 	backendHandler http.Handler
 	httpCodeRanges types.HTTPCodeRanges
 	backendQuery   string
+	rewriteStatus  []rewriteStatusObj
+}
+
+type rewriteStatusObj struct {
+	fromCodes types.HTTPCodeRanges
+	toCode    int
 }
 
 // New creates a new custom error pages middleware.
@@ -53,12 +59,27 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		return nil, err
 	}
 
+	// Parse RewriteStatus codes
+	rewriteStatus := make([]rewriteStatusObj, 0, len(config.RewriteStatus))
+	for k, v := range config.RewriteStatus {
+		ranges, err := types.NewHTTPCodeRanges([]string{k})
+		if err != nil {
+			return nil, err
+		}
+
+		rewriteStatus = append(rewriteStatus, rewriteStatusObj{
+			fromCodes: ranges,
+			toCode:    v,
+		})
+	}
+
 	return &customErrors{
 		name:           name,
 		next:           next,
 		backendHandler: backend,
 		httpCodeRanges: httpCodeRanges,
 		backendQuery:   config.Query,
+		rewriteStatus:  rewriteStatus,
 	}, nil
 }
 
@@ -99,6 +120,13 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		observability.SetStatusErrorf(req.Context(), "Unable to create error page request: %v", err)
 		http.Error(rw, http.StatusText(code), code)
 		return
+	}
+
+	// Check if we need to rewrite the status code
+	for _, rsc := range c.rewriteStatus {
+		if rsc.fromCodes.Contains(code) {
+			code = rsc.toCode
+		}
 	}
 
 	utils.CopyHeaders(pageReq.Header, req.Header)

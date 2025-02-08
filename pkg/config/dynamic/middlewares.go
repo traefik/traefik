@@ -227,6 +227,9 @@ type ErrorPage struct {
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
 	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+	// RewriteStatus defines a mapping of status codes which should be returned instead of the error service status codes.
+	// Eg: "418": 404 or "410-418": 404
+	RewriteStatus map[string]int `json:"rewriteStatus,omitempty" toml:"rewriteStatus,omitempty" yaml:"rewriteStatus,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
