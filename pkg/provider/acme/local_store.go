@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -23,9 +24,9 @@ type LocalStore struct {
 }
 
 // NewLocalStore initializes a new LocalStore with a file name.
-func NewLocalStore(filename string) *LocalStore {
+func NewLocalStore(filename string, routinesPool *safe.Pool) *LocalStore {
 	store := &LocalStore{filename: filename, saveDataChan: make(chan map[string]*StoredData)}
-	store.listenSaveAction()
+	store.listenSaveAction(routinesPool)
 	return store
 }
 
@@ -100,18 +101,31 @@ func (s *LocalStore) get(resolverName string) (*StoredData, error) {
 }
 
 // listenSaveAction listens to a chan to store ACME data in json format into `LocalStore.filename`.
-func (s *LocalStore) listenSaveAction() {
-	safe.Go(func() {
+func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
+	routinesPool.GoCtx(func(ctx context.Context) {
 		logger := log.With().Str(logs.ProviderName, "acme").Logger()
-		for object := range s.saveDataChan {
-			data, err := json.MarshalIndent(object, "", "  ")
-			if err != nil {
-				logger.Error().Err(err).Send()
-			}
+		for {
+			select {
+			case <-ctx.Done():
+				return
 
-			err = os.WriteFile(s.filename, data, 0o600)
-			if err != nil {
-				logger.Error().Err(err).Send()
+			case object := <-s.saveDataChan:
+				select {
+				case <-ctx.Done():
+					// Stop handling events because Traefik is shutting down.
+					return
+				default:
+				}
+
+				data, err := json.MarshalIndent(object, "", "  ")
+				if err != nil {
+					logger.Error().Err(err).Send()
+				}
+
+				err = os.WriteFile(s.filename, data, 0o600)
+				if err != nil {
+					logger.Error().Err(err).Send()
+				}
 			}
 		}
 	})

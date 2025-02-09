@@ -35,15 +35,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	defaultMirrorBody        = true
-	defaultMaxBodySize int64 = -1
-)
-
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
-	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader bool, flushInterval time.Duration) (http.Handler, error)
+	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
 	Update(configs map[string]*dynamic.ServersTransport)
+}
+
+// ServiceBuilder is a Service builder.
+type ServiceBuilder interface {
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
 }
 
 // Manager The service manager.
@@ -52,6 +52,7 @@ type Manager struct {
 	observabilityMgr *middleware.ObservabilityMgr
 	transportManager httputil.TransportManager
 	proxyBuilder     ProxyBuilder
+	serviceBuilders  []ServiceBuilder
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -60,12 +61,13 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middleware.ObservabilityMgr, routinePool *safe.Pool, transportManager httputil.TransportManager, proxyBuilder ProxyBuilder, serviceBuilders ...ServiceBuilder) *Manager {
 	return &Manager{
 		routinePool:      routinePool,
 		observabilityMgr: observabilityMgr,
 		transportManager: transportManager,
 		proxyBuilder:     proxyBuilder,
+		serviceBuilders:  serviceBuilders,
 		services:         make(map[string]http.Handler),
 		configs:          configs,
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
@@ -83,6 +85,18 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	handler, ok := m.services[serviceName]
 	if ok {
 		return handler, nil
+	}
+
+	// Must be before we get configs to handle services without config.
+	for _, builder := range m.serviceBuilders {
+		handler, err := builder.BuildHTTP(rootCtx, serviceName)
+		if err != nil {
+			return nil, err
+		}
+		if handler != nil {
+			m.services[serviceName] = handler
+			return handler, nil
+		}
 	}
 
 	conf, ok := m.configs[serviceName]
@@ -202,12 +216,12 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	mirrorBody := defaultMirrorBody
+	mirrorBody := dynamic.MirroringDefaultMirrorBody
 	if config.MirrorBody != nil {
 		mirrorBody = *config.MirrorBody
 	}
 
-	maxBodySize := defaultMaxBodySize
+	maxBodySize := dynamic.MirroringDefaultMaxBodySize
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
@@ -239,7 +253,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.Add(service.Name, serviceHandler, service.Weight)
+		balancer.Add(service.Name, serviceHandler, service.Weight, false)
 
 		if config.HealthCheck == nil {
 			continue
@@ -337,22 +351,22 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
-		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, flushInterval)
+		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
 
 		// Prevents from enabling observability for internal resources.
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 		}
 
 		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
 			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
@@ -363,11 +377,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			}
 		}
 
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) {
 			proxy = observability.NewService(ctx, serviceName, proxy)
 		}
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
 			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
 			// to re-target the request to it.
 			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
@@ -378,7 +392,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy, _ = capture.Wrap(proxy)
 		}
 
-		lb.Add(proxyName, proxy, server.Weight)
+		lb.Add(proxyName, proxy, server.Weight, server.Fenced)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)

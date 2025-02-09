@@ -251,3 +251,5 @@ In which case, you should make sure your infrastructure is properly set up for a
 ```shell
 LEGO_DISABLE_CNAME_SUPPORT=true
 ```
+
+{!traefik-for-business-applications.md!}

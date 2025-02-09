@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -14,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,8 +25,10 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const delta float64 = 1e-10
@@ -50,6 +52,75 @@ var (
 	testRetryAttempts       = 2
 	testStart               = time.Now()
 )
+
+func TestOTelAccessLog(t *testing.T) {
+	logCh := make(chan string)
+	collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gzr, err := gzip.NewReader(r.Body)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(gzr)
+		require.NoError(t, err)
+
+		req := plogotlp.NewExportRequest()
+		err = req.UnmarshalProto(body)
+		require.NoError(t, err)
+
+		marshalledReq, err := json.Marshal(req)
+		require.NoError(t, err)
+
+		logCh <- string(marshalledReq)
+	}))
+	t.Cleanup(collector.Close)
+
+	config := &types.AccessLog{
+		OTLP: &types.OTelLog{
+			ServiceName:        "test",
+			ResourceAttributes: map[string]string{"resource": "attribute"},
+			HTTP: &types.OTelHTTP{
+				Endpoint: collector.URL,
+			},
+		},
+	}
+	logHandler, err := NewHandler(config)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := logHandler.Close()
+		require.NoError(t, err)
+	})
+
+	req := &http.Request{
+		Header: map[string][]string{},
+		URL: &url.URL{
+			Path: testPath,
+		},
+	}
+	ctx := trace.ContextWithSpanContext(context.Background(), trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: trace.TraceID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
+		SpanID:  trace.SpanID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
+	}))
+	req = req.WithContext(ctx)
+
+	chain := alice.New()
+	chain = chain.Append(capture.Wrap)
+	chain = chain.Append(WrapHandler(logHandler))
+	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	require.NoError(t, err)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	select {
+	case <-time.After(5 * time.Second):
+		t.Error("AccessLog not exported")
+
+	case log := <-logCh:
+		assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
+		assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+		assert.Regexp(t, `{"key":"DownstreamStatus","value":{"intValue":"200"}}`, log)
+		assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
+	}
+}
 
 func TestLogRotation(t *testing.T) {
 	fileName := filepath.Join(t.TempDir(), "traefik.log")
@@ -339,6 +410,8 @@ func TestLoggerJSON(t *testing.T) {
 				"time":                    assertNotEmpty(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
+				TraceID:                   assertNotEmpty(),
+				SpanID:                    assertNotEmpty(),
 			},
 		},
 		{
@@ -382,6 +455,8 @@ func TestLoggerJSON(t *testing.T) {
 				"time":                    assertNotEmpty(),
 				StartLocal:                assertNotEmpty(),
 				StartUTC:                  assertNotEmpty(),
+				TraceID:                   assertNotEmpty(),
+				SpanID:                    assertNotEmpty(),
 			},
 		},
 		{
@@ -557,6 +632,8 @@ func TestLogger_AbortedRequest(t *testing.T) {
 		"downstream_Content-Type":      assertString("text/plain"),
 		"downstream_Transfer-Encoding": assertString("chunked"),
 		"downstream_Cache-Control":     assertString("no-cache"),
+		TraceID:                        assertNotEmpty(),
+		SpanID:                         assertNotEmpty(),
 	}
 
 	config := &types.AccessLog{
@@ -813,16 +890,16 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
-	assert.Regexp(t, regexp.MustCompile(`\d*`), result[RequestCount], formatErrMessage)
+	assert.Regexp(t, `\d*`, result[RequestCount], formatErrMessage)
 	assert.Equal(t, resultExpected[RouterName], result[RouterName], formatErrMessage)
 	assert.Equal(t, resultExpected[ServiceURL], result[ServiceURL], formatErrMessage)
-	assert.Regexp(t, regexp.MustCompile(`\d*ms`), result[Duration], formatErrMessage)
+	assert.Regexp(t, `\d*ms`, result[Duration], formatErrMessage)
 }
 
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	t.Helper()
 
-	file, err := os.CreateTemp("", "testlogger")
+	file, err := os.CreateTemp(t.TempDir(), "testlogger")
 	require.NoError(t, err, "failed to create temp file")
 
 	original := os.Stdout
@@ -874,6 +951,10 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 			}},
 		}
 	}
+
+	tracer := noop.Tracer{}
+	spanCtx, _ := tracer.Start(req.Context(), "test")
+	req = req.WithContext(spanCtx)
 
 	chain := alice.New()
 	chain = chain.Append(capture.Wrap)
@@ -954,8 +1035,14 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 	req = req.WithContext(reqContext)
 
 	chain := alice.New()
+
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return recovery.New(context.Background(), next)
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			defer func() {
+				_ = recover() // ignore the stream backend panic to avoid the test to fail.
+			}()
+			next.ServeHTTP(rw, req)
+		}), nil
 	})
 	chain = chain.Append(capture.Wrap)
 	chain = chain.Append(WrapHandler(logger))

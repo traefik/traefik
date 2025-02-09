@@ -30,7 +30,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -58,6 +57,11 @@ func init() {
 						},
 					},
 				},
+				Observability: &dynamic.RouterObservabilityConfig{
+					AccessLogs: pointer(true),
+					Tracing:    pointer(true),
+					Metrics:    pointer(true),
+				},
 			},
 		},
 		Services: map[string]*dynamic.Service{
@@ -78,12 +82,12 @@ func init() {
 						Interval:        ptypes.Duration(111 * time.Second),
 						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
-						FollowRedirects: boolPtr(true),
+						FollowRedirects: pointer(true),
 						Headers: map[string]string{
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: boolPtr(true),
+					PassHostHeader: pointer(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
 						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
@@ -100,7 +104,7 @@ func init() {
 					Services: []dynamic.WRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 					Sticky: &dynamic.Sticky{
@@ -116,7 +120,7 @@ func init() {
 			"baz": {
 				Mirroring: &dynamic.Mirroring{
 					Service:     "foo",
-					MaxBodySize: int64Ptr(42),
+					MaxBodySize: pointer[int64](42),
 					Mirrors: []dynamic.MirrorService{
 						{
 							Name:    "foo",
@@ -380,7 +384,7 @@ func init() {
 					Services: []dynamic.TCPWRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 				},
@@ -427,7 +431,7 @@ func init() {
 					Services: []dynamic.UDPWRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 				},
@@ -484,7 +488,7 @@ func TestAnonymize_dynamicConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
 func TestSecure_dynamicConfiguration(t *testing.T) {
@@ -501,7 +505,7 @@ func TestSecure_dynamicConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
 func TestDo_staticConfiguration(t *testing.T) {
@@ -831,6 +835,25 @@ func TestDo_staticConfiguration(t *testing.T) {
 		MaxAge:     3,
 		MaxBackups: 4,
 		Compress:   true,
+		OTLP: &types.OTelLog{
+			ServiceName: "foobar",
+			ResourceAttributes: map[string]string{
+				"foobar": "foobar",
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			HTTP: &types.OTelHTTP{
+				Endpoint: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+		},
 	}
 
 	config.AccessLog = &types.AccessLog{
@@ -854,18 +877,46 @@ func TestDo_staticConfiguration(t *testing.T) {
 			},
 		},
 		BufferingSize: 42,
+		OTLP: &types.OTelLog{
+			ServiceName: "foobar",
+			ResourceAttributes: map[string]string{
+				"foobar": "foobar",
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			HTTP: &types.OTelHTTP{
+				Endpoint: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+		},
 	}
 
 	config.Tracing = &static.Tracing{
 		ServiceName: "myServiceName",
+		ResourceAttributes: map[string]string{
+			"foobar": "foobar",
+		},
 		GlobalAttributes: map[string]string{
 			"foobar": "foobar",
 		},
 		SampleRate: 42,
-		OTLP: &opentelemetry.Config{
-			HTTP: &types.OtelHTTP{
+		OTLP: &types.OTelTracing{
+			HTTP: &types.OTelHTTP{
 				Endpoint: "foobar",
-				TLS:      nil,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
 				Headers: map[string]string{
 					"foobar": "foobar",
 				},
@@ -950,17 +1001,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
-func boolPtr(value bool) *bool {
-	return &value
-}
-
-func intPtr(value int) *int {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
-}
+func pointer[T any](v T) *T { return &v }

@@ -15,7 +15,7 @@
           <div
             v-for="(entryItems, index) in entryAll.items"
             :key="index"
-            class="col-12 col-sm-6 col-md-2"
+            class="col-12 col-sm-6 col-md-3"
           >
             <panel-entry
               :name="entryItems.name"

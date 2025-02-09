@@ -46,7 +46,7 @@ For the DNS challenge, you'll need:
 	#- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 	```
 
-- Run `docker-compose up -d` within the folder where you created the previous file.
+- Run `docker compose up -d` within the folder where you created the previous file.
 - Wait a bit and visit `https://your_own_domain` to confirm everything went fine.
 
 !!! Note
@@ -186,3 +186,5 @@ environment:
   - "OVH_APPLICATION_SECRET_FILE=/run/secrets/ovh_application_secret"
   - "OVH_CONSUMER_KEY_FILE=/run/secrets/ovh_consumer_key"
 ```
+
+{!traefik-for-business-applications.md!}

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -32,6 +33,11 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 			Str("namespace", route.Namespace).
 			Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
@@ -48,11 +54,9 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				accepted := true
-				if !matchListener(listener, route.Namespace, parentRef) {
-					accepted = false
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
+
 				if accepted && !allowRoute(listener, route.Namespace, kindGRPCRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
@@ -116,7 +120,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindGRPCRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 
 		matches := routeRule.Matches
 		if len(matches) == 0 {
@@ -162,7 +166,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(conf, routeKey, routeRule, route)
+				router.Service, serviceCondition = p.loadGRPCService(conf, routerName, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -263,7 +267,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 	}
 
 	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
+	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
 	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
 	if errCondition != nil {
@@ -274,20 +278,30 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 }
 
 func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, routerName string, filters []gatev1.GRPCRouteFilter) ([]string, error) {
-	middlewares := make(map[string]*dynamic.Middleware)
+	type namedMiddleware struct {
+		Name   string
+		Config *dynamic.Middleware
+	}
+
+	var middlewares []namedMiddleware
 	for i, filter := range filters {
 		name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
 		switch filter.Type {
 		case gatev1.GRPCRouteFilterRequestHeaderModifier:
-			middlewares[name] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createRequestHeaderModifier(filter.RequestHeaderModifier),
+			})
 
 		case gatev1.GRPCRouteFilterExtensionRef:
 			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
 			if err != nil {
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
-
-			middlewares[name] = middleware
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
+			})
 
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -299,12 +313,11 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	}
 
 	var middlewareNames []string
-	for name, middleware := range middlewares {
-		if middleware != nil {
-			conf.HTTP.Middlewares[name] = middleware
+	for _, m := range middlewares {
+		if m.Config != nil {
+			conf.HTTP.Middlewares[m.Name] = m.Config
 		}
-
-		middlewareNames = append(middlewareNames, name)
+		middlewareNames = append(middlewareNames, m.Name)
 	}
 
 	return middlewareNames, nil
@@ -334,14 +347,15 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 		}
 	}
 
-	if svcPort.AppProtocol != nil && *svcPort.AppProtocol != appProtocolH2C {
+	protocol, err := getGRPCServiceProtocol(svcPort)
+	if err != nil {
 		return nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only kubernetes.io/h2c appProtocol is supported", namespace, backendRef.Name),
+			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only \"kubernetes.io/h2c\" and \"https\" appProtocol is supported", namespace, backendRef.Name),
 		}
 	}
 
@@ -350,7 +364,7 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("h2c://%s", net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
 	return lb, nil
@@ -404,4 +418,23 @@ func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
 	}
 
 	return rules
+}
+
+func getGRPCServiceProtocol(portSpec corev1.ServicePort) (string, error) {
+	if portSpec.Protocol != corev1.ProtocolTCP {
+		return "", errors.New("only TCP protocol is supported")
+	}
+
+	if portSpec.AppProtocol == nil {
+		return schemeH2C, nil
+	}
+
+	switch ap := *portSpec.AppProtocol; ap {
+	case appProtocolH2C:
+		return schemeH2C, nil
+	case appProtocolHTTPS:
+		return schemeHTTPS, nil
+	default:
+		return "", fmt.Errorf("unsupported application protocol %s", ap)
+	}
 }

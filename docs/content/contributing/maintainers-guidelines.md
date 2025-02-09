@@ -32,7 +32,7 @@ The contributor should also meet one or several of the following requirements:
   including those of other maintainers and contributors.
 
 - The contributor is active on Traefik Community forums
-  or other technical forums/boards such as K8S slack, Reddit, StackOverflow, hacker news.
+  or other technical forums/boards, such as K8S Slack, Reddit, StackOverflow, and Hacker News.
 
 Any existing active maintainer can create an issue to discuss promoting a contributor to maintainer. 
 Other maintainers can vote on the issue, and if the quorum is reached, the contributor is promoted to maintainer.

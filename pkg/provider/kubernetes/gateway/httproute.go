@@ -36,6 +36,11 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 			Str("namespace", route.Namespace).
 			Logger()
 
+		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		if len(routeListeners) == 0 {
+			continue
+		}
+
 		var parentStatuses []gatev1.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
@@ -52,11 +57,9 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 				},
 			}
 
-			for _, listener := range gatewayListeners {
-				accepted := true
-				if !matchListener(listener, route.Namespace, parentRef) {
-					accepted = false
-				}
+			for _, listener := range routeListeners {
+				accepted := matchListener(listener, parentRef)
+
 				if accepted && !allowRoute(listener, route.Namespace, kindHTTPRoute) {
 					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
 					accepted = false
@@ -120,7 +123,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 
 	for ri, routeRule := range route.Spec.Rules {
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-%d", route.Namespace, route.Name, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindHTTPRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
 
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
@@ -221,7 +224,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http")
 
 	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, &metav1.Condition{
@@ -381,39 +384,58 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 }
 
 func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, routerName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
+	type namedMiddleware struct {
+		Name   string
+		Config *dynamic.Middleware
+	}
+
 	pm := ptr.Deref(pathMatch, gatev1.HTTPPathMatch{
 		Type:  ptr.To(gatev1.PathMatchPathPrefix),
 		Value: ptr.To("/"),
 	})
 
-	middlewares := make(map[string]*dynamic.Middleware)
+	var middlewares []namedMiddleware
 	for i, filter := range filters {
 		name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
+
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
-			middlewares[name] = createRequestRedirect(filter.RequestRedirect, pm)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createRequestRedirect(filter.RequestRedirect, pm),
+			})
 
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
-			middlewares[name] = createRequestHeaderModifier(filter.RequestHeaderModifier)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createRequestHeaderModifier(filter.RequestHeaderModifier),
+			})
 
 		case gatev1.HTTPRouteFilterResponseHeaderModifier:
-			middlewares[name] = createResponseHeaderModifier(filter.ResponseHeaderModifier)
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createResponseHeaderModifier(filter.ResponseHeaderModifier),
+			})
 
 		case gatev1.HTTPRouteFilterExtensionRef:
 			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
 			if err != nil {
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
-
-			middlewares[name] = middleware
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
+			})
 
 		case gatev1.HTTPRouteFilterURLRewrite:
-			var err error
 			middleware, err := createURLRewrite(filter.URLRewrite, pm)
 			if err != nil {
 				return nil, fmt.Errorf("invalid filter %s: %w", filter.Type, err)
 			}
-			middlewares[name] = middleware
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
+			})
 
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -425,12 +447,11 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, route
 	}
 
 	var middlewareNames []string
-	for name, middleware := range middlewares {
-		if middleware != nil {
-			conf.HTTP.Middlewares[name] = middleware
+	for _, m := range middlewares {
+		if m.Config != nil {
+			conf.HTTP.Middlewares[m.Name] = m.Config
 		}
-
-		middlewareNames = append(middlewareNames, name)
+		middlewareNames = append(middlewareNames, m.Name)
 	}
 
 	return middlewareNames, nil
@@ -465,7 +486,7 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 		}
 	}
 
-	protocol, err := getProtocol(svcPort)
+	protocol, err := getHTTPServiceProtocol(svcPort)
 	if err != nil {
 		return nil, corev1.ServicePort{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -498,7 +519,7 @@ func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.Ba
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if caCertRef.Group != groupCore || caCertRef.Kind != "ConfigMap" {
+		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || caCertRef.Kind != "ConfigMap" {
 			continue
 		}
 
@@ -718,7 +739,7 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch g
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
-	if filterScheme == "http" || filterScheme == "https" {
+	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
 		port = ptr.To("")
 	}
 	if filter.Port != nil {
@@ -780,26 +801,26 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 	}, nil
 }
 
-func getProtocol(portSpec corev1.ServicePort) (string, error) {
+func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	if portSpec.Protocol != corev1.ProtocolTCP {
 		return "", errors.New("only TCP protocol is supported")
 	}
 
 	if portSpec.AppProtocol == nil {
-		protocol := "http"
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			protocol = "https"
+		protocol := schemeHTTP
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
+			protocol = schemeHTTPS
 		}
 		return protocol, nil
 	}
 
 	switch ap := *portSpec.AppProtocol; ap {
 	case appProtocolH2C:
-		return "h2c", nil
-	case appProtocolWS:
-		return "http", nil
-	case appProtocolWSS:
-		return "https", nil
+		return schemeH2C, nil
+	case appProtocolHTTP, appProtocolWS:
+		return schemeHTTP, nil
+	case appProtocolHTTPS, appProtocolWSS:
+		return schemeHTTPS, nil
 	default:
 		return "", fmt.Errorf("unsupported application protocol %s", ap)
 	}

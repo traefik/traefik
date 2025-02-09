@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"github.com/http-wasm/http-wasm-host-go/handler"
@@ -82,7 +83,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	config := wazero.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
 	for _, env := range b.settings.Envs {
-		config.WithEnv(env, os.Getenv(env))
+		config = config.WithEnv(env, os.Getenv(env))
 	}
 
 	if len(b.settings.Mounts) > 0 {
@@ -96,14 +97,14 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 			parts := strings.Split(prefix, ":")
 			switch {
 			case len(parts) == 1:
-				withDir(parts[0], parts[0])
+				fsConfig = withDir(parts[0], parts[0])
 			case len(parts) == 2:
-				withDir(parts[0], parts[1])
+				fsConfig = withDir(parts[0], parts[1])
 			default:
 				return nil, nil, fmt.Errorf("invalid directory %q", mount)
 			}
 		}
-		config.WithFSConfig(fsConfig)
+		config = config.WithFSConfig(fsConfig)
 	}
 
 	opts := []handler.Option{
@@ -135,7 +136,19 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, fmt.Errorf("creating middleware: %w", err)
 	}
 
-	return mw.NewHandler(ctx, next), applyCtx, nil
+	h := mw.NewHandler(ctx, next)
+
+	// Traefik does not Close the middleware when creating a new instance on a configuration change.
+	// When the middleware is marked to be GC, we need to close it so the wasm instance is properly closed.
+	// Reference: https://github.com/traefik/traefik/issues/11119
+	runtime.SetFinalizer(h, func(_ http.Handler) {
+		if err := mw.Close(ctx); err != nil {
+			logger.Err(err).Msg("[wasm] middleware Close failed")
+		} else {
+			logger.Debug().Msg("[wasm] middleware Close ok")
+		}
+	})
+	return h, applyCtx, nil
 }
 
 // WasmMiddleware is an HTTP handler plugin wrapper.

@@ -50,9 +50,15 @@ const (
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
 
-	appProtocolH2C = "kubernetes.io/h2c"
-	appProtocolWS  = "kubernetes.io/ws"
-	appProtocolWSS = "kubernetes.io/wss"
+	appProtocolHTTP  = "http"
+	appProtocolHTTPS = "https"
+	appProtocolH2C   = "kubernetes.io/h2c"
+	appProtocolWS    = "kubernetes.io/ws"
+	appProtocolWSS   = "kubernetes.io/wss"
+
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+	schemeH2C   = "h2c"
 )
 
 // Provider holds configurations of the provider.
@@ -357,7 +363,13 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		}
 	}
 
-	gateways := p.client.ListGateways()
+	var gateways []*gatev1.Gateway
+	for _, gateway := range p.client.ListGateways() {
+		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
+			continue
+		}
+		gateways = append(gateways, gateway)
+	}
 
 	var gatewayListeners []gatewayListener
 	for _, gateway := range gateways {
@@ -365,10 +377,6 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
-
-		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
-			continue
-		}
 
 		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
 	}
@@ -1117,24 +1125,36 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-func matchListener(listener gatewayListener, routeNamespace string, parentRef gatev1.ParentReference) bool {
-	if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
-		return false
+func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	var listeners []gatewayListener
+
+	for _, listener := range gatewayListeners {
+		for _, parentRef := range parentRefs {
+			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+				continue
+			}
+
+			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+				continue
+			}
+
+			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+			if listener.GWNamespace != parentRefNamespace {
+				continue
+			}
+
+			if string(parentRef.Name) != listener.GWName {
+				continue
+			}
+
+			listeners = append(listeners, listener)
+		}
 	}
 
-	if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
-		return false
-	}
+	return listeners
+}
 
-	parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-	if listener.GWNamespace != parentRefNamespace {
-		return false
-	}
-
-	if string(parentRef.Name) != listener.GWName {
-		return false
-	}
-
+func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
 	if sectionName != "" && sectionName != listener.Name {
 		return false
