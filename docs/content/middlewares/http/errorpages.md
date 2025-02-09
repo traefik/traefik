@@ -123,10 +123,11 @@ There are multiple variables that can be placed in the `query` option to insert 
 
 The table below lists all the available variables and their associated values.
 
-| Variable   | Value                                                              |
-|------------|--------------------------------------------------------------------|
-| `{status}` | The response status code.                                          |
-| `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
+| Variable           | Value                                                                                                           |
+|--------------------|-----------------------------------------------------------------------------------------------------------------|
+| `{status}`         | The response status code. May have been rewritten, when using the `rewriteStatus`-option.                       |
+| `{originalStatus}` | The original response status code, if the response status code has been modified by the `rewriteStatus`-option. |
+| `{url}`            | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.                                              |
 
 ### `rewriteStatus`
 
