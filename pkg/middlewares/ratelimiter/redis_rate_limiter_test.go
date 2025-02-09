@@ -2,143 +2,21 @@ package ratelimiter
 
 import (
 	"context"
-	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/vulcand/oxy/v2/utils"
-	"golang.org/x/time/rate"
 )
 
-const delta float64 = 1e-10
-
-func TestNewRateLimiter(t *testing.T) {
-	testCases := []struct {
-		desc             string
-		config           dynamic.RateLimit
-		expectedMaxDelay time.Duration
-		expectedSourceIP string
-		requestHeader    string
-		expectedError    string
-		expectedRTL      rate.Limit
-	}{
-		{
-			desc: "no ratelimit on Average == 0",
-			config: dynamic.RateLimit{
-				Average: 0,
-				Burst:   10,
-			},
-			expectedRTL: rate.Inf,
-		},
-		{
-			desc: "maxDelay computation",
-			config: dynamic.RateLimit{
-				Average: 200,
-				Burst:   10,
-			},
-			expectedMaxDelay: 2500 * time.Microsecond,
-		},
-		{
-			desc: "maxDelay computation, low rate regime",
-			config: dynamic.RateLimit{
-				Average: 2,
-				Period:  ptypes.Duration(10 * time.Second),
-				Burst:   10,
-			},
-			expectedMaxDelay: 500 * time.Millisecond,
-		},
-		{
-			desc: "default SourceMatcher is remote address ip strategy",
-			config: dynamic.RateLimit{
-				Average: 200,
-				Burst:   10,
-			},
-			expectedSourceIP: "127.0.0.1",
-		},
-		{
-			desc: "SourceCriterion in config is respected",
-			config: dynamic.RateLimit{
-				Average: 200,
-				Burst:   10,
-				SourceCriterion: &dynamic.SourceCriterion{
-					RequestHeaderName: "Foo",
-				},
-			},
-			requestHeader: "bar",
-		},
-		{
-			desc: "SourceCriteria are mutually exclusive",
-			config: dynamic.RateLimit{
-				Average: 200,
-				Burst:   10,
-				SourceCriterion: &dynamic.SourceCriterion{
-					IPStrategy:        &dynamic.IPStrategy{},
-					RequestHeaderName: "Foo",
-				},
-			},
-			expectedError: "iPStrategy and RequestHeaderName are mutually exclusive",
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
-			if test.expectedError != "" {
-				assert.EqualError(t, err, test.expectedError)
-			} else {
-				require.NoError(t, err)
-			}
-
-			rtl, _ := h.(*rateLimiter)
-			if test.expectedMaxDelay != 0 {
-				assert.Equal(t, test.expectedMaxDelay, rtl.maxDelay)
-			}
-
-			if test.expectedSourceIP != "" {
-				extractor, ok := rtl.sourceMatcher.(utils.ExtractorFunc)
-				require.True(t, ok, "Not an ExtractorFunc")
-
-				req := http.Request{
-					RemoteAddr: fmt.Sprintf("%s:1234", test.expectedSourceIP),
-				}
-
-				ip, _, err := extractor(&req)
-				assert.NoError(t, err)
-				assert.Equal(t, test.expectedSourceIP, ip)
-			}
-			if test.requestHeader != "" {
-				extractor, ok := rtl.sourceMatcher.(utils.ExtractorFunc)
-				require.True(t, ok, "Not an ExtractorFunc")
-
-				req := http.Request{
-					Header: map[string][]string{
-						test.config.SourceCriterion.RequestHeaderName: {test.requestHeader},
-					},
-				}
-				hd, _, err := extractor(&req)
-				assert.NoError(t, err)
-				assert.Equal(t, test.requestHeader, hd)
-			}
-			if test.expectedRTL != 0 {
-				assert.InDelta(t, float64(test.expectedRTL), float64(rtl.rate), delta)
-			}
-		})
-	}
-}
-
-func TestRateLimit(t *testing.T) {
+func TestRateLimitRedis(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		config       dynamic.RateLimit
@@ -197,7 +75,10 @@ func TestRateLimit(t *testing.T) {
 		{
 			desc: "lower than 1/s",
 			config: dynamic.RateLimit{
-				Average: 5,
+				// Bug on gopher-lua on parsing the string to number "5e-07" => 0.0000005
+				// See https://github.com/yuin/gopher-lua/issues/491
+				// Average: 5,
+				Average: 1,
 				Period:  ptypes.Duration(10 * time.Second),
 			},
 			loadDuration: 2 * time.Second,
@@ -207,7 +88,10 @@ func TestRateLimit(t *testing.T) {
 		{
 			desc: "lower than 1/s, longer",
 			config: dynamic.RateLimit{
-				Average: 5,
+				// Bug on gopher-lua on parsing the string to number "5e-07" => 0.0000005
+				// See https://github.com/yuin/gopher-lua/issues/491
+				// Average: 5,
+				Average: 1,
 				Period:  ptypes.Duration(10 * time.Second),
 			},
 			loadDuration: time.Minute,
@@ -248,6 +132,7 @@ func TestRateLimit(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			randPort := rand.Int()
 			if test.loadDuration >= time.Minute && testing.Short() {
 				t.Skip("skipping test in short mode.")
 			}
@@ -258,8 +143,15 @@ func TestRateLimit(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				reqCount++
 			})
+			test.config.Redis = &dynamic.Redis{
+				Endpoints: []string{"localhost:6379"},
+			}
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
+			l := h.(*rateLimiter)
+			limiter := l.limiter.(*RedisLimiter)
+			l.limiter = injectClient(l.limiter.(*RedisLimiter), NewMockRedisClient(limiter.ttl))
+			h = l
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)
 			start := time.Now()
@@ -272,7 +164,7 @@ func TestRateLimit(t *testing.T) {
 				}
 
 				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-				req.RemoteAddr = "127.0.0.1:1234"
+				req.RemoteAddr = "127.0.0." + strconv.Itoa(randPort) + ":" + strconv.Itoa(randPort)
 				w := httptest.NewRecorder()
 
 				h.ServeHTTP(w, req)
@@ -323,19 +215,19 @@ func TestRateLimit(t *testing.T) {
 			// we can expect some extra delay in addition to the rate limiting we already do,
 			// so we allow for some extra leeway there.
 			// Feel free to adjust wrt to the load on e.g. the CI.
-			minCount := computeMinCount(wantCount)
+			minCount := computeMinCountRedis(wantCount)
 
 			if reqCount < minCount {
-				t.Fatalf("rate was slower than expected: %d requests (wanted > %d) in %v", reqCount, minCount, elapsed)
+				t.Fatalf("rate was slower than expected: %d requests (wanted > %d) (dropped %d)  in %v", reqCount, minCount, dropped, elapsed)
 			}
 			if reqCount > maxCount {
-				t.Fatalf("rate was faster than expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
+				t.Fatalf("rate was faster than expected: %d requests (wanted < %d) (dropped %d) in %v", reqCount, maxCount, dropped, elapsed)
 			}
 		})
 	}
 }
 
-func computeMinCount(wantCount int) int {
+func computeMinCountRedis(wantCount int) int {
 	if os.Getenv("CI") != "" {
 		return wantCount * 60 / 100
 	}
