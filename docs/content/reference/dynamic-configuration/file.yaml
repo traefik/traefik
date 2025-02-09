@@ -355,6 +355,24 @@ http:
             ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
+        redis:
+          endpoints:
+            - foobar
+            - foobar
+          tls:
+            ca: foobar
+            cert: foobar
+            key: foobar
+            insecureSkipVerify: true
+          username: foobar
+          password: foobar
+          db: 42
+          poolSize: 42
+          minIdleConns: 42
+          maxActiveConns: 42
+          readTimeout: 42ns
+          writeTimeout: 42ns
+          dialTimeout: 42ns
     Middleware19:
       redirectRegex:
         regex: foobar
