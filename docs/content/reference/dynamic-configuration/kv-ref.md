@@ -48,7 +48,11 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/authResponseHeadersRegex` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/forwardBody` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/headerField` | `foobar` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/maxBodySize` | `42` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/preserveLocationHeader` | `true` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/preserveRequestMethod` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/cert` | `foobar` |
@@ -188,6 +192,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router0/entryPoints/1` | `foobar` |
 | `traefik/http/routers/Router0/middlewares/0` | `foobar` |
 | `traefik/http/routers/Router0/middlewares/1` | `foobar` |
+| `traefik/http/routers/Router0/observability/accessLogs` | `true` |
+| `traefik/http/routers/Router0/observability/metrics` | `true` |
+| `traefik/http/routers/Router0/observability/tracing` | `true` |
 | `traefik/http/routers/Router0/priority` | `42` |
 | `traefik/http/routers/Router0/rule` | `foobar` |
 | `traefik/http/routers/Router0/ruleSyntax` | `foobar` |
@@ -204,6 +211,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router1/entryPoints/1` | `foobar` |
 | `traefik/http/routers/Router1/middlewares/0` | `foobar` |
 | `traefik/http/routers/Router1/middlewares/1` | `foobar` |
+| `traefik/http/routers/Router1/observability/accessLogs` | `true` |
+| `traefik/http/routers/Router1/observability/metrics` | `true` |
+| `traefik/http/routers/Router1/observability/tracing` | `true` |
 | `traefik/http/routers/Router1/priority` | `42` |
 | `traefik/http/routers/Router1/rule` | `foobar` |
 | `traefik/http/routers/Router1/ruleSyntax` | `foobar` |
@@ -271,14 +281,17 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/healthCheck/timeout` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
+| `traefik/http/services/Service02/loadBalancer/servers/0/preservePath` | `true` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/url` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/weight` | `42` |
+| `traefik/http/services/Service02/loadBalancer/servers/1/preservePath` | `true` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/name` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
@@ -297,6 +310,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service04/weighted/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/name` | `foobar` |
+| `traefik/http/services/Service04/weighted/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/secure` | `true` |
 | `traefik/tcp/middlewares/TCPMiddleware01/ipAllowList/sourceRange/0` | `foobar` |

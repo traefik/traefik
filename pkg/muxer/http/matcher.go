@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
-	"golang.org/x/exp/slices"
 )
 
 var httpFuncs = map[string]func(*matchersTree, ...string) error{

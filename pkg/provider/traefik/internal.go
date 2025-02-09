@@ -32,7 +32,7 @@ func New(staticCfg static.Configuration) *Provider {
 }
 
 // ThrottleDuration returns the throttle duration.
-func (i Provider) ThrottleDuration() time.Duration {
+func (i *Provider) ThrottleDuration() time.Duration {
 	return 0
 }
 
@@ -223,35 +223,38 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 	}
 
 	for name, ep := range i.staticCfg.EntryPoints {
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" {
+		if defaultRuleSyntax != "" {
+			cfg.TCP.Models[name] = &dynamic.TCPModel{
+				DefaultRuleSyntax: defaultRuleSyntax,
+			}
+		}
+
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil {
 			continue
 		}
 
-		m := &dynamic.Model{
-			Middlewares: ep.HTTP.Middlewares,
+		httpModel := &dynamic.Model{
+			DefaultRuleSyntax: defaultRuleSyntax,
+			Middlewares:       ep.HTTP.Middlewares,
+		}
+
+		if ep.Observability != nil {
+			httpModel.Observability = dynamic.RouterObservabilityConfig{
+				AccessLogs: ep.Observability.AccessLogs,
+				Tracing:    ep.Observability.Tracing,
+				Metrics:    ep.Observability.Metrics,
+			}
 		}
 
 		if ep.HTTP.TLS != nil {
-			m.TLS = &dynamic.RouterTLSConfig{
+			httpModel.TLS = &dynamic.RouterTLSConfig{
 				Options:      ep.HTTP.TLS.Options,
 				CertResolver: ep.HTTP.TLS.CertResolver,
 				Domains:      ep.HTTP.TLS.Domains,
 			}
 		}
 
-		m.DefaultRuleSyntax = defaultRuleSyntax
-
-		cfg.HTTP.Models[name] = m
-
-		if cfg.TCP == nil {
-			continue
-		}
-
-		mTCP := &dynamic.TCPModel{
-			DefaultRuleSyntax: defaultRuleSyntax,
-		}
-
-		cfg.TCP.Models[name] = mTCP
+		cfg.HTTP.Models[name] = httpModel
 	}
 }
 

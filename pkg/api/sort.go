@@ -1,10 +1,9 @@
 package api
 
 import (
+	"cmp"
 	"net/url"
 	"sort"
-
-	"golang.org/x/exp/constraints"
 )
 
 const (
@@ -341,11 +340,7 @@ func (m tcpMiddlewareRepresentation) status() string {
 	return m.Status
 }
 
-type orderedByName interface {
-	orderedWithName
-}
-
-func sortByName[T orderedByName](direction string, results []T) {
+func sortByName[T orderedWithName](direction string, results []T) {
 	// Ascending
 	if direction == ascendantSorting {
 		sort.Slice(results, func(i, j int) bool {
@@ -361,7 +356,7 @@ func sortByName[T orderedByName](direction string, results []T) {
 	})
 }
 
-func sortByFunc[T orderedWithName, U constraints.Ordered](direction string, results []T, fn func(int) U) {
+func sortByFunc[T orderedWithName, U cmp.Ordered](direction string, results []T, fn func(int) U) {
 	// Ascending
 	if direction == ascendantSorting {
 		sort.Slice(results, func(i, j int) bool {

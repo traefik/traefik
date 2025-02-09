@@ -7,7 +7,8 @@ There are, however, exceptions when using label-based configurations:
 and a label defines a service (e.g. implicitly through a loadbalancer server port value),
 but the router does not specify any service,
 then that service is automatically assigned to the router.
-1. If a label defines a router (e.g. through a router Rule) but no service is defined,
+
+2. If a label defines a router (e.g. through a router Rule) but no service is defined,
 then a service is automatically created and assigned to the router.
 
 !!! info ""

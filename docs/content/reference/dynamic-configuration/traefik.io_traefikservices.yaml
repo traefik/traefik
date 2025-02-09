@@ -22,7 +22,7 @@ spec:
           TraefikService object allows to:
           - Apply weight to Services on load-balancing
           - Mirror traffic on services
-          More info: https://doc.traefik.io/traefik/v3.2/routing/providers/kubernetes-crd/#kind-traefikservice
+          More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#kind-traefikservice
         properties:
           apiVersion:
             description: |-
@@ -268,7 +268,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.2/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.3/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -279,12 +279,18 @@ spec:
                                   type: boolean
                                 maxAge:
                                   description: |-
-                                    MaxAge indicates the number of seconds until the cookie expires.
+                                    MaxAge defines the number of seconds until the cookie expires.
                                     When set to a negative number, the cookie expires immediately.
                                     When set to zero, the cookie never expires.
                                   type: integer
                                 name:
                                   description: Name defines the Cookie name.
+                                  type: string
+                                path:
+                                  description: |-
+                                    Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
+                                    When not provided the cookie will be sent on every request to the domain.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                   type: string
                                 sameSite:
                                   description: |-
@@ -375,7 +381,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.2/routing/services/#sticky-sessions
+                      More info: https://doc.traefik.io/traefik/v3.3/routing/services/#sticky-sessions
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -386,12 +392,18 @@ spec:
                             type: boolean
                           maxAge:
                             description: |-
-                              MaxAge indicates the number of seconds until the cookie expires.
+                              MaxAge defines the number of seconds until the cookie expires.
                               When set to a negative number, the cookie expires immediately.
                               When set to zero, the cookie never expires.
                             type: integer
                           name:
                             description: Name defines the Cookie name.
+                            type: string
+                          path:
+                            description: |-
+                              Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
+                              When not provided the cookie will be sent on every request to the domain.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
                           sameSite:
                             description: |-
@@ -558,7 +570,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.2/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.3/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -569,12 +581,18 @@ spec:
                                   type: boolean
                                 maxAge:
                                   description: |-
-                                    MaxAge indicates the number of seconds until the cookie expires.
+                                    MaxAge defines the number of seconds until the cookie expires.
                                     When set to a negative number, the cookie expires immediately.
                                     When set to zero, the cookie never expires.
                                   type: integer
                                 name:
                                   description: Name defines the Cookie name.
+                                  type: string
+                                path:
+                                  description: |-
+                                    Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
+                                    When not provided the cookie will be sent on every request to the domain.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                                   type: string
                                 sameSite:
                                   description: |-
@@ -605,7 +623,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v3.2/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+                      More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -616,12 +634,18 @@ spec:
                             type: boolean
                           maxAge:
                             description: |-
-                              MaxAge indicates the number of seconds until the cookie expires.
+                              MaxAge defines the number of seconds until the cookie expires.
                               When set to a negative number, the cookie expires immediately.
                               When set to zero, the cookie never expires.
                             type: integer
                           name:
                             description: Name defines the Cookie name.
+                            type: string
+                          path:
+                            description: |-
+                              Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
+                              When not provided the cookie will be sent on every request to the domain.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
                             type: string
                           sameSite:
                             description: |-

@@ -283,7 +283,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.ecs.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.ecs.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
 
