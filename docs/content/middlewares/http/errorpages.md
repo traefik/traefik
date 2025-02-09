@@ -123,7 +123,21 @@ There are multiple variables that can be placed in the `query` option to insert 
 
 The table below lists all the available variables and their associated values.
 
-| Variable   | Value                                                              |
-|------------|--------------------------------------------------------------------|
-| `{status}` | The response status code.                                          |
-| `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
+| Variable           | Value                                                                                                           |
+|--------------------|-----------------------------------------------------------------------------------------------------------------|
+| `{status}`         | The response status code. May have been rewritten, when using the `rewriteStatus`-option.                       |
+| `{originalStatus}` | The original response status code, if the response status code has been modified by the `rewriteStatus`-option. |
+| `{url}`            | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.                                              |
+
+### `rewriteStatus`
+
+An optional mapping of status codes to be rewritten. If you have a service returning a 418, you may want to return a 404 for example.
+You can map single status codes or even status code ranges to another code. The range-syntax is the same as for the `status`-option.
+
+Here is an example:
+
+```yml
+rewriteStatus:
+  "500-503": 500
+  "418": 404
+```
