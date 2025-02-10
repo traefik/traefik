@@ -132,7 +132,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.")
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
-			"ms"), time.Second)
+			"s"), time.Second)
 		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, entryPointReqsBytesTotalName,
 			"The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
 		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, entryPointRespsBytesTotalName,
@@ -146,7 +146,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.")
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
-			"ms"), time.Second)
+			"s"), time.Second)
 		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, routerReqsBytesTotalName,
 			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
 		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
@@ -160,7 +160,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.")
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
-			"ms"), time.Second)
+			"s"), time.Second)
 		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,
 			"How many request retries happened on a service.")
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
