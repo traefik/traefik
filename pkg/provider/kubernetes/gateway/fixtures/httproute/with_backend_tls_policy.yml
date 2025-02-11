@@ -58,21 +58,33 @@ metadata:
   namespace: default
 spec:
   targetRefs:
-    - group: core
+    - group: ""
       kind: Service
       name: whoami
   validation:
     hostname: whoami
     caCertificateRefs:
-      - group: core
+      - group: ""
         kind: ConfigMap
         name: ca-file
+      - group: core
+        kind: ConfigMap
+        name: ca-file-2
 
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ca-file
+  namespace: default
+data:
+  ca.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-file-2
   namespace: default
 data:
   ca.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="

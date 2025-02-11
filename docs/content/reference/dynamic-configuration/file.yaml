@@ -25,6 +25,10 @@ http:
             sans:
               - foobar
               - foobar
+      observability:
+        accessLogs: true
+        tracing: true
+        metrics: true
     Router1:
       entryPoints:
         - foobar
@@ -48,6 +52,10 @@ http:
             sans:
               - foobar
               - foobar
+      observability:
+        accessLogs: true
+        tracing: true
+        metrics: true
   services:
     Service01:
       failover:
@@ -201,6 +209,10 @@ http:
           - foobar
           - foobar
         headerField: foobar
+        forwardBody: true
+        maxBodySize: 42
+        preserveLocationHeader: true
+        preserveRequestMethod: true
     Middleware11:
       grpcWeb:
         allowOrigins:

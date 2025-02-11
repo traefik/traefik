@@ -15,13 +15,13 @@ Let's see how.
 
 ### General
 
-This [documentation](../../ "Link to the official Traefik documentation") is built with [MkDocs](https://mkdocs.org/ "Link to website of MkDocs").
+This [documentation](../../ "Link to the official Traefik documentation") is built with [MkDocs](https://mkdocs.org/ "Link to the website of MkDocs").
 
 ### Method 1: `Docker` and `make`
 
 Please make sure you have the following requirements installed:
 
-- [Docker](https://www.docker.com/ "Link to website of Docker")
+- [Docker](https://www.docker.com/ "Link to the website of Docker")
 
 You can build the documentation and test it locally (with live reloading), using the `docs-serve` target:
 
@@ -51,7 +51,7 @@ $ make docs-build
 
 Please make sure you have the following requirements installed:
 
-- [Python](https://www.python.org/ "Link to website of Python")
+- [Python](https://www.python.org/ "Link to the website of Python")
 - [pip](https://pypi.org/project/pip/ "Link to the website of pip on PyPI")
 
 ```bash

@@ -91,6 +91,10 @@ entryPoints:
       advertisedPort: 42
     udp:
       timeout: 42s
+    observability:
+      accessLogs: true
+      tracing: true
+      metrics: true
 providers:
   providersThrottleDuration: 42s
   docker:
@@ -330,6 +334,7 @@ providers:
       name0: foobar
       name1: foobar
 api:
+  basePath: foobar
   insecure: true
   dashboard: true
   debug: true
@@ -417,6 +422,32 @@ log:
   maxAge: 42
   maxBackups: 42
   compress: true
+  otlp:
+    serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 accessLog:
   filePath: foobar
   format: foobar
@@ -438,9 +469,35 @@ accessLog:
         name1: foobar
   bufferingSize: 42
   addInternals: true
+  otlp:
+    serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 tracing:
   serviceName: foobar
-  globalAttributes:
+  resourceAttributes:
     name0: foobar
     name1: foobar
   capturedRequestHeaders:
@@ -476,6 +533,9 @@ tracing:
       headers:
         name0: foobar
         name1: foobar
+  globalAttributes:
+    name0: foobar
+    name1: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
@@ -499,10 +559,15 @@ certificatesResolvers:
       caServerName: foobar
       dnsChallenge:
         provider: foobar
-        delayBeforeCheck: 42s
         resolvers:
           - foobar
           - foobar
+        propagation:
+          disableChecks: true
+          disableANSChecks: true
+          requireAllRNS: true
+          delayBeforeChecks: 42s
+        delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
@@ -526,10 +591,15 @@ certificatesResolvers:
       caServerName: foobar
       dnsChallenge:
         provider: foobar
-        delayBeforeCheck: 42s
         resolvers:
           - foobar
           - foobar
+        propagation:
+          disableChecks: true
+          disableANSChecks: true
+          requireAllRNS: true
+          delayBeforeChecks: 42s
+        delayBeforeCheck: 42s
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
@@ -579,6 +649,7 @@ experimental:
   abortOnPluginFailure: true
   fastProxy:
     debug: true
+  otlplogs: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar

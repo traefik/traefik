@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"io"
 	stdlog "log"
+	"maps"
 	"net/http"
 	"os"
 	"os/signal"
-	"sort"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"github.com/traefik/traefik/v3/cmd"
 	"github.com/traefik/traefik/v3/cmd/healthcheck"
 	cmdVersion "github.com/traefik/traefik/v3/cmd/version"
+	_ "github.com/traefik/traefik/v3/init"
 	tcli "github.com/traefik/traefik/v3/pkg/cli"
 	"github.com/traefik/traefik/v3/pkg/collector"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -48,7 +50,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
-	"golang.org/x/exp/maps"
 )
 
 func main() {
@@ -90,7 +91,9 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	setupLogger(staticConfiguration)
+	if err := setupLogger(staticConfiguration); err != nil {
+		return fmt.Errorf("setting up logger: %w", err)
+	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
@@ -189,11 +192,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
+	acmeProviders := initACMEProvider(staticConfiguration, providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider, routinesPool)
 
 	// Tailscale
 
-	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
+	tsProviders := initTailscaleProviders(staticConfiguration, providerAggregator)
 
 	// Observability
 
@@ -230,8 +233,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	pluginLogger := log.Ctx(ctx).With().Logger()
 	hasPlugins := staticConfiguration.Experimental != nil && (staticConfiguration.Experimental.Plugins != nil || staticConfiguration.Experimental.LocalPlugins != nil)
 	if hasPlugins {
-		pluginsList := maps.Keys(staticConfiguration.Experimental.Plugins)
-		pluginsList = append(pluginsList, maps.Keys(staticConfiguration.Experimental.LocalPlugins)...)
+		pluginsList := slices.Collect(maps.Keys(staticConfiguration.Experimental.Plugins))
+		pluginsList = append(pluginsList, slices.Collect(maps.Keys(staticConfiguration.Experimental.LocalPlugins))...)
 
 		pluginLogger = pluginLogger.With().Strs("plugins", pluginsList).Logger()
 		pluginLogger.Info().Msg("Loading plugins...")
@@ -425,7 +428,7 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 		}
 	}
 
-	sort.Strings(defaultEntryPoints)
+	slices.Sort(defaultEntryPoints)
 	return defaultEntryPoints
 }
 
@@ -441,7 +444,7 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 }
 
 // initACMEProvider creates and registers acme.Provider instances corresponding to the configured ACME certificate resolvers.
-func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider) []*acme.Provider {
+func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider, routinesPool *safe.Pool) []*acme.Provider {
 	localStores := map[string]*acme.LocalStore{}
 
 	var resolvers []*acme.Provider
@@ -451,7 +454,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		}
 
 		if localStores[resolver.ACME.Storage] == nil {
-			localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
+			localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage, routinesPool)
 		}
 
 		p := &acme.Provider{
@@ -566,7 +569,7 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 }
 
 func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
-	sort.Strings(certificate.DNSNames)
+	slices.Sort(certificate.DNSNames)
 
 	labels := []string{
 		"cn", certificate.Subject.CommonName,

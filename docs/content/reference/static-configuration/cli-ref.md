@@ -39,8 +39,65 @@ Keep access logs with status codes in the specified range.
 `--accesslog.format`:  
 Access log format: json | common (Default: ```common```)
 
+`--accesslog.otlp`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--accesslog.otlp.grpc`:  
+gRPC configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`--accesslog.otlp.grpc.endpoint`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`--accesslog.otlp.grpc.headers.<name>`:  
+Headers sent with payload.
+
+`--accesslog.otlp.grpc.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--accesslog.otlp.grpc.tls.ca`:  
+TLS CA
+
+`--accesslog.otlp.grpc.tls.cert`:  
+TLS cert
+
+`--accesslog.otlp.grpc.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--accesslog.otlp.grpc.tls.key`:  
+TLS key
+
+`--accesslog.otlp.http`:  
+HTTP configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`--accesslog.otlp.http.endpoint`:  
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`--accesslog.otlp.http.headers.<name>`:  
+Headers sent with payload.
+
+`--accesslog.otlp.http.tls.ca`:  
+TLS CA
+
+`--accesslog.otlp.http.tls.cert`:  
+TLS cert
+
+`--accesslog.otlp.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--accesslog.otlp.http.tls.key`:  
+TLS key
+
+`--accesslog.otlp.resourceattributes.<name>`:  
+Defines additional resource attributes (key:value).
+
+`--accesslog.otlp.servicename`:  
+Set the name for this service. (Default: ```traefik```)
+
 `--api`:  
 Enable api/dashboard. (Default: ```false```)
+
+`--api.basepath`:  
+Defines the base path where the API and Dashboard will be exposed. (Default: ```/```)
 
 `--api.dashboard`:  
 Activate dashboard. (Default: ```true```)
@@ -76,10 +133,25 @@ Certificates' duration in hours. (Default: ```2160```)
 Activate DNS-01 Challenge. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.delaybeforecheck`:  
-Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
+(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.disablepropagationcheck`:  
-Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+(Deprecated) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation`:  
+DNS propagation checks configuration (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.delaybeforechecks`:  
+Defines the delay before checking the challenge TXT record propagation. (Default: ```0```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.disableanschecks`:  
+Disables the challenge TXT record propagation checks against authoritative nameservers. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.disablechecks`:  
+Disables the challenge TXT record propagation checks (not recommended). (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.propagation.requireallrns`:  
+Requires the challenge TXT record to be propagated to all recursive nameservers. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge.provider`:  
 Use a DNS-01 based challenge provider rather than HTTPS.
@@ -192,6 +264,15 @@ HTTP/3 configuration. (Default: ```false```)
 `--entrypoints.<name>.http3.advertisedport`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
+`--entrypoints.<name>.observability.accesslogs`:  
+ (Default: ```true```)
+
+`--entrypoints.<name>.observability.metrics`:  
+ (Default: ```true```)
+
+`--entrypoints.<name>.observability.tracing`:  
+ (Default: ```true```)
+
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
 
@@ -232,7 +313,7 @@ Timeout defines how long to wait on an idle session before releasing the related
 Defines whether all plugins must be loaded successfully for Traefik to start. (Default: ```false```)
 
 `--experimental.fastproxy`:  
-Enable the FastProxy implementation. (Default: ```false```)
+Enables the FastProxy implementation. (Default: ```false```)
 
 `--experimental.fastproxy.debug`:  
 Enable debug mode for the FastProxy implementation. (Default: ```false```)
@@ -254,6 +335,9 @@ Environment variables to forward to the wasm guest.
 
 `--experimental.localplugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
+
+`--experimental.otlplogs`:  
+Enables the OpenTelemetry logs integration. (Default: ```false```)
 
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
@@ -314,6 +398,60 @@ Maximum size in megabytes of the log file before it gets rotated. (Default: ```0
 
 `--log.nocolor`:  
 When using the 'common' format, disables the colorized output. (Default: ```false```)
+
+`--log.otlp`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--log.otlp.grpc`:  
+gRPC configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`--log.otlp.grpc.endpoint`:  
+Sets the gRPC endpoint (host:port) of the collector. (Default: ```localhost:4317```)
+
+`--log.otlp.grpc.headers.<name>`:  
+Headers sent with payload.
+
+`--log.otlp.grpc.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--log.otlp.grpc.tls.ca`:  
+TLS CA
+
+`--log.otlp.grpc.tls.cert`:  
+TLS cert
+
+`--log.otlp.grpc.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--log.otlp.grpc.tls.key`:  
+TLS key
+
+`--log.otlp.http`:  
+HTTP configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`--log.otlp.http.endpoint`:  
+Sets the HTTP endpoint (scheme://host:port/path) of the collector. (Default: ```https://localhost:4318```)
+
+`--log.otlp.http.headers.<name>`:  
+Headers sent with payload.
+
+`--log.otlp.http.tls.ca`:  
+TLS CA
+
+`--log.otlp.http.tls.cert`:  
+TLS cert
+
+`--log.otlp.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--log.otlp.http.tls.key`:  
+TLS key
+
+`--log.otlp.resourceattributes.<name>`:  
+Defines additional resource attributes (key:value).
+
+`--log.otlp.servicename`:  
+Set the name for this service. (Default: ```traefik```)
 
 `--metrics.addinternals`:  
 Enables metrics for internal services (ping, dashboard, etc...). (Default: ```false```)
@@ -1120,7 +1258,7 @@ Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
 Defines the allowed SPIFFE trust domain.
 
 `--tracing`:  
-OpenTracing configuration. (Default: ```false```)
+Tracing configuration. (Default: ```false```)
 
 `--tracing.addinternals`:  
 Enables tracing for internal services (ping, dashboard, etc...). (Default: ```false```)
@@ -1132,7 +1270,7 @@ Request headers to add as attributes for server and client spans.
 Response headers to add as attributes for server and client spans.
 
 `--tracing.globalattributes.<name>`:  
-Defines additional attributes (key:value) on all spans.
+(Deprecated) Defines additional resource attributes (key:value).
 
 `--tracing.otlp`:  
 Settings for OpenTelemetry. (Default: ```false```)
@@ -1182,6 +1320,9 @@ TLS insecure skip verify (Default: ```false```)
 `--tracing.otlp.http.tls.key`:  
 TLS key
 
+`--tracing.resourceattributes.<name>`:  
+Defines additional resource attributes (key:value).
+
 `--tracing.safequeryparams`:  
 Query params to not redact.
 
@@ -1189,4 +1330,4 @@ Query params to not redact.
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.servicename`:  
-Set the name for this service. (Default: ```traefik```)
+Sets the name for this service. (Default: ```traefik```)

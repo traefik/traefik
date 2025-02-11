@@ -31,7 +31,7 @@ func NewCertificateStore() *CertificateStore {
 	}
 }
 
-func (c CertificateStore) getDefaultCertificateDomains() []string {
+func (c *CertificateStore) getDefaultCertificateDomains() []string {
 	var allCerts []string
 
 	if c.DefaultCertificate == nil {
@@ -58,7 +58,7 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 }
 
 // GetAllDomains return a slice with all the certificate domain.
-func (c CertificateStore) GetAllDomains() []string {
+func (c *CertificateStore) GetAllDomains() []string {
 	allDomains := c.getDefaultCertificateDomains()
 
 	// Get dynamic certificates
@@ -157,7 +157,7 @@ func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 }
 
 // ResetCache clears the cache in the store.
-func (c CertificateStore) ResetCache() {
+func (c *CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}

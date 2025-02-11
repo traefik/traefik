@@ -171,7 +171,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if reqUpType != "" {
 		outReq.Header.Set("Connection", "Upgrade")
 		outReq.Header.Set("Upgrade", reqUpType)
-		if reqUpType == "websocket" {
+		if strings.EqualFold(reqUpType, "websocket") {
 			cleanWebSocketHeaders(&outReq.Header)
 		}
 	}
@@ -284,8 +284,9 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	// Sending the responseWriter unlocks the connection readLoop, to handle the response.
 	co.RWCh <- rwWithUpgrade{
-		RW:      rw,
-		Upgrade: upgradeResponseHandler(req.Context(), reqUpType),
+		ReqMethod: req.Method,
+		RW:        rw,
+		Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
 	}
 
 	if err := <-co.ErrCh; err != nil {
@@ -353,6 +354,7 @@ type fasthttpHeader interface {
 	SetBytesV(key string, value []byte)
 	DelBytes(key []byte)
 	Del(key string)
+	ConnectionUpgrade() bool
 }
 
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.
