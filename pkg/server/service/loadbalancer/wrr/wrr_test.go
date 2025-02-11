@@ -442,7 +442,7 @@ func TestStickyWithCompatibility(t *testing.T) {
 			},
 		},
 		{
-			desc:    "Two fnv previous cookie",
+			desc:    "Double fnv previous cookie",
 			servers: []string{"first", "second"},
 			cookies: []*http.Cookie{
 				{Name: "test", Value: fnvHash(fnvHash("first"))},

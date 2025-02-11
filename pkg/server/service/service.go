@@ -333,13 +333,13 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
 	healthCheckTargets := make(map[string]*url.URL)
 
-	for _, server := range shuffle(service.Servers, m.rand) {
+	for i, server := range shuffle(service.Servers, m.rand) {
 		target, err := url.Parse(server.URL)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
 		}
 
-		logger.Debug().Str(logs.ServerName, server.URL).Stringer("target", target).
+		logger.Debug().Int(logs.ServerIndex, i).Str("URL", server.URL).
 			Msg("Creating server")
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
