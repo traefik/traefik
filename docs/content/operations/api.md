@@ -177,3 +177,34 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/debug/pprof/trace`           | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.               |
 
 {!traefik-for-business-applications.md!}
+
+### GET /api/routes
+Retrieves a list of all routes.
+
+**Query Parameters:**
+
+| Parameter | Type   | Description                        |
+|-----------|--------|------------------------------------|
+| `page`    | `int`  | Page number for pagination.        |
+| `limit`   | `int`  | Number of routes per page.         |
+| `sort`    | `string` | Sort order (`asc` or `desc`).     |
+
+**Response:**
+
+```json
+{
+  "routes": [
+    {
+      "id": "route-123",
+      "name": "My Route",
+      "status": "active",
+      "created_at": "2024-02-10T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 100
+  }
+}
+
