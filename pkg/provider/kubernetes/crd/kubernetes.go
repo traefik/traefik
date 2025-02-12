@@ -353,6 +353,26 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			rootCAs = append(rootCAs, types.FileOrContent(caSecret))
 		}
 
+		for _, rootCa := range serversTransport.Spec.RootCAs {
+			if rootCa.SecretRef != nil {
+				caSecret, err := loadCASecret(serversTransport.Namespace, *rootCa.SecretRef, client)
+				if err != nil {
+					logger.Error().Err(err).Msgf("Error while loading rootCAs %s", *rootCa.SecretRef)
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+			} else if rootCa.ConfigMapRef != nil {
+				caSecret, err := loadCASecretFromConfigMap(serversTransport.Namespace, *rootCa.ConfigMapRef, client)
+				if err != nil {
+					logger.Error().Err(err).Msgf("Error while loading rootCAs %s", *rootCa.ConfigMapRef)
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+			}
+		}
+
 		var certs tls.Certificates
 		for _, secret := range serversTransport.Spec.CertificatesSecrets {
 			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
@@ -858,6 +878,28 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 	return "", fmt.Errorf("could not find CA block: %w", err)
 }
 
+func loadCASecretFromConfigMap(namespace, name string, k8sClient Client) (string, error) {
+	configMap, ok, err := k8sClient.GetConfigMap(namespace, name)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch config map '%s/%s': %w", namespace, name, err)
+	}
+
+	if !ok {
+		return "", fmt.Errorf("config map '%s/%s' not found", namespace, name)
+	}
+
+	if configMap == nil {
+		return "", fmt.Errorf("data for config map '%s/%s' must not be nil", namespace, name)
+	}
+
+	tlsCAData, err := getCABlocksFromConfigMap(configMap, namespace, name)
+	if err == nil {
+		return tlsCAData, nil
+	}
+
+	return "", fmt.Errorf("could not find CA block: %w", err)
+}
+
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
@@ -1293,6 +1335,20 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	}
 
 	return "", fmt.Errorf("secret %s/%s contains neither tls.ca nor ca.crt", namespace, secretName)
+}
+
+func getCABlocksFromConfigMap(configMap *corev1.ConfigMap, namespace, name string) (string, error) {
+	tlsCrtData, tlsCrtExists := configMap.Data["tls.ca"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	tlsCrtData, tlsCrtExists = configMap.Data["ca.crt"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	return "", fmt.Errorf("config map %s/%s contains neither tls.ca nor ca.crt", namespace, name)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
