@@ -429,6 +429,8 @@
       email = "foobar"
       caServer = "foobar"
       preferredChain = "foobar"
+      profile = "foobar"
+      emailAddresses = ["foobar", "foobar"]
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
@@ -448,6 +450,8 @@
       email = "foobar"
       caServer = "foobar"
       preferredChain = "foobar"
+      profile = "foobar"
+      emailAddresses = ["foobar", "foobar"]
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
