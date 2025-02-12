@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.3.0) of the specification.
+The Kubernetes Gateway API provider supports version [v1.2.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.1) of the specification.
 
 It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.2.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.2.1/traefik-traefik).
 
 ## Deploying a Gateway
 
@@ -287,7 +287,7 @@ There are three types of filters:
 
 - **Core:** Mandatory filters for every Gateway controller, such as `RequestHeaderModifier` and `RequestRedirect`.
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
-- **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares]() supported through the [Middleware CRD]().
+- **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](./http/middleware.md).
 
 !!! info "ExtensionRef Filters"
 
@@ -487,7 +487,7 @@ spec:
     - port: 3000
 ```
 
-Once everything is deployed, sending a GRPC request to the HTTP endpoint should return the following responses:
+Once everything is deployed, sending a GRPC request to the HTTP endpoint should return the following response:
 
 ??? success "Response"
 
