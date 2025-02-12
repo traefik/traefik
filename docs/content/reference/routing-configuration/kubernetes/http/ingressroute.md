@@ -63,42 +63,6 @@ spec:
     secretName: supersecret
 ```
 
-```yaml tab="Middleware"
-  # All resources definition must be declared
-  # Prefixing with /foo
-  apiVersion: traefik.io/v1alpha1
-  kind: Middleware
-  metadata:
-    name: middleware1
-    namespace: apps
-
-  spec:
-    addPrefix:
-      prefix: /foo
-```
-
-```yaml tab="TLSOption"
-  apiVersion: traefik.io/v1alpha1
-  kind: TLSOption
-  metadata:
-    name: opt
-    namespace: apps
-
-  spec:
-    minVersion: VersionTLS12
-```
-
-```yaml tab="Secret"
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: supersecret
-    namespace: apps
-  data:
-    tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-    tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
-```
-
 ## Configuration Options
 
 | Field | Description                                               | Default              | Required |
@@ -112,7 +76,7 @@ spec:
 | `routes[n].`<br />`middlewares[m].`<br />`name` | Middleware name.<br />The character `@` is not authorized. <br />More information [here](#routesmiddlewares). | "" | Yes |
 | `routes[n].`<br />`middlewares[m].`<br />`namespace` | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#routesmiddlewares). | "" | No |
 | `routes[n].`<br />`services` | List of any combination of TraefikService and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br />More information [here](#routesservices). |  | No |
-| `routes[n].`<br />`services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#routesservices) | "" | No |
+| `routes[n].`<br />`services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#routesservices). | "" | No |
 | `routes[n].`<br />`services[m].`<br />`name` | Service name.<br />The character `@` is not authorized. <br />More information [here](#routesmiddlewares). | "" | Yes |
 | `routes[n].`<br />`services[m].`<br />`namespace` | Service namespace.<br />Can be empty if the service belongs to the same namespace as the IngressRoute. <br />More information [here](#routesservices). | "" | No |
 | `routes[n].`<br />`services[m].`<br />`port` | Service port (number or port name).<br />Evaluated only if the kind is **Service**. | "" | No |
@@ -149,7 +113,7 @@ spec:
 | `tls.`<br />`domains[n].main`        | Main domain name | "" | Yes |
 | `tls.`<br />`domains[n].sans`        | List of alternative domains (SANs) |  | No |
 
-### routes.middlewares
+### Middlewares
 
 - You can attach a list of [middlewares](../../http/middlewares/overview.md) 
 to each HTTP router.
@@ -188,20 +152,6 @@ same namespace as the IngressRoute)
         - name: whoami
           port: 80
     ```
-
-### routes.services
-
-The service to target can be either a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)
-or a [`TraefikService`](/api-gateway/reference/routing/kubernetes/http/services/traefikservice.md)
-
-??? abstract "Kubernetes Service vs TraefikService"
-
-    A [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) allows exposing a pod.
-
-    A [`TraefikService`]()  allows using any (valid) combinations of:
-
-    - [Weighted Round Robin load balancing](). More information in the dedicated Weighted Round Robin service load balancing section.
-    - [Mirroring](). More information in the dedicated mirroring service section.
 
 ??? abstract "routes.services.kind"
 
@@ -315,7 +265,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
         - port: 80
     ```
 
-### tls.options
+### TLS Options
 
 The `options` field enables fine-grained control of the TLS parameters.
 It refers to a [TLSOption](./tlsoption.md) and will be applied only if a `Host` 

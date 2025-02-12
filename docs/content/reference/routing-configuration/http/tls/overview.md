@@ -3,7 +3,7 @@ title: "Traefik TLS Documentation"
 description: "Learn how to configure the transport layer security (TLS) connection in Traefik Proxy. Read the technical documentation."
 ---
 
-Traefik’s TLS configuration defines how to handle TLS negotiation for incoming connections. TLS settings are primarily configured on routers, where you specify certificates and security options for secure communication..
+Traefik's TLS configuration defines how TLS negotiation is handled for incoming connections.
 
 When a router has to handle HTTPS traffic, it should be specified with a `tls` field of the router definition.
 
