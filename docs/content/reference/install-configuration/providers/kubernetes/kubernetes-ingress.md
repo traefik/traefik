@@ -3,7 +3,7 @@ title: "Traefik Kubernetes Ingress Documentation"
 description: "Understand the requirements, routing configuration, and how to set up Traefik Proxy as your Kubernetes Ingress Controller. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes
+# Traefik & Kubernetes 
 
 The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; i.e,
 it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
