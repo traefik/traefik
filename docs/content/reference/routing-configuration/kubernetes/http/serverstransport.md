@@ -9,7 +9,7 @@ It can be applied on a service using:
 
 - An annotation on the [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/) (if the service is exposed using an [Ingress](../ingress.md))
 - The option `services.serverstransport` on an [`IngressRoute`](./ingressroute.md) (if the service is a Kubernetes Service)
-- The option `serverstransport` on an [`TraefikService`](./traefikService.md) (if the service is a Kubernetes Service)
+- The option `serverstransport` on an [`TraefikService`](./traefikservice.md) (if the service is a Kubernetes Service)
 
 !!! note "Reference a ServersTransport CRD from another namespace"
 
