@@ -1,9 +1,9 @@
 ---
 title: "Traefik HTTP Routers Rules & Priority Documentation"
-description: "In Traefik Proxy, a router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
+description: "In Traefik Proxy, an HTTP router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
 ---
 
-A router is in charge of connecting incoming requests to the services that can handle them. To customize the connection, Traefik allows you to define your matching rules and [prioritize](#priority-calculation) the routes.
+An HTTP router is in charge of connecting incoming requests to the services that can handle them. Traefik allows you to define your matching rules and [prioritize](#priority-calculation) the routes.
 
 ## Rules
 

@@ -18,7 +18,7 @@ tcp:
     Router-1:
       rule: "HostSNI(`foo-domain`)"
       service: service-id
-      # will terminate the TLS request by default
+       # Enable TLS termination for all requests.
       tls: {}
 ```
 
@@ -28,7 +28,7 @@ tcp:
   [tcp.routers.Router-1]
     rule = "HostSNI(`foo-domain`)"
     service = "service-id"
-    # will terminate the TLS request by default
+     # Enable TLS termination for all requests.
     [tcp.routers.Router-1.tls]
 ```
 
@@ -58,9 +58,9 @@ tcp:
 | Field   | Description  | Default    | Required |
 |:------------------|:--------------------|:-----------------------------------------------|:---------|
 |`passthrough`| Defines whether the requests should be forwarded "as is", keeping all data encrypted. More information [here](#passthrough) | false | No |
-|`options`| enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-certificates.md#tls-options) and will be applied only if a `HostSNI` rule is defined. |  | No |
-|`domains`| Defines a set of SANs (alternative domains) for each main domain. Every domain must have A/AAAA records pointing to Traefik. Each domain & SAN will lead to a certificate request.|  | No |
-|`certResolver`| If defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules. |  | No |
+|`options`| enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-certificates.md#tls-options) and will be applied only if a `HostSNI` rule is defined. | "" | No |
+|`domains`| Defines a set of SANs (alternative domains) for each main domain. Every domain must have A/AAAA records pointing to Traefik. Each domain & SAN will lead to a certificate request.| [] | No |
+|`certResolver`| If defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules. | "" | No |
 
 ### `passthrough`
 
