@@ -43,7 +43,7 @@ tcp:
 | `servers` |  Servers declare a single instance of your program.  | "" |
 | `servers.address` |   The address option (IP:Port) point to a specific instance. | "" |
 | `servers.tls` | The `tls` option determines whether to use TLS when dialing with the backend. | false |
-| `servers.serversTransport` | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  " " |
+| `servers.serversTransport` | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
 | `servers.proxyProtocol.version` | Traefik supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#proxy-protocol) |  2 |
 
 ### PROXY Protocol
