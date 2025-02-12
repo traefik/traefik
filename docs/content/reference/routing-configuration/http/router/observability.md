@@ -13,7 +13,7 @@ However, a router defining its own observability configuration will opt-out from
 
 !!! warning "AddInternals option"
 
-    By default, and for any type of signals (access-logs, metrics and tracing),
+    By default, and for any type of signal (access-logs, metrics and tracing),
     Traefik disables observability for internal resources.
     The observability options described below cannot interfere with the `AddInternals` ones,
     and will be ignored.
