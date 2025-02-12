@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"k8s.io/utils/strings"
 )
 
 type namedHandler struct {
@@ -338,5 +339,5 @@ func sha256Hash(input string) string {
 	// We purposely ignore the error because the implementation always returns nil.
 	_, _ = hash.Write([]byte(input))
 
-	return hex.EncodeToString(hash.Sum(nil))
+	return strings.ShortenString(hex.EncodeToString(hash.Sum(nil)), 16)
 }
