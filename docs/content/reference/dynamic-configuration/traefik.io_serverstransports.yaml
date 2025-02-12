@@ -107,9 +107,23 @@ spec:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
                 type: string
+              rootCAs:
+                description: RootCAs gives you the option to use secrets or config
+                  maps to store CAs
+                items:
+                  description: RootCAs holds the reference to the secret or config
+                    map that stores the CA.
+                  properties:
+                    configMapRef:
+                      type: string
+                    secretRef:
+                      type: string
+                  type: object
+                type: array
               rootCAsSecrets:
-                description: RootCAsSecrets defines a list of CA secret used to validate
-                  self-signed certificate.
+                description: |-
+                  Deprecated: RootCAsSecrets is deprecated and will be removed in a future release.
+                  Use RootCAs instead for specifying CA certificates.
                 items:
                   type: string
                 type: array
