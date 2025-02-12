@@ -3,136 +3,12 @@ title: "Traefik Kubernetes Services Documentation"
 description: "Learn how to configure routing and load balancing in Traefik Proxy to reach Services, which handle incoming requests. Read the technical documentation."
 --- 
 
-A `TraefikService` is a custom resource that can be put on top of the Kubernetes Services. It brings advanced load-balancing feature such as a [Weighted Round Robin](#weighted-round-robin) load balancing or a Mirroring between your Kubernetes Services.
+A `TraefikService` is a custom resource that sits  on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing or a [Mirroring](#mirroring) between your Kubernetes Services.
 
-## Services
-
- Services are responsible for configuring how to reach the actual services that will eventually handle the incoming requests. The service to target can be either a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) or a `TraefikService`
-
-### Kubernetes Service vs TraefikService
-
-A [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) allows exposing a pod.
-
-A `TraefikService` allows using any (valid) combinations of:
+Services configure how to reach the actual endpoints that will eventually handle incoming requests. In Traefik, the target service can be either a standard [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)—which exposes a pod—or a TraefikService. The latter allows you to combine advanced load-balancing options like:
 
 - [Weighted Round Robin load balancing](#weighted-round-robin).
 - [Mirroring](#mirroring). 
-
-### ExternalName Service
-
-[ExternalName Services](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are used to reference services that exist off platform, on other clusters, or locally.
-
-#### Healthcheck
-
-As the healthchech cannot be done using the usual Kubernetes livenessprobe and readinessprobe, the [`IngressRoute`](./ingressroute.md) brings an option to check the ExternalName Service health.
-
-#### Port Definition
-
-Traefik connect to a backend with a domain and a port. However, Kubernetes ExternalName Service can be defined without any port. Accordingly, Traefik supports defining a port in two ways:
-
-- only on `IngressRoute` service
-- on both sides, you'll be warned if the ports don't match, and the IngressRoute service port is used
-
-Thus, in case of two sides port definition, Traefik expects a match between ports.
-
-=== "Ports defined on Resource"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: apps
-
-    spec:
-      entryPoints:
-        - foo
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-          port: 80
-    ```
-
-    ```yaml tab="Service ExternalName"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: apps
-
-    spec:
-      externalName: external.domain
-      type: ExternalName
-    ```
-
-=== "Port defined on the Service"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: apps
-
-    spec:
-      entryPoints:
-        - foo
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-    ```
-
-    ```yaml tab="Service ExternalName"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: apps
-
-    spec:
-      externalName: external.domain
-      type: ExternalName
-      ports:
-        - port: 80
-    ```
-
-=== "Port defined on both sides"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: apps
-
-    spec:
-      entryPoints:
-        - foo
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-          port: 80
-    ```
-
-    ```yaml tab="Service ExternalName"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: apps
-
-    spec:
-      externalName: external.domain
-      type: ExternalName
-      ports:
-        - port: 80
-    ```
 
 ## Weighted Round Robin
 
@@ -275,7 +151,7 @@ data:
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | `services` | List of any combination of TraefikService and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br />More information [here](#services). |  | No |
-| `services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#services) | "" | No |
+| `services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> - **TraefikService**: Traefik Service.<br />More information [here](#services) | "" | No |
 | `services[m].`<br />`name` | Service name.<br />The character `@` is not authorized. | "" | Yes |
 | `services[m].`<br />`namespace` | Service namespace.<br />More information [here](#services). | "" | No |
 | `services[m].`<br />`port` | Service port (number or port name).<br />Evaluated only if the kind is **Service**. | "" | No |
