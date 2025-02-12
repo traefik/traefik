@@ -338,5 +338,9 @@ func sha256Hash(input string) string {
 	// We purposely ignore the error because the implementation always returns nil.
 	_, _ = hash.Write([]byte(input))
 
-	return hex.EncodeToString(hash.Sum(nil))
+	hashedInput := hex.EncodeToString(hash.Sum(nil))
+	if len(hashedInput) < 16 {
+		return hashedInput
+	}
+	return hashedInput[:16]
 }
