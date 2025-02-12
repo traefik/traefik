@@ -20,7 +20,7 @@ function upload_test_images() {
   echo ">> Publishing test images"
   (
     # Script needs to be executed from repo root
-    cd "$( dirname "$0")/.."
+    cd "$( dirname "$0")/../.."
     local image_dir="vendor/knative.dev/networking/test/test_images"
     local docker_tag=$1
     local tag_option=""
