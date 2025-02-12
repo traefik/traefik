@@ -33,7 +33,7 @@ type ServersTransportSpec struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 	// RootCAs gives you the option to use secrets or config maps to store CAs
 	RootCAs []RootCAs `json:"rootCAs,omitempty"`
-	// RootCAsSecrets is deprecated and will be removed in a future release.
+	// Deprecated: RootCAsSecrets is deprecated and will be removed in a future release.
 	// Use RootCAs instead for specifying CA certificates.
 	// +optional
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
