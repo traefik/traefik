@@ -3,19 +3,72 @@ title: "Traefik HTTP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 --- 
 
-## Servers
+## Servers Load Balancer
 
-Servers declare a single instance of your program.
+The load balancers are able to load balance the requests between multiple instances of your programs.
+
+Each service has a load-balancer, even if there is only one server to forward traffic to.
+
+## Configuration Example
+
+```yaml tab="File(YAML)"
+http:
+  services:
+    my-service:
+      loadBalancer:
+        servers:
+          - url: "http://private-ip-server-1/"
+        sticky:
+          cookie:
+            name: "sticky-cookie"
+        healthcheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+        passHostHeader: true
+        serversTransport: "customTransport@file"
+        responseForwarding:
+          flushInterval: "150ms"
+```
+
+```toml tab="File(TOML)"
+[http.services]
+  [http.services.my-service.loadBalancer]
+    [[http.services.my-service.loadBalancer.servers]]
+      url = "http://private-ip-server-1/"
+    
+    [http.services.my-service.loadBalancer.sticky.cookie]
+      name = "sticky-cookie"
+
+    [http.services.my-service.loadBalancer.healthcheck]
+      path = "/health"
+      interval = "10s"
+      timeout = "3s"
+    
+    passHostHeader = true
+    serversTransport = "customTransport@file"
+
+    [http.services.my-service.loadBalancer.responseForwarding]
+      flushInterval = "150ms"
+```
 
 ### Configuration Options
 
 | Field | Description                                 | Required |
 |----------|------------------------------------------|----------|
-|`url`| Points to a specific instance. | Yes for File provider, No for [Docker provider](../../other-providers/docker.md) |
-|`weight`| Allows for weighted load balancing on the servers. | No |
-|`preservePath`| Allows to preserve the URL path. | No |
+|`servers`| Represents individual backend instances for your service | Yes |
+|`sticky`| Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response. | No |
+|`healthcheck`| Configures health check to remove unhealthy servers from the load balancing rotation. | No |
+|`passHostHeader`| Allows forwarding of the client Host header to server. By default, `passHostHeader` is true. | No |
+|`serversTransport`| Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used. | No |
+| `responseForwarding` | Configures how Traefik forwards the response from the backend server to the client.| No |
+| `responseForwarding.FlushInterval` | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No |
 
-### Configuration Examples
+#### Servers
+
+Servers represent individual backend instances for your service. The service loadBalancer `servers` option lets you configure the list of instances that will handle incoming requests.
+
+##### Configuration Examples
 
 ```yaml tab="A Service with One Server"
 ## Dynamic configuration
@@ -51,32 +104,36 @@ http:
             preservePath: true
 ```
 
-## Load Balancer
+##### Configuration Options
 
-The load balancers are able to load balance the requests between multiple instances of your programs.
+| Field | Description                                 | Required |
+|----------|------------------------------------------|----------|
+|`url`| Points to a specific instance. | Yes for File provider, No for [Docker provider](../../other-providers/docker.md) |
+|`weight`| Allows for weighted load balancing on the servers. | No |
+|`preservePath`| Allows to preserve the URL path. | No |
 
-The example below declares a service with two servers (with load balancing):
+#### Health Check
 
-```yaml tab="YAML"
-## Dynamic configuration
-http:
-  services:
-    my-service:
-      loadBalancer:
-        servers:
-        - url: "http://private-ip-server-1/"
-        - url: "http://private-ip-server-2/"
-```
+The `healthcheck` option configures health check to remove unhealthy servers from the load balancing rotation. Traefik will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every interval) between `2XX` and `3XX`, or matching the configured status. For gRPC servers, Traefik will consider them healthy as long as they return SERVING to [gRPC health check v1 requests](https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
 
-```toml tab="TOML"
-## Dynamic configuration
-[http.services]
-  [http.services.my-service.loadBalancer]
-    [[http.services.my-service.loadBalancer.servers]]
-      url = "http://private-ip-server-1/"
-    [[http.services.my-service.loadBalancer.servers]]
-      url = "http://private-ip-server-2/"
-```
+To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
+
+Below are the available options for the health check mechanism:
+
+| Field | Description                                 | Default | Required |
+|----------|------------------------------------------|----------|--------|
+|`path`| Defines the server URL path for the health check endpoint. | "" | Yes |
+|`scheme`| Replaces the server URL scheme for the health check endpoint. | | No |
+|`mode`| If defined to `grpc`, will use the gRPC health check protocol to probe the server. | http | No |
+|`hostname`| Defines the value of hostname in the Host header of the health check request. | "" | No |
+|`port`| Replaces the server URL port for the health check endpoint. |  | No |
+|`interval`| Defines the frequency of the health check calls. | 30s | No |
+|`timeout`| Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy. | 5s | No |
+|`headers`| Defines custom headers to be sent to the health check endpoint. | | No |
+|`followRedirects`| Defines whether redirects should be followed during the health check calls. | true | No |
+|`hostname`| Defines the value of hostname in the Host header of the health check request. | "" | No |
+|`method`| Defines the HTTP method that will be used while connecting to the endpoint. | GET | No |
+|`status`| Defines the expected HTTP status code of the response to the health check request. | | No |
 
 ## Weighted Round Robin (WRR)
 

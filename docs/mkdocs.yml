@@ -242,6 +242,7 @@ nav:
             - 'TLS' : 
               - 'Overview' : 'reference/routing-configuration/http/tls/overview.md'
               - 'TLS Certificates' : 'reference/routing-configuration/http/tls/tls-certificates.md'
+              - 'TLS Options' : 'reference/routing-configuration/http/tls/tls-options.md'
             - 'Middlewares' : 
               - 'Overview' : 'reference/routing-configuration/http/middlewares/overview.md'
               - 'AddPrefix' : 'reference/routing-configuration/http/middlewares/addprefix.md' 
@@ -288,7 +289,7 @@ nav:
           - 'Kubernetes CRD' : 
             - 'HTTP' :
               - 'IngressRoute' : 'reference/routing-configuration/kubernetes/http/ingressroute.md'
-              - 'TraefikService' : 'reference/routing-configuration/kubernetes/http/traefikService.md'
+              - 'TraefikService' : 'reference/routing-configuration/kubernetes/http/traefikservice.md'
               - 'ServersTransport' : 'reference/routing-configuration/kubernetes/http/serverstransport.md'
               - 'Middleware' : 'reference/routing-configuration/kubernetes/http/middleware.md'
               - 'TLSOption' : 'reference/routing-configuration/kubernetes/http/tlsoption.md'
