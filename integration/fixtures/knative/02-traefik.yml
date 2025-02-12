@@ -52,7 +52,7 @@ spec:
             - --entrypoints.traefik.address=:9000
             - --providers.knative.allowCrossNamespace=true
             - --providers.knative.namespaces=default,traefik,serving-tests
-            - --providers.knative.loadbalancerdomaininternal=traefik.default.svc.cluster.local
+            - --providers.knative.loadbalancerdomaininternal=traefik.traefik.svc.cluster.local
 
           ports:
             - name: web
