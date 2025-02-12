@@ -3,6 +3,8 @@ title: "Kubernetes Ingress Routing Configuration"
 description: "Understand the routing configuration for the Kubernetes Ingress Controller and Traefik Proxy. Read the technical documentation."
 ---
 
+# Traefik & Kubernetes with Ingress
+
 ## Routing Configuration
 
 The Kubernetes Ingress provider watches for incoming ingresses events, such as the example below,
@@ -38,155 +40,6 @@ spec:
                 name:  whoami
                 port:
                   number: 80
-```
-
-```yaml tab="RBAC"
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: traefik-ingress-controller
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - services
-      - secrets
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - discovery.k8s.io
-    resources:
-      - endpointslices
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - extensions
-      - networking.k8s.io
-    resources:
-      - ingresses
-      - ingressclasses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - extensions
-      - networking.k8s.io
-    resources:
-      - ingresses/status
-    verbs:
-      - update
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: traefik-ingress-controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: traefik-ingress-controller
-subjects:
-  - kind: ServiceAccount
-    name: traefik-ingress-controller
-    namespace: default
-```
-
-```yaml tab="Traefik"
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: traefik-ingress-controller
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: traefik
-  labels:
-    app: traefik
-
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: traefik
-  template:
-    metadata:
-      labels:
-        app: traefik
-    spec:
-      serviceAccountName: traefik-ingress-controller
-      containers:
-        - name: traefik
-          image: traefik:v3.2
-          args:
-            - --entryPoints.web.address=:80
-            - --providers.kubernetesingress
-          ports:
-            - name: web
-              containerPort: 80
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik
-spec:
-  type: LoadBalancer
-  selector:
-    app: traefik
-  ports:
-    - protocol: TCP
-      port: 80
-      name: web
-      targetPort: 80
-```
-
-```yaml tab="Whoami"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: whoami
-  labels:
-    app: traefiklabs
-    name: whoami
-
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: traefiklabs
-      task: whoami
-  template:
-    metadata:
-      labels:
-        app: traefiklabs
-        task: whoami
-    spec:
-      containers:
-        - name: whoami
-          image: traefik/whoami
-          ports:
-            - containerPort: 80
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: whoami
-
-spec:
-  ports:
-    - name: http
-      port: 80
-  selector:
-    app: traefiklabs
-    task: whoami
 ```
 
 ## Annotations
@@ -328,7 +181,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
 
-    See [sticky sessions](../kubernetes/http/traefikService.md#stickiness-on-multiple-levels)) for more information.
+    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
@@ -336,7 +189,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.name`"
 
-    See [sticky sessions](../kubernetes/http/traefikService.md#stickiness-on-multiple-levels)) for more information.
+    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
@@ -344,7 +197,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.secure`"
 
-    See [sticky sessions](../kubernetes/http/traefikService.md#stickiness-on-multiple-levels)) for more information.
+    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
@@ -352,7 +205,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.samesite`"
 
-    See [sticky sessions](../kubernetes/http/traefikService.md#stickiness-on-multiple-levels)) for more information.
+    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.samesite: "none"
@@ -360,7 +213,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`"
 
-    See [sticky sessions](../kubernetes/http/traefikService.md#stickiness-on-multiple-levels)) for more information.
+    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
@@ -368,25 +221,11 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`"
 
-    See [sticky sessions](../kubernetes/http/traefikService.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
     ```
-
-## Path Types on Kubernetes 1.18+
-
-If the Kubernetes cluster version is 1.18+,
-the new `pathType` property can be leveraged to define the rules matchers:
-
-- `Exact`: This path type forces the rule matcher to `Path`
-- `Prefix`: This path type forces the rule matcher to `PathPrefix`
-
-Please see [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types) for more information.
-
-!!! warning "Multiple Matches"
-    In the case of multiple matches, Traefik will not ensure the priority of a Path matcher over a PathPrefix matcher,
-    as stated in [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#multiple-matches).
 
 ## TLS
 
@@ -613,63 +452,6 @@ For more options, please refer to the available [annotations](#on-ingress).
 
 ??? example "Configuring Kubernetes Ingress Controller with TLS"
 
-    ```yaml tab="RBAC"
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      name: traefik-ingress-controller
-    rules:
-      - apiGroups:
-          - ""
-        resources:
-          - services
-          - secrets
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - discovery.k8s.io
-        resources:
-          - endpointslices
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - extensions
-          - networking.k8s.io
-        resources:
-          - ingresses
-          - ingressclasses
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - extensions
-          - networking.k8s.io
-        resources:
-          - ingresses/status
-        verbs:
-          - update
-
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      name: traefik-ingress-controller
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: traefik-ingress-controller
-    subjects:
-      - kind: ServiceAccount
-        name: traefik-ingress-controller
-        namespace: default
-    ```
-
     ```yaml tab="Ingress"
     apiVersion: networking.k8s.io/v1
     kind: Ingress
@@ -698,99 +480,6 @@ For more options, please refer to the available [annotations](#on-ingress).
                     name:  whoami
                     port:
                       number: 80
-    ```
-
-    ```yaml tab="Traefik"
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: traefik-ingress-controller
-
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: traefik
-      labels:
-        app: traefik
-
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: traefik
-      template:
-        metadata:
-          labels:
-            app: traefik
-        spec:
-          serviceAccountName: traefik-ingress-controller
-          containers:
-            - name: traefik
-              image: traefik:v3.2
-              args:
-                - --entryPoints.websecure.address=:443
-                - --providers.kubernetesingress
-              ports:
-                - name: websecure
-                  containerPort: 443
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: traefik
-    spec:
-      type: LoadBalancer
-      selector:
-        app: traefik
-      ports:
-        - protocol: TCP
-          port: 443
-          name: websecure
-          targetPort: 443
-    ```
-
-    ```yaml tab="Whoami"
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: whoami
-      labels:
-        app: traefiklabs
-        name: whoami
-
-    spec:
-      replicas: 2
-      selector:
-        matchLabels:
-          app: traefiklabs
-          task: whoami
-      template:
-        metadata:
-          labels:
-            app: traefiklabs
-            task: whoami
-        spec:
-          containers:
-            - name: whoami
-              image: traefik/whoami
-              ports:
-                - containerPort: 80
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: whoami
-
-    spec:
-      ports:
-        - name: http
-          port: 80
-      selector:
-        app: traefiklabs
-        task: whoami
     ```
 
 ### Certificates Management
@@ -871,7 +560,7 @@ and will connect via TLS automatically.
     Please note that by enabling TLS communication between traefik and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
-    See the [`insecureSkipVerify`] TLSOption(./http/tlsoption.md) setting for more details.
+    See the [`insecureSkipVerify` TLSOption](./http/tlsoption.md) setting for more details.
 
 ## Global Default Backend Ingresses
 
