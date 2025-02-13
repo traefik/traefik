@@ -30,10 +30,10 @@ function upload_test_images() {
 
     # ko resolve is being used for the side-effect of publishing images,
     # so the resulting yaml produced is ignored.
-    ko resolve --jobs=4 ${tag_option} -RBf "${image_dir}" > /dev/null
+    ko resolve --jobs=4 "${tag_option}" -RBf "${image_dir}" > /dev/null
   )
 }
 
-: ${KO_DOCKER_REPO:?"You must set 'KO_DOCKER_REPO', see DEVELOPMENT.md"}
+: "${KO_DOCKER_REPO:?"You must set 'KO_DOCKER_REPO', see DEVELOPMENT.md"}"
 
-upload_test_images $@
+upload_test_images "$@"
