@@ -11,7 +11,7 @@ Otherwise, the response from the authentication server is returned.
 
 ## Configuration Example
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Forward authentication to example.com
 http:
   middlewares:
@@ -20,11 +20,26 @@ http:
         address: "https://example.com/auth"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Forward authentication to example.com
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
     address = "https://example.com/auth"
+```
+
+```yaml tab="Labels"
+# Forward authentication to example.com
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+```
+
+```json tab="Tags"
+// Forward authentication to example.com
+{
+  "Tags" : [
+    "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -37,19 +52,6 @@ spec:
   forwardAuth:
     address: https://example.com/auth
 ```
-
-```yaml tab="Docker & Swarm"
-# Forward authentication to example.com
-labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
-```
-
-```yaml tab="Consul Catalog"
-# Forward authentication to example.com
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
-```
-
-</TabItem>
 
 ## Configuration Options
 

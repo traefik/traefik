@@ -12,7 +12,7 @@ The `grpcWeb` middleware converts gRPC Web requests to HTTP/2 gRPC requests befo
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 http:
   middlewares:
     test-grpcweb:
@@ -21,10 +21,24 @@ http:
           - "*"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 [http.middlewares]
   [http.middlewares.test-grpcweb.grpcWeb]
     allowOrigins = ["*"]
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.test-grpcweb.grpcweb.allowOrigins=*"
+```
+
+```json tab="Tags"
+{
+  //...
+  "Tags" : [
+    "traefik.http.middlewares.test-grpcweb.grpcWeb.allowOrigins=*"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -38,22 +52,11 @@ spec:
       - "*"
 ```
 
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.test-grpcweb.grpcweb.allowOrigins=*"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-grpcweb.grpcWeb.allowOrigins=*"
-```
-
 ## Configuration Options
 
 | Field                        | Description         | Default | Required |
 |:-----------------------------|:------------------------------------------|:--------|:---------|
 | `allowOrigins` | List of allowed origins. <br /> A wildcard origin `*` can also be configured to match all requests.<br /> More information [here](#alloworigins). | | No |
-
-<!-- markdownlint-enable MD013 -->
 
 ### allowOrigins
 

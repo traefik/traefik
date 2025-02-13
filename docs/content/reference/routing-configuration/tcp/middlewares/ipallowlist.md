@@ -7,7 +7,7 @@ description: "Learn how to use IPAllowList in TCP middleware for limiting client
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Accepts request from defined IP
 tcp:
   middlewares:
@@ -18,11 +18,27 @@ tcp:
           - "192.168.1.7"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Accepts request from defined IP
 [tcp.middlewares]
   [tcp.middlewares.test-ipallowlist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+```
+
+```yaml tab="Labels"
+# Accepts connections from defined IP
+labels:
+  - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Tags"
+// Accepts request from defined IP
+{
+  //...
+  "Tags" : [
+    "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"s
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -35,17 +51,6 @@ spec:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7
-```
-
-```yaml tab="Docker & Swarm"
-# Accepts connections from defined IP
-labels:
-  - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-```
-
-```yaml tab="Consul Catalog"
-# Accepts request from defined IP
-- "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ## Configuration Options
