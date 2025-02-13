@@ -3,9 +3,11 @@ title: 'Providing Dynamic Configuration to Traefik'
 description: 'Learn about the different methods for providing dynamic configuration to Traefik. Read the technical documentation.'
 ---
 
-# Providing Dynamic Configuration to Traefik
+# Providing Dynamic (Routing) Configuration to Traefik
 
-Traefik uses dynamic configuration to define how it routes traffic to services discovered through its providers. Depending on your environment and preferences, there are several ways to supply this configuration. This guide covers the different methods available:
+Dynamic configuration—now also known as routing configuration—defines how Traefik routes incoming requests to the correct services. This is distinct from install configuration (formerly known as static configuration), which sets up Traefik’s core components and providers.
+
+Depending on your environment and preferences, there are several ways to supply this routing configuration:
 
 - File Provider: Use TOML or YAML files.
 - Docker and ECS Providers: Use container labels.
@@ -15,11 +17,11 @@ Traefik uses dynamic configuration to define how it routes traffic to services d
 
 ## Using the File Provider
 
-The File provider allows you to define dynamic configuration in static files using either TOML or YAML syntax. This method is ideal for environments where services cannot be automatically discovered or when you prefer to manage configurations manually.
+The File provider allows you to define routing configuration in static files using either TOML or YAML syntax. This method is ideal for environments where services cannot be automatically discovered or when you prefer to manage configurations manually.
 
 ### Enabling the File Provider
 
-To enable the File provider, add the following to your Traefik static configuration:
+To enable the File provider, add the following to your Traefik install configuration:
 
 ```yaml tab="YAML"
 providers:
@@ -63,7 +65,7 @@ providers:
 
 ## Using Labels With Docker and ECS
 
-When using Docker or Amazon ECS, you can define dynamic configuration using container labels. This method allows Traefik to automatically discover services and apply configurations without the need for additional files.
+When using Docker or Amazon ECS, you can define routing configuration using container labels. This method allows Traefik to automatically discover services and apply configurations without the need for additional files.
 
 ???+ example "Example with Docker"
 
@@ -168,7 +170,7 @@ For [KV providers](./other-providers/kv.md) you can configure Traefik with key-v
 
 ## Using Tags With Other Providers
 
-For providers that do not support labels, such as Consul & Nomad, you can use tags to provide dynamic configuration.
+For providers that do not support labels, such as Consul & Nomad, you can use tags to provide routing configuration.
 
 ???+ example "Example"
 

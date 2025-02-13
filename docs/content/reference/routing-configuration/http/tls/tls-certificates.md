@@ -1,7 +1,10 @@
 ---
-title: "Traefik TLS Documentation"
+title: "Traefik TLS Certificates Documentation"
 description: "Learn how to configure the transport layer security (TLS) connection in Traefik Proxy. Read the technical documentation."
 ---
+
+!!! info
+    When a router has to handle HTTPS traffic, it should be specified with a `tls` field of the router definition.
 
 ## Certificates Definition
 
