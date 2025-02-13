@@ -7,7 +7,7 @@ description: "A service is in charge of connecting incoming requests to the Serv
 
 Each of the fields of the service section represents a kind of service. Which means, that for each specified service, one of the fields, and only one, has to be enabled to define what kind of service is created. Currently, the two available kinds are `LoadBalancer`, and `Weighted`.
 
-## Servers Load Balancer
+## Service Load Balancer
 
 The servers load balancer is in charge of balancing the requests between the servers of the same service.
 
@@ -15,8 +15,7 @@ The servers load balancer is in charge of balancing the requests between the ser
 
 Declaring a Service with Two Servers -- Using the [File Provider](../../install-configuration/providers/others/file.md)
 
-```yaml tab="YAML"
-## Dynamic configuration
+```yaml tab="Structured (YAML)"
 tcp:
   services:
     my-service:
@@ -26,8 +25,7 @@ tcp:
         - address: "xx.xx.xx.xx:xx"
 ```
 
-```toml tab="TOML"
-## Dynamic configuration
+```toml tab="Structured (TOML)"
 [tcp.services]
   [tcp.services.my-service.loadBalancer]
     [[tcp.services.my-service.loadBalancer.servers]]
@@ -64,8 +62,7 @@ This strategy is only available to load balance between [services](./service.md)
 
     This strategy can be defined currently with the [File](../../install-configuration/providers/others/file.md) or [IngressRoute](../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
 
-```yaml tab="YAML"
-## Dynamic configuration
+```yaml tab="Structured (YAML)"
 tcp:
   services:
     app:
@@ -87,8 +84,7 @@ tcp:
         - address: "xxx.xxx.xxx.xxx:8080"
 ```
 
-```toml tab="TOML"
-## Dynamic configuration
+```toml tab="Structured (TOML)"
 [tcp.services]
   [tcp.services.app]
     [[tcp.services.app.weighted.services]]
