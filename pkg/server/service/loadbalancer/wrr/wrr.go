@@ -3,6 +3,8 @@ package wrr
 import (
 	"container/heap"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"hash/fnv"
 	"net/http"
@@ -15,9 +17,10 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name     string
-	weight   float64
-	deadline float64
+	name       string
+	hashedName string
+	weight     float64
+	deadline   float64
 }
 
 type stickyCookie struct {
@@ -53,9 +56,10 @@ type Balancer struct {
 
 	handlersMu sync.RWMutex
 	// References all the handlers by name and also by the hashed value of the name.
-	handlerMap  map[string]*namedHandler
-	handlers    []*namedHandler
-	curDeadline float64
+	stickyMap              map[string]*namedHandler
+	compatibilityStickyMap map[string]*namedHandler
+	handlers               []*namedHandler
+	curDeadline            float64
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
 	// created via Add, and it is later removed or added to the map as needed,
@@ -73,7 +77,6 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		fenced:           make(map[string]struct{}),
-		handlerMap:       make(map[string]*namedHandler),
 		wantsHealthCheck: wantHealthCheck,
 	}
 	if sticky != nil && sticky.Cookie != nil {
@@ -88,6 +91,9 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 		if sticky.Cookie.Path != nil {
 			balancer.stickyCookie.path = *sticky.Cookie.Path
 		}
+
+		balancer.stickyMap = make(map[string]*namedHandler)
+		balancer.compatibilityStickyMap = make(map[string]*namedHandler)
 	}
 
 	return balancer
@@ -218,7 +224,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		if err == nil && cookie != nil {
 			b.handlersMu.RLock()
-			handler, ok := b.handlerMap[cookie.Value]
+			handler, ok := b.stickyMap[cookie.Value]
 			b.handlersMu.RUnlock()
 
 			if ok && handler != nil {
@@ -226,6 +232,22 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				_, isHealthy := b.status[handler.name]
 				b.handlersMu.RUnlock()
 				if isHealthy {
+					handler.ServeHTTP(w, req)
+					return
+				}
+			}
+
+			b.handlersMu.RLock()
+			handler, ok = b.compatibilityStickyMap[cookie.Value]
+			b.handlersMu.RUnlock()
+
+			if ok && handler != nil {
+				b.handlersMu.RLock()
+				_, isHealthy := b.status[handler.name]
+				b.handlersMu.RUnlock()
+				if isHealthy {
+					b.writeStickyCookie(w, handler)
+
 					handler.ServeHTTP(w, req)
 					return
 				}
@@ -244,19 +266,23 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.stickyCookie != nil {
-		cookie := &http.Cookie{
-			Name:     b.stickyCookie.name,
-			Value:    hash(server.name),
-			Path:     b.stickyCookie.path,
-			HttpOnly: b.stickyCookie.httpOnly,
-			Secure:   b.stickyCookie.secure,
-			SameSite: convertSameSite(b.stickyCookie.sameSite),
-			MaxAge:   b.stickyCookie.maxAge,
-		}
-		http.SetCookie(w, cookie)
+		b.writeStickyCookie(w, server)
 	}
 
 	server.ServeHTTP(w, req)
+}
+
+func (b *Balancer) writeStickyCookie(w http.ResponseWriter, handler *namedHandler) {
+	cookie := &http.Cookie{
+		Name:     b.stickyCookie.name,
+		Value:    handler.hashedName,
+		Path:     b.stickyCookie.path,
+		HttpOnly: b.stickyCookie.httpOnly,
+		Secure:   b.stickyCookie.secure,
+		SameSite: convertSameSite(b.stickyCookie.sameSite),
+		MaxAge:   b.stickyCookie.maxAge,
+	}
+	http.SetCookie(w, cookie)
 }
 
 // Add adds a handler.
@@ -280,15 +306,41 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 	if fenced {
 		b.fenced[name] = struct{}{}
 	}
-	b.handlerMap[name] = h
-	b.handlerMap[hash(name)] = h
+
+	if b.stickyCookie != nil {
+		sha256HashedName := sha256Hash(name)
+		h.hashedName = sha256HashedName
+
+		b.stickyMap[sha256HashedName] = h
+		b.compatibilityStickyMap[name] = h
+
+		hashedName := fnvHash(name)
+		b.compatibilityStickyMap[hashedName] = h
+
+		// server.URL was fnv hashed in service.Manager
+		// so we can have "double" fnv hash in already existing cookies
+		hashedName = fnvHash(hashedName)
+		b.compatibilityStickyMap[hashedName] = h
+	}
 	b.handlersMu.Unlock()
 }
 
-func hash(input string) string {
+func fnvHash(input string) string {
 	hasher := fnv.New64()
 	// We purposely ignore the error because the implementation always returns nil.
 	_, _ = hasher.Write([]byte(input))
 
 	return strconv.FormatUint(hasher.Sum64(), 16)
+}
+
+func sha256Hash(input string) string {
+	hash := sha256.New()
+	// We purposely ignore the error because the implementation always returns nil.
+	_, _ = hash.Write([]byte(input))
+
+	hashedInput := hex.EncodeToString(hash.Sum(nil))
+	if len(hashedInput) < 16 {
+		return hashedInput
+	}
+	return hashedInput[:16]
 }
