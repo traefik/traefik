@@ -10,7 +10,7 @@ The Retry middleware has an optional configuration to enable an exponential back
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Retry 4 times with exponential backoff
 http:
   middlewares:
@@ -20,12 +20,32 @@ http:
         initialInterval: 100ms
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Retry 4 times with exponential backoff
 [http.middlewares]
   [http.middlewares.test-retry.retry]
     attempts = 4
     initialInterval = "100ms"
+```
+
+```yaml tab="Labels"
+# Retry 4 times with exponential backoff
+labels:
+  - "traefik.http.middlewares.test-retry.retry.attempts=4"
+  - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
+```
+
+```json tab="Tags"
+// Retry 4 times with exponential backoff
+
+{
+  // ...
+  "Tags" : [
+    "traefik.http.middlewares.test-retry.retry.attempts=4",
+    "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
+  ]
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -38,19 +58,6 @@ spec:
   retry:
     attempts: 4
     initialInterval: 100ms
-```
-
-```yaml tab="Docker & Swarm"
-# Retry 4 times with exponential backoff
-labels:
-  - "traefik.http.middlewares.test-retry.retry.attempts=4"
-  - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
-```
-
-```yaml tab="Consul Catalog"
-# Retry 4 times with exponential backoff
-- "traefik.http.middlewares.test-retry.retry.attempts=4"
-- "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
 ```
 
 ## Configuration Options

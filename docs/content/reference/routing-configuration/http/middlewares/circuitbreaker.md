@@ -21,7 +21,7 @@ This is the expected behavior, we want you to be able to define what makes a ser
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Latency Check
 http:
   middlewares:
@@ -30,11 +30,26 @@ http:
         expression: "LatencyAtQuantileMS(50.0) > 100"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Latency Check
 [http.middlewares]
   [http.middlewares.latency-check.circuitBreaker]
     expression = "LatencyAtQuantileMS(50.0) > 100"
+```
+
+```yaml tab="Labels"
+# Latency Check
+labels:
+  - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+```
+
+```json tab="Tags"
+{
+  //..
+  "Tags" : [
+    "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -46,17 +61,6 @@ metadata:
 spec:
   circuitBreaker:
     expression: LatencyAtQuantileMS(50.0) > 100
-```
-
-```yaml tab="Docker & Swarm"
-# Latency Check
-labels:
-  - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
-```
-
-```yaml tab="Consul Catalog"
-# Latency Check
-- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
 ```
 
 ## Configuration Options
@@ -114,7 +118,7 @@ This behavior cannot be configured.
 
 ## State
 
-There are three possible state for your circuit breaker:
+There are three possible states for your circuit breaker:
 
 - `Closed` (your service operates normally).
 - `Open` (the fallback mechanism takes over your service).

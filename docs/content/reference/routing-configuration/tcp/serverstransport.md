@@ -7,29 +7,79 @@ ServersTransport allows to configure the transport between Traefik and your TCP 
 
 ## Configuration Example
 
-```yaml tab="File (YAML)"
-## Dynamic configuration
+Declare the serversTransport:
+
+```yaml tab="Structured (YAML)"
 tcp:
   serversTransports:
     mytransport:
-      dialTimeout: 30s
+      dialTimeout: "30s"
+      dialKeepAlive: "20s"
+      terminationDelay: "200ms"
+      tls:
+        serverName: "example.com"
+        certificates:
+          - "/path/to/cert1.pem"
+          - "/path/to/cert2.pem"
+        insecureSkipVerify: true
+        rootcas:
+          - "/path/to/rootca.pem"
+        peerCertURI: "spiffe://example.org/peer"
+      spiffe:
+        ids:
+          - "spiffe://example.org/id1"
+          - "spiffe://example.org/id2"
+        trustDomain: "example.org"
 ```
 
-```toml tab="File (TOML)"
-## Dynamic configuration
+```toml tab="Structured (TOML)"
 [tcp.serversTransports.mytransport]
   dialTimeout = "30s"
+  dialKeepAlive = "20s"
+  terminationDelay = "200ms"
+
+  [tcp.serversTransports.mytransport.tls]
+    serverName = "example.com"
+    certificates = ["/path/to/cert1.pem", "/path/to/cert2.pem"]
+    insecureSkipVerify = true
+    rootcas = ["/path/to/rootca.pem"]
+    peerCertURI = "spiffe://example.org/peer"
+
+  [tcp.serversTransports.mytransport.spiffe]
+    ids = ["spiffe://example.org/id1", "spiffe://example.org/id2"]
+    trustDomain = "example.org"
 ```
 
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
+Attach the serversTransport to a service:
 
-spec:
-  dialTimeout: 30s
+```yaml tab="Structured (YAML)"
+tcp:
+  services:
+    Service01:
+      loadBalancer:
+        serversTransport: mytransport
+```
+
+```toml tab="Structured(TOML)"
+## Dynamic configuration
+[tcp.services]
+  [tcp.services.Service01]
+    [tcp.services.Service01.loadBalancer]
+      serversTransport = "mytransport"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.tcp.services.Service01.loadBalancer.serversTransport=mytransport"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.tcp.services.Service01.loadBalancer.serversTransport=mytransport"
+  ]
+}
 ```
 
 ## Configuration Options
@@ -37,7 +87,7 @@ spec:
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | `serverstransport.`<br />`dialTimeout` | Defines the timeout when dialing the backend TCP service. If zero, no timeout exists.  | 30s | No |
-| `serverstransport.`<br />`dialKeepAlive` | Defines the interval between keep-alive probes for an active network connection. More Information [here](#dialkeepalive).  | 15s | No |
+| `serverstransport.`<br />`dialKeepAlive` | Defines the interval between keep-alive probes for an active network connection.  | 15s | No |
 | `serverstransport.`<br />`terminationDelay` | Sets the time limit for the proxy to fully terminate connections on both sides after initiating the termination sequence, with a negative value indicating no deadline. More Information [here](#terminationdelay) | 100ms | No |
 | `serverstransport.`<br />`tls` | Defines the TLS configuration. An empty `tls` section enables TLS. |  | No |
 | `serverstransport.`<br />`tls`<br />`.serverName` | Configures the server name that will be used for SNI. |  | No |
@@ -52,35 +102,6 @@ spec:
 
     Please note that SPIFFE must be enabled in the [static configuration](../../install-configuration/tls/spiffe.md) before using it to secure the connection between Traefik and the backends.
 
-### dialKeepAlive
-
-`dialKeepAlive` defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      dialKeepAlive: 30s
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.serversTransports.mytransport]
-  dialKeepAlive = "30s"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  dialKeepAlive: 30s
-```
-
 ### `terminationDelay`
 
 As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
@@ -93,28 +114,3 @@ To that end, as soon as the proxy enters this termination sequence, it sets a de
 
 The termination delay controls that deadline.
 A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      terminationDelay: 100ms
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.serversTransports.mytransport]
-  terminationDelay = "100ms"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  terminationDelay: 100ms
-```

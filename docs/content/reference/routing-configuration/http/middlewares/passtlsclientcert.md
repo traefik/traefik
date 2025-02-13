@@ -7,12 +7,37 @@ The `passTLSClientCert` middleware adds the selected data from the passed client
 
 ## Configuration Examples
 
-Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
+Pass the pem in the `X-Forwarded-Tls-Client-Cert` header:
 
-```yaml tab="Docker & Swarm"
+```yaml tab="Structured (YAML)"
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
+http:
+  middlewares:
+    test-passtlsclientcert:
+      passTLSClientCert:
+        pem: true
+```
+
+```toml tab="Structured (TOML)"
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
+[http.middlewares]
+  [http.middlewares.test-passtlsclientcert.passTLSClientCert]
+    pem = true
+```
+
+```yaml tab="Labels"
 # Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 labels:
   - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
+```
+
+```json tab="Tags"
+// Pass the pem in the `X-Forwarded-Tls-Client-Cert` header
+{
+  "Tags": [
+    "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -25,30 +50,9 @@ spec:
     pem: true
 ```
 
-```yaml tab="Consul Catalog"
-# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header
-- "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
-```
-
-```yaml tab="File (YAML)"
-# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
-http:
-  middlewares:
-    test-passtlsclientcert:
-      passTLSClientCert:
-        pem: true
-```
-
-```toml tab="File (TOML)"
-# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
-[http.middlewares]
-  [http.middlewares.test-passtlsclientcert.passTLSClientCert]
-    pem = true
-```
-
 ??? example "Pass the pem in the `X-Forwarded-Tls-Client-Cert` header"
 
-    ```yaml tab="File (YAML)"
+    ```yaml tab="Structured (YAML)"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     http:
       middlewares:
@@ -77,7 +81,7 @@ http:
                 domainComponent: true
     ```
 
-    ```toml tab="File (TOML)"
+    ```toml tab="Structured (TOML)"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     [http.middlewares]
       [http.middlewares.test-passtlsclientcert.passTLSClientCert]
@@ -102,6 +106,57 @@ http:
             commonName = true
             serialNumber = true
             domainComponent = true
+    ```
+
+    ```yaml tab="Labels"
+    # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
+    labels:
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.serialnumber=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
+    ```
+
+    ```json tab="Tags"
+    // Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
+    {
+      //...
+      "Tags" : [
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
+      ]
+    }
     ```
 
     ```yaml tab="Kubernetes"
@@ -133,52 +188,6 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-    ```
-
-    ```yaml tab="Docker & Swarm"
-    # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
-    labels:
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.serialnumber=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
-    ```
-
-    ```yaml tab="Consul Catalog"
-    # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
     ```
 
 ## General Information
@@ -322,7 +331,6 @@ http:
 | `info.issuer.commonName` |Add the `commonName` information into the issuer.<br /> The data is taken from the issuer part with the `CN` key. <br />More information about `info` [here](#info). | false      | No      |
 | `info.issuer.serialNumber` |Add the `serialNumber` information into the issuer.<br /> The data is taken from the issuer part with the `SN` key. <br />More information about `info` [here](#info). | false      | No      |
 | `info.issuer.domainComponent` | Add the `domainComponent` information into the issuer.<br /> The data is taken from the issuer part with the `DC` key. <br />More information about `info` [here](#info). | false      | No      |
-
 
 ### pem
 
