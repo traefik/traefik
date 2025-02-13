@@ -3,9 +3,11 @@ title: "Traefik RedirectRegex Documentation"
 description: "In Traefik Proxy's HTTP middleware, RedirectRegex redirecting clients to different locations. Read the technical documentation."
 ---
 
+The `RedirectRegex` redirects a request using regex matching and replacement.
+
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Redirect with domain replacement
 http:
   middlewares:
@@ -15,12 +17,32 @@ http:
         replacement: "http://mydomain/${1}"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Redirect with domain replacement
 [http.middlewares]
   [http.middlewares.test-redirectregex.redirectRegex]
     regex = "^http://localhost/(.*)"
     replacement = "http://mydomain/${1}"
+```
+
+```yaml tab="Labels"
+# Redirect with domain replacement
+# Note: all dollar signs need to be doubled for escaping.
+labels:
+  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
+```
+
+```json tab="Tags"
+// Redirect with domain replacement
+// Note: all dollar signs need to be doubled for escaping.
+{
+  // ...
+  "Tags" : [
+    "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+    "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -33,21 +55,6 @@ spec:
   redirectRegex:
     regex: ^http://localhost/(.*)
     replacement: http://mydomain/${1}
-```
-
-```yaml tab="Docker & Swarm"
-# Redirect with domain replacement
-# Note: all dollar signs need to be doubled for escaping.
-labels:
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
-```
-
-```yaml tab="Consul Catalog"
-# Redirect with domain replacement
-# Note: all dollar signs need to be doubled for escaping.
-- "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
 ## Configuration Options

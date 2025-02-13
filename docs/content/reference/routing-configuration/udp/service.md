@@ -23,7 +23,7 @@ i.e. each address (IP:Port) on which an instance of the service's program is dep
 
 A Service with One Server -- Using the [File Provider](../../install-configuration/providers/others/file.md)
 
-```yaml tab="YAML"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 udp:
   services:
@@ -33,7 +33,7 @@ udp:
           - address: "xx.xx.xx.xx:xx"
 ```
 
-```toml tab="TOML"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [udp.services]
   [udp.services.my-service.loadBalancer]

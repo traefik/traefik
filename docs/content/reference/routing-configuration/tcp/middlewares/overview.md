@@ -2,10 +2,17 @@
 title: "Traefik Proxy TCP Middleware Overview"
 description: "Read the official Traefik Proxy documentation for an overview of the available TCP middleware."
 ---
+# TCP Middleware Overview
+
+Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your service (or before the answer from the services are sent to the clients).
+
+There are several available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
+
+Middlewares that use the same protocol can be combined into chains to fit every scenario.
 
 ## Configuration Example
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # As YAML Configuration File
 tcp:
   routers:
@@ -30,7 +37,7 @@ tcp:
         - address: "10.0.0.11:4000"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # As TOML Configuration File
 [tcp.routers]
   [tcp.routers.router1]
@@ -49,6 +56,27 @@ tcp:
       address = "10.0.0.10:4000"
     [[tcp.services.service1.loadBalancer.servers]]
       address = "10.0.0.11:4000"
+```
+
+```yaml tab="Labels"
+labels:
+  # Create a middleware named `foo-ip-allowlist`
+  - "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  # Apply the middleware named `foo-ip-allowlist` to the router named `router1`
+  - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@docker"
+```
+
+```json tab="Consul Catalog" 
+{
+  //...
+  "Tags" : [
+    // Create a middleware named `foo-ip-allowlist`
+    "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
+    // Apply the middleware named `foo-ip-allowlist` to the router named `router1`
+    "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@consulcatalog"
+  ]
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -74,25 +102,6 @@ spec:
     # more fields...
     middlewares:
       - name: foo-ip-allowlist
-```
-
-```yaml tab="Docker & Swarm"
-# As a Docker Label
-whoami:
-  #  A container that exposes an API to show its IP address
-  image: traefik/whoami
-  labels:
-    # Create a middleware named `foo-ip-allowlist`
-    - "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-    # Apply the middleware named `foo-ip-allowlist` to the router named `router1`
-    - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@docker"
-```
-
-```yaml tab="Consul Catalog"
-# Create a middleware named `foo-ip-allowlist`
-- "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-# Apply the middleware named `foo-ip-allowlist` to the router named `router1`
-- "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@consulcatalog"
 ```
 
 ## Available TCP Middlewares
