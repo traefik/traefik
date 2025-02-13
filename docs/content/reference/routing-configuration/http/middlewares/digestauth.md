@@ -9,7 +9,7 @@ The `DigestAuth` middleware grants access to services to authorized users only.
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Declaring the user list
 http:
   middlewares:
@@ -20,7 +20,7 @@ http:
           - "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Declaring the user list
 [http.middlewares]
   [http.middlewares.test-auth.digestAuth]
@@ -28,6 +28,22 @@ http:
       "test:traefik:a2688e031edb4be6a3797f3882655c05",
       "test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
     ]
+```
+
+```yaml tab="Labels"
+# Declaring the user list
+labels:
+  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+```
+
+```json tab="Tags"
+// Declaring the user list
+{
+  //...
+  "Tags" : [
+    "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -39,17 +55,6 @@ metadata:
 spec:
   digestAuth:
     secret: userssecret
-```
-
-```yaml tab="Docker & Swarm"
-# Declaring the user list
-labels:
-  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-```
-
-```yaml tab="Consul Catalog"
-# Declaring the user list
-- "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ## Configuration Options

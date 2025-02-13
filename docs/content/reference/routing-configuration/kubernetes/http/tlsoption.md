@@ -14,6 +14,16 @@ Register the `TLSOption` kind in the Kubernetes cluster before creating TLSOptio
 
     Additionally, when the definition of the TLS option is from another provider, the cross-provider [syntax](../../../install-configuration/providers/overview.md#provider-namespace) (`middlewarename@provider`) should be used to refer to the TLS option. Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
+!!! important "TLSOption in Kubernetes"
+
+    When using the `TLSOption` resource in Kubernetes, one might setup a default set of options that,
+    if not explicitly overwritten, should apply to all ingresses.  
+    To achieve that, you'll have to create a TLSOption resource with the name `default`.
+    There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
+    To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
+    you'll have to add an annotation to the Ingress in the following form:
+    `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
+
 ## Configuration Example
 
 ```yaml tab="TLSOption"

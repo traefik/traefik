@@ -7,7 +7,7 @@ description: "Learn how to use IPAllowList in HTTP middleware for limiting clien
 
 ## Configuration Example
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Accepts request from defined IP
 http:
   middlewares:
@@ -18,11 +18,26 @@ http:
           - "192.168.1.7"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Accepts request from defined IP
 [http.middlewares]
   [http.middlewares.test-ipallowlist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+```
+
+```yaml tab="Labels"
+# Accepts request from defined IP
+labels:
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Tags"
+// Accepts request from defined IP
+{
+  "Tags" : [
+    "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -35,17 +50,6 @@ spec:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7
-```
-
-```yaml tab="Docker"
-# Accepts request from defined IP
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-```
-
-```yaml tab="Consul Catalog"
-# Accepts request from defined IP
-- "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ## Configuration Options

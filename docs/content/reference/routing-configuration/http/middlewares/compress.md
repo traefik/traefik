@@ -7,7 +7,7 @@ The `compress` middleware compresses response. It supports Gzip, Brotli and Zsta
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Enable compression
 http:
   middlewares:
@@ -15,10 +15,26 @@ http:
       compress: {}
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Enable compression
 [http.middlewares]
   [http.middlewares.test-compress.compress]
+```
+
+```yaml tab="Labels"
+# Enable compression
+labels:
+  - "traefik.http.middlewares.test-compress.compress=true"
+```
+
+```json tab="Tags"
+// Enable compression
+{
+  //...
+  "Tags": [
+    "traefik.http.middlewares.test-compress.compress=true"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -29,17 +45,6 @@ metadata:
   name: test-compress
 spec:
   compress: {}
-```
-
-```yaml tab="Docker & Swarm"
-# Enable compression
-labels:
-  - "traefik.http.middlewares.test-compress.compress=true"
-```
-
-```yaml tab="Consul Catalog"
-# Enable compression
-- "traefik.http.middlewares.test-compress.compress=true"
 ```
 
 ## Configuration Options

@@ -14,19 +14,9 @@ The TLS options allow one to configure some parameters of the TLS connection.
     you must specify the provider namespace, for example:  
     `traefik.http.routers.myrouter.tls.options=myoptions@file`
 
-!!! important "TLSOption in Kubernetes"
-
-    When using the [TLSOption resource](../../kubernetes/http/tlsoption.md) in Kubernetes, one might setup a default set of options that,
-    if not explicitly overwritten, should apply to all ingresses.  
-    To achieve that, you'll have to create a TLSOption resource with the name `default`.
-    There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
-    To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
-    you'll have to add an annotation to the Ingress in the following form:
-    `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
-
 ### Minimum TLS Version
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -38,7 +28,7 @@ tls:
       minVersion: VersionTLS13
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
@@ -50,34 +40,13 @@ tls:
     minVersion = "VersionTLS13"
 ```
 
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  minVersion: VersionTLS12
-
----
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: mintls13
-  namespace: default
-
-spec:
-  minVersion: VersionTLS13
-```
-
 ### Maximum TLS Version
 
 We discourage the use of this setting to disable TLS1.3.
 
 The recommended approach is to update the clients to support TLS1.3.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -89,7 +58,7 @@ tls:
       maxVersion: VersionTLS12
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
@@ -101,32 +70,11 @@ tls:
     maxVersion = "VersionTLS12"
 ```
 
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  maxVersion: VersionTLS13
-
----
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: maxtls12
-  namespace: default
-
-spec:
-  maxVersion: VersionTLS12
-```
-
 ### Cipher Suites
 
 See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -136,7 +84,7 @@ tls:
         - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
@@ -144,18 +92,6 @@ tls:
     cipherSuites = [
       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     ]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  cipherSuites:
-    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 ```
 
 !!! important "TLS 1.3"
@@ -172,7 +108,7 @@ The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#Curve
 
 See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -183,25 +119,12 @@ tls:
         - CurveP384
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
   [tls.options.default]
     curvePreferences = ["CurveP521", "CurveP384"]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  curvePreferences:
-    - CurveP521
-    - CurveP384
 ```
 
 ### Strict SNI Checking
@@ -210,7 +133,7 @@ With strict SNI checking enabled, Traefik won't allow connections from clients t
 or don't match any of the configured certificates.
 The default certificate is irrelevant on that matter.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -219,23 +142,12 @@ tls:
       sniStrict: true
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
   [tls.options.default]
     sniStrict = true
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  sniStrict: true
 ```
 
 ### ALPN Protocols
@@ -247,7 +159,7 @@ in order of preference.
 If the client supports ALPN, the selected protocol will be one from this list, 
 and the connection will fail if there is no mutually supported protocol.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -258,25 +170,12 @@ tls:
         - h2
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
   [tls.options.default]
     alpnProtocols = ["http/1.1", "h2"]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  alpnProtocols:
-    - http/1.1
-    - h2
 ```
 
 ### Client Authentication (mTLS)
@@ -297,7 +196,7 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
 | `VerifyClientCertIfGiven` | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
 | `RequireAndVerifyClientCert` |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic configuration
 
 tls:
@@ -311,7 +210,7 @@ tls:
         clientAuthType: RequireAndVerifyClientCert
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic configuration
 
 [tls.options]
@@ -320,21 +219,6 @@ tls:
       # in PEM format. each file can contain multiple CAs.
       caFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
       clientAuthType = "RequireAndVerifyClientCert"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  clientAuth:
-    # the CA certificate is extracted from key `tls.ca` or `ca.crt` of the given secrets.
-    secretNames:
-      - secretCA
-    clientAuthType: RequireAndVerifyClientCert
 ```
 
 {!traefik-for-business-applications.md!}

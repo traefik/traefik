@@ -3,6 +3,8 @@ title: "Traefik Proxy Middleware Overview"
 description: "There are several available middleware in Traefik Proxy used to modify requests or headers, take charge of redirections, add authentication, and so on."
 ---
 
+# HTTP Middleware Overview
+
 Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your service (or before the answer from the services are sent to the clients).
 
 There are several available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.

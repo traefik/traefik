@@ -9,7 +9,7 @@ The `basicAuth` middleware grants access to services to authorized users only.
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Declaring the user list
 http:
   middlewares:
@@ -20,7 +20,7 @@ http:
           - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Declaring the user list
 [http.middlewares]
   [http.middlewares.test-auth.basicAuth]
@@ -28,6 +28,27 @@ http:
     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
     "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
   ]
+```
+
+```yaml tab="Labels"
+# Declaring the user list
+#
+# Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
+# To create user:password pair, it's possible to use this command:
+# echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
+#
+# Also, note that dollar signs should NOT be doubled when not evaluated (e.g. Ansible docker_container module).
+labels:
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -39,22 +60,6 @@ metadata:
 spec:
   basicAuth:
     secret: secretName
-```
-
-```yaml tab="Docker & Swarm"
-# Declaring the user list
-#
-# Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
-# To create user:password pair, it's possible to use this command:
-# echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
-#
-# Also note that dollar signs should NOT be doubled when they not evaluated (e.g. Ansible docker_container module).
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ## Configuration Options

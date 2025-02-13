@@ -9,25 +9,59 @@ ServersTransport allows you to configure the transport between Traefik and your 
 
 Declare the serversTransport:
 
-```yaml tab="File (YAML)"
-## Dynamic configuration
+```yaml tab="Structured (YAML)"
 http:
   serversTransports:
     mytransport:
       serverName: "myhost"
-      # ....
+      certificates:
+        - "/path/to/cert1.pem"
+        - "/path/to/cert2.pem"
+      insecureSkipVerify: true
+      rootcas:
+        - "/path/to/rootca1.pem"
+        - "/path/to/rootca2.pem"
+      maxIdleConnsPerHost: 100
+      disableHTTP2: true
+      peerCertURI: "spiffe://example.org/peer"
+      forwardingTimeouts:
+        dialTimeout: "30s"
+        responseHeaderTimeout: "10s"
+        idleConnTimeout: "60s"
+        readIdleTimeout: "5s"
+        pingTimeout: "15s"
+      spiffe:
+        ids:
+          - "spiffe://example.org/id1"
+          - "spiffe://example.org/id2"
+        trustDomain: "example.org"
 ```
 
-```toml tab="File (TOML)"
-## Dynamic configuration
+```toml tab="Structured (TOML)"
 [http.serversTransports.mytransport]
   serverName = "myhost"
-  # ....
+  certificates = ["/path/to/cert1.pem", "/path/to/cert2.pem"]
+  insecureSkipVerify = true
+  rootcas = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
+  maxIdleConnsPerHost = 100
+  disableHTTP2 = true
+  peerCertURI = "spiffe://example.org/peer"
+
+  [http.serversTransports.mytransport.forwardingTimeouts]
+    dialTimeout = "30s"
+    responseHeaderTimeout = "10s"
+    idleConnTimeout = "60s"
+    readIdleTimeout = "5s"
+    pingTimeout = "15s"
+
+  [http.serversTransports.mytransport.spiffe]
+    ids = ["spiffe://example.org/id1", "spiffe://example.org/id2"]
+    trustDomain = "example.org"
 ``` 
 
 Attach the serversTransport to a service:
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   services:
@@ -36,12 +70,26 @@ http:
         serversTransport: mytransport
 ```
 
-```toml tab="File(TOML)"
+```toml tab="Structured(TOML)"
 ## Dynamic configuration
 [http.services]
   [http.services.Service01]
     [http.services.Service01.loadBalancer]
       serversTransport = "mytransport"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.services.Service01.loadBalancer.serversTransport=mytransport"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.services.Service01.loadBalancer.serversTransport=mytransport"
+  ]
+}
 ```
 
 ## Configuration Options

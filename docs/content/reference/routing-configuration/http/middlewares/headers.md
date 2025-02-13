@@ -23,7 +23,7 @@ By default, the following headers are automatically added when proxying requests
 
 The following example adds the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` header to the response
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 http:
   middlewares:
     testHeader:
@@ -34,13 +34,30 @@ http:
           X-Custom-Response-Header: "value"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.customRequestHeaders]
         X-Script-Name = "test"
     [http.middlewares.testHeader.headers.customResponseHeaders]
         X-Custom-Response-Header = "value"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
+```
+
+```json tab="Tags"
+{
+  //...
+  "Tags": [
+    "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test",
+    "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+  ]
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -56,23 +73,12 @@ spec:
       X-Custom-Response-Header: "value"
 ```
 
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
-```
-
 ### Adding and Removing Headers
 
 In the following example, requests are proxied with an extra `X-Script-Name` header while their `X-Custom-Request-Header` header gets stripped,
 and responses are stripped of their `X-Custom-Response-Header` header.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 http:
   middlewares:
     testHeader:
@@ -84,7 +90,7 @@ http:
           X-Custom-Response-Header: "" # Removes
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.customRequestHeaders]
@@ -92,6 +98,23 @@ http:
         X-Custom-Request-Header = "" # Removes
     [http.middlewares.testHeader.headers.customResponseHeaders]
         X-Custom-Response-Header = "" # Removes
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
+```
+
+```json tab="Tags"
+{
+  "Tags" : [
+    "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test",
+    "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header=",
+    "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -108,25 +131,12 @@ spec:
       X-Custom-Response-Header: "" # Removes
 ```
 
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
-```
-
 ### Using Security Headers
 
 Security-related headers (HSTS headers, Browser XSS filter, etc) can be managed similarly to custom headers as shown above.
 This functionality makes it possible to easily use security features by adding headers.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 http:
   middlewares:
     testHeader:
@@ -135,11 +145,27 @@ http:
         browserXssFilter: true
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     frameDeny = true
     browserXssFilter = true
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.testHeader.headers.framedeny=true"
+  - "traefik.http.middlewares.testHeader.headers.browserxssfilter=true"
+```
+
+```json tab="Tags"
+{
+  "Tags" : [
+    "traefik.http.middlewares.testheader.headers.framedeny=true",
+    "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
+  ]
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -153,17 +179,6 @@ spec:
     browserXssFilter: true
 ```
 
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.testHeader.headers.framedeny=true"
-  - "traefik.http.middlewares.testHeader.headers.browserxssfilter=true"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.framedeny=true"
-- "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
-```
-
 ### CORS Headers
 
 CORS (Cross-Origin Resource Sharing) headers can be added and configured in a manner similar to the custom headers above.
@@ -173,7 +188,7 @@ instead the response will be generated and sent back to the client directly.
 Please note that the example below is by no means authoritative or exhaustive,
 and should not be used as is for production.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 http:
   middlewares:
     testHeader:
@@ -190,7 +205,7 @@ http:
         addVaryHeader: true
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods = ["GET", "OPTIONS", "PUT"]
@@ -198,6 +213,27 @@ http:
     accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+```
+
+```json tab="Tags"
+{
+  "Tags" : [
+    "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT",
+     "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*",
+    "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org",
+    "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100",
+    "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -218,23 +254,6 @@ spec:
       - "https://example.org"
     accessControlMaxAge: 100
     addVaryHeader: true
-```
-
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-- "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-- "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-- "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ## Configuration Options

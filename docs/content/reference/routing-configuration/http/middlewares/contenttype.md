@@ -12,7 +12,7 @@ when it is not set by the backend.
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Enable auto-detection
 http:
   middlewares:
@@ -20,10 +20,26 @@ http:
       contentType: {}
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Enable auto-detection
 [http.middlewares]
   [http.middlewares.autodetect.contentType]
+```
+
+```yaml tab="Labels"
+# Enable auto-detection
+labels:
+  - "traefik.http.middlewares.autodetect.contenttype=true"
+```
+
+```json tab="Tags"
+// Enable auto-detection
+{
+  // ...
+  "Tags": [
+    "traefik.http.middlewares.autodetect.contenttype=true"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -34,15 +50,4 @@ metadata:
   name: autodetect
 spec:
   contentType: {}
-```
-
-```yaml tab="Docker & Swarm"
-# Enable auto-detection
-labels:
-  - "traefik.http.middlewares.autodetect.contenttype=true"
-```
-
-```yaml tab="Consul Catalog"
-# Enable auto-detection
-- "traefik.http.middlewares.autodetect.contenttype=true"
 ```

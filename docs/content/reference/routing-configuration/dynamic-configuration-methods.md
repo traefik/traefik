@@ -9,7 +9,7 @@ Dynamic configuration—now also known as routing configuration—defines how Tr
 
 Depending on your environment and preferences, there are several ways to supply this routing configuration:
 
-- File Provider: Use TOML or YAML files.
+- File or Structured Provider: Use TOML or YAML files.
 - Docker and ECS Providers: Use container labels.
 - Kubernetes Providers: Use annotations.
 - KV Providers : Use key-value pairs.

@@ -26,8 +26,7 @@ However, a router defining its own observability configuration will opt-out from
 
 ## Configuration Example
 
-```yaml tab="File(YAML)"
-## Dynamic configuration
+```yaml tab="Structured (YAML)"
 http:
   routers:
     my-router:
@@ -37,6 +36,39 @@ http:
         metrics: false
         accessLogs: false
         tracing: false
+```
+
+```yaml tab="Structured (TOML)"
+[http.routers.my-router]
+  rule = "Path(`/foo`)"
+  service = "service-foo"
+
+  [http.routers.my-router.observability]
+    metrics = false
+    accessLogs = false
+    tracing = false
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.routers.my-router.rule=Path(`/foo`)"
+  - "traefik.http.routers.my-router.service=service-foo"
+  - "traefik.http.routers.my-router.observability.metrics=false"
+  - "traefik.http.routers.my-router.observability.accessLogs=false"
+  - "traefik.http.routers.my-router.observability.tracing=false"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.routers.my-router.rule=Path(`/foo`)",
+    "traefik.http.routers.my-router.service=service-foo",
+    "traefik.http.routers.my-router.observability.metrics=false",
+    "traefik.http.routers.my-router.observability.accessLogs=false",
+    "traefik.http.routers.my-router.observability.tracing=false"
+  ]
+}
 ```
 
 ## Configuration Options

@@ -11,7 +11,7 @@ The `stripPrefix` middleware strips the matching path prefix and stores it in an
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Strip prefix /foobar and /fiibar
 http:
   middlewares:
@@ -22,11 +22,26 @@ http:
           - "/fiibar"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Strip prefix /foobar and /fiibar
 [http.middlewares]
   [http.middlewares.test-stripprefix.stripPrefix]
     prefixes = ["/foobar", "/fiibar"]
+```
+
+```yaml tab="Labels"
+# Strip prefix /foobar and /fiibar
+labels:
+  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+```
+
+```json tab="Tags"
+// Strip prefix /foobar and /fiibar
+{
+  "Tags" : [
+    "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -40,17 +55,6 @@ spec:
     prefixes:
       - /foobar
       - /fiibar
-```
-
-```yaml tab="Docker & Swarm"
-# Strip prefix /foobar and /fiibar
-labels:
-  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
-```
-
-```yaml tab="Consul Catalog"
-# Strip prefix /foobar and /fiibar
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ## Configuration Options

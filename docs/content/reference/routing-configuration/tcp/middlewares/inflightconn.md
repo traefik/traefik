@@ -7,7 +7,7 @@ To proactively prevent Services from being overwhelmed with high load, the numbe
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Limiting to 10 simultaneous connections
 tcp:
   middlewares:
@@ -16,11 +16,26 @@ tcp:
         amount: 10
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Limiting to 10 simultaneous connections
 [tcp.middlewares]
   [tcp.middlewares.test-inflightconn.inFlightConn]
     amount = 10
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
+```
+
+```json tab="Tags"
+// Limiting to 10 simultaneous connections
+{
+  //..
+  "Tags" : [
+    "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -31,16 +46,6 @@ metadata:
 spec:
   inFlightConn:
     amount: 10
-```
-
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
-```
-
-```yaml tab="Consul Catalog"
-# Limiting to 10 simultaneous connections
-- "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
 ```
 
 ## Configuration Options

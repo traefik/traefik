@@ -135,6 +135,27 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 ### Example
 
+```yaml tab="Structured (YAML)"
+tcp:
+  routers:
+    Router-1:
+      rule: "ClientIP(`192.168.0.12`)"
+      # ...
+    Router-2:
+      rule: "ClientIP(`192.168.0.0/24`)"
+      # ...
+```
+
+```toml tab="Structured (TOML)"
+[tcp.routers]
+  [tcp.routers.Router-1]
+    rule = "ClientIP(`192.168.0.12`)"
+    # ...
+  [tcp.routers.Router-2]
+    rule = "ClientIP(`192.168.0.0/24`)"
+    # ...
+```
+
 The table below shows that `Router-2` has a higher computed priority than `Router-1`.
 
 | Name     | Rule                                                        | Priority |
@@ -142,5 +163,5 @@ The table below shows that `Router-2` has a higher computed priority than `Route
 | Router-1 | ```ClientIP(`192.168.0.12`)```                              | 24       |
 | Router-2 | ```ClientIP(`192.168.0.0/24`)```                            | 26       |
 
-Which means that requests from `192.168.0.12` would go to Router-2 even though Router-1 is intended to specifically handle them.
-To achieve this intention, a priority (higher than 26) should be set on Router-1.
+Which means that requests from `192.168.0.12` would go to`Router-2` even though `Router-1` is intended to specifically handle them.
+To achieve this intention, a priority (higher than 26) should be set on `Router-1`.

@@ -11,7 +11,7 @@ The `stripPrefixRegex` middleware strips the matching path prefix and stores it 
 
 ## Configuration Example
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 http:
   middlewares:
     test-stripprefixregex:
@@ -20,10 +20,25 @@ http:
           - "/foo/[a-z0-9]+/[0-9]+/"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 [http.middlewares]
   [http.middlewares.test-stripprefixregex.stripPrefixRegex]
     regex = ["/foo/[a-z0-9]+/[0-9]+/"]
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+```
+
+```yaml tab="Tags"
+{
+  //..
+  "Tags" : [
+    "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+  ]
+}
+- 
 ```
 
 ```yaml tab="Kubernetes"
@@ -35,15 +50,6 @@ spec:
   stripPrefixRegex:
     regex:
       - "/foo/[a-z0-9]+/[0-9]+/"
-```
-
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ## Configuration Options

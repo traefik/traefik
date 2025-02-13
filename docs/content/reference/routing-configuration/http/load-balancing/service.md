@@ -3,7 +3,7 @@ title: "Traefik HTTP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 --- 
 
-## Servers Load Balancer
+## Service Load Balancer
 
 The load balancers are able to load balance the requests between multiple instances of your programs.
 
@@ -11,13 +11,15 @@ Each service has a load-balancer, even if there is only one server to forward tr
 
 ## Configuration Example
 
-```yaml tab="File(YAML)"
+```yaml tab="Structured (YAML)"
 http:
   services:
     my-service:
       loadBalancer:
         servers:
           - url: "http://private-ip-server-1/"
+            weight: 2
+            preservePath: true
         sticky:
           cookie:
             name: "sticky-cookie"
@@ -31,7 +33,7 @@ http:
           flushInterval: "150ms"
 ```
 
-```toml tab="File(TOML)"
+```toml tab="Structured (TOML)"
 [http.services]
   [http.services.my-service.loadBalancer]
     [[http.services.my-service.loadBalancer.servers]]
@@ -66,43 +68,7 @@ http:
 
 #### Servers
 
-Servers represent individual backend instances for your service. The service loadBalancer `servers` option lets you configure the list of instances that will handle incoming requests.
-
-##### Configuration Examples
-
-```yaml tab="A Service with One Server"
-## Dynamic configuration
-http:
-  services:
-    my-service:
-      loadBalancer:
-        servers:
-          - url: "http://private-ip-server-1/"
-```
-
-```yaml tab="A Service with Two Servers with Weight"
-## Dynamic configuration
-http:
-  services:
-    my-service:
-      loadBalancer:
-        servers:
-          - url: "http://private-ip-server-1/"
-            weight: 2
-          - url: "http://private-ip-server-2/"
-            weight: 1
-```
-
-```yaml tab="A Service with One Server and PreservePath"
-## Dynamic configuration
-http:
-  services:
-    my-service:
-      loadBalancer:
-        servers:
-          - url: "http://private-ip-server-1/base"
-            preservePath: true
-```
+Servers represent individual backend instances for your service. The [service loadBalancer](#service-load-balancer) `servers` option lets you configure the list of instances that will handle incoming requests.
 
 ##### Configuration Options
 
@@ -145,8 +111,7 @@ This strategy is only available to load balance between services and not between
 
     This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-ingress.md) providers. To load balance between servers based on weights, the Load Balancer service should be used instead.
 
-```yaml tab="File (YAML)"
-
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   services:
@@ -169,7 +134,7 @@ http:
         - url: "http://private-ip-server-2/"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.services]
   [http.services.app]
@@ -201,7 +166,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. whenever o
 
     HealthCheck on Weighted services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   services:
@@ -233,7 +198,7 @@ http:
         - url: "http://private-ip-server-2/"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.services]
   [http.services.app]
@@ -266,13 +231,13 @@ http:
 
 ## Mirroring
 
-The mirroring is able to mirror requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the maxBodySize option in the example below for how to modify this behaviour. You can also omit the request body by setting the mirrorBody option to false.
+The mirroring is able to mirror requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the `maxBodySize` option in the example below for how to modify this behaviour. You can also omit the request body by setting the `mirrorBody` option to false.
 
 !!! info "Supported Providers"
 
     This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-ingress.md) providers.
     
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   services:
@@ -301,7 +266,7 @@ http:
         - url: "http://private-ip-server-2/
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.services]
   [http.services.mirrored-api]
@@ -339,7 +304,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     HealthCheck on Mirroring services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   services:
@@ -366,7 +331,7 @@ http:
         - url: "http://private-ip-server-2/"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.services]
   [http.services.mirrored-api]
@@ -416,7 +381,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   services:
@@ -445,7 +410,7 @@ http:
         - url: "http://private-ip-server-2/"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.services]
   [http.services.app]

@@ -13,7 +13,7 @@ This can help services avoid large amounts of data (`multipart/form-data` for ex
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Sets the maximum request body to 2MB
 http:
   middlewares:
@@ -22,11 +22,27 @@ http:
         maxRequestBodyBytes: 2000000
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Sets the maximum request body to 2MB
 [http.middlewares]
   [http.middlewares.limit.buffering]
     maxRequestBodyBytes = 2000000
+```
+
+```yaml tab="Labels"
+# Sets the maximum request body to 2MB
+labels:
+  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+```
+
+```json tab="Tags"
+// Sets the maximum request body to 2MB
+{
+  // ...
+  "Tags": [
+    "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -38,17 +54,6 @@ metadata:
 spec:
   buffering:
     maxRequestBodyBytes: 2000000
-```
-
-```yaml tab="Docker & Swarm"
-# Sets the maximum request body to 2MB
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
-```
-
-```yaml tab="Consul Catalog"
-# Sets the maximum request body to 2MB
-- "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ## Configuration Options

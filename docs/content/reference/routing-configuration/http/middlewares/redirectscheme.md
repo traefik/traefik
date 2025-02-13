@@ -16,7 +16,7 @@ The `RedirectScheme` middleware redirects the request if the request scheme is d
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Redirect to https
 http:
   middlewares:
@@ -26,12 +26,31 @@ http:
         permanent: true
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Redirect to https
 [http.middlewares]
   [http.middlewares.test-redirectscheme.redirectScheme]
     scheme = "https"
     permanent = true
+```
+
+```yaml tab="Labels"
+# Redirect to https
+labels:
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```json tab="Tags"
+// Redirect to https
+{
+  // ...
+  "Tags": [
+    "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+    "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+  ]
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -44,20 +63,6 @@ spec:
   redirectScheme:
     scheme: https
     permanent: true
-```
-
-```yaml tab="Docker & Swarm"
-# Redirect to https
-labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
-```
-
-```yaml tab="Consul Catalog"
-# Redirect to https
-labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 ```
 
 ## Configuration Options
