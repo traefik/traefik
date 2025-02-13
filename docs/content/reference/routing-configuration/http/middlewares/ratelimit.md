@@ -13,26 +13,9 @@ In this analogy, the `average` and `period` parameters define the **rate** at wh
 The rate is defined by dividing `average` by `period`.
 For a rate below 1 req/s, define a `period` larger than a second
 
-```yaml tab="File(YAML)"
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: test-ratelimit
-spec:
-  rateLimit:
-    burst: 100
-    period: 1m
-    average: 6
-```
-
-In the example above, the middleware allows up to 100 connections in parallel (`burst`).
-Each connection consumes a token, once the 100 tokens are consumed, the other ones are blocked until at least one token is available in the bucket.
-
-When the bucket is not full, one token is generated every 10 seconds (6 every 1 minutes (`period` / `average`))
-
 ## Configuration Example
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 http:
@@ -43,13 +26,32 @@ http:
         burst: 200
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     average = 100
     burst = 200
+```
+
+```yaml tab="Labels"
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 200 requests is allowed.
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
+```
+
+```json tab="Tags"
+// Here, an average of 100 requests per second is allowed.
+// In addition, a burst of 200 requests is allowed.
+{
+  "Tags": [
+    "traefik.http.middlewares.test-ratelimit.ratelimit.average=100",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -63,21 +65,6 @@ spec:
   rateLimit:
     average: 100
     burst: 200
-```
-
-```yaml tab="Docker & Swarm"
-# Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 200 requests is allowed.
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
-```
-
-```yaml tab="Consul Catalog"
-# Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 200 requests is allowed.
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
 ## Configuration Options

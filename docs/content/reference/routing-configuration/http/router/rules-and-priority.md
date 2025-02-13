@@ -118,9 +118,9 @@ The default value of the `ruleSyntax` option is inherited from the `defaultRuleS
 
 #### Configuration Example
 
-The configuration below uses the [File Provider](../../../install-configuration/providers/others/file.md) to configure the `ruleSyntax` to allow `Router-v2` to use v2 syntax, while for `Router-v3` it is configured to use v3 syntax.
+The configuration below uses the [File Provider (Structured)](../../../install-configuration/providers/others/file.md) to configure the `ruleSyntax` to allow `Router-v2` to use v2 syntax, while for `Router-v3` it is configured to use v3 syntax.
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   routers:
@@ -132,7 +132,7 @@ http:
       ruleSyntax: v2
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.routers]
   [http.routers.Router-v3]
@@ -143,27 +143,70 @@ http:
     ruleSyntax = v2
 ```
 
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: test.route
-  namespace: default
+```yaml tab="Labels"
+services:
+  my-container:
+    #...
+    labels:
+      - "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      - "traefik.http.routers.Router-v3.ruleSyntax=v3"
+      - "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+      - "traefik.http.routers.Router-v2.ruleSyntax=v2"
+```
 
-spec:
-  routes:
-    # route v3
-    - match: HostRegexp(`[a-z]+\\.traefik\\.com`)
-      syntax: v3
-      kind: Rule
-
-    # route v2
-    - match: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
-      syntax: v2
-      kind: Rule   
+```json tab="Tags"
+  {
+    "Name": "Router-v3",
+    "Tags": [
+      "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+      "traefik.http.routers.Router-v3.ruleSyntax=v3"
+    ]
+  },
+  {
+    "Name": "Router-v2",
+    "Tags": [
+      "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)",
+      "traefik.http.routers.Router-v2.ruleSyntax=v2"
+    ]
+    // ...
+  }
 ```
 
 ## Priority Calculation
+
+??? info "How default priorities are computed"
+
+    ```yaml tab="Structured (YAML)"
+    http:
+      routers:
+        Router-1:
+          rule: "HostRegexp(`[a-z]+\.traefik\.com`)"
+          # ...
+        Router-2:
+          rule: "Host(`foobar.traefik.com`)"
+          # ...
+    ```
+
+    ```toml tab="Structured (TOML)"
+    [http.routers]
+      [http.routers.Router-1]
+        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+        # ...
+      [http.routers.Router-2]
+        rule = "Host(`foobar.traefik.com`)"
+        # ...
+    ```
+
+    In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
+
+    | Name     | Rule                                     | Priority |
+    |----------|------------------------------------------|----------|
+    | Router-1 | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
+    | Router-2 | ```Host(`foobar.traefik.com`)```         | 26       |
+
+    The previous table shows that `Router-1` has a higher priority than `Router-2`.
+
+    To solve this issue, the priority must be set.
 
 To avoid path overlap, routes are sorted, by default, in descending order using rules length.
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
@@ -177,35 +220,69 @@ Traefik reserves a range of priorities for its internal routers, the maximum use
 
 ### Example
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
   routers:
     Router-1:
-      rule: "HostRegexp(`[a-z]+\.traefik\.com`)"
-      # ...
+      rule: "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      entryPoints:
+      - "web"
+      service: service-1
+      priority: 1
     Router-2:
       rule: "Host(`foobar.traefik.com`)"
-      # ...
+      entryPoints:
+      - "web"
+      priority: 2
+      service: service-2
 ```
 
-```yaml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [http.routers]
   [http.routers.Router-1]
     rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
-    # ...
+    entryPoints = ["web"]
+    service = "service-1"
+    priority = 1
   [http.routers.Router-2]
     rule = "Host(`foobar.traefik.com`)"
-    # ...
+    entryPoints = ["web"]
+    priority = 2
+    service = "service-2"
 ```
 
-In the example above, all requests with host `foobar.traefik.com` will be routed through
-`Router-1` instead of `Router-2`, because `Router-1` has a higher priority than `Router-2`.
+```yaml tab="Labels"
+services:
+  my-container:
+    #...
+    labels:
+      - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      - "traefik.http.routers.Router-1.entryPoints=web"
+      - "traefik.http.routers.Router-1.service=service-1"
+      - "traefik.http.routers.Router-1.priority=1"
+      - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
+      - "traefik.http.routers.Router-2.entryPoints=web"
+      - "traefik.http.routers.Router-2.service=service-2"
+      - "traefik.http.routers.Router-2.priority=2"
+```
 
-| Name     | Rule                                     | Priority |
-|----------|------------------------------------------|----------|
-| Router-1 | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
-| Router-2 | ```Host(`foobar.traefik.com`)```         | 26       |
+```json tab="Tags"
+  {
+    "Name": "Routers",
+    "Tags": [
+      "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+      "traefik.http.routers.Router-1.entryPoints=web",
+      "traefik.http.routers.Router-1.service=service-1",
+      "traefik.http.routers.Router-1.priority=1"
+      "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)",
+      "traefik.http.routers.Router-2.entryPoints=web",
+      "traefik.http.routers.Router-2.service=service-2",
+      "traefik.http.routers.Router-2.priority=2"
+    ]
+    // ...
+  }
+```
 
-If you set the option `priority: 2` to `Router-1`, it allows `Router-2` to handle requests with the `foobar.traefik.com` host.
+In the example above, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
