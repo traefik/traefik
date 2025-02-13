@@ -67,20 +67,20 @@ providers:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Description                                               | Default              | Required |
-|:------|:----------------------------------------------------------|:---------------------|:---------|
-| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.kubernetesGateway.endpoint` | Server endpoint URL.<br />More information [here](#endpoint). | "" | No |
-| `providers.kubernetesGateway.experimentalChannel` | Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).<br />(ex: `TCPRoute` and `TLSRoute`)| false | No |
-| `providers.kubernetesGateway.token` | Bearer token used for the Kubernetes client configuration. | "" | No |
-| `providers.kubernetesGateway.certAuthFilePath` | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | "" | No |
-| `providers.kubernetesGateway.namespaces` | Array of namespaces to watch.<br />If left empty, watch all namespaces. | {} | No |
-| `providers.kubernetesGateway.labelselector` | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](./kubernetes-crd.md#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""  | No |
-| `providers.kubernetesGateway.throttleDuration` | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s | No |
-| `providers.kubernetesGateway.nativeLBByDefault` | Defines whether to use Native Kubernetes load-balancing mode by default. For more information, please check out the `traefik.io/service.nativelb` service annotation documentation. | false | No |
-| `providers.kubernetesGateway.`<br />`statusAddress.hostname` | Hostname copied to the Gateway `status.addresses`. | ""  | No |
-| `providers.kubernetesGateway.`<br />`statusAddress.ip` | IP address copied to the Gateway `status.addresses`, and currently only supports one IP value (IPv4 or IPv6). | ""  | No |
-| `providers.kubernetesGateway.`<br />`statusAddress.publishedService` | The Kubernetes service to copy status addresses from.<br />When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the gateways. | ""  | No |
+| Field | Description                                               | Default | Required |
+|:------|:----------------------------------------------------------|:--------|:---------|
+| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s      | No |
+| `providers.kubernetesGateway.endpoint` | Server endpoint URL.<br />More information [here](#endpoint). | ""      | No |
+| `providers.kubernetesGateway.experimentalChannel` | Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).<br />(ex: `TCPRoute` and `TLSRoute`)| false   | No |
+| `providers.kubernetesGateway.token` | Bearer token used for the Kubernetes client configuration. | ""      | No |
+| `providers.kubernetesGateway.certAuthFilePath` | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | ""      | No |
+| `providers.kubernetesGateway.namespaces` | Array of namespaces to watch.<br />If left empty, watch all namespaces. | []      | No |
+| `providers.kubernetesGateway.labelselector` | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](./kubernetes-crd.md#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No |
+| `providers.kubernetesGateway.throttleDuration` | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s      | No |
+| `providers.kubernetesGateway.nativeLBByDefault` | Defines whether to use Native Kubernetes load-balancing mode by default. For more information, please check out the `traefik.io/service.nativelb` service annotation documentation. | false   | No |
+| `providers.kubernetesGateway.`<br />`statusAddress.hostname` | Hostname copied to the Gateway `status.addresses`. | ""      | No |
+| `providers.kubernetesGateway.`<br />`statusAddress.ip` | IP address copied to the Gateway `status.addresses`, and currently only supports one IP value (IPv4 or IPv6). | ""      | No |
+| `providers.kubernetesGateway.`<br />`statusAddress.publishedService` | The Kubernetes service to copy status addresses from.<br />When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the gateways. | ""      | No |
 
 <!-- markdownlint-enable MD013 -->
 

@@ -52,21 +52,21 @@ providers:
 
 ## Configuration Options
 
-| Field | Description                                               | Default              | Required |
-|:------|:----------------------------------------------------------|:---------------------|:---------|
-| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.kubernetesCRD.endpoint` | Server endpoint URL.<br />More information [here](#endpoint). | "" | No |
-| `providers.kubernetesCRD.token` | Bearer token used for the Kubernetes client configuration. | "" | No |
-| `providers.kubernetesCRD.certAuthFilePath` | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | "" | No |
-| `providers.kubernetesCRD.namespaces` | Array of namespaces to watch.<br />If left empty, watch all namespaces. | {} | No |
-| `providers.kubernetesCRD.labelselector` | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""  | No |
-| `providers.kubernetesCRD.ingressClass` | Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `traefik` are processed. | ""  | No |
-| `providers.kubernetesCRD.throttleDuration` | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s | No |
-| `providers.kubernetesCRD.allowEmptyServices` | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false | No |
-| `providers.kubernetesCRD.allowCrossNamespace` | Allows the `IngressRoutes` to reference resources in namespaces other than theirs. | false | No |
-| `providers.kubernetesCRD.allowExternalNameServices` | Allows the `IngressRoutes` to reference ExternalName services. | false | No |
-| `providers.kubernetesCRD.nativeLBByDefault` | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport). | false | No |
-| `providers.kubernetesCRD.disableClusterScopeResources` | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false | No |
+| Field | Description                                               | Default | Required |
+|:------|:----------------------------------------------------------|:--------|:---------|
+| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s      | No |
+| `providers.kubernetesCRD.endpoint` | Server endpoint URL.<br />More information [here](#endpoint). | ""      | No |
+| `providers.kubernetesCRD.token` | Bearer token used for the Kubernetes client configuration. | ""      | No |
+| `providers.kubernetesCRD.certAuthFilePath` | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | ""      | No |
+| `providers.kubernetesCRD.namespaces` | Array of namespaces to watch.<br />If left empty, watch all namespaces. | []      | No |
+| `providers.kubernetesCRD.labelselector` | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No |
+| `providers.kubernetesCRD.ingressClass` | Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `traefik` are processed. | ""      | No |
+| `providers.kubernetesCRD.throttleDuration` | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s      | No |
+| `providers.kubernetesCRD.allowEmptyServices` | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No |
+| `providers.kubernetesCRD.allowCrossNamespace` | Allows the `IngressRoutes` to reference resources in namespaces other than theirs. | false   | No |
+| `providers.kubernetesCRD.allowExternalNameServices` | Allows the `IngressRoutes` to reference ExternalName services. | false   | No |
+| `providers.kubernetesCRD.nativeLBByDefault` | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport). | false   | No |
+| `providers.kubernetesCRD.disableClusterScopeResources` | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No |
 
 ### endpoint
 
