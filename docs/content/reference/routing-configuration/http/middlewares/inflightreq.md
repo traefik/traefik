@@ -7,7 +7,7 @@ The `inFlightReq` middleware proactively prevents services from being overwhelme
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Limiting to 10 simultaneous connections
 http:
   middlewares:
@@ -16,11 +16,26 @@ http:
         amount: 10
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Limiting to 10 simultaneous connections
 [http.middlewares]
   [http.middlewares.test-inflightreq.inFlightReq]
     amount = 10
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+```
+
+```json tab="Consul Catalog"
+// Limiting to 10 simultaneous connections
+{
+  "Tags" : [
+    "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  ]
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -31,16 +46,6 @@ metadata:
 spec:
   inFlightReq:
     amount: 10
-```
-
-```yaml tab="Docker & Swarm"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```yaml tab="Consul Catalog"
-# Limiting to 10 simultaneous connections
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ## Configuration Options
