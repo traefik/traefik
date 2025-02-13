@@ -9,7 +9,7 @@ The `errors` middleware returns a custom page in lieu of the default, according 
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
 http:
   middlewares:
@@ -27,7 +27,7 @@ http:
     # ... definition of the error-handler-service
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
 [http.middlewares]
   [http.middlewares.test-errors.errors]
@@ -37,6 +37,28 @@ http:
 
 [http.services]
   # ... definition of the error-handler-service
+```
+
+```yaml tab="Labels"
+# Dynamic Custom Error Page for 5XX Status Code
+labels:
+  - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
+  - "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
+  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+```
+
+```json tab="Tags"
+// Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
+{
+  // ...
+  "Tags": [
+    "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599",
+    "traefik.http.middlewares.test-errors.errors.service=error-handler-service",
+    "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+  ]
+
+}
+
 ```
 
 ```yaml tab="Kubernetes"
@@ -55,21 +77,6 @@ spec:
     service:
       name: error-handler-service
       port: 80
-```
-
-```yaml tab="Docker & Swarm"
-# Dynamic Custom Error Page for 5XX Status Code
-labels:
-  - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-  - "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
-  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-```
-
-```yaml tab="Consul Catalog"
-# Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
-- "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-- "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
-- "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ## Configuration Options

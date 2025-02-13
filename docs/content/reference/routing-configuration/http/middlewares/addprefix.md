@@ -9,7 +9,7 @@ The `addPrefix` middleware updates the path of a request before forwarding it.
 
 ## Configuration Examples
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 # Prefixing with /foo
 http:
   middlewares:
@@ -18,11 +18,27 @@ http:
         prefix: "/foo"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 # Prefixing with /foo
 [http.middlewares]
   [http.middlewares.add-foo.addPrefix]
     prefix = "/foo"
+```
+
+```yaml tab="Labels"
+# Prefixing with /foo
+labels:
+  - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+```
+
+```json tab="Tags"
+// Prefixing with /foo
+{
+  // ...
+  "Tags": [
+    "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+  ]
+}
 ```
 
 ```yaml tab="Kubernetes"
@@ -34,17 +50,6 @@ metadata:
 spec:
   addPrefix:
     prefix: /foo
-```
-
-```yaml tab="Consul Catalog"
-# Prefixing with /foo
-- "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
-```
-
-```yaml tab="Docker & Swarm"
-# Prefixing with /foo
-labels:
-  - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
 ```
 
 ## Configuration Options

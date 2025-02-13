@@ -11,25 +11,64 @@ By default, a router with a TLS field will terminate the TLS connections, meanin
 
 ## Configuration Example
 
-```yaml tab="File (YAML)"
-## Dynamic configuration
+```yaml tab="Structured (YAML)"
 tcp:
   routers:
-    Router-1:
-      rule: "HostSNI(`foo-domain`)"
-      service: service-id
-       # Enable TLS termination for all requests.
-      tls: {}
+    my-tls-router:
+      rule: "HostSNI(`example.com`)"
+      service: "my-tcp-service"
+      tls:
+        passthrough: true
+        options: "my-tls-options"
+        domains:
+          - main: "example.com"
+            sans:
+              - "www.example.com"
+              - "api.example.com"
+        certResolver: "myresolver"
 ```
 
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.routers]
-  [tcp.routers.Router-1]
-    rule = "HostSNI(`foo-domain`)"
-    service = "service-id"
-     # Enable TLS termination for all requests.
-    [tcp.routers.Router-1.tls]
+```toml tab="Structured (TOML)"
+[tcp.routers.my-tls-router]
+  rule = "HostSNI(`example.com`)"
+  service = "my-tcp-service"
+
+  [tcp.routers.my-tls-router.tls]
+    passthrough = true
+    options = "my-tls-options"
+    certResolver = "myresolver"
+
+    [[tcp.routers.my-tls-router.tls.domains]]
+      main = "example.com"
+      sans = ["www.example.com", "api.example.com"]
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.tcp.routers.my-tls-router.tls=true"
+  - "traefik.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)"
+  - "traefik.tcp.routers.my-tls-router.service=my-tcp-service"
+  - "traefik.tcp.routers.my-tls-router.tls.passthrough=true"
+  - "traefik.tcp.routers.my-tls-router.tls.options=my-tls-options"
+  - "traefik.tcp.routers.my-tls-router.tls.certResolver=myresolver"
+  - "traefik.tcp.routers.my-tls-router.tls.domains[0].main=example.com"
+  - "traefik.tcp.routers.my-tls-router.tls.domains[0].sans=www.example.com,api.example.com"
+```
+
+```json tab="Tags"
+{
+  //...
+  "Tags": [
+    "traefik.tcp.routers.my-tls-router.tls=true"
+    "traefik.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)",
+    "traefik.tcp.routers.my-tls-router.service=my-tcp-service",
+    "traefik.tcp.routers.my-tls-router.tls.passthrough=true",
+    "traefik.tcp.routers.my-tls-router.tls.options=my-tls-options",
+    "traefik.tcp.routers.my-tls-router.tls.certResolver=myresolver",
+    "traefik.tcp.routers.my-tls-router.tls.domains[0].main=example.com",
+    "traefik.tcp.routers.my-tls-router.tls.domains[0].sans=www.example.com,api.example.com"
+  ]
+}
 ```
 
 ??? info "Postgres STARTTLS"
@@ -57,37 +96,9 @@ tcp:
 
 | Field   | Description  | Default    | Required |
 |:------------------|:--------------------|:-----------------------------------------------|:---------|
-|`passthrough`| Defines whether the requests should be forwarded "as is", keeping all data encrypted. More information [here](#passthrough) | false | No |
+|`passthrough`| Defines whether the requests should be forwarded "as is", keeping all data encrypted. | false | No |
 |`options`| enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-certificates.md#tls-options) and will be applied only if a `HostSNI` rule is defined. | "" | No |
 |`domains`| Defines a set of SANs (alternative domains) for each main domain. Every domain must have A/AAAA records pointing to Traefik. Each domain & SAN will lead to a certificate request.| [] | No |
 |`certResolver`| If defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules. | "" | No |
-
-### `passthrough`
-
-A TLS router will terminate the TLS connection by default.
-However, the `passthrough` option can be specified to set whether the requests should be forwarded "as is", keeping all data encrypted.
-
-??? example "Configuring passthrough"
-
-    ```yaml tab="File (YAML)"
-    ## Dynamic configuration
-    tcp:
-      routers:
-        Router-1:
-          rule: "HostSNI(`foo-domain`)"
-          service: service-id
-          tls:
-            passthrough: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Dynamic configuration
-    [tcp.routers]
-      [tcp.routers.Router-1]
-        rule = "HostSNI(`foo-domain`)"
-        service = "service-id"
-        [tcp.routers.Router-1.tls]
-          passthrough = true
-    ```
 
 {!traefik-for-business-applications.md!}
