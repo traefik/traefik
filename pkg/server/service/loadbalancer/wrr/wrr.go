@@ -246,7 +246,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				_, isHealthy := b.status[handler.name]
 				b.handlersMu.RUnlock()
 				if isHealthy {
-					b.writeCookie(w, handler)
+					b.writeStickyCookie(w, handler)
 
 					handler.ServeHTTP(w, req)
 					return
@@ -265,24 +265,24 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	b.writeCookie(w, server)
+	if b.stickyCookie != nil {
+		b.writeStickyCookie(w, server)
+	}
 
 	server.ServeHTTP(w, req)
 }
 
-func (b *Balancer) writeCookie(w http.ResponseWriter, handler *namedHandler) {
-	if b.stickyCookie != nil {
-		cookie := &http.Cookie{
-			Name:     b.stickyCookie.name,
-			Value:    handler.hashedName,
-			Path:     b.stickyCookie.path,
-			HttpOnly: b.stickyCookie.httpOnly,
-			Secure:   b.stickyCookie.secure,
-			SameSite: convertSameSite(b.stickyCookie.sameSite),
-			MaxAge:   b.stickyCookie.maxAge,
-		}
-		http.SetCookie(w, cookie)
+func (b *Balancer) writeStickyCookie(w http.ResponseWriter, handler *namedHandler) {
+	cookie := &http.Cookie{
+		Name:     b.stickyCookie.name,
+		Value:    handler.hashedName,
+		Path:     b.stickyCookie.path,
+		HttpOnly: b.stickyCookie.httpOnly,
+		Secure:   b.stickyCookie.secure,
+		SameSite: convertSameSite(b.stickyCookie.sameSite),
+		MaxAge:   b.stickyCookie.maxAge,
 	}
+	http.SetCookie(w, cookie)
 }
 
 // Add adds a handler.
