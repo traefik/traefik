@@ -163,7 +163,7 @@ tracing:
 
 #### `safeQueryParams`
 
-_Optional, Default={}_
+_Optional, Default=[]_
 
 By default, all query parameters are redacted.
 Defines the list of query parameters to not redact.
