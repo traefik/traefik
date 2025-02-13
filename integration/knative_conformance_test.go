@@ -3,25 +3,25 @@ package integration
 import (
 	"context"
 	"flag"
+	"io"
+	"os"
+	"slices"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/traefik/traefik/v3/integration/try"
-	"io"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"knative.dev/networking/test/conformance/ingress"
-	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"slices"
-	"testing"
-	"time"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -201,7 +201,7 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 	}
 
 	// Write the byte array to the file
-	err = os.WriteFile("/etc/rancher/k3s/k3s.yaml", config, 0644)
+	err = os.WriteFile("/etc/rancher/k3s/k3s.yaml", config, 0o644)
 	if err != nil {
 		s.T().Fatal(err)
 	}

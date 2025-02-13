@@ -36,13 +36,11 @@ import (
 )
 
 var (
-	showLog                          = flag.Bool("tlog", false, "always show Traefik logs")
-	k8sConformance                   = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
-	k8sConformanceRunTest            = flag.String("k8sConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
-	k8sConformanceTraefikVersion     = flag.String("k8sConformanceTraefikVersion", "dev", "specify the Traefik version for the K8s Gateway API conformance report")
-	kNativeConformance               = flag.Bool("kNativeConformance", false, "run K8s Gateway API conformance test")
-	kNativeConformanceRunTest        = flag.String("kNativeConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
-	kNativeConformanceTraefikVersion = flag.String("kNativeConformanceTraefikVersion", "dev", "specify the Traefik version for the K8s Gateway API conformance report")
+	showLog                      = flag.Bool("tlog", false, "always show Traefik logs")
+	k8sConformance               = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
+	k8sConformanceRunTest        = flag.String("k8sConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
+	k8sConformanceTraefikVersion = flag.String("k8sConformanceTraefikVersion", "dev", "specify the Traefik version for the K8s Gateway API conformance report")
+	kNativeConformance           = flag.Bool("kNativeConformance", false, "run K8s Gateway API conformance test")
 )
 
 const (
