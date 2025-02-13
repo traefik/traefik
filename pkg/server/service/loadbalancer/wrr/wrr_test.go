@@ -296,7 +296,7 @@ func TestSticky_FallBack(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(2), false)
 
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}, cookies: make(map[string]*http.Cookie)}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.AddCookie(&http.Cookie{Name: "test", Value: "second"})
@@ -373,7 +373,7 @@ func TestSticky_Fenced(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), true)
 
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}, cookies: make(map[string]*http.Cookie)}
 
 	stickyReq := httptest.NewRequest(http.MethodGet, "/", nil)
 	stickyReq.AddCookie(&http.Cookie{Name: "test", Value: "fenced"})
@@ -390,4 +390,100 @@ func TestSticky_Fenced(t *testing.T) {
 	assert.Equal(t, 4, recorder.save["fenced"])
 	assert.Equal(t, 2, recorder.save["first"])
 	assert.Equal(t, 2, recorder.save["second"])
+}
+
+func TestStickyWithCompatibility(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		servers []string
+		cookies []*http.Cookie
+
+		expectedCookies []*http.Cookie
+		expectedServer  string
+	}{
+		{
+			desc:    "No previous cookie",
+			servers: []string{"first"},
+
+			expectedServer: "first",
+			expectedCookies: []*http.Cookie{
+				{Name: "test", Value: sha256Hash("first")},
+			},
+		},
+		{
+			desc:    "Sha256 previous cookie",
+			servers: []string{"first", "second"},
+			cookies: []*http.Cookie{
+				{Name: "test", Value: sha256Hash("first")},
+			},
+			expectedServer:  "first",
+			expectedCookies: []*http.Cookie{},
+		},
+		{
+			desc:    "Raw previous cookie",
+			servers: []string{"first", "second"},
+			cookies: []*http.Cookie{
+				{Name: "test", Value: "first"},
+			},
+			expectedServer: "first",
+			expectedCookies: []*http.Cookie{
+				{Name: "test", Value: sha256Hash("first")},
+			},
+		},
+		{
+			desc:    "Fnv previous cookie",
+			servers: []string{"first", "second"},
+			cookies: []*http.Cookie{
+				{Name: "test", Value: fnvHash("first")},
+			},
+			expectedServer: "first",
+			expectedCookies: []*http.Cookie{
+				{Name: "test", Value: sha256Hash("first")},
+			},
+		},
+		{
+			desc:    "Double fnv previous cookie",
+			servers: []string{"first", "second"},
+			cookies: []*http.Cookie{
+				{Name: "test", Value: fnvHash(fnvHash("first"))},
+			},
+			expectedServer: "first",
+			expectedCookies: []*http.Cookie{
+				{Name: "test", Value: sha256Hash("first")},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			balancer := New(&dynamic.Sticky{Cookie: &dynamic.Cookie{Name: "test"}}, false)
+
+			for _, server := range test.servers {
+				balancer.Add(server, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(http.StatusOK)
+					_, _ = rw.Write([]byte(server))
+				}), pointer(1), false)
+			}
+
+			// Do it twice, to be sure it's not just the luck.
+			for range 2 {
+				req := httptest.NewRequest(http.MethodGet, "/", nil)
+				for _, cookie := range test.cookies {
+					req.AddCookie(cookie)
+				}
+
+				recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}, cookies: make(map[string]*http.Cookie)}
+				balancer.ServeHTTP(recorder, req)
+
+				assert.Equal(t, test.expectedServer, recorder.Body.String())
+
+				assert.Len(t, recorder.cookies, len(test.expectedCookies))
+				for _, cookie := range test.expectedCookies {
+					assert.Equal(t, cookie.Value, recorder.cookies[cookie.Name].Value)
+				}
+			}
+		})
+	}
 }
