@@ -5,9 +5,9 @@ description: "Learn how to configure the transport layer security (TLS) connecti
 
 ## General
 
-When a TLS section is specified, it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
+When a router is configured to handle HTTPS traffic, include a `tls` field in its definition. This field tells Traefik that the router should process only TLS requests and ignore non-TLS traffic.
 
-By default, a router with a TLS section will terminate the TLS connections, meaning that it will send decrypted data to the services.
+By default, a router with a TLS field will terminate the TLS connections, meaning that it will send decrypted data to the services.
 
 ## Configuration Example
 
