@@ -11,6 +11,9 @@ However, a router defining its own observability configuration will opt-out from
 !!! info
     To enable router-level observability, you must first enable access-logs, tracing, and metrics.
 
+    When metrics layers are not enabled with the `addEntryPointsLabels`, `addRoutersLabels` and/or `addServicesLabels` options,
+    enabling metrics for a router will not enable them.
+
 !!! warning "AddInternals option"
 
     By default, and for any type of signal (access-logs, metrics and tracing),
@@ -41,24 +44,5 @@ http:
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
 | `accessLogs` | The `accessLogs` option controls whether the router will produce access-logs. | `true` | No |
-| `metrics` | The `metrics` option controls whether the router will produce metrics. See [here](#metrics) for additional information | `true` | No |
+| `metrics` | The `metrics` option controls whether the router will produce metrics. | `true` | No |
 | `tracing` | The `tracing` option controls whether the router will produce traces. | `true` | No |
-
-### Metrics
-
-The `metrics` option controls whether the router will produce metrics.
-
-!!! warning "Metrics layers"
-
-    When metrics layers are not enabled with the `addEntryPointsLabels`, `addRoutersLabels` and/or `addServicesLabels` options,
-    enabling metrics for a router will not enable them.
-
-```yaml tab="File(YAML)"
-http:
-  routers:
-    my-router:
-      rule: "Path(`/foo`)"
-      service: service-foo
-      observability:
-        metrics: false
-```
