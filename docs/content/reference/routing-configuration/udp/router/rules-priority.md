@@ -37,9 +37,7 @@ If not specified, UDP routers will accept packets from all defined (UDP) EntryPo
 
 Listens to Every Entry Point
 
-```yaml tab="File (YAML)"
-## Dynamic configuration
-
+```yaml tab="Structured (YAML)"
 udp:
   routers:
     Router-1:
@@ -48,9 +46,7 @@ udp:
       service: "service-1"
 ```
 
-```toml tab="File (TOML)"
-## Dynamic configuration
-
+```toml tab="Structured (TOML)"
 [udp.routers]
   [udp.routers.Router-1]
     # By default, routers listen to all UDP entrypoints,
@@ -60,7 +56,7 @@ udp:
 
 Listens to Specific EntryPoints
 
-```yaml tab="File (YAML)"
+```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 udp:
   routers:
@@ -71,7 +67,7 @@ udp:
       service: "service-1"
 ```
 
-```toml tab="File (TOML)"
+```toml tab="Structured (TOML)"
 ## Dynamic configuration
 [udp.routers]
   [udp.routers.Router-1]
@@ -80,9 +76,9 @@ udp:
     service = "service-1"
 ```
 
-### Services
+!!! info "Service"
 
-There must be one (and only one) UDP [service](../service.md) referenced per UDP router.
-Services are the target for the router.
+    There must be one (and only one) UDP [service](../service.md) referenced per UDP router.
+    Services are the target for the router.
 
 {!traefik-for-business-applications.md!}
