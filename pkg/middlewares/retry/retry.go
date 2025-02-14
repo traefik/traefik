@@ -196,6 +196,9 @@ func (r *responseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
 	if r.ShouldRetry() {
 		return len(buf), nil
 	}
+	if !r.written {
+		r.WriteHeader(http.StatusOK)
+	}
 	return r.responseWriter.Write(buf)
 }
 
