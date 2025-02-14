@@ -3,7 +3,7 @@ title: "Traefik Compress Documentation"
 description: "Traefik Proxy's HTTP middleware lets you compress responses before sending them to the client. Read the technical documentation."
 ---
 
-The `compress` middleware compresses response. It supports Gzip, Brotli and Zstandard compression
+The `compress` middleware compresses response. It supports Gzip, Brotli and Zstandard compression.
 
 ## Configuration Examples
 
