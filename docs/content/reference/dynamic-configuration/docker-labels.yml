@@ -31,6 +31,8 @@
 - "traefik.http.middlewares.middleware08.digestauth.users=foobar, foobar"
 - "traefik.http.middlewares.middleware08.digestauth.usersfile=foobar"
 - "traefik.http.middlewares.middleware09.errors.query=foobar"
+- "traefik.http.middlewares.middleware09.errors.rewritestatus.name0=42"
+- "traefik.http.middlewares.middleware09.errors.rewritestatus.name1=42"
 - "traefik.http.middlewares.middleware09.errors.service=foobar"
 - "traefik.http.middlewares.middleware09.errors.status=foobar, foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.addauthcookiestoresponse=foobar, foobar"

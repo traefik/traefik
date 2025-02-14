@@ -188,6 +188,9 @@ http:
           - foobar
         service: foobar
         query: foobar
+        rewriteStatus:
+          name0: 42
+          name1: 42
     Middleware10:
       forwardAuth:
         address: foobar
