@@ -210,6 +210,7 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+	Redis           *dynamic.Redis           `json:"redis,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

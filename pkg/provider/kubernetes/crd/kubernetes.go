@@ -713,6 +713,10 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 		rl.SourceCriterion = rateLimit.SourceCriterion
 	}
 
+	if rateLimit.Redis != nil {
+		rl.Redis = rateLimit.Redis
+	}
+
 	return rl, nil
 }
 
