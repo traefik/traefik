@@ -7,6 +7,11 @@
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
 			"priority": 18,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"web"
@@ -21,6 +26,11 @@
 			"priority": 12,
 			"tls": {
 				"options": "default-mytlsoption"
+			},
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
 			},
 			"status": "enabled",
 			"using": [
@@ -37,6 +47,11 @@
 			"service": "default-test2-route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
 			"priority": 46,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"web"
@@ -49,6 +64,11 @@
 			"service": "default-wrr1",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
 			"priority": 38,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"web"
@@ -61,6 +81,11 @@
 			"service": "default-testst-route-60ad45fcb5fc1f5f3629",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/serverstransport`)",
 			"priority": 50,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"web"
@@ -73,6 +98,11 @@
 			"service": "other-ns-wrr3",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
 			"priority": 35,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"error": [
 				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
 			],

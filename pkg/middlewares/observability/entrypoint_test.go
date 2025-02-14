@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -78,28 +77,4 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestEntryPointMiddleware_tracingInfoIntoLog(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "http://www.test.com/", http.NoBody)
-	req = req.WithContext(
-		context.WithValue(
-			req.Context(),
-			accesslog.DataTableKey,
-			&accesslog.LogData{Core: accesslog.CoreLogData{}},
-		),
-	)
-
-	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {})
-
-	tracer := &mockTracer{}
-
-	handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{}, []string{}, []string{}), "test", next)
-	handler.ServeHTTP(httptest.NewRecorder(), req)
-
-	expectedSpanCtx := tracer.spans[0].SpanContext()
-
-	logData := accesslog.GetLogData(req)
-	assert.Equal(t, expectedSpanCtx.TraceID().String(), logData.Core[accesslog.TraceID])
-	assert.Equal(t, expectedSpanCtx.SpanID().String(), logData.Core[accesslog.SpanID])
 }

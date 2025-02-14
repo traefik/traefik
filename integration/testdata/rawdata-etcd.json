@@ -12,6 +12,11 @@
       "rule": "Host(`kv1.localhost`)",
       "priority": 42,
       "tls": {},
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "web"
@@ -42,6 +47,11 @@
           }
         ]
       },
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "web"
@@ -55,6 +65,11 @@
       "rule": "PathPrefix(`/api`)",
       "ruleSyntax": "v3",
       "priority": 9223372036854775806,
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "traefik"
@@ -72,6 +87,11 @@
       "rule": "PathPrefix(`/`)",
       "ruleSyntax": "v3",
       "priority": 9223372036854775805,
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "traefik"

@@ -60,8 +60,6 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.HTTP.SetDefaults()
 	ep.HTTP2 = &HTTP2Config{}
 	ep.HTTP2.SetDefaults()
-	ep.Observability = &ObservabilityConfig{}
-	ep.Observability.SetDefaults()
 }
 
 // HTTPConfig is the HTTP configuration of an entry point.
@@ -164,14 +162,15 @@ func (u *UDPConfig) SetDefaults() {
 
 // ObservabilityConfig holds the observability configuration for an entry point.
 type ObservabilityConfig struct {
-	AccessLogs bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
-	Tracing    bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
-	Metrics    bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	Tracing    *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	Metrics    *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
-	o.AccessLogs = true
-	o.Tracing = true
-	o.Metrics = true
+	defaultValue := true
+	o.AccessLogs = &defaultValue
+	o.Tracing = &defaultValue
+	o.Metrics = &defaultValue
 }

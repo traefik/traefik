@@ -60,6 +60,7 @@ metadata:
 spec:
   forwardAuth:
     address: test.com
+    headerField: X-Header-Field
     tls:
       certSecret: tlssecret
       caSecret: casecret

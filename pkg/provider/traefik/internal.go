@@ -229,33 +229,32 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			}
 		}
 
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil {
 			continue
 		}
 
-		m := &dynamic.Model{
-			Middlewares: ep.HTTP.Middlewares,
+		httpModel := &dynamic.Model{
+			DefaultRuleSyntax: defaultRuleSyntax,
+			Middlewares:       ep.HTTP.Middlewares,
 		}
 
 		if ep.Observability != nil {
-			m.Observability = dynamic.RouterObservabilityConfig{
-				AccessLogs: &ep.Observability.AccessLogs,
-				Tracing:    &ep.Observability.Tracing,
-				Metrics:    &ep.Observability.Metrics,
+			httpModel.Observability = dynamic.RouterObservabilityConfig{
+				AccessLogs: ep.Observability.AccessLogs,
+				Tracing:    ep.Observability.Tracing,
+				Metrics:    ep.Observability.Metrics,
 			}
 		}
 
 		if ep.HTTP.TLS != nil {
-			m.TLS = &dynamic.RouterTLSConfig{
+			httpModel.TLS = &dynamic.RouterTLSConfig{
 				Options:      ep.HTTP.TLS.Options,
 				CertResolver: ep.HTTP.TLS.CertResolver,
 				Domains:      ep.HTTP.TLS.Domains,
 			}
 		}
 
-		m.DefaultRuleSyntax = defaultRuleSyntax
-
-		cfg.HTTP.Models[name] = m
+		cfg.HTTP.Models[name] = httpModel
 	}
 }
 

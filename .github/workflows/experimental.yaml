@@ -33,6 +33,7 @@ jobs:
           ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
 
       - name: Build
         run: make generate binary

@@ -161,6 +161,9 @@ type ForwardAuth struct {
 	TLS *ClientTLS `json:"tls,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
+	// HeaderField defines a header field to store the authenticated user.
+	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/forwardauth/#headerfield
+	HeaderField string `json:"headerField,omitempty"`
 	// ForwardBody defines whether to send the request body to the authentication server.
 	ForwardBody bool `json:"forwardBody,omitempty"`
 	// MaxBodySize defines the maximum body size in bytes allowed to be forwarded to the authentication server.

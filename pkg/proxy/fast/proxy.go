@@ -284,8 +284,9 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	// Sending the responseWriter unlocks the connection readLoop, to handle the response.
 	co.RWCh <- rwWithUpgrade{
-		RW:      rw,
-		Upgrade: upgradeResponseHandler(req.Context(), reqUpType),
+		ReqMethod: req.Method,
+		RW:        rw,
+		Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
 	}
 
 	if err := <-co.ErrCh; err != nil {

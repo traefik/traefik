@@ -61,6 +61,7 @@ jobs:
           ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
 
       - name: Artifact webui
         uses: actions/download-artifact@v4
