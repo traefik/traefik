@@ -6,7 +6,7 @@ description: "In Traefik Proxy's HTTP middleware, ReplacePath updates paths befo
 The `replacePath` middleware will:
 
 - Replace the actual path with the specified one.
-- Store the original path in a `X-Replaced-Path` header
+- Store the original path in an `X-Replaced-Path` header
 
 ## Configuration Examples
 
