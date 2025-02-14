@@ -1,3 +1,6 @@
+//go:build conformance
+// +build conformance
+
 package integration
 
 import (

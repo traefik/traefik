@@ -43,7 +43,7 @@ jobs:
       - name: Set up KO
         uses: ko-build/setup-ko@v0.6
         env:
-          KO_DOCKER_REPO: kind.local
+          KO_DOCKER_REPO: ko.local
 
       - name: Upload Test Images
         run: |
