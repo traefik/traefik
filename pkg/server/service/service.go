@@ -34,7 +34,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
 	"google.golang.org/grpc/status"
-	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 )
 
 // ProxyBuilder builds reverse proxy handlers.
@@ -313,6 +312,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 	default:
 		return m.BuildHTTP(ctx, service.Name)
 	}
+}
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
 	balancer := hrw.New(config.HealthCheck != nil)
@@ -322,7 +322,7 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.Add(service.Name, serviceHandler, service.Weight)
+		balancer.Add(service.Name, serviceHandler, service.Weight, false)
 
 		if config.HealthCheck == nil {
 			continue
@@ -373,11 +373,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		passHostHeader = *service.PassHostHeader
 	}
 
-	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
-	roundTripper, err := m.roundTripperManager.Get(service.ServersTransport)
-	if err != nil {
-		return nil, err
-	}
+	// lb := wrr.New(service.Sticky, service.HealthCheck != nil)
+	// roundTripper, err := m.roundTripperManager.Get(service.ServersTransport)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// here choose between WRR and HRW based on load balancer type
 	var lbHRW *hrw.Balancer
@@ -446,12 +446,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy, _ = capture.Wrap(proxy)
 		}
 
-		lb.Add(proxyName, proxy, server.Weight, server.Fenced)
-		// so many ifs
+		// lb.Add(proxyName, proxy, server.Weight, server.Fenced)
 		if info.LoadBalancer.Type == "hrw" {
-			lbHRW.Add(proxyName, proxy, nil)
+			lbHRW.Add(proxyName, proxy, server.Weight, server.Fenced)
 		} else {
-			lbWRR.Add(proxyName, proxy, nil)
+			lbWRR.Add(proxyName, proxy, server.Weight, server.Fenced)
 		}
 
 		// servers are considered UP by default.
@@ -460,35 +459,23 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		healthCheckTargets[proxyName] = target
 	}
 
-	if service.HealthCheck != nil {
-		roundTripper, err := m.transportManager.GetRoundTripper(service.ServersTransport)
-		if err != nil {
-			return nil, fmt.Errorf("getting RoundTripper: %w", err)
-		}
-
-		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
-			ctx,
-			m.observabilityMgr.MetricsRegistry(),
-			service.HealthCheck,
-			lb,
-			info,
-			roundTripper,
-			healthCheckTargets,
-			serviceName,
-		)
-	// so many ifs
+	roundTripper, err := m.transportManager.GetRoundTripper(service.ServersTransport)
+	if err != nil {
+		return nil, fmt.Errorf("getting RoundTripper: %w", err)
+	}
 
 	// fills healthcheck for the service of the loadbalancer
 	if info.LoadBalancer.Type == "hrw" {
 		if service.HealthCheck != nil {
 			m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 				ctx,
-				m.metricsRegistry,
+				m.observabilityMgr.MetricsRegistry(),
 				service.HealthCheck,
 				lbHRW,
 				info,
 				roundTripper,
 				healthCheckTargets,
+				serviceName,
 			)
 		}
 		return lbHRW, nil
@@ -496,12 +483,13 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	if service.HealthCheck != nil {
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
-			m.metricsRegistry,
+			m.observabilityMgr.MetricsRegistry(),
 			service.HealthCheck,
 			lbWRR,
 			info,
 			roundTripper,
 			healthCheckTargets,
+			serviceName,
 		)
 	}
 	return lbWRR, nil

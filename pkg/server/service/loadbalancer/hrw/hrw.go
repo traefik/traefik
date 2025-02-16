@@ -1,11 +1,13 @@
 package hrw
 
 import (
+	"container/heap"
 	"context"
 	"errors"
 	"hash/fnv"
 	"math"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -14,8 +16,9 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name   string
-	weight float64
+	name     string
+	weight   float64
+	deadline float64
 }
 
 // Balancer is a HRW load balancer based on RendezVous hashing Algorithm (HRW).
@@ -27,8 +30,11 @@ type Balancer struct {
 
 	strategy ip.RemoteAddrStrategy
 
-	mutex    sync.RWMutex
-	handlers []*namedHandler
+	handlersMu sync.RWMutex
+	// References all the handlers by name and also by the hashed value of the name.
+	handlerMap  map[string]*namedHandler
+	handlers    []*namedHandler
+	curDeadline float64
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
 	// created via Add, and it is later removed or added to the map as needed,
@@ -37,17 +43,34 @@ type Balancer struct {
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
 	updaters []func(bool)
+	// fenced is the list of terminating yet still serving child services.
+	fenced map[string]struct{}
 }
 
 // New creates a new load balancer.
 func New(wantHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
+		fenced:           make(map[string]struct{}),
+		handlerMap:       make(map[string]*namedHandler),
 		wantsHealthCheck: wantHealthCheck,
 		strategy:         ip.RemoteAddrStrategy{},
 	}
 
 	return balancer
+}
+
+// Len implements heap.Interface/sort.Interface.
+func (b *Balancer) Len() int { return len(b.handlers) }
+
+// Less implements heap.Interface/sort.Interface.
+func (b *Balancer) Less(i, j int) bool {
+	return b.handlers[i].deadline < b.handlers[j].deadline
+}
+
+// Swap implements heap.Interface/sort.Interface.
+func (b *Balancer) Swap(i, j int) {
+	b.handlers[i], b.handlers[j] = b.handlers[j], b.handlers[i]
 }
 
 // Push append a handler to the balancer list.
@@ -57,6 +80,14 @@ func (b *Balancer) Push(x interface{}) {
 		return
 	}
 	b.handlers = append(b.handlers, h)
+}
+
+// Pop implements heap.Interface for popping an item from the heap.
+// It panics if b.Len() < 1.
+func (b *Balancer) Pop() interface{} {
+	h := b.handlers[len(b.handlers)-1]
+	b.handlers = b.handlers[0 : len(b.handlers)-1]
+	return h
 }
 
 // getNodeScore calcul the score of the couple of src and handler name.
@@ -73,8 +104,8 @@ func getNodeScore(handler *namedHandler, src string) float64 {
 // SetStatus sets on the balancer that its given child is now of the given
 // status. balancerName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
 
 	upBefore := len(b.status) > 0
 
@@ -125,8 +156,8 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
 
 	if len(b.handlers) == 0 || len(b.status) == 0 {
 		log.Debug().Msg("nextServer() len = 0")
@@ -172,7 +203,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -184,8 +215,22 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
 
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
 
-	b.mutex.Lock()
-	b.Push(h)
+	b.handlersMu.Lock()
+	h.deadline = b.curDeadline + 1/h.weight
+	heap.Push(b, h)
 	b.status[name] = struct{}{}
-	b.mutex.Unlock()
+	if fenced {
+		b.fenced[name] = struct{}{}
+	}
+	b.handlerMap[name] = h
+	b.handlerMap[hash(name)] = h
+	b.handlersMu.Unlock()
+}
+
+func hash(input string) string {
+	hasher := fnv.New64()
+	// We purposely ignore the error because the implementation always returns nil.
+	_, _ = hasher.Write([]byte(input))
+
+	return strconv.FormatUint(hasher.Sum64(), 16)
 }
