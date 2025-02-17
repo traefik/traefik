@@ -21,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/emptybackendhandler"
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/pipelining"
+	"github.com/traefik/traefik/v2/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/cookie"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
@@ -284,15 +285,15 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		return nil, err
 	}
 
-	alHandler := func(next http.Handler) (http.Handler, error) {
-		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
-	}
 	chain := alice.New()
 	if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
 		chain = chain.Append(metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName))
 	}
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
+	})
 
-	handler, err := chain.Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))
+	handler, err := chain.Then(pipelining.New(ctx, retry.WrapHandler(fwd), "pipelining"))
 	if err != nil {
 		return nil, err
 	}
