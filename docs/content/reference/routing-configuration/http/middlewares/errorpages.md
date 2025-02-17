@@ -84,7 +84,7 @@ spec:
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | `status` | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
-| `service` | The Kubernetes Service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
+| `service` | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
 | `query` | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
 
 ### service and HostHeader
