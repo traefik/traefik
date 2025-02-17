@@ -277,7 +277,7 @@ spec:
 | `accessControlAllowOriginListRegex` | Allows origins matching regex. More information [here](#accesscontrolalloworiginlistregex)            | []      | No |
 | `accessControlExposeHeaders`    | Specifies which headers are safe to expose to the API of a CORS API specification.       |  []    | No |
 | `accessControlMaxAge`           | Time (in seconds) to cache preflight requests.   | 0         | No |
-| `addVaryHeader`                | used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header. | false     | No |
+| `addVaryHeader`                | Used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header. | false     | No |
 | `allowedHosts`                  | Lists allowed domain names.                      | []      | No |
 | `hostsProxyHeaders`             | Specifies header keys for proxied hostname.      | []      | No |
 | `sslProxyHeaders`               | Defines a set of header keys with associated values that would indicate a valid HTTPS request. It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).        |   {}   | No |
