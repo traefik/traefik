@@ -455,6 +455,10 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       preferredChain: foobar
+      profile: foobar
+      emailAddresses:
+        - foobar
+        - foobar
       storage: foobar
       keyType: foobar
       eab:
@@ -476,6 +480,10 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       preferredChain: foobar
+      profile: foobar
+      emailAddresses:
+        - foobar
+        - foobar
       storage: foobar
       keyType: foobar
       eab:
