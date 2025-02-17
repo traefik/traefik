@@ -105,12 +105,21 @@ func TestRetry(t *testing.T) {
 			t.Parallel()
 
 			retryAttempts := 0
-			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				// This signals that a connection will be established with the backend
+				// to enable the Retry middleware mechanism.
+				shouldRetry := ContextShouldRetry(req.Context())
+				if shouldRetry != nil {
+					shouldRetry(true)
+				}
+
 				retryAttempts++
 
 				if retryAttempts > test.amountFaultyEndpoints {
-					// calls WroteHeaders on httptrace.
-					_ = r.Write(io.Discard)
+					// This signals that request headers have been sent to the backend.
+					if shouldRetry != nil {
+						shouldRetry(false)
+					}
 
 					rw.WriteHeader(http.StatusOK)
 					return
@@ -152,27 +161,17 @@ func TestRetryEmptyServerList(t *testing.T) {
 	assert.Equal(t, 0, retryListener.timesCalled)
 }
 
-func TestRetryListeners(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	retryListeners := Listeners{&countingRetryListener{}, &countingRetryListener{}}
-
-	retryListeners.Retried(req, 1)
-	retryListeners.Retried(req, 1)
-
-	for _, retryListener := range retryListeners {
-		listener := retryListener.(*countingRetryListener)
-		if listener.timesCalled != 2 {
-			t.Errorf("retry listener was called %d time(s), want %d time(s)", listener.timesCalled, 2)
-		}
-	}
-}
-
 func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 	attempt := 0
 	expectedHeaderName := "X-Foo-Test-2"
 	expectedHeaderValue := "bar"
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		shouldRetry := ContextShouldRetry(req.Context())
+		if shouldRetry != nil {
+			shouldRetry(true)
+		}
+
 		headerName := fmt.Sprintf("X-Foo-Test-%d", attempt)
 		rw.Header().Add(headerName, expectedHeaderValue)
 		if attempt < 2 {
@@ -181,8 +180,7 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 		}
 
 		// Request has been successfully written to backend
-		trace := httptrace.ContextClientTrace(req.Context())
-		trace.WroteHeaders()
+		shouldRetry(false)
 
 		// And we decide to answer to client
 		rw.WriteHeader(http.StatusNoContent)
@@ -209,15 +207,6 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 			t.Errorf("Expected no value for header %s, got %s", headerName, headerValue)
 		}
 	}
-}
-
-// countingRetryListener is a Listener implementation to count the times the Retried fn is called.
-type countingRetryListener struct {
-	timesCalled int
-}
-
-func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
-	l.timesCalled++
 }
 
 func TestRetryWithFlush(t *testing.T) {
@@ -275,12 +264,24 @@ func TestRetryWebsocket(t *testing.T) {
 			t.Parallel()
 
 			retryAttempts := 0
-			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				// This signals that a connection will be established with the backend
+				// to enable the Retry middleware mechanism.
+				shouldRetry := ContextShouldRetry(req.Context())
+				if shouldRetry != nil {
+					shouldRetry(true)
+				}
+
 				retryAttempts++
 
 				if retryAttempts > test.amountFaultyEndpoints {
+					// This signals that request headers have been sent to the backend.
+					if shouldRetry != nil {
+						shouldRetry(false)
+					}
+
 					upgrader := websocket.Upgrader{}
-					_, err := upgrader.Upgrade(rw, r, nil)
+					_, err := upgrader.Upgrade(rw, req, nil)
 					if err != nil {
 						http.Error(rw, err.Error(), http.StatusInternalServerError)
 					}
@@ -386,4 +387,13 @@ func Test1xxResponses(t *testing.T) {
 	}
 
 	assert.Equal(t, 0, retryListener.timesCalled)
+}
+
+// countingRetryListener is a Listener implementation to count the times the Retried fn is called.
+type countingRetryListener struct {
+	timesCalled int
+}
+
+func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
+	l.timesCalled++
 }
