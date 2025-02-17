@@ -60,8 +60,10 @@ func ContextShouldRetry(ctx context.Context) ShouldRetry {
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if shouldRetry := ContextShouldRetry(req.Context()); shouldRetry != nil {
+			// Enables the retry middleware as soon as the proxy is reached.
 			shouldRetry(true)
 
+			// Disables the retry middleware whenever the request has been partly or fully sent to the backend.
 			trace := &httptrace.ClientTrace{
 				WroteHeaders: func() {
 					shouldRetry(false)
