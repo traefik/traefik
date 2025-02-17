@@ -77,16 +77,11 @@ Use `htpasswd` to generate the passwords.
 - If both `users` and `usersFile` are provided, they are merged. The contents of `usersFile` have precedence over the values in users.
 - Because referencing a file path isn’t feasible on Kubernetes, the `users` & `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the `secret` field.
 
-#### Kubernetes Secrets
+### Kubernetes Secrets
 
-The option `users` supports Kubernetes secrets.
+On Kubernetes, you don’t use the `users` or `usersFile` fields. Instead, you reference a Kubernetes secret using the `secret` field in your Middleware resource. This secret can be one of two types:
 
-!!! note "Kubernetes `kubernetes.io/basic-auth` secret type"
-
-    Kubernetes supports a special `kubernetes.io/basic-auth` secret type.
-    This secret must contain two keys: `username` and `password`.
-
-    Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
-    You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
+- `kubernetes.io/basic-auth secret`: This secret type contains two keys—`username` and `password`—but is generally suited for a smaller number of users. Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than the other method.
+- Opaque secret with a users field: Here, the secret contains a single string field (often called `users`) where each line represents a user. This approach allows you to store multiple users in one secret.
 
 {!traefik-for-business-applications.md!}
