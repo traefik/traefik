@@ -17,7 +17,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2 // No tag on the repo.
-	github.com/go-acme/lego/v4 v4.22.0
+	github.com/go-acme/lego/v4 v4.22.1
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
