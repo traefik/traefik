@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -181,7 +180,7 @@ func TestManager_BuildTCP(t *testing.T) {
 				TCPServices: test.configs,
 			})
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}

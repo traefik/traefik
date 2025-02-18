@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,7 +26,7 @@ func TestInfluxDB2(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	influxDB2Registry := RegisterInfluxDB2(context.Background(),
+	influxDB2Registry := RegisterInfluxDB2(t.Context(),
 		&types.InfluxDB2{
 			Address:              ts.URL,
 			Token:                "test-token",

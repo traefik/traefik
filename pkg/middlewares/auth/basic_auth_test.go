@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,13 +22,13 @@ func TestBasicAuthFail(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test"},
 	}
-	_, err := NewBasic(context.Background(), next, auth, "authName")
+	_, err := NewBasic(t.Context(), next, auth, "authName")
 	require.Error(t, err)
 
 	auth2 := dynamic.BasicAuth{
 		Users: []string{"test:test"},
 	}
-	authMiddleware, err := NewBasic(context.Background(), next, auth2, "authTest")
+	authMiddleware, err := NewBasic(t.Context(), next, auth2, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -52,7 +51,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
-	authMiddleware, err := NewBasic(context.Background(), next, auth, "authName")
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -83,7 +82,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 		Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		HeaderField: "X-Webauth-User",
 	}
-	middleware, err := NewBasic(context.Background(), next, auth, "authName")
+	middleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -114,7 +113,7 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 		RemoveHeader: true,
 		Users:        []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
-	middleware, err := NewBasic(context.Background(), next, auth, "authName")
+	middleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -145,7 +144,7 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
-	middleware, err := NewBasic(context.Background(), next, auth, "authName")
+	middleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -231,7 +230,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 				fmt.Fprintln(w, "traefik")
 			})
 
-			authenticator, err := NewBasic(context.Background(), next, authenticatorConfiguration, "authName")
+			authenticator, err := NewBasic(t.Context(), next, authenticatorConfiguration, "authName")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(authenticator)

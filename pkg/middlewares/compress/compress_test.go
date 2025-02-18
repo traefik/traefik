@@ -1,7 +1,6 @@
 package compress
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -34,7 +33,7 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 		_, err := rw.Write(baseBody)
 		assert.NoError(t, err)
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -61,7 +60,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -83,7 +82,7 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -144,7 +143,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 				}
 			})
 
-			handler, err := New(context.Background(), next, test.conf, "test")
+			handler, err := New(t.Context(), next, test.conf, "test")
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()
@@ -194,7 +193,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			compress, err := New(context.Background(), test.handler, dynamic.Compress{}, "testing")
+			compress, err := New(t.Context(), test.handler, dynamic.Compress{}, "testing")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(compress)
@@ -229,7 +228,7 @@ func TestShouldWriteHeaderWhenFlush(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{}, "testing")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(handler)
@@ -280,7 +279,7 @@ func TestIntegrationShouldCompress(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			compress, err := New(context.Background(), test.handler, dynamic.Compress{}, "testing")
+			compress, err := New(t.Context(), test.handler, dynamic.Compress{}, "testing")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(compress)
@@ -337,7 +336,7 @@ func TestMinResponseBodyBytes(t *testing.T) {
 				}
 			})
 
-			handler, err := New(context.Background(), next, dynamic.Compress{MinResponseBodyBytes: test.minResponseBodyBytes}, "testing")
+			handler, err := New(t.Context(), next, dynamic.Compress{MinResponseBodyBytes: test.minResponseBodyBytes}, "testing")
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()
@@ -373,7 +372,7 @@ func Test1xxResponses(t *testing.T) {
 		}
 	})
 
-	compress, err := New(context.Background(), next, dynamic.Compress{MinResponseBodyBytes: 1024}, "testing")
+	compress, err := New(t.Context(), next, dynamic.Compress{MinResponseBodyBytes: 1024}, "testing")
 	require.NoError(t, err)
 
 	server := httptest.NewServer(compress)
@@ -417,7 +416,7 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, server.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
 	req.Header.Add(acceptEncodingHeader, gzipValue)
 
 	res, err := frontendClient.Do(req)
@@ -478,7 +477,7 @@ func BenchmarkCompress(b *testing.B) {
 				_, err := rw.Write(baseBody)
 				assert.NoError(b, err)
 			})
-			handler, _ := New(context.Background(), next, dynamic.Compress{}, "testing")
+			handler, _ := New(b.Context(), next, dynamic.Compress{}, "testing")
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set("Accept-Encoding", "gzip")

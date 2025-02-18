@@ -2,7 +2,6 @@ package log
 
 import (
 	"bytes"
-	"context"
 	"strings"
 	"testing"
 
@@ -42,7 +41,7 @@ func TestLog(t *testing.T) {
 			var buffer bytes.Buffer
 			SetOutput(&buffer)
 
-			ctx := context.Background()
+			ctx := t.Context()
 
 			for key, value := range test.fields {
 				ctx = With(ctx, Str(key, value))

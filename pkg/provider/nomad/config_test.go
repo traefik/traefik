@@ -1,7 +1,6 @@
 package nomad
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -229,7 +228,7 @@ func Test_defaultRule(t *testing.T) {
 			err := p.Init()
 			require.NoError(t, err)
 
-			ctx := context.TODO()
+			ctx := t.Context()
 			config := p.buildConfig(ctx, test.items)
 			require.Equal(t, test.expected, config)
 		})
@@ -2680,7 +2679,7 @@ func Test_buildConfig(t *testing.T) {
 			err := p.Init()
 			require.NoError(t, err)
 
-			ctx := context.TODO()
+			ctx := t.Context()
 			c := p.buildConfig(ctx, test.items)
 			require.Equal(t, test.expected, c)
 		})
@@ -2729,7 +2728,7 @@ func Test_keepItem(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
 			p.Constraints = test.constraints
-			ctx := context.TODO()
+			ctx := t.Context()
 			result := p.keepItem(ctx, test.i)
 			require.Equal(t, test.exp, result)
 		})

@@ -1,7 +1,6 @@
 package failover
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -51,7 +50,7 @@ func TestFailover(t *testing.T) {
 	assert.Equal(t, []int{200}, recorder.status)
 	assert.True(t, status)
 
-	failover.SetHandlerStatus(context.Background(), false)
+	failover.SetHandlerStatus(t.Context(), false)
 
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	failover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -61,7 +60,7 @@ func TestFailover(t *testing.T) {
 	assert.Equal(t, []int{200}, recorder.status)
 	assert.True(t, status)
 
-	failover.SetFallbackHandlerStatus(context.Background(), false)
+	failover.SetFallbackHandlerStatus(t.Context(), false)
 
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	failover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -92,7 +91,7 @@ func TestFailoverDownThenUp(t *testing.T) {
 	assert.Equal(t, 0, recorder.save["fallback"])
 	assert.Equal(t, []int{200}, recorder.status)
 
-	failover.SetHandlerStatus(context.Background(), false)
+	failover.SetHandlerStatus(t.Context(), false)
 
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	failover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -101,7 +100,7 @@ func TestFailoverDownThenUp(t *testing.T) {
 	assert.Equal(t, 1, recorder.save["fallback"])
 	assert.Equal(t, []int{200}, recorder.status)
 
-	failover.SetHandlerStatus(context.Background(), true)
+	failover.SetHandlerStatus(t.Context(), true)
 
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	failover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -129,7 +128,7 @@ func TestFailoverPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 	err := failover.RegisterStatusUpdater(func(up bool) {
-		topFailover.SetHandlerStatus(context.Background(), up)
+		topFailover.SetHandlerStatus(t.Context(), up)
 	})
 	require.NoError(t, err)
 
@@ -141,7 +140,7 @@ func TestFailoverPropagate(t *testing.T) {
 	assert.Equal(t, 0, recorder.save["topFailover"])
 	assert.Equal(t, []int{200}, recorder.status)
 
-	failover.SetHandlerStatus(context.Background(), false)
+	failover.SetHandlerStatus(t.Context(), false)
 
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	topFailover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -151,7 +150,7 @@ func TestFailoverPropagate(t *testing.T) {
 	assert.Equal(t, 0, recorder.save["topFailover"])
 	assert.Equal(t, []int{200}, recorder.status)
 
-	failover.SetFallbackHandlerStatus(context.Background(), false)
+	failover.SetFallbackHandlerStatus(t.Context(), false)
 
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	topFailover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))

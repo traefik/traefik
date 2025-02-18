@@ -101,7 +101,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 			// The context is passed to the health check and canonically canceled by
 			// the test server once all expected requests have been received.
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			ts := newTestServer(cancel, test.healthSequence)
 			defer ts.Close()
@@ -568,7 +568,7 @@ func TestNotFollowingRedirects(t *testing.T) {
 	}))
 	defer redirectTestServer.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

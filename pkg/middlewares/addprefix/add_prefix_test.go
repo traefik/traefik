@@ -1,7 +1,6 @@
 package addprefix
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -34,7 +33,7 @@ func TestNewAddPrefix(t *testing.T) {
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			_, err := New(context.Background(), next, test.prefix, "foo-add-prefix")
+			_, err := New(t.Context(), next, test.prefix, "foo-add-prefix")
 			if test.expectsError {
 				assert.Error(t, err)
 			} else {
@@ -87,7 +86,7 @@ func TestAddPrefix(t *testing.T) {
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
 
-			handler, err := New(context.Background(), next, test.prefix, "foo-add-prefix")
+			handler, err := New(t.Context(), next, test.prefix, "foo-add-prefix")
 			require.NoError(t, err)
 
 			handler.ServeHTTP(nil, req)

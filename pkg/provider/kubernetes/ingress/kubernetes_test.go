@@ -1,7 +1,6 @@
 package ingress
 
 import (
-	"context"
 	"errors"
 	"math"
 	"os"
@@ -1634,7 +1633,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 
 			clientMock := newClientMock(serverVersion, paths...)
 			p := Provider{IngressClass: test.ingressClass, AllowEmptyServices: test.allowEmptyServices}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1780,7 +1779,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1857,7 +1856,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 			clientMock := newClientMock(serverVersion, paths...)
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2029,7 +2028,7 @@ func TestGetCertificates(t *testing.T) {
 			t.Parallel()
 
 			tlsConfigs := map[string]*tls.CertAndStores{}
-			err := getCertificates(context.Background(), test.ingress, test.client, tlsConfigs)
+			err := getCertificates(t.Context(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)

@@ -1,7 +1,6 @@
 package tracing
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -79,7 +78,7 @@ func TestEntryPointMiddleware(t *testing.T) {
 				assert.Equal(t, test.expected.OperationName, span.OpName)
 			})
 
-			handler := NewEntryPoint(context.Background(), newTracing, test.entryPoint, next)
+			handler := NewEntryPoint(t.Context(), newTracing, test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 		})
 	}
