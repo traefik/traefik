@@ -215,34 +215,20 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
-	hasContentLength := len(res.Header.Peek("Content-Length")) > 0
-
-	if hasContentLength && res.Header.ContentLength() == 0 {
-		return nil
-	}
-
 	// When a body is not allowed for a given status code the body is ignored.
 	// The connection will be marked as broken by the next Peek in the readloop.
 	if !isBodyAllowedForStatus(res.StatusCode()) {
 		return nil
 	}
 
-	if !hasContentLength {
-		b := c.bufferPool.Get()
-		if b == nil {
-			b = make([]byte, bufferSize)
-		}
-		defer c.bufferPool.Put(b)
+	contentLength := res.Header.ContentLength()
 
-		if _, err := io.CopyBuffer(r.RW, c.br, b); err != nil {
-			return err
-		}
-
+	if contentLength == 0 {
 		return nil
 	}
 
 	// Chunked response, Content-Length is set to -1 by FastProxy when "Transfer-Encoding: chunked" header is received.
-	if res.Header.ContentLength() == -1 {
+	if contentLength == -1 {
 		cbr := httputil.NewChunkedReader(c.br)
 
 		b := c.bufferPool.Get()
@@ -282,6 +268,23 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
+	// Response without Content-Length header.
+	// The message body length is determined by the number of bytes received prior to the server closing the connection.
+	if contentLength == -2 {
+		b := c.bufferPool.Get()
+		if b == nil {
+			b = make([]byte, bufferSize)
+		}
+		defer c.bufferPool.Put(b)
+
+		if _, err := io.CopyBuffer(r.RW, c.br, b); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Response with a valid Content-Length header.
 	brl := c.limitedReaderPool.Get()
 	if brl == nil {
 		brl = &io.LimitedReader{}
