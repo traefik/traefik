@@ -2,30 +2,24 @@
 
 set -e -o pipefail
 
+export PROJECT_MODULE="github.com/traefik/traefik"
+export MODULE_VERSION="v2"
+KUBE_VERSION=v0.30.10
+CURRENT_DIR="$(pwd)"
+
 # shellcheck disable=SC1091 # Cannot check source of this file
-source /go/src/k8s.io/code-generator/kube_codegen.sh
+go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
 
-git config --global --add safe.directory "/go/src/${PROJECT_MODULE}"
-
-rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"
-mkdir -p "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"
-
-# TODO: remove the workaround when the issue is solved in the code-generator
-# (https://github.com/kubernetes/code-generator/issues/165).
-# Here, we create the soft link named "${PROJECT_MODULE}" to the parent directory of
-# Traefik to ensure the layout required by the kube_codegen.sh script.
-ln -s "/go/src/${PROJECT_MODULE}/pkg" "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"
+CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
+source "${CODEGEN_PKG}/kube_codegen.sh"
 
 kube::codegen::gen_helpers \
-    --input-pkg-root "${PROJECT_MODULE}/pkg" \
-    --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
-    --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
+  --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
+  "${CURRENT_DIR}"
 
 kube::codegen::gen_client \
     --with-watch \
-    --input-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd" \
-    --output-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
-    --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
-    --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
-
-rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"
+    --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
+    --output-pkg "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
+    --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
+    "${CURRENT_DIR}/pkg/provider/kubernetes/crd"
