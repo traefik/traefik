@@ -143,21 +143,6 @@ To take into account the new certificate contents, the update of the dynamic con
 One way to achieve that, is to trigger a file notification,
 for example, by using the `touch` command on the configuration file.
 
-## What Are the Forwarded Headers When Proxying HTTP Requests?
-
-By default, the following headers are automatically added when proxying requests:
-
-| Property                  | HTTP Header                |
-|---------------------------|----------------------------|
-| Client's IP               | X-Forwarded-For, X-Real-Ip |
-| Host                      | X-Forwarded-Host           |
-| Port                      | X-Forwarded-Port           |
-| Protocol                  | X-Forwarded-Proto          |
-| Proxy Server's Hostname   | X-Forwarded-Server         |
-
-For more details,
-please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.
-
 ## How Traefik is Storing and Serving TLS Certificates?
 
 ### Storing TLS Certificates
