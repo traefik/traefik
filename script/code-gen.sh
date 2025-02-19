@@ -10,6 +10,7 @@ CURRENT_DIR="$(pwd)"
 go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
 
 CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
+# shellcheck disable=SC1091 # Cannot check source of this file
 source "${CODEGEN_PKG}/kube_codegen.sh"
 
 kube::codegen::gen_helpers \
