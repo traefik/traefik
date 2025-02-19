@@ -7,6 +7,7 @@ export MODULE_VERSION="v2"
 KUBE_VERSION=v0.30.10
 CURRENT_DIR="$(pwd)"
 
+# shellcheck disable=SC1091 # Cannot check source of this file
 go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
 
 CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
