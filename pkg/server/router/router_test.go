@@ -53,6 +53,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -76,6 +77,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -114,6 +116,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -138,6 +141,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -179,6 +183,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -219,6 +224,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-1": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -242,6 +248,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-2": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -266,6 +273,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-1": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -351,6 +359,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1:8085",
@@ -385,6 +394,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -412,6 +422,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -439,6 +450,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -482,6 +494,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -522,6 +535,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -552,6 +566,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -582,6 +597,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -608,6 +624,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -641,6 +658,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -730,7 +748,8 @@ func TestProviderOnMiddlewares(t *testing.T) {
 			Services: map[string]*dynamic.Service{
 				"test@file": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{},
+						Strategy: dynamic.BalancerStrategyWRR,
+						Servers:  []dynamic.Server{},
 					},
 				},
 			},

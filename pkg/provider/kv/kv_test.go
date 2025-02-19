@@ -58,6 +58,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/secure":                          "true",
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/httpOnly":                        "true",
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/path":                            "foobar",
+		"traefik/http/services/Service01/loadBalancer/strategy":                                      "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/0/url":                                 "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/1/url":                                 "foobar",
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
@@ -646,6 +647,7 @@ func Test_buildConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.Service{
 				"Service01": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: "foobar",
 						Sticky: &dynamic.Sticky{
 							Cookie: &dynamic.Cookie{
 								Name:     "foobar",

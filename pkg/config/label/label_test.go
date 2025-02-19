@@ -172,6 +172,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "1s",
+		"traefik.http.services.Service0.loadbalancer.strategy":                         "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.url":                       "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.preservepath":              "true",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
@@ -195,6 +196,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "1s",
+		"traefik.http.services.Service1.loadbalancer.strategy":                         "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.url":                       "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.preservepath":              "true",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
@@ -680,6 +682,7 @@ func TestDecodeConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.Service{
 				"Service0": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: "foobar",
 						Sticky: &dynamic.Sticky{
 							Cookie: &dynamic.Cookie{
 								Name:     "foobar",
@@ -722,6 +725,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Service1": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: "foobar",
 						Servers: []dynamic.Server{
 							{
 								URL:          "foobar",
@@ -1222,6 +1226,7 @@ func TestEncodeConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.Service{
 				"Service0": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: "foobar",
 						Sticky: &dynamic.Sticky{
 							Cookie: &dynamic.Cookie{
 								Name:     "foobar",
@@ -1261,6 +1266,7 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Service1": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: "foobar",
 						Servers: []dynamic.Server{
 							{
 								URL:          "foobar",
@@ -1473,6 +1479,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Timeout":              "1000000000",
 		"traefik.HTTP.Services.Service0.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Strategy":                         "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.URL":                       "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.PreservePath":              "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
@@ -1496,6 +1503,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Timeout":              "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
+		"traefik.HTTP.Services.Service1.LoadBalancer.Strategy":                         "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.URL":                       "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.PreservePath":              "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",

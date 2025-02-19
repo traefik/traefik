@@ -54,6 +54,7 @@
         [http.services.Service01.failover.healthCheck]
     [http.services.Service02]
       [http.services.Service02.loadBalancer]
+        strategy = "foobar"
         passHostHeader = true
         serversTransport = "foobar"
         [http.services.Service02.loadBalancer.sticky]

@@ -211,12 +211,22 @@ func (c *Cookie) SetDefaults() {
 	c.Path = &defaultPath
 }
 
+type BalancerStrategy string
+
+const (
+	// BalancerStrategyWRR is the weighted round-robin strategy.
+	BalancerStrategyWRR BalancerStrategy = "wrr"
+	// BalancerStrategyP2C is the power of two choices strategy.
+	BalancerStrategyP2C BalancerStrategy = "p2c"
+)
+
 // +k8s:deepcopy-gen=true
 
 // ServersLoadBalancer holds the ServersLoadBalancer configuration.
 type ServersLoadBalancer struct {
-	Sticky  *Sticky  `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	Servers []Server `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	Sticky   *Sticky          `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Servers  []Server         `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	Strategy BalancerStrategy `json:"strategy,omitempty" toml:"strategy,omitempty" yaml:"strategy,omitempty" export:"true"`
 	// HealthCheck enables regular active checks of the responsiveness of the
 	// children servers of this load-balancer. To propagate status changes (e.g. all
 	// servers of this service are down) upwards, HealthCheck must also be enabled on
@@ -249,6 +259,7 @@ func (l *ServersLoadBalancer) SetDefaults() {
 	defaultPassHostHeader := DefaultPassHostHeader
 	l.PassHostHeader = &defaultPassHostHeader
 
+	l.Strategy = BalancerStrategyWRR
 	l.ResponseForwarding = &ResponseForwarding{}
 	l.ResponseForwarding.SetDefaults()
 }

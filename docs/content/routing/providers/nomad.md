@@ -338,6 +338,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.strategy=p2c
+    ```
+
 ### Middleware
 
 You can declare pieces of middleware using tags starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
