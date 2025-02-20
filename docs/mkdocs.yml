@@ -302,7 +302,7 @@ nav:
             - 'UDP' :
                 - 'IngressRouteUDP' : 'reference/routing-configuration/kubernetes/udp/ingressrouteudp.md'
           - 'Ingress' : 'reference/routing-configuration/kubernetes/ingress.md'
-        - 'Other Providers' :
+        - 'Label & Tag Providers' :
           - 'Docker' : 'reference/routing-configuration/other-providers/docker.md'
           - 'Swarm' : 'reference/routing-configuration/other-providers/swarm.md'
           - 'Consul Catalog' : 'reference/routing-configuration/other-providers/consul-catalog.md'
