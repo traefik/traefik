@@ -212,6 +212,7 @@ http:
         forwardBody: true
         maxBodySize: 42
         preserveLocationHeader: true
+        preserveRequestMethod: true
     Middleware11:
       grpcWeb:
         allowOrigins:

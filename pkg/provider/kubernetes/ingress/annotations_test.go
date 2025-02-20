@@ -131,7 +131,7 @@ func Test_parseServiceConfig(t *testing.T) {
 							Secure:   true,
 							HTTPOnly: true,
 							SameSite: "none",
-							Path:     String("foobar"),
+							Path:     pointer("foobar"),
 						},
 					},
 					ServersScheme:    "protocol",
@@ -150,7 +150,7 @@ func Test_parseServiceConfig(t *testing.T) {
 				Service: &ServiceIng{
 					Sticky: &dynamic.Sticky{
 						Cookie: &dynamic.Cookie{
-							Path: String("/"),
+							Path: pointer("/"),
 						},
 					},
 					PassHostHeader: pointer(true),

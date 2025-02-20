@@ -4,27 +4,30 @@ import (
 	"context"
 	"errors"
 	"math"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
 var _ provider.Provider = (*Provider)(nil)
 
 func pointer[T any](v T) *T { return &v }
-
-func String(v string) *string { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
@@ -134,7 +137,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										Name:     "foobar",
 										Secure:   true,
 										HTTPOnly: true,
-										Path:     String("/"),
+										Path:     pointer("/"),
 									},
 								},
 								Servers: []dynamic.Server{
@@ -2081,4 +2084,124 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			assert.Equal(t, test.expected, conf)
 		})
 	}
+}
+
+func TestIngressEndpointPublishedService(t *testing.T) {
+	testCases := []struct {
+		desc                         string
+		disableClusterScopeResources bool
+		expected                     []netv1.IngressLoadBalancerIngress
+	}{
+		{
+			desc: "Published Service ClusterIP",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					IP: "1.2.3.4",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+				{
+					IP: "5.6.7.8",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+			},
+		},
+		{
+			desc: "Published Service LoadBalancer",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					IP: "1.2.3.4",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+				{
+					IP: "5.6.7.8",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+			},
+		},
+		{
+			desc:                         "Published Service NodePort",
+			disableClusterScopeResources: true,
+		},
+		{
+			desc: "Published Service NodePort",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					IP: "1.2.3.4",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+				{
+					IP: "5.6.7.8",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects := readResources(t, []string{generateTestFilename(test.desc)})
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+
+			client := newClientImpl(kubeClient)
+
+			stopCh := make(chan struct{})
+			eventCh, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				DisableClusterScopeResources: test.disableClusterScopeResources,
+				IngressEndpoint: &EndpointIngress{
+					PublishedService: "default/published-service",
+				},
+			}
+			p.loadConfigurationFromIngresses(context.Background(), client)
+
+			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(context.Background(), "foo", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, ingress.Status.LoadBalancer.Ingress)
+		})
+	}
+}
+
+func readResources(t *testing.T, paths []string) []runtime.Object {
+	t.Helper()
+
+	var k8sObjects []runtime.Object
+	for _, path := range paths {
+		yamlContent, err := os.ReadFile(filepath.FromSlash(path))
+		if err != nil {
+			panic(err)
+		}
+
+		objects := k8s.MustParseYaml(yamlContent)
+		k8sObjects = append(k8sObjects, objects...)
+	}
+
+	return k8sObjects
 }

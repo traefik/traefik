@@ -6,7 +6,6 @@ import (
 	"maps"
 	"reflect"
 	"slices"
-	"sort"
 	"strings"
 	"text/template"
 	"unicode"
@@ -81,7 +80,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 	for key := range configurations {
 		sortedKeys = append(sortedKeys, key)
 	}
-	sort.Strings(sortedKeys)
+	slices.Sort(sortedKeys)
 
 	for _, root := range sortedKeys {
 		conf := configurations[root]

@@ -52,6 +52,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware10/forwardAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/maxBodySize` | `42` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/preserveLocationHeader` | `true` |
+| `traefik/http/middlewares/Middleware10/forwardAuth/preserveRequestMethod` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/tls/cert` | `foobar` |

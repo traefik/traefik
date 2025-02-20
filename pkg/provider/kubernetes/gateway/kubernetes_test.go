@@ -4582,6 +4582,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-TCP-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"TCP"},
+							Priority:    0,
 							Rule:        "HostSNI(`*`)",
 							RuleSyntax:  "v3",
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-TCP-0-e3b0c44298fc1c149afb-wrr",
@@ -4799,6 +4800,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -4866,6 +4868,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    0,
 							Rule:        "HostSNI(`*`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5026,6 +5029,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5085,6 +5089,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5144,6 +5149,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5203,6 +5209,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`) || HostSNI(`bar.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5262,6 +5269,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    11,
 							Rule:        "HostSNI(`foo.default`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5321,6 +5329,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    11,
 							Rule:        "HostSNI(`foo.default`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5330,6 +5339,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    7,
 							Rule:        "HostSNI(`foo.bar`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5411,6 +5421,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    7,
 							Rule:        "HostSNI(`foo.bar`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5470,6 +5481,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-gw-default-my-gateway-ep-tcp-1-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp-1"},
 							Service:     "tlsroute-default-tls-app-gw-default-my-gateway-ep-tcp-1-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    0,
 							Rule:        "HostSNI(`*`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5479,6 +5491,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-gw-default-my-gateway-ep-tcp-1-1-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp-1"},
 							Service:     "tlsroute-default-tls-app-gw-default-my-gateway-ep-tcp-1-1-e3b0c44298fc1c149afb-wrr",
+							Priority:    0,
 							Rule:        "HostSNI(`*`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5561,6 +5574,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5617,6 +5631,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -5839,6 +5854,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-2"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -6026,6 +6042,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-2"},
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -6185,6 +6202,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-2"},
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{
@@ -6440,6 +6458,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						"tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-2"},
 							Service:     "tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
 							RuleSyntax:  "v3",
 							TLS: &dynamic.RouterTCPTLSConfig{

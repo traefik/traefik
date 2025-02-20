@@ -272,14 +272,18 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.Server{}
-		server.SetDefaults()
-
-		loadBalancer.Servers = []dynamic.Server{server}
+		loadBalancer.Servers = []dynamic.Server{{}}
 	}
 
 	if item.Address == "" {
 		return errors.New("address is missing")
+	}
+
+	if loadBalancer.Servers[0].URL != "" {
+		if loadBalancer.Servers[0].Scheme != "" || loadBalancer.Servers[0].Port != "" {
+			return errors.New("defining scheme or port is not allowed when URL is defined")
+		}
+		return nil
 	}
 
 	port := loadBalancer.Servers[0].Port
@@ -295,6 +299,9 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 
 	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
+	if scheme == "" {
+		scheme = "http"
+	}
 
 	if item.ExtraConf.ConsulCatalog.Connect {
 		loadBalancer.ServersTransport = itemServersTransportKey(item)

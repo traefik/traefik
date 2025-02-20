@@ -10,7 +10,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/hashicorp/go-version"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -58,7 +57,6 @@ type clientWrapper struct {
 	disableIngressClassInformer bool // Deprecated.
 	disableClusterScopeInformer bool
 	watchedNamespaces           []string
-	serverVersion               *version.Version
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -141,19 +139,6 @@ func newClientImpl(clientset kclientset.Interface) *clientWrapper {
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	// Get and store the serverVersion for future use.
-	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve server version: %w", err)
-	}
-
-	serverVersion, err := version.NewVersion(serverVersionInfo.GitVersion)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse server version: %w", err)
-	}
-
-	c.serverVersion = serverVersion
-
 	eventCh := make(chan interface{}, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
@@ -175,7 +160,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	for _, ns := range namespaces {
 		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector))
 
-		_, err = factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+		_, err := factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +215,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	if !c.disableIngressClassInformer || !c.disableClusterScopeInformer {
 		c.clusterScopeFactory = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
 
-		_, err = c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		_, err := c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
