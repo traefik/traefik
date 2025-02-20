@@ -175,11 +175,9 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
-	b.handlersMu.Lock()
-	defer b.handlersMu.Unlock()
-
 	// We kept the same representation (map) as in the WRR strategy to improve maintainability.
 	// However, with the P2C strategy, we only need a slice of healthy servers.
+	b.handlersMu.RLock()
 	var healthy []*namedHandler
 	for _, h := range b.handlers {
 		if _, ok := b.status[h.name]; ok {
@@ -188,6 +186,8 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 			}
 		}
 	}
+	b.handlersMu.RUnlock()
+
 	if len(healthy) == 0 {
 		return nil, errNoAvailableServer
 	}

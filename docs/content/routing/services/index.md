@@ -171,14 +171,14 @@ The `preservePath` option allows to preserve the URL path.
 
 The `strategy` option allows to choose the load balancing algorithm.
 
-Two load balancing algorithm are supported:
+Two load balancing algorithms are supported:
 
-- weighed round-robin (wrr)
-- power of two choices (p2c)
+- Weighed round-robin (wrr)
+- Power of two choices (p2c)
 
 ##### WRR
 
-Weighed round-robin is the default strategy (and doesn't need to be specified).
+Weighed round-robin is the default strategy (and does not need to be specified).
 
 The `weight` option allows for weighted load balancing on the servers.
 

@@ -16,7 +16,7 @@ func FnvHash(input string) string {
 	return strconv.FormatUint(hasher.Sum64(), 16)
 }
 
-// Sha256Hash returns the SHA-256 hash (truncated to 16 characters) of the input string.
+// Sha256Hash returns the SHA-256 hash, truncated to 16 characters, of the input string.
 func Sha256Hash(input string) string {
 	hash := sha256.New()
 	// We purposely ignore the error because the implementation always returns nil.

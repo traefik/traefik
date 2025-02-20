@@ -324,13 +324,17 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb.SetDefaults()
 
 	switch svc.Strategy {
-	case dynamic.BalancerStrategyP2C:
-	case dynamic.BalancerStrategyWRR:
+	case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
 		lb.Strategy = svc.Strategy
+
 	case "RoundRobin":
-		log.Debug().Msgf("RoundRobin strategy value is used on Kubernetes service %s/%s but is now deprecated, please use %s value instead", namespace, svc.Name, dynamic.BalancerStrategyWRR)
+		log.Warn().
+			Str("namespace", namespace).
+			Str("service", svc.Name).
+			Msgf("RoundRobin strategy value is deprecated, please use %s value instead", dynamic.BalancerStrategyWRR)
+
 	default:
-		return nil, fmt.Errorf("load balancing strategy %s is not supported", svc.Strategy)
+		return nil, fmt.Errorf("load-balancer strategy %s is not supported", svc.Strategy)
 	}
 
 	servers, err := c.loadServers(namespace, svc)

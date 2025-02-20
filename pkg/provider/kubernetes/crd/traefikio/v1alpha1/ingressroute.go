@@ -111,8 +111,8 @@ type LoadBalancerSpec struct {
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
-	// Supported values are: wrr (Weighed Round-Robin) and p2c (Power of two choices).
-	// RoundRobin value is also supported for backward compatibility.
+	// Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+	// RoundRobin value is deprecated and  supported for backward compatibility.
 	// +kubebuilder:validation:Enum=wrr;p2c;RoundRobin
 	// +kubebuilder:default:=wrr
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`

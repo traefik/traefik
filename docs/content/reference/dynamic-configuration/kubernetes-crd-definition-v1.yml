@@ -283,8 +283,8 @@ spec:
                             default: wrr
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
-                              Supported values are: wrr (Weighed Round-Robin) and p2c (Power of two choices).
-                              RoundRobin value is also supported for backward compatibility.
+                              Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                              RoundRobin value is deprecated and  supported for backward compatibility.
                             enum:
                             - wrr
                             - p2c
@@ -1186,8 +1186,8 @@ spec:
                         default: wrr
                         description: |-
                           Strategy defines the load balancing strategy between the servers.
-                          Supported values are: wrr (Weighed Round-Robin) and p2c (Power of two choices).
-                          RoundRobin value is also supported for backward compatibility.
+                          Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                          RoundRobin value is deprecated and  supported for backward compatibility.
                         enum:
                         - wrr
                         - p2c
@@ -2775,8 +2775,8 @@ spec:
                           default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed Round-Robin) and p2c (Power of two choices).
-                            RoundRobin value is also supported for backward compatibility.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and  supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c
@@ -2893,8 +2893,8 @@ spec:
                     default: wrr
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
-                      Supported values are: wrr (Weighed Round-Robin) and p2c (Power of two choices).
-                      RoundRobin value is also supported for backward compatibility.
+                      Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                      RoundRobin value is deprecated and  supported for backward compatibility.
                     enum:
                     - wrr
                     - p2c
@@ -3089,8 +3089,8 @@ spec:
                           default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed Round-Robin) and p2c (Power of two choices).
-                            RoundRobin value is also supported for backward compatibility.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and  supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c

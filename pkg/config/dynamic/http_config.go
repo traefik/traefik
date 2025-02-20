@@ -212,7 +212,7 @@ type BalancerStrategy string
 const (
 	// BalancerStrategyWRR is the weighted round-robin strategy.
 	BalancerStrategyWRR BalancerStrategy = "wrr"
-	// BalancerStrategyP2C is the power of two random choice strategy.
+	// BalancerStrategyP2C is the power of two choices strategy.
 	BalancerStrategyP2C BalancerStrategy = "p2c"
 )
 

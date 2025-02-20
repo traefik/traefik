@@ -345,7 +345,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	default:
-		return nil, fmt.Errorf("unknown load-balancer strategy %q", service.Strategy)
+		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
 	}
 
 	healthCheckTargets := make(map[string]*url.URL)
