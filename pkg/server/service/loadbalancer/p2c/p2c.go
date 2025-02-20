@@ -16,8 +16,7 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name       string
-	hashedName string
+	name string
 
 	// inflight is the number of inflight requests.
 	// It is used to implement the "power-of-two-random-choices" algorithm.
@@ -31,42 +30,19 @@ func (h *namedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.Handler.ServeHTTP(w, req)
 }
 
-type stickyCookie struct {
-	name     string
-	secure   bool
-	httpOnly bool
-	sameSite string
-	maxAge   int
-	path     string
-}
-
-func convertSameSite(sameSite string) http.SameSite {
-	switch sameSite {
-	case "none":
-		return http.SameSiteNoneMode
-	case "lax":
-		return http.SameSiteLaxMode
-	case "strict":
-		return http.SameSiteStrictMode
-	default:
-		return http.SameSiteDefaultMode
-	}
-}
-
 // Balancer implements the power-of-two-random-choices algorithm for load balancing.
 // The idea is to randomly select two of the available backends and choose the one with the fewest in-flight requests.
 // This algorithm balances the load more effectively than a round-robin approach, while maintaining a constant time for the selection:
 // The strategy also has more advantageous "herd" behaviour than the "fewest connections" algorithm, especially when the load balancer
 // doesn't have perfect knowledge of the global number of connections to the backend, for example, when running in a distributed fashion.
 type Balancer struct {
-	stickyCookie     *stickyCookie
 	wantsHealthCheck bool
 
 	handlersMu sync.RWMutex
 	// References all the handlers by name and also by the hashed value of the name.
-	stickyMap              map[string]*namedHandler
-	compatibilityStickyMap map[string]*namedHandler
-	handlers               []*namedHandler
+	//stickyMap              map[string]*namedHandler
+	//compatibilityStickyMap map[string]*namedHandler
+	handlers []*namedHandler
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
 	// created via Add, and it is later removed or added to the map as needed,
@@ -77,6 +53,8 @@ type Balancer struct {
 	updaters []func(bool)
 	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
+
+	sticky *loadbalancer.Sticky
 
 	rand rnd
 }
@@ -93,22 +71,24 @@ func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 		wantsHealthCheck: wantsHealthCheck,
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
-	if sticky != nil && sticky.Cookie != nil {
-		balancer.stickyCookie = &stickyCookie{
-			name:     sticky.Cookie.Name,
-			secure:   sticky.Cookie.Secure,
-			httpOnly: sticky.Cookie.HTTPOnly,
-			sameSite: sticky.Cookie.SameSite,
-			maxAge:   sticky.Cookie.MaxAge,
-			path:     "/",
-		}
-		if sticky.Cookie.Path != nil {
-			balancer.stickyCookie.path = *sticky.Cookie.Path
-		}
 
-		balancer.stickyMap = make(map[string]*namedHandler)
-		balancer.compatibilityStickyMap = make(map[string]*namedHandler)
-	}
+	balancer.sticky = loadbalancer.New(sticky)
+	//if sticky != nil && sticky.Cookie != nil {
+	//	balancer.stickyCookie = &stickyCookie{
+	//		name:     sticky.Cookie.Name,
+	//		secure:   sticky.Cookie.Secure,
+	//		httpOnly: sticky.Cookie.HTTPOnly,
+	//		sameSite: sticky.Cookie.SameSite,
+	//		maxAge:   sticky.Cookie.MaxAge,
+	//		path:     "/",
+	//	}
+	//	if sticky.Cookie.Path != nil {
+	//		balancer.stickyCookie.path = *sticky.Cookie.Path
+	//	}
+	//
+	//	balancer.stickyMap = make(map[string]*namedHandler)
+	//	balancer.compatibilityStickyMap = make(map[string]*namedHandler)
+	//}
 
 	return balancer
 }
@@ -209,42 +189,17 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if b.stickyCookie != nil {
-		cookie, err := req.Cookie(b.stickyCookie.name)
-
-		if err != nil && !errors.Is(err, http.ErrNoCookie) {
-			log.Warn().Err(err).Msg("Error while reading cookie")
-		}
-
-		if err == nil && cookie != nil {
-			b.handlersMu.RLock()
-			handler, ok := b.stickyMap[cookie.Value]
-			b.handlersMu.RUnlock()
-
-			if ok && handler != nil {
-				b.handlersMu.RLock()
-				_, isHealthy := b.status[handler.name]
-				b.handlersMu.RUnlock()
-				if isHealthy {
-					handler.ServeHTTP(w, req)
-					return
+	if b.sticky != nil {
+		if stickyHandler, rewrite := b.sticky.GetStickyHandler(req); stickyHandler != nil {
+			if _, ok := b.status[stickyHandler.Name]; ok {
+				if rewrite {
+					if err := b.sticky.WriteStickyCookie(w, stickyHandler.Name); err != nil {
+						log.Error().Err(err).Msg("Writing sticky cookie")
+					}
 				}
-			}
 
-			b.handlersMu.RLock()
-			handler, ok = b.compatibilityStickyMap[cookie.Value]
-			b.handlersMu.RUnlock()
-
-			if ok && handler != nil {
-				b.handlersMu.RLock()
-				_, isHealthy := b.status[handler.name]
-				b.handlersMu.RUnlock()
-				if isHealthy {
-					b.writeStickyCookie(w, handler)
-
-					handler.ServeHTTP(w, req)
-					return
-				}
+				stickyHandler.ServeHTTP(w, req)
+				return
 			}
 		}
 	}
@@ -259,24 +214,13 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if b.stickyCookie != nil {
-		b.writeStickyCookie(w, server)
+	if b.sticky != nil {
+		if err := b.sticky.WriteStickyCookie(w, server.name); err != nil {
+			log.Error().Err(err).Msg("Writing sticky cookie")
+		}
 	}
 
 	server.ServeHTTP(w, req)
-}
-
-func (b *Balancer) writeStickyCookie(w http.ResponseWriter, handler *namedHandler) {
-	cookie := &http.Cookie{
-		Name:     b.stickyCookie.name,
-		Value:    handler.hashedName,
-		Path:     b.stickyCookie.path,
-		HttpOnly: b.stickyCookie.httpOnly,
-		Secure:   b.stickyCookie.secure,
-		SameSite: convertSameSite(b.stickyCookie.sameSite),
-		MaxAge:   b.stickyCookie.maxAge,
-	}
-	http.SetCookie(w, cookie)
 }
 
 // AddServer adds a handler with a server.
@@ -290,20 +234,8 @@ func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.S
 		b.fenced[name] = struct{}{}
 	}
 
-	if b.stickyCookie != nil {
-		sha256HashedName := loadbalancer.Sha256Hash(name)
-		h.hashedName = sha256HashedName
-
-		b.stickyMap[sha256HashedName] = h
-		b.compatibilityStickyMap[name] = h
-
-		hashedName := loadbalancer.FnvHash(name)
-		b.compatibilityStickyMap[hashedName] = h
-
-		// server.URL was fnv hashed in service.Manager
-		// so we can have "double" fnv hash in already existing cookies
-		hashedName = loadbalancer.FnvHash(hashedName)
-		b.compatibilityStickyMap[hashedName] = h
+	if b.sticky != nil {
+		b.sticky.Add(name, h)
 	}
 	b.handlersMu.Unlock()
 }
