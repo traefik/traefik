@@ -5,7 +5,7 @@ description: "You can disable access logs, metrics, and tracing for a specific e
 
 Traefik's observability features include logs, access logs, metrics, and tracing. You can configure these options globally or at more specific levels, such as per router or per entry point.
 
-The default router observability configuration is inherited from the attached EntryPoints and can be configured with the observability [options](../../../install-configuration/entrypoints.md#configuration-options)).
+By default, the router observability configuration is inherited from the attached EntryPoints and can be configured with the observability [options](../../../install-configuration/entrypoints.md#configuration-options)).
 However, a router defining its own observability configuration will opt-out from these defaults.
 
 !!! info
