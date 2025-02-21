@@ -18,14 +18,14 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 |-------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
 | `entryPoints`                       | List of entrypoints names. | | No |
 | `routes`                            | List of routes. | | Yes |
-| `routes[n].match`                   | Defines the [rule](../../tcp/router/rules-and-priority.md#rules) of the underlying router. | "" | Yes |
+| `routes[n].match`                   | Defines the [rule](../../tcp/router/rules-and-priority.md#rules) of the underlying router. | | Yes |
 | `routes[n].priority`                | Defines the [priority](../../tcp/router/rules-and-priority.md#priority) to disambiguate rules of the same length, for route matching. | 0 | No |
 | `routes[n].middlewares[n].name`               | Defines the [MiddlewareTCP](./middlewaretcp.md) name. | | Yes |
 | `routes[n].middlewares[n].namespace`          | Defines the [MiddlewareTCP](./middlewaretcp.md) namespace. | ""| No|
-| `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions.  (See below for [`ExternalName Service`](#routesservices) setup) | | No |
-|  `routes[n].services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). | "" | Yes |
-| `routes[n].services[n].port`                  | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.| "" | Yes |
-| `routes[n].services[n].weight`                | Defines the weight to apply to the server load balancing. | "" | No |
+| `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. | | No |
+|  `routes[n].services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). | | Yes |
+| `routes[n].services[n].port`                  | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.| | Yes |
+| `routes[n].services[n].weight`                | Defines the weight to apply to the server load balancing. | 1 | No |
 | `routes[n].services[n].proxyProtocol`         | Defines the [PROXY protocol](../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) configuration. |  | No |
 | `routes[n].services[n].proxyProtocol.version` | Defines the [PROXY protocol](../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) version. |  | No |
 | `routes[n].services[n].serversTransport`      | Defines the [ServersTransportTCP](./serverstransporttcp.md).<br />The `ServersTransport` namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace. |  | No |
