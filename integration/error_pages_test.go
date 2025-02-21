@@ -69,9 +69,9 @@ func (s *ErrorPagesSuite) TestErrorPage() {
 	require.NoError(s.T(), err)
 }
 
-func (s *ErrorPagesSuite) TestRewriteStatus() {
-	// rewriteStatus.toml contains a mis-configuration of the backend host and some rewrites for the status code
-	file := s.adaptFile("fixtures/error_pages/rewriteStatus.toml", struct {
+func (s *ErrorPagesSuite) TestStatusRewrites() {
+	// The `statusRewrites.toml` file contains a misconfigured backend host and some status code rewrites.
+	file := s.adaptFile("fixtures/error_pages/statusRewrites.toml", struct {
 		Server1 string
 		Server2 string
 	}{s.BackendIP, s.ErrorPageIP})
