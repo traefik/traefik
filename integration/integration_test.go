@@ -1,3 +1,6 @@
+//go:build conformance
+// +build conformance
+
 // This is the main file that sets up integration tests using go-check.
 package integration
 

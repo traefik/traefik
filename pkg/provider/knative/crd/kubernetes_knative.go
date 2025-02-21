@@ -91,6 +91,11 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			if entrypoints != nil {
 				r.EntryPoints = entrypoints
 			}
+			if ingressRoute.Spec.TLS != nil {
+				r.TLS = &dynamic.RouterTLSConfig{
+					CertResolver: "default", //setting to default as we will only have secretName for KNative's.
+				}
+			}
 			conf.Routers[provider.Normalize(result.ServiceKey)] = r
 		}
 		if err := p.updateKnativeIngressStatus(client, ingressRoute); err != nil {
