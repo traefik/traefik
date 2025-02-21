@@ -459,7 +459,7 @@ For more options, please refer to the available [annotations](#on-ingress).
       name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
-        traefik.ingress.kubernetes.io/router.tls: true
+        traefik.ingress.kubernetes.io/router.tls: "true"
 
     spec:
       rules:
