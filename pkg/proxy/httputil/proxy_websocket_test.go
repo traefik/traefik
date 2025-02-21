@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -17,6 +18,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"golang.org/x/net/websocket"
 )
+
+const dialTimeout = time.Second
 
 func TestWebSocketTCPClose(t *testing.T) {
 	errChan := make(chan error, 1)
@@ -419,28 +422,6 @@ func TestForwardsWebsocketTraffic(t *testing.T) {
 	assert.Equal(t, "ok", resp)
 }
 
-func createTLSWebsocketServer() *httptest.Server {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer conn.Close()
-		for {
-			mt, message, err := conn.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = conn.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	return srv
-}
-
 func TestWebSocketTransferTLSConfig(t *testing.T) {
 	srv := createTLSWebsocketServer()
 	defer srv.Close()
@@ -495,7 +476,58 @@ func TestWebSocketTransferTLSConfig(t *testing.T) {
 	assert.Equal(t, "ok", resp)
 }
 
-const dialTimeout = time.Second
+func TestCleanWebSocketHeaders(t *testing.T) {
+	// Asserts that no headers are sent if the request contain anything.
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+	req.Header.Del("User-Agent")
+
+	cleanWebSocketHeaders(req)
+
+	b := bytes.NewBuffer(nil)
+	err := req.Header.Write(b)
+	require.NoError(t, err)
+
+	assert.Empty(t, b)
+
+	// Asserts that the Sec-WebSocket-* is enforced.
+	req.Header.Set("Sec-Websocket-Key", "key")
+	req.Header.Set("Sec-Websocket-Extensions", "extensions")
+	req.Header.Set("Sec-Websocket-Accept", "accept")
+	req.Header.Set("Sec-Websocket-Protocol", "protocol")
+	req.Header.Set("Sec-Websocket-Version", "version")
+
+	cleanWebSocketHeaders(req)
+
+	want := http.Header{
+		"Sec-WebSocket-Key":        {"key"},
+		"Sec-WebSocket-Extensions": {"extensions"},
+		"Sec-WebSocket-Accept":     {"accept"},
+		"Sec-WebSocket-Protocol":   {"protocol"},
+		"Sec-WebSocket-Version":    {"version"},
+	}
+	assert.Equal(t, want, req.Header)
+}
+
+func createTLSWebsocketServer() *httptest.Server {
+	var upgrader gorillawebsocket.Upgrader
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+}
 
 type websocketRequestOpt func(w *websocketRequest)
 
