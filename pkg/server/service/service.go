@@ -2,11 +2,9 @@ package service
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -335,18 +333,13 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
 	healthCheckTargets := make(map[string]*url.URL)
 
-	for _, server := range shuffle(service.Servers, m.rand) {
-		hasher := fnv.New64a()
-		_, _ = hasher.Write([]byte(server.URL)) // this will never return an error.
-
-		proxyName := hex.EncodeToString(hasher.Sum(nil))
-
+	for i, server := range shuffle(service.Servers, m.rand) {
 		target, err := url.Parse(server.URL)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
 		}
 
-		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
+		logger.Debug().Int(logs.ServerIndex, i).Str("URL", server.URL).
 			Msg("Creating server")
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
@@ -392,12 +385,12 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy, _ = capture.Wrap(proxy)
 		}
 
-		lb.Add(proxyName, proxy, server.Weight, server.Fenced)
+		lb.Add(server.URL, proxy, server.Weight, server.Fenced)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
 
-		healthCheckTargets[proxyName] = target
+		healthCheckTargets[server.URL] = target
 	}
 
 	if service.HealthCheck != nil {

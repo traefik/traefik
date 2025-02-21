@@ -73,6 +73,7 @@ func TestTracing(t *testing.T) {
 		desc                 string
 		propagators          string
 		headers              map[string]string
+		resourceAttributes   map[string]string
 		wantServiceHeadersFn func(t *testing.T, headers http.Header)
 		assertFn             func(*testing.T, string)
 	}{
@@ -83,6 +84,17 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `({"key":"service.name","value":{"stringValue":"traefik"}})`, trace)
 				assert.Regexp(t, `({"key":"service.version","value":{"stringValue":"dev"}})`, trace)
+			},
+		},
+		{
+			desc: "resource attributes must be propagated",
+			resourceAttributes: map[string]string{
+				"service.environment": "custom",
+			},
+			assertFn: func(t *testing.T, trace string) {
+				t.Helper()
+
+				assert.Regexp(t, `({"key":"service.environment","value":{"stringValue":"custom"}})`, trace)
 			},
 		},
 		{
@@ -328,8 +340,9 @@ func TestTracing(t *testing.T) {
 			})
 
 			tracingConfig := &static.Tracing{
-				ServiceName: "traefik",
-				SampleRate:  1.0,
+				ServiceName:        "traefik",
+				SampleRate:         1.0,
+				ResourceAttributes: test.resourceAttributes,
 				OTLP: &types.OTelTracing{
 					HTTP: &types.OTelHTTP{
 						Endpoint: collector.URL,

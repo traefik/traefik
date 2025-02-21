@@ -70,7 +70,9 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 			outReq.Host = outReq.URL.Host
 		}
 
-		cleanWebSocketHeaders(outReq)
+		if isWebSocketUpgrade(outReq) {
+			cleanWebSocketHeaders(outReq)
+		}
 	}
 }
 
@@ -79,10 +81,6 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 // Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
 // https://tools.ietf.org/html/rfc6455#page-20
 func cleanWebSocketHeaders(req *http.Request) {
-	if !isWebSocketUpgrade(req) {
-		return
-	}
-
 	req.Header["Sec-WebSocket-Key"] = req.Header["Sec-Websocket-Key"]
 	delete(req.Header, "Sec-Websocket-Key")
 
