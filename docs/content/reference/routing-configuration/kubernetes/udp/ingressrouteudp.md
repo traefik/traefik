@@ -9,7 +9,7 @@ Before creating `IngressRouteUDP` objects, you need to apply the [Traefik Kubern
 
 This registers the `IngressRouteUDP` kind and other Traefik-specific resources.
 
-## Configuration Examples
+## Configuration Example
 
 ```yaml tab="IngressRouteUDP"
 apiVersion: traefik.io/v1alpha1
@@ -19,26 +19,25 @@ metadata:
   namespace: apps
 spec:
   entryPoints:
-    - fooudp  # The entry point where Traefik listens for incoming traffic
+    - fooudp  # The entry point where Traefik listens for incoming traffic.
   routes:
   - services:
-    - name: foo # The name of the Kubernetes Service to route to
+    - name: foo # The name of the Kubernetes Service to route to.
       port: 8080
       weight: 10
-      nativeLB: true # Enables native load balancing between pods
-      nodePortLB: true
+      nativeLB: true # Enables native load balancing between pods.
 ```
 
 ## Configuration Options
 
 | Field  |  Description | Default  | Required |
 |------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
-|   `entryPoints`                     | List of entrypoints names  | | No |
-|   ` routes `                        | List of routes  | | Yes |
+|   `entryPoints`                     | List of entrypoints names.  | | No |
+|   ` routes `                        | List of routes.  | | Yes |
 | `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. See [here](#externalname-service) for `ExternalName Service` setup. | | No |
-| `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) | "" | Yes |
-| `routes[n].services[n].port`        | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.| "" | Yes |
-| `routes[n].services[n].weight`      | Defines the weight to apply to the server load balancing | "" | No |
+| `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) |  | Yes |
+| `routes[n].services[n].port`        | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.|  | Yes |
+| `routes[n].services[n].weight`      | Defines the weight to apply to the server load balancing. | 1 | No |
 | `routes[n].services[n].nativeLB`    | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
 | `routes[n].services[n].nodePortLB`  | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. See [here](#nativelb) for more information. | false | No  |
 
@@ -46,8 +45,8 @@ spec:
 
 Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port. Accordingly, Traefik supports defining a port in two ways:
 
-- only on IngressRouteUDP service
-- on both sides, you'll be warned if the ports don't match, and the IngressRouteUDP service port is used
+- only on `IngressRouteUDP` service
+- on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
 
 Thus, in case of two sides port definition, Traefik expects a match between ports.
     
