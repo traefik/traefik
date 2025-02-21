@@ -5,12 +5,10 @@ description: "TLS Options in Traefik Proxy"
 
 The TLS options allow you to configure some parameters of the TLS connection in Traefik.
 
-Before creating `TLSStore` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
-
-Register the `TLSOption` kind in the Kubernetes cluster before creating TLSOption objects or referencing TLS options in the [`IngressRoute`](../http/ingressroute.md) / [`IngressRouteTCP`](../tcp/ingressroutetcp.md) objects.
+Before creating `TLSOption` objects or referencing TLS options in the [`IngressRoute`](../http/ingressroute.md) / [`IngressRouteTCP`](../tcp/ingressroutetcp.md) objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
 !!! tip "References and namespaces"
-    If the optional namespace attribute is not set, the configuration will be applied with the namespace of the `IngressRoute`.
+    If the optional namespace attribute is not set, the configuration will be applied with the namespace of the `IngressRoute`/`IngressRouteTCP`.
 
     Additionally, when the definition of the TLS option is from another provider, the cross-provider [syntax](../../../install-configuration/providers/overview.md#provider-namespace) (`middlewarename@provider`) should be used to refer to the TLS option. Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
@@ -18,9 +16,9 @@ Register the `TLSOption` kind in the Kubernetes cluster before creating TLSOptio
 
     When using the `TLSOption` resource in Kubernetes, one might setup a default set of options that,
     if not explicitly overwritten, should apply to all ingresses.  
-    To achieve that, you'll have to create a TLSOption resource with the name `default`.
-    There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
-    To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
+    To achieve that, you'll have to create a `TLSOption` resource with the name `default`.
+    There may exist only one `TLSOption` with the name `default` (across all namespaces) - otherwise they will be dropped.  
+    To explicitly use a different `TLSOption` (and using the Kubernetes Ingress resources)
     you'll have to add an annotation to the Ingress in the following form:
     `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
 
@@ -44,48 +42,6 @@ spec:
       - secret-ca1
       - secret-ca2
     clientAuthType: VerifyClientCertIfGiven
-```
-
-```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute # OR IngressRouteTCP
-metadata:
-  name: ingressroutebar
-
-spec:
-  entryPoints:
-    - web
-  routes:
-  - match: Host(`example.com`) && PathPrefix(`/stripit`)
-    kind: Rule
-    services:
-    - name: whoami
-      port: 80
-  tls:
-    options: 
-      name: mytlsoption
-      namespace: default
-```
-
-```yaml tab="Secrets"
-apiVersion: v1
-kind: Secret
-metadata:
-  name: secret-ca1
-  namespace: default
-data:
-  # Must contain a certificate under either a `tls.ca` or a `ca.crt` key.
-  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: secret-ca2
-  namespace: default
-data:
-  # Must contain a certificate under either a `tls.ca` or a `ca.crt` key. 
-  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
 ## Configuration Options
@@ -116,13 +72,11 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 ### Default TLS Option
 
-The `default` option is special.
-
-When no TLS options are specified in an Ingress or IngressRoute, the `default` option is used.
+When no TLS options are specified in an `IngressRoute`/`IngressRouteTCP`, the `default` option is used.
 The default behavior is summed up in the table below:
 
 | Configuration             | Behavior                                                   |
 |:--------------------------|:-----------------------------------------------------------|
-| No `default` TLS Option   | Default internal set of TLS Options by default             |
-| One `default` TLS Option  | Custom TLS Options applied by default                      |
-| Many `default` TLS Option | Error log + Default internal set of TLS Options by default |
+| No `default` TLS Option   | Default internal set of TLS Options by default.            |
+| One `default` TLS Option  | Custom TLS Options applied by default.                     |
+| Many `default` TLS Option | Error log + Default internal set of TLS Options by default. |
