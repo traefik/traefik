@@ -284,6 +284,10 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	if err != nil {
 		return nil, err
 	}
+	// The retry wrapping must be done just before the proxy handler,
+	// to make sure that the retry will not be triggered/disabled by
+	// middlewares in the chain.
+	fwd = retry.WrapHandler(fwd)
 
 	chain := alice.New()
 	if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
@@ -293,7 +297,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
 	})
 
-	handler, err := chain.Then(pipelining.New(ctx, retry.WrapHandler(fwd), "pipelining"))
+	handler, err := chain.Then(pipelining.New(ctx, fwd, "pipelining"))
 	if err != nil {
 		return nil, err
 	}
