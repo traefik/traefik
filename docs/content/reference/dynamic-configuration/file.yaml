@@ -188,7 +188,7 @@ http:
           - foobar
         service: foobar
         query: foobar
-        rewriteStatus:
+        statusRewrites:
           name0: 42
           name1: 42
     Middleware10:

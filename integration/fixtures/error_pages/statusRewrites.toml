@@ -30,7 +30,7 @@
     status = ["500-502", "503-599", "418"]
     service = "error"
     query = "/50x.html"
-    [http.middlewares.error.errors.rewriteStatus]
+    [http.middlewares.error.errors.statusRewrites]
       "418" = 400
       "500-502" = 404
 

@@ -37,10 +37,10 @@ type customErrors struct {
 	backendHandler http.Handler
 	httpCodeRanges types.HTTPCodeRanges
 	backendQuery   string
-	rewriteStatus  []rewriteStatusObj
+	statusRewrites []statusRewrite
 }
 
-type rewriteStatusObj struct {
+type statusRewrite struct {
 	fromCodes types.HTTPCodeRanges
 	toCode    int
 }
@@ -59,15 +59,15 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		return nil, err
 	}
 
-	// Parse RewriteStatus codes
-	rewriteStatus := make([]rewriteStatusObj, 0, len(config.RewriteStatus))
-	for k, v := range config.RewriteStatus {
+	// Parse StatusRewrites
+	statusRewrites := make([]statusRewrite, 0, len(config.StatusRewrites))
+	for k, v := range config.StatusRewrites {
 		ranges, err := types.NewHTTPCodeRanges([]string{k})
 		if err != nil {
 			return nil, err
 		}
 
-		rewriteStatus = append(rewriteStatus, rewriteStatusObj{
+		statusRewrites = append(statusRewrites, statusRewrite{
 			fromCodes: ranges,
 			toCode:    v,
 		})
@@ -79,7 +79,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendHandler: backend,
 		httpCodeRanges: httpCodeRanges,
 		backendQuery:   config.Query,
-		rewriteStatus:  rewriteStatus,
+		statusRewrites: statusRewrites,
 	}, nil
 }
 
@@ -109,7 +109,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	originalCode := code
 
 	// Check if we need to rewrite the status code
-	for _, rsc := range c.rewriteStatus {
+	for _, rsc := range c.statusRewrites {
 		if rsc.fromCodes.Contains(code) {
 			code = rsc.toCode
 			break
