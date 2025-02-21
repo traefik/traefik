@@ -538,7 +538,7 @@ certificatesResolvers:
 
 Disables the challenge TXT record propagation checks, before notifying ACME that the DNS challenge is ready. 
 
-Please note that disabling checks can prevent the challenge to succeed.
+Please note that disabling checks can prevent the challenge from succeeding.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
