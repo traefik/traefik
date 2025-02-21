@@ -115,14 +115,15 @@ func (p *Provider) createClient(ctx context.Context, logger log.Logger) (*awsCli
 	}
 
 	if p.AccessKeyID != "" && p.SecretAccessKey != "" {
-		// From https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specify-credentials-programmatically:
+		// From https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specify-credentials-programmatically:
 		//   "If you explicitly provide credentials, as in this example, the SDK uses only those credentials."
 		// this makes sure that user-defined credentials always have the highest priority
-		optFns = append(optFns, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.SecretAccessKey, "")))
+		staticCreds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.SecretAccessKey, ""))
+		optFns = append(optFns, config.WithCredentialsProvider(staticCreds))
 
 		// If the access key and secret access key are not provided, config.LoadDefaultConfig
 		// will look for the credentials in the default credential chain.
-		// See https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials.
+		// See https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specifying-credentials.
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx, optFns...)
@@ -351,7 +352,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				instance := ecsInstance{
-					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.ToString(task.Group), ":", "-", 1), *container.Name),
+					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.ToString(task.Group), ":", "-", 1), aws.ToString(container.Name)),
 					ID:                  key[len(key)-12:],
 					containerDefinition: containerDefinition,
 					machine:             mach,
