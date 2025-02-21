@@ -5,6 +5,10 @@ description: "An IngressRoute is a Traefik CRD is in charge of connecting incomi
 
 In Kubernetes, you can use the Traefik `IngressRoute` to define a router.
 
+Before creating `IngressRoute` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+
+This registers the `IngressRoute` kind and other Traefik-specific resources.
+
 ## Configuration Example
 
 You can declare an `IngressRoute` as detailed below:
@@ -69,17 +73,17 @@ spec:
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | `entryPoints` | List of [entry points](../../../install-configuration/entrypoints.md) names.<br />If not specified, HTTP routers will accept requests from all EntryPoints in the list of default EntryPoints. |  | No |
 | `routes`        | List of routes. | | Yes |
-| `routes[n].kind`        | Kind of router matching, only `Rule` is allowed yet. | "" | Yes |
-| `routes[n].match`       | Defines the [rule](../../http/router/rules-and-priority.md#rules) corresponding to an underlying router. | "" | No |
+| `routes[n].kind`        | Kind of router matching, only `Rule` is allowed yet. | "Rule" | No |
+| `routes[n].match`       | Defines the [rule](../../http/router/rules-and-priority.md#rules) corresponding to an underlying router. | | Yes |
 | `routes[n].priority`    | Defines the [priority](../../http/router/rules-and-priority.md#priority-calculation) to disambiguate rules of the same length, for route matching.<br />If not set, the priority is directly equal to the length of the rule, and so the longest length has the highest priority.<br />A value of `0` for the priority is ignored, the default rules length sorting is used. | 0  | No |
-| `routes[n].middlewares` | List of middlewares to attach to the IngressRoute. <br />More information [here](#middleware). |  | No |
+| `routes[n].middlewares` | List of middlewares to attach to the IngressRoute. <br />More information [here](#middleware). | "" | No |
 | `routes[n].`<br />`middlewares[m].`<br />`name` | Middleware name.<br />The character `@` is not authorized. <br />More information [here](#middleware). | "" | Yes |
-| `routes[n].`<br />`middlewares[m].`<br />`namespace` | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#middleware). | "" | No |
+| `routes[n].`<br />`middlewares[m].`<br />`namespace` | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#middleware). | | No |
 | `routes[n].`<br />`services` | List of any combination of TraefikService and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br />More information [here](#externalname-service). |  | No |
-| `routes[n].`<br />`services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#externalname-service). | "" | No |
+| `routes[n].`<br />`services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#externalname-service). | "Service" | No |
 | `routes[n].`<br />`services[m].`<br />`name` | Service name.<br />The character `@` is not authorized. <br />More information [here](#middleware). | "" | Yes |
-| `routes[n].`<br />`services[m].`<br />`namespace` | Service namespace.<br />Can be empty if the service belongs to the same namespace as the IngressRoute. <br />More information [here](#externalname-service). | "" | No |
-| `routes[n].`<br />`services[m].`<br />`port` | Service port (number or port name).<br />Evaluated only if the kind is **Service**. | "" | No |
+| `routes[n].`<br />`services[m].`<br />`namespace` | Service namespace.<br />Can be empty if the service belongs to the same namespace as the IngressRoute. <br />More information [here](#externalname-service). | | No |
+| `routes[n].`<br />`services[m].`<br />`port` | Service port (number or port name).<br />Evaluated only if the kind is **Service**. | | No |
 | `routes[n].`<br />`services[m].`<br />`responseForwarding.`<br />`flushInterval` | Interval, in milliseconds, in between flushes to the client while copying the response body.<br />A negative value means to flush immediately after each write to the client.<br />This configuration is ignored when a response is a streaming response; for such responses, writes are flushed to the client immediately.<br />Evaluated only if the kind is **Service**. | 100ms | No |
 | `routes[n].`<br />`services[m].`<br />`scheme` | Scheme to use for the request to the upstream Kubernetes Service.<br />Evaluated only if the kind is **Service**. | "http"<br />"https" if `port` is 443 or contains the string *https*. | No |
 | `routes[n].`<br />`services[m].`<br />`serversTransport` | Name of ServersTransport resource to use to configure the transport between Traefik and your servers.<br />Evaluated only if the kind is **Service**. | "" | No |

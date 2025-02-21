@@ -5,7 +5,7 @@ description: "TLS Store in Traefik Proxy"
 
 In Traefik, certificates are grouped together in certificates stores. 
 
-`TLSStore` is the CRD implementation of a [Traefik TLS Store](../../http/tls/tls-certificates.md#certificates-stores). Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects.
+`TLSStore` is the CRD implementation of a [Traefik TLS Store](../../http/tls/tls-certificates.md#certificates-stores).
 
 Before creating `TLSStore` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
@@ -25,41 +25,12 @@ spec:
     secretName:  supersecret
 ```
 
-```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute # OR IngressRouteTCP
-metadata:
-  name: ingressroutebar
-
-spec:
-  entryPoints:
-    - websecure
-  routes:
-  - match: Host(`example.com`) && PathPrefix(`/stripit`)
-    kind: Rule
-    services:
-    - name: whoami
-      port: 80
-  tls: {}
-```
-
-```yaml tab="Secret"
-apiVersion: v1
-kind: Secret
-metadata:
-  name: supersecret
-
-data:
-  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
-```
-
 ## Configuration Options
 
 | Field                                  | Description    | Required |
 |:---------------------------------------|:-------------------------|:---------|
-| `certificates`                         | List of Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/), each of them holding a key/certificate pair to add to the store. List item format: `secretName: $secret_name` | No      |
-| `defaultCertificate.secretName`        | Name of the Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) served for connections without a SNI, or without a matching domain. If no default certificate is provided, Traefik will use the generated one. Do not use if the option `defaultGeneratedCert` is set  | No      |
+| `certificates[n].secretName`                         | List of Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/), each of them holding a key/certificate pair to add to the store. List item format: `secretName: $secret_name` | No      |
+| `defaultCertificate.secretName`        | Name of the Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) served for connections without a SNI, or without a matching domain. If no default certificate is provided, Traefik will use the generated one. Do not use if the option `defaultGeneratedCert` is set.  | No      |
 | `defaultGeneratedCert.resolver`        | Name of the ACME resolver to use to generate the default certificate.<br /> Do not use if the option `defaultCertificate` is set.     | No      |
 | `defaultGeneratedCert.domain.main`     | Main domain used to generate the default certificate.<br /> Do not use if the option `defaultCertificate` is set.      | No      |
 | `defaultGeneratedCert.domain.sans`     | List of [Subject Alternative Name](https://en.wikipedia.org/wiki/Subject_Alternative_Name) used to generate the default certificate.<br /> Do not use if the option `defaultCertificate` is set.   | No      |
