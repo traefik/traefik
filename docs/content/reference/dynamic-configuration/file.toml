@@ -185,6 +185,7 @@
         forwardBody = true
         maxBodySize = 42
         preserveLocationHeader = true
+        preserveRequestMethod = true
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"

@@ -122,9 +122,11 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1alpha2.TL
 			continue
 		}
 
+		rule, priority := hostSNIRule(hostnames)
 		router := dynamic.TCPRouter{
 			RuleSyntax:  "v3",
-			Rule:        hostSNIRule(hostnames),
+			Rule:        rule,
+			Priority:    priority,
 			EntryPoints: []string{listener.EPName},
 			TLS: &dynamic.RouterTCPTLSConfig{
 				Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
@@ -298,7 +300,9 @@ func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute
 	return lb, nil
 }
 
-func hostSNIRule(hostnames []gatev1.Hostname) string {
+func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
+	var priority int
+
 	rules := make([]string, 0, len(hostnames))
 	uniqHostnames := map[gatev1.Hostname]struct{}{}
 
@@ -307,14 +311,21 @@ func hostSNIRule(hostnames []gatev1.Hostname) string {
 			continue
 		}
 
+		host := string(hostname)
+		wildcard := strings.Count(host, "*")
+
+		thisPriority := len(hostname) - wildcard
+
+		if priority < thisPriority {
+			priority = thisPriority
+		}
+
 		if _, exists := uniqHostnames[hostname]; exists {
 			continue
 		}
 
-		host := string(hostname)
 		uniqHostnames[hostname] = struct{}{}
 
-		wildcard := strings.Count(host, "*")
 		if wildcard == 0 {
 			rules = append(rules, fmt.Sprintf("HostSNI(`%s`)", host))
 			continue
@@ -325,8 +336,8 @@ func hostSNIRule(hostnames []gatev1.Hostname) string {
 	}
 
 	if len(hostnames) == 0 || len(rules) == 0 {
-		return "HostSNI(`*`)"
+		return "HostSNI(`*`)", 0
 	}
 
-	return strings.Join(rules, " || ")
+	return strings.Join(rules, " || "), priority
 }

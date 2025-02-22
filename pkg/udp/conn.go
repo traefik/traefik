@@ -34,16 +34,12 @@ type Listener struct {
 	timeout time.Duration
 }
 
-// Listen creates a new listener.
-func Listen(listenConfig net.ListenConfig, network, address string, timeout time.Duration) (*Listener, error) {
+// Creates a new listener from PacketConn.
+func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listener, error) {
 	if timeout <= 0 {
 		return nil, errors.New("timeout should be greater than zero")
 	}
 
-	packetConn, err := listenConfig.ListenPacket(context.Background(), network, address)
-	if err != nil {
-		return nil, fmt.Errorf("listen packet: %w", err)
-	}
 	pConn, ok := packetConn.(*net.UDPConn)
 	if !ok {
 		return nil, errors.New("packet conn is not an UDPConn")
@@ -58,6 +54,25 @@ func Listen(listenConfig net.ListenConfig, network, address string, timeout time
 	}
 
 	go l.readLoop()
+
+	return l, nil
+}
+
+// Listen creates a new listener.
+func Listen(listenConfig net.ListenConfig, network, address string, timeout time.Duration) (*Listener, error) {
+	if timeout <= 0 {
+		return nil, errors.New("timeout should be greater than zero")
+	}
+
+	packetConn, err := listenConfig.ListenPacket(context.Background(), network, address)
+	if err != nil {
+		return nil, fmt.Errorf("listen packet: %w", err)
+	}
+
+	l, err := ListenPacketConn(packetConn, timeout)
+	if err != nil {
+		return nil, fmt.Errorf("listen packet conn: %w", err)
+	}
 
 	return l, nil
 }
