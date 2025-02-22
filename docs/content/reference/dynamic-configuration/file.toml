@@ -64,6 +64,7 @@
             sameSite = "foobar"
             maxAge = 42
             path = "foobar"
+            domain = "foo.bar"
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
@@ -120,6 +121,7 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
+            domain = "foo.bar"
             maxAge = 42
             path = "foobar"
         [http.services.Service04.weighted.healthCheck]

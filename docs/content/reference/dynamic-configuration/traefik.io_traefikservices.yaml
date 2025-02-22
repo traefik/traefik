@@ -297,6 +297,11 @@ spec:
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                                   type: string
+                                domain:
+                                  description: |-
+                                    Domain defineds the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string  
                                 secure:
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
@@ -410,6 +415,11 @@ spec:
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                             type: string
+                          domain:
+                            description: |-
+                              Domain defineds the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string                              
                           secure:
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
@@ -599,6 +609,11 @@ spec:
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                                   type: string
+                                domain:
+                                  description: |-
+                                    Domain defineds the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string                                    
                                 secure:
                                   description: Secure defines whether the cookie can
                                     only be transmitted over an encrypted connection
@@ -652,6 +667,11 @@ spec:
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
                             type: string
+                          domain:
+                            description: |-
+                              Domain defineds the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string                              
                           secure:
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
