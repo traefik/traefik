@@ -429,7 +429,7 @@ spec:
                                 type: string
                               domain:
                                 description: |-
-                                  Domain defineds the host to which the cookie will be sent.
+                                  Domain defines the host to which the cookie will be sent.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                                 type: string  
                               secure:

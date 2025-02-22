@@ -65,12 +65,10 @@
             maxAge = 42
             path = "foobar"
             domain = "foo.bar"
-
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
           weight = 42
           preservePath = true
-
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
           weight = 42
@@ -121,9 +119,9 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
-            domain = "foo.bar"
             maxAge = 42
             path = "foobar"
+            domain = "foo.bar"
         [http.services.Service04.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
