@@ -351,6 +351,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 
 			rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+			logger.Warn().Msg("Using RootCAsSecrets is deprecated and will be removed in a future version. Use RootCAs instead.")
 		}
 
 		for _, rootCa := range serversTransport.Spec.RootCAs {
