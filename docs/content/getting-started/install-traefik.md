@@ -1,3 +1,4 @@
+
 ---
 title: "Traefik Installation Documentation"
 description: "There are several flavors to choose from when installing Traefik Proxy. Get started with Traefik Proxy, and read the technical documentation."
