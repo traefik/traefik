@@ -3,7 +3,7 @@ title: "IngressRouteUDP"
 description: "Understand the routing configuration for the Kubernetes IngressRouteUDP & Traefik CRD"
 ---
 
-`IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../../udp/router/rules-priority.md).
+`IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../../../udp/router/rules-priority.md).
 
 Before creating `IngressRouteUDP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
