@@ -10,6 +10,15 @@ A Story of KV store & Containers
 
 Store your configuration in Redis and let Traefik do the rest!
 
+!!! tip "Dynamic configuration updates"
+
+    Dynamic configuration updates require Redis [keyspace notifications](https://redis.io/docs/latest/develop/use/keyspace-notifications) to be enabled.
+    
+    Cloud-managed Redis services (e.g., GCP Memorystore, AWS ElastiCache) may disable this by default due to cpu performance issues.  
+    
+    Refer to [Redis](https://redis.io/docs/latest/develop/use/keyspace-notifications/) for further information or see your cloud provider's documentation for specific configuration steps.
+
+
 ## Routing Configuration
 
 See the dedicated section in [routing](../routing/providers/kv.md).
