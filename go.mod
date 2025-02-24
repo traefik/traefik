@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000 // No tag on the repo.
-	github.com/andybalholm/brotli v1.1.0
+	github.com/andybalholm/brotli v1.1.1
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/aws/aws-sdk-go v1.44.327
 	github.com/cenkalti/backoff/v4 v4.3.0
@@ -33,7 +33,7 @@ require (
 	github.com/http-wasm/http-wasm-host-go v0.7.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
-	github.com/klauspost/compress v1.17.11-0.20241004063537-dbd6c381492a // Required to have the content-type fix: https://github.com/klauspost/compress/pull/1013
+	github.com/klauspost/compress v1.17.11
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.2
 	github.com/kvtools/redis v1.1.0
@@ -67,7 +67,7 @@ require (
 	github.com/traefik/yaegi v0.16.1
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
-	github.com/valyala/fasthttp v1.55.0
+	github.com/valyala/fasthttp v1.58.0
 	github.com/vulcand/oxy/v2 v2.0.0
 	github.com/vulcand/predicate v1.2.0
 	go.opentelemetry.io/collector/pdata v1.10.0
