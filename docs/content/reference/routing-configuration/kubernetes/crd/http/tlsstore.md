@@ -5,7 +5,7 @@ description: "TLS Store in Traefik Proxy"
 
 In Traefik, certificates are grouped together in certificates stores. 
 
-`TLSStore` is the CRD implementation of a [Traefik TLS Store](../../http/tls/tls-certificates.md#certificates-stores).
+`TLSStore` is the CRD implementation of a [Traefik TLS Store](../../../http/tls/tls-certificates.md#certificates-stores).
 
 Before creating `TLSStore` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 

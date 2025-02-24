@@ -3,7 +3,7 @@ title : 'ServersTransportTCP'
 description : 'Understand the service routing configuration for the Kubernetes ServerTransportTCP & Traefik CRD'
 ---
 
-`ServersTransportTCP` is the CRD implementation of [ServersTransportTCP](../../tcp/serverstransport.md).
+`ServersTransportTCP` is the CRD implementation of [ServersTransportTCP](../../../tcp/serverstransport.md).
 
 Before creating `ServersTransportTCP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
@@ -64,6 +64,6 @@ spec:
 | `tls.peerCertURI`                     | Defines the URI used to match against SAN URIs during the server's certificate verification. | "" | No |
 | `tls.rootCAsSecrets`                  | Defines the set of root certificate authorities to use when verifying server certificates.<br />The CA secret must contain a base64 encoded certificate under either a `tls.ca` or a `ca.crt` key.| "" | No |
 | `tls.certificatesSecrets`             | Certificates to present to the server for mTLS.| "" | No |
-| `spiffe`                              | Configures [SPIFFE](../../../install-configuration/tls/spiffe.md) options. | "" | No |
+| `spiffe`                              | Configures [SPIFFE](../../../../install-configuration/tls/spiffe.md) options. | "" | No |
 | `spiffe.ids`                          | Defines the allowed SPIFFE IDs. This takes precedence over the SPIFFE `trustDomain`. |""| No |
 | `spiffe.trustDomain`                  | Defines the allowed SPIFFE trust domain. | "" | No |

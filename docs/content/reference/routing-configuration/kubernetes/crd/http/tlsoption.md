@@ -10,7 +10,7 @@ Before creating `TLSOption` objects or referencing TLS options in the [`IngressR
 !!! tip "References and namespaces"
     If the optional namespace attribute is not set, the configuration will be applied with the namespace of the `IngressRoute`/`IngressRouteTCP`.
 
-    Additionally, when the definition of the TLS option is from another provider, the cross-provider [syntax](../../../install-configuration/providers/overview.md#provider-namespace) (`middlewarename@provider`) should be used to refer to the TLS option. Specifying a namespace attribute in this case would not make any sense, and will be ignored.
+    Additionally, when the definition of the TLS option is from another provider, the cross-provider [syntax](../../../../install-configuration/providers/overview.md#provider-namespace) (`middlewarename@provider`) should be used to refer to the TLS option. Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
 !!! important "TLSOption in Kubernetes"
 
@@ -54,7 +54,7 @@ spec:
 | `curvePreferences`          | List of the elliptic curves references that will be used in an ECDHE handshake, in preference order.<br />Use curves names from [`crypto`](https://godoc.org/crypto/tls#CurveID) or the [RFC](https://tools.ietf.org/html/rfc8446#section-4.2.7).<br />See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.   |          | No      |
 | `clientAuth.secretNames`    | Client Authentication (mTLS) option.<br />List of names of the referenced Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) (in TLSOption namespace).<br /> The secret must contain a certificate under either a `tls.ca` or a `ca.crt` key.   |          | No      |
 | `clientAuth.clientAuthType` | Client Authentication (mTLS) option.<br />Client authentication type to apply. Available values [here](#client-authentication-mtls).    |          | No      |
-| `sniStrict`                 | Allow rejecting connections from clients connections that do not specify a server_name extension.<br />The [default certificate](../../http/tls/tls-certificates.md#default-certificate) is never served is the option is enabled. | false    | No      |
+| `sniStrict`                 | Allow rejecting connections from clients connections that do not specify a server_name extension.<br />The [default certificate](../../../http/tls/tls-certificates.md#default-certificate) is never served is the option is enabled. | false    | No      |
 | `alpnProtocols`             | List of supported application level protocols for the TLS handshake, in order of preference.<br />If the client supports ALPN, the selected protocol will be one from this list, and the connection will fail if there is no mutually supported protocol.   | "h2, http/1.1, acme-tls/1"         | No      |
 
 ### Client Authentication (mTLS)
