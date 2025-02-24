@@ -3,7 +3,7 @@ title: "Kubernetes IngressRoute"
 description: "An IngressRoute is a Traefik CRD is in charge of connecting incoming requests to the Services that can handle them in HTTP."
 ---
 
-`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../../http/router/rules-and-priority.md).
+`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../../../http/router/rules-and-priority.md).
 
 Before creating `IngressRoute` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
@@ -71,11 +71,11 @@ spec:
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| `entryPoints` | List of [entry points](../../../install-configuration/entrypoints.md) names.<br />If not specified, HTTP routers will accept requests from all EntryPoints in the list of default EntryPoints. |  | No |
+| `entryPoints` | List of [entry points](../../../../install-configuration/entrypoints.md) names.<br />If not specified, HTTP routers will accept requests from all EntryPoints in the list of default EntryPoints. |  | No |
 | `routes`        | List of routes. | | Yes |
 | `routes[n].kind`        | Kind of router matching, only `Rule` is allowed yet. | "Rule" | No |
-| `routes[n].match`       | Defines the [rule](../../http/router/rules-and-priority.md#rules) corresponding to an underlying router. | | Yes |
-| `routes[n].priority`    | Defines the [priority](../../http/router/rules-and-priority.md#priority-calculation) to disambiguate rules of the same length, for route matching.<br />If not set, the priority is directly equal to the length of the rule, and so the longest length has the highest priority.<br />A value of `0` for the priority is ignored, the default rules length sorting is used. | 0  | No |
+| `routes[n].match`       | Defines the [rule](../../../http/router/rules-and-priority.md#rules) corresponding to an underlying router. | | Yes |
+| `routes[n].priority`    | Defines the [priority](../../../http/router/rules-and-priority.md#priority-calculation) to disambiguate rules of the same length, for route matching.<br />If not set, the priority is directly equal to the length of the rule, and so the longest length has the highest priority.<br />A value of `0` for the priority is ignored, the default rules length sorting is used. | 0  | No |
 | `routes[n].middlewares` | List of middlewares to attach to the IngressRoute. <br />More information [here](#middleware). | "" | No |
 | `routes[n].`<br />`middlewares[m].`<br />`name` | Middleware name.<br />The character `@` is not authorized. <br />More information [here](#middleware). |  | Yes |
 | `routes[n].`<br />`middlewares[m].`<br />`namespace` | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#middleware). | | No |
@@ -112,8 +112,8 @@ spec:
 | `tls.secretName`        | [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the same namesapce as the `IngressRoute`) | "" | No |
 | `tls.`<br />`options.name`        | Name of the [`TLSOption`](tlsoption.md) to use.<br />More information [here](#tls-options). | "" | No |
 | `tls.`<br />`options.namespace`        | Namespace of the [`TLSOption`](tlsoption.md) to use. | "" | No |
-| `tls.certResolver`        | Name of the [Certificate Resolver](../../../install-configuration/tls/certificate-resolvers/acme.md) to use to generate automatic TLS certificates. | "" | No |
-| `tls.domains`        | List of domains to serve using the certificates generates (one `tls.domain`= one certificate).<br />More information in the [dedicated section](../../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition). | | No |
+| `tls.certResolver`        | Name of the [Certificate Resolver](../../../../install-configuration/tls/certificate-resolvers/overview.md) to use to generate automatic TLS certificates. | "" | No |
+| `tls.domains`        | List of domains to serve using the certificates generates (one `tls.domain`= one certificate).<br />More information in the [dedicated section](../../../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition). | | No |
 | `tls.`<br />`domains[n].main`        | Main domain name | "" | Yes |
 | `tls.`<br />`domains[n].sans`        | List of alternative domains (SANs) |  | No |
 
@@ -121,8 +121,8 @@ spec:
 
 Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port. Accordingly, Traefik supports defining a port in two ways:
 
-- only on IngressRoute service
-- on both sides, you'll be warned if the ports don't match, and the IngressRouteUDP service port is used
+- only on `IngressRoute` service
+- on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
 
 Thus, in case of two sides port definition, Traefik expects a match between ports.
     
@@ -215,7 +215,7 @@ spec:
 
 ### Middleware
 
-- You can attach a list of [middlewares](../../http/middlewares/overview.md) 
+- You can attach a list of [middlewares](../../../http/middlewares/overview.md) 
 to each HTTP router.
 - The middlewares will take effect only if the rule matches, and before forwarding
 the request to the service.
@@ -259,7 +259,7 @@ same namespace as the IngressRoute)
     The field `kind` allows the following values:
 
     - `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
-    - `TraefikService`: to reference an object [`TraefikService`]()
+    - `TraefikService`: to reference an object [`TraefikService`](../http/traefikservice.md)
 
 #### Port Definition
 

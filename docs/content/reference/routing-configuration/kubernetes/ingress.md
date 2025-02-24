@@ -128,7 +128,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.tls.options`"
 
-    See [options](../kubernetes/http/tlsoption.md) for more information.
+    See [options](../kubernetes/crd/http/tlsoption.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.tls.options: foobar@file
@@ -167,7 +167,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.serverstransport`"
 
-    See [ServersTransport](./http/serverstransport.md) for more information.
+    See [ServersTransport](../kubernetes/crd/http/serverstransport.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
@@ -181,7 +181,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
 
-    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
@@ -189,7 +189,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.name`"
 
-    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
@@ -197,7 +197,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.secure`"
 
-    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
@@ -205,7 +205,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.samesite`"
 
-    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.samesite: "none"
@@ -213,7 +213,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`"
 
-    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
@@ -221,7 +221,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`"
 
-    See [sticky sessions](../kubernetes/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
+    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
@@ -560,7 +560,7 @@ and will connect via TLS automatically.
     Please note that by enabling TLS communication between traefik and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
-    See the [`insecureSkipVerify` TLSOption](./http/tlsoption.md) setting for more details.
+    See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/http/tlsoption.md) setting for more details.
 
 ## Global Default Backend Ingresses
 
