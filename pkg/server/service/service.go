@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
@@ -349,6 +350,10 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
+		// The retry wrapping must be done just before the proxy handler,
+		// to make sure that the retry will not be triggered/disabled by
+		// middlewares in the chain.
+		proxy = retry.WrapHandler(proxy)
 
 		// Prevents from enabling observability for internal resources.
 
