@@ -462,7 +462,7 @@ func TestStickyWithCompatibility(t *testing.T) {
 				balancer.Add(server, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(http.StatusOK)
 					_, _ = rw.Write([]byte(server))
-				}), pointer(1), false)
+				}), pointer(1), false, nil)
 			}
 
 			// Do it twice, to be sure it's not just the luck.

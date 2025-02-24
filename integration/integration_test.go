@@ -1,6 +1,3 @@
-//go:build conformance
-// +build conformance
-
 // This is the main file that sets up integration tests using go-check.
 package integration
 
@@ -43,7 +40,6 @@ var (
 	k8sConformance               = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
 	k8sConformanceRunTest        = flag.String("k8sConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
 	k8sConformanceTraefikVersion = flag.String("k8sConformanceTraefikVersion", "dev", "specify the Traefik version for the K8s Gateway API conformance report")
-	kNativeConformance           = flag.Bool("kNativeConformance", false, "run K8s Gateway API conformance test")
 )
 
 const (

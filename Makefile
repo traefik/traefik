@@ -101,11 +101,11 @@ test-integration: binary
 #? test-gateway-api-conformance: Run the conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags conformance ./integration/k8s_conformance_test.go ./integration/integration_test.go  -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.3" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags conformance ./integration  -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.3" $(TESTFLAGS)
 
 test-knative-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags conformance -parallel=1 -failfast -count=1 -timeout=20m ./integration/knative_conformance_test.go ./integration/integration_test.go -v -test.run KNativeConformanceSuite -kNativeConformance -ingressClass=traefik.ingress.networking.knative.dev  -spoofinterval=3s
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags conformance -parallel=1 -failfast -count=1 -timeout=20m ./integration/knative_conformance_test.go ./integration/integration_test.go -v -test.run KNativeConformanceSuite -ingressClass=traefik.ingress.networking.knative.dev  -spoofinterval=3s
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui

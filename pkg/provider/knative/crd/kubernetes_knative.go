@@ -93,7 +93,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			}
 			if ingressRoute.Spec.TLS != nil {
 				r.TLS = &dynamic.RouterTLSConfig{
-					CertResolver: "default", //setting to default as we will only have secretName for KNative's.
+					CertResolver: "default", // setting to default as we will only have secretName for KNative's.
 				}
 			}
 			conf.Routers[provider.Normalize(result.ServiceKey)] = r
@@ -170,7 +170,6 @@ func (c configBuilder) loadKnativeServers(namespace string,
 	if err != nil {
 		return nil, err
 	}
-
 	if !exists {
 		return nil, fmt.Errorf("service not found %s/%s", namespace, svc.Name)
 	}
@@ -192,7 +191,6 @@ func (c configBuilder) loadKnativeServers(namespace string,
 		if err != nil {
 			return nil, err
 		}
-
 		hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))
 		servers = append(servers, dynamic.Server{
 			URL: fmt.Sprintf("%s://%s", protocol, hostPort),

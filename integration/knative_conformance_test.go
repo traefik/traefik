@@ -1,5 +1,4 @@
 //go:build conformance
-// +build conformance
 
 package integration
 
@@ -37,6 +36,7 @@ const (
 	kNativeWebhook          = "deployment/webhook"
 	kNativeNetworkConfigMap = "configmap/config-network"
 	kNativeDomainConfigMap  = "configmap/config-domain"
+	KNativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,hosts/multiple"
 )
 
 var imageNames = []string{
@@ -50,10 +50,8 @@ var imageNames = []string{
 }
 var allTests = [][]string{
 	{"basics", "basics/http2", "grpc", "grpc/split", "headers/pre-split"},
-	{"headers/post-split", "headers/probe", "hosts/multiple", "dispatch/path", "dispatch/percentage"},
-	{"dispatch/path_and_percentage", "dispatch/rule", "retry", "timeout", "tls"},
-	{"update", "visibility", "visibility/split", "visibility/path", "ingressclass"},
-	{"websocket", "websocket/split"},
+	{"headers/post-split", "dispatch/path", "dispatch/percentage", "websocket", "websocket/split"},
+	{"dispatch/path_and_percentage", "dispatch/rule", "retry", "tls", "ingressclass", "timeout"},
 }
 
 type KNativeConformanceSuite struct {
@@ -70,9 +68,6 @@ func TestKNativeConformanceSuite(t *testing.T) {
 }
 
 func (s *KNativeConformanceSuite) SetupSuite() {
-	if !*kNativeConformance {
-		s.T().Skip("Skip because it can take a long time to execute. To enable pass the `kNativeConformance` flag.")
-	}
 
 	s.BaseSuite.SetupSuite()
 
@@ -235,7 +230,7 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 			}
 		}
 		result := strings.Join(remainingTests, ",")
-		err = flag.CommandLine.Set("skip-tests", result)
+		err = flag.CommandLine.Set("skip-tests", result+","+KNativeSkipTests)
 		if err != nil {
 			s.T().Fatal(err)
 		}

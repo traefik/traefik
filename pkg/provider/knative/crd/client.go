@@ -57,8 +57,8 @@ type Client interface {
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
 type clientWrapper struct {
-	csKnativeNetworking *knativenetworkingclientset.Clientset
-	csKube              *kclientset.Clientset
+	csKnativeNetworking knativenetworkingclientset.Interface
+	csKube              kclientset.Interface
 
 	factoriesKnativeNetworking map[string]knativenetworkinginformers.SharedInformerFactory
 	factoriesKube              map[string]kinformers.SharedInformerFactory
@@ -83,7 +83,7 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 	return newClientImpl(csKnativeNetworking, csKube), nil
 }
 
-func newClientImpl(csKnativeNetworking *knativenetworkingclientset.Clientset, csKube *kclientset.Clientset) *clientWrapper {
+func newClientImpl(csKnativeNetworking knativenetworkingclientset.Interface, csKube kclientset.Interface) *clientWrapper {
 	return &clientWrapper{
 		csKnativeNetworking:        csKnativeNetworking,
 		csKube:                     csKube,
