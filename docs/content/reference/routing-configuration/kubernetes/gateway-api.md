@@ -287,7 +287,7 @@ There are three types of filters:
 
 - **Core:** Mandatory filters for every Gateway controller, such as `RequestHeaderModifier` and `RequestRedirect`.
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
-- **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](./http/middleware.md).
+- **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
 !!! info "ExtensionRef Filters"
 
