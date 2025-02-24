@@ -1,5 +1,6 @@
 run:
   timeout: 10m
+  relative-path-mode: cfg
 
 linters-settings:
   govet:
@@ -165,6 +166,7 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - tenv # Deprecated
     - sqlclosecheck # not relevant (SQL)
     - rowserrcheck # not relevant (SQL)
     - cyclop # duplicate of gocyclo
@@ -201,7 +203,6 @@ linters:
     - maintidx # kind of duplicate of gocyclo
     - nonamedreturns # Too strict
     - gosmopolitan  # not relevant
-    - exportloopref # Not relevant since go1.22
 
 issues:
   exclude-use-default: false
