@@ -17,7 +17,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.8.0
-	github.com/go-acme/lego/v4 v4.21.0
+	github.com/go-acme/lego/v4 v4.22.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
@@ -63,7 +63,7 @@ require (
 	github.com/tetratelabs/wazero v1.8.0
 	github.com/tidwall/gjson v1.17.0
 	github.com/traefik/grpc-web v0.16.0
-	github.com/traefik/paerser v0.2.1
+	github.com/traefik/paerser v0.2.2
 	github.com/traefik/yaegi v0.16.1
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
@@ -169,7 +169,6 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
-	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deepmap/oapi-codegen v1.9.1 // indirect
@@ -281,6 +280,7 @@ require (
 	github.com/nrdcg/desec v0.10.0 // indirect
 	github.com/nrdcg/dnspod-go v0.4.0 // indirect
 	github.com/nrdcg/freemyip v0.3.0 // indirect
+	github.com/nrdcg/goacmedns v0.2.0 // indirect
 	github.com/nrdcg/goinwx v0.10.0 // indirect
 	github.com/nrdcg/mailinabox v0.2.0 // indirect
 	github.com/nrdcg/namesilo v0.2.1 // indirect
