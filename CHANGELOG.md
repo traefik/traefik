@@ -1,3 +1,12 @@
+# [v2.11.21](https://github.com/traefik/traefik/tree/v2.11.21) (2025-02-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.20...v2.11.21)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.22.2 ([#11537](https://github.com/traefik/traefik/pull/11537) by [ldez](https://github.com/ldez))
+- **[cli]** Bump github.com/traefik/paerser to v0.2.2 ([#11530](https://github.com/traefik/traefik/pull/11530) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Enable the retry middleware in the proxy ([#11536](https://github.com/traefik/traefik/pull/11536) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Retry should send headers on Write ([#11534](https://github.com/traefik/traefik/pull/11534) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.3](https://github.com/traefik/traefik/tree/v3.3.3) (2025-01-31)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.2...v3.3.3)
 
