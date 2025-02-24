@@ -229,8 +229,10 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			b.handlersMu.RUnlock()
 
 			// Set custom headers
-			for key, value := range handler.headers {
-				req.Header.Set(key, value)
+			if handler != nil {
+				for key, value := range handler.headers {
+					req.Header.Set(key, value)
+				}
 			}
 
 			if ok && handler != nil {
