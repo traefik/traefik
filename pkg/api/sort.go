@@ -1,10 +1,9 @@
 package api
 
 import (
+	"cmp"
 	"net/url"
 	"sort"
-
-	"golang.org/x/exp/constraints"
 )
 
 const (
@@ -357,7 +356,7 @@ func sortByName[T orderedWithName](direction string, results []T) {
 	})
 }
 
-func sortByFunc[T orderedWithName, U constraints.Ordered](direction string, results []T, fn func(int) U) {
+func sortByFunc[T orderedWithName, U cmp.Ordered](direction string, results []T, fn func(int) U) {
 	// Ascending
 	if direction == ascendantSorting {
 		sort.Slice(results, func(i, j int) bool {
