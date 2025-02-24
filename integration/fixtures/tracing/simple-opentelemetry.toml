@@ -50,7 +50,7 @@
     Rule = "Path(`/basic`)"
   [http.routers.router1]
     Service = "service1"
-    Middlewares = ["retry", "ratelimit-1"]
+    Middlewares = ["ratelimit-1"]
     Rule = "Path(`/ratelimit`)"
   [http.routers.router2]
     Service = "service2"
@@ -58,7 +58,7 @@
     Rule = "Path(`/retry`)"
   [http.routers.router3]
     Service = "service3"
-    Middlewares = ["retry", "basic-auth"]
+    Middlewares = ["basic-auth"]
     Rule = "Path(`/auth`)"
   [http.routers.customPing]
     entryPoints = ["web"]
