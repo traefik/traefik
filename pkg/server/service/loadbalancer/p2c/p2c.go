@@ -53,11 +53,11 @@ func convertSameSite(sameSite string) http.SameSite {
 	}
 }
 
-// Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
-// (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
-// Each pick from the schedule has the earliest deadline entry selected.
-// Entries have deadlines set at currentDeadline + 1 / weight,
-// providing weighted round-robin behavior with floating point weights and an O(log n) pick time.
+// Balancer implements the power-of-two-random-choices algorithm for load balancing.
+// The idea is to randomly select two of the available backends and choose the one with the fewest in-flight requests.
+// This algorithm balances the load more effectively than a round-robin approach, while maintaining a constant time for the selection:
+// The strategy also has more advantageous "herd" behaviour than the "fewest connections" algorithm, especially when the load balancer
+// doesn't have perfect knowledge of the global number of connections to the backend, for example, when running in a distributed fashion.
 type Balancer struct {
 	stickyCookie     *stickyCookie
 	wantsHealthCheck bool
@@ -85,19 +85,12 @@ type rnd interface {
 	Intn(n int) int
 }
 
-// New creates a new "the power-of-two-random-choices" load balancer.
-// strategyPowerOfTwoChoices implements "the power-of-two-random-choices" algorithm for load balancing.
-// The idea of this is two take two of the backends at random from the available backends, and select
-// the backend that has the fewest in-flight requests. This algorithm more effectively balances the
-// load than a round-robin approach, while also being constant time when picking: The strategy also
-// has more beneficial "herd" behavior than the "fewest connections" algorithm, especially when the
-// load balancer doesn't have perfect knowledge about the global number of connections to the backend,
-// for example, when running in a distributed fashion.
-func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
+// New creates a new power-of-two-random-choices load balancer.
+func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		fenced:           make(map[string]struct{}),
-		wantsHealthCheck: wantHealthCheck,
+		wantsHealthCheck: wantsHealthCheck,
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	if sticky != nil && sticky.Cookie != nil {
@@ -207,7 +200,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	h1, h2 := healthy[n1], healthy[n2]
 	// Ensure h1 has fewer inflight requests than h2.
 	if h2.inflight.Load() < h1.inflight.Load() {
-		log.Debug().Msgf("Service selected by P2C: %s", h1.name)
+		log.Debug().Msgf("Service selected by P2C: %s", h2.name)
 		return h2, nil
 	}
 

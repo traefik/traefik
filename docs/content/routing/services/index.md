@@ -226,6 +226,7 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
             servers:
             - url: "http://private-ip-server-1/"
             - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
     ```
 
     ```toml tab="TOML"
@@ -236,7 +237,9 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-1/"
         [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"
+          url = "http://private-ip-server-2/"       
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
     ```
 
 #### Sticky sessions
