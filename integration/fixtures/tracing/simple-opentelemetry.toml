@@ -50,7 +50,7 @@
     Rule = "Path(`/basic`)"
   [http.routers.router1]
     Service = "service1"
-    Middlewares = ["retry", "ratelimit-1"]
+    Middlewares = ["ratelimit-1"]
     Rule = "Path(`/ratelimit`)"
   [http.routers.router2]
     Service = "service2"
@@ -58,8 +58,12 @@
     Rule = "Path(`/retry`)"
   [http.routers.router3]
     Service = "service3"
-    Middlewares = ["retry", "basic-auth"]
+    Middlewares = ["basic-auth"]
     Rule = "Path(`/auth`)"
+  [http.routers.router4]
+    Service = "service4"
+    Middlewares = ["retry", "basic-auth"]
+    Rule = "Path(`/retry-auth`)"
   [http.routers.customPing]
     entryPoints = ["web"]
     rule = "PathPrefix(`/ping`)"
@@ -97,4 +101,10 @@
     [http.services.service3.loadBalancer]
       passHostHeader = true
       [[http.services.service3.loadBalancer.servers]]
+        url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"
+
+  [http.services.service4]
+    [http.services.service4.loadBalancer]
+      passHostHeader = true
+      [[http.services.service4.loadBalancer.servers]]
         url = "http://{{.WhoamiIP}}:{{.WhoamiPort}}"
