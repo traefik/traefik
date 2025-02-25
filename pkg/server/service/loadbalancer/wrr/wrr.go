@@ -71,11 +71,11 @@ type Balancer struct {
 }
 
 // New creates a new load balancer.
-func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
+func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		fenced:           make(map[string]struct{}),
-		wantsHealthCheck: wantHealthCheck,
+		wantsHealthCheck: wantsHealthCheck,
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{

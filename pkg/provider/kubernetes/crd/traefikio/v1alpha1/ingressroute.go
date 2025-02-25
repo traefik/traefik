@@ -112,7 +112,7 @@ type LoadBalancerSpec struct {
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
 	// Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
-	// RoundRobin value is deprecated and  supported for backward compatibility.
+	// RoundRobin value is deprecated and supported for backward compatibility.
 	// +kubebuilder:validation:Enum=wrr;p2c;RoundRobin
 	// +kubebuilder:default:=wrr
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`

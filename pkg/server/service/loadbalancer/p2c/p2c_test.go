@@ -15,31 +15,31 @@ import (
 
 func TestP2C(t *testing.T) {
 	testCases := []struct {
-		name            string
+		desc            string
 		handlers        []*namedHandler
 		rand            *mockRand
 		expectedHandler string
 	}{
 		{
-			name:            "oneHealthyHandler",
+			desc:            "one healthy handler",
 			handlers:        testHandlers(0),
 			rand:            nil,
 			expectedHandler: "0",
 		},
 		{
-			name:            "twoHandlersZeroInflight",
+			desc:            "two handlers zero in flight",
 			handlers:        testHandlers(0, 0),
 			rand:            &mockRand{vals: []int{1, 0}},
 			expectedHandler: "1",
 		},
 		{
-			name:            "choosesLowerOfTwo",
+			desc:            "chooses lower of two",
 			handlers:        testHandlers(0, 1),
 			rand:            &mockRand{vals: []int{1, 0}},
 			expectedHandler: "0",
 		},
 		{
-			name:            "choosesLowerOfThree",
+			desc:            "chooses lower of three",
 			handlers:        testHandlers(10, 90, 40),
 			rand:            &mockRand{vals: []int{1, 1}},
 			expectedHandler: "2",
@@ -47,20 +47,21 @@ func TestP2C(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			strategy := New(nil, false)
-			strategy.rand = test.rand
+
+			balancer := New(nil, false)
+			balancer.rand = test.rand
 
 			for _, h := range test.handlers {
-				strategy.handlers = append(strategy.handlers, h)
-				strategy.status[h.name] = struct{}{}
+				balancer.handlers = append(balancer.handlers, h)
+				balancer.status[h.name] = struct{}{}
 			}
 
-			got, err := strategy.nextServer()
+			got, err := balancer.nextServer()
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expectedHandler, got.name, "balancer strategy gave unexpected backend handler")
+			assert.Equal(t, test.expectedHandler, got.name)
 		})
 	}
 }
@@ -247,17 +248,15 @@ func TestSticky_Fenced(t *testing.T) {
 
 func TestStickyWithCompatibility(t *testing.T) {
 	testCases := []struct {
-		desc    string
-		servers []string
-		cookies []*http.Cookie
-
+		desc            string
+		servers         []string
+		cookies         []*http.Cookie
 		expectedCookies []*http.Cookie
 		expectedServer  string
 	}{
 		{
-			desc:    "No previous cookie",
-			servers: []string{"first"},
-
+			desc:           "No previous cookie",
+			servers:        []string{"first"},
 			expectedServer: "first",
 			expectedCookies: []*http.Cookie{
 				{Name: "test", Value: loadbalancer.Sha256Hash("first")},
