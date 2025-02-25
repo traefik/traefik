@@ -1,11 +1,13 @@
-package wrr
+package p2c
 
 import (
-	"container/heap"
 	"context"
 	"errors"
+	"math/rand"
 	"net/http"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -16,8 +18,17 @@ type namedHandler struct {
 	http.Handler
 	name       string
 	hashedName string
-	weight     float64
-	deadline   float64
+
+	// inflight is the number of inflight requests.
+	// It is used to implement the "power-of-two-random-choices" algorithm.
+	inflight atomic.Int64
+}
+
+func (h *namedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	h.inflight.Add(1)
+	defer h.inflight.Add(-1)
+
+	h.Handler.ServeHTTP(w, req)
 }
 
 type stickyCookie struct {
@@ -42,11 +53,11 @@ func convertSameSite(sameSite string) http.SameSite {
 	}
 }
 
-// Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
-// (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
-// Each pick from the schedule has the earliest deadline entry selected.
-// Entries have deadlines set at currentDeadline + 1 / weight,
-// providing weighted round-robin behavior with floating point weights and an O(log n) pick time.
+// Balancer implements the power-of-two-random-choices algorithm for load balancing.
+// The idea is to randomly select two of the available backends and choose the one with the fewest in-flight requests.
+// This algorithm balances the load more effectively than a round-robin approach, while maintaining a constant time for the selection:
+// The strategy also has more advantageous "herd" behaviour than the "fewest connections" algorithm, especially when the load balancer
+// doesn't have perfect knowledge of the global number of connections to the backend, for example, when running in a distributed fashion.
 type Balancer struct {
 	stickyCookie     *stickyCookie
 	wantsHealthCheck bool
@@ -67,15 +78,20 @@ type Balancer struct {
 	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
 
-	curDeadline float64
+	rand rnd
 }
 
-// New creates a new load balancer.
+type rnd interface {
+	Intn(n int) int
+}
+
+// New creates a new power-of-two-random-choices load balancer.
 func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		fenced:           make(map[string]struct{}),
 		wantsHealthCheck: wantsHealthCheck,
+		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -95,37 +111,6 @@ func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	}
 
 	return balancer
-}
-
-// Len implements heap.Interface/sort.Interface.
-func (b *Balancer) Len() int { return len(b.handlers) }
-
-// Less implements heap.Interface/sort.Interface.
-func (b *Balancer) Less(i, j int) bool {
-	return b.handlers[i].deadline < b.handlers[j].deadline
-}
-
-// Swap implements heap.Interface/sort.Interface.
-func (b *Balancer) Swap(i, j int) {
-	b.handlers[i], b.handlers[j] = b.handlers[j], b.handlers[i]
-}
-
-// Push implements heap.Interface for pushing an item into the heap.
-func (b *Balancer) Push(x interface{}) {
-	h, ok := x.(*namedHandler)
-	if !ok {
-		return
-	}
-
-	b.handlers = append(b.handlers, h)
-}
-
-// Pop implements heap.Interface for popping an item from the heap.
-// It panics if b.Len() < 1.
-func (b *Balancer) Pop() interface{} {
-	h := b.handlers[len(b.handlers)-1]
-	b.handlers = b.handlers[0 : len(b.handlers)-1]
-	return h
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
@@ -183,33 +168,44 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
-	b.handlersMu.Lock()
-	defer b.handlersMu.Unlock()
-
-	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
-		return nil, errNoAvailableServer
-	}
-
-	var handler *namedHandler
-	for {
-		// Pick handler with closest deadline.
-		handler = heap.Pop(b).(*namedHandler)
-
-		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
-		b.curDeadline = handler.deadline
-		handler.deadline += 1 / handler.weight
-
-		heap.Push(b, handler)
-		if _, ok := b.status[handler.name]; ok {
-			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler.
-				break
+	// We kept the same representation (map) as in the WRR strategy to improve maintainability.
+	// However, with the P2C strategy, we only need a slice of healthy servers.
+	b.handlersMu.RLock()
+	var healthy []*namedHandler
+	for _, h := range b.handlers {
+		if _, ok := b.status[h.name]; ok {
+			if _, fenced := b.fenced[h.name]; !fenced {
+				healthy = append(healthy, h)
 			}
 		}
 	}
+	b.handlersMu.RUnlock()
 
-	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
-	return handler, nil
+	if len(healthy) == 0 {
+		return nil, errNoAvailableServer
+	}
+
+	// If there is only one healthy server, return it.
+	if len(healthy) == 1 {
+		return healthy[0], nil
+	}
+	// In order to not get the same backend twice, we make the second call to s.rand.IntN one fewer
+	// than the length of the slice. We then have to shift over the second index if it is equal or
+	// greater than the first index, wrapping round if needed.
+	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
+	if n2 == n1 {
+		n2 = (n2 + 1) % len(healthy)
+	}
+
+	h1, h2 := healthy[n1], healthy[n2]
+	// Ensure h1 has fewer inflight requests than h2.
+	if h2.inflight.Load() < h1.inflight.Load() {
+		log.Debug().Msgf("Service selected by P2C: %s", h2.name)
+		return h2, nil
+	}
+
+	log.Debug().Msgf("Service selected by P2C: %s", h1.name)
+	return h1, nil
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -285,28 +281,12 @@ func (b *Balancer) writeStickyCookie(w http.ResponseWriter, handler *namedHandle
 
 // AddServer adds a handler with a server.
 func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.Server) {
-	b.Add(name, handler, server.Weight, server.Fenced)
-}
-
-// Add adds a handler.
-// A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
-	w := 1
-	if weight != nil {
-		w = *weight
-	}
-
-	if w <= 0 { // non-positive weight is meaningless
-		return
-	}
-
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{Handler: handler, name: name}
 
 	b.handlersMu.Lock()
-	h.deadline = b.curDeadline + 1/h.weight
-	heap.Push(b, h)
+	b.handlers = append(b.handlers, h)
 	b.status[name] = struct{}{}
-	if fenced {
+	if server.Fenced {
 		b.fenced[name] = struct{}{}
 	}
 

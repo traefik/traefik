@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
 func pointer[T any](v T) *T { return &v }
@@ -263,8 +264,8 @@ func TestSticky(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 3 {
 		for _, cookie := range recorder.Result().Cookies() {
-			assert.NotContains(t, "test=first", cookie.Value)
-			assert.NotContains(t, "test=second", cookie.Value)
+			assert.NotContains(t, "first", cookie.Value)
+			assert.NotContains(t, "second", cookie.Value)
 			req.AddCookie(cookie)
 		}
 		recorder.ResponseRecorder = httptest.NewRecorder()
@@ -407,14 +408,14 @@ func TestStickyWithCompatibility(t *testing.T) {
 
 			expectedServer: "first",
 			expectedCookies: []*http.Cookie{
-				{Name: "test", Value: sha256Hash("first")},
+				{Name: "test", Value: loadbalancer.Sha256Hash("first")},
 			},
 		},
 		{
 			desc:    "Sha256 previous cookie",
 			servers: []string{"first", "second"},
 			cookies: []*http.Cookie{
-				{Name: "test", Value: sha256Hash("first")},
+				{Name: "test", Value: loadbalancer.Sha256Hash("first")},
 			},
 			expectedServer:  "first",
 			expectedCookies: []*http.Cookie{},
@@ -427,29 +428,29 @@ func TestStickyWithCompatibility(t *testing.T) {
 			},
 			expectedServer: "first",
 			expectedCookies: []*http.Cookie{
-				{Name: "test", Value: sha256Hash("first")},
+				{Name: "test", Value: loadbalancer.Sha256Hash("first")},
 			},
 		},
 		{
 			desc:    "Fnv previous cookie",
 			servers: []string{"first", "second"},
 			cookies: []*http.Cookie{
-				{Name: "test", Value: fnvHash("first")},
+				{Name: "test", Value: loadbalancer.FnvHash("first")},
 			},
 			expectedServer: "first",
 			expectedCookies: []*http.Cookie{
-				{Name: "test", Value: sha256Hash("first")},
+				{Name: "test", Value: loadbalancer.Sha256Hash("first")},
 			},
 		},
 		{
 			desc:    "Double fnv previous cookie",
 			servers: []string{"first", "second"},
 			cookies: []*http.Cookie{
-				{Name: "test", Value: fnvHash(fnvHash("first"))},
+				{Name: "test", Value: loadbalancer.FnvHash("first")},
 			},
 			expectedServer: "first",
 			expectedCookies: []*http.Cookie{
-				{Name: "test", Value: sha256Hash("first")},
+				{Name: "test", Value: loadbalancer.Sha256Hash("first")},
 			},
 		},
 	}

@@ -139,6 +139,47 @@ The `url` option point to a specific instance.
           url = "http://private-ip-server-1/"
     ```
 
+The `preservePath` option allows to preserve the URL path.
+
+!!! info "Health Check"
+
+    When a [health check](#health-check) is configured for the server, the path is not preserved.
+
+??? example "A Service with One Server and PreservePath -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              - url: "http://private-ip-server-1/base"
+                preservePath: true
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/base"
+          preservePath = true
+    ```
+
+#### Load Balancing Strategy
+
+The `strategy` option allows to choose the load balancing algorithm.
+
+Two load balancing algorithms are supported:
+
+- Weighed round-robin (wrr)
+- Power of two choices (p2c)
+
+##### WRR
+
+Weighed round-robin is the default strategy (and does not need to be specified).
+
 The `weight` option allows for weighted load balancing on the servers.
 
 ??? example "A Service with Two Servers with Weight -- Using the [File Provider](../../providers/file.md)"
@@ -169,13 +210,11 @@ The `weight` option allows for weighted load balancing on the servers.
           weight = 1
     ```
 
-The `preservePath` option allows to preserve the URL path.
+##### P2C
 
-!!! info "Health Check"
+Power of two choices algorithm is a load balancing strategy that selects two servers at random and chooses the one with the least number of active requests.
 
-    When a [health check](#health-check) is configured for the server, the path is not preserved.
-
-??? example "A Service with One Server and PreservePath -- Using the [File Provider](../../providers/file.md)"
+??? example "P2C Load Balancing -- Using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="YAML"
     ## Dynamic configuration
@@ -183,45 +222,24 @@ The `preservePath` option allows to preserve the URL path.
       services:
         my-service:
           loadBalancer:
-            servers:
-              - url: "http://private-ip-server-1/base"
-                preservePath: true
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.my-service.loadBalancer]
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-1/base"
-          preservePath = true
-    ```
-
-#### Load-balancing
-
-For now, only round robin load balancing is supported:
-
-??? example "Load Balancing -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        my-service:
-          loadBalancer:
+            strategy: "p2c"
             servers:
             - url: "http://private-ip-server-1/"
             - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
     ```
 
     ```toml tab="TOML"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
+        strategy = "p2c"
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-1/"
         [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"
+          url = "http://private-ip-server-2/"       
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
     ```
 
 #### Sticky sessions
