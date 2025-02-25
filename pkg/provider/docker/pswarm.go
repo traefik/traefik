@@ -221,10 +221,16 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
 	logger := log.Ctx(ctx)
 
+	status := "running"
+	if service.ServiceStatus.RunningTasks == 0 {
+		status = "stopped"
+	}
+
 	dData := dockerData{
 		ID:              service.ID,
 		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
+		Status:          status,
 		Labels:          service.Spec.Annotations.Labels,
 		NetworkSettings: networkSettings{},
 	}
@@ -297,6 +303,7 @@ func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData doc
 	dData := dockerData{
 		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
+		Status:          string(task.Status.State),
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
 		ExtraConf:       serviceDockerData.ExtraConf,
