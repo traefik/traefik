@@ -279,6 +279,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
+| `traefik/http/services/Service02/loadBalancer/strategy` | `foobar` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
 | `traefik/http/services/Service03/mirroring/maxBodySize` | `42` |
 | `traefik/http/services/Service03/mirroring/mirrorBody` | `true` |
