@@ -1387,6 +1387,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-whoami-ipv6-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:8080",
@@ -1400,6 +1401,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 						"default-external-svc-with-ipv6-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://[2001:db8:85a3:8d3:1319:8a2e:370:7347]:8080",
@@ -6118,6 +6120,7 @@ func TestCrossNamespace(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6196,6 +6199,7 @@ func TestCrossNamespace(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-crossnamespace-route-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6212,6 +6216,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6228,6 +6233,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"default-test-errorpage-errorpage-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6244,6 +6250,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"default-test-crossnamespace-route-a1963878aac7331b7950": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6323,6 +6330,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"default-cross-ns-route-1bc3efa892379bb93c6e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6340,6 +6348,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"cross-ns-whoami-svc-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6398,6 +6407,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"default-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -7301,6 +7311,7 @@ func TestExternalNameService(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://external.domain:80",
@@ -7568,6 +7579,7 @@ func TestNativeLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								Servers: []dynamic.Server{
 									{
@@ -7749,6 +7761,7 @@ func TestNodePortLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								Servers: []dynamic.Server{
 									{
@@ -8192,6 +8205,7 @@ func TestGlobalNativeLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-global-native-lb-6f97418635c7e18853da": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								Servers: []dynamic.Server{
 									{
@@ -8234,6 +8248,7 @@ func TestGlobalNativeLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								Servers: []dynamic.Server{
 									{

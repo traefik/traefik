@@ -91,4 +91,5 @@ spec:
       priority: 12
       services:
         - name: whoami-svc-multiple-endpointslices
+          strategy: wrr
           port: 8080

@@ -69,6 +69,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -132,6 +133,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -197,6 +199,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -254,6 +257,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -311,6 +315,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -374,6 +379,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -606,6 +612,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -689,6 +696,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -702,6 +710,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 						},
 						"Test2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:80",
@@ -782,6 +791,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -849,6 +859,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -914,6 +925,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -971,6 +983,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1041,6 +1054,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1101,6 +1115,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1114,6 +1129,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 						},
 						"Service2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1178,6 +1194,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1421,6 +1438,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1487,6 +1505,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1584,6 +1603,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1671,6 +1691,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1777,6 +1798,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1861,6 +1883,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1961,6 +1984,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2050,6 +2074,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2129,6 +2154,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2142,6 +2168,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 						},
 						"Test2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:80",
@@ -2206,6 +2233,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2271,6 +2299,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://127.0.0.1:8080",
@@ -2330,6 +2359,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2343,6 +2373,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 						},
 						"Service2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8080",
@@ -2407,6 +2438,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://1.2.3.4:5678",
@@ -2472,6 +2504,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL:          "http://1.2.3.4:5678",
@@ -2772,6 +2805,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
 								PassHostHeader: pointer(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
@@ -3032,6 +3066,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -3107,6 +3142,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -3578,6 +3614,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -3762,6 +3799,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://192.168.0.1:8081",
@@ -3825,6 +3863,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:79",

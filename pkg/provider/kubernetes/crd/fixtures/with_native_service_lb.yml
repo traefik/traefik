@@ -13,5 +13,6 @@ spec:
     kind: Rule
     services:
     - name: native-svc
+      strategy: wrr
       port: 80
       nativeLB: true

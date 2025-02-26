@@ -21,9 +21,8 @@ import (
 )
 
 const (
-	roundRobinStrategy = "RoundRobin"
-	httpsProtocol      = "https"
-	httpProtocol       = "http"
+	httpsProtocol = "https"
+	httpProtocol  = "http"
 )
 
 func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
@@ -321,13 +320,30 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
 func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+
+	switch svc.Strategy {
+	case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
+		lb.Strategy = svc.Strategy
+
+	case "RoundRobin":
+		lb.Strategy = dynamic.BalancerStrategyWRR
+
+		log.Warn().
+			Str("namespace", namespace).
+			Str("service", svc.Name).
+			Msgf("RoundRobin strategy value is deprecated, please use %s value instead", dynamic.BalancerStrategyWRR)
+
+	default:
+		return nil, fmt.Errorf("load-balancer strategy %s is not supported", svc.Strategy)
+	}
+
 	servers, err := c.loadServers(namespace, svc)
 	if err != nil {
 		return nil, err
 	}
 
-	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
 	lb.Servers = servers
 
 	if svc.HealthCheck != nil {
@@ -419,14 +435,6 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 }
 
 func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
-	strategy := svc.Strategy
-	if strategy == "" {
-		strategy = roundRobinStrategy
-	}
-	if strategy != roundRobinStrategy {
-		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
-	}
-
 	namespace := namespaceOrFallback(svc, parentNamespace)
 
 	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
