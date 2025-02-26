@@ -323,11 +323,18 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	switch svc.Strategy {
+	strategy := svc.Strategy
+	if strategy == "" {
+		strategy = dynamic.BalancerStrategyWRR
+	}
+
+	switch strategy {
 	case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
-		lb.Strategy = svc.Strategy
+		lb.Strategy = strategy
 
 	case "RoundRobin":
+		lb.Strategy = dynamic.BalancerStrategyWRR
+
 		log.Warn().
 			Str("namespace", namespace).
 			Str("service", svc.Name).

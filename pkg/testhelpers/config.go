@@ -70,6 +70,8 @@ func WithLoadBalancerServices(opts ...func(service *dynamic.ServersLoadBalancer)
 		c.Services = make(map[string]*dynamic.Service)
 		for _, opt := range opts {
 			b := &dynamic.ServersLoadBalancer{}
+			b.SetDefaults()
+
 			name := opt(b)
 			c.Services[name] = &dynamic.Service{
 				LoadBalancer: b,
