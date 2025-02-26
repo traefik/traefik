@@ -14,6 +14,7 @@ spec:
     priority: 12
     services:
     - name: whoami
+      strategy: wrr
       namespace: default
       port: 80
     middlewares:
@@ -24,6 +25,7 @@ spec:
     priority: 12
     services:
     - name: whoami
+      strategy: wrr
       namespace: default
       port: 80
     middlewares:
@@ -33,6 +35,7 @@ spec:
     priority: 12
     services:
     - name: whoami
+      strategy: wrr
       namespace: default
       port: 80
     middlewares:

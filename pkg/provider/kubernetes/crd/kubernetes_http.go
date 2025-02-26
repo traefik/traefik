@@ -328,6 +328,8 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		lb.Strategy = svc.Strategy
 
 	case "RoundRobin":
+		lb.Strategy = dynamic.BalancerStrategyWRR
+
 		log.Warn().
 			Str("namespace", namespace).
 			Str("service", svc.Name).

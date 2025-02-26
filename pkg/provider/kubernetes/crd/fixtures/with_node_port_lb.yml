@@ -13,6 +13,7 @@ spec:
     kind: Rule
     services:
     - name: nodeport-svc
+      strategy: wrr
       port: 80
       nodePortLB: true
 
