@@ -26,6 +26,7 @@ spec:
       kind: Rule
       services:
         - name: whoami
+          
           port: 80
       middlewares:
         - name: multiple---hyphens

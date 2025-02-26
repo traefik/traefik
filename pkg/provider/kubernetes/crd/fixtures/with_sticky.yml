@@ -15,6 +15,7 @@ spec:
         maxAge: 42
     services:
       - name: whoami3
+        
         port: 8443
 
 ---
@@ -35,6 +36,7 @@ spec:
         path: /foo
     services:
       - name: whoami3
+        
         port: 8443
 
 ---
@@ -61,6 +63,7 @@ spec:
       kind: Rule
       services:
         - name: whoami
+          
           port: 80
           sticky:
             cookie:
@@ -71,6 +74,7 @@ spec:
               maxAge: 42
               path: /foo
         - name: whoami2
+          
           port: 8080
           sticky:
             cookie:

@@ -44,7 +44,7 @@ spec:
   weighted:
     services:
       - name: whoami5
-        kind: Service
+        
         weight: 1
         port: 8080
 
