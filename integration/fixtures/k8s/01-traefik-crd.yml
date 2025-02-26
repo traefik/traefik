@@ -280,9 +280,15 @@ spec:
                                 type: object
                             type: object
                           strategy:
+                            default: wrr
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
-                              RoundRobin is the only supported value at the moment.
+                              Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                              RoundRobin value is deprecated and  supported for backward compatibility.
+                            enum:
+                            - wrr
+                            - p2c
+                            - RoundRobin
                             type: string
                           weight:
                             description: |-
@@ -1177,9 +1183,15 @@ spec:
                             type: object
                         type: object
                       strategy:
+                        default: wrr
                         description: |-
                           Strategy defines the load balancing strategy between the servers.
-                          RoundRobin is the only supported value at the moment.
+                          Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                          RoundRobin value is deprecated and  supported for backward compatibility.
+                        enum:
+                        - wrr
+                        - p2c
+                        - RoundRobin
                         type: string
                       weight:
                         description: |-
@@ -2760,9 +2772,15 @@ spec:
                               type: object
                           type: object
                         strategy:
+                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            RoundRobin is the only supported value at the moment.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and  supported for backward compatibility.
+                          enum:
+                          - wrr
+                          - p2c
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
@@ -2872,9 +2890,15 @@ spec:
                         type: object
                     type: object
                   strategy:
+                    default: wrr
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
-                      RoundRobin is the only supported value at the moment.
+                      Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                      RoundRobin value is deprecated and  supported for backward compatibility.
+                    enum:
+                    - wrr
+                    - p2c
+                    - RoundRobin
                     type: string
                   weight:
                     description: |-
@@ -3062,9 +3086,15 @@ spec:
                               type: object
                           type: object
                         strategy:
+                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            RoundRobin is the only supported value at the moment.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and  supported for backward compatibility.
+                          enum:
+                          - wrr
+                          - p2c
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
