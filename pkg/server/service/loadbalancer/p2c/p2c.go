@@ -16,33 +16,35 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name string
 
+	// name is the handler name.
+	name string
 	// inflight is the number of inflight requests.
 	// It is used to implement the "power-of-two-random-choices" algorithm.
 	inflight atomic.Int64
 }
 
-func (h *namedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (h *namedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	h.inflight.Add(1)
 	defer h.inflight.Add(-1)
 
-	h.Handler.ServeHTTP(w, req)
+	h.Handler.ServeHTTP(rw, req)
+}
+
+type rnd interface {
+	Intn(n int) int
 }
 
 // Balancer implements the power-of-two-random-choices algorithm for load balancing.
 // The idea is to randomly select two of the available backends and choose the one with the fewest in-flight requests.
 // This algorithm balances the load more effectively than a round-robin approach, while maintaining a constant time for the selection:
-// The strategy also has more advantageous "herd" behaviour than the "fewest connections" algorithm, especially when the load balancer
+// The strategy also has more advantageous "herd" behavior than the "fewest connections" algorithm, especially when the load balancer
 // doesn't have perfect knowledge of the global number of connections to the backend, for example, when running in a distributed fashion.
 type Balancer struct {
 	wantsHealthCheck bool
 
 	handlersMu sync.RWMutex
-	// References all the handlers by name and also by the hashed value of the name.
-	//stickyMap              map[string]*namedHandler
-	//compatibilityStickyMap map[string]*namedHandler
-	handlers []*namedHandler
+	handlers   []*namedHandler
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
 	// created via Add, and it is later removed or added to the map as needed,
@@ -59,36 +61,17 @@ type Balancer struct {
 	rand rnd
 }
 
-type rnd interface {
-	Intn(n int) int
-}
-
 // New creates a new power-of-two-random-choices load balancer.
-func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
+func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
 		fenced:           make(map[string]struct{}),
 		wantsHealthCheck: wantsHealthCheck,
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
-
-	balancer.sticky = loadbalancer.New(sticky)
-	//if sticky != nil && sticky.Cookie != nil {
-	//	balancer.stickyCookie = &stickyCookie{
-	//		name:     sticky.Cookie.Name,
-	//		secure:   sticky.Cookie.Secure,
-	//		httpOnly: sticky.Cookie.HTTPOnly,
-	//		sameSite: sticky.Cookie.SameSite,
-	//		maxAge:   sticky.Cookie.MaxAge,
-	//		path:     "/",
-	//	}
-	//	if sticky.Cookie.Path != nil {
-	//		balancer.stickyCookie.path = *sticky.Cookie.Path
-	//	}
-	//
-	//	balancer.stickyMap = make(map[string]*namedHandler)
-	//	balancer.compatibilityStickyMap = make(map[string]*namedHandler)
-	//}
+	if stickyConfig != nil && stickyConfig.Cookie != nil {
+		balancer.sticky = loadbalancer.NewSticky(*stickyConfig.Cookie)
+	}
 
 	return balancer
 }
@@ -188,17 +171,20 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	return h1, nil
 }
 
-func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if b.sticky != nil {
-		if stickyHandler, rewrite := b.sticky.GetStickyHandler(req); stickyHandler != nil {
-			if _, ok := b.status[stickyHandler.Name]; ok {
+		h, rewrite, err := b.sticky.StickyHandler(req)
+		if err != nil {
+			log.Error().Err(err).Msg("Error while getting sticky handler")
+		} else if h != nil {
+			if _, ok := b.status[h.Name]; ok {
 				if rewrite {
-					if err := b.sticky.WriteStickyCookie(w, stickyHandler.Name); err != nil {
+					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")
 					}
 				}
 
-				stickyHandler.ServeHTTP(w, req)
+				h.ServeHTTP(rw, req)
 				return
 			}
 		}
@@ -207,20 +193,20 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	server, err := b.nextServer()
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
-			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
+			http.Error(rw, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	if b.sticky != nil {
-		if err := b.sticky.WriteStickyCookie(w, server.name); err != nil {
-			log.Error().Err(err).Msg("Writing sticky cookie")
+		if err := b.sticky.WriteStickyCookie(rw, server.name); err != nil {
+			log.Error().Err(err).Msg("Error while writing sticky cookie")
 		}
 	}
 
-	server.ServeHTTP(w, req)
+	server.ServeHTTP(rw, req)
 }
 
 // AddServer adds a handler with a server.
@@ -233,9 +219,9 @@ func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.S
 	if server.Fenced {
 		b.fenced[name] = struct{}{}
 	}
+	b.handlersMu.Unlock()
 
 	if b.sticky != nil {
-		b.sticky.Add(name, h)
+		b.sticky.AddHandler(name, h)
 	}
-	b.handlersMu.Unlock()
 }
