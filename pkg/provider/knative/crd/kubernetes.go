@@ -213,8 +213,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							Configuration: conf,
 						}
 						time.Sleep(5 * time.Second) // Wait for the routes to be updated before updating ingress
-						// status. Not having this acn lead to conformance tests failing intermittently as the routes
-						// as soon as the status is set to ready.
+						// status. Not having this can lead to conformance tests failing intermittently as the routes
+						//are queried as soon as the status is set to ready.
 						for _, ingress := range ingressStatusList {
 							if err := p.updateKnativeIngressStatus(k8sClient, ingress); err != nil {
 								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
