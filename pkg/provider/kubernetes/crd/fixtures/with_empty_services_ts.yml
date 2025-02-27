@@ -31,6 +31,7 @@ spec:
   weighted:
     services:
       - name: whoami-without-endpointslice-endpoints
+        
         weight: 1
         port: 80
 
@@ -47,6 +48,7 @@ spec:
     port: 80
     mirrors:
       - name: whoami-without-endpointslice-endpoints
+        
         port: 80
       - name: test-weighted
         kind: TraefikService
@@ -62,4 +64,5 @@ spec:
   errors:
     service:
       name: whoami-without-endpointslice-endpoints
+      
       port: 80

@@ -29,6 +29,7 @@ spec:
   weighted:
     services:
       - name: whoami5
+        
         weight: 1
         port: 8080
 
@@ -61,6 +62,7 @@ spec:
       kind: TraefikService
       weight: 1
     - name: whoami5
+      
       weight: 1
       port: 8080
 

@@ -144,8 +144,10 @@ spec:
       kind: Rule
       services:
         - name: external-svc-with-https
+          
           port: 443
           serversTransport: test
         - name: whoamitls
+          
           port: 443
           serversTransport: default-test

@@ -13,4 +13,5 @@ spec:
     kind: Rule
     services:
     - name: native-svc
+      
       port: 80

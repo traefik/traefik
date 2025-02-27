@@ -79,6 +79,7 @@ spec:
   weighted:
     services:
       - name: whoami5
+        
         weight: 1
         port: 8080
 
@@ -95,6 +96,7 @@ spec:
     port: 8080
     mirrors:
       - name: whoami4
+        
         percent: 50
         port: 8080
 
@@ -112,6 +114,7 @@ spec:
       kind: TraefikService
       weight: 1
     - name: whoami5
+      
       weight: 1
       port: 8080
     - name: mirror1
@@ -135,4 +138,5 @@ spec:
     priority: 12
     services:
     - name: wrr1
+      
       kind: TraefikService

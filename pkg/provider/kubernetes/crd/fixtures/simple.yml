@@ -18,4 +18,5 @@ spec:
       metrics: true
     services:
     - name: whoami
+      
       port: 80

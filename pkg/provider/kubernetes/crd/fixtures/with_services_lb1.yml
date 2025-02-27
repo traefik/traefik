@@ -149,9 +149,11 @@ spec:
   weighted:
     services:
       - name: whoami4
+        
         port: 80
         weight: 1
       - name: whoami5
+        
         port: 8080
         weight: 1
 
@@ -166,9 +168,11 @@ spec:
   weighted:
     services:
       - name: whoami6
+        
         port: 80
         weight: 1
       - name: whoami7
+        
         port: 8080
         weight: 1
 

@@ -15,6 +15,7 @@ spec:
       services:
       - name: whoami-svc
         namespace: cross-ns
+        
         port: 80
       - name: tr-svc-wrr1
         kind: TraefikService
@@ -32,6 +33,7 @@ spec:
       services:
         - name: whoami-svc
           namespace: cross-ns
+          
           port: 80
           serversTransport: foo-test@kubernetescrd
 
@@ -47,6 +49,7 @@ spec:
     services:
       - name: whoami-svc
         namespace: cross-ns
+        
         weight: 1
         port: 80
 
@@ -61,6 +64,7 @@ spec:
   weighted:
     services:
       - name: whoami-svc
+        
         weight: 1
         port: 80
 
@@ -78,6 +82,7 @@ spec:
     mirrors:
       - name: whoami-svc
         namespace: cross-ns
+        
         percent: 20
         port: 80
 
@@ -95,6 +100,7 @@ spec:
     mirrors:
       - name: whoami-svc
         namespace: cross-ns
+        
         percent: 20
         port: 80
 

@@ -13,4 +13,5 @@ spec:
     kind: Rule
     services:
     - name: external-svc-with-http
+      
       port: 80

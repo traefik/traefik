@@ -14,7 +14,9 @@ spec:
     priority: 12
     services:
     - name: whoami
+      
       port: 80
     - name: whoami2
+      
       port: 8080
 
