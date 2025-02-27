@@ -157,6 +157,7 @@
 						"url": "http://10.42.0.5:80"
 					}
 				],
+				"strategy": "wrr",
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
@@ -182,6 +183,7 @@
 						"url": "http://10.42.0.5:80"
 					}
 				],
+				"strategy": "wrr",
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"

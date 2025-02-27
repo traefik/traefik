@@ -126,6 +126,7 @@
 						"url": "http://10.42.0.6:80"
 					}
 				],
+				"strategy": "wrr",
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
