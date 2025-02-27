@@ -228,7 +228,7 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 	tlsConfigs := make(map[string]*tls.CertAndStores)
 
 	ctx := context.Background()
-	conf := provider.loadKnativeIngressRouteConfiguration(ctx, mockClient, tlsConfigs)
+	conf, ingressStatusList := provider.loadKnativeIngressRouteConfiguration(ctx, mockClient, tlsConfigs)
 
 	require.NotNil(t, conf)
 	assert.NotEmpty(t, conf.Routers)
@@ -239,4 +239,9 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 	assert.Equal(t, "web", router.EntryPoints[0])
 	assert.Equal(t, "(Host(`example.com`)) && PathPrefix(`/`)", router.Rule)
 	assert.Equal(t, "default-test-service-80", router.Service)
+
+	require.NotNil(t, ingressStatusList)
+	assert.NotEmpty(t, ingressStatusList)
+	assert.Equal(t, "example-ingress", ingressStatusList[0].Name)
+	assert.Equal(t, "default", ingressStatusList[0].Namespace)
 }

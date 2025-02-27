@@ -28,12 +28,13 @@ const (
 
 func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client,
 	tlsConfigs map[string]*tls.CertAndStores,
-) *dynamic.HTTPConfiguration {
+) (*dynamic.HTTPConfiguration, []*knativenetworkingv1alpha1.Ingress) {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},
 		Services:    map[string]*dynamic.Service{},
 	}
+	var ingressStatusList []*knativenetworkingv1alpha1.Ingress
 
 	for _, ingressRoute := range client.GetKnativeIngressRoutes() {
 		logger := log.Ctx(ctx).With().Str("KNativeIngress", ingressRoute.Name).Str("namespace",
@@ -97,13 +98,10 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 				}
 			}
 			conf.Routers[provider.Normalize(result.ServiceKey)] = r
-		}
-		if err := p.updateKnativeIngressStatus(client, ingressRoute); err != nil {
-			logger.Error().Err(err).Msgf("error %v", err)
-			return nil
+			ingressStatusList = append(ingressStatusList, ingressRoute)
 		}
 	}
-	return conf
+	return conf, ingressStatusList
 }
 
 type configBuilder struct {
@@ -292,34 +290,6 @@ func makeID(s1, s2 string) string {
 		return s1
 	}
 	return fmt.Sprintf("%s-%s", s1, s2)
-}
-
-func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knativenetworkingv1alpha1.Ingress) error {
-	log.Ctx(context.Background()).Debug().Msgf("Updating status for Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
-	log.Ctx(context.Background()).Debug().Msgf("ingressRoute.GetStatus() %v", ingressRoute.GetStatus())
-	if ingressRoute.GetStatus() == nil ||
-		!ingressRoute.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
-		ingressRoute.GetGeneration() != ingressRoute.GetStatus().ObservedGeneration {
-		ingressRoute.Status.MarkLoadBalancerReady(
-			// public lbs
-			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-				Domain:         p.LoadBalancerDomain,
-				DomainInternal: p.LoadBalancerDomainInternal,
-				IP:             p.LoadBalancerIP,
-			}},
-			// private lbs
-			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-				Domain:         p.LoadBalancerDomain,
-				DomainInternal: p.LoadBalancerDomainInternal,
-				IP:             p.LoadBalancerIP,
-			}},
-		)
-
-		ingressRoute.Status.MarkNetworkConfigured()
-		ingressRoute.Status.ObservedGeneration = ingressRoute.GetGeneration()
-		return client.UpdateKnativeIngressStatus(ingressRoute)
-	}
-	return nil
 }
 
 // parseServiceProtocol parses the scheme, port name, and number to determine the correct protocol.

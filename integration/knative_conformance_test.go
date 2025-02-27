@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"slices"
-	"strings"
 	"testing"
 	"time"
 
@@ -47,11 +46,6 @@ var imageNames = []string{
 	"ko.local/runtime:latest",
 	"ko.local/wsserver:latest",
 	"ko.local/timeout:latest",
-}
-var allTests = [][]string{
-	{"basics", "basics/http2", "grpc", "grpc/split", "headers/pre-split"},
-	{"headers/post-split", "dispatch/path", "dispatch/percentage", "websocket", "websocket/split"},
-	{"dispatch/path_and_percentage", "dispatch/rule", "retry", "tls", "ingressclass", "timeout"},
 }
 
 type KNativeConformanceSuite struct {
@@ -222,19 +216,10 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 		s.T().Fatal(err)
 	}
 
-	for i := 0; i < len(allTests); i++ {
-		var remainingTests []string
-		for j, batch := range allTests {
-			if i != j {
-				remainingTests = append(remainingTests, batch...)
-			}
-		}
-		result := strings.Join(remainingTests, ",")
-		err = flag.CommandLine.Set("skip-tests", result+","+KNativeSkipTests)
-		if err != nil {
-			s.T().Fatal(err)
-		}
-		ingress.RunConformance(s.T())
+	err = flag.CommandLine.Set("skip-tests", KNativeSkipTests)
+	if err != nil {
+		s.T().Fatal(err)
 	}
+	ingress.RunConformance(s.T())
 
 }

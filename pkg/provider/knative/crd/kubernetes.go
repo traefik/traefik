@@ -21,6 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
+	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 )
 
 const (
@@ -188,8 +189,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
 					tlsConfigs := make(map[string]*tls.CertAndStores)
+					httpConf, ingressStatusList := p.loadKnativeIngressRouteConfiguration(context.Background(), k8sClient,
+						tlsConfigs)
 					conf := &dynamic.Configuration{
-						HTTP: p.loadKnativeIngressRouteConfiguration(context.Background(), k8sClient, tlsConfigs),
+						HTTP: httpConf,
 					}
 
 					if len(tlsConfigs) > 0 {
@@ -208,6 +211,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						configurationChan <- dynamic.Message{
 							ProviderName:  providerName,
 							Configuration: conf,
+						}
+						time.Sleep(5 * time.Second) // Wait for the routes to be updated before updating ingress
+						// status. Not having this acn lead to conformance tests failing intermittently as the routes
+						// as soon as the status is set to ready.
+						for _, ingress := range ingressStatusList {
+							if err := p.updateKnativeIngressStatus(k8sClient, ingress); err != nil {
+								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
+							}
 						}
 					}
 
@@ -228,6 +239,33 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 	})
 
+	return nil
+}
+
+func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knativenetworkingv1alpha1.Ingress) error {
+	log.Ctx(context.Background()).Debug().Msgf("Updating status for Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
+	if ingressRoute.GetStatus() == nil ||
+		!ingressRoute.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
+		ingressRoute.GetGeneration() != ingressRoute.GetStatus().ObservedGeneration {
+		ingressRoute.Status.MarkLoadBalancerReady(
+			// public lbs
+			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
+				Domain:         p.LoadBalancerDomain,
+				DomainInternal: p.LoadBalancerDomainInternal,
+				IP:             p.LoadBalancerIP,
+			}},
+			// private lbs
+			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
+				Domain:         p.LoadBalancerDomain,
+				DomainInternal: p.LoadBalancerDomainInternal,
+				IP:             p.LoadBalancerIP,
+			}},
+		)
+
+		ingressRoute.Status.MarkNetworkConfigured()
+		ingressRoute.Status.ObservedGeneration = ingressRoute.GetGeneration()
+		return client.UpdateKnativeIngressStatus(ingressRoute)
+	}
 	return nil
 }
 

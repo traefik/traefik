@@ -21,6 +21,7 @@ function upload_test_images() {
   (
     # Script needs to be executed from repo root
     cd "$( dirname "$0")/../../.."
+    echo "Current working directory: $(pwd)"
     local image_dir="vendor/knative.dev/networking/test/test_images"
     local docker_tag=$1
     local tag_option=""
