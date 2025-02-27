@@ -47,6 +47,8 @@ jobs:
 
       - name: Upload Test Images
         run: |
+          # Download the test image templates for building integration/fixtures/knative/tools.go
+          go build -tags tools
           # Build and Publish our test images to the docker daemon.
           ./integration/fixtures/knative/upload-test-images.sh
 
