@@ -13,6 +13,8 @@ spec:
       kind: Rule
       services:
         - name: whoami-ipv6
+          
           port: 8080
         - name: external-svc-with-ipv6
+          
           port: 8080

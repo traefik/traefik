@@ -12,4 +12,5 @@ spec:
     query: query
     service:
       name: whoami
+      
       port: 80

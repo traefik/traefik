@@ -79,6 +79,7 @@ spec:
   weighted:
     services:
       - name: whoami5
+        
         weight: 1
         port: 8080
 
@@ -93,6 +94,7 @@ spec:
   weighted:
     services:
       - name: whoami4
+        
         weight: 1
         port: 8080
 

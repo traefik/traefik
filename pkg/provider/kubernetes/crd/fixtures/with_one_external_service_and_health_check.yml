@@ -16,6 +16,7 @@ spec:
 
     services:
     - name: external-svc
+      
       port: 443
       healthCheck:
         path: /health

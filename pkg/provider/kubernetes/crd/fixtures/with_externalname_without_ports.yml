@@ -13,3 +13,4 @@ spec:
     kind: Rule
     services:
     - name: external-svc
+      

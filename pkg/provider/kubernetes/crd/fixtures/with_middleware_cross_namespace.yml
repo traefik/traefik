@@ -15,6 +15,7 @@ spec:
     services:
     - name: whoami
       namespace: default
+      
       port: 80
     middlewares:
     - name: stripprefix
@@ -25,6 +26,7 @@ spec:
     services:
     - name: whoami
       namespace: default
+      
       port: 80
     middlewares:
     - name: test-errorpage
@@ -34,6 +36,7 @@ spec:
     services:
     - name: whoami
       namespace: default
+      
       port: 80
     middlewares:
     - name: cross-ns-stripprefix@kubernetescrd
@@ -64,4 +67,5 @@ spec:
     service:
       name: whoami-svc
       namespace: cross-ns
+      
       port: 80

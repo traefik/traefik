@@ -16,11 +16,13 @@ spec:
 
     services:
     - name: external-svc
+      
       port: 443
       healthCheck:
         path: /health1
         interval: 15s
     - name: whoami2
+      
       port: 443
       healthCheck:
         path: /health3

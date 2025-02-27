@@ -79,6 +79,7 @@ http:
           - url: foobar
             weight: 42
             preservePath: true
+        strategy: foobar
         healthCheck:
           scheme: foobar
           mode: foobar
