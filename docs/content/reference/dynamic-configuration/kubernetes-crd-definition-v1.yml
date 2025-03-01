@@ -1732,6 +1732,61 @@ spec:
                       Period, in combination with Average, defines the actual maximum rate, such as:
                       r = Average / Period. It defaults to a second.
                     x-kubernetes-int-or-string: true
+                  redis:
+                    description: Redis is the Redis configuration.
+                    properties:
+                      db:
+                        type: integer
+                      dialTimeout:
+                        description: |-
+                          A Duration represents the elapsed time between two instants
+                          as an int64 nanosecond count. The representation limits the
+                          largest representable duration to approximately 290 years.
+                        format: int64
+                        type: integer
+                      endpoints:
+                        items:
+                          type: string
+                        type: array
+                      maxActiveConns:
+                        type: integer
+                      minIdleConns:
+                        type: integer
+                      password:
+                        type: string
+                      poolSize:
+                        type: integer
+                      readTimeout:
+                        description: |-
+                          A Duration represents the elapsed time between two instants
+                          as an int64 nanosecond count. The representation limits the
+                          largest representable duration to approximately 290 years.
+                        format: int64
+                        type: integer
+                      tls:
+                        description: |-
+                          ClientTLS holds TLS specific configurations as client
+                          CA, Cert and Key can be either path or file contents.
+                        properties:
+                          ca:
+                            type: string
+                          cert:
+                            type: string
+                          insecureSkipVerify:
+                            type: boolean
+                          key:
+                            type: string
+                        type: object
+                      username:
+                        type: string
+                      writeTimeout:
+                        description: |-
+                          A Duration represents the elapsed time between two instants
+                          as an int64 nanosecond count. The representation limits the
+                          largest representable duration to approximately 290 years.
+                        format: int64
+                        type: integer
+                    type: object
                   sourceCriterion:
                     description: |-
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
