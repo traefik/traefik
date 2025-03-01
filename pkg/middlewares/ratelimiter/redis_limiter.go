@@ -35,17 +35,39 @@ func NewRedisLimiter(
 	logger *zerolog.Logger,
 ) (Limiter, error) {
 	options := &redis.UniversalOptions{
-		Addrs:          config.Redis.Endpoints,
-		Username:       config.Redis.Username,
-		Password:       config.Redis.Password,
-		DB:             config.Redis.DB,
-		PoolSize:       config.Redis.PoolSize,
+		Addrs:    config.Redis.Endpoints,
+		Username: config.Redis.Username,
+		Password: config.Redis.Password,
+		DB:       config.Redis.DB,
+		PoolSize: config.Redis.PoolSize,
+		// Default values for timeout configs.
+		DialTimeout:    5 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		WriteTimeout:   3 * time.Second,
 		MinIdleConns:   config.Redis.MinIdleConns,
-		ReadTimeout:    config.Redis.ReadTimeout,
-		WriteTimeout:   config.Redis.WriteTimeout,
-		DialTimeout:    config.Redis.DialTimeout,
 		MaxActiveConns: config.Redis.MaxActiveConns,
 	}
+
+	if config.Redis.DialTimeout != nil && *config.Redis.DialTimeout > 0 {
+		options.DialTimeout = (time.Duration)(*config.Redis.DialTimeout)
+	}
+
+	// -1 means there will be no timeout. Apply when user intentionally set 0 or negative value.
+	if config.Redis.ReadTimeout != nil {
+		if *config.Redis.ReadTimeout > 0 {
+			options.ReadTimeout = (time.Duration)(*config.Redis.ReadTimeout)
+		} else {
+			options.ReadTimeout = -1
+		}
+	}
+	if config.Redis.WriteTimeout != nil {
+		if *config.Redis.ReadTimeout > 0 {
+			options.WriteTimeout = (time.Duration)(*config.Redis.WriteTimeout)
+		} else {
+			options.WriteTimeout = -1
+		}
+	}
+
 	if config.Redis.TLS != nil {
 		tlsConfig, err := config.Redis.TLS.CreateTLSConfig(context.Background())
 		if err != nil {

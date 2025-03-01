@@ -370,9 +370,9 @@ http:
           poolSize: 42
           minIdleConns: 42
           maxActiveConns: 42
-          readTimeout: 42ns
-          writeTimeout: 42ns
-          dialTimeout: 42ns
+          readTimeout: 42s
+          writeTimeout: 42s
+          dialTimeout: 42s
     Middleware19:
       redirectRegex:
         regex: foobar

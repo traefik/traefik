@@ -646,14 +646,16 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          db: 0
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      db: 0
 ```
 
 ```yaml tab="Consul Catalog"
@@ -892,14 +894,16 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          db: 0
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      poolSize: 42
 ```
 
 ```yaml tab="Consul Catalog"
@@ -936,14 +940,16 @@ labels:
     - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          minIdleConns: 42
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      minIdleConns: 42
 ```
 
 ```yaml tab="Consul Catalog"
@@ -980,14 +986,16 @@ labels:
     - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          maxActiveConns: 42
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      maxActiveConns: 42
 ```
 
 ```yaml tab="Consul Catalog"
@@ -1026,14 +1034,16 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          readTimeout: 42s
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      readTimeout: 42s
 ```
 
 ```yaml tab="Consul Catalog"
@@ -1073,14 +1083,16 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          writeTimeout: 42s
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      writeTimeout: 42s
 ```
 
 ```yaml tab="Consul Catalog"
@@ -1122,14 +1134,16 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
 ```
 
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-ratelimit:
-      rateLimit:
-        # ...
-        redis:
-          dialTimeout: 42s
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      dialTimeout: 42s
 ```
 
 ```yaml tab="Consul Catalog"
