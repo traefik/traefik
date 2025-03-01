@@ -314,9 +314,9 @@
           poolSize = 42
           minIdleConns = 42
           maxActiveConns = 42
-          omitempty = "42ns"
-          writeTimeout = "42ns"
-          dialTimeout = "42ns"
+          omitempty = "42s"
+          writeTimeout = "42s"
+          dialTimeout = "42s"
           [http.middlewares.Middleware18.rateLimit.redis.tls]
             ca = "foobar"
             cert = "foobar"
