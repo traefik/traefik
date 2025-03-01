@@ -31,10 +31,10 @@ type ServersTransportSpec struct {
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables SSL certificate verification.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	// RootCAs gives you the option to use secrets or config maps to store CAs
-	RootCAs []RootCAs `json:"rootCAs,omitempty"`
+	// RootCA gives you the option to use secrets or config maps to store CAs
+	RootCA []RootCA `json:"rootCA,omitempty"`
 	// Deprecated: RootCAsSecrets is deprecated and will be removed in a future release.
-	// Use RootCAs instead for specifying CA certificates.
+	// Use RootCA instead for specifying CA certificates.
 	// +optional
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
@@ -69,8 +69,8 @@ type ForwardingTimeouts struct {
 
 // +k8s:deepcopy-gen=true
 
-// RootCAs holds the reference to the secret or config map that stores the CA.
-type RootCAs struct {
+// RootCA holds the reference to the secret or config map that stores the CA.
+type RootCA struct {
 	SecretRef    *string `json:"secretRef,omitempty"`
 	ConfigMapRef *string `json:"configMapRef,omitempty"`
 }
