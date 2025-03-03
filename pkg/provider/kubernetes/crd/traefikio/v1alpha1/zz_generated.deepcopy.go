@@ -229,6 +229,13 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.StatusRewrites != nil {
+		in, out := &in.StatusRewrites, &out.StatusRewrites
+		*out = make(map[string]int, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	in.Service.DeepCopyInto(&out.Service)
 	return
 }

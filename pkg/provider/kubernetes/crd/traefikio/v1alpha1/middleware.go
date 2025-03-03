@@ -68,11 +68,16 @@ type ErrorPage struct {
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
 	Status []string `json:"status,omitempty"`
+	// StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
+	// For example: "418": 404 or "410-418": 404
+	StatusRewrites map[string]int `json:"statusRewrites,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
 	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/errorpages/#service
 	Service Service `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
+	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
+	// The {url} variable can be used in order to insert the escaped request URL.
 	Query string `json:"query,omitempty"`
 }
 
