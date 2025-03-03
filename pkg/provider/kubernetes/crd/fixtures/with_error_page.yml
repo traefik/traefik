@@ -9,6 +9,8 @@ spec:
     status:
     - "404"
     - "500"
+    statusRewrites:
+      404: 200
     query: query
     service:
       name: whoami
