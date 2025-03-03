@@ -340,7 +340,9 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 	var lb serverBalancer
 	switch service.Strategy {
-	case dynamic.BalancerStrategyWRR:
+	// Here we are handling the empty value to comply with providers that are not applying defaults (e.g. REST provider)
+	// TODO: remove this when all providers apply default values.
+	case dynamic.BalancerStrategyWRR, "":
 		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)

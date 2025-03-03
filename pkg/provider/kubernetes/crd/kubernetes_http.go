@@ -323,25 +323,23 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	strategy := svc.Strategy
-	if strategy == "" {
-		strategy = dynamic.BalancerStrategyWRR
-	}
+	// This is required by the tests as the fake client does not apply default values.
+	// TODO: remove this when the fake client apply default values.
+	if svc.Strategy != "" {
+		switch svc.Strategy {
+		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
+			lb.Strategy = svc.Strategy
 
-	switch strategy {
-	case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
-		lb.Strategy = strategy
+		// Here we are just logging a warning as the default value is already applied.
+		case "RoundRobin":
+			log.Warn().
+				Str("namespace", namespace).
+				Str("service", svc.Name).
+				Msgf("RoundRobin strategy value is deprecated, please use %s value instead", dynamic.BalancerStrategyWRR)
 
-	case "RoundRobin":
-		lb.Strategy = dynamic.BalancerStrategyWRR
-
-		log.Warn().
-			Str("namespace", namespace).
-			Str("service", svc.Name).
-			Msgf("RoundRobin strategy value is deprecated, please use %s value instead", dynamic.BalancerStrategyWRR)
-
-	default:
-		return nil, fmt.Errorf("load-balancer strategy %s is not supported", svc.Strategy)
+		default:
+			return nil, fmt.Errorf("load-balancer strategy %s is not supported", svc.Strategy)
+		}
 	}
 
 	servers, err := c.loadServers(namespace, svc)

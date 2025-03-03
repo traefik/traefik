@@ -119,7 +119,9 @@ func (s *Sticky) StickyHandler(req *http.Request) (*NamedHandler, bool, error) {
 
 // WriteStickyCookie writes a sticky cookie to the response to stick the client to the given handler name.
 func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
+	s.handlersMu.RLock()
 	hash, ok := s.hashMap[name]
+	s.handlersMu.RUnlock()
 	if !ok {
 		return fmt.Errorf("no hash found for handler named %s", name)
 	}

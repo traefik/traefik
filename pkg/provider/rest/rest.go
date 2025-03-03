@@ -1,13 +1,12 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/paerser/file"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -48,14 +47,7 @@ func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	configuration := new(dynamic.Configuration)
 
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		log.Error().Err(err).Msg("Error reading configuration")
-		http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
-		return
-	}
-
-	if err := file.DecodeContent(string(body), ".yaml", configuration); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(configuration); err != nil {
 		log.Error().Err(err).Msg("Error parsing configuration")
 		http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 		return
