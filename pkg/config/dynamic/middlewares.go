@@ -558,6 +558,8 @@ type RateLimit struct {
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
 
+	// Redis stores the configuration for using Redis as a bucket in the rate-limiting algorithm.
+	// If not specified, Traefik will default to an in-memory bucket for the algorithm.
 	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
 }
 

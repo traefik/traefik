@@ -157,9 +157,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/endpoints/1` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/maxActiveConns` | `42` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/minIdleConns` | `42` |
-| `traefik/http/middlewares/Middleware18/rateLimit/redis/omitempty` | `42s` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/password` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/poolSize` | `42` |
+| `traefik/http/middlewares/Middleware18/rateLimit/redis/readTimeout` | `42s` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/tls/cert` | `foobar` |
 | `traefik/http/middlewares/Middleware18/rateLimit/redis/tls/insecureSkipVerify` | `true` |
