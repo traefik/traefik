@@ -1,7 +1,9 @@
 package v1alpha1
 
 import (
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -215,6 +217,46 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+	// Redis hold the configs of Redis as bucket in rate limiter.
+	Redis *Redis `json:"redis,omitempty"`
+}
+
+// Redis contains the configuration for using Redis in middleware.
+// In a Kubernetes setup, the username and password are stored in a Secret file within the same namespace as the middleware.
+type Redis struct {
+	// Endpoints contains either a single address or a seed list of host:port addresses.
+	Endpoints []string `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
+	// TLS holds TLS-specific configurations, including the CA, certificate, and key,
+	// which can be provided as a file path or file contents.
+	TLS *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	// Secret is the name of the referenced Kubernetes Secret containing Redis credentials.
+	Secret string `json:"secret,omitempty" toml:"secret,omitempty" yaml:"secret,omitempty"`
+	// Username represents the authorized username used to authenticate the connection.
+	Username string `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	// Password represents the password associated with the above username,
+	// used to connect to the Redis server.
+	Password string `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	// Database specifies the Redis database that will be selected after connecting to the server.
+	DB int `json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
+	// PoolSize defines the initial number of socket connections.
+	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+	// This can be limited using MaxActiveConns.
+	PoolSize int `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
+	// MinIdleConns specifies the minimum number of idle connections.
+	// Default is 0, and idle connections are not closed by default.
+	MinIdleConns int `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty" export:"true"`
+	// MaxActiveConns sets the maximum number of connections allocated by the pool at a given time.
+	// The default value is 0, meaning there is no limit.
+	MaxActiveConns int `json:"maxActiveConns,omitempty" toml:"maxActiveConns,omitempty" yaml:"maxActiveConns,omitempty" export:"true"`
+	// ReadTimeout defines the timeout for socket read operations.
+	// The default value is 3 seconds.
+	ReadTimeout *ptypes.Duration `json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	// WriteTimeout defines the timeout for socket write operations.
+	// The default value is 3 seconds.
+	WriteTimeout *ptypes.Duration `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	// DialTimeout sets the timeout for establishing new connections.
+	// The default value is 5 seconds.
+	DialTimeout *ptypes.Duration `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

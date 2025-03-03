@@ -3,6 +3,7 @@
 *.iml
 .vscode/
 .DS_Store
+*debug*
 /dist
 /webui/.tmp/
 /site/
