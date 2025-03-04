@@ -10,10 +10,11 @@ import (
 
 func TestSNICheck_ServeHTTP(t *testing.T) {
 	testCases := []struct {
-		desc              string
-		tlsOptionsForHost map[string]string
-		host              string
-		expected          int
+		desc                    string
+		tlsOptionsForHost       map[string]string
+		tlsOptionsFotHostRegexp map[string]string
+		host                    string
+		expected                int
 	}{
 		{
 			desc:     "no TLS options",
@@ -24,15 +25,35 @@ func TestSNICheck_ServeHTTP(t *testing.T) {
 			tlsOptionsForHost: map[string]string{
 				"example.com": "foo",
 			},
+			tlsOptionsFotHostRegexp: map[string]string{},
+			expected:                http.StatusOK,
+		},
+		{
+			desc:              "with wildcard TLS options and subdomain",
+			tlsOptionsForHost: map[string]string{},
+			tlsOptionsFotHostRegexp: map[string]string{
+				".*.localhost": "foo",
+			},
+			host:     "sub2.localhost",
 			expected: http.StatusOK,
+		},
+		{
+			desc:              "with wildcard TLS options",
+			tlsOptionsForHost: map[string]string{},
+			tlsOptionsFotHostRegexp: map[string]string{
+				"example.com": "foo",
+			},
+			host:     "example.com",
+			expected: http.StatusMisdirectedRequest,
 		},
 		{
 			desc: "server name and host doesn't have the same TLS configuration",
 			tlsOptionsForHost: map[string]string{
 				"example.com": "foo",
 			},
-			host:     "example.com",
-			expected: http.StatusMisdirectedRequest,
+			tlsOptionsFotHostRegexp: map[string]string{},
+			host:                    "example.com",
+			expected:                http.StatusMisdirectedRequest,
 		},
 	}
 
@@ -42,9 +63,9 @@ func TestSNICheck_ServeHTTP(t *testing.T) {
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 
-			sniCheck := New(test.tlsOptionsForHost, next)
+			sniCheck := New(test.tlsOptionsForHost, test.tlsOptionsFotHostRegexp, next)
 
-			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)
+			req := httptest.NewRequest(http.MethodGet, "https://sub.localhost", nil)
 			if test.host != "" {
 				req.Host = test.host
 			}
