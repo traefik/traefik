@@ -1840,7 +1840,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:                "Simple Ingress Route with middleware and ratelimit secret",
 			allowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_middleware-and-secret.yml"},
+			paths:               []string{"services.yml", "with_middleware_and_secret.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
