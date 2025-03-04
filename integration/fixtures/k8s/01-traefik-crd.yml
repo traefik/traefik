@@ -1741,6 +1741,82 @@ spec:
                       Period, in combination with Average, defines the actual maximum rate, such as:
                       r = Average / Period. It defaults to a second.
                     x-kubernetes-int-or-string: true
+                  redis:
+                    description: Redis hold the configs of Redis as bucket in rate
+                      limiter.
+                    properties:
+                      db:
+                        description: Database specifies the Redis database that will
+                          be selected after connecting to the server.
+                        type: integer
+                      dialTimeout:
+                        description: |-
+                          DialTimeout sets the timeout for establishing new connections.
+                          The default value is 5 seconds.
+                        format: int64
+                        type: integer
+                      endpoints:
+                        description: Endpoints contains either a single address or
+                          a seed list of host:port addresses.
+                        items:
+                          type: string
+                        type: array
+                      maxActiveConns:
+                        description: |-
+                          MaxActiveConns sets the maximum number of connections allocated by the pool at a given time.
+                          The default value is 0, meaning there is no limit.
+                        type: integer
+                      minIdleConns:
+                        description: |-
+                          MinIdleConns specifies the minimum number of idle connections.
+                          Default is 0, and idle connections are not closed by default.
+                        type: integer
+                      password:
+                        description: |-
+                          Password represents the password associated with the above username,
+                          used to connect to the Redis server.
+                        type: string
+                      poolSize:
+                        description: |-
+                          PoolSize defines the initial number of socket connections.
+                          If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+                          This can be limited using MaxActiveConns.
+                        type: integer
+                      readTimeout:
+                        description: |-
+                          ReadTimeout defines the timeout for socket read operations.
+                          The default value is 3 seconds.
+                        format: int64
+                        type: integer
+                      secret:
+                        description: Secret is the name of the referenced Kubernetes
+                          Secret containing Redis credentials.
+                        type: string
+                      tls:
+                        description: |-
+                          TLS holds TLS-specific configurations, including the CA, certificate, and key,
+                          which can be provided as a file path or file contents.
+                        properties:
+                          ca:
+                            type: string
+                          cert:
+                            type: string
+                          insecureSkipVerify:
+                            type: boolean
+                          key:
+                            type: string
+                        type: object
+                      username:
+                        description: Username represents the authorized username used
+                          to authenticate the connection.
+                        type: string
+                      writeTimeout:
+                        description: |-
+                          WriteTimeout defines the timeout for socket write operations.
+                          The default value is 3 seconds.
+                        format: int64
+                        type: integer
+                    type: object
                   sourceCriterion:
                     description: |-
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
