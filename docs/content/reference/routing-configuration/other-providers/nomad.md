@@ -15,9 +15,13 @@ With Nomad, Traefik can leverage tags attached to a service to generate routing 
 
 ## Routing Configuration
 
-!!! info "tags"
+!!! info "Tags"
 
-    tags are case-insensitive.
+    Tags are case-insensitive.
+
+!!! tip "TLS Default Generated Certificates"
+
+    To learn how to configure Traefik default generated certificate, refer to the [TLS Certificates](../http/tls/tls-certificates.md#acme-default-certificate) page.
 
 ### General
 

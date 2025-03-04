@@ -43,34 +43,7 @@ tls:
 
 ## Certificates Stores
 
-In Traefik, certificates are grouped together in certificates stores, which are defined as such:
-
-```yaml tab="Structured (YAML)"
-tls:
-  stores:
-    default: {}
-```
-
-```toml tab="Structured (TOML)"
-[tls.stores]
-  [tls.stores.default]
-```
-
-```yaml tab="Labels"
-labels:
-  - "traefik.tls.stores.default={}"
-```
-
-```json tab="Tags"
-[
-  {
-    "Name": "default",
-    "Tags": [
-      "traefik.tls.stores.default={}"
-    ]
-  }
-]
-```
+In Traefik, certificates are grouped together in certificates stores.
 
 !!! important "Restriction"
 

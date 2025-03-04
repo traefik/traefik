@@ -14,6 +14,10 @@ The TLS options allow one to configure some parameters of the TLS connection.
     you must specify the provider namespace, for example:  
     `traefik.http.routers.myrouter.tls.options=myoptions@file`
 
+!!! important "Providers"
+
+    TLS options are not supported by label or tag-based providers. However, you can define them when using a [KV provider](../../other-providers/kv.md).
+
 ### Minimum TLS Version
 
 ```yaml tab="Structured (YAML)"
