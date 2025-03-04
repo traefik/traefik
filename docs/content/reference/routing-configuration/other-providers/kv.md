@@ -544,3 +544,28 @@ More information about available middlewares in the dedicated [middlewares secti
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+## TLS
+
+### TLS Options
+
+With the KV provider, you configure some parameters of the TLS connection using the `tls/options` key. For example, you can define a basic setup like this:
+
+| Key (Path)                                                                      | Value            |
+|---------------------------------------------------------------------------------|------------------|
+| `traefik/tls/options/Options0/alpnProtocols/0`                                  | `foobar`         |
+| `traefik/tls/options/Options0/cipherSuites/0`                                  | `foobar`         |
+| `traefik/tls/options/Options0/clientAuth/caFiles/0`                            | `foobar`         |
+
+For more information on the available TLS options that can be configured, please refer to the [TLS Options](../http/tls/tls-options.md) page.
+
+### TLS Default Generated Certificates
+
+You can configure Traefik to use an ACME provider (like Let's Encrypt) to generate the default certificate. The configuration to resolve the default certificate should be defined in a TLS store:
+
+| Key (Path)                                                                      | Value         |
+|---------------------------------------------------------------------------------|----------------|
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/main`                    | `foobar`       |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/0`                  | `foobar`       |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/1`                  | `foobar`       |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/resolver`                       | `foobar`       |

@@ -31,6 +31,11 @@ spec:
     middlewares:
     - name: middleware1
       namespace: apps
+    # Enable Router observability
+    observability:
+      accesslogs: true
+      metrics: true
+      tracing: true
     # Set a pirority
     priority: 10
     services:
@@ -79,6 +84,9 @@ spec:
 | `routes[n].middlewares` | List of middlewares to attach to the IngressRoute. <br />More information [here](#middleware). | "" | No |
 | `routes[n].`<br />`middlewares[m].`<br />`name` | Middleware name.<br />The character `@` is not authorized. <br />More information [here](#middleware). |  | Yes |
 | `routes[n].`<br />`middlewares[m].`<br />`namespace` | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#middleware). | | No |
+| `routes[n].`<br />`observability.`<br />`accesslogs` | Defines whether the route will produce [access-logs](../../../../install-configuration/observability/logs-and-accesslogs.md). See [here](../../../http/router/observability.md) for more information. | false | No |
+| `routes[n].`<br />`observability.`<br />`metrics` | Defines whether the route will produce [metrics](../../../../install-configuration/observability/metrics.md). See [here](../../../http/router/observability.md) for more information. | false | No |
+| `routes[n].`<br />`observability.`<br />`tracing` | Defines whether the route will produce [traces](../../../../install-configuration/observability/tracing.md). See [here](../../../http/router/observability.md) for more information. | false | No |
 | `routes[n].`<br />`services` | List of any combination of TraefikService and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br />More information [here](#externalname-service). |  | No |
 | `routes[n].`<br />`services[m].`<br />`kind` | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#externalname-service). | "Service" | No |
 | `routes[n].`<br />`services[m].`<br />`name` | Service name.<br />The character `@` is not authorized. <br />More information [here](#middleware). |  | Yes |

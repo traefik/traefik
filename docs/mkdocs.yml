@@ -271,7 +271,6 @@ nav:
           - 'TCP' :
               - 'Router' : 
                 - 'Rules & Priority' : 'reference/routing-configuration/tcp/router/rules-and-priority.md'
-                - 'Observability': 'reference/routing-configuration/tcp/router/observability.md'
               - 'Service' : 'reference/routing-configuration/tcp/service.md'
               - 'ServersTransport' : 'reference/routing-configuration/tcp/serverstransport.md'
               - 'TLS' : 'reference/routing-configuration/tcp/tls.md'
@@ -282,7 +281,6 @@ nav:
           - 'UDP' :
             - 'Router' :
               - 'Rules & Priority' : 'reference/routing-configuration/udp/router/rules-priority.md'
-              - 'Observability': 'reference/routing-configuration/udp/router/observability.md'
             - 'Service' : 'reference/routing-configuration/udp/service.md'
         - 'Kubernetes':
           - 'Gateway API' : 'reference/routing-configuration/kubernetes/gateway-api.md'

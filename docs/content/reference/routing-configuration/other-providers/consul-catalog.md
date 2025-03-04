@@ -19,6 +19,10 @@ With Consul Catalog, Traefik can leverage tags attached to a service to generate
     
     Tags are case-insensitive.
 
+!!! tip "TLS Default Generated Certificates"
+
+    To learn how to configure Traefik default generated certificate, refer to the [TLS Certificates](../http/tls/tls-certificates.md#acme-default-certificate) page.
+
 ### General
 
 Traefik creates, for each consul Catalog service, a corresponding [service](../http/load-balancing/service.md) and [router](../http/router/rules-and-priority.md).

@@ -134,6 +134,30 @@ spec:
     traefik.ingress.kubernetes.io/router.tls.options: foobar@file
     ```
 
+??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
+
+    See [here](../http/router/observability.md) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: true
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
+
+    See [here](../http/router/observability.md) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.metrics: true
+    ```
+
+??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
+
+    See [here](../http/router/observability.md) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/router.observability.tracing: true
+    ```
+
 ### On Service
 
 ??? info "`traefik.ingress.kubernetes.io/service.nativelb`"
@@ -561,6 +585,9 @@ and will connect via TLS automatically.
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
     See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/http/tlsoption.md) setting for more details.
+
+## Observability
+
 
 ## Global Default Backend Ingresses
 
