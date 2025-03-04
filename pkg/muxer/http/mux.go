@@ -116,6 +116,36 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.
 	return nil
 }
 
+// ParseDomainsAndRegex extract domains and regex from rule.
+// It returns the domains and regex. If the rule is invalid, it returns an error.
+func ParseDomainsAndRegex(rule string) ([]string, []string, error) {
+	var matchers []string
+	for matcher := range httpFuncs {
+		matchers = append(matchers, matcher)
+	}
+	for matcher := range httpFuncsV2 {
+		matchers = append(matchers, matcher)
+	}
+
+	parser, err := rules.NewParser(matchers)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error while creating parser: %w", err)
+	}
+
+	parse, err := parser.Parse(rule)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error while parsing rule %s: %w", rule, err)
+	}
+
+	buildTree, ok := parse.(rules.TreeBuilder)
+	if !ok {
+		return nil, nil, fmt.Errorf("error while parsing rule %s", rule)
+	}
+
+	tree := buildTree()
+	return tree.ParseMatchers([]string{"Host"}), tree.ParseMatchers([]string{"HostRegexp"}), nil
+}
+
 // ParseDomains extract domains from rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
