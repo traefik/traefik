@@ -70,6 +70,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            domain: foo.bar
             maxAge: 42
             path: foobar
         servers:
@@ -121,6 +122,7 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+            domain: foo.bar
             maxAge: 42
             path: foobar
         healthCheck: {}
