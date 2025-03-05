@@ -10,7 +10,7 @@ Before creating `ServersTransportTCP` objects, you need to apply the [Traefik Ku
 This registers the `ServersTransportTCP` kind and other Traefik-specific resources.
 
 !!! tip "Default serversTransportTCP"
-    If no `serversTransportTCP` is specified, the `default@internal` will be used. The `default@internal` `serversTransportTCP` is created from the static configuration.
+    If no `serversTransportTCP` is specified, the `default@internal` will be used. The `default@internal` `serversTransportTCP` is created from the install configuration (formerly known as static configuration).
 
 !!! note "ServersTransport reference"
     By default, the referenced `ServersTransportTCP` CRD must be defined in the same Kubernetes service namespace.

@@ -100,7 +100,7 @@ labels:
 
 !!! note "SPIFFE"
 
-    Please note that SPIFFE must be enabled in the [static configuration](../../install-configuration/tls/spiffe.md) before using it to secure the connection between Traefik and the backends.
+    Please note that SPIFFE must be enabled in the [install configuration](../../install-configuration/tls/spiffe.md) (formerly known as static configuration) before using it to secure the connection between Traefik and the backends.
 
 ### `terminationDelay`
 

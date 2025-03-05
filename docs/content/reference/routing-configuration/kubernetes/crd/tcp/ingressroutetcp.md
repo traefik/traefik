@@ -14,6 +14,51 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 
 ## Configuration Example
 
+You can declare an `IngressRouteTCP` as detailed below:
+
+```yaml tab="IngressRoute"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ingressroutetcpfoo
+  namespace: apps
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  - match: HostSNI(`*`)
+    priority: 10
+    middlewares:
+    - name: middleware1
+      namespace: default
+    services:
+    - name: foo
+      port: 8080
+      weight: 10
+      proxyProtocol:
+        version: 1
+      serversTransport: transport
+      nativeLB: true
+      nodePortLB: true
+      tls: false
+
+  tls:
+    secretName: supersecret
+    options:
+      name: opt
+      namespace: default
+    certResolver: foo
+    domains:
+    - main: example.net
+      sans:                       
+      - a.example.net
+      - b.example.net
+    passthrough: false
+```
+
+## Configuration Options
+
 | Field                                |  Description                    | Default                                   | Required |
 |-------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
 | `entryPoints`                       | List of entrypoints names. | | No |

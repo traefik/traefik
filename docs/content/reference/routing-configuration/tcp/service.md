@@ -7,7 +7,7 @@ description: "A service is in charge of connecting incoming requests to the Serv
 
 Each of the fields of the service section represents a kind of service. Which means, that for each specified service, one of the fields, and only one, has to be enabled to define what kind of service is created. Currently, the two available kinds are `LoadBalancer`, and `Weighted`.
 
-## Service Load Balancer
+## Servers Load Balancer
 
 The servers load balancer is in charge of balancing the requests between the servers of the same service.
 
@@ -42,15 +42,12 @@ tcp:
 | `servers.address` |   The address option (IP:Port) point to a specific instance. | "" |
 | `servers.tls` | The `tls` option determines whether to use TLS when dialing with the backend. | false |
 | `servers.serversTransport` | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
-| `servers.proxyProtocol.version` | Traefik supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#proxy-protocol) |  2 |
+| `servers.proxyProtocol.version` | Traefik supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#serversproxyprotocolversion) |  2 |
 
-### PROXY Protocol
+### servers.proxyProtocol.version
 
 Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services. It can be enabled by setting `proxyProtocol` on the load balancer.
-
-Below is the available options for the PROXY protocol:
-
-- `version` specifies the version of the protocol to be used. Either 1 or 2.
+The option specifies the version of the protocol to be used. Either 1 or 2.
 
 ## Weighted Round Robin
 
