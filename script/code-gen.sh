@@ -14,7 +14,7 @@ CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
 # shellcheck disable=SC1091 # Cannot check source of this file
 source "${CODEGEN_PKG}/kube_codegen.sh"
 
-echo "# Generating Traefik clientset and deepcopy code .."
+echo "# Generating Traefik clientset and deepcopy code ..."
 kube::codegen::gen_helpers \
   --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
   "${CURRENT_DIR}"
