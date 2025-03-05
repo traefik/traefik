@@ -64,7 +64,7 @@ spec:
 | `entryPoints`                       | List of entrypoints names. | | No |
 | `routes`                            | List of routes. | | Yes |
 | `routes[n].match`                   | Defines the [rule](../../../tcp/router/rules-and-priority.md#rules) of the underlying router. | | Yes |
-| `routes[n].priority`                | Defines the [priority](../../../tcp/router/rules-and-priority.md#priority) to disambiguate rules of the same length, for route matching. | 0 | No |
+| `routes[n].priority`                | Defines the [priority](../../../tcp/router/rules-and-priority.md#priority) to disambiguate rules of the same length, for route matching. | | No |
 | `routes[n].middlewares[n].name`               | Defines the [MiddlewareTCP](./middlewaretcp.md) name. | | Yes |
 | `routes[n].middlewares[n].namespace`          | Defines the [MiddlewareTCP](./middlewaretcp.md) namespace. | ""| No|
 | `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. | | No |
@@ -197,7 +197,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
 
 ### NativeLB
 
-To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service `clusterIP` directly, one should set the TCP service `NativeLB` option to true. By default, `NativeLB` is false.
+To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service `clusterIP` directly, one should set the `NativeLB` option to true. By default, `NativeLB` is false.
 
 ```yaml tab="IngressRouteTCP"
 apiVersion: traefik.io/v1alpha1

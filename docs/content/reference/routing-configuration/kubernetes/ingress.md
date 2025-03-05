@@ -586,9 +586,6 @@ and will connect via TLS automatically.
     If this is not an option, you may need to skip TLS certificate verification.
     See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/http/tlsoption.md) setting for more details.
 
-## Observability
-
-
 ## Global Default Backend Ingresses
 
 Ingresses can be created that look like the following:

@@ -34,24 +34,6 @@ spec:
     insecureSkipVerify: true
 ```
 
-```yaml tab="IngressRouteTCP"
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteTCP
-metadata:
-  name: testroute
-  namespace: default
-
-spec:
-  entryPoints:
-    - tcpep
-  routes:
-  - match: HostSNI(`bar`)
-    services:
-      - name: whoamitcp
-        port: 8080
-        serversTransport: mytransport
-```
-
 ## Configuration Options
 
 | Field                                |  Description                    | Default                                   | Required |

@@ -54,6 +54,38 @@ http:
       flushInterval = "150ms"
 ```
 
+```yaml tab="Labels"
+labels:
+  - "traefik.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/"
+  - "traefik.http.services.my-service.loadBalancer.servers[0].weight=2"
+  - "traefik.http.services.my-service.loadBalancer.servers[0].preservePath=true"
+  - "traefik.http.services.my-service.loadBalancer.sticky.cookie.name=sticky-cookie"
+  - "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health"
+  - "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s"
+  - "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s"
+  - "traefik.http.services.my-service.loadBalancer.passHostHeader=true"
+  - "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file"
+  - "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/",
+    "traefik.http.services.my-service.loadBalancer.servers[0].weight=2",
+    "traefik.http.services.my-service.loadBalancer.servers[0].preservePath=true",
+    "traefik.http.services.my-service.loadBalancer.sticky.cookie.name=sticky-cookie",
+    "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health",
+    "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s",
+    "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
+    "traefik.http.services.my-service.loadBalancer.passHostHeader=true",
+    "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file",
+    "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
+  ]
+}
+```
+
 ### Configuration Options
 
 | Field | Description                                 | Required |
