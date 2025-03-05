@@ -229,15 +229,85 @@ nav:
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
       # - 'Options List':  'reference/install-configuration/cli-options-list.md' -- Todo
-    - 'Dynamic Configuration':
-        - 'File': 'reference/dynamic-configuration/file.md'
-        - 'Docker': 'reference/dynamic-configuration/docker.md'
-        - 'Swarm': 'reference/dynamic-configuration/swarm.md'
-        - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
-        - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
-        - 'Nomad': "reference/dynamic-configuration/nomad.md"
-        - 'ECS': 'reference/dynamic-configuration/ecs.md'
-        - 'KV': 'reference/dynamic-configuration/kv.md'
+    - 'Routing Configuration':
+        - 'General' : 
+          - 'Configuration Methods' : 'reference/routing-configuration/dynamic-configuration-methods.md'
+          - 'HTTP' : 
+            - 'Router' :
+              - 'Rules & Priority' : 'reference/routing-configuration/http/router/rules-and-priority.md'
+              - 'Observability': 'reference/routing-configuration/http/router/observability.md'
+            - 'Load Balancing' :
+              - 'Service' : 'reference/routing-configuration/http/load-balancing/service.md'
+              - 'ServersTransport' : 'reference/routing-configuration/http/load-balancing/serverstransport.md'
+            - 'TLS' : 
+              - 'Overview' : 'reference/routing-configuration/http/tls/overview.md'
+              - 'TLS Certificates' : 'reference/routing-configuration/http/tls/tls-certificates.md'
+              - 'TLS Options' : 'reference/routing-configuration/http/tls/tls-options.md'
+            - 'Middlewares' : 
+              - 'Overview' : 'reference/routing-configuration/http/middlewares/overview.md'
+              - 'AddPrefix' : 'reference/routing-configuration/http/middlewares/addprefix.md' 
+              - 'BasicAuth' : 'reference/routing-configuration/http/middlewares/basicauth.md'
+              - 'Buffering': 'reference/routing-configuration/http/middlewares/buffering.md'
+              - 'Chain': 'reference/routing-configuration/http/middlewares/chain.md'
+              - 'Circuit Breaker' : 'reference/routing-configuration/http/middlewares/circuitbreaker.md'
+              - 'Compress': 'reference/routing-configuration/http/middlewares/compress.md'
+              - 'ContentType': 'reference/routing-configuration/http/middlewares/contenttype.md'
+              - 'DigestAuth': 'reference/routing-configuration/http/middlewares/digestauth.md'
+              - 'Errors': 'reference/routing-configuration/http/middlewares/errorpages.md'
+              - 'ForwardAuth': 'reference/routing-configuration/http/middlewares/forwardauth.md'
+              - 'GrpcWeb': 'reference/routing-configuration/http/middlewares/grpcweb.md'
+              - 'Headers': 'reference/routing-configuration/http/middlewares/headers.md'
+              - 'IPAllowList': 'reference/routing-configuration/http/middlewares/ipallowlist.md'
+              - 'InFlightReq': 'reference/routing-configuration/http/middlewares/inflightreq.md'
+              - 'PassTLSClientCert': 'reference/routing-configuration/http/middlewares/passtlsclientcert.md'
+              - 'RateLimit': 'reference/routing-configuration/http/middlewares/ratelimit.md'
+              - 'RedirectRegex': 'reference/routing-configuration/http/middlewares/redirectregex.md'
+              - 'RedirectScheme': 'reference/routing-configuration/http/middlewares/redirectscheme.md'
+              - 'ReplacePath': 'reference/routing-configuration/http/middlewares/replacepath.md'
+              - 'ReplacePathRegex': 'reference/routing-configuration/http/middlewares/replacepathregex.md'
+              - 'Retry': 'reference/routing-configuration/http/middlewares/retry.md'
+              - 'StripPrefix': 'reference/routing-configuration/http/middlewares/stripprefix.md'
+              - 'StripPrefixRegex': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
+          - 'TCP' :
+              - 'Router' : 
+                - 'Rules & Priority' : 'reference/routing-configuration/tcp/router/rules-and-priority.md'
+              - 'Service' : 'reference/routing-configuration/tcp/service.md'
+              - 'ServersTransport' : 'reference/routing-configuration/tcp/serverstransport.md'
+              - 'TLS' : 'reference/routing-configuration/tcp/tls.md'
+              - 'Middlewares' :
+                - 'Overview' : 'reference/routing-configuration/tcp/middlewares/overview.md'
+                - 'InFlightConn' : 'reference/routing-configuration/tcp/middlewares/inflightconn.md'
+                - 'IPAllowList' : 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
+          - 'UDP' :
+            - 'Router' :
+              - 'Rules & Priority' : 'reference/routing-configuration/udp/router/rules-priority.md'
+            - 'Service' : 'reference/routing-configuration/udp/service.md'
+        - 'Kubernetes':
+          - 'Gateway API' : 'reference/routing-configuration/kubernetes/gateway-api.md'
+          - 'Kubernetes CRD' : 
+            - 'HTTP' :
+              - 'IngressRoute' : 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+              - 'TraefikService' : 'reference/routing-configuration/kubernetes/crd/http/traefikservice.md'
+              - 'ServersTransport' : 'reference/routing-configuration/kubernetes/crd/http/serverstransport.md'
+              - 'Middleware' : 'reference/routing-configuration/kubernetes/crd/http/middleware.md'
+              - 'TLSOption' : 'reference/routing-configuration/kubernetes/crd/http/tlsoption.md'
+              - 'TLSStore' : 'reference/routing-configuration/kubernetes/crd/http/tlsstore.md'
+            - 'TCP' :
+                - 'IngressRouteTCP' : 'reference/routing-configuration/kubernetes/crd/tcp/ingressroutetcp.md'
+                - 'ServersTransportTCP' : 'reference/routing-configuration/kubernetes/crd/tcp/serverstransporttcp.md'
+                - 'MiddlewareTCP' : 'reference/routing-configuration/kubernetes/crd/tcp/middlewaretcp.md'
+                - 'TLSOption' : 'reference/routing-configuration/kubernetes/crd/tcp/tlsoption.md'
+                - 'TLSStore' : 'reference/routing-configuration/kubernetes/crd/tcp/tlsstore.md'
+            - 'UDP' :
+                - 'IngressRouteUDP' : 'reference/routing-configuration/kubernetes/crd/udp/ingressrouteudp.md'
+          - 'Ingress' : 'reference/routing-configuration/kubernetes/ingress.md'
+        - 'Label & Tag Providers' :
+          - 'Docker' : 'reference/routing-configuration/other-providers/docker.md'
+          - 'Swarm' : 'reference/routing-configuration/other-providers/swarm.md'
+          - 'Consul Catalog' : 'reference/routing-configuration/other-providers/consul-catalog.md'
+          - 'Nomad' : 'reference/routing-configuration/other-providers/nomad.md'
+          - 'ECS' : 'reference/routing-configuration/other-providers/ecs.md'
+          - 'KV' : 'reference/routing-configuration/other-providers/kv.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'
