@@ -35,7 +35,7 @@ spec:
 |   `entryPoints`                     | List of entrypoints names.  | | No |
 |   ` routes `                        | List of routes.  | | Yes |
 | `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. See [here](#externalname-service) for `ExternalName Service` setup. | | No |
-| `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) |  | Yes |
+| `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). |  | Yes |
 | `routes[n].services[n].port`        | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.|  | Yes |
 | `routes[n].services[n].weight`      | Defines the weight to apply to the server load balancing. | 1 | No |
 | `routes[n].services[n].nativeLB`    | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
@@ -49,97 +49,109 @@ Traefik backends creation needs a port to be set, however Kubernetes [ExternalNa
 - on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
 
 Thus, in case of two sides port definition, Traefik expects a match between ports.
-    
-```yaml tab="IngressRouteUDP"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: test.route
-  namespace: default
 
-spec:
-  entryPoints:
-    - foo
+=== "Ports defined on Resource"
 
-  routes:
-  - services:
-    - name: external-svc
-      port: 80
+    ```yaml tab="IngressRouteUDP"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRouteUDP
+    metadata:
+      name: test.route
+      namespace: apps
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external-svc
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-```
+    spec:
+      entryPoints:
+        - foo
+      routes:
+      - match: Host(`example.net`)
+        kind: Rule
+        services:
+        - name: external-svc
+          port: 80
+    ```
 
-```yaml tab="ExternalName Service"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: test.route
-  namespace: default
+    ```yaml tab="Service ExternalName"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: external-svc
+      namespace: apps
 
-spec:
-  entryPoints:
-    - foo
+    spec:
+      externalName: external.domain
+      type: ExternalName
+    ```
 
-  routes:
-  - services:
-    - name: external-svc
+=== "Port defined on the Service"
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external-svc
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-  ports:
-    - port: 80
-```
+    ```yaml tab="IngressRouteUDP"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRouteUDP
+    metadata:
+      name: test.route
+      namespace: apps
 
-```yaml tab="Both sides"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: test.route
-  namespace: default
+    spec:
+      entryPoints:
+        - foo
+      routes:
+      - match: Host(`example.net`)
+        kind: Rule
+        services:
+        - name: external-svc
+    ```
 
-spec:
-  entryPoints:
-    - foo
+    ```yaml tab="Service ExternalName"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: external-svc
+      namespace: apps
 
-  routes:
-  - services:
-    - name: external-svc
-      port: 80
+    spec:
+      externalName: external.domain
+      type: ExternalName
+      ports:
+        - port: 80
+    ```
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external-svc
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-  ports:
-    - port: 80
-```
+=== "Port defined on both sides"
+
+    ```yaml tab="IngressRouteUDP"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRouteUDP
+    metadata:
+      name: test.route
+      namespace: apps
+
+    spec:
+      entryPoints:
+        - foo
+      routes:
+      - match: Host(`example.net`)
+        kind: Rule
+        services:
+        - name: external-svc
+          port: 80
+    ```
+
+    ```yaml tab="Service ExternalName"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: external-svc
+      namespace: apps
+
+    spec:
+      externalName: external.domain
+      type: ExternalName
+      ports:
+        - port: 80
+    ```
 
 ### NativeLB
 
-To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service `clusterIP` directly, one should set the TCP service `NativeLB` option to true. By default, `NativeLB` is false.
+To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service `clusterIP` directly, one should set the `NativeLB` option to true. By default, `NativeLB` is false.
 
 ```yaml tab="IngressRouteUDP"
 apiVersion: traefik.io/v1alpha1

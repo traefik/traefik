@@ -130,96 +130,108 @@ spec:
 Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port. Accordingly, Traefik supports defining a port in two ways:
 
 - only on `IngressRoute` service
-- on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
+- on both sides, you'll be warned if the ports don't match, and the `IngressRoute` service port is used
 
 Thus, in case of two sides port definition, Traefik expects a match between ports.
-    
-```yaml tab="IngressRouteUDP"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: test.route
-  namespace: default
 
-spec:
-  entryPoints:
-    - foo
+=== "Ports defined on Resource"
 
-  routes:
-  - services:
-    - name: external-svc
-      port: 80
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: apps
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external-svc
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-```
+    spec:
+      entryPoints:
+        - foo
+      routes:
+      - match: Host(`example.net`)
+        kind: Rule
+        services:
+        - name: external-svc
+          port: 80
+    ```
 
-```yaml tab="ExternalName Service"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: test.route
-  namespace: default
+    ```yaml tab="Service ExternalName"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: external-svc
+      namespace: apps
 
-spec:
-  entryPoints:
-    - foo
+    spec:
+      externalName: external.domain
+      type: ExternalName
+    ```
 
-  routes:
-  - services:
-    - name: external-svc
+=== "Port defined on the Service"
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external-svc
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-  ports:
-    - port: 80
-```
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: apps
 
-```yaml tab="Both sides"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: test.route
-  namespace: default
+    spec:
+      entryPoints:
+        - foo
+      routes:
+      - match: Host(`example.net`)
+        kind: Rule
+        services:
+        - name: external-svc
+    ```
 
-spec:
-  entryPoints:
-    - foo
+    ```yaml tab="Service ExternalName"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: external-svc
+      namespace: apps
 
-  routes:
-  - services:
-    - name: external-svc
-      port: 80
+    spec:
+      externalName: external.domain
+      type: ExternalName
+      ports:
+        - port: 80
+    ```
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: external-svc
-  namespace: default
-spec:
-  externalName: external.domain
-  type: ExternalName
-  ports:
-    - port: 80
-```
+=== "Port defined on both sides"
+
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: apps
+
+    spec:
+      entryPoints:
+        - foo
+      routes:
+      - match: Host(`example.net`)
+        kind: Rule
+        services:
+        - name: external-svc
+          port: 80
+    ```
+
+    ```yaml tab="Service ExternalName"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: external-svc
+      namespace: apps
+
+    spec:
+      externalName: external.domain
+      type: ExternalName
+      ports:
+        - port: 80
+    ```
 
 ### Middleware
 
@@ -269,7 +281,7 @@ same namespace as the IngressRoute)
     - `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
     - `TraefikService`: to reference an object [`TraefikService`](../http/traefikservice.md)
 
-#### Port Definition
+### Port Definition
 
 Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port. Accordingly, Traefik supports defining a port in two ways:
 
