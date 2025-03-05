@@ -173,6 +173,9 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        [http.middlewares.Middleware09.errors.statusRewrites]
+          name0 = 42
+          name1 = 42
     [http.middlewares.Middleware10]
       [http.middlewares.Middleware10.forwardAuth]
         address = "foobar"
