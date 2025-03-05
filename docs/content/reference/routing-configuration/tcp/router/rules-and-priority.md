@@ -126,42 +126,80 @@ Match connections using the ALPN protocol `h2`:
 ALPN(`h2`)
 ```
 
-## Priority
+## Priority Calculation
+
+???+ info "How default priorities are computed"
+
+    ```yaml tab="Structured (YAML)"
+      tcp:
+        routers:
+          Router-1:
+            rule: "ClientIP(`192.168.0.12`)"
+            entryPoints:
+            - "web"
+            service: service-1
+            priority: 2
+          Router-2:
+            rule: "ClientIP(`192.168.0.0/24`)"
+            entryPoints:
+            - "web"
+            priority: 1
+            service: service-2
+    ```
+
+      ```toml tab="Structured (TOML)"
+      [tcp.routers]
+        [tcp.routers.Router-1]
+          rule = "ClientIP(`192.168.0.12`)"
+          entryPoints = ["web"]
+          service = "service-1"
+          priority = 2
+        [tcp.routers.Router-2]
+          rule = "ClientIP(`192.168.0.0/24`)"
+          entryPoints = ["web"]
+          priority = 1
+          service = "service-2
+      ```
+
+    ```yaml tab="Labels"
+      services:
+        my-container:
+          #...
+          labels:
+            - "traefik.tcp.routers.Router-1.rule="ClientIP(`192.168.0.12`)"
+            - "traefik.tcp.routers.Router-1.entryPoints=web"
+            - "traefik.tcp.routers.Router-1.service=service-1"
+            - "traefik.tcp.routers.Router-1.priority=2"
+            - "traefik.tcp.routers.Router-2.rule="ClientIP(`192.168.0.0/24`)"
+            - "traefik.tcp.routers.Router-2.entryPoints=web"
+            - "traefik.tcp.routers.Router-2.service=service-2"
+            - "traefik.tcp.routers.Router-2.priority=1"
+    ```
+
+    ```json tab="Tags"
+      {
+        "Name": "Routers",
+        "Tags": [
+          "traefik.tcp.routers.Router-1.rule=ClientIP(`192.168.0.12`)",
+          "traefik.tcp.routers.Router-1.entryPoints=web",
+          "traefik.tcp.routers.Router-1.service=service-1",
+          "traefik.tcp.routers.Router-1.priority=2",
+          "traefik.tcp.routers.Router-2.rule=ClientIP(`192.168.0.0/24`)",
+          "traefik.tcp.routers.Router-2.entryPoints=web",
+          "traefik.tcp.routers.Router-2.service=service-2",
+          "traefik.tcp.routers.Router-2.priority=1"
+        ]
+        // ...
+      }
+    ```
+
+    In the example above, the priority is configured so that `Router-1` will handle requests from `192.168.0.12`.
 
 To avoid path overlap, routes are sorted, by default, in descending order using rules length.
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
+A value of `0` for the priority is ignored: `priority: 0` means that the default rules length sorting is used.
 
-A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+Traefik reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
 
-### Example
-
-```yaml tab="Structured (YAML)"
-tcp:
-  routers:
-    Router-1:
-      rule: "ClientIP(`192.168.0.12`)"
-      # ...
-    Router-2:
-      rule: "ClientIP(`192.168.0.0/24`)"
-      # ...
-```
-
-```toml tab="Structured (TOML)"
-[tcp.routers]
-  [tcp.routers.Router-1]
-    rule = "ClientIP(`192.168.0.12`)"
-    # ...
-  [tcp.routers.Router-2]
-    rule = "ClientIP(`192.168.0.0/24`)"
-    # ...
-```
-
-The table below shows that `Router-2` has a higher computed priority than `Router-1`.
-
-| Name     | Rule                                                        | Priority |
-|----------|-------------------------------------------------------------|----------|
-| Router-1 | ```ClientIP(`192.168.0.12`)```                              | 24       |
-| Router-2 | ```ClientIP(`192.168.0.0/24`)```                            | 26       |
-
-Which means that requests from `192.168.0.12` would go to`Router-2` even though `Router-1` is intended to specifically handle them.
-To achieve this intention, a priority (higher than 26) should be set on `Router-1`.
+- `(MaxInt32 - 1000)` for 32-bit platforms,
+- `(MaxInt64 - 1000)` for 64-bit platforms.
