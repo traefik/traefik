@@ -280,9 +280,9 @@ A Story of key & values
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
-    | Key (Path)                                                            | Value  |
-    |-----------------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/domain` | `foo.bar` |
+    | Key (Path)                                                            | Value     |
+    |-----------------------------------------------------------------------|-----------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/domain`   | `foo.com` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/maxage`"
 
@@ -350,9 +350,9 @@ A Story of key & values
 
 ??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/domain`"
 
-    | Key (Path)                                                             | Value  |
-    |------------------------------------------------------------------------|--------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/domain` | `foo.bar` |
+    | Key (Path)                                                             | Value     |
+    |------------------------------------------------------------------------|-----------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/domain`   | `foo.com` |
 
 ??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
 
