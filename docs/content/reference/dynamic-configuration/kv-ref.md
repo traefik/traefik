@@ -273,12 +273,12 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/sticky/cookie/domain` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/name` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/sameSite` | `foobar` |
-| `traefik/http/services/Service02/loadBalancer/sticky/cookie/domain` | `foo.bar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service03/mirroring/healthCheck` | `` |
 | `traefik/http/services/Service03/mirroring/maxBodySize` | `42` |
@@ -293,12 +293,12 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service04/weighted/services/0/weight` | `42` |
 | `traefik/http/services/Service04/weighted/services/1/name` | `foobar` |
 | `traefik/http/services/Service04/weighted/services/1/weight` | `42` |
+| `traefik/http/services/Service04/weighted/sticky/cookie/domain` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/name` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/path` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/sameSite` | `foobar` |
-| `traefik/http/services/Service04/weighted/sticky/cookie/domain` | `foo.bar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/secure` | `true` |
 | `traefik/tcp/middlewares/TCPMiddleware01/ipAllowList/sourceRange/0` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware01/ipAllowList/sourceRange/1` | `foobar` |

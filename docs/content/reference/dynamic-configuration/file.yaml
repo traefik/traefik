@@ -70,9 +70,9 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
-            domain: foo.bar
             maxAge: 42
             path: foobar
+            domain: foobar
         servers:
           - url: foobar
             weight: 42
@@ -122,9 +122,9 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
-            domain: foo.bar
             maxAge: 42
             path: foobar
+            domain: foobar
         healthCheck: {}
   middlewares:
     Middleware01:

@@ -247,6 +247,11 @@ spec:
                               cookie:
                                 description: Cookie defines the sticky cookie configuration.
                                 properties:
+                                  domain:
+                                    description: |-
+                                      Domain defines the host to which the cookie will be sent.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                    type: string
                                   httpOnly:
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
@@ -1145,6 +1150,11 @@ spec:
                           cookie:
                             description: Cookie defines the sticky cookie configuration.
                             properties:
+                              domain:
+                                description: |-
+                                  Domain defines the host to which the cookie will be sent.
+                                  More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                type: string
                               httpOnly:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
@@ -2728,6 +2738,11 @@ spec:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
+                                domain:
+                                  description: |-
+                                    Domain defines the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -2841,6 +2856,11 @@ spec:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
+                          domain:
+                            description: |-
+                              Domain defines the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
@@ -3030,6 +3050,11 @@ spec:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
+                                domain:
+                                  description: |-
+                                    Domain defines the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -3083,6 +3108,11 @@ spec:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
+                          domain:
+                            description: |-
+                              Domain defines the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
