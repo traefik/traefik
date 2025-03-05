@@ -11,8 +11,7 @@ This registers the `ServersTransport` kind and other Traefik-specific resources.
 
 It can be applied on a service using:
 
-- An annotation on the [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/) (if the service is exposed using an [Ingress](../../ingress.md))
-- The option `services.serverstransport` on an [`IngressRoute`](./ingressroute.md) (if the service is a Kubernetes Service)
+- The option `services.serverstransport` on a [`IngressRoute`](./ingressroute.md) (if the service is a Kubernetes Service)
 - The option `serverstransport` on an [`TraefikService`](./traefikservice.md) (if the service is a Kubernetes Service)
 
 !!! note "Reference a ServersTransport CRD from another namespace"
@@ -63,9 +62,9 @@ spec:
 | `serverstransport.`<br />`maxIdleConnsPerHost` | Maximum idle (keep-alive) connections to keep per-host. | 200 | No |
 | `serverstransport.`<br />`disableHTTP2` | Disables HTTP/2 for connections with servers. | false | No |
 | `serverstransport.`<br />`peerCertURI` | Defines the URI used to match against SAN URIs during the server's certificate verification. | "" | No |
-| `serverstransport.`<br />`forwardingTimeouts.dialTimeout` | Amount of time to wait until a connection to a server can be established.<br />0 = no timeout. | 30s  | No |
-| `serverstransport.`<br />`forwardingTimeouts.responseHeaderTimeout` | Amount of time to wait for a server's response headers after fully writing the request (including its body, if any).<br />0 = no timeout | 0s  | No |
-| `serverstransport.`<br />`forwardingTimeouts.idleConnTimeout` | Maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.<br />0 = no timeout. | 90s  | No |
+| `serverstransport.`<br />`forwardingTimeouts.dialTimeout` | Amount of time to wait until a connection to a server can be established.<br />Zero means no timeout. | 30s  | No |
+| `serverstransport.`<br />`forwardingTimeouts.responseHeaderTimeout` | Amount of time to wait for a server's response headers after fully writing the request (including its body, if any).<br />Zero means no timeout | 0s  | No |
+| `serverstransport.`<br />`forwardingTimeouts.idleConnTimeout` | Maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.<br />Zero means no timeout. | 90s  | No |
 | `serverstransport.`<br />`spiffe.ids` | Allow SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain. |  | No |
 | `serverstransport.`<br />`spiffe.trustDomain` | Allow SPIFFE trust domain. | ""  | No |
 

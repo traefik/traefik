@@ -144,32 +144,23 @@ http:
 ```
 
 ```yaml tab="Labels"
-services:
-  my-container:
-    #...
-    labels:
-      - "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
-      - "traefik.http.routers.Router-v3.ruleSyntax=v3"
-      - "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
-      - "traefik.http.routers.Router-v2.ruleSyntax=v2"
+labels:
+  - "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+  - "traefik.http.routers.Router-v3.ruleSyntax=v3"
+  - "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+  - "traefik.http.routers.Router-v2.ruleSyntax=v2"
 ```
 
 ```json tab="Tags"
-  {
-    "Name": "Router-v3",
-    "Tags": [
-      "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
-      "traefik.http.routers.Router-v3.ruleSyntax=v3"
-    ]
-  },
-  {
-    "Name": "Router-v2",
-    "Tags": [
-      "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)",
-      "traefik.http.routers.Router-v2.ruleSyntax=v2"
-    ]
-    // ...
-  }
+{
+  // ...
+  "Tags": [
+    "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+    "traefik.http.routers.Router-v3.ruleSyntax=v3"
+    "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)",
+    "traefik.http.routers.Router-v2.ruleSyntax=v2"
+  ]
+},
 ```
 
 ## Priority Calculation
@@ -195,6 +186,22 @@ services:
       [http.routers.Router-2]
         rule = "Host(`foobar.traefik.com`)"
         # ...
+    ```
+
+    ```yaml tab="Labels"
+    labels:
+      - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
+    ```
+
+    ```json tab="Tags"
+    {
+        // ...
+        "Tags": [
+          "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+          "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
+        ]
+      }
     ```
 
     In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
@@ -254,23 +261,20 @@ http:
 ```
 
 ```yaml tab="Labels"
-services:
-  my-container:
-    #...
-    labels:
-      - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
-      - "traefik.http.routers.Router-1.entryPoints=web"
-      - "traefik.http.routers.Router-1.service=service-1"
-      - "traefik.http.routers.Router-1.priority=1"
-      - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
-      - "traefik.http.routers.Router-2.entryPoints=web"
-      - "traefik.http.routers.Router-2.service=service-2"
-      - "traefik.http.routers.Router-2.priority=2"
+labels:
+  - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+  - "traefik.http.routers.Router-1.entryPoints=web"
+  - "traefik.http.routers.Router-1.service=service-1"
+  - "traefik.http.routers.Router-1.priority=1"
+  - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
+  - "traefik.http.routers.Router-2.entryPoints=web"
+  - "traefik.http.routers.Router-2.service=service-2"
+  - "traefik.http.routers.Router-2.priority=2"
 ```
 
 ```json tab="Tags"
   {
-    "Name": "Routers",
+    // ...
     "Tags": [
       "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
       "traefik.http.routers.Router-1.entryPoints=web",
@@ -281,7 +285,6 @@ services:
       "traefik.http.routers.Router-2.service=service-2",
       "traefik.http.routers.Router-2.priority=2"
     ]
-    // ...
   }
 ```
 
