@@ -201,7 +201,7 @@ type Cookie struct {
 	Path *string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	// Domain defines the host to which the cookie will be sent.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
-	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty" export:"true"`
+	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
 }
 
 // SetDefaults set the default values for a Cookie.
