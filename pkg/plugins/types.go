@@ -46,6 +46,7 @@ type Manifest struct {
 	BasePkg       string                 `yaml:"basePkg"`
 	Compatibility string                 `yaml:"compatibility"`
 	Summary       string                 `yaml:"summary"`
+	UseUnsafe     bool                   `yaml:"useUnsafe"`
 	TestData      map[string]interface{} `yaml:"testData"`
 }
 
