@@ -274,8 +274,10 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Set custom headers
-	for key, value := range server.headers {
-		req.Header.Set(key, value)
+	if server != nil {
+		for key, value := range server.headers {
+			req.Header.Set(key, value)
+		}
 	}
 
 	if b.stickyCookie != nil {

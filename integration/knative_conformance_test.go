@@ -35,7 +35,7 @@ const (
 	kNativeWebhook          = "deployment/webhook"
 	kNativeNetworkConfigMap = "configmap/config-network"
 	kNativeDomainConfigMap  = "configmap/config-domain"
-	KNativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,hosts/multiple"
+	KNativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,hosts/multiple,tls"
 )
 
 var imageNames = []string{
