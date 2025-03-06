@@ -53,6 +53,7 @@ spec:
                   the protocol and operating system. Network protocols or operating
                   systems that do not support keep-alives ignore this field. If negative,
                   keep-alive probes are disabled.
+                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
               dialTimeout:
                 anyOf:
@@ -60,6 +61,7 @@ spec:
                 - type: string
                 description: DialTimeout is the amount of time to wait until a connection
                   to a backend server can be established.
+                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
               terminationDelay:
                 anyOf:
@@ -68,6 +70,7 @@ spec:
                 description: TerminationDelay defines the delay to wait before fully
                   terminating the connection, after one connected peer has closed
                   its writing capability.
+                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
               tls:
                 description: TLS defines the TLS configuration
