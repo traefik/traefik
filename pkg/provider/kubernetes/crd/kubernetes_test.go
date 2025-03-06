@@ -4160,7 +4160,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-errorpage": {
 							Errors: &dynamic.ErrorPage{
-								Status:  []string{"404", "500"},
+								Status: []string{"404", "500"},
+								StatusRewrites: map[string]int{
+									"404": 200,
+								},
 								Service: "default-errorpage-errorpage-service",
 								Query:   "query",
 							},
