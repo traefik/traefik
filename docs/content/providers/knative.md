@@ -15,7 +15,6 @@ The Traefik Knative provider integrates with Knative to manage service access, e
 
 {!kubernetes-requirements.md!}
 
-
 1. Install/update the Knative CRDs.
 
     ```bash
@@ -29,22 +28,25 @@ The Traefik Knative provider integrates with Knative to manage service access, e
     # Install Knative Serving core components.
     kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.17.0/serving-core.yaml
     ```
+   
 3. Update the config-network configuration to use the Traefik ingress class.
 
-    ```bash
+   ```bash
        kubectl patch configmap/config-network \
        -n knative-serving \
        --type merge \
        -p '{"data":{"ingress.class":"traefik.ingress.networking.knative.dev"}}'
     ```
+   
 4. (Optional) Add a custom domain to your Knative configuration.
 
-    ```bash
+   ```bash
     kubectl patch configmap config-domain \
       -n knative-serving \
       --type='merge' \
       -p='{"data":{"example.com":""}}'
     ```
+   
 5. Deploy Traefik and enable the `knative` provider in the static configuration as detailed below:
 
        ```yaml tab="File (YAML)"

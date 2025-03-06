@@ -200,6 +200,12 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 		s.T().Fatal(err)
 	}
 
+	// Ensure the directory exists
+	err = os.MkdirAll("/etc/rancher/k3s", 0o755)
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
 	// Write the byte array to the file
 	err = os.WriteFile("/etc/rancher/k3s/k3s.yaml", config, 0o644)
 	if err != nil {
