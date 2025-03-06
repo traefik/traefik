@@ -324,6 +324,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.domain`"
+    
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.domain=foo.com
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.maxage`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
