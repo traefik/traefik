@@ -715,7 +715,6 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 
 	if rateLimit.Redis != nil {
 		rl.Redis = &dynamic.Redis{
-			Endpoints:      rateLimit.Redis.Endpoints,
 			TLS:            rateLimit.Redis.TLS,
 			DB:             rateLimit.Redis.DB,
 			PoolSize:       rateLimit.Redis.PoolSize,
@@ -723,6 +722,10 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 			MaxActiveConns: rateLimit.Redis.MaxActiveConns,
 		}
 		rl.Redis.SetDefaults()
+
+		if len(rateLimit.Redis.Endpoints) > 0 {
+			rl.Redis.Endpoints = rateLimit.Redis.Endpoints
+		}
 
 		if rateLimit.Redis.DialTimeout != nil {
 			err := rl.Redis.DialTimeout.Set(rateLimit.Redis.DialTimeout.String())

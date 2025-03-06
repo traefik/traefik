@@ -584,6 +584,7 @@ func (r *RateLimit) SetDefaults() {
 // Redis holds the Redis configuration.
 type Redis struct {
 	// Endpoints contains either a single address or a seed list of host:port addresses.
+	// Default value is ["localhost:6379"].
 	Endpoints []string `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
 	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
 	// which can be provided as a file path or file content.
@@ -617,6 +618,8 @@ type Redis struct {
 
 // SetDefaults sets the default values on a RateLimit.
 func (r *Redis) SetDefaults() {
+	r.Endpoints = []string{"localhost:6379"}
+
 	defaultReadTimeout := ptypes.Duration(3 * time.Second)
 	r.ReadTimeout = &defaultReadTimeout
 

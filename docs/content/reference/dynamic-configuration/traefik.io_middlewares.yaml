@@ -1045,8 +1045,9 @@ spec:
                         pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                         x-kubernetes-int-or-string: true
                       endpoints:
-                        description: Endpoints contains either a single address or
-                          a seed list of host:port addresses.
+                        description: |-
+                          Endpoints contains either a single address or a seed list of host:port addresses.
+                          Default value is ["localhost:6379"].
                         items:
                           type: string
                         type: array
@@ -1102,8 +1103,6 @@ spec:
                           Default value is 3 seconds.
                         pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                         x-kubernetes-int-or-string: true
-                    required:
-                    - endpoints
                     type: object
                   sourceCriterion:
                     description: |-

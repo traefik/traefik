@@ -234,7 +234,8 @@ type RateLimit struct {
 // In a Kubernetes setup, the username and password are stored in a Secret file within the same namespace as the middleware.
 type Redis struct {
 	// Endpoints contains either a single address or a seed list of host:port addresses.
-	Endpoints []string `json:"endpoints"`
+	// Default value is ["localhost:6379"].
+	Endpoints []string `json:"endpoints,omitempty"`
 	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
 	// which can be provided as a file path or file content.
 	TLS *types.ClientTLS `json:"tls,omitempty"`
