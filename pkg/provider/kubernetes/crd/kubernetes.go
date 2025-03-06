@@ -266,7 +266,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
+		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
 			continue
@@ -686,7 +686,7 @@ func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compr
 	return c
 }
 
-func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -713,7 +713,70 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 		rl.SourceCriterion = rateLimit.SourceCriterion
 	}
 
+	if rateLimit.Redis != nil {
+		rl.Redis = &dynamic.Redis{
+			Endpoints:      rateLimit.Redis.Endpoints,
+			TLS:            rateLimit.Redis.TLS,
+			DB:             rateLimit.Redis.DB,
+			PoolSize:       rateLimit.Redis.PoolSize,
+			MinIdleConns:   rateLimit.Redis.MinIdleConns,
+			MaxActiveConns: rateLimit.Redis.MaxActiveConns,
+		}
+		rl.Redis.SetDefaults()
+
+		if rateLimit.Redis.DialTimeout != nil {
+			err := rl.Redis.DialTimeout.Set(rateLimit.Redis.DialTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.ReadTimeout != nil {
+			err := rl.Redis.ReadTimeout.Set(rateLimit.Redis.ReadTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.WriteTimeout != nil {
+			err := rl.Redis.WriteTimeout.Set(rateLimit.Redis.WriteTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.Secret != "" {
+			var err error
+			rl.Redis.Username, rl.Redis.Password, err = loadRedisCredentials(namespace, rateLimit.Redis.Secret, client)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return rl, nil
+}
+
+func loadRedisCredentials(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
+	}
+
+	if !exists {
+		return "", "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+
+	username, usernameExists := secret.Data["username"]
+	password, passwordExists := secret.Data["password"]
+	if !usernameExists || !passwordExists {
+		return "", "", fmt.Errorf("secret '%s/%s' must contain both username and password keys", secret.Namespace, secret.Name)
+	}
+	return string(username), string(password), nil
 }
 
 func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error) {
