@@ -2,7 +2,6 @@ Traefik follows the [Kubernetes support policy](https://kubernetes.io/releases/v
 and supports at least the latest three minor versions of Kubernetes.
 General functionality cannot be guaranteed for older versions.
 
-
 | Traefik | Kubernetes  |
 |---------|-------------|
 | 3.3     | 1.30-1.32   |
