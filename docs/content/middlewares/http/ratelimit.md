@@ -1050,13 +1050,11 @@ http:
 
 #### `redis.readTimeout`
 
-_Optional, Default=0_
+_Optional, Default=3s_
 
-Defines the timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
-
--   `0` - default timeout (3 seconds).
--   `-1` - no timeout (blocks indefinitely).
--   `-2` - disables `SetReadDeadline` calls completely.
+Defines the timeout for socket reads. 
+If reached, commands will fail with a timeout instead of blocking.
+Zero means no timeout.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1098,14 +1096,11 @@ http:
 
 #### `redis.writeTimeout`
 
-_Optional, Default=0_
+_Optional, Default=3s_
 
-Timeout for socket writes. If reached, commands will fail
-with a timeout instead of blocking. Supported values:
-
--   `0` - default timeout (3 seconds).
--   `-1` - no timeout (blocks indefinitely).
--   `-2` - disables `SetWriteDeadline` calls completely.
+Timeout for socket writes. 
+If reached, commands will fail with a timeout instead of blocking. 
+Zero means no timeout.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1150,13 +1145,6 @@ http:
 _Optional, Default=5s_
 
 Dial timeout for establishing new connections.
-Default is 5 seconds.
-
-Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Supported values:
-
--   `0` - default timeout (5 seconds).
--   `-1` - no timeout (blocks indefinitely).
--   `-2` - disables `SetReadDeadline` calls completely.
 
 ```yaml tab="Docker & Swarm"
 labels:

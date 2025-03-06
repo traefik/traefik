@@ -29,7 +29,7 @@
     average = 100
     burst = 1
     [http.middlewares.ratelimit.rateLimit.redis]
-    endpoints = ["{{ .RedisAddress }}"]
+    endpoints = ["{{ .RedisEndpoints }}"]
 
 [http.services]
   [http.services.service1]

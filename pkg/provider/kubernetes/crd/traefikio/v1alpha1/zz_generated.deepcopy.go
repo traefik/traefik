@@ -30,7 +30,6 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	paersertypes "github.com/traefik/paerser/types"
 	dynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
 	tls "github.com/traefik/traefik/v3/pkg/tls"
 	types "github.com/traefik/traefik/v3/pkg/types"
@@ -1087,17 +1086,17 @@ func (in *Redis) DeepCopyInto(out *Redis) {
 	}
 	if in.ReadTimeout != nil {
 		in, out := &in.ReadTimeout, &out.ReadTimeout
-		*out = new(paersertypes.Duration)
+		*out = new(intstr.IntOrString)
 		**out = **in
 	}
 	if in.WriteTimeout != nil {
 		in, out := &in.WriteTimeout, &out.WriteTimeout
-		*out = new(paersertypes.Duration)
+		*out = new(intstr.IntOrString)
 		**out = **in
 	}
 	if in.DialTimeout != nil {
 		in, out := &in.DialTimeout, &out.DialTimeout
-		*out = new(paersertypes.Duration)
+		*out = new(intstr.IntOrString)
 		**out = **in
 	}
 	return

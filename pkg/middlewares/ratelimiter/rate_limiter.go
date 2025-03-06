@@ -23,6 +23,15 @@ const (
 	maxSources = 65536
 )
 
+type result struct {
+	OK    bool
+	Delay time.Duration
+}
+
+type limiter interface {
+	Allow(ctx context.Context, token string) (result, error)
+}
+
 // rateLimiter implements rate limiting and traffic shaping with a set of token buckets;
 // one for each traffic source. The same parameters are applied to all the buckets.
 type rateLimiter struct {
@@ -35,17 +44,7 @@ type rateLimiter struct {
 	next          http.Handler
 	logger        *zerolog.Logger
 
-	limiter Limiter
-}
-
-type Result struct {
-	Ok        bool
-	Remaining float64
-	Delay     time.Duration
-}
-
-type Limiter interface {
-	Allow(ctx context.Context, token string) (Result, error)
+	limiter limiter
 }
 
 // New returns a rate limiter middleware.
@@ -65,7 +64,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 
 	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting source extractor: %w", err)
 	}
 
 	burst := config.Burst
@@ -109,20 +108,20 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
-	var limiter Limiter
+	var limiter limiter
 	if config.Redis != nil {
-		limiter, err = NewRedisLimiter(rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
+		limiter, err = newRedisLimiter(ctx, rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating redis limiter: %w", err)
 		}
 	} else {
-		limiter, err = NewInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
+		limiter, err = newInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating in-memory limiter: %w", err)
 		}
 	}
 
-	rateLimmiter := &rateLimiter{
+	return &rateLimiter{
 		logger:        logger,
 		name:          name,
 		rate:          rate.Limit(rtl),
@@ -130,9 +129,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		next:          next,
 		sourceMatcher: sourceMatcher,
 		limiter:       limiter,
-	}
-
-	return rateLimmiter, nil
+	}, nil
 }
 
 func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
@@ -150,7 +147,6 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// always equal to 1 if exist.
 	if amount != 1 {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
@@ -159,22 +155,22 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
 		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
-		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
+		http.Error(rw, "Could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
 
-	if !result.Ok {
-		if result.Delay > rl.maxDelay {
-			rl.serveDelayError(ctx, rw, result.Delay)
-		} else {
-			observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
-			http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
-		}
+	if !result.OK {
+		observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
+		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
+		return
 	}
 
-	if result.Ok {
-		rl.next.ServeHTTP(rw, req)
+	if result.Delay > rl.maxDelay {
+		rl.serveDelayError(ctx, rw, result.Delay)
+		return
 	}
+
+	rl.next.ServeHTTP(rw, req)
 }
 
 func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {

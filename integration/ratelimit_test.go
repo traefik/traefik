@@ -3,7 +3,6 @@ package integration
 import (
 	"net"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,7 +13,8 @@ import (
 
 type RateLimitSuite struct {
 	BaseSuite
-	ServerIP string
+	ServerIP      string
+	RedisEndpoint string
 }
 
 func TestRateLimitSuite(t *testing.T) {
@@ -28,6 +28,8 @@ func (s *RateLimitSuite) SetupSuite() {
 	s.composeUp()
 
 	s.ServerIP = s.getComposeServiceIP("whoami1")
+
+	s.RedisEndpoint = net.JoinHostPort(s.getComposeServiceIP("redis"), "6379")
 }
 
 func (s *RateLimitSuite) TearDownSuite() {
@@ -61,39 +63,13 @@ func (s *RateLimitSuite) TestSimpleConfiguration() {
 	}
 }
 
-type RedisRateLimitSuite struct {
-	BaseSuite
-	ServerIP       string
-	redisEndpoints []string
-}
-
-func TestRedisRateLimitSuite(t *testing.T) {
-	suite.Run(t, new(RedisRateLimitSuite))
-}
-
-func (s *RedisRateLimitSuite) SetupSuite() {
-	s.BaseSuite.SetupSuite()
-
-	s.createComposeProject("ratelimit_redis")
-	s.composeUp()
-
-	s.redisEndpoints = []string{}
-	s.redisEndpoints = append(s.redisEndpoints, net.JoinHostPort(s.getComposeServiceIP("redis"), "6379"))
-
-	s.ServerIP = s.getComposeServiceIP("whoami1")
-}
-
-func (s *RedisRateLimitSuite) TearDownSuite() {
-	s.BaseSuite.TearDownSuite()
-}
-
-func (s *RedisRateLimitSuite) TestRedisRateLimitSimpleConfiguration() {
+func (s *RateLimitSuite) TestRedisRateLimitSimpleConfiguration() {
 	file := s.adaptFile("fixtures/ratelimit/simple_redis.toml", struct {
-		Server1      string
-		RedisAddress string
+		Server1        string
+		RedisEndpoints string
 	}{
-		Server1:      s.ServerIP,
-		RedisAddress: strings.Join(s.redisEndpoints, ","),
+		Server1:        s.ServerIP,
+		RedisEndpoints: s.RedisEndpoint,
 	})
 
 	s.traefikCmd(withConfigFile(file))

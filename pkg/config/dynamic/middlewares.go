@@ -568,47 +568,58 @@ type RateLimit struct {
 	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
 }
 
+// SetDefaults sets the default values on a RateLimit.
+func (r *RateLimit) SetDefaults() {
+	r.Burst = 1
+	r.Period = ptypes.Duration(time.Second)
+}
+
 // +k8s:deepcopy-gen=true
 
 // Redis holds the Redis configuration.
 type Redis struct {
 	// Endpoints contains either a single address or a seed list of host:port addresses.
 	Endpoints []string `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
-	// TLS holds TLS-specific configurations, including the CA, certificate, and key,
-	// which can be provided as a file path or file contents.
+	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
+	// which can be provided as a file path or file content.
 	TLS *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	// Username represents the authorized username used to authenticate the connection.
+	// Username defines the username to connect to the Redis server.
 	Username string `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	// Password represents the password associated with the above username,
-	// used to connect to the Redis server.
+	// Password defines the password to connect to the Redis server.
 	Password string `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
-	// Database specifies the Redis database that will be selected after connecting to the server.
+	// DB defines the Redis database that will be selected after connecting to the server.
 	DB int `json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
 	// PoolSize defines the initial number of socket connections.
 	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
 	// This can be limited using MaxActiveConns.
 	PoolSize int `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
-	// MinIdleConns specifies the minimum number of idle connections.
-	// Default is 0, and idle connections are not closed by default.
+	// MinIdleConns defines the minimum number of idle connections.
+	// Default value is 0, and idle connections are not closed by default.
 	MinIdleConns int `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty" export:"true"`
-	// MaxActiveConns sets the maximum number of connections allocated by the pool at a given time.
-	// The default value is 0, meaning there is no limit.
+	// MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+	// Default value is 0, meaning there is no limit.
 	MaxActiveConns int `json:"maxActiveConns,omitempty" toml:"maxActiveConns,omitempty" yaml:"maxActiveConns,omitempty" export:"true"`
 	// ReadTimeout defines the timeout for socket read operations.
-	// The default value is 3 seconds.
+	// Default value is 3 seconds.
 	ReadTimeout *ptypes.Duration `json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
 	// WriteTimeout defines the timeout for socket write operations.
-	// The default value is 3 seconds.
+	// Default value is 3 seconds.
 	WriteTimeout *ptypes.Duration `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
 	// DialTimeout sets the timeout for establishing new connections.
-	// The default value is 5 seconds.
+	// Default value is 5 seconds.
 	DialTimeout *ptypes.Duration `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
-func (r *RateLimit) SetDefaults() {
-	r.Burst = 1
-	r.Period = ptypes.Duration(time.Second)
+func (r *Redis) SetDefaults() {
+	defaultReadTimeout := ptypes.Duration(3 * time.Second)
+	r.ReadTimeout = &defaultReadTimeout
+
+	defaultWriteTimeout := ptypes.Duration(3 * time.Second)
+	r.WriteTimeout = &defaultWriteTimeout
+
+	defaultDialTimeout := ptypes.Duration(5 * time.Second)
+	r.DialTimeout = &defaultDialTimeout
 }
 
 // +k8s:deepcopy-gen=true

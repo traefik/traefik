@@ -1009,15 +1009,18 @@ spec:
                       limiter.
                     properties:
                       db:
-                        description: Database specifies the Redis database that will
-                          be selected after connecting to the server.
+                        description: DB defines the Redis database that will be selected
+                          after connecting to the server.
                         type: integer
                       dialTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: |-
                           DialTimeout sets the timeout for establishing new connections.
-                          The default value is 5 seconds.
-                        format: int64
-                        type: integer
+                          Default value is 5 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
                       endpoints:
                         description: Endpoints contains either a single address or
                           a seed list of host:port addresses.
@@ -1026,19 +1029,14 @@ spec:
                         type: array
                       maxActiveConns:
                         description: |-
-                          MaxActiveConns sets the maximum number of connections allocated by the pool at a given time.
-                          The default value is 0, meaning there is no limit.
+                          MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+                          Default value is 0, meaning there is no limit.
                         type: integer
                       minIdleConns:
                         description: |-
-                          MinIdleConns specifies the minimum number of idle connections.
-                          Default is 0, and idle connections are not closed by default.
+                          MinIdleConns defines the minimum number of idle connections.
+                          Default value is 0, and idle connections are not closed by default.
                         type: integer
-                      password:
-                        description: |-
-                          Password represents the password associated with the above username,
-                          used to connect to the Redis server.
-                        type: string
                       poolSize:
                         description: |-
                           PoolSize defines the initial number of socket connections.
@@ -1046,19 +1044,22 @@ spec:
                           This can be limited using MaxActiveConns.
                         type: integer
                       readTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: |-
                           ReadTimeout defines the timeout for socket read operations.
-                          The default value is 3 seconds.
-                        format: int64
-                        type: integer
+                          Default value is 3 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
                       secret:
-                        description: Secret is the name of the referenced Kubernetes
+                        description: Secret defines the name of the referenced Kubernetes
                           Secret containing Redis credentials.
                         type: string
                       tls:
                         description: |-
-                          TLS holds TLS-specific configurations, including the CA, certificate, and key,
-                          which can be provided as a file path or file contents.
+                          TLS defines TLS-specific configurations, including the CA, certificate, and key,
+                          which can be provided as a file path or file content.
                         properties:
                           ca:
                             type: string
@@ -1069,16 +1070,17 @@ spec:
                           key:
                             type: string
                         type: object
-                      username:
-                        description: Username represents the authorized username used
-                          to authenticate the connection.
-                        type: string
                       writeTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: |-
                           WriteTimeout defines the timeout for socket write operations.
-                          The default value is 3 seconds.
-                        format: int64
-                        type: integer
+                          Default value is 3 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                    required:
+                    - endpoints
                     type: object
                   sourceCriterion:
                     description: |-

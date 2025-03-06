@@ -714,8 +714,6 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 	}
 
 	if rateLimit.Redis != nil {
-		rateLimit.Redis.Username = ""
-		rateLimit.Redis.Password = ""
 		rl.Redis = &dynamic.Redis{
 			Endpoints:      rateLimit.Redis.Endpoints,
 			TLS:            rateLimit.Redis.TLS,
@@ -723,38 +721,59 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 			PoolSize:       rateLimit.Redis.PoolSize,
 			MinIdleConns:   rateLimit.Redis.MinIdleConns,
 			MaxActiveConns: rateLimit.Redis.MaxActiveConns,
-			ReadTimeout:    rateLimit.Redis.ReadTimeout,
-			WriteTimeout:   rateLimit.Redis.WriteTimeout,
-			DialTimeout:    rateLimit.Redis.DialTimeout,
 		}
-		// Get username password of redis if set
+		rl.Redis.SetDefaults()
+
+		if rateLimit.Redis.DialTimeout != nil {
+			err := rl.Redis.DialTimeout.Set(rateLimit.Redis.DialTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.ReadTimeout != nil {
+			err := rl.Redis.ReadTimeout.Set(rateLimit.Redis.ReadTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.WriteTimeout != nil {
+			err := rl.Redis.WriteTimeout.Set(rateLimit.Redis.WriteTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		if rateLimit.Redis.Secret != "" {
-			secret, ok, err := client.GetSecret(namespace, rateLimit.Redis.Secret)
+			var err error
+			rl.Redis.Username, rl.Redis.Password, err = loadRedisCredentials(namespace, rateLimit.Redis.Secret, client)
 			if err != nil {
-				return nil, fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, rateLimit.Redis.Secret, err)
+				return nil, err
 			}
-			if !ok {
-				return nil, fmt.Errorf("secret '%s/%s' not found", namespace, rateLimit.Redis.Secret)
-			}
-			if secret == nil {
-				return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, rateLimit.Redis.Secret)
-			}
-			username, password, err := loadRedisCredentials(secret)
-			if err != nil {
-				return nil, fmt.Errorf("fail to load username and password from secret: %w", err)
-			}
-			rl.Redis.Username = username
-			rl.Redis.Password = password
 		}
 	}
 
 	return rl, nil
 }
 
-func loadRedisCredentials(secret *corev1.Secret) (string, string, error) {
+func loadRedisCredentials(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
+	}
+
+	if !exists {
+		return "", "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+
 	username, usernameExists := secret.Data["username"]
 	password, passwordExists := secret.Data["password"]
-	if !(usernameExists && passwordExists) {
+	if !usernameExists || !passwordExists {
 		return "", "", fmt.Errorf("secret '%s/%s' must contain both username and password keys", secret.Namespace, secret.Name)
 	}
 	return string(username), string(password), nil
