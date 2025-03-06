@@ -67,6 +67,7 @@ type ErrorPage struct {
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
+	// +kubebuilder:validation:items:Pattern=`^([0-5][0-9]{2}[,-]?)+$`
 	Status []string `json:"status,omitempty"`
 	// StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
 	// For example: "418": 404 or "410-418": 404
@@ -88,12 +89,18 @@ type CircuitBreaker struct {
 	// Expression is the condition that triggers the tripped state.
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
 	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
 	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
+	// +kubebuilder:validation:Minimum=100
+	// +kubebuilder:validation:Maximum=599
 	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
@@ -204,12 +211,15 @@ type RateLimit struct {
 	// It defaults to 0, which means no rate limiting.
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
 	// one needs to define a Period larger than a second.
+	// +kubebuilder:validation:Minimum=0
 	Average *int64 `json:"average,omitempty"`
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
+	// +kubebuilder:validation:XIntOrString
 	Period *intstr.IntOrString `json:"period,omitempty"`
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
+	// +kubebuilder:validation:Minimum=0
 	Burst *int64 `json:"burst,omitempty"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
@@ -230,6 +240,7 @@ type Compress struct {
 	IncludedContentTypes []string `json:"includedContentTypes,omitempty"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
+	// +kubebuilder:validation:Minimum=0
 	MinResponseBodyBytes *int `json:"minResponseBodyBytes,omitempty"`
 	// Encodings defines the list of supported compression algorithms.
 	Encodings []string `json:"encodings,omitempty"`
@@ -245,12 +256,15 @@ type Compress struct {
 // More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
+	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
 }
 

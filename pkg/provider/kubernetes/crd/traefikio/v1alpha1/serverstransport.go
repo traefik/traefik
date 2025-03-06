@@ -36,6 +36,7 @@ type ServersTransportSpec struct {
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
 	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
+	// +kubebuilder:validation:Minimum=0
 	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
 	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
 	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
@@ -52,14 +53,24 @@ type ServersTransportSpec struct {
 // ForwardingTimeouts holds the timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
 	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
 	// ResponseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	ResponseHeaderTimeout *intstr.IntOrString `json:"responseHeaderTimeout,omitempty"`
 	// IdleConnTimeout is the maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	IdleConnTimeout *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
 	// ReadIdleTimeout is the timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	ReadIdleTimeout *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
 	// PingTimeout is the timeout after which the HTTP/2 connection will be closed if a response to ping is not received.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
 }
 
