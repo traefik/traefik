@@ -255,6 +255,12 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
     `SameSite` can be `none`, `lax`, `strict` or empty.
 
+!!! info "Domain"
+
+    The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
+    
+    By setting the Domain attribute, the cookie can be shared across subdomains (for example, a cookie set for example.com would be accessible to www.example.com, api.example.com, etc.). This is particularly useful in cases where sticky sessions span multiple subdomains, ensuring that the session is maintained even when the client interacts with different parts of the infrastructure.
+
 ??? example "Adding Stickiness -- Using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="YAML"
@@ -286,6 +292,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
               cookie:
                 name: my_sticky_cookie_name
                 secure: true
+                domain: mysite.site
                 httpOnly: true
     ```
 
@@ -297,6 +304,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
           name = "my_sticky_cookie_name"
           secure = true
           httpOnly = true
+          domain = "mysite.site"
           sameSite = "none"
     ```
 

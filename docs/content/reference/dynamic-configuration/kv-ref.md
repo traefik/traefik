@@ -40,6 +40,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware09/errors/service` | `foobar` |
 | `traefik/http/middlewares/Middleware09/errors/status/0` | `foobar` |
 | `traefik/http/middlewares/Middleware09/errors/status/1` | `foobar` |
+| `traefik/http/middlewares/Middleware09/errors/statusRewrites/name0` | `42` |
+| `traefik/http/middlewares/Middleware09/errors/statusRewrites/name1` | `42` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/addAuthCookiesToResponse/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/addAuthCookiesToResponse/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/forwardAuth/address` | `foobar` |
@@ -288,6 +290,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/servers/1/url` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/servers/1/weight` | `42` |
 | `traefik/http/services/Service02/loadBalancer/serversTransport` | `foobar` |
+| `traefik/http/services/Service02/loadBalancer/sticky/cookie/domain` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service02/loadBalancer/sticky/cookie/name` | `foobar` |
@@ -307,6 +310,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service04/weighted/services/0/weight` | `42` |
 | `traefik/http/services/Service04/weighted/services/1/name` | `foobar` |
 | `traefik/http/services/Service04/weighted/services/1/weight` | `42` |
+| `traefik/http/services/Service04/weighted/sticky/cookie/domain` | `foobar` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/maxAge` | `42` |
 | `traefik/http/services/Service04/weighted/sticky/cookie/name` | `foobar` |
