@@ -477,22 +477,6 @@ You can declare TCP Routers and/or Services using tags.
     traefik.tcp.services.myservice.loadbalancer.serverstransport=foobar@file
     ```
 
-### UDP
-
-You can declare UDP Routers and/or Services using tags.
-
-??? example "Declaring UDP Routers and Services"
-
-    ```yaml
-    traefik.udp.routers.my-router.entrypoints=udp
-    traefik.udp.services.my-service.loadbalancer.server.port=4123
-    ```
-
-!!! warning "UDP and HTTP"
-
-    If you declare a UDP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no UDP Router/Service is defined).
-    You can declare both a UDP Router/Service and an HTTP Router/Service for the same Nomad service (but you have to do so manually).
-
 #### TCP Middleware
 
 You can declare pieces of middleware using tags starting with `traefik.tcp.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
@@ -514,6 +498,22 @@ More information about available middlewares in the dedicated [middlewares secti
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+### UDP
+
+You can declare UDP Routers and/or Services using tags.
+
+??? example "Declaring UDP Routers and Services"
+
+    ```yaml
+    traefik.udp.routers.my-router.entrypoints=udp
+    traefik.udp.services.my-service.loadbalancer.server.port=4123
+    ```
+
+!!! warning "UDP and HTTP"
+
+    If you declare a UDP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no UDP Router/Service is defined).
+    You can declare both a UDP Router/Service and an HTTP Router/Service for the same Nomad service (but you have to do so manually).
 
 #### UDP Routers
 
