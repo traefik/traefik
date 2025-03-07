@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -225,6 +226,51 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+	// Redis hold the configs of Redis as bucket in rate limiter.
+	Redis *Redis `json:"redis,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Redis contains the configuration for using Redis in middleware.
+// In a Kubernetes setup, the username and password are stored in a Secret file within the same namespace as the middleware.
+type Redis struct {
+	// Endpoints contains either a single address or a seed list of host:port addresses.
+	// Default value is ["localhost:6379"].
+	Endpoints []string `json:"endpoints,omitempty"`
+	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
+	// which can be provided as a file path or file content.
+	TLS *types.ClientTLS `json:"tls,omitempty"`
+	// Secret defines the name of the referenced Kubernetes Secret containing Redis credentials.
+	Secret string `json:"secret,omitempty"`
+	// DB defines the Redis database that will be selected after connecting to the server.
+	DB int `json:"db,omitempty"`
+	// PoolSize defines the initial number of socket connections.
+	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+	// This can be limited using MaxActiveConns.
+	// Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+	PoolSize int `json:"poolSize,omitempty"`
+	// MinIdleConns defines the minimum number of idle connections.
+	// Default value is 0, and idle connections are not closed by default.
+	MinIdleConns int `json:"minIdleConns,omitempty"`
+	// MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+	// Default value is 0, meaning there is no limit.
+	MaxActiveConns int `json:"maxActiveConns,omitempty"`
+	// ReadTimeout defines the timeout for socket read operations.
+	// Default value is 3 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout defines the timeout for socket write operations.
+	// Default value is 3 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
+	// DialTimeout sets the timeout for establishing new connections.
+	// Default value is 5 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
