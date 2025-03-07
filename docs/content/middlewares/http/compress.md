@@ -179,8 +179,14 @@ http:
 _Optional, Default=1024_
 
 `minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
-
 Responses smaller than the specified values will not be compressed.
+
+!!! tip "Streaming"
+
+    When data is sent to the client on flush, the `minResponseBodyBytes` configuration is ignored and the data is compressed.
+    This is particularly the case when data is streamed to the client when using `Transfer-encoding: chunked` response.
+
+When chunked data is sent to the client on flush, it will be compressed by default even if the received data has not reached  
 
 ```yaml tab="Docker & Swarm"
 labels:
