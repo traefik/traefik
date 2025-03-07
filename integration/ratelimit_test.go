@@ -28,7 +28,6 @@ func (s *RateLimitSuite) SetupSuite() {
 	s.composeUp()
 
 	s.ServerIP = s.getComposeServiceIP("whoami1")
-
 	s.RedisEndpoint = net.JoinHostPort(s.getComposeServiceIP("redis"), "6379")
 }
 

@@ -598,6 +598,7 @@ type Redis struct {
 	// PoolSize defines the initial number of socket connections.
 	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
 	// This can be limited using MaxActiveConns.
+	// Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
 	PoolSize int `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
 	// MinIdleConns defines the minimum number of idle connections.
 	// Default value is 0, and idle connections are not closed by default.

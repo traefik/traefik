@@ -1829,6 +1829,7 @@ spec:
                           PoolSize defines the initial number of socket connections.
                           If the pool runs out of available connections, additional ones will be created beyond PoolSize.
                           This can be limited using MaxActiveConns.
+                          Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
                         type: integer
                       readTimeout:
                         anyOf:

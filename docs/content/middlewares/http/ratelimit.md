@@ -499,7 +499,8 @@ http:
 
 ### `redis`
 
-Enables distributed rate limit using `redis` to store the tokens. If not set, Traefik's in-memory storage is used by default.
+Enables distributed rate limit using `redis` to store the tokens.
+If not set, Traefik's in-memory storage is used by default.
 
 #### `redis.endpoints`
 
@@ -547,63 +548,26 @@ http:
       endpoints = ["127.0.0.1:6379"]
 ```
 
-### `redis.secret`
-!!! important "Restriction"
-
-    The username and password configurations are not available for Kubernetes configurations.
-    In Kubernetes, credentials must be stored in a Secret resource (kind: Secret).
-
-```yaml tab="Kubernetes"
-# Defining the rate limit configuration with Redis credentials stored in a Secret.
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-    name: ratelimit
-    namespace: default
-spec:
-    rateLimit:
-        period: 1m
-        average: 6
-        burst: 12
-        sourceCriterion:
-            ipStrategy:
-                excludedIPs:
-                    - 127.0.0.1/32
-                    - 192.168.1.7
-        redis:
-            secret: redissecret
-            endpoints:
-                - "127.0.0.1:6379"
-            username: user-redis # This value should be ignored
-            password: password-redis # This value should be ignored
-            db: 0
-            poolSize: 42
-            maxActiveConns: 42
-            readTimeout: 42s
-            writeTimeout: 42s
-            dialTimeout: 42s
-
----
-# This Secret stores the username and password for authenticating the Redis connection.
-# Note: The password is not hashed; it is only Base64-encoded.
-
-apiVersion: v1
-kind: Secret
-metadata:
-    name: redissecret
-    namespace: default
-data:
-    username: dXNlcg== # username: user
-    password: cGFzc3dvcmQ= # password: password
-    
-```
-
-
 #### `redis.username`
 
 _Optional, Default=""_
 
-Specifies the username used to authenticate with the Redis server.
+Defines the username used to authenticate with the Redis server.
+
+??? note "Kubernetes"
+
+    In Kubernetes, credentials must be stored in a Secret resource.
+    This secret must contain two keys: `username` and `password` and referenced in the Secret option.
+
+    ```yaml
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: test-ratelimit
+    spec:
+     rateLimit:
+       secret: mysecret 
+    ```
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -635,13 +599,27 @@ http:
 
 _Optional, Default=""_
 
-Specifies the password to authenticate against the Redis server.
+Defines the password to authenticate against the Redis server.
+
+??? note "Kubernetes"
+
+    In Kubernetes, credentials must be stored in a Secret resource.
+    This secret must contain two keys: `username` and `password` and referenced in the Secret option.
+
+    ```yaml
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: test-ratelimit
+    spec:
+     rateLimit:
+       secret: mysecret 
+    ```
 
 ```yaml tab="Docker & Swarm"
 labels:
     - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
 ```
-
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
@@ -910,13 +888,14 @@ http:
 
 #### `redis.poolSize`
 
-_Optional, Default=10_
+_Optional, Default=0_
 
 Defines the base number of socket connections.
 
-By default, there are 10 connections per available CPU as reported by `runtime.GOMAXPROCS`.
+If there are not enough connections in the pool, new connections will be allocated beyond `redis.poolSize`. 
+You can limit this using `redis.maxActiveConns`.
 
-If there are not enough connections in the pool, new connections will be allocated beyond `redis.poolSize`. You can limit this using `redis.maxActiveConns`.
+Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -961,8 +940,7 @@ http:
 _Optional, Default=0_
 
 Defines the minimum number of idle connections, which is useful when establishing new connections is slow.
-
-The default value is 0. By default, idle connections are not closed.
+Zero means that idle connections are not closed.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1007,8 +985,7 @@ http:
 _Optional, Default=0_
 
 Defines the maximum number of connections the pool can allocate at a given time.
-
-When set to `0`, there is no limit on the number of connections in the pool.
+Zero means no limit.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1091,14 +1068,14 @@ http:
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     [http.middlewares.test-ratelimit.rateLimit.redis]
-      readTimeout = 42s
+      readTimeout = "42s"
 ```
 
 #### `redis.writeTimeout`
 
 _Optional, Default=3s_
 
-Timeout for socket writes. 
+Defines the timeout for socket writes. 
 If reached, commands will fail with a timeout instead of blocking. 
 Zero means no timeout.
 
@@ -1137,14 +1114,15 @@ http:
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     [http.middlewares.test-ratelimit.rateLimit.redis]
-      writeTimeout = 42s
+      writeTimeout = "42s"
 ```
 
 #### `redis.dialTimeout`
 
 _Optional, Default=5s_
 
-Dial timeout for establishing new connections.
+Defines the dial timeout for establishing new connections.
+Zero means no timeout.
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -1181,5 +1159,5 @@ http:
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     [http.middlewares.test-ratelimit.rateLimit.redis]
-      dialTimeout = 42s
+      dialTimeout = "42s"
 ```

@@ -230,6 +230,8 @@ type RateLimit struct {
 	Redis *Redis `json:"redis,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Redis contains the configuration for using Redis in middleware.
 // In a Kubernetes setup, the username and password are stored in a Secret file within the same namespace as the middleware.
 type Redis struct {
@@ -246,6 +248,7 @@ type Redis struct {
 	// PoolSize defines the initial number of socket connections.
 	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
 	// This can be limited using MaxActiveConns.
+	// Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
 	PoolSize int `json:"poolSize,omitempty"`
 	// MinIdleConns defines the minimum number of idle connections.
 	// Default value is 0, and idle connections are not closed by default.
