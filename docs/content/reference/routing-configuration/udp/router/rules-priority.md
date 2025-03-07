@@ -20,7 +20,7 @@ So UDP _routers_ at this time are pretty much only load-balancers in one form or
 ## Sessions and timeout
 
 Even though UDP is connectionless (and because of that),
-the implementation of an UDP router in Traefik Hub relies on what we (and a couple of other implementations) call a `session`.
+the implementation of an UDP router in Traefik relies on what we (and a couple of other implementations) call a `session`.
 It means that some state is kept about an ongoing communication between a client and a backend,
 notably so that the proxy knows where to forward a response packet from a backend.
 
@@ -54,10 +54,23 @@ udp:
     service = "service-1"
 ```
 
+```yaml tab="Labels"
+labels:
+  - "traefik.udp.routers.Router-1.service=service-1"
+```
+
+```json tab="Tags"
+{
+  //...
+  "Tags": [
+    "traefik.udp.routers.Router-1.service=service-1"
+  ]
+}
+```
+
 Listens to Specific EntryPoints
 
 ```yaml tab="Structured (YAML)"
-## Dynamic configuration
 udp:
   routers:
     Router-1:
@@ -68,12 +81,27 @@ udp:
 ```
 
 ```toml tab="Structured (TOML)"
-## Dynamic configuration
 [udp.routers]
   [udp.routers.Router-1]
     # does not listen on "other" entry point
     entryPoints = ["streaming"]
     service = "service-1"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.udp.routers.Router-1.entryPoints=streaming"
+  - "traefik.udp.routers.Router-1.service=service-1"
+```
+
+```json tab="Tags"
+{
+  //...
+  "Tags": [
+    "traefik.udp.routers.Router-1.entryPoints=streaming",
+    "traefik.udp.routers.Router-1.service=service-1"
+  ]
+}
 ```
 
 !!! info "Service"

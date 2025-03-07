@@ -545,6 +545,44 @@ More information about available middlewares in the dedicated [middlewares secti
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
+### UDP
+
+You can declare UDP Routers and/or Services using KV.
+
+### UDP Routers
+
+??? info "`traefik/udp/routers/<router-name>/entrypoints/<n>`"
+
+    | Key (Path)                                                       | Value |
+    |------------------------------------------------------------------|-------|
+    | `traefik/udp/routers/myudprouter/entrypoints/0` | `foobar`  |
+
+??? info "`traefik/udp/routers/<router-name>/service`"
+
+    | Key (Path)                                                       | Value |
+    |------------------------------------------------------------------|-------|
+    | `traefik/udp/routers/myudprouter/service` | `foobar`  |
+
+### UDP Services
+
+??? info "`traefik/udp/services/loadBalancer/servers/<n>/address`"
+
+    | Key (Path)                                                       | Value |
+    |------------------------------------------------------------------|-------|
+    | `traefik/udp/services/loadBalancer/servers/<n>/address` | `foobar`  |
+
+??? info "`traefik/udp/services/weighted/services/<n>/name`"
+
+    | Key (Path)                                                       | Value |
+    |------------------------------------------------------------------|-------|
+    | `traefik/udp/services/weighted/services/0/name` | `foobar`  |
+
+??? info "`traefik/udp/services/weighted/services/<n>/name`"
+
+    | Key (Path)                                                       | Value |
+    |------------------------------------------------------------------|-------|
+    | `traefik/udp/services/weighted/servers/0/weight` | `42`  |
+
 ## TLS
 
 ### TLS Options
