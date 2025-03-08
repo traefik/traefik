@@ -2268,7 +2268,7 @@ spec:
               rootCAsSecrets:
                 description: |-
                   Deprecated: RootCAsSecrets is deprecated and will be removed in a future release.
-                  Use RootCA instead for specifying CA certificates.
+                  Use RootCAs instead for specifying CA certificates.
                 items:
                   type: string
                 type: array
