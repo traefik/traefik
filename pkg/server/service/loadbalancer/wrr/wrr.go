@@ -31,6 +31,7 @@ type stickyCookie struct {
 	sameSite string
 	maxAge   int
 	path     string
+	domain   string
 }
 
 func convertSameSite(sameSite string) http.SameSite {
@@ -88,6 +89,7 @@ func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 			sameSite: sticky.Cookie.SameSite,
 			maxAge:   sticky.Cookie.MaxAge,
 			path:     "/",
+			domain:   sticky.Cookie.Domain,
 		}
 		if sticky.Cookie.Path != nil {
 			balancer.stickyCookie.path = *sticky.Cookie.Path
@@ -296,6 +298,7 @@ func (b *Balancer) writeStickyCookie(w http.ResponseWriter, handler *namedHandle
 		Secure:   b.stickyCookie.secure,
 		SameSite: convertSameSite(b.stickyCookie.sameSite),
 		MaxAge:   b.stickyCookie.maxAge,
+		Domain:   b.stickyCookie.domain,
 	}
 	http.SetCookie(w, cookie)
 }

@@ -72,6 +72,7 @@ http:
             sameSite: foobar
             maxAge: 42
             path: foobar
+            domain: foobar
         servers:
           - url: foobar
             weight: 42
@@ -123,6 +124,7 @@ http:
             sameSite: foobar
             maxAge: 42
             path: foobar
+            domain: foobar
         healthCheck: {}
   middlewares:
     Middleware01:

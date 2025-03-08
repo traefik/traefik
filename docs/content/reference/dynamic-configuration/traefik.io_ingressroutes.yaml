@@ -102,6 +102,7 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority
+                      maximum: 9223372036854775000
                       type: integer
                     services:
                       description: |-
@@ -247,6 +248,11 @@ spec:
                               cookie:
                                 description: Cookie defines the sticky cookie configuration.
                                 properties:
+                                  domain:
+                                    description: |-
+                                      Domain defines the host to which the cookie will be sent.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                    type: string
                                   httpOnly:
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
@@ -271,6 +277,10 @@ spec:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie
@@ -283,11 +293,14 @@ spec:
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
                               RoundRobin is the only supported value at the moment.
+                            enum:
+                            - RoundRobin
                             type: string
                           weight:
                             description: |-
                               Weight defines the weight and should only be specified when Name references a TraefikService object
                               (and to be precise, one that embeds a Weighted Round Robin).
+                            minimum: 0
                             type: integer
                         required:
                         - name

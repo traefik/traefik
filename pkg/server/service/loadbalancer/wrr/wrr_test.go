@@ -239,6 +239,7 @@ func TestSticky(t *testing.T) {
 			Secure:   true,
 			HTTPOnly: true,
 			SameSite: "none",
+			Domain:   "foo.com",
 			MaxAge:   42,
 		},
 	}, false)
@@ -275,6 +276,7 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, 3, recorder.save["second"])
 	assert.True(t, recorder.cookies["test"].HttpOnly)
 	assert.True(t, recorder.cookies["test"].Secure)
+	assert.Equal(t, "foo.com", recorder.cookies["test"].Domain)
 	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
 	assert.Equal(t, 42, recorder.cookies["test"].MaxAge)
 }
