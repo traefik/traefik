@@ -31,8 +31,8 @@ type ServersTransportSpec struct {
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables SSL certificate verification.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	// RootCA gives you the option to use secrets or config maps to store CAs
-	RootCA []RootCA `json:"rootCA,omitempty"`
+	// RootCAs gives you the option to use secrets or config maps to store CAs
+	RootCAs []RootCA `json:"rootCAs,omitempty"`
 	// Deprecated: RootCAsSecrets is deprecated and will be removed in a future release.
 	// Use RootCA instead for specifying CA certificates.
 	// +optional

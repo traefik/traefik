@@ -2252,8 +2252,8 @@ spec:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
                 type: string
-              rootCA:
-                description: RootCA gives you the option to use secrets or config
+              rootCAs:
+                description: RootCAs gives you the option to use secrets or config
                   maps to store CAs
                 items:
                   description: RootCA holds the reference to the secret or config
