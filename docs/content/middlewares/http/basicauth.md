@@ -42,7 +42,7 @@ spec:
 ```
 
 ```yaml tab="File (YAML)"
-# Declaring the user list
+# Declaring the user list in the dynamic config file
 http:
   middlewares:
     test-auth:
@@ -170,7 +170,9 @@ http:
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
 
-The file content is a list of `name:hashed-password`.
+The file content is a list of `name:hashed-password`. A Docker volume must be defined in Traefik's compose file pointing to the file.
+
+The file permissions may optionally be set to 600 so other users cannot view the contents, and should be mounted as read-only in the volume definition.
 
 !!! note ""
 
@@ -209,11 +211,24 @@ data:
 ```
 
 ```yaml tab="File (YAML)"
+# In Traefik's compose file, first define a volume mount pointing to a usersfile named 'auth_users.txt'
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: reverse_proxy
+    ...
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Mount the docker socket so traefik can listen to events
+      - ./traefik.yml:/traefik.yml:ro # Mounts the Traefik static config file for entryPoints
+      - ./providers.yml:/providers.yml:ro # Mounts the Traefik dynamic config file
+      - /path/on/host/machine/to/auth_users.txt:/auth_users.txt:ro" # Read-only mounts the Traefik usersFile for HTTP basicAuth
+    ...
+
 http:
   middlewares:
     test-auth:
       basicAuth:
-        usersFile: "/path/to/my/usersfile"
+        usersFile: "/path/to/my/auth_users.txt"
 ```
 
 ```toml tab="File (TOML)"
