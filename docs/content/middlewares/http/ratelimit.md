@@ -496,3 +496,718 @@ http:
     [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
       requestHost = true
 ```
+
+### `redis`
+
+Enables distributed rate limit using `redis` to store the tokens.
+If not set, Traefik's in-memory storage is used by default.
+
+#### `redis.endpoints`
+
+_Required, Default="127.0.0.1:6379"_
+
+Defines how to connect to the Redis server.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      endpoints:
+        - "127.0.0.1:6379"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          endpoints:
+            - "127.0.0.1:6379"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      endpoints = ["127.0.0.1:6379"]
+```
+
+#### `redis.username`
+
+_Optional, Default=""_
+
+Defines the username used to authenticate with the Redis server.
+
+```yaml tab="Docker & Swarm"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+   name: test-ratelimit
+spec:
+   rateLimit:
+      # ...
+      redis:
+         secret: mysecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mysecret
+   namespace: default
+
+data:
+   username: dXNlcm5hbWU=
+   password: cGFzc3dvcmQ=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          username: user
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      username = "user"
+```
+
+#### `redis.password`
+
+_Optional, Default=""_
+
+Defines the password to authenticate against the Redis server.
+
+```yaml tab="Docker & Swarm"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+   name: test-ratelimit
+spec:
+   rateLimit:
+      # ...
+      redis:
+         secret: mysecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mysecret
+   namespace: default
+
+data:
+   username: dXNlcm5hbWU=
+   password: cGFzc3dvcmQ=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          password: password
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      password = "password"
+```
+
+#### `redis.db`
+
+_Optional, Default=0_
+
+Defines the database to select after connecting to the Redis.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      db: 0
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          db: 0
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      db = 0
+```
+
+#### `redis.tls`
+
+Same as this [config](https://doc.traefik.io/traefik/providers/redis/#tls)
+
+_Optional_
+
+Defines the TLS configuration used for the secure connection to Redis.
+
+##### `redis.tls.ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to Redis,
+it defaults to the system bundle.
+
+```yaml tab="Docker & Swarm"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      tls:
+        caSecret: mycasercret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycasercret
+  namespace: default
+
+data:
+  # Must contain a certificate under either a `tls.ca` or a `ca.crt` key. 
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    rateLimit:
+      # ... 
+      redis:
+        tls:
+          ca: path/to/ca.crt
+```
+
+```toml tab="File (TOML)"
+[providers.redis.tls]
+  ca = "path/to/ca.crt"
+```
+
+##### `redis.tls.cert`
+
+_Optional_
+
+`cert` is the path to the public certificate used for the secure connection to Redis.
+When this option is set, the `key` option is required.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+   name: test-ratelimit
+spec:
+   rateLimit:
+      # ...
+      redis:
+         tls:
+           certSecret: mytlscert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mytlscert
+   namespace: default
+
+data:
+   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        redis:
+          tls:
+            cert: path/to/foo.cert
+            key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      [http.middlewares.test-ratelimit.rateLimit.redis.tls]
+        cert = "path/to/foo.cert"
+        key = "path/to/foo.key"
+```
+
+##### `redis.tls.key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to Redis.
+When this option is set, the `cert` option is required.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+   name: test-ratelimit
+spec:
+   rateLimit:
+      # ...
+      redis:
+         tls:
+            certSecret: mytlscert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mytlscert
+   namespace: default
+
+data:
+   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        redis:
+          tls:
+            cert: path/to/foo.cert
+            key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      [http.middlewares.test-ratelimit.rateLimit.redis.tls]
+        cert = "path/to/foo.cert"
+        key = "path/to/foo.key"
+```
+
+##### `redis.tls.insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certificate presented by the server regardless of the hostnames it covers.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      tls:
+        insecureSkipVerify: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          tls:
+            insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      [http.middlewares.test-ratelimit.rateLimit.redis.tls]
+        insecureSkipVerify = true
+```
+
+#### `redis.poolSize`
+
+_Optional, Default=0_
+
+Defines the base number of socket connections.
+
+If there are not enough connections in the pool, new connections will be allocated beyond `redis.poolSize`. 
+You can limit this using `redis.maxActiveConns`.
+
+Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      poolSize: 42
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          poolSize: 42
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      poolSize = 42
+```
+
+#### `redis.minIdleConns`
+
+_Optional, Default=0_
+
+Defines the minimum number of idle connections, which is useful when establishing new connections is slow.
+Zero means that idle connections are not closed.
+
+```yaml tab="Docker & Swarm"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      minIdleConns: 42
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          minIdleConns: 42
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      minIdleConns = 42
+```
+
+#### `redis.maxActiveConns`
+
+_Optional, Default=0_
+
+Defines the maximum number of connections the pool can allocate at a given time.
+Zero means no limit.
+
+```yaml tab="Docker & Swarm"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      maxActiveConns: 42
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          maxActiveConns: 42
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      maxActiveConns = 42
+```
+
+#### `redis.readTimeout`
+
+_Optional, Default=3s_
+
+Defines the timeout for socket reads. 
+If reached, commands will fail with a timeout instead of blocking.
+Zero means no timeout.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      readTimeout: 42s
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          readTimeout: 42s
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      readTimeout = "42s"
+```
+
+#### `redis.writeTimeout`
+
+_Optional, Default=3s_
+
+Defines the timeout for socket writes. 
+If reached, commands will fail with a timeout instead of blocking. 
+Zero means no timeout.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      writeTimeout: 42s
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          writeTimeout: 42s
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      writeTimeout = "42s"
+```
+
+#### `redis.dialTimeout`
+
+_Optional, Default=5s_
+
+Defines the dial timeout for establishing new connections.
+Zero means no timeout.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      dialTimeout: 42s
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          dialTimeout: 42s
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      dialTimeout = "42s"
+```
