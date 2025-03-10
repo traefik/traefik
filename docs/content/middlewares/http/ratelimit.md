@@ -847,6 +847,7 @@ metadata:
    name: test-ratelimit
 spec:
    rateLimit:
+      # ...
       redis:
          tls:
             certSecret: mytlscert
