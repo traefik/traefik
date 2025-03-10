@@ -75,38 +75,20 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 	}, nil
 }
 
-func (r *redisLimiter) Allow(ctx context.Context, source string) (result, error) {
-	res, err := r.evaluateScript(ctx, source)
+func (r *redisLimiter) Allow(ctx context.Context, source string) (*time.Duration, error) {
+	ok, delay, err := r.evaluateScript(ctx, source)
 	if err != nil {
-		return result{}, fmt.Errorf("evaluating script: %w", err)
+		return nil, fmt.Errorf("evaluating script: %w", err)
 	}
-
-	if !res.OK {
-		return result{OK: false}, nil
+	if !ok {
+		return nil, nil
 	}
-
-	if res.Delay > r.maxDelay {
-		return result{
-			OK:    false,
-			Delay: res.Delay,
-		}, nil
-	}
-
-	select {
-	case <-ctx.Done():
-		return result{OK: false}, nil
-	case <-time.After(res.Delay):
-	}
-
-	return result{
-		OK:    true,
-		Delay: res.Delay,
-	}, nil
+	return delay, nil
 }
 
-func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (*result, error) {
+func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (bool, *time.Duration, error) {
 	if r.rate == rate.Inf {
-		return &result{OK: true}, nil
+		return true, nil, nil
 	}
 
 	params := []interface{}{
@@ -118,21 +100,19 @@ func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (*result,
 	}
 	v, err := AllowTokenBucketScript.Run(ctx, r.client, []string{redisPrefix + key}, params...).Result()
 	if err != nil {
-		return nil, fmt.Errorf("running script: %w", err)
+		return false, nil, fmt.Errorf("running script: %w", err)
 	}
 
 	values := v.([]interface{})
 	ok, err := strconv.ParseBool(values[0].(string))
 	if err != nil {
-		return nil, fmt.Errorf("parsing ok value from redis rate lua script: %w", err)
+		return false, nil, fmt.Errorf("parsing ok value from redis rate lua script: %w", err)
 	}
 	delay, err := strconv.ParseFloat(values[1].(string), 64)
 	if err != nil {
-		return nil, fmt.Errorf("parsing delay value from redis rate lua script: %w", err)
+		return false, nil, fmt.Errorf("parsing delay value from redis rate lua script: %w", err)
 	}
 
-	return &result{
-		OK:    ok,
-		Delay: time.Duration(delay * float64(time.Microsecond)),
-	}, nil
+	microDelay := time.Duration(delay * float64(time.Microsecond))
+	return ok, &microDelay, nil
 }

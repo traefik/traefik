@@ -42,7 +42,7 @@ func newInMemoryRateLimiter(rate rate.Limit, burst int64, maxDelay time.Duration
 	}, nil
 }
 
-func (i *inMemoryRateLimiter) Allow(ctx context.Context, source string) (result, error) {
+func (i *inMemoryRateLimiter) Allow(_ context.Context, source string) (*time.Duration, error) {
 	// Get bucket which contains limiter information.
 	var bucket *rate.Limiter
 	if rlSource, exists := i.buckets.Get(source); exists {
@@ -55,30 +55,18 @@ func (i *inMemoryRateLimiter) Allow(ctx context.Context, source string) (result,
 	// because we want to update the expiryTime everytime we get the source,
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := i.buckets.Set(source, bucket, i.ttl); err != nil {
-		return result{}, fmt.Errorf("setting buckets: %w", err)
+		return nil, fmt.Errorf("setting buckets: %w", err)
 	}
 
 	res := bucket.Reserve()
 	if !res.OK() {
-		return result{OK: false}, nil
+		return nil, nil
 	}
+
 	delay := res.Delay()
 	if delay > i.maxDelay {
 		res.Cancel()
-		return result{
-			OK:    false,
-			Delay: delay,
-		}, nil
 	}
 
-	select {
-	case <-ctx.Done():
-		return result{OK: false}, nil
-	case <-time.After(delay):
-	}
-
-	return result{
-		OK:    res.OK(),
-		Delay: delay,
-	}, nil
+	return &delay, nil
 }

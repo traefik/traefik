@@ -23,13 +23,8 @@ const (
 	maxSources = 65536
 )
 
-type result struct {
-	OK    bool
-	Delay time.Duration
-}
-
 type limiter interface {
-	Allow(ctx context.Context, token string) (result, error)
+	Allow(ctx context.Context, token string) (*time.Duration, error)
 }
 
 // rateLimiter implements rate limiting and traffic shaping with a set of token buckets;
@@ -151,7 +146,7 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	result, err := rl.limiter.Allow(ctx, source)
+	delay, err := rl.limiter.Allow(ctx, source)
 	if err != nil {
 		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
 		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
@@ -159,15 +154,24 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !result.OK {
+	if delay == nil {
 		observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
 		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
 		return
 	}
 
-	if result.Delay > rl.maxDelay {
-		rl.serveDelayError(ctx, rw, result.Delay)
+	if *delay > rl.maxDelay {
+		rl.serveDelayError(ctx, rw, *delay)
 		return
+	}
+
+	select {
+	case <-ctx.Done():
+		observability.SetStatusErrorf(ctx, "Context canceled")
+		http.Error(rw, "context canceled", http.StatusInternalServerError)
+		return
+
+	case <-time.After(*delay):
 	}
 
 	rl.next.ServeHTTP(rw, req)
