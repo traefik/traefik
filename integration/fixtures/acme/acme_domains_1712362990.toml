@@ -1,0 +1,57 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":5002"
+  [entryPoints.websecure]
+    address = ":5001"
+
+
+
+[certificatesResolvers.default.acme]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  keyType = ""
+  caServer = "https://172.31.42.2:14000/dir"
+
+  
+
+  
+  [certificatesResolvers.default.acme.tlsChallenge]
+  
+
+
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "fixtures/acme/acme_domains_1712362990.toml"
+
+## dynamic configuration ##
+
+[http.services]
+  [http.services.test.loadBalancer]
+    [[http.services.test.loadBalancer.servers]]
+      url = "http://127.0.0.1:9010"
+
+[http.routers]
+  [http.routers.test]
+    entryPoints = ["websecure"]
+    rule = "PathPrefix(`/`)"
+    service = "test"
+    [http.routers.test.tls]
+      certResolver = "default"
+
+  [[http.routers.test.tls.domains]]
+    main = "acme.wtf"
+    sans = [
+      "traefik.acme.wtf",
+      ]
+
