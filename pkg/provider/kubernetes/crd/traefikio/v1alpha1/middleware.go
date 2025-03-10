@@ -170,7 +170,7 @@ type ForwardAuth struct {
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
-	TLS *ClientTLS `json:"tls,omitempty"`
+	TLS *ClientTLSWithCAOptional `json:"tls,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -186,16 +186,12 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty"`
 }
 
-// ClientTLS holds the client TLS configuration.
-type ClientTLS struct {
-	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
-	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
-	CASecret string `json:"caSecret,omitempty"`
-	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
-	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
-	CertSecret string `json:"certSecret,omitempty"`
-	// InsecureSkipVerify defines whether the server certificates should be validated.
-	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+// +k8s:deepcopy-gen=true
+
+// ClientTLSWithCAOptional holds the client TLS configuration.
+// TODO: This has to be removed once the CAOptional option is removed.
+type ClientTLSWithCAOptional struct {
+	ClientTLS `json:",inline"`
 
 	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
 	CAOptional *bool `json:"caOptional,omitempty"`
@@ -225,6 +221,65 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+	// Redis hold the configs of Redis as bucket in rate limiter.
+	Redis *Redis `json:"redis,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Redis contains the configuration for using Redis in middleware.
+// In a Kubernetes setup, the username and password are stored in a Secret file within the same namespace as the middleware.
+type Redis struct {
+	// Endpoints contains either a single address or a seed list of host:port addresses.
+	// Default value is ["localhost:6379"].
+	Endpoints []string `json:"endpoints,omitempty"`
+	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
+	// which can be provided as a file path or file content.
+	TLS *ClientTLS `json:"tls,omitempty"`
+	// Secret defines the name of the referenced Kubernetes Secret containing Redis credentials.
+	Secret string `json:"secret,omitempty"`
+	// DB defines the Redis database that will be selected after connecting to the server.
+	DB int `json:"db,omitempty"`
+	// PoolSize defines the initial number of socket connections.
+	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+	// This can be limited using MaxActiveConns.
+	// // Default value is 0, meaning 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+	PoolSize int `json:"poolSize,omitempty"`
+	// MinIdleConns defines the minimum number of idle connections.
+	// Default value is 0, and idle connections are not closed by default.
+	MinIdleConns int `json:"minIdleConns,omitempty"`
+	// MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+	// Default value is 0, meaning there is no limit.
+	MaxActiveConns int `json:"maxActiveConns,omitempty"`
+	// ReadTimeout defines the timeout for socket read operations.
+	// Default value is 3 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout defines the timeout for socket write operations.
+	// Default value is 3 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
+	// DialTimeout sets the timeout for establishing new connections.
+	// Default value is 5 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ClientTLS holds the client TLS configuration.
+type ClientTLS struct {
+	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	CASecret string `json:"caSecret,omitempty"`
+	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+	CertSecret string `json:"certSecret,omitempty"`
+	// InsecureSkipVerify defines whether the server certificates should be validated.
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
