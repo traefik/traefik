@@ -2,30 +2,35 @@
 
 set -e -o pipefail
 
+PROJECT_MODULE="github.com/traefik/traefik"
+MODULE_VERSION="v3"
+KUBE_VERSION=v0.30.10
+CURRENT_DIR="$(pwd)"
+
+go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
+go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.1
+
+CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
 # shellcheck disable=SC1091 # Cannot check source of this file
-source /go/src/k8s.io/code-generator/kube_codegen.sh
+source "${CODEGEN_PKG}/kube_codegen.sh"
 
-git config --global --add safe.directory "/go/src/${PROJECT_MODULE}"
-
-rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"
-mkdir -p "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"
-
-# TODO: remove the workaround when the issue is solved in the code-generator
-# (https://github.com/kubernetes/code-generator/issues/165).
-# Here, we create the soft link named "${PROJECT_MODULE}" to the parent directory of
-# Traefik to ensure the layout required by the kube_codegen.sh script.
-ln -s "/go/src/${PROJECT_MODULE}/pkg" "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}/"
-
+echo "# Generating Traefik clientset and deepcopy code ..."
 kube::codegen::gen_helpers \
-    --input-pkg-root "${PROJECT_MODULE}/pkg" \
-    --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
-    --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
+  --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
+  "${CURRENT_DIR}"
 
 kube::codegen::gen_client \
     --with-watch \
-    --input-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd" \
-    --output-pkg-root "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
-    --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
-    --boilerplate "/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
+    --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
+    --output-pkg "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
+    --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
+    "${CURRENT_DIR}/pkg/provider/kubernetes/crd"
 
-rm -rf "/go/src/${PROJECT_MODULE}/${MODULE_VERSION}"
+echo "# Generating the CRD definitions for the documentation ..."
+controller-gen crd:crdVersions=v1 \
+    paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...} \
+    output:dir=./docs/content/reference/dynamic-configuration/
+
+echo "# Concatenate the CRD definitions for publication and integration tests ..."
+cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.io_*.yaml > "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-traefik-crd.yml
