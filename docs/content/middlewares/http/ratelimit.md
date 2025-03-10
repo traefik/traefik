@@ -554,24 +554,32 @@ _Optional, Default=""_
 
 Defines the username used to authenticate with the Redis server.
 
-??? note "Kubernetes"
-
-    In Kubernetes, credentials must be stored in a Secret resource.
-    This secret must contain two keys: `username` and `password` and referenced in the Secret option.
-
-    ```yaml
-    apiVersion: traefik.io/v1alpha1
-    kind: Middleware
-    metadata:
-      name: test-ratelimit
-    spec:
-     rateLimit:
-       secret: mysecret 
-    ```
-
 ```yaml tab="Docker & Swarm"
 labels:
     - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+   name: test-ratelimit
+spec:
+   rateLimit:
+      # ...
+      redis:
+         secret: mysecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mysecret
+   namespace: default
+
+data:
+   username: dXNlcm5hbWU=
+   password: cGFzc3dvcmQ=
 ```
 
 ```yaml tab="Consul Catalog"
@@ -601,24 +609,32 @@ _Optional, Default=""_
 
 Defines the password to authenticate against the Redis server.
 
-??? note "Kubernetes"
-
-    In Kubernetes, credentials must be stored in a Secret resource.
-    This secret must contain two keys: `username` and `password` and referenced in the Secret option.
-
-    ```yaml
-    apiVersion: traefik.io/v1alpha1
-    kind: Middleware
-    metadata:
-      name: test-ratelimit
-    spec:
-     rateLimit:
-       secret: mysecret 
-    ```
-
 ```yaml tab="Docker & Swarm"
 labels:
     - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+   name: test-ratelimit
+spec:
+   rateLimit:
+      # ...
+      redis:
+         secret: mysecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mysecret
+   namespace: default
+
+data:
+   username: dXNlcm5hbWU=
+   password: cGFzc3dvcmQ=
 ```
 
 ```yaml tab="Consul Catalog"
@@ -713,6 +729,7 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
+    # ...
     redis:
       tls:
         caSecret: mycasercret
@@ -736,11 +753,11 @@ data:
 ```yaml tab="File (YAML)"
 http:
   middlewares:
-    test-ratelimit:
-      rateLimit:
-        redis:
-          tls:
-            ca: path/to/ca.crt
+    rateLimit:
+      # ... 
+      redis:
+        tls:
+          ca: path/to/ca.crt
 ```
 
 ```toml tab="File (TOML)"
@@ -768,6 +785,7 @@ metadata:
    name: test-ratelimit
 spec:
    rateLimit:
+      # ...
       redis:
          tls:
            certSecret: mytlscert
