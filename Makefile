@@ -175,7 +175,7 @@ docs-pull-images:
 .PHONY: generate-crd
 #? generate-crd: Generate CRD clientset and CRD manifests
 generate-crd:
-	@$(CURDIR)/script/code-gen-docker.sh
+	@$(CURDIR)/script/code-gen.sh
 
 .PHONY: generate-genconf
 #? generate-genconf: Generate code from dynamic configuration github.com/traefik/genconf
