@@ -1836,6 +1836,84 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:                "Simple Ingress Route with middleware ratelimit",
+			allowCrossNamespace: true,
+			paths:               []string{"services.yml", "with_ratelimit.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test2-route-3c9bf014491ebdba74f7": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-3c9bf014491ebdba74f7",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/will-be-limited`)",
+							Priority:    12,
+							Middlewares: []string{"default-ratelimit"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ratelimit": {
+							RateLimit: &dynamic.RateLimit{
+								Average: 6,
+								Burst:   12,
+								Period:  ptypes.Duration(60 * time.Second),
+								SourceCriterion: &dynamic.SourceCriterion{
+									IPStrategy: &dynamic.IPStrategy{
+										ExcludedIPs: []string{"127.0.0.1/32", "192.168.1.7"},
+									},
+								},
+								Redis: &dynamic.Redis{
+									Endpoints: []string{"127.0.0.1:6379"},
+									Username:  "user",
+									Password:  "password",
+									TLS: &types.ClientTLS{
+										CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+										Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+										Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+									},
+									DB:             0,
+									PoolSize:       42,
+									MaxActiveConns: 42,
+									ReadTimeout:    pointer(ptypes.Duration(42 * time.Second)),
+									WriteTimeout:   pointer(ptypes.Duration(42 * time.Second)),
+									DialTimeout:    pointer(ptypes.Duration(42 * time.Second)),
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-test2-route-3c9bf014491ebdba74f7": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                "Middlewares in ingress route config are normalized",
 			allowCrossNamespace: true,
 			paths:               []string{"services.yml", "with_middleware_multiple_hyphens.yml"},
