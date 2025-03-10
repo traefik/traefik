@@ -1086,14 +1086,20 @@ spec:
                           TLS defines TLS-specific configurations, including the CA, certificate, and key,
                           which can be provided as a file path or file content.
                         properties:
-                          ca:
+                          caSecret:
+                            description: |-
+                              CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+                              The CA certificate is extracted from key `tls.ca` or `ca.crt`.
                             type: string
-                          cert:
+                          certSecret:
+                            description: |-
+                              CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+                              The client certificate is extracted from the keys `tls.crt` and `tls.key`.
                             type: string
                           insecureSkipVerify:
+                            description: InsecureSkipVerify defines whether the server
+                              certificates should be validated.
                             type: boolean
-                          key:
-                            type: string
                         type: object
                       writeTimeout:
                         anyOf:

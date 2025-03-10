@@ -29,8 +29,6 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-var redisTimeout = ptypes.Duration(42 * time.Second)
-
 func pointer[T any](v T) *T { return &v }
 
 func init() {
@@ -1838,9 +1836,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "Simple Ingress Route with middleware and ratelimit secret",
+			desc:                "Simple Ingress Route with middleware ratelimit",
 			allowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_middleware_and_secret.yml"},
+			paths:               []string{"services.yml", "with_ratelimit.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1874,15 +1872,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 									},
 								},
 								Redis: &dynamic.Redis{
-									Endpoints:      []string{"127.0.0.1:6379"},
-									Username:       "user",
-									Password:       "password",
+									Endpoints: []string{"127.0.0.1:6379"},
+									Username:  "user",
+									Password:  "password",
+									TLS: &types.ClientTLS{
+										CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+										Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+										Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+									},
 									DB:             0,
 									PoolSize:       42,
 									MaxActiveConns: 42,
-									ReadTimeout:    &redisTimeout,
-									WriteTimeout:   &redisTimeout,
-									DialTimeout:    &redisTimeout,
+									ReadTimeout:    pointer(ptypes.Duration(42 * time.Second)),
+									WriteTimeout:   pointer(ptypes.Duration(42 * time.Second)),
+									DialTimeout:    pointer(ptypes.Duration(42 * time.Second)),
 								},
 							},
 						},

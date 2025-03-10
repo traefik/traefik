@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/types"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -171,7 +170,7 @@ type ForwardAuth struct {
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
-	TLS *ClientTLS `json:"tls,omitempty"`
+	TLS *ClientTLSWithCAOptional `json:"tls,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -187,16 +186,12 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty"`
 }
 
-// ClientTLS holds the client TLS configuration.
-type ClientTLS struct {
-	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
-	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
-	CASecret string `json:"caSecret,omitempty"`
-	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
-	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
-	CertSecret string `json:"certSecret,omitempty"`
-	// InsecureSkipVerify defines whether the server certificates should be validated.
-	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+// +k8s:deepcopy-gen=true
+
+// ClientTLSWithCAOptional holds the client TLS configuration.
+// TODO: This has to be removed once the CAOptional option is removed.
+type ClientTLSWithCAOptional struct {
+	ClientTLS `json:",inline"`
 
 	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
 	CAOptional *bool `json:"caOptional,omitempty"`
@@ -240,7 +235,7 @@ type Redis struct {
 	Endpoints []string `json:"endpoints,omitempty"`
 	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
 	// which can be provided as a file path or file content.
-	TLS *types.ClientTLS `json:"tls,omitempty"`
+	TLS *ClientTLS `json:"tls,omitempty"`
 	// Secret defines the name of the referenced Kubernetes Secret containing Redis credentials.
 	Secret string `json:"secret,omitempty"`
 	// DB defines the Redis database that will be selected after connecting to the server.
@@ -271,6 +266,20 @@ type Redis struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ClientTLS holds the client TLS configuration.
+type ClientTLS struct {
+	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	CASecret string `json:"caSecret,omitempty"`
+	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+	CertSecret string `json:"certSecret,omitempty"`
+	// InsecureSkipVerify defines whether the server certificates should be validated.
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

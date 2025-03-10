@@ -715,7 +715,18 @@ spec:
   rateLimit:
     redis:
       tls:
-        ca: path/to/ca.crt
+        caSecret: mycasercret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycasercret
+  namespace: default
+
+data:
+  # Must contain a certificate under either a `tls.ca` or a `ca.crt` key. 
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
 ```yaml tab="Consul Catalog"
@@ -754,13 +765,23 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: test-ratelimit
+   name: test-ratelimit
 spec:
-  rateLimit:
-    redis:
-      tls:
-        cert: path/to/foo.cert
-        key: path/to/foo.key
+   rateLimit:
+      redis:
+         tls:
+           certSecret: mytlscert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mytlscert
+   namespace: default
+
+data:
+   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
 ```yaml tab="Consul Catalog"
@@ -805,13 +826,23 @@ labels:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: test-ratelimit
+   name: test-ratelimit
 spec:
-  rateLimit:
-    redis:
-      tls:
-        cert: path/to/foo.cert
-        key: path/to/foo.key
+   rateLimit:
+      redis:
+         tls:
+            certSecret: mytlscert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+   name: mytlscert
+   namespace: default
+
+data:
+   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
 ```yaml tab="Consul Catalog"

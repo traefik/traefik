@@ -14,13 +14,14 @@ spec:
         excludedIPs:
           - 127.0.0.1/32
           - 192.168.1.7
- 
+
     redis:
       secret: redissecret
       endpoints:
         - "127.0.0.1:6379"
-      username: user-redis # This value should be ignored
-      password: password-redis # This value should be ignored
+      tls:
+        certSecret: tlssecret
+        caSecret: casecret
       db: 0
       poolSize: 42
       maxActiveConns: 42
@@ -29,8 +30,6 @@ spec:
       dialTimeout: 42s
 
 ---
-# This is an alternate auth secret that demonstrates the basic-auth secret type.
-# Note: the password is not hashed, and is merely base64 encoded.
 apiVersion: v1
 kind: Secret
 metadata:
@@ -39,6 +38,27 @@ metadata:
 data:
   username: dXNlcg== # username: user
   password: cGFzc3dvcmQ= # password: password
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: casecret
+  namespace: default
+
+data:
+  ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tlssecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 
 ---
 apiVersion: traefik.io/v1alpha1

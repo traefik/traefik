@@ -715,7 +715,6 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 
 	if rateLimit.Redis != nil {
 		rl.Redis = &dynamic.Redis{
-			TLS:            rateLimit.Redis.TLS,
 			DB:             rateLimit.Redis.DB,
 			PoolSize:       rateLimit.Redis.PoolSize,
 			MinIdleConns:   rateLimit.Redis.MinIdleConns,
@@ -725,6 +724,29 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 
 		if len(rateLimit.Redis.Endpoints) > 0 {
 			rl.Redis.Endpoints = rateLimit.Redis.Endpoints
+		}
+
+		if rateLimit.Redis.TLS != nil {
+			rl.Redis.TLS = &types.ClientTLS{
+				InsecureSkipVerify: rateLimit.Redis.TLS.InsecureSkipVerify,
+			}
+
+			if len(rateLimit.Redis.TLS.CASecret) > 0 {
+				caSecret, err := loadCASecret(namespace, rateLimit.Redis.TLS.CASecret, client)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+				}
+				rl.Redis.TLS.CA = caSecret
+			}
+
+			if len(rateLimit.Redis.TLS.CertSecret) > 0 {
+				authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, rateLimit.Redis.TLS.CertSecret, client)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load auth secret: %w", err)
+				}
+				rl.Redis.TLS.Cert = authSecretCert
+				rl.Redis.TLS.Key = authSecretKey
+			}
 		}
 
 		if rateLimit.Redis.DialTimeout != nil {
