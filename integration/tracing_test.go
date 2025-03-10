@@ -77,7 +77,7 @@ func (s *TracingSuite) TearDownTest() {
 	s.composeStop("tempo")
 }
 
-func (s *TracingSuite) TestOpentelemetryBasic_HTTP() {
+func (s *TracingSuite) TestOpenTelemetryBasic_HTTP() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
@@ -144,7 +144,7 @@ func (s *TracingSuite) TestOpentelemetryBasic_HTTP() {
 	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryBasic_gRPC() {
+func (s *TracingSuite) TestOpenTelemetryBasic_gRPC() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
@@ -201,7 +201,7 @@ func (s *TracingSuite) TestOpentelemetryBasic_gRPC() {
 	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryRateLimit() {
+func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
@@ -248,48 +248,26 @@ func (s *TracingSuite) TestOpentelemetryRateLimit() {
 			"batches.0.scopeSpans.0.spans.0.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
 
-			"batches.0.scopeSpans.0.spans.1.name": "Retry",
+			"batches.0.scopeSpans.0.spans.1.name": "Router",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
 
-			"batches.0.scopeSpans.0.spans.2.name": "RateLimiter",
+			"batches.0.scopeSpans.0.spans.2.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
 
-			"batches.0.scopeSpans.0.spans.3.name": "Retry",
-			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.request.resend_count\").value.intValue":  "1",
-
-			"batches.0.scopeSpans.0.spans.4.name": "RateLimiter",
-			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
-
-			"batches.0.scopeSpans.0.spans.5.name": "Retry",
-			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.request.resend_count\").value.intValue":  "2",
-
-			"batches.0.scopeSpans.0.spans.6.name": "Router",
-			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
-
-			"batches.0.scopeSpans.0.spans.7.name": "Metrics",
-			"batches.0.scopeSpans.0.spans.7.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
-
-			"batches.0.scopeSpans.0.spans.8.name":                                                           "EntryPoint",
-			"batches.0.scopeSpans.0.spans.8.kind":                                                           "SPAN_KIND_SERVER",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"entry_point\").value.stringValue":            "web",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"url.query\").value.stringValue":              "",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"http.response.status_code\").value.intValue": "429",
+			"batches.0.scopeSpans.0.spans.3.name":                                                           "EntryPoint",
+			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.query\").value.stringValue":              "",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "429",
 		},
 		{
 			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
@@ -318,37 +296,33 @@ func (s *TracingSuite) TestOpentelemetryRateLimit() {
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
 
-			"batches.0.scopeSpans.0.spans.4.name": "Retry",
+			"batches.0.scopeSpans.0.spans.4.name": "Router",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
 
-			"batches.0.scopeSpans.0.spans.5.name": "Router",
+			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
 
-			"batches.0.scopeSpans.0.spans.6.name": "Metrics",
-			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
-
-			"batches.0.scopeSpans.0.spans.7.name":                                                           "EntryPoint",
-			"batches.0.scopeSpans.0.spans.7.kind":                                                           "SPAN_KIND_SERVER",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"entry_point\").value.stringValue":            "web",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"url.query\").value.stringValue":              "",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+			"batches.0.scopeSpans.0.spans.6.name":                                                           "EntryPoint",
+			"batches.0.scopeSpans.0.spans.6.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"url.path\").value.stringValue":               "/ratelimit",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"url.query\").value.stringValue":              "",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
 		},
 	}
 
 	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryRetry() {
+func (s *TracingSuite) TestOpenTelemetryRetry() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: 81,
@@ -471,7 +445,7 @@ func (s *TracingSuite) TestOpentelemetryRetry() {
 	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetryAuth() {
+func (s *TracingSuite) TestOpenTelemetryAuth() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
@@ -498,59 +472,90 @@ func (s *TracingSuite) TestOpentelemetryAuth() {
 			"batches.0.scopeSpans.0.spans.0.status.message":                                                  "Authentication failed",
 			"batches.0.scopeSpans.0.spans.0.status.code":                                                     "STATUS_CODE_ERROR",
 
-			"batches.0.scopeSpans.0.spans.1.name": "Retry",
+			"batches.0.scopeSpans.0.spans.1.name": "Router",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
 
-			"batches.0.scopeSpans.0.spans.2.name": "BasicAuth",
+			"batches.0.scopeSpans.0.spans.2.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
-			"batches.0.scopeSpans.0.spans.2.status.message":                                                  "Authentication failed",
-			"batches.0.scopeSpans.0.spans.2.status.code":                                                     "STATUS_CODE_ERROR",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
 
-			"batches.0.scopeSpans.0.spans.3.name": "Retry",
-			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.request.resend_count\").value.intValue":  "1",
-
-			"batches.0.scopeSpans.0.spans.4.name": "BasicAuth",
-			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
-			"batches.0.scopeSpans.0.spans.4.status.message":                                                  "Authentication failed",
-			"batches.0.scopeSpans.0.spans.4.status.code":                                                     "STATUS_CODE_ERROR",
-
-			"batches.0.scopeSpans.0.spans.5.name": "Retry",
-			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.request.resend_count\").value.intValue":  "2",
-
-			"batches.0.scopeSpans.0.spans.6.name": "Router",
-			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
-
-			"batches.0.scopeSpans.0.spans.7.name": "Metrics",
-			"batches.0.scopeSpans.0.spans.7.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
-
-			"batches.0.scopeSpans.0.spans.8.name":                                                           "EntryPoint",
-			"batches.0.scopeSpans.0.spans.8.kind":                                                           "SPAN_KIND_SERVER",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"entry_point\").value.stringValue":            "web",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"url.path\").value.stringValue":               "/auth",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"url.query\").value.stringValue":              "",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
-			"batches.0.scopeSpans.0.spans.8.attributes.#(key=\"http.response.status_code\").value.intValue": "401",
+			"batches.0.scopeSpans.0.spans.3.name":                                                           "EntryPoint",
+			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.path\").value.stringValue":               "/auth",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"url.query\").value.stringValue":              "",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "401",
 		},
 	}
 
 	s.checkTraceContent(contains)
 }
 
-func (s *TracingSuite) TestOpentelemetrySafeURL() {
+func (s *TracingSuite) TestOpenTelemetryAuthWithRetry() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+		WhoamiIP:   s.whoamiIP,
+		WhoamiPort: s.whoamiPort,
+		IP:         s.otelCollectorIP,
+	})
+	defer os.Remove(file)
+
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8000/retry-auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
+	require.NoError(s.T(), err)
+
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name": "BasicAuth",
+			"batches.0.scopeSpans.0.spans.0.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
+			"batches.0.scopeSpans.0.spans.0.status.message":                                                  "Authentication failed",
+			"batches.0.scopeSpans.0.spans.0.status.code":                                                     "STATUS_CODE_ERROR",
+
+			"batches.0.scopeSpans.0.spans.1.name": "Retry",
+			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+
+			"batches.0.scopeSpans.0.spans.2.name": "Router",
+			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service4@file",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router4@file",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/retry-auth`)",
+
+			"batches.0.scopeSpans.0.spans.3.name": "Metrics",
+			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+
+			"batches.0.scopeSpans.0.spans.4.name":                                                           "EntryPoint",
+			"batches.0.scopeSpans.0.spans.4.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"url.path\").value.stringValue":               "/retry-auth",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"url.query\").value.stringValue":              "",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.response.status_code\").value.intValue": "401",
+		},
+	}
+
+	s.checkTraceContent(contains)
+}
+
+func (s *TracingSuite) TestOpenTelemetrySafeURL() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
@@ -593,30 +598,26 @@ func (s *TracingSuite) TestOpentelemetrySafeURL() {
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
 
-			"batches.0.scopeSpans.0.spans.4.name": "Retry",
+			"batches.0.scopeSpans.0.spans.4.name": "Router",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
 
-			"batches.0.scopeSpans.0.spans.5.name": "Router",
+			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
 
-			"batches.0.scopeSpans.0.spans.6.name": "Metrics",
-			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
-
-			"batches.0.scopeSpans.0.spans.7.name":                                                           "EntryPoint",
-			"batches.0.scopeSpans.0.spans.7.kind":                                                           "SPAN_KIND_SERVER",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"entry_point\").value.stringValue":            "web",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"url.path\").value.stringValue":               "/auth",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"url.query\").value.stringValue":              "api_key=REDACTED",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+			"batches.0.scopeSpans.0.spans.6.name":                                                           "EntryPoint",
+			"batches.0.scopeSpans.0.spans.6.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"entry_point\").value.stringValue":            "web",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"url.path\").value.stringValue":               "/auth",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"url.query\").value.stringValue":              "api_key=REDACTED",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
 		},
 	}
 
