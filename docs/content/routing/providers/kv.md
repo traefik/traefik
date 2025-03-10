@@ -300,6 +300,14 @@ A Story of key & values
     |---------------------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    | Key (Path)                                              | Value |
+    |---------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/strategy` | `p2c` |
+
 ??? info "`traefik/http/services/<service_name>/mirroring/service`"
 
     | Key (Path)                                               | Value    |
