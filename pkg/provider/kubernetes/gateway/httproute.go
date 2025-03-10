@@ -190,6 +190,9 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
+			log.Ctx(ctx).Error().
+				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
+
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
 				Name:   svcName,
@@ -272,92 +275,14 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, svcPort, errCondition := p.loadHTTPServers(namespace, route, backendRef)
+	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
 
-	if !p.ExperimentalChannel {
-		conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb}
-
-		return serviceName, nil
-	}
-
-	servicePolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
-	if err != nil {
-		return serviceName, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonRefNotPermitted),
-			Message:            fmt.Sprintf("Cannot list BackendTLSPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
-		}
-	}
-
-	var matchedPolicy *gatev1alpha3.BackendTLSPolicy
-	for _, policy := range servicePolicies {
-		matched := false
-		for _, targetRef := range policy.Spec.TargetRefs {
-			if targetRef.SectionName == nil || svcPort.Name == string(*targetRef.SectionName) {
-				matchedPolicy = policy
-				matched = true
-				break
-			}
-		}
-
-		// If the policy targets the service, but doesn't match any port.
-		if !matched {
-			// update policy status
-			status := gatev1alpha2.PolicyStatus{
-				Ancestors: []gatev1alpha2.PolicyAncestorStatus{{
-					AncestorRef: gatev1alpha2.ParentReference{
-						Group:       ptr.To(gatev1.Group(groupGateway)),
-						Kind:        ptr.To(gatev1.Kind(kindGateway)),
-						Namespace:   ptr.To(gatev1.Namespace(namespace)),
-						Name:        gatev1.ObjectName(listener.GWName),
-						SectionName: ptr.To(gatev1.SectionName(listener.Name)),
-					},
-					ControllerName: controllerName,
-					Conditions: []metav1.Condition{{
-						Type:               string(gatev1.RouteConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.RouteReasonBackendNotFound),
-						Message:            fmt.Sprintf("BackendTLSPolicy has no valid TargetRef for Service %s/%s", namespace, string(backendRef.Name)),
-					}},
-				}},
-			}
-
-			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-				logger := log.Ctx(ctx).With().
-					Str("http_route", route.Name).
-					Str("namespace", route.Namespace).Logger()
-				logger.Warn().
-					Err(err).
-					Msg("Unable to update TLSRoute status")
-			}
-		}
-	}
-
-	if matchedPolicy != nil {
-		st, err := p.loadServersTransport(namespace, *matchedPolicy)
-		if err != nil {
-			return serviceName, &metav1.Condition{
-				Type:               string(gatev1.RouteConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: route.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.RouteReasonRefNotPermitted),
-				Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), err),
-			}
-		}
-
-		if st != nil {
-			lb.ServersTransport = serviceName
-			conf.HTTP.ServersTransports[serviceName] = st
-		}
+	if st != nil {
+		lb.ServersTransport = serviceName
+		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
 	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb}
@@ -473,10 +398,10 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (*dynamic.ServersLoadBalancer, corev1.ServicePort, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
-		return nil, corev1.ServicePort{}, &metav1.Condition{
+		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -486,27 +411,104 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 		}
 	}
 
-	protocol, err := getHTTPServiceProtocol(svcPort)
-	if err != nil {
-		return nil, corev1.ServicePort{}, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s: %s", namespace, backendRef.Name, err),
+	var st *dynamic.ServersTransport
+	var protocol string
+	if p.ExperimentalChannel {
+		servicePolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
+		if err != nil {
+			return nil, nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonRefNotPermitted),
+				Message:            fmt.Sprintf("Cannot list BackendTLSPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+			}
+		}
+
+		var matchedPolicy *gatev1alpha3.BackendTLSPolicy
+		for _, policy := range servicePolicies {
+			matched := false
+			for _, targetRef := range policy.Spec.TargetRefs {
+				if targetRef.SectionName == nil || svcPort.Name == string(*targetRef.SectionName) {
+					matchedPolicy = policy
+					matched = true
+					break
+				}
+			}
+
+			// If the policy targets the service, but doesn't match any port.
+			if !matched {
+				// update policy status
+				status := gatev1alpha2.PolicyStatus{
+					Ancestors: []gatev1alpha2.PolicyAncestorStatus{{
+						AncestorRef: gatev1alpha2.ParentReference{
+							Group:       ptr.To(gatev1.Group(groupGateway)),
+							Kind:        ptr.To(gatev1.Kind(kindGateway)),
+							Namespace:   ptr.To(gatev1.Namespace(namespace)),
+							Name:        gatev1.ObjectName(listener.GWName),
+							SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+						},
+						ControllerName: controllerName,
+						Conditions: []metav1.Condition{{
+							Type:               string(gatev1.RouteConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: route.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.RouteReasonBackendNotFound),
+							Message:            fmt.Sprintf("BackendTLSPolicy has no valid TargetRef for Service %s/%s", namespace, string(backendRef.Name)),
+						}},
+					}},
+				}
+
+				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+					log.Ctx(ctx).Warn().Err(err).
+						Msg("Unable to update BackendTLSPolicy status")
+				}
+			}
+		}
+
+		if matchedPolicy != nil {
+			st, err = p.loadServersTransport(namespace, *matchedPolicy)
+			if err != nil {
+				return nil, nil, &metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteReasonRefNotPermitted),
+					Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+				}
+			}
+			// A backend TLS policy has been found for the service, a serversTransport configuration has been created, use/force HTTPS.
+			protocol = "https"
 		}
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
+	// Guess the protocol from the service port if not set by the backend TLS policy
+	if protocol == "" {
+		protocol, err = getHTTPServiceProtocol(svcPort)
+		if err != nil {
+			return nil, nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s: %s", namespace, backendRef.Name, err),
+			}
+		}
+	}
+
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
 			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
-	return lb, svcPort, nil
+	return lb, st, nil
 }
 
 func (p *Provider) loadServersTransport(namespace string, policy gatev1alpha3.BackendTLSPolicy) (*dynamic.ServersTransport, error) {

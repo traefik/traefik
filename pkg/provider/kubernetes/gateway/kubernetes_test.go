@@ -2309,10 +2309,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.1:80",
+										URL: "https://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.2:80",
+										URL: "https://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -2381,10 +2381,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.1:80",
+										URL: "https://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.2:80",
+										URL: "https://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: ptr.To(true),
