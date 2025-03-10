@@ -1027,6 +1027,90 @@ spec:
                       Period, in combination with Average, defines the actual maximum rate, such as:
                       r = Average / Period. It defaults to a second.
                     x-kubernetes-int-or-string: true
+                  redis:
+                    description: Redis hold the configs of Redis as bucket in rate
+                      limiter.
+                    properties:
+                      db:
+                        description: DB defines the Redis database that will be selected
+                          after connecting to the server.
+                        type: integer
+                      dialTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          DialTimeout sets the timeout for establishing new connections.
+                          Default value is 5 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      endpoints:
+                        description: |-
+                          Endpoints contains either a single address or a seed list of host:port addresses.
+                          Default value is ["localhost:6379"].
+                        items:
+                          type: string
+                        type: array
+                      maxActiveConns:
+                        description: |-
+                          MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+                          Default value is 0, meaning there is no limit.
+                        type: integer
+                      minIdleConns:
+                        description: |-
+                          MinIdleConns defines the minimum number of idle connections.
+                          Default value is 0, and idle connections are not closed by default.
+                        type: integer
+                      poolSize:
+                        description: |-
+                          PoolSize defines the initial number of socket connections.
+                          If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+                          This can be limited using MaxActiveConns.
+                          Zero means 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+                        type: integer
+                      readTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          ReadTimeout defines the timeout for socket read operations.
+                          Default value is 3 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      secret:
+                        description: Secret defines the name of the referenced Kubernetes
+                          Secret containing Redis credentials.
+                        type: string
+                      tls:
+                        description: |-
+                          TLS defines TLS-specific configurations, including the CA, certificate, and key,
+                          which can be provided as a file path or file content.
+                        properties:
+                          caSecret:
+                            description: |-
+                              CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+                              The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+                            type: string
+                          certSecret:
+                            description: |-
+                              CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+                              The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+                            type: string
+                          insecureSkipVerify:
+                            description: InsecureSkipVerify defines whether the server
+                              certificates should be validated.
+                            type: boolean
+                        type: object
+                      writeTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          WriteTimeout defines the timeout for socket write operations.
+                          Default value is 3 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                    type: object
                   sourceCriterion:
                     description: |-
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
