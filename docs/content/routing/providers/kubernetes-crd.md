@@ -358,19 +358,19 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
               maxAge: 42  
               path: /foo
               domain: foo.com
-          strategy: RoundRobin
+          strategy: wrr                 # [16]
           weight: 10
-          nativeLB: true                # [16]
-          nodePortLB: true              # [17]
-      tls:                              # [18]
-        secretName: supersecret         # [19]
-        options:                        # [20]
-          name: opt                     # [21]
-          namespace: default            # [22]
-        certResolver: foo               # [23]
-        domains:                        # [24]
-        - main: example.net             # [25]
-          sans:                         # [26]
+          nativeLB: true                # [17]
+          nodePortLB: true              # [18]
+      tls:                              # [19]
+        secretName: supersecret         # [20]
+        options:                        # [21]
+          name: opt                     # [22]
+          namespace: default            # [23]
+        certResolver: foo               # [24]
+        domains:                        # [25]
+        - main: example.net             # [26]
+          sans:                         # [27]
           - a.example.net
           - b.example.net
     ```
@@ -392,17 +392,18 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [13] | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       |
 | [14] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
 | [15] | `services[n].healthCheck`      | Defines the HealthCheck when service references a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.                                                                                                                               |
-| [16] | `services[n].nativeLB`         | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                     |
-| [17] | `services[n].nodePortLB`       | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.                                                                                                                               |
-| [18] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                             |
-| [19] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                         |
-| [20] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                      |
-| [21] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                |
-| [22] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                           |
-| [23] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                                                                                                  |
-| [24] | `tls.domains`                  | List of [domains](../routers/index.md#domains)                                                                                                                                                                                                                                               |
-| [25] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                 |
-| [26] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                           |
+| [16] | `services[n].strategy`         | Defines the load-balancing strategy for the load-balancer. Supported values are `wrr` and `p2c`, please refer to the [Load Balancing documentation](../routing/services/#load-balancing-strategy) for more information.                                                                      |
+| [17] | `services[n].nativeLB`         | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                     |
+| [18] | `services[n].nodePortLB`       | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.                                                                                                                               |
+| [19] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                             |
+| [20] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                         |
+| [21] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                      |
+| [22] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                |
+| [23] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                           |
+| [24] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                                                                                                  |
+| [25] | `tls.domains`                  | List of [domains](../routers/index.md#domains)                                                                                                                                                                                                                                               |
+| [26] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                 |
+| [27] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                           |
 
 ??? example "Declaring an IngressRoute"
 
@@ -605,7 +606,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 
 #### Load Balancing
 
-More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
+More information in the dedicated server [load balancing](../services/index.md#load-balancing-strategy) section.
 
 !!! info "Declaring and using Kubernetes Service Load Balancing"
 
