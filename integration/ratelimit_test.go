@@ -64,11 +64,11 @@ func (s *RateLimitSuite) TestSimpleConfiguration() {
 
 func (s *RateLimitSuite) TestRedisRateLimitSimpleConfiguration() {
 	file := s.adaptFile("fixtures/ratelimit/simple_redis.toml", struct {
-		Server1        string
-		RedisEndpoints string
+		Server1       string
+		RedisEndpoint string
 	}{
-		Server1:        s.ServerIP,
-		RedisEndpoints: s.RedisEndpoint,
+		Server1:       s.ServerIP,
+		RedisEndpoint: s.RedisEndpoint,
 	})
 
 	s.traefikCmd(withConfigFile(file))
