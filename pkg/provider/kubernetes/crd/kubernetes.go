@@ -365,8 +365,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		for _, rootCA := range serversTransport.Spec.RootCAs {
 			if rootCA.Secret != nil && rootCA.ConfigMap != nil {
-				logger.Error().
-					Msg("Error while loading CA: both Secret and ConfigMap are defined")
+				logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
 				continue
 			}
 
@@ -512,8 +511,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 			for _, rootCA := range serversTransportTCP.Spec.TLS.RootCAs {
 				if rootCA.Secret != nil && rootCA.ConfigMap != nil {
-					logger.Error().
-						Msg("Error while loading CA: both Secret and ConfigMap are defined")
+					logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
 					continue
 				}
 

@@ -58,7 +58,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: root-ca6
+  name: root-ca5
   namespace: foo
 
 data:
@@ -68,7 +68,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: root-ca7
+  name: root-ca6
   namespace: foo
 
 data:
@@ -150,10 +150,10 @@ spec:
     - allcerts
   rootCAs:
     - configMap: root-ca-as-config-map
-    - secret: root-ca6
+    - secret: root-ca5
     # referencing both a ConfigMap and a Secret should fail.
     - configMap: root-ca-as-config-map-2
-      secret: root-ca7
+      secret: root-ca6
   certificatesSecrets:
     - mtls1
     - mtls2
