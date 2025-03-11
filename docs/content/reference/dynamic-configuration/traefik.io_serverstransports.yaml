@@ -113,9 +113,33 @@ spec:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
                 type: string
+              rootCAs:
+                description: RootCAs defines a list of CA certificate Secrets or ConfigMaps
+                  used to validate server certificates.
+                items:
+                  description: |-
+                    RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
+                    If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
+                  properties:
+                    configMap:
+                      description: |-
+                        ConfigMap defines the name of a ConfigMap that holds a CA certificate.
+                        The referenced ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.
+                      type: string
+                    secret:
+                      description: |-
+                        Secret defines the name of a Secret that holds a CA certificate.
+                        The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.
+                      type: string
+                  type: object
+                  x-kubernetes-validations:
+                  - message: RootCA cannot have both Secret and ConfigMap defined.
+                    rule: has(self.secret) && has(self.configMap)
+                type: array
               rootCAsSecrets:
-                description: RootCAsSecrets defines a list of CA secret used to validate
-                  self-signed certificate.
+                description: |-
+                  RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+                  Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                 items:
                   type: string
                 type: array
