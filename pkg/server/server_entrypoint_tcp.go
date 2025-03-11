@@ -478,6 +478,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 
 	if listener == nil {
 		listenConfig := newListenConfig(config)
+                listenConfig.SetMultipathTCP(true)
 		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("error opening listener: %w", err)
