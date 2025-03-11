@@ -1,7 +1,6 @@
 package snicheck
 
 import (
-	"github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"net"
 	"net/http"
 	"regexp"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
