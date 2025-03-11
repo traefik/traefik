@@ -340,17 +340,59 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, serversTransport := range client.GetServersTransports() {
-		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransport.Name).Logger()
+		logger := log.Ctx(ctx).With().
+			Str(logs.ServersTransportName, serversTransport.Name).
+			Str("namespace", serversTransport.Namespace).
+			Logger()
+
+		if len(serversTransport.Spec.RootCAsSecrets) > 0 {
+			logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
+		}
 
 		var rootCAs []types.FileOrContent
 		for _, secret := range serversTransport.Spec.RootCAsSecrets {
 			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
+				logger.Error().
+					Err(err).
+					Str("secret", secret).
+					Msg("Error while loading CA Secret")
 				continue
 			}
 
 			rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+		}
+
+		for _, rootCA := range serversTransport.Spec.RootCAs {
+			if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+				logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+				continue
+			}
+
+			if rootCA.Secret != nil {
+				ca, err := loadCASecret(serversTransport.Namespace, *rootCA.Secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("secret", *rootCA.Secret).
+						Msg("Error while loading CA Secret")
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(ca))
+				continue
+			}
+
+			ca, err := loadCAConfigMap(serversTransport.Namespace, *rootCA.ConfigMap, client)
+			if err != nil {
+				logger.Error().
+					Err(err).
+					Str("configMap", *rootCA.ConfigMap).
+					Msg("Error while loading CA ConfigMap")
+				continue
+			}
+
+			rootCAs = append(rootCAs, types.FileOrContent(ca))
 		}
 
 		var certs tls.Certificates
@@ -449,18 +491,54 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 
 		if serversTransportTCP.Spec.TLS != nil {
+			if len(serversTransportTCP.Spec.TLS.RootCAsSecrets) > 0 {
+				logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
+			}
+
 			var rootCAs []types.FileOrContent
 			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
 				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
 				if err != nil {
 					logger.Error().
 						Err(err).
-						Str("rootCAs", secret).
-						Msg("Error while loading rootCAs")
+						Str("secret", secret).
+						Msg("Error while loading CA Secret")
 					continue
 				}
 
 				rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+			}
+
+			for _, rootCA := range serversTransportTCP.Spec.TLS.RootCAs {
+				if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+					logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+					continue
+				}
+
+				if rootCA.Secret != nil {
+					ca, err := loadCASecret(serversTransportTCP.Namespace, *rootCA.Secret, client)
+					if err != nil {
+						logger.Error().
+							Err(err).
+							Str("secret", *rootCA.Secret).
+							Msg("Error while loading CA Secret")
+						continue
+					}
+
+					rootCAs = append(rootCAs, types.FileOrContent(ca))
+					continue
+				}
+
+				ca, err := loadCAConfigMap(serversTransportTCP.Namespace, *rootCA.ConfigMap, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("configMap", *rootCA.ConfigMap).
+						Msg("Error while loading CA ConfigMap")
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(ca))
 			}
 
 			var certs tls.Certificates
@@ -936,7 +1014,7 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 		return tlsCAData, nil
 	}
 
-	// TODO: remove this behavior in the next major version (v3)
+	// TODO: remove this behavior in the next major version (v4)
 	if len(secret.Data) == 1 {
 		// For backwards compatibility, use the only available secret data as CA if both 'ca.crt' and 'tls.ca' are missing.
 		for _, v := range secret.Data {
@@ -944,7 +1022,29 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 		}
 	}
 
-	return "", fmt.Errorf("could not find CA block: %w", err)
+	return "", fmt.Errorf("secret '%s/%s' has no CA block: %w", namespace, secretName, err)
+}
+
+func loadCAConfigMap(namespace, name string, k8sClient Client) (string, error) {
+	configMap, ok, err := k8sClient.GetConfigMap(namespace, name)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch configMap '%s/%s': %w", namespace, name, err)
+	}
+
+	if !ok {
+		return "", fmt.Errorf("configMap '%s/%s' not found", namespace, name)
+	}
+
+	if configMap == nil {
+		return "", fmt.Errorf("data for configMap '%s/%s' must not be nil", namespace, name)
+	}
+
+	tlsCAData, err := getCABlocksFromConfigMap(configMap, namespace, name)
+	if err == nil {
+		return tlsCAData, nil
+	}
+
+	return "", fmt.Errorf("configMap '%s/%s' has no CA block: %w", namespace, name, err)
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
@@ -1382,6 +1482,20 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	}
 
 	return "", fmt.Errorf("secret %s/%s contains neither tls.ca nor ca.crt", namespace, secretName)
+}
+
+func getCABlocksFromConfigMap(configMap *corev1.ConfigMap, namespace, name string) (string, error) {
+	tlsCrtData, tlsCrtExists := configMap.Data["tls.ca"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	tlsCrtData, tlsCrtExists = configMap.Data["ca.crt"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	return "", fmt.Errorf("config map %s/%s contains neither tls.ca nor ca.crt", namespace, name)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {

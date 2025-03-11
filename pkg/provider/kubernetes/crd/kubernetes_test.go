@@ -1491,7 +1491,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "test",
 								InsecureSkipVerify: true,
-								RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+								RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS", "TESTROOTCASFROMCONFIGMAP", "TESTROOTCAS6"},
 								Certificates: tls.Certificates{
 									{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 									{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
@@ -4734,7 +4734,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"foo-test": {
 							ServerName:         "test",
 							InsecureSkipVerify: true,
-							RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+							RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS", "TESTROOTCASFROMCONFIGMAP", "TESTROOTCAS6"},
 							Certificates: tls.Certificates{
 								{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
