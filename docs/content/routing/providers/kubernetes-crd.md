@@ -1851,9 +1851,9 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     spec:
       serverName: foobar                        # [1]
       insecureSkipVerify: true                  # [2]
-      rootCAsSecrets:                           # [3]
-        - foobar
-        - foobar
+      rootCAs:                                  # [3]
+        - configMap: foobar
+        - secret: foobar
       certificatesSecrets:                      # [4]
         - foobar
         - foobar
@@ -1871,22 +1871,22 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         trustDomain: "spiffe://trust-domain"    # [14]
     ```
 
-| Ref  | Attribute               | Purpose                                                                                                                                                                 |
-|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                  |
-| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                              |
-| [3]  | `rootCAsSecrets`        | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key. |
-| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                         |
-| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                     |
-| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                         |
-| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                               |
-| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                    |
-| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
-| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
-| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                           |
-| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                               |
-| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                          |
-| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                |
+| Ref  | Attribute               | Purpose                                                                                                                                                                                         |
+|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                                          |
+| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                                                      |
+| [3]  | `rootCAs`               | Defines the set of root certificate authorities to use when verifying server certificates. The referenced Secret or ConfigMap must contain a certificate under either a tls.ca or a ca.crt key. |
+| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                                                 |
+| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                                             |
+| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                                                 |
+| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                                                       |
+| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                                            |
+| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                                                  |
+| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                |
+| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                                                   |
+| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                                                       |
+| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                  |
+| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                                        |
 
 !!! info "CA Secret"
 
@@ -1960,9 +1960,9 @@ The `default@internal` serversTransportTCP is created from the [static configura
         serverName: foobar                      # [5]
         insecureSkipVerify: true                # [6]
         peerCertURI: foobar                     # [7]
-        rootCAsSecrets:                         # [8]
-          - foobar
-          - foobar
+        rootCAs:                                # [8]
+          - secret: foobar
+          - configMap: foobar
         certificatesSecrets:                    # [9]
           - foobar
           - foobar
@@ -1982,7 +1982,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 | [5]  | `serverName`          | ServerName used to contact the server.                                                                                                                                                                                                                                                                                                              |
 | [6]  | `insecureSkipVerify`  | Controls whether the server's certificate chain and host name is verified.                                                                                                                                                                                                                                                                          |
 | [7]  | `peerCertURI`         | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                                                                                                                                                                    |
-| [8]  | `rootCAsSecrets`      | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                                             |
+| [8]  | `rootCAs`             | Defines the set of root certificate authorities to use when verifying server certificates. The referenced Secret or ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                     |
 | [9]  | `certificatesSecrets` | Certificates to present to the server for mTLS.                                                                                                                                                                                                                                                                                                     |
 | [10] | `spiffe`              | The SPIFFE configuration.                                                                                                                                                                                                                                                                                                                           |
 | [11] | `ids`                 | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                                                                                                                                                                      |
