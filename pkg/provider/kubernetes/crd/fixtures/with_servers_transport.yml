@@ -1,4 +1,10 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: foo
+
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: root-ca0
@@ -62,6 +68,16 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: root-ca7
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVM3
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: mtls1
   namespace: foo
 
@@ -103,6 +119,16 @@ data:
   ca.crt: "TESTROOTCASFROMCONFIGMAP"
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: root-ca-as-config-map-2
+  namespace: foo
+
+data:
+  ca.crt: "TESTROOTCASFROMCONFIGMAP2"
+
+---
 apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
@@ -123,8 +149,11 @@ spec:
     - root-ca4
     - allcerts
   rootCAs:
-    - configMapRef: root-ca-as-config-map
-    - secretRef: root-ca6
+    - configMap: root-ca-as-config-map
+    - secret: root-ca6
+    # referencing both a ConfigMap and a Secret should fail.
+    - configMap: root-ca-as-config-map-2
+      secret: root-ca7
   certificatesSecrets:
     - mtls1
     - mtls2
