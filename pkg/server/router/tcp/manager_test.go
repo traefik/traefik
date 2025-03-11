@@ -603,6 +603,33 @@ func TestDomainFronting(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
+			desc: "Request is OK when Host is matched by HostRegexp and TLS options are different",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1@file": {
+					Router: &dynamic.Router{
+						EntryPoints: entryPoints,
+						Rule:        "HostRegexp(`.*.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1@file",
+						},
+					},
+				},
+				"router-2@crd": {
+					Router: &dynamic.Router{
+						EntryPoints: entryPoints,
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1@crd",
+						},
+					},
+				},
+			},
+			tlsOptions:     tlsOptionsBase,
+			host:           "other.local",
+			ServerName:     "other.local",
+			expectedStatus: http.StatusOK,
+		},
+		{
 			desc: "Request is misdirected when server name is empty and the host name is an FQDN, but router's rule is not",
 			routers: map[string]*runtime.RouterInfo{
 				"router-1@file": {

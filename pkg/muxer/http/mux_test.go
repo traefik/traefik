@@ -404,6 +404,68 @@ func Test_addRoutePriority(t *testing.T) {
 	}
 }
 
+func TestParseDomainsAndRegex(t *testing.T) {
+	testCases := []struct {
+		description   string
+		expression    string
+		domain        []string
+		domainRegex   []string
+		errorExpected bool
+	}{
+		{
+			description:   "Unknown rule",
+			expression:    "Foobar(`foo.bar`,`test.bar`)",
+			errorExpected: true,
+		},
+		{
+			description: "No host rule",
+			expression:  "Path(`/test`)",
+		},
+		{
+			description: "Host rule and another rule",
+			expression:  "Host(`foo.bar`) && Path(`/test`)",
+			domain:      []string{"foo.bar"},
+		},
+		{
+			description: "Host rule to trim and another rule",
+			expression:  "Host(`Foo.Bar`) || Host(`bar.buz`) && Path(`/test`)",
+			domain:      []string{"foo.bar", "bar.buz"},
+		},
+		{
+			description: "Host rule to trim and another rule",
+			expression:  "Host(`Foo.Bar`) && Path(`/test`)",
+			domain:      []string{"foo.bar"},
+		},
+		{
+			description: "Host rule with no domain",
+			expression:  "Host() && Path(`/test`)",
+		},
+		{
+			description: "Host rule with domain regex",
+			expression:  "Host(`Foo.Bar`) || HostRegexp(`^bar.*`) && Path(`/test`)",
+			domain:      []string{"foo.bar"},
+			domainRegex: []string{"^bar.*"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.expression, func(t *testing.T) {
+			t.Parallel()
+
+			domains, domainRegex, err := ParseDomainsAndRegex(test.expression)
+
+			if test.errorExpected {
+				require.Errorf(t, err, "unable to parse correctly the domains in the Host rule from %q", test.expression)
+			} else {
+				require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
+			}
+
+			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
+			assert.EqualValues(t, test.domainRegex, domainRegex, "%s: Error parsing domain regex from expression.", test.expression)
+		})
+	}
+}
+
 func TestParseDomains(t *testing.T) {
 	testCases := []struct {
 		description   string
