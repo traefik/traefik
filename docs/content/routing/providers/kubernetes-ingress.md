@@ -391,6 +391,14 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.sticky.cookie.samesite: "none"
     ```
 
+??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.domain`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.sticky.cookie.domain: "foo.com"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.

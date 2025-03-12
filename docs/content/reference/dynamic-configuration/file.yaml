@@ -72,6 +72,7 @@ http:
             sameSite: foobar
             maxAge: 42
             path: foobar
+            domain: foobar
         servers:
           - url: foobar
             weight: 42
@@ -79,6 +80,7 @@ http:
           - url: foobar
             weight: 42
             preservePath: true
+        strategy: foobar
         healthCheck:
           scheme: foobar
           mode: foobar
@@ -123,6 +125,7 @@ http:
             sameSite: foobar
             maxAge: 42
             path: foobar
+            domain: foobar
         healthCheck: {}
   middlewares:
     Middleware01:
@@ -358,6 +361,24 @@ http:
             ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
+        redis:
+          endpoints:
+            - foobar
+            - foobar
+          tls:
+            ca: foobar
+            cert: foobar
+            key: foobar
+            insecureSkipVerify: true
+          username: foobar
+          password: foobar
+          db: 42
+          poolSize: 42
+          minIdleConns: 42
+          maxActiveConns: 42
+          readTimeout: 42s
+          writeTimeout: 42s
+          dialTimeout: 42s
     Middleware19:
       redirectRegex:
         regex: foobar

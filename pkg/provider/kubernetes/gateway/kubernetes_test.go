@@ -637,6 +637,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -733,6 +734,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -803,6 +805,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -864,6 +867,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -925,6 +929,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1003,6 +1008,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1019,6 +1025,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami2-http-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.3:8080",
@@ -1084,6 +1091,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1100,6 +1108,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami2-http-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.3:8080",
@@ -1184,6 +1193,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1277,6 +1287,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1381,6 +1392,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1442,6 +1454,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1503,6 +1516,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1564,6 +1578,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1642,6 +1657,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1658,6 +1674,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -1719,6 +1736,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -1789,6 +1807,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1859,6 +1878,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2021,6 +2041,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2089,6 +2110,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2159,6 +2181,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2220,6 +2243,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2282,12 +2306,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.1:80",
+										URL: "https://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.2:80",
+										URL: "https://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -2353,12 +2378,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.1:80",
+										URL: "https://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.2:80",
+										URL: "https://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -2420,6 +2446,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.10.1:80",
@@ -2478,6 +2505,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-native-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.10.1:80",
@@ -2597,7 +2625,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			paths: []string{"services.yml", "httproute/simple_with_TraefikService.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
 				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
-					return name, &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "foobar"}}}}, nil
+					return name, &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Strategy: dynamic.BalancerStrategyWRR, Servers: []dynamic.Server{{URL: "foobar"}}}}, nil
 				}},
 			},
 			entryPoints: map[string]Entrypoint{"web": {
@@ -2638,6 +2666,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"whoami": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{URL: "foobar"},
 								},
@@ -2797,6 +2826,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2872,6 +2902,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-h2c-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://10.10.0.13:80",
@@ -2885,6 +2916,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-ws-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.14:80",
@@ -2898,6 +2930,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-wss-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.15:80",
@@ -3012,6 +3045,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -3084,6 +3118,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -3296,6 +3331,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-80-grpc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://10.10.0.1:80",
@@ -3368,6 +3404,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-80-grpc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://10.10.0.1:80",
@@ -5951,6 +5988,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6139,6 +6177,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6359,6 +6398,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6375,6 +6415,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -6535,6 +6576,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -6694,6 +6736,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",

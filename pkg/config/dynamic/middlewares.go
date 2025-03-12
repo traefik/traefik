@@ -7,6 +7,7 @@ import (
 
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
@@ -80,6 +81,7 @@ type ContentType struct {
 type AddPrefix struct {
 	// Prefix is the string to add before the current path in the requested URL.
 	// It should include a leading slash (/).
+	// +kubebuilder:validation:XValidation:message="must start with a '/'",rule="self.startsWith('/')"
 	Prefix string `json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 }
 
@@ -179,6 +181,7 @@ type Compress struct {
 	IncludedContentTypes []string `json:"includedContentTypes,omitempty" toml:"includedContentTypes,omitempty" yaml:"includedContentTypes,omitempty" export:"true"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
+	// +kubebuilder:validation:Minimum=0
 	MinResponseBodyBytes int `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
 	// Encodings defines the list of supported compression algorithms.
 	Encodings []string `json:"encodings,omitempty" toml:"encodings,omitempty" yaml:"encodings,omitempty" export:"true"`
@@ -324,6 +327,7 @@ type Headers struct {
 	SSLProxyHeaders map[string]string `json:"sslProxyHeaders,omitempty" toml:"sslProxyHeaders,omitempty" yaml:"sslProxyHeaders,omitempty"`
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
+	// +kubebuilder:validation:Minimum=0
 	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
@@ -424,6 +428,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
 	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
+	// +kubebuilder:validation:Minimum=0
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
@@ -505,6 +510,7 @@ type IPAllowList struct {
 type InFlightReq struct {
 	// Amount defines the maximum amount of allowed simultaneous in-flight request.
 	// The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
+	// +kubebuilder:validation:Minimum=0
 	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
@@ -561,12 +567,68 @@ type RateLimit struct {
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+
+	// Redis stores the configuration for using Redis as a bucket in the rate-limiting algorithm.
+	// If not specified, Traefik will default to an in-memory bucket for the algorithm.
+	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
 	r.Period = ptypes.Duration(time.Second)
+}
+
+// +k8s:deepcopy-gen=true
+
+// Redis holds the Redis configuration.
+type Redis struct {
+	// Endpoints contains either a single address or a seed list of host:port addresses.
+	// Default value is ["localhost:6379"].
+	Endpoints []string `json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
+	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
+	// which can be provided as a file path or file content.
+	TLS *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	// Username defines the username to connect to the Redis server.
+	Username string `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	// Password defines the password to connect to the Redis server.
+	Password string `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	// DB defines the Redis database that will be selected after connecting to the server.
+	DB int `json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
+	// PoolSize defines the initial number of socket connections.
+	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+	// This can be limited using MaxActiveConns.
+	// Default value is 0, meaning 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+	PoolSize int `json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
+	// MinIdleConns defines the minimum number of idle connections.
+	// Default value is 0, and idle connections are not closed by default.
+	MinIdleConns int `json:"minIdleConns,omitempty" toml:"minIdleConns,omitempty" yaml:"minIdleConns,omitempty" export:"true"`
+	// MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+	// Default value is 0, meaning there is no limit.
+	MaxActiveConns int `json:"maxActiveConns,omitempty" toml:"maxActiveConns,omitempty" yaml:"maxActiveConns,omitempty" export:"true"`
+	// ReadTimeout defines the timeout for socket read operations.
+	// Default value is 3 seconds.
+	ReadTimeout *ptypes.Duration `json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	// WriteTimeout defines the timeout for socket write operations.
+	// Default value is 3 seconds.
+	WriteTimeout *ptypes.Duration `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	// DialTimeout sets the timeout for establishing new connections.
+	// Default value is 5 seconds.
+	DialTimeout *ptypes.Duration `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values on a RateLimit.
+func (r *Redis) SetDefaults() {
+	r.Endpoints = []string{"localhost:6379"}
+
+	defaultReadTimeout := ptypes.Duration(3 * time.Second)
+	r.ReadTimeout = &defaultReadTimeout
+
+	defaultWriteTimeout := ptypes.Duration(3 * time.Second)
+	r.WriteTimeout = &defaultWriteTimeout
+
+	defaultDialTimeout := ptypes.Duration(5 * time.Second)
+	r.DialTimeout = &defaultDialTimeout
 }
 
 // +k8s:deepcopy-gen=true

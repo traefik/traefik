@@ -49,6 +49,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:

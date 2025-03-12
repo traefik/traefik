@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/smithy-go/logging"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +19,7 @@ func TestNewAWSWrapper(t *testing.T) {
 
 	logger := NewAWSWrapper(zerolog.New(out).With().Caller().Logger())
 
-	logger.Log("foo")
+	logger.Logf(logging.Debug, "%s", "foo")
 
-	assert.Equal(t, "<nil> DBG aws_test.go:21 > foo\n", buf.String())
+	assert.Equal(t, "<nil> DBG aws_test.go:22 > foo\n", buf.String())
 }
