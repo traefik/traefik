@@ -2556,6 +2556,10 @@ spec:
                   It is enabled automatically when minVersion or maxVersion is set.
                   Deprecated: https://github.com/golang/go/issues/45430
                 type: boolean
+              sessionTicketsDisabled:
+                description: SessionTicketsDisabled when set to true, disables TLS
+                  session resumption via session tickets.
+                type: boolean
               sniStrict:
                 description: SniStrict defines whether Traefik allows connections
                   from clients connections that do not specify a server_name extension.

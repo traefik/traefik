@@ -408,6 +408,9 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
+	// Set SessionTicketsDisabled if set in the config
+	conf.SessionTicketsDisabled = tlsOption.SessionTicketsDisabled
+
 	return conf, nil
 }
 
