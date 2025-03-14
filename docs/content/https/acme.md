@@ -836,17 +836,16 @@ certificatesResolvers:
 
 _Optional, Default=""_
 
-Server certificate profile to use.
+Certificate profile to use.
 
-This new feature will allow to opt in to the next evolution of Let’s Encrypt.
-https://letsencrypt.org/2025/01/09/acme-profiles/
+For more information, please check out the [Let's Encrypt blog post](https://letsencrypt.org/2025/01/09/acme-profiles/) about certificate profile selection.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
     acme:
       # ...
-      profile: 'tlsserver'
+      profile: tlsserver
       # ...
 ```
 
