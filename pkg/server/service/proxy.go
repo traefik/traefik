@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -91,8 +92,9 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 		BufferPool:    bufferPool,
 		ErrorLog:      errorLogger,
 		ErrorHandler: func(w http.ResponseWriter, request *http.Request, err error) {
-			statusCode := http.StatusInternalServerError
+			logger := log.FromContext(request.Context())
 
+			statusCode := http.StatusInternalServerError
 			switch {
 			case errors.Is(err, io.EOF):
 				statusCode = http.StatusBadGateway
@@ -109,7 +111,13 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 				}
 			}
 
-			log.Debugf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
+			// Log the error with error level if it is a TLS error related to configuration.
+			if isTLSConfigError(err) {
+				logger.Errorf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
+			} else {
+				logger.Debugf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
+			}
+
 			w.WriteHeader(statusCode)
 			_, werr := w.Write([]byte(statusText(statusCode)))
 			if werr != nil {
@@ -119,6 +127,25 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 	}
 
 	return proxy, nil
+}
+
+// isTLSError returns true if the error is a TLS error which is related to configuration.
+// We assume that if the error is a tls.RecordHeaderError or a tls.CertificateVerificationError,
+// it is related to configuration, because the client should not send a TLS request to a non-TLS server,
+// and the client configuration should allow to verify the server certificate.
+func isTLSConfigError(err error) bool {
+	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
+	if _, ok := err.(tls.RecordHeaderError); ok {
+		return true
+	}
+
+	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
+	var tlsCertErr *tls.CertificateVerificationError
+	if errors.As(err, &tlsCertErr) {
+		return true
+	}
+
+	return false
 }
 
 func isWebSocketUpgrade(req *http.Request) bool {
