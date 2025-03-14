@@ -168,6 +168,9 @@ Key identifier from External CA.
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAIL`:  
 Email address used for registration.
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAILADDRESSES`:  
+CSR email addresses to use.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
 
@@ -179,6 +182,9 @@ KeyType used for generating certificate private key. Allow value 'EC256', 'EC384
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_PREFERREDCHAIN`:  
 Preferred chain to use.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_PROFILE`:  
+Certificate profile to use.
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_STORAGE`:  
 Storage to use. (Default: ```acme.json```)
