@@ -184,7 +184,7 @@ KeyType used for generating certificate private key. Allow value 'EC256', 'EC384
 Preferred chain to use.
 
 `--certificatesresolvers.<name>.acme.profile`:  
-Server certificate profile to use.
+Certificate profile to use.
 
 `--certificatesresolvers.<name>.acme.storage`:  
 Storage to use. (Default: ```acme.json```)

@@ -184,7 +184,7 @@ KeyType used for generating certificate private key. Allow value 'EC256', 'EC384
 Preferred chain to use.
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_PROFILE`:  
-Server certificate profile to use.
+Certificate profile to use.
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_STORAGE`:  
 Storage to use. (Default: ```acme.json```)
