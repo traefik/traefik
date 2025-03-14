@@ -80,5 +80,4 @@ func TestIsTLSConfigError(t *testing.T) {
 			require.Equal(t, test.expected, actual)
 		})
 	}
-
 }

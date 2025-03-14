@@ -135,17 +135,14 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 // and the client configuration should allow to verify the server certificate.
 func isTLSConfigError(err error) bool {
 	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
-	if _, ok := err.(tls.RecordHeaderError); ok {
+	var recordHeaderErr tls.RecordHeaderError
+	if errors.As(err, &recordHeaderErr) {
 		return true
 	}
 
 	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
-	var tlsCertErr *tls.CertificateVerificationError
-	if errors.As(err, &tlsCertErr) {
-		return true
-	}
-
-	return false
+	var certVerificationErr *tls.CertificateVerificationError
+	return errors.As(err, &certVerificationErr)
 }
 
 func isWebSocketUpgrade(req *http.Request) bool {
