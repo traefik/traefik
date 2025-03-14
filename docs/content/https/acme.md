@@ -832,6 +832,66 @@ certificatesResolvers:
 # ...
 ```
 
+### `profile`
+
+_Optional, Default=""_
+
+Certificate profile to use.
+
+For more information, please check out the [Let's Encrypt blog post](https://letsencrypt.org/2025/01/09/acme-profiles/) about certificate profile selection.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      profile: tlsserver
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  profile = "tlsserver"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.profile=tlsserver
+# ...
+```
+
+### `emailAddresses`
+
+_Optional, Default=""_
+
+CSR email addresses to use.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      emailAddresses:
+        - foo@example.com
+        - bar@example.org
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  emailAddresses = ["foo@example.com", "bar@example.org"]
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.emailaddresses=foo@example.com,bar@example.org
+# ...
+```
+
 ### `keyType`
 
 _Optional, Default="RSA4096"_
