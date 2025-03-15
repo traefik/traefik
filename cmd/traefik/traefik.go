@@ -50,6 +50,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	wsvc "golang.org/x/sys/windows/svc"
+	"github.com/traefik/traefik/v3/pkg/winsvc"
+	winruntime "runtime"
 )
 
 func main() {
@@ -125,6 +128,9 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	}
 
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	
+	ctx, cancel := setupWindowsServiceCancellation(ctx)
+	defer cancel()
 
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
@@ -168,6 +174,37 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	log.Info().Msg("Shutting down")
 	return nil
 }
+
+func setupWindowsServiceCancellation(ctx context.Context) (context.Context, context.CancelFunc) {
+	// If not on Windows, return a cancellable context without additional logic
+	if winruntime.GOOS != "windows" {
+		return context.WithCancel(ctx)
+	}
+
+	isService, err := wsvc.IsWindowsService()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to determine if running as a Windows Service")
+		isService = false // Default to CMD mode if unsure
+	}
+
+	if !isService {
+		log.Info().Msg("Running in CMD mode, skipping Windows Service cancellation setup.")
+		return context.WithCancel(ctx) // No-op but still valid
+	}
+
+	// Windows Service mode: Create a cancellable context
+	ctx, cancel := context.WithCancel(ctx)
+
+	// Listen for Windows Service stop signal
+	go func() {
+		<-winsvc.ChanExit
+		log.Info().Msg("Received Windows Service stop signal, shutting down...")
+		cancel()
+	}()
+
+	return ctx, cancel
+}
+
 
 func setupServer(staticConfiguration *static.Configuration) (*server.Server, error) {
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
