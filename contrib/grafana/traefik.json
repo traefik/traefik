@@ -1410,7 +1410,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "sum(traefik_open_connections{entrypoint=~\"$entrypoint\"}) by (entrypoint)\n",
+              "expr": "sum(traefik_entrypoint_open_connections{entrypoint=~\"$entrypoint\"}) by (entrypoint)\n",
               "legendFormat": "{{entrypoint}}",
               "range": true,
               "refId": "A"
@@ -1517,14 +1517,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(traefik_open_connections, entrypoint)",
+        "definition": "label_values(traefik_entrypoint_open_connections, entrypoint)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
         "name": "entrypoint",
         "options": [],
         "query": {
-          "query": "label_values(traefik_open_connections, entrypoint)",
+          "query": "label_values(traefik_entrypoint_open_connections, entrypoint)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
