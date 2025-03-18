@@ -28,8 +28,8 @@ And if your needs change, you can add API gateway and API management capabilitie
 Traefik supports different needs depending on your background. We keep three user personas in mind as we build and organize these docs:
 
 - **Beginners**: You are new to Traefik or new to reverse proxies. You want simple, guided steps to set things up without diving too deep into advanced topics.
-- **DevOps Engineers**: You handle infrastructure and know about networking, scaling, and production-level deployments. You want details about configuration, performance, and reliability.
-- **Developers**: You build and deploy apps regularly and appreciate automation, CI/CD, and advanced customization. You want integration details, tooling support, and advanced routing rules.
+- **DevOps Engineers**: You manage infrastructure or clusters (Docker, Kubernetes, or other orchestrators). You integrate Traefik into your environment and value reliability, performance, and streamlined deployments.
+- Developers: You create and deploy applications or APIs. You focus on how to expose your services through Traefik, apply routing rules, and integrate it with your development workflow.
 
 ## Core Concepts
 
