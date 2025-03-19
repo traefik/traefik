@@ -37,6 +37,7 @@ type Route struct {
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax
+	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of Service.
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
