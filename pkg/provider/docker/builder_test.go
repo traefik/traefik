@@ -13,6 +13,7 @@ func containerJSON(ops ...func(*dockertypes.ContainerJSON)) dockertypes.Containe
 		ContainerJSONBase: &dockertypes.ContainerJSONBase{
 			Name:       "fake",
 			HostConfig: &container.HostConfig{},
+			State:      &dockertypes.ContainerState{},
 		},
 		Config: &container.Config{},
 		NetworkSettings: &dockertypes.NetworkSettings{
@@ -25,6 +26,12 @@ func containerJSON(ops ...func(*dockertypes.ContainerJSON)) dockertypes.Containe
 	}
 
 	return *c
+}
+
+func status(status string) func(*dockertypes.ContainerJSON) {
+	return func(c *dockertypes.ContainerJSON) {
+		c.ContainerJSONBase.State.Status = status
+	}
 }
 
 func name(name string) func(*dockertypes.ContainerJSON) {
@@ -143,6 +150,10 @@ func taskContainerStatus(id string) func(*swarm.TaskStatus) {
 func swarmService(ops ...func(*swarm.Service)) swarm.Service {
 	service := &swarm.Service{
 		ID: "serviceID",
+		ServiceStatus: &swarm.ServiceStatus{
+			RunningTasks: 1,
+			DesiredTasks: 1,
+		},
 		Spec: swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Name: "defaultServiceName",
@@ -155,6 +166,12 @@ func swarmService(ops ...func(*swarm.Service)) swarm.Service {
 	}
 
 	return *service
+}
+
+func serviceStatus(status *swarm.ServiceStatus) func(service *swarm.Service) {
+	return func(service *swarm.Service) {
+		service.ServiceStatus = status
+	}
 }
 
 func serviceName(name string) func(service *swarm.Service) {
