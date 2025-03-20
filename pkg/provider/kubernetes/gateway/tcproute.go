@@ -120,7 +120,7 @@ func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1alpha2.TC
 		router := dynamic.TCPRouter{
 			Rule:        "HostSNI(`*`)",
 			EntryPoints: []string{listener.EPName},
-			RuleSyntax:  "v3",
+			RuleSyntax:  "default",
 		}
 
 		if listener.Protocol == gatev1.TLSProtocolType && listener.TLS != nil {

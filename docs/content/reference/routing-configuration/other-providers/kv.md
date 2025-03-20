@@ -25,6 +25,11 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
 
 ??? info "`traefik/http/routers/<router_name>/ruleSyntax`"
 
+    !!! warning
+
+        RuleSyntax option is deprecated and will be removed in the next major version.
+        Please do not use this field and rewrite the router rules to use the v3 syntax.
+
     See [rule](../http/router/rules-and-priority.md#rulesyntax) for more information.
     
     | Key (Path)                           | Value                      |
