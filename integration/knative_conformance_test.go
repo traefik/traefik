@@ -201,18 +201,24 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 	}
 
 	// Ensure the directory exists
-	err = os.MkdirAll("/home/runner/work/traefik/traefik/k3s/", 0o755)
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	err = os.MkdirAll(homeDir+"/work/traefik/k3s/", 0o755)
 	if err != nil {
 		s.T().Fatal(err)
 	}
 
 	// Write the byte array to the file
-	err = os.WriteFile("/home/runner/work/traefik/traefik/k3s/k3s.yaml", config, 0o644)
+	err = os.WriteFile(homeDir+"/work/traefik/k3s/k3s.yaml", config, 0o644)
 	if err != nil {
 		s.T().Fatal(err)
 	}
 
-	err = flag.CommandLine.Set("kubeconfig", "/home/runner/work/traefik/traefik/k3s/k3s.yaml")
+	err = flag.CommandLine.Set("kubeconfig", homeDir+"/work/traefik/k3s/k3s.yaml")
 	if err != nil {
 		s.T().Fatal(err)
 	}
