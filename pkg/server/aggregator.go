@@ -59,7 +59,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 				if router.RuleSyntax != "" && router.RuleSyntax != "default" {
 					log.Warn().
 						Str(logs.RouterName, routerName).
-						Msgf("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
+						Msg("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
 				}
 
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
