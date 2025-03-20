@@ -97,11 +97,6 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			if route.Syntax != "" {
-				logger.Warn().
-					Msgf("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
-			}
-
 			r := &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Middlewares: mds,

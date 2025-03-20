@@ -112,11 +112,6 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 			}
 
-			if route.Syntax != "" {
-				logger.Warn().
-					Msgf("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
-			}
-
 			r := &dynamic.Router{
 				Middlewares:   mds,
 				Priority:      route.Priority,
