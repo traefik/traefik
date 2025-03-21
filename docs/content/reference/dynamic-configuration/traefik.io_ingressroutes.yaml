@@ -314,6 +314,7 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax
+                        Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
                       type: string
                   required:
                   - match

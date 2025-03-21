@@ -287,8 +287,9 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule:       "PathPrefix(`/`)",
-				RuleSyntax: "v3",
+				Rule: "PathPrefix(`/`)",
+				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    "default-backend",
 			}
