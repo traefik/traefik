@@ -171,6 +171,7 @@ nav:
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
+      - 'WebSocket Examples': 'user-guides/websocket.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS with Let''s Encrypt':
