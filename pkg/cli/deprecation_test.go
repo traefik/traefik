@@ -274,6 +274,15 @@ func TestDeprecationNotice(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Core DefaultRuleSyntax configuration is compatible",
+			config: configuration{
+				Core: &core{
+					DefaultRuleSyntax: "foobar",
+				},
+			},
+			wantCompatible: true,
+		},
 	}
 
 	for _, test := range tests {

@@ -10,7 +10,7 @@
         ],
         "service": "noop@internal",
         "rule": "HostRegexp(`^.+$`)",
-        "ruleSyntax": "v3"
+        "ruleSyntax": "default"
       }
     },
     "services": {

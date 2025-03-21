@@ -231,6 +231,11 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 ??? info "`traefik.ingress.kubernetes.io/router.rulesyntax`"
 
+    !!! warning
+
+        RuleSyntax option is deprecated and will be removed in the next major version.
+        Please do not use this field and rewrite the router rules to use the v3 syntax.
+
     See [rule syntax](../routers/index.md#rulesyntax) for more information.
 
     ```yaml

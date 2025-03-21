@@ -6,7 +6,7 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 9223372036854775806,
 			"observability": {
 				"accessLogs": true,
@@ -28,7 +28,7 @@
 			],
 			"service": "dashboard@internal",
 			"rule": "PathPrefix(`/`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 9223372036854775805,
 			"observability": {
 				"accessLogs": true,
@@ -46,7 +46,7 @@
 			],
 			"service": "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 100008,
 			"observability": {
 				"accessLogs": true,
@@ -64,7 +64,7 @@
 			],
 			"service": "httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 100008,
 			"tls": {},
 			"observability": {
@@ -177,7 +177,7 @@
 			],
 			"service": "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-e3b0c44298fc1c149afb-wrr",
 			"rule": "HostSNI(`*`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": -1,
 			"status": "enabled",
 			"using": [
@@ -190,7 +190,7 @@
 			],
 			"service": "tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-footlsterminate-0-e3b0c44298fc1c149afb-wrr",
 			"rule": "HostSNI(`*`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": -1,
 			"tls": {
 				"passthrough": false
@@ -206,7 +206,7 @@
 			],
 			"service": "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-e3b0c44298fc1c149afb-wrr",
 			"rule": "HostSNI(`foo.bar`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 7,
 			"tls": {
 				"passthrough": true

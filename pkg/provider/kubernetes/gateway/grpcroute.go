@@ -131,7 +131,8 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 			rule, priority := buildGRPCMatchRule(hostnames, match)
 
 			router := dynamic.Router{
-				RuleSyntax:  "v3",
+				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				RuleSyntax:  "default",
 				Rule:        rule,
 				Priority:    priority,
 				EntryPoints: []string{listener.EPName},
