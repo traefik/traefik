@@ -187,7 +187,7 @@ type Compress struct {
 }
 
 func (c *Compress) SetDefaults() {
-	c.Encodings = []string{"zstd", "br", "gzip"}
+	c.Encodings = []string{"gzip", "br", "zstd"}
 }
 
 // +k8s:deepcopy-gen=true
