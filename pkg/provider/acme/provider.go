@@ -40,15 +40,16 @@ const resolverSuffix = ".acme"
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
-	Email                string   `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
-	CAServer             string   `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
-	PreferredChain       string   `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
-	Profile              string   `description:"Certificate profile to use." json:"profile,omitempty" toml:"profile,omitempty" yaml:"profile,omitempty" export:"true"`
-	EmailAddresses       []string `description:"CSR email addresses to use." json:"emailAddresses,omitempty" toml:"emailAddresses,omitempty" yaml:"emailAddresses,omitempty"`
-	Storage              string   `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
-	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
-	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	Email                string           `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	CAServer             string           `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	PreferredChain       string           `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
+	Profile              string           `description:"Certificate profile to use." json:"profile,omitempty" toml:"profile,omitempty" yaml:"profile,omitempty" export:"true"`
+	EmailAddresses       []string         `description:"CSR email addresses to use." json:"emailAddresses,omitempty" toml:"emailAddresses,omitempty" yaml:"emailAddresses,omitempty"`
+	Storage              string           `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
+	KeyType              string           `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	EAB                  *EAB             `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
+	CertificatesDuration int              `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	ClientTimeout        *ptypes.Duration `description:"Timeout for HTTP responses from the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
 	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
@@ -372,22 +373,33 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	return p.client, nil
 }
 
+// Maximum allowed value for Configuration.ClientTimeout.
+// We multiply the timeout by 4, so pick `"time".maxDuration / 4`.
+const maxClientTimeout = time.Duration((1<<63 - 1) / 4)
+
 func (p *Provider) createHTTPClient() (*http.Client, error) {
 	tlsConfig, err := p.createClientTLSConfig()
 	if err != nil {
 		return nil, fmt.Errorf("creating client TLS config: %w", err)
 	}
 
+	clientTimeout := 30 * time.Second
+	if p.Configuration != nil && p.Configuration.ClientTimeout != nil {
+		timeout := time.Duration(*p.Configuration.ClientTimeout)
+		// clamp value to avoid overflows
+		clientTimeout = max(min(timeout, maxClientTimeout), 0)
+	}
+
 	return &http.Client{
-		Timeout: 2 * time.Minute,
+		Timeout: 4 * clientTimeout,
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
+				Timeout:   clientTimeout,
+				KeepAlive: clientTimeout,
 			}).DialContext,
-			TLSHandshakeTimeout:   30 * time.Second,
-			ResponseHeaderTimeout: 30 * time.Second,
+			TLSHandshakeTimeout:   clientTimeout,
+			ResponseHeaderTimeout: clientTimeout,
 			TLSClientConfig:       tlsConfig,
 		},
 	}, nil

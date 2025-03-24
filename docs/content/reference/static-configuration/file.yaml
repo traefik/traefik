@@ -556,6 +556,7 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      clientTimeout: 42s
       caCertificates:
         - foobar
         - foobar
@@ -593,6 +594,7 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      clientTimeout: 42s
       caCertificates:
         - foobar
         - foobar
