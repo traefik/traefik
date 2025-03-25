@@ -56,7 +56,7 @@ export default defineComponent({
   },
   props: {
     sticky: { type: Object, default: undefined, required: false },
-    dense: Boolean
+    dense: { type: Boolean, default: undefined }
   }
 })
 </script>
