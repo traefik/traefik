@@ -644,6 +644,7 @@ tls:
       alpnProtocols:
         - foobar
         - foobar
+      disableSessionTickets: true
       preferServerCipherSuites: true
     Options1:
       minVersion: foobar
@@ -663,6 +664,7 @@ tls:
       alpnProtocols:
         - foobar
         - foobar
+      disableSessionTickets: true
       preferServerCipherSuites: true
   stores:
     Store0:
