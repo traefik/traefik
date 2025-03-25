@@ -2540,6 +2540,10 @@ spec:
                 items:
                   type: string
                 type: array
+              disableSessionTickets:
+                description: DisableSessionTickets when set to true, disables TLS
+                  session resumption via session tickets.
+                type: boolean
               maxVersion:
                 description: |-
                   MaxVersion defines the maximum TLS version that Traefik will accept.
@@ -2557,10 +2561,6 @@ spec:
                   PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
                   It is enabled automatically when minVersion or maxVersion is set.
                   Deprecated: https://github.com/golang/go/issues/45430
-                type: boolean
-              sessionTicketsDisabled:
-                description: SessionTicketsDisabled when set to true, disables TLS
-                  session resumption via session tickets.
                 type: boolean
               sniStrict:
                 description: SniStrict defines whether Traefik allows connections
