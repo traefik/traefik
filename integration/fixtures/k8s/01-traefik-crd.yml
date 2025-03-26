@@ -102,6 +102,7 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority
+                      maximum: 9223372036854775000
                       type: integer
                     services:
                       description: |-
@@ -247,6 +248,11 @@ spec:
                               cookie:
                                 description: Cookie defines the sticky cookie configuration.
                                 properties:
+                                  domain:
+                                    description: |-
+                                      Domain defines the host to which the cookie will be sent.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                    type: string
                                   httpOnly:
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
@@ -271,6 +277,10 @@ spec:
                                     description: |-
                                       SameSite defines the same site policy.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                    enum:
+                                    - none
+                                    - lax
+                                    - strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie
@@ -280,14 +290,21 @@ spec:
                                 type: object
                             type: object
                           strategy:
+                            default: wrr
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
-                              RoundRobin is the only supported value at the moment.
+                              Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                              RoundRobin value is deprecated and supported for backward compatibility.
+                            enum:
+                            - wrr
+                            - p2c
+                            - RoundRobin
                             type: string
                           weight:
                             description: |-
                               Weight defines the weight and should only be specified when Name references a TraefikService object
                               (and to be precise, one that embeds a Weighted Round Robin).
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -297,6 +314,7 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax
+                        Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
                       type: string
                   required:
                   - match
@@ -465,6 +483,7 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority_1
+                      maximum: 9223372036854775000
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -510,6 +529,8 @@ spec:
                               version:
                                 description: Version defines the PROXY Protocol version
                                   to use.
+                                maximum: 2
+                                minimum: 1
                                 type: integer
                             type: object
                           serversTransport:
@@ -534,6 +555,7 @@ spec:
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -544,6 +566,10 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax_1
+                        Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
+                      enum:
+                      - v3
+                      - v2
                       type: string
                   required:
                   - match
@@ -723,6 +749,7 @@ spec:
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            minimum: 0
                             type: integer
                         required:
                         - name
@@ -794,6 +821,9 @@ spec:
                       Prefix is the string to add before the current path in the requested URL.
                       It should include a leading slash (/).
                     type: string
+                    x-kubernetes-validations:
+                    - message: must start with a '/'
+                      rule: self.startsWith('/')
                 type: object
               basicAuth:
                 description: |-
@@ -894,6 +924,7 @@ spec:
                     - type: string
                     description: CheckPeriod is the interval between successive checks
                       of the circuit breaker condition (when in standby state).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   expression:
                     description: Expression is the condition that triggers the tripped
@@ -913,10 +944,13 @@ spec:
                     description: RecoveryDuration is the duration for which the circuit
                       breaker will try to recover (as soon as it is in recovering
                       state).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   responseCode:
                     description: ResponseCode is the status code that the circuit
                       breaker will return while it is in the open state.
+                    maximum: 599
+                    minimum: 100
                     type: integer
                 type: object
               compress:
@@ -954,6 +988,7 @@ spec:
                     description: |-
                       MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
                       Default: 1024.
+                    minimum: 0
                     type: integer
                 type: object
               contentType:
@@ -1003,6 +1038,8 @@ spec:
                     description: |-
                       Query defines the URL for the error page (hosted by service).
                       The {status} variable can be used in order to insert the status code in the URL.
+                      The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
+                      The {url} variable can be used in order to insert the escaped request URL.
                     type: string
                   service:
                     description: |-
@@ -1145,6 +1182,11 @@ spec:
                           cookie:
                             description: Cookie defines the sticky cookie configuration.
                             properties:
+                              domain:
+                                description: |-
+                                  Domain defines the host to which the cookie will be sent.
+                                  More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                type: string
                               httpOnly:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
@@ -1168,6 +1210,10 @@ spec:
                                 description: |-
                                   SameSite defines the same site policy.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                enum:
+                                - none
+                                - lax
+                                - strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -1177,14 +1223,21 @@ spec:
                             type: object
                         type: object
                       strategy:
+                        default: wrr
                         description: |-
                           Strategy defines the load balancing strategy between the servers.
-                          RoundRobin is the only supported value at the moment.
+                          Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                          RoundRobin value is deprecated and supported for backward compatibility.
+                        enum:
+                        - wrr
+                        - p2c
+                        - RoundRobin
                         type: string
                       weight:
                         description: |-
                           Weight defines the weight and should only be specified when Name references a TraefikService object
                           (and to be precise, one that embeds a Weighted Round Robin).
+                        minimum: 0
                         type: integer
                     required:
                     - name
@@ -1197,8 +1250,16 @@ spec:
                       as ranges by separating two codes with a dash (500-599),
                       or a combination of the two (404,418,500-599).
                     items:
+                      pattern: ^([0-5][0-9]{2}[,-]?)+$
                       type: string
                     type: array
+                  statusRewrites:
+                    additionalProperties:
+                      type: integer
+                    description: |-
+                      StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
+                      For example: "418": 404 or "410-418": 404
+                    type: object
                 type: object
               forwardAuth:
                 description: |-
@@ -1468,6 +1529,7 @@ spec:
                       STSSeconds defines the max-age of the Strict-Transport-Security header.
                       If set to 0, the header is not set.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               inFlightReq:
@@ -1481,6 +1543,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous in-flight request.
                       The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
                     format: int64
+                    minimum: 0
                     type: integer
                   sourceCriterion:
                     description: |-
@@ -1498,6 +1561,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -1538,6 +1602,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -1575,6 +1640,7 @@ spec:
                         description: Depth tells Traefik to use the X-Forwarded-For
                           header and take the IP located at the depth position (starting
                           from the right).
+                        minimum: 0
                         type: integer
                       excludedIPs:
                         description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
@@ -1717,12 +1783,14 @@ spec:
                       The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
                       one needs to define a Period larger than a second.
                     format: int64
+                    minimum: 0
                     type: integer
                   burst:
                     description: |-
                       Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
                       It defaults to 1.
                     format: int64
+                    minimum: 0
                     type: integer
                   period:
                     anyOf:
@@ -1732,6 +1800,90 @@ spec:
                       Period, in combination with Average, defines the actual maximum rate, such as:
                       r = Average / Period. It defaults to a second.
                     x-kubernetes-int-or-string: true
+                  redis:
+                    description: Redis hold the configs of Redis as bucket in rate
+                      limiter.
+                    properties:
+                      db:
+                        description: DB defines the Redis database that will be selected
+                          after connecting to the server.
+                        type: integer
+                      dialTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          DialTimeout sets the timeout for establishing new connections.
+                          Default value is 5 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      endpoints:
+                        description: |-
+                          Endpoints contains either a single address or a seed list of host:port addresses.
+                          Default value is ["localhost:6379"].
+                        items:
+                          type: string
+                        type: array
+                      maxActiveConns:
+                        description: |-
+                          MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+                          Default value is 0, meaning there is no limit.
+                        type: integer
+                      minIdleConns:
+                        description: |-
+                          MinIdleConns defines the minimum number of idle connections.
+                          Default value is 0, and idle connections are not closed by default.
+                        type: integer
+                      poolSize:
+                        description: |-
+                          PoolSize defines the initial number of socket connections.
+                          If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+                          This can be limited using MaxActiveConns.
+                          // Default value is 0, meaning 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+                        type: integer
+                      readTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          ReadTimeout defines the timeout for socket read operations.
+                          Default value is 3 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      secret:
+                        description: Secret defines the name of the referenced Kubernetes
+                          Secret containing Redis credentials.
+                        type: string
+                      tls:
+                        description: |-
+                          TLS defines TLS-specific configurations, including the CA, certificate, and key,
+                          which can be provided as a file path or file content.
+                        properties:
+                          caSecret:
+                            description: |-
+                              CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+                              The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+                            type: string
+                          certSecret:
+                            description: |-
+                              CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+                              The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+                            type: string
+                          insecureSkipVerify:
+                            description: InsecureSkipVerify defines whether the server
+                              certificates should be validated.
+                            type: boolean
+                        type: object
+                      writeTimeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          WriteTimeout defines the timeout for socket write operations.
+                          Default value is 3 seconds.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                    type: object
                   sourceCriterion:
                     description: |-
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
@@ -1747,6 +1899,7 @@ spec:
                             description: Depth tells Traefik to use the X-Forwarded-For
                               header and take the IP located at the depth position
                               (starting from the right).
+                            minimum: 0
                             type: integer
                           excludedIPs:
                             description: ExcludedIPs configures Traefik to scan the
@@ -1844,6 +1997,7 @@ spec:
                   attempts:
                     description: Attempts defines how many times the request should
                       be retried.
+                    minimum: 0
                     type: integer
                   initialInterval:
                     anyOf:
@@ -1855,6 +2009,7 @@ spec:
                       If unspecified, requests will be retried immediately.
                       The value of initialInterval should be provided in seconds or as a valid duration format,
                       see https://pkg.go.dev/time#ParseDuration.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
@@ -1947,6 +2102,7 @@ spec:
                       Amount defines the maximum amount of allowed simultaneous connections.
                       The middleware closes the connection if there are already amount connections opened.
                     format: int64
+                    minimum: 0
                     type: integer
                 type: object
               ipAllowList:
@@ -2048,6 +2204,7 @@ spec:
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
                       connection to a backend server can be established.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -2056,6 +2213,7 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -2063,6 +2221,7 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -2071,6 +2230,7 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -2079,6 +2239,7 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
@@ -2087,14 +2248,39 @@ spec:
               maxIdleConnsPerHost:
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
                   to keep per-host.
+                minimum: 0
                 type: integer
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
                 type: string
+              rootCAs:
+                description: RootCAs defines a list of CA certificate Secrets or ConfigMaps
+                  used to validate server certificates.
+                items:
+                  description: |-
+                    RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
+                    If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
+                  properties:
+                    configMap:
+                      description: |-
+                        ConfigMap defines the name of a ConfigMap that holds a CA certificate.
+                        The referenced ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.
+                      type: string
+                    secret:
+                      description: |-
+                        Secret defines the name of a Secret that holds a CA certificate.
+                        The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.
+                      type: string
+                  type: object
+                  x-kubernetes-validations:
+                  - message: RootCA cannot have both Secret and ConfigMap defined.
+                    rule: has(self.secret) && has(self.configMap)
+                type: array
               rootCAsSecrets:
-                description: RootCAsSecrets defines a list of CA secret used to validate
-                  self-signed certificate.
+                description: |-
+                  RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+                  Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                 items:
                   type: string
                 type: array
@@ -2177,6 +2363,7 @@ spec:
                   the protocol and operating system. Network protocols or operating
                   systems that do not support keep-alives ignore this field. If negative,
                   keep-alive probes are disabled.
+                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
               dialTimeout:
                 anyOf:
@@ -2184,6 +2371,7 @@ spec:
                 - type: string
                 description: DialTimeout is the amount of time to wait until a connection
                   to a backend server can be established.
+                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
               terminationDelay:
                 anyOf:
@@ -2192,6 +2380,7 @@ spec:
                 description: TerminationDelay defines the delay to wait before fully
                   terminating the connection, after one connected peer has closed
                   its writing capability.
+                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
               tls:
                 description: TLS defines the TLS configuration
@@ -2210,9 +2399,33 @@ spec:
                       MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
                       PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
                     type: string
+                  rootCAs:
+                    description: RootCAs defines a list of CA certificate Secrets
+                      or ConfigMaps used to validate server certificates.
+                    items:
+                      description: |-
+                        RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
+                        If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
+                      properties:
+                        configMap:
+                          description: |-
+                            ConfigMap defines the name of a ConfigMap that holds a CA certificate.
+                            The referenced ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.
+                          type: string
+                        secret:
+                          description: |-
+                            Secret defines the name of a Secret that holds a CA certificate.
+                            The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: RootCA cannot have both Secret and ConfigMap defined.
+                        rule: has(self.secret) && has(self.configMap)
+                    type: array
                   rootCAsSecrets:
-                    description: RootCAsSecrets defines a list of CA secret used to
-                      validate self-signed certificates.
+                    description: |-
+                      RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+                      Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                     items:
                       type: string
                     type: array
@@ -2728,6 +2941,11 @@ spec:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
+                                domain:
+                                  description: |-
+                                    Domain defines the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -2751,6 +2969,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -2760,14 +2982,21 @@ spec:
                               type: object
                           type: object
                         strategy:
+                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            RoundRobin is the only supported value at the moment.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and supported for backward compatibility.
+                          enum:
+                          - wrr
+                          - p2c
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -2841,6 +3070,11 @@ spec:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
+                          domain:
+                            description: |-
+                              Domain defines the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
@@ -2864,6 +3098,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -2872,14 +3110,21 @@ spec:
                         type: object
                     type: object
                   strategy:
+                    default: wrr
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
-                      RoundRobin is the only supported value at the moment.
+                      Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                      RoundRobin value is deprecated and supported for backward compatibility.
+                    enum:
+                    - wrr
+                    - p2c
+                    - RoundRobin
                     type: string
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object
                       (and to be precise, one that embeds a Weighted Round Robin).
+                    minimum: 0
                     type: integer
                 required:
                 - name
@@ -3030,6 +3275,11 @@ spec:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
+                                domain:
+                                  description: |-
+                                    Domain defines the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -3053,6 +3303,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3062,14 +3316,21 @@ spec:
                               type: object
                           type: object
                         strategy:
+                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            RoundRobin is the only supported value at the moment.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and supported for backward compatibility.
+                          enum:
+                          - wrr
+                          - p2c
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -3083,6 +3344,11 @@ spec:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
+                          domain:
+                            description: |-
+                              Domain defines the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
@@ -3106,6 +3372,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only

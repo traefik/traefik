@@ -266,7 +266,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
+		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
 			continue
@@ -340,17 +340,59 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, serversTransport := range client.GetServersTransports() {
-		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransport.Name).Logger()
+		logger := log.Ctx(ctx).With().
+			Str(logs.ServersTransportName, serversTransport.Name).
+			Str("namespace", serversTransport.Namespace).
+			Logger()
+
+		if len(serversTransport.Spec.RootCAsSecrets) > 0 {
+			logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
+		}
 
 		var rootCAs []types.FileOrContent
 		for _, secret := range serversTransport.Spec.RootCAsSecrets {
 			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
+				logger.Error().
+					Err(err).
+					Str("secret", secret).
+					Msg("Error while loading CA Secret")
 				continue
 			}
 
 			rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+		}
+
+		for _, rootCA := range serversTransport.Spec.RootCAs {
+			if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+				logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+				continue
+			}
+
+			if rootCA.Secret != nil {
+				ca, err := loadCASecret(serversTransport.Namespace, *rootCA.Secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("secret", *rootCA.Secret).
+						Msg("Error while loading CA Secret")
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(ca))
+				continue
+			}
+
+			ca, err := loadCAConfigMap(serversTransport.Namespace, *rootCA.ConfigMap, client)
+			if err != nil {
+				logger.Error().
+					Err(err).
+					Str("configMap", *rootCA.ConfigMap).
+					Msg("Error while loading CA ConfigMap")
+				continue
+			}
+
+			rootCAs = append(rootCAs, types.FileOrContent(ca))
 		}
 
 		var certs tls.Certificates
@@ -449,18 +491,54 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 
 		if serversTransportTCP.Spec.TLS != nil {
+			if len(serversTransportTCP.Spec.TLS.RootCAsSecrets) > 0 {
+				logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
+			}
+
 			var rootCAs []types.FileOrContent
 			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
 				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
 				if err != nil {
 					logger.Error().
 						Err(err).
-						Str("rootCAs", secret).
-						Msg("Error while loading rootCAs")
+						Str("secret", secret).
+						Msg("Error while loading CA Secret")
 					continue
 				}
 
 				rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+			}
+
+			for _, rootCA := range serversTransportTCP.Spec.TLS.RootCAs {
+				if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+					logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+					continue
+				}
+
+				if rootCA.Secret != nil {
+					ca, err := loadCASecret(serversTransportTCP.Namespace, *rootCA.Secret, client)
+					if err != nil {
+						logger.Error().
+							Err(err).
+							Str("secret", *rootCA.Secret).
+							Msg("Error while loading CA Secret")
+						continue
+					}
+
+					rootCAs = append(rootCAs, types.FileOrContent(ca))
+					continue
+				}
+
+				ca, err := loadCAConfigMap(serversTransportTCP.Namespace, *rootCA.ConfigMap, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("configMap", *rootCA.ConfigMap).
+						Msg("Error while loading CA ConfigMap")
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(ca))
 			}
 
 			var certs tls.Certificates
@@ -686,7 +764,7 @@ func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compr
 	return c
 }
 
-func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -713,7 +791,95 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 		rl.SourceCriterion = rateLimit.SourceCriterion
 	}
 
+	if rateLimit.Redis != nil {
+		rl.Redis = &dynamic.Redis{
+			DB:             rateLimit.Redis.DB,
+			PoolSize:       rateLimit.Redis.PoolSize,
+			MinIdleConns:   rateLimit.Redis.MinIdleConns,
+			MaxActiveConns: rateLimit.Redis.MaxActiveConns,
+		}
+		rl.Redis.SetDefaults()
+
+		if len(rateLimit.Redis.Endpoints) > 0 {
+			rl.Redis.Endpoints = rateLimit.Redis.Endpoints
+		}
+
+		if rateLimit.Redis.TLS != nil {
+			rl.Redis.TLS = &types.ClientTLS{
+				InsecureSkipVerify: rateLimit.Redis.TLS.InsecureSkipVerify,
+			}
+
+			if len(rateLimit.Redis.TLS.CASecret) > 0 {
+				caSecret, err := loadCASecret(namespace, rateLimit.Redis.TLS.CASecret, client)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+				}
+				rl.Redis.TLS.CA = caSecret
+			}
+
+			if len(rateLimit.Redis.TLS.CertSecret) > 0 {
+				authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, rateLimit.Redis.TLS.CertSecret, client)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load auth secret: %w", err)
+				}
+				rl.Redis.TLS.Cert = authSecretCert
+				rl.Redis.TLS.Key = authSecretKey
+			}
+		}
+
+		if rateLimit.Redis.DialTimeout != nil {
+			err := rl.Redis.DialTimeout.Set(rateLimit.Redis.DialTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.ReadTimeout != nil {
+			err := rl.Redis.ReadTimeout.Set(rateLimit.Redis.ReadTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.WriteTimeout != nil {
+			err := rl.Redis.WriteTimeout.Set(rateLimit.Redis.WriteTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.Secret != "" {
+			var err error
+			rl.Redis.Username, rl.Redis.Password, err = loadRedisCredentials(namespace, rateLimit.Redis.Secret, client)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return rl, nil
+}
+
+func loadRedisCredentials(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
+	}
+
+	if !exists {
+		return "", "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+
+	username, usernameExists := secret.Data["username"]
+	password, passwordExists := secret.Data["password"]
+	if !usernameExists || !passwordExists {
+		return "", "", fmt.Errorf("secret '%s/%s' must contain both username and password keys", secret.Namespace, secret.Name)
+	}
+	return string(username), string(password), nil
 }
 
 func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error) {
@@ -737,8 +903,9 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 	}
 
 	errorPageMiddleware := &dynamic.ErrorPage{
-		Status: errorPage.Status,
-		Query:  errorPage.Query,
+		Status:         errorPage.Status,
+		StatusRewrites: errorPage.StatusRewrites,
+		Query:          errorPage.Query,
 	}
 
 	cb := configBuilder{
@@ -847,7 +1014,7 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 		return tlsCAData, nil
 	}
 
-	// TODO: remove this behavior in the next major version (v3)
+	// TODO: remove this behavior in the next major version (v4)
 	if len(secret.Data) == 1 {
 		// For backwards compatibility, use the only available secret data as CA if both 'ca.crt' and 'tls.ca' are missing.
 		for _, v := range secret.Data {
@@ -855,7 +1022,29 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 		}
 	}
 
-	return "", fmt.Errorf("could not find CA block: %w", err)
+	return "", fmt.Errorf("secret '%s/%s' has no CA block: %w", namespace, secretName, err)
+}
+
+func loadCAConfigMap(namespace, name string, k8sClient Client) (string, error) {
+	configMap, ok, err := k8sClient.GetConfigMap(namespace, name)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch configMap '%s/%s': %w", namespace, name, err)
+	}
+
+	if !ok {
+		return "", fmt.Errorf("configMap '%s/%s' not found", namespace, name)
+	}
+
+	if configMap == nil {
+		return "", fmt.Errorf("data for configMap '%s/%s' must not be nil", namespace, name)
+	}
+
+	tlsCAData, err := getCABlocksFromConfigMap(configMap, namespace, name)
+	if err == nil {
+		return tlsCAData, nil
+	}
+
+	return "", fmt.Errorf("configMap '%s/%s' has no CA block: %w", namespace, name, err)
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
@@ -1293,6 +1482,20 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	}
 
 	return "", fmt.Errorf("secret %s/%s contains neither tls.ca nor ca.crt", namespace, secretName)
+}
+
+func getCABlocksFromConfigMap(configMap *corev1.ConfigMap, namespace, name string) (string, error) {
+	tlsCrtData, tlsCrtExists := configMap.Data["tls.ca"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	tlsCrtData, tlsCrtExists = configMap.Data["ca.crt"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	return "", fmt.Errorf("config map %s/%s contains neither tls.ca nor ca.crt", namespace, name)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {

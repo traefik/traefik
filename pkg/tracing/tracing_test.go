@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -391,4 +392,26 @@ func TestTracing(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestTracerProvider ensures that Tracer returns a valid TracerProvider
+// when using the default Traefik Tracer and a custom one.
+func TestTracerProvider(t *testing.T) {
+	t.Parallel()
+
+	otlpConfig := &types.OTelTracing{}
+	otlpConfig.SetDefaults()
+
+	config := &static.Tracing{OTLP: otlpConfig}
+	tracer, closer, err := NewTracing(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closer.Close()
+
+	_, span := tracer.Start(context.Background(), "test")
+	defer span.End()
+
+	span.TracerProvider().Tracer("github.com/traefik/traefik")
+	span.TracerProvider().Tracer("other")
 }

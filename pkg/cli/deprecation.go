@@ -179,6 +179,7 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 
 // configuration holds the static configuration removed/deprecated options.
 type configuration struct {
+	Core         *core          `json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Pilot        map[string]any `json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Providers    *providers     `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty" label:"allowEmpty" file:"allowEmpty"`
@@ -194,13 +195,28 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 	if c.Pilot != nil {
 		incompatible = true
 		logger.Error().Msg("Pilot configuration has been removed in v3, please remove all Pilot-related static configuration for Traefik to start." +
-			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v2-to-v3/#pilot")
+			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v2-to-v3/#pilot")
 	}
 
+	incompatibleCore := c.Core.deprecationNotice(logger)
 	incompatibleExperimental := c.Experimental.deprecationNotice(logger)
 	incompatibleProviders := c.Providers.deprecationNotice(logger)
 	incompatibleTracing := c.Tracing.deprecationNotice(logger)
-	return incompatible || incompatibleExperimental || incompatibleProviders || incompatibleTracing
+	return incompatible || incompatibleCore || incompatibleExperimental || incompatibleProviders || incompatibleTracing
+}
+
+type core struct {
+	DefaultRuleSyntax string `json:"defaultRuleSyntax,omitempty" toml:"defaultRuleSyntax,omitempty" yaml:"defaultRuleSyntax,omitempty" label:"allowEmpty" file:"allowEmpty"`
+}
+
+func (c *core) deprecationNotice(logger zerolog.Logger) bool {
+	if c != nil && c.DefaultRuleSyntax != "" {
+		logger.Error().Msg("`Core.DefaultRuleSyntax` option has been deprecated in v3.4, and will be removed in the next major version." +
+			" Please consider migrating all router rules to v3 syntax." +
+			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v3/#rule-syntax")
+	}
+
+	return false
 }
 
 type providers struct {
@@ -227,13 +243,13 @@ func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
 	if p.Marathon != nil {
 		incompatible = true
 		logger.Error().Msg("Marathon provider has been removed in v3, please remove all Marathon-related static configuration for Traefik to start." +
-			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v2-to-v3/#marathon-provider")
+			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v2-to-v3/#marathon-provider")
 	}
 
 	if p.Rancher != nil {
 		incompatible = true
 		logger.Error().Msg("Rancher provider has been removed in v3, please remove all Rancher-related static configuration for Traefik to start." +
-			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v2-to-v3/#rancher-v1-provider")
+			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.3/migration/v2-to-v3/#rancher-v1-provider")
 	}
 
 	dockerIncompatible := p.Docker.deprecationNotice(logger)

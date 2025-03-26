@@ -67,12 +67,18 @@ type ErrorPage struct {
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
+	// +kubebuilder:validation:items:Pattern=`^([0-5][0-9]{2}[,-]?)+$`
 	Status []string `json:"status,omitempty"`
+	// StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
+	// For example: "418": 404 or "410-418": 404
+	StatusRewrites map[string]int `json:"statusRewrites,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
 	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/errorpages/#service
 	Service Service `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
+	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
+	// The {url} variable can be used in order to insert the escaped request URL.
 	Query string `json:"query,omitempty"`
 }
 
@@ -83,12 +89,18 @@ type CircuitBreaker struct {
 	// Expression is the condition that triggers the tripped state.
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
 	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
 	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
 	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
+	// +kubebuilder:validation:Minimum=100
+	// +kubebuilder:validation:Maximum=599
 	ResponseCode int `json:"responseCode,omitempty" toml:"responseCode,omitempty" yaml:"responseCode,omitempty" export:"true"`
 }
 
@@ -158,7 +170,7 @@ type ForwardAuth struct {
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
-	TLS *ClientTLS `json:"tls,omitempty"`
+	TLS *ClientTLSWithCAOptional `json:"tls,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -174,16 +186,12 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty"`
 }
 
-// ClientTLS holds the client TLS configuration.
-type ClientTLS struct {
-	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
-	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
-	CASecret string `json:"caSecret,omitempty"`
-	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
-	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
-	CertSecret string `json:"certSecret,omitempty"`
-	// InsecureSkipVerify defines whether the server certificates should be validated.
-	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+// +k8s:deepcopy-gen=true
+
+// ClientTLSWithCAOptional holds the client TLS configuration.
+// TODO: This has to be removed once the CAOptional option is removed.
+type ClientTLSWithCAOptional struct {
+	ClientTLS `json:",inline"`
 
 	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
 	CAOptional *bool `json:"caOptional,omitempty"`
@@ -199,17 +207,79 @@ type RateLimit struct {
 	// It defaults to 0, which means no rate limiting.
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
 	// one needs to define a Period larger than a second.
+	// +kubebuilder:validation:Minimum=0
 	Average *int64 `json:"average,omitempty"`
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
+	// +kubebuilder:validation:XIntOrString
 	Period *intstr.IntOrString `json:"period,omitempty"`
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
+	// +kubebuilder:validation:Minimum=0
 	Burst *int64 `json:"burst,omitempty"`
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the request's remote address field (as an ipStrategy).
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+	// Redis hold the configs of Redis as bucket in rate limiter.
+	Redis *Redis `json:"redis,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Redis contains the configuration for using Redis in middleware.
+// In a Kubernetes setup, the username and password are stored in a Secret file within the same namespace as the middleware.
+type Redis struct {
+	// Endpoints contains either a single address or a seed list of host:port addresses.
+	// Default value is ["localhost:6379"].
+	Endpoints []string `json:"endpoints,omitempty"`
+	// TLS defines TLS-specific configurations, including the CA, certificate, and key,
+	// which can be provided as a file path or file content.
+	TLS *ClientTLS `json:"tls,omitempty"`
+	// Secret defines the name of the referenced Kubernetes Secret containing Redis credentials.
+	Secret string `json:"secret,omitempty"`
+	// DB defines the Redis database that will be selected after connecting to the server.
+	DB int `json:"db,omitempty"`
+	// PoolSize defines the initial number of socket connections.
+	// If the pool runs out of available connections, additional ones will be created beyond PoolSize.
+	// This can be limited using MaxActiveConns.
+	// // Default value is 0, meaning 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+	PoolSize int `json:"poolSize,omitempty"`
+	// MinIdleConns defines the minimum number of idle connections.
+	// Default value is 0, and idle connections are not closed by default.
+	MinIdleConns int `json:"minIdleConns,omitempty"`
+	// MaxActiveConns defines the maximum number of connections allocated by the pool at a given time.
+	// Default value is 0, meaning there is no limit.
+	MaxActiveConns int `json:"maxActiveConns,omitempty"`
+	// ReadTimeout defines the timeout for socket read operations.
+	// Default value is 3 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout defines the timeout for socket write operations.
+	// Default value is 3 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
+	// DialTimeout sets the timeout for establishing new connections.
+	// Default value is 5 seconds.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ClientTLS holds the client TLS configuration.
+type ClientTLS struct {
+	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	CASecret string `json:"caSecret,omitempty"`
+	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+	CertSecret string `json:"certSecret,omitempty"`
+	// InsecureSkipVerify defines whether the server certificates should be validated.
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -225,6 +295,7 @@ type Compress struct {
 	IncludedContentTypes []string `json:"includedContentTypes,omitempty"`
 	// MinResponseBodyBytes defines the minimum amount of bytes a response body must have to be compressed.
 	// Default: 1024.
+	// +kubebuilder:validation:Minimum=0
 	MinResponseBodyBytes *int `json:"minResponseBodyBytes,omitempty"`
 	// Encodings defines the list of supported compression algorithms.
 	Encodings []string `json:"encodings,omitempty"`
@@ -240,12 +311,15 @@ type Compress struct {
 // More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
+	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
 }
 

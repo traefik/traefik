@@ -276,6 +276,14 @@ A Story of key & values
     |-----------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/domain`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                            | Value     |
+    |-----------------------------------------------------------------------|-----------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/domain`   | `foo.com` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/maxage`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -291,6 +299,14 @@ A Story of key & values
     | Key (Path)                                                                      | Value |
     |---------------------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    | Key (Path)                                              | Value |
+    |---------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/strategy` | `p2c` |
 
 ??? info "`traefik/http/services/<service_name>/mirroring/service`"
 
@@ -339,6 +355,12 @@ A Story of key & values
     | Key (Path)                                                             | Value  |
     |------------------------------------------------------------------------|--------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/samesite` | `none` |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/domain`"
+
+    | Key (Path)                                                             | Value     |
+    |------------------------------------------------------------------------|-----------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/domain`   | `foo.com` |
 
 ??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
 

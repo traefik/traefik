@@ -1,3 +1,33 @@
+## [v3.3.4](https://github.com/traefik/traefik/tree/v3.3.4) (2025-02-25)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.3...v3.3.4)
+
+**Bug fixes:**
+- **[fastproxy]** Bump github.com/valyala/fasthttp to v1.58.0 ([#11526](https://github.com/traefik/traefik/pull/11526) by [kevinpollet](https://github.com/kevinpollet))
+- **[fastproxy]** Add WebSocket headers if they are present in the request ([#11522](https://github.com/traefik/traefik/pull/11522) by [kevinpollet](https://github.com/kevinpollet))
+- **[fastproxy]** Chunked responses does not have a Content-Length header ([#11514](https://github.com/traefik/traefik/pull/11514) by [kevinpollet](https://github.com/kevinpollet))
+- **[metrics,otel]** Change request duration metric unit from millisecond to second ([#11523](https://github.com/traefik/traefik/pull/11523) by [rtribotte](https://github.com/rtribotte))
+- **[sticky-session]** Fix double hash in sticky cookie ([#11518](https://github.com/traefik/traefik/pull/11518) by [juliens](https://github.com/juliens))
+- **[tracing]** Use ResourceAttributes instead of GlobalAttributes ([#11515](https://github.com/traefik/traefik/pull/11515) by [bruno-de-queiroz](https://github.com/bruno-de-queiroz))
+- **[tracing]** Fix panic when calling Tracer ([#11479](https://github.com/traefik/traefik/pull/11479) by [basgys](https://github.com/basgys))
+
+**Documentation:**
+- **[acme]** Update ACME provider configuration options ([#11564](https://github.com/traefik/traefik/pull/11564) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[acme]** Fix incorrect grammar in ACME documentation ([#11553](https://github.com/traefik/traefik/pull/11553) by [Peter-Maguire](https://github.com/Peter-Maguire))
+- **[metrics,tracing,accesslogs]** Add missing options in entrypoints page ([#11524](https://github.com/traefik/traefik/pull/11524) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[tracing]** Replace globalAttributes with resourceAttributes in tracing reference ([#11531](https://github.com/traefik/traefik/pull/11531) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11567](https://github.com/traefik/traefik/pull/11567) by [kevinpollet](https://github.com/kevinpollet))
+
+# [v2.11.21](https://github.com/traefik/traefik/tree/v2.11.21) (2025-02-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.20...v2.11.21)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.22.2 ([#11537](https://github.com/traefik/traefik/pull/11537) by [ldez](https://github.com/ldez))
+- **[cli]** Bump github.com/traefik/paerser to v0.2.2 ([#11530](https://github.com/traefik/traefik/pull/11530) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Enable the retry middleware in the proxy ([#11536](https://github.com/traefik/traefik/pull/11536) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Retry should send headers on Write ([#11534](https://github.com/traefik/traefik/pull/11534) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.3](https://github.com/traefik/traefik/tree/v3.3.3) (2025-01-31)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.2...v3.3.3)
 
