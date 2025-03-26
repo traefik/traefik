@@ -1563,7 +1563,7 @@ export default defineComponent({
   },
   props: {
     data: Array[Object],
-    dense: Boolean
+    dense: { type: Boolean, default: undefined }
   },
   computed: {
     protocol () {
