@@ -63,10 +63,11 @@ type Service struct {
 
 // Router holds the router configuration.
 type Router struct {
-	EntryPoints   []string                   `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
-	Middlewares   []string                   `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	Service       string                     `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Rule          string                     `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Rule        string   `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	RuleSyntax    string                     `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
 	Priority      int                        `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
 	TLS           *RouterTLSConfig           `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
@@ -190,6 +191,7 @@ type Cookie struct {
 	HTTPOnly bool `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+	// +kubebuilder:validation:Enum=none;lax;strict
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
 	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.
@@ -199,6 +201,9 @@ type Cookie struct {
 	// When not provided the cookie will be sent on every request to the domain.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
 	Path *string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	// Domain defines the host to which the cookie will be sent.
+	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
 }
 
 // SetDefaults set the default values for a Cookie.
@@ -207,12 +212,22 @@ func (c *Cookie) SetDefaults() {
 	c.Path = &defaultPath
 }
 
+type BalancerStrategy string
+
+const (
+	// BalancerStrategyWRR is the weighted round-robin strategy.
+	BalancerStrategyWRR BalancerStrategy = "wrr"
+	// BalancerStrategyP2C is the power of two choices strategy.
+	BalancerStrategyP2C BalancerStrategy = "p2c"
+)
+
 // +k8s:deepcopy-gen=true
 
 // ServersLoadBalancer holds the ServersLoadBalancer configuration.
 type ServersLoadBalancer struct {
-	Sticky  *Sticky  `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	Servers []Server `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	Sticky   *Sticky          `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Servers  []Server         `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	Strategy BalancerStrategy `json:"strategy,omitempty" toml:"strategy,omitempty" yaml:"strategy,omitempty" export:"true"`
 	// HealthCheck enables regular active checks of the responsiveness of the
 	// children servers of this load-balancer. To propagate status changes (e.g. all
 	// servers of this service are down) upwards, HealthCheck must also be enabled on
@@ -245,6 +260,7 @@ func (l *ServersLoadBalancer) SetDefaults() {
 	defaultPassHostHeader := DefaultPassHostHeader
 	l.PassHostHeader = &defaultPassHostHeader
 
+	l.Strategy = BalancerStrategyWRR
 	l.ResponseForwarding = &ResponseForwarding{}
 	l.ResponseForwarding.SetDefaults()
 }
@@ -316,8 +332,8 @@ type HealthCheck struct{}
 type ServersTransport struct {
 	ServerName          string                  `description:"Defines the serverName used to contact the server." json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty"`
 	InsecureSkipVerify  bool                    `description:"Disables SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
-	RootCAs             []types.FileOrContent   `description:"Defines a list of CA secret used to validate self-signed certificate" json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
-	Certificates        traefiktls.Certificates `description:"Defines a list of secret storing client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
+	RootCAs             []types.FileOrContent   `description:"Defines a list of CA certificates used to validate server certificates." json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
+	Certificates        traefiktls.Certificates `description:"Defines a list of client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
 	MaxIdleConnsPerHost int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used" json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts     `description:"Defines the timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2        bool                    `description:"Disables HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`

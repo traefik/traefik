@@ -357,19 +357,20 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
               sameSite: none
               maxAge: 42  
               path: /foo
-          strategy: RoundRobin
+              domain: foo.com
+          strategy: wrr                 # [16]
           weight: 10
-          nativeLB: true                # [16]
-          nodePortLB: true              # [17]
-      tls:                              # [18]
-        secretName: supersecret         # [19]
-        options:                        # [20]
-          name: opt                     # [21]
-          namespace: default            # [22]
-        certResolver: foo               # [23]
-        domains:                        # [24]
-        - main: example.net             # [25]
-          sans:                         # [26]
+          nativeLB: true                # [17]
+          nodePortLB: true              # [18]
+      tls:                              # [19]
+        secretName: supersecret         # [20]
+        options:                        # [21]
+          name: opt                     # [22]
+          namespace: default            # [23]
+        certResolver: foo               # [24]
+        domains:                        # [25]
+        - main: example.net             # [26]
+          sans:                         # [27]
           - a.example.net
           - b.example.net
     ```
@@ -391,17 +392,18 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [13] | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       |
 | [14] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
 | [15] | `services[n].healthCheck`      | Defines the HealthCheck when service references a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.                                                                                                                               |
-| [16] | `services[n].nativeLB`         | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                     |
-| [17] | `services[n].nodePortLB`       | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.                                                                                                                               |
-| [18] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                             |
-| [19] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                         |
-| [20] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                      |
-| [21] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                |
-| [22] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                           |
-| [23] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                                                                                                  |
-| [24] | `tls.domains`                  | List of [domains](../routers/index.md#domains)                                                                                                                                                                                                                                               |
-| [25] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                 |
-| [26] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                           |
+| [16] | `services[n].strategy`         | Defines the load-balancing strategy for the load-balancer. Supported values are `wrr` and `p2c`, please refer to the [Load Balancing documentation](../routing/services/#load-balancing-strategy) for more information.                                                                      |
+| [17] | `services[n].nativeLB`         | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                     |
+| [18] | `services[n].nodePortLB`       | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.                                                                                                                               |
+| [19] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                             |
+| [20] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                         |
+| [21] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                      |
+| [22] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                |
+| [23] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                           |
+| [24] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                                                                                                  |
+| [25] | `tls.domains`                  | List of [domains](../routers/index.md#domains)                                                                                                                                                                                                                                               |
+| [26] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                 |
+| [27] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                           |
 
 ??? example "Declaring an IngressRoute"
 
@@ -604,7 +606,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 
 #### Load Balancing
 
-More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
+More information in the dedicated server [load balancing](../services/index.md#load-balancing-strategy) section.
 
 !!! info "Declaring and using Kubernetes Service Load Balancing"
 
@@ -1849,9 +1851,9 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     spec:
       serverName: foobar                        # [1]
       insecureSkipVerify: true                  # [2]
-      rootCAsSecrets:                           # [3]
-        - foobar
-        - foobar
+      rootCAs:                                  # [3]
+        - configMap: foobar
+        - secret: foobar
       certificatesSecrets:                      # [4]
         - foobar
         - foobar
@@ -1869,22 +1871,22 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         trustDomain: "spiffe://trust-domain"    # [14]
     ```
 
-| Ref  | Attribute               | Purpose                                                                                                                                                                 |
-|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                  |
-| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                              |
-| [3]  | `rootCAsSecrets`        | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key. |
-| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                         |
-| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                     |
-| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                         |
-| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                               |
-| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                    |
-| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
-| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
-| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                           |
-| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                               |
-| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                          |
-| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                |
+| Ref  | Attribute               | Purpose                                                                                                                                                                                         |
+|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                                          |
+| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                                                      |
+| [3]  | `rootCAs`               | Defines the set of root certificate authorities to use when verifying server certificates. The referenced Secret or ConfigMap must contain a certificate under either a tls.ca or a ca.crt key. |
+| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                                                 |
+| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                                             |
+| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                                                 |
+| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                                                       |
+| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                                            |
+| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                                                  |
+| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                |
+| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                                                   |
+| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                                                       |
+| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                  |
+| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                                        |
 
 !!! info "CA Secret"
 
@@ -1958,9 +1960,9 @@ The `default@internal` serversTransportTCP is created from the [static configura
         serverName: foobar                      # [5]
         insecureSkipVerify: true                # [6]
         peerCertURI: foobar                     # [7]
-        rootCAsSecrets:                         # [8]
-          - foobar
-          - foobar
+        rootCAs:                                # [8]
+          - secret: foobar
+          - configMap: foobar
         certificatesSecrets:                    # [9]
           - foobar
           - foobar
@@ -1980,7 +1982,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 | [5]  | `serverName`          | ServerName used to contact the server.                                                                                                                                                                                                                                                                                                              |
 | [6]  | `insecureSkipVerify`  | Controls whether the server's certificate chain and host name is verified.                                                                                                                                                                                                                                                                          |
 | [7]  | `peerCertURI`         | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                                                                                                                                                                    |
-| [8]  | `rootCAsSecrets`      | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                                             |
+| [8]  | `rootCAs`             | Defines the set of root certificate authorities to use when verifying server certificates. The referenced Secret or ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                     |
 | [9]  | `certificatesSecrets` | Certificates to present to the server for mTLS.                                                                                                                                                                                                                                                                                                     |
 | [10] | `spiffe`              | The SPIFFE configuration.                                                                                                                                                                                                                                                                                                                           |
 | [11] | `ids`                 | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                                                                                                                                                                      |

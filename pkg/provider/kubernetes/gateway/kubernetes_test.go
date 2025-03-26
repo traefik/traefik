@@ -251,7 +251,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -620,7 +620,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -637,6 +637,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -681,7 +682,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "api@internal",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -715,7 +716,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -733,6 +734,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -786,7 +788,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-66e726cd8903b49727ae-wrr",
 							Rule:        "(Host(`foo.com`) || Host(`bar.com`)) && PathPrefix(`/`)",
 							Priority:    9,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -803,6 +805,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -847,7 +850,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-baa117c0219e3878749f-wrr",
 							Rule:        "(Host(`foo.com`) || HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.com$`)) && PathPrefix(`/`)",
 							Priority:    11,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -864,6 +867,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -908,7 +912,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-45eba2eaf40ac792e036-wrr",
 							Rule:        "(Host(`foo.com`) || HostRegexp(`^[a-z0-9-\\.]+\\.foo\\.com$`)) && PathPrefix(`/`)",
 							Priority:    11,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -925,6 +929,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -968,14 +973,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100009,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-d737b4933fa88e68ab8a": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && Path(`/bir`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-d737b4933fa88e68ab8a-wrr",
 						},
 					},
@@ -1003,6 +1008,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1019,6 +1025,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami2-http-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.3:8080",
@@ -1062,7 +1069,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 						},
 					},
@@ -1084,6 +1091,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1100,6 +1108,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami2-http-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.3:8080",
@@ -1149,14 +1158,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-http-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-https-ep-websecure-0-1c0cf64bde37d9d0df06": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-https-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -1184,6 +1193,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1242,14 +1252,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -1277,6 +1287,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1329,21 +1340,21 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && (Path(`/bar`) || PathPrefix(`/bar/`)) && Header(`my-header`,`foo`) && Header(`my-header2`,`bar`)",
 							Priority:    10610,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-6cf37fa71907768d925c-wrr",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-d23f7039bc8036fb918c": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && PathRegexp(`^/buzz/[0-9]+$`)",
 							Priority:    11408,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-d23f7039bc8036fb918c-wrr",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-aaba0f24fd26e1ca2276": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && Path(`/bar`) && Header(`my-header`,`bar`)",
 							Priority:    100109,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-aaba0f24fd26e1ca2276-wrr",
 						},
 					},
@@ -1381,6 +1392,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1424,7 +1436,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && (Path(`/foo`) || PathPrefix(`/foo/`)) && Method(`GET`)",
 							Priority:    11408,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-74ad70a7cf090becdd3c-wrr",
 						},
 					},
@@ -1442,6 +1454,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1485,7 +1498,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && (Path(`/foo`) || PathPrefix(`/foo/`)) && Query(`foo`,`bar`) && QueryRegexp(`baz`,`buz`)",
 							Priority:    10428,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-bb7b03c9610e982fd627-wrr",
 						},
 					},
@@ -1503,6 +1516,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1547,7 +1561,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-efde1997778109a1f6eb-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/foo`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1564,6 +1578,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1608,14 +1623,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-efde1997778109a1f6eb-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/foo`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-66f5c78d03d948e36597": {
 							EntryPoints: []string{"web"},
 							Service:     "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-66f5c78d03d948e36597-wrr",
 							Rule:        "Host(`bar.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1642,6 +1657,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1658,6 +1674,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -1702,7 +1719,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-66f5c78d03d948e36597-wrr",
 							Rule:        "Host(`bar.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1719,6 +1736,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -1763,7 +1781,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-wrr",
 							Rule:        "Host(`example.org`) && PathPrefix(`/`)",
 							Priority:    13,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-requestheadermodifier-0"},
 						},
 					},
@@ -1789,6 +1807,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1833,7 +1852,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-wrr",
 							Rule:        "Host(`example.org`) && PathPrefix(`/`)",
 							Priority:    13,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-responseheadermodifier-0"},
 						},
 					},
@@ -1859,6 +1878,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1903,7 +1923,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-wrr",
 							Rule:        "Host(`example.org`) && PathPrefix(`/`)",
 							Priority:    13,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-requestredirect-0"},
 						},
 					},
@@ -1950,7 +1970,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-wrr",
 							Rule:        "Host(`example.org`) && PathPrefix(`/`)",
 							Priority:    13,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-requestredirect-0"},
 						},
 					},
@@ -1996,7 +2016,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-7f90cf546b15efadf2f8-wrr",
 							Rule:        "Host(`example.com`) && (Path(`/foo`) || PathPrefix(`/foo/`))",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Priority:    10412,
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-7f90cf546b15efadf2f8-urlrewrite-0"},
 						},
@@ -2021,6 +2041,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2064,7 +2085,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-7f90cf546b15efadf2f8-wrr",
 							Rule:        "Host(`example.com`) && (Path(`/foo`) || PathPrefix(`/foo/`))",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Priority:    10412,
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-7f90cf546b15efadf2f8-urlrewrite-0"},
 						},
@@ -2089,6 +2110,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2132,7 +2154,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-7f90cf546b15efadf2f8-wrr",
 							Rule:        "Host(`example.com`) && (Path(`/foo`) || PathPrefix(`/foo/`))",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Priority:    10412,
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-7f90cf546b15efadf2f8-urlrewrite-0"},
 						},
@@ -2159,6 +2181,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2203,7 +2226,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2220,6 +2243,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2265,7 +2289,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2282,12 +2306,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.1:80",
+										URL: "https://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.2:80",
+										URL: "https://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -2336,7 +2361,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2353,12 +2378,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.1:80",
+										URL: "https://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.2:80",
+										URL: "https://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -2403,7 +2429,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2420,6 +2446,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.10.1:80",
@@ -2461,7 +2488,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2478,6 +2505,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"default-whoami-native-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.10.1:80",
@@ -2571,7 +2599,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2597,7 +2625,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			paths: []string{"services.yml", "httproute/simple_with_TraefikService.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
 				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
-					return name, &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "foobar"}}}}, nil
+					return name, &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Strategy: dynamic.BalancerStrategyWRR, Servers: []dynamic.Server{{URL: "foobar"}}}}, nil
 				}},
 			},
 			entryPoints: map[string]Entrypoint{"web": {
@@ -2621,7 +2649,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2638,6 +2666,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"whoami": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{URL: "foobar"},
 								},
@@ -2673,7 +2702,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2724,7 +2753,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2776,7 +2805,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2797,6 +2826,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -2847,7 +2877,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2872,6 +2902,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-h2c-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://10.10.0.13:80",
@@ -2885,6 +2916,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-ws-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.14:80",
@@ -2898,6 +2930,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						},
 						"default-whoami-wss-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.15:80",
@@ -2991,7 +3024,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-my-first-middleware",
 								"default-my-second-middleware",
@@ -3012,6 +3045,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -3060,7 +3094,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-my-first-middleware",
 								"default-my-second-middleware",
@@ -3084,6 +3118,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -3127,7 +3162,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-err-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3177,7 +3212,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-err-wrr",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 							Priority:    100008,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3275,7 +3310,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-74471866db6e94e08d00-wrr",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
 							Priority:    22,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-my-first-middleware",
 								"default-my-second-middleware",
@@ -3296,6 +3331,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-80-grpc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://10.10.0.1:80",
@@ -3344,7 +3380,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-74471866db6e94e08d00-wrr",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
 							Priority:    22,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-my-first-middleware",
 								"default-my-second-middleware",
@@ -3368,6 +3404,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						},
 						"default-whoami-80-grpc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://10.10.0.1:80",
@@ -3411,7 +3448,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-74471866db6e94e08d00-err-wrr",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
 							Priority:    22,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3464,7 +3501,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-74471866db6e94e08d00-err-wrr",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
 							Priority:    22,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3707,7 +3744,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 						"tcproute-default-TCP-app-1-gw-default-my-gateway-ep-TCP-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"TCP"},
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "tcproute-default-TCP-app-1-gw-default-my-gateway-ep-TCP-0-e3b0c44298fc1c149afb-wrr",
 						},
 					},
@@ -3755,7 +3792,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -3813,13 +3850,13 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp-1"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-default-tcp-app-2-gw-default-my-tcp-gateway-ep-tcp-2-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp-2"},
 							Service:     "tcproute-default-tcp-app-2-gw-default-my-tcp-gateway-ep-tcp-2-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -3899,13 +3936,13 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp-1"},
 							Service:     "tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-1-1-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp-1"},
 							Service:     "tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-1-1-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -3983,7 +4020,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -4043,7 +4080,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tls"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
@@ -4107,7 +4144,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -4163,13 +4200,13 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -4247,7 +4284,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -4304,7 +4341,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -4357,7 +4394,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
@@ -4584,7 +4621,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							EntryPoints: []string{"TCP"},
 							Priority:    0,
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-TCP-0-e3b0c44298fc1c149afb-wrr",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
@@ -4676,7 +4713,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
@@ -4742,7 +4779,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -4802,7 +4839,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -4862,7 +4899,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							EntryPoints: []string{"tls"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
@@ -4870,7 +4907,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    0,
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -4960,7 +4997,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							EntryPoints: []string{"tls"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
@@ -5031,7 +5068,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5091,7 +5128,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5151,7 +5188,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5211,7 +5248,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`) || HostSNI(`bar.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5271,7 +5308,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    11,
 							Rule:        "HostSNI(`foo.default`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5331,7 +5368,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    11,
 							Rule:        "HostSNI(`foo.default`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5341,7 +5378,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    7,
 							Rule:        "HostSNI(`foo.bar`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5423,7 +5460,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    7,
 							Rule:        "HostSNI(`foo.bar`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5483,7 +5520,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-gw-default-my-gateway-ep-tcp-1-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    0,
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5493,7 +5530,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-gw-default-my-gateway-ep-tcp-1-1-e3b0c44298fc1c149afb-wrr",
 							Priority:    0,
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5576,7 +5613,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5633,7 +5670,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    15,
 							Rule:        "HostSNI(`foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5842,13 +5879,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-1"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
@@ -5856,7 +5893,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -5916,14 +5953,14 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -5951,6 +5988,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6030,13 +6068,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-1"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
@@ -6044,7 +6082,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -6104,14 +6142,14 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -6139,6 +6177,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6190,13 +6229,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-1"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
@@ -6204,7 +6243,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -6213,13 +6252,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-bar-tcp-app-bar-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-1"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
@@ -6309,14 +6348,14 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd": {
@@ -6324,14 +6363,14 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -6359,6 +6398,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6375,6 +6415,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -6446,13 +6487,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-bar-tcp-app-bar-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-1"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-gateway-ep-tls-1-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 						"tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb": {
@@ -6460,7 +6501,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "tlsroute-bar-tls-app-bar-gw-default-my-gateway-ep-tls-2-0-e3b0c44298fc1c149afb-wrr",
 							Priority:    24,
 							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -6520,14 +6561,14 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -6535,6 +6576,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.11:80",
@@ -6605,13 +6647,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
@@ -6659,14 +6701,14 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd": {
 							EntryPoints: []string{"websecure"},
 							Service:     "httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-a431b128267aabc954fd-wrr",
 							Rule:        "PathPrefix(`/`)",
 							Priority:    2,
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -6694,6 +6736,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						},
 						"default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -6888,7 +6931,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							EntryPoints: []string{"tls"},
 							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        "HostSNI(`*`)",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
@@ -7036,7 +7079,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        "Host(`foo.example.com`) && PathPrefix(`/`)",
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-http-0-d40286ed9f4652ca2108-wrr",
-							RuleSyntax:  "v3",
+							RuleSyntax:  "default",
 							Priority:    17,
 						},
 					},
