@@ -43,6 +43,8 @@ var (
 	testHostname            = "TestHost"
 	testUsername            = "TestUser"
 	testPath                = "testpath"
+	testQuery               = "param1=foo&param2=bar"
+	testPathWithQuery       = testPath + "?" + testQuery
 	testPort                = 8181
 	testProto               = "HTTP/0.0"
 	testScheme              = "http"
@@ -315,7 +317,7 @@ func TestLoggerCLF(t *testing.T) {
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
 
-	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
 	assertValidLogData(t, expectedLog, logData)
 }
 
@@ -330,7 +332,7 @@ func TestLoggerCLFWithBufferingSize(t *testing.T) {
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
 
-	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
 	assertValidLogData(t, expectedLog, logData)
 }
 
@@ -384,7 +386,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
 				RequestMethod:             assertString(testMethod),
-				RequestPath:               assertString(testPath),
+				RequestPath:               assertString(testPathWithQuery),
 				RequestProtocol:           assertString(testProto),
 				RequestScheme:             assertString(testScheme),
 				RequestPort:               assertString("-"),
@@ -426,7 +428,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
 				RequestMethod:             assertString(testMethod),
-				RequestPath:               assertString(testPath),
+				RequestPath:               assertString(testPathWithQuery),
 				RequestProtocol:           assertString(testProto),
 				RequestScheme:             assertString("https"),
 				RequestPort:               assertString("-"),
@@ -568,6 +570,50 @@ func TestLoggerJSON(t *testing.T) {
 				RequestRefererHeader: assertString(testReferer),
 			},
 		},
+		{
+			desc: "default config keep only path",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+				Fields: &types.AccessLogFields{
+					DefaultMode: "drop",
+					Names: map[string]string{
+						RequestPath: "keep",
+					},
+					Headers: &types.FieldHeaders{
+						DefaultMode: "drop",
+					},
+				},
+			},
+			expected: map[string]func(t *testing.T, value interface{}){
+				RequestPath: assertString(testPath),
+				"level":     assertString("info"),
+				"msg":       assertString(""),
+				"time":      assertNotEmpty(),
+			},
+		},
+		{
+			desc: "default config keep only query",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+				Fields: &types.AccessLogFields{
+					DefaultMode: "drop",
+					Names: map[string]string{
+						RequestQuery: "keep",
+					},
+					Headers: &types.FieldHeaders{
+						DefaultMode: "drop",
+					},
+				},
+			},
+			expected: map[string]func(t *testing.T, value interface{}){
+				RequestPath: assertString("?" + testQuery),
+				"level":     assertString("info"),
+				"msg":       assertString(""),
+				"time":      assertNotEmpty(),
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -671,7 +717,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				FilePath: "",
 				Format:   CommonFormat,
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "default config with empty filters",
@@ -680,7 +726,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Filters:  &types.AccessLogFilters{},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Status code filter not matching",
@@ -702,7 +748,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					StatusCodes: []string{"123"},
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Duration filter not matching",
@@ -724,7 +770,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					MinDuration: ptypes.Duration(1 * time.Millisecond),
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Retry attempts filter matching",
@@ -735,7 +781,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					RetryAttempts: true,
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Default mode keep",
@@ -746,7 +792,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					DefaultMode: "keep",
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Default mode keep with override",
@@ -760,7 +806,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+			expectedLog: `- - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=foo&param2=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Default mode drop",
@@ -885,6 +931,7 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	assert.Equal(t, resultExpected[ClientUsername], result[ClientUsername], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestMethod], result[RequestMethod], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestPath], result[RequestPath], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestQuery], result[RequestQuery], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestProtocol], result[RequestProtocol], formatErrMessage)
 	assert.Equal(t, resultExpected[OriginStatus], result[OriginStatus], formatErrMessage)
 	assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
@@ -937,8 +984,9 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 		Method:     testMethod,
 		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
 		URL: &url.URL{
-			User: url.UserPassword(testUsername, ""),
-			Path: testPath,
+			User:     url.UserPassword(testUsername, ""),
+			Path:     testPath,
+			RawQuery: testQuery,
 		},
 		Body: io.NopCloser(bytes.NewReader([]byte("bar"))),
 	}
