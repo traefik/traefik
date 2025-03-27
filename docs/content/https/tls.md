@@ -552,5 +552,36 @@ spec:
       - secretCA
     clientAuthType: RequireAndVerifyClientCert
 ```
+### Disable Session Tickets
+
+By default, DisableSessionTickets is set to false. When set to true, Traefik disables the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      disableSessionTickets: true
+```
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    disableSessionTickets = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  disableSessionTickets: true
+```
 
 {!traefik-for-business-applications.md!}
