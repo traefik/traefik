@@ -14,7 +14,7 @@
 <script>
 export default {
   props: {
-    dense: Boolean,
+    dense: { type: Boolean, default: undefined },
     classNames: Array[String],
     list: Array[Object]
   }
