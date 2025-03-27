@@ -264,10 +264,10 @@ http:
 
 ### `encodings`
 
-_Optional, Default="zstd, br, gzip"_
+_Optional, Default="gzip, br, zstd"_
 
 `encodings` specifies the list of supported compression encodings.
-At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip).
+At least one encoding value must be specified, and valid entries are `gzip` (Gzip), `br` (Brotli), and `zstd` (Zstandard).
 The order of the list also sets the priority, the top entry has the highest priority.
 
 ```yaml tab="Docker & Swarm"
