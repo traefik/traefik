@@ -325,7 +325,8 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
 func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	conf := &tls.Config{
-		NextProtos: tlsOption.ALPNProtocols,
+		NextProtos:             tlsOption.ALPNProtocols,
+		SessionTicketsDisabled: tlsOption.DisableSessionTickets,
 	}
 
 	if len(tlsOption.ClientAuth.CAFiles) > 0 {

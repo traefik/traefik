@@ -83,6 +83,10 @@ spec:
                 items:
                   type: string
                 type: array
+              disableSessionTickets:
+                description: DisableSessionTickets disables TLS session resumption
+                  via session tickets.
+                type: boolean
               maxVersion:
                 description: |-
                   MaxVersion defines the maximum TLS version that Traefik will accept.
