@@ -44,7 +44,8 @@ type TLSOptionSpec struct {
 	// ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
 	// More info: https://doc.traefik.io/traefik/v3.3/https/tls/#alpn-protocols
 	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
-
+	// DisableSessionTickets disables TLS session resumption via session tickets.
+	DisableSessionTickets bool `json:"disableSessionTickets,omitempty"`
 	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
 	// It is enabled automatically when minVersion or maxVersion is set.
 	// Deprecated: https://github.com/golang/go/issues/45430
