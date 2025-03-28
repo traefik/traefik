@@ -331,6 +331,7 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 	config, _ := tlsManager.Get("default", "default")
 	assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
 	assert.Equal(t, []string{"h2", "http/1.1", "acme-tls/1"}, config.NextProtos)
+	assert.False(t, config.SessionTicketsDisabled)
 	assert.Equal(t, []uint16{
 		tls.TLS_AES_128_GCM_SHA256,
 		tls.TLS_AES_256_GCM_SHA384,
