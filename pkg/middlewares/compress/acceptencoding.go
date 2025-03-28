@@ -41,7 +41,7 @@ func (c *compress) getCompressionEncoding(acceptEncoding []string) string {
 
 	slices.SortFunc(acceptableEncodings, func(a, b Encoding) int {
 		if a.Weight == b.Weight {
-			// at same weight, we want to prioritize based on the encoding priority.
+			// At same weight, we want to prioritize based on the encoding priority.
 			// the lower the index, the higher the priority.
 			return cmp.Compare(c.supportedEncodings[a.Type], c.supportedEncodings[b.Type])
 		}
