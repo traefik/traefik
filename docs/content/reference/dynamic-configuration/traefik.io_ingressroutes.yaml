@@ -136,7 +136,7 @@ spec:
                                 - type: integer
                                 - type: string
                                 description: |-
-                                  Interval defines the frequency of the health check calls.
+                                  Interval defines the frequency of the health check calls for healthy targets.
                                   Default: 30s
                                 x-kubernetes-int-or-string: true
                               method:
@@ -171,6 +171,15 @@ spec:
                                 description: |-
                                   Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
                                   Default: 5s
+                                x-kubernetes-int-or-string: true
+                              unhealthyInterval:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: |-
+                                  UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+                                  When UnhealthyInterval is not defined, it defaults to the Interval value.
+                                  Default: 30s
                                 x-kubernetes-int-or-string: true
                             type: object
                           kind:
