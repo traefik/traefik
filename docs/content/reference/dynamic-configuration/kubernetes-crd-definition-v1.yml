@@ -2541,8 +2541,8 @@ spec:
                   type: string
                 type: array
               disableSessionTickets:
-                description: DisableSessionTickets when set to true, disables TLS
-                  session resumption via session tickets.
+                description: DisableSessionTickets disables TLS session resumption
+                  via session tickets.
                 type: boolean
               maxVersion:
                 description: |-

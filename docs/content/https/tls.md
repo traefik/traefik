@@ -555,7 +555,9 @@ spec:
 
 ### Disable Session Tickets
 
-By default, DisableSessionTickets is set to false. When set to true, Traefik disables the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.
+_Optional, Default="false"_
+
+When set to true, Traefik disables the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration
