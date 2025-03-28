@@ -575,6 +575,7 @@ certificatesResolvers:
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
+        delay: 42s
       tlsChallenge: {}
     tailscale: {}
   CertificateResolver1:
@@ -611,6 +612,7 @@ certificatesResolvers:
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
+        delay: 42s
       tlsChallenge: {}
     tailscale: {}
 experimental:
