@@ -393,6 +393,13 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/serversTransports/TCPServersTransport1/tls/spiffe/ids/0` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/tls/spiffe/ids/1` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/tls/spiffe/trustDomain` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/address` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/expected` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/interval` | `42s` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/payload` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/serversTransport` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/timeout` | `42s` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/tls` | `true` |
 | `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version` | `42` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/tls` | `true` |
