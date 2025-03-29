@@ -3,14 +3,15 @@ package healthcheck
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"net"
-	"net/netip"
 	"runtime"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -21,35 +22,52 @@ import (
 )
 
 var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
-MIICDDCCAXWgAwIBAgIQH20JmcOlcRWHNuf62SYwszANBgkqhkiG9w0BAQsFADAS
-MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
-MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
-iQKBgQC0qINy3F4oq6viDnlpDDE5J08iSRGggg6EylJKBKZfphEG2ufgK78Dufl3
-+7b0LlEY2AeZHwviHODqC9a6ihj1ZYQk0/djAh+OeOhFEWu+9T/VP8gVFarFqT8D
-Opy+hrG7YJivUIzwb4fmJQRI7FajzsnGyM6LiXLU+0qzb7ZO/QIDAQABo2EwXzAO
-BgNVHQ8BAf8EBAMCAqQwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUw
-AwEB/zAnBgNVHREEIDAeggtleGFtcGxlLmNvbYIPd3d3LmV4YW1wbGUuY29tMA0G
-CSqGSIb3DQEBCwUAA4GBAB+eluoQYzyyMfeEEAOtlldevx5MtDENT05NB0WI+91R
-we7mX8lv763u0XuCWPxbHszhclI6FFjoQef0Z1NYLRm8ZRq58QqWDFZ3E6wdDK+B
-+OWvkW+hRavo6R9LzIZPfbv8yBo4M9PK/DXw8hLqH7VkkI+Gh793iH7Ugd4A7wvT
+MIIDJzCCAg+gAwIBAgIUe3vnWg3cTbflL6kz2TyPUxmV8Y4wDQYJKoZIhvcNAQEL
+BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wIBcNMjUwMzA1MjAwOTM4WhgPMjA1
+NTAyMjYyMDA5MzhaMBYxFDASBgNVBAMMC2V4YW1wbGUuY29tMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4Mm4Sp6xzJvFZJWAv/KVmI1krywiuef8Fhlf
+JR2M0caKixjBcNt4U8KwrzIrqL+8nilbps1QuwpQ09+6ztlbUXUL6DqR8ZC+4oCp
+gOZ3yyVX2vhMigkATbQyJrX/WVjWSHD5rIUBP2BrsaYLt1qETnFP9wwQ3YEi7V4l
+c4+jDrZOtJvrv+tRClt9gQJVgkr7Y30X+dx+rsh+ROaA2+/VTDX0qtoqd/4fjhcJ
+OY9VLm0eU66VUMyOTNeUm6ZAXRBp/EonIM1FXOlj82S0pZQbPrvyWWqWoAjtPvLU
+qRzqp/BQJqx3EHz1dP6s+xUjP999B+7jhiHoFhZ/bfVVlx8XkwIDAQABo2swaTAd
+BgNVHQ4EFgQUhJiJ37LW6RODCpBPAApG1zQxFtAwHwYDVR0jBBgwFoAUhJiJ37LW
+6RODCpBPAApG1zQxFtAwDwYDVR0TAQH/BAUwAwEB/zAWBgNVHREEDzANggtleGFt
+cGxlLmNvbTANBgkqhkiG9w0BAQsFAAOCAQEAfnDPHllA1TFlQ6zY46tqM20d68bR
+kXeGMKLoaATFPbDea5H8/GM5CU6CPD7RUuEB9CvxvaM0aOInxkgstozG7BOr8hcs
+WS9fMgM0oO5yGiSOv+Qa0Rc0BFb6A1fUJRta5MI5DTdTJLoyoRX/5aocSI34T67x
+ULbkJvVXw6hnx/KZ65apNobfmVQSy7DR8Fo82eB4hSoaLpXyUUTLmctGgrRCoKof
+GVUJfKsDJ4Ts8WIR1np74flSoxksWSHEOYk79AZOPANYgJwPMMiiZKsKm17GBoGu
+DxI0om4eX8GaSSZAtG6TOt3O3v1oCjKNsAC+u585HN0x0MFA33TUzC15NA==
 -----END CERTIFICATE-----`)
 
-// LocalhostKey is the private key for localhostCert.
 var LocalhostKey = []byte(`-----BEGIN PRIVATE KEY-----
-MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBALSog3LcXiirq+IO
-eWkMMTknTyJJEaCCDoTKUkoEpl+mEQba5+ArvwO5+Xf7tvQuURjYB5kfC+Ic4OoL
-1rqKGPVlhCTT92MCH4546EURa771P9U/yBUVqsWpPwM6nL6GsbtgmK9QjPBvh+Yl
-BEjsVqPOycbIzouJctT7SrNvtk79AgMBAAECgYB1wMT1MBgbkFIXpXGTfAP1id61
-rUTVBxCpkypx3ngHLjo46qRq5Hi72BN4FlTY8fugIudI8giP2FztkMvkiLDc4m0p
-Gn+QMJzjlBjjTuNLvLy4aSmNRLIC3mtbx9PdU71DQswEpJHFj/vmsxbuSrG1I1YE
-r1reuSo2ow6fOAjXLQJBANpz+RkOiPSPuvl+gi1sp2pLuynUJVDVqWZi386YRpfg
-DiKCLpqwqYDkOozm/fwFALvwXKGmsyyL43HO8eI+2NsCQQDTtY32V+02GPecdsyq
-msK06EPVTSaYwj9Mm+q709KsmYFHLXDqXjcKV4UgKYKRPz7my1fXodMmGmfuh1a3
-/HMHAkEAmOQKN0tA90mRJwUvvvMIyRBv0fq0kzq28P3KfiF9ZtZdjjFmxMVYHOmf
-QPZ6VGR7+w1jB5BQXqEZcpHQIPSzeQJBAIy9tZJ/AYNlNbcegxEnsSjy/6VdlLsY
-51vWi0Yym2uC4R6gZuBnoc+OP0ISVmqY0Qg9RjhjrCs4gr9f2ZaWjSECQCxqZMq1
-3viJ8BGCC0m/5jv1EHur3YgwphYCkf4Li6DKwIdMLk1WXkTcPIY3V2Jqj8rPEB5V
-rqPRSAtd/h6oZbs=
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDgybhKnrHMm8Vk
+lYC/8pWYjWSvLCK55/wWGV8lHYzRxoqLGMFw23hTwrCvMiuov7yeKVumzVC7ClDT
+37rO2VtRdQvoOpHxkL7igKmA5nfLJVfa+EyKCQBNtDImtf9ZWNZIcPmshQE/YGux
+pgu3WoROcU/3DBDdgSLtXiVzj6MOtk60m+u/61EKW32BAlWCSvtjfRf53H6uyH5E
+5oDb79VMNfSq2ip3/h+OFwk5j1UubR5TrpVQzI5M15SbpkBdEGn8SicgzUVc6WPz
+ZLSllBs+u/JZapagCO0+8tSpHOqn8FAmrHcQfPV0/qz7FSM/330H7uOGIegWFn9t
+9VWXHxeTAgMBAAECggEALinfGhv7Iaz/3cdCOKlGBZ1MBxmGTC2TPKqbOpEWAWLH
+wwcjetznmjQKewBPrQkrYEPYGapioPbeYJS61Y4XzeO+vUOCA10ZhoSrytgJ1ANo
+RoTlmxd8I3kVL5QCy8ONxjTFYaOy/OP9We9iypXhRAbLSE4HDKZfmOXTxSbDctql
+Kq7uV3LX1KCfr9C6M8d79a0Rdr4p8IXp8MOg3tXq6n75vZbepRFyAujhg7o/kkTp
+lgv87h89lrK97K+AjqtvCIT3X3VXfA+LYp3AoQFdOluKgyJT221MyHkTeI/7gggt
+Z57lVGD71UJH/LGUJWrraJqXd9uDxZWprD/s66BIAQKBgQD8CtHUJ/VuS7gP0ebN
+688zrmRtENj6Gqi+URm/Pwgr9b7wKKlf9jjhg5F/ue+BgB7/nK6N7yJ4Xx3JJ5ox
+LqsRGLFa4fDBxogF/FN27obD8naOxe2wS1uTjM6LSrvdJ+HjeNEwHYhjuDjTAHj5
+VVEMagZWgkE4jBiFUYefiYLsAQKBgQDkUVdW8cXaYri5xxDW86JNUzI1tUPyd6I+
+AkOHV/V0y2zpwTHVLcETRpdVGpc5TH3J5vWf+5OvSz6RDTGjv7blDb8vB/kVkFmn
+uXTi0dB9P+SYTsm+X3V7hOAFsyVYZ1D9IFsKUyMgxMdF+qgERjdPKx5IdLV/Jf3q
+P9pQ922TkwKBgCKllhyU9Z8Y14+NKi4qeUxAb9uyUjFnUsT+vwxULNpmKL44yLfB
+UCZoAKtPMwZZR2mZ70Dhm5pycNTDFeYm5Ssvesnkf0UT9oTkH9EcjvgGr5eGy9rN
+MSSCWa46MsL/BYVQiWkU1jfnDiCrUvXrbX3IYWCo/TA5yfEhuQQMUiwBAoGADyzo
+5TqEsBNHu/FjSSZAb2tMNw2pSoBxJDX6TxClm/G5d4AD0+uKncFfZaSy0HgpFDZp
+tQx/sHML4ZBC8GNZwLe9MV8SS0Cg9Oj6v+i6Ntj8VLNH7YNix6b5TOevX8TeOTTh
+WDpWZ2Ms65XRfRc9reFrzd0UAzN/QQaleCQ6AEkCgYBe4Ucows7JGbv7fNkz3nb1
+kyH+hk9ecnq/evDKX7UUxKO1wwTi74IYKgcRB2uPLpHKL35gPz+LAfCphCW5rwpR
+lvDhS+Pi/1KCBJxLHMv+V/WrckDRgHFnAhDaBZ+2vI/s09rKDnpjcTzV7x22kL0b
+XIJCEEE8JZ4AXIZ+IcB6LA==
 -----END PRIVATE KEY-----`)
 
 //	openssl req -newkey rsa:2048 \
@@ -109,8 +127,6 @@ ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
 func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		desc                  string
 		server                *sequencedTcpServer
@@ -192,10 +208,12 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			desc: "healthy server with TLS certificate",
 			server: newTCPServer(t,
 				true,
-				tcpMockSequence{accept: true},
-				tcpMockSequence{accept: true},
+				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
+				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
 			),
 			config: &dynamic.TCPServerHealthCheck{
+				Payload:  "request",
+				Expected: "response",
 				Interval: ptypes.Duration(time.Millisecond * 100),
 				Timeout:  ptypes.Duration(time.Millisecond * 99),
 				TLS:      true,
@@ -209,9 +227,8 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			ctx, cancel := context.WithCancel(context.Background())
+			c, cancel := context.WithCancel(context.Background())
+			ctx := log.Logger.WithContext(c)
 			defer t.Cleanup(cancel)
 
 			test.server.Start(t)
@@ -227,6 +244,7 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {
 				TLS: &dynamic.TLSClientConfig{
 					InsecureSkipVerify: true,
+					ServerName:         "example.com",
 				},
 			}})
 			service := NewServiceTCPHealthChecker(dialerManager, &MetricsMock{gauge}, test.config, lb, serviceInfo, targets, "serviceName")
@@ -263,7 +281,9 @@ type sequencedTcpServer struct {
 }
 
 func newTCPServer(t *testing.T, tlsEnabled bool, statusSequence ...tcpMockSequence) *sequencedTcpServer {
-	listener, err := net.ListenTCP("tcp", net.TCPAddrFromAddrPort(netip.MustParseAddrPort("127.0.0.1:0")))
+	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	listener, err := net.ListenTCP("tcp", addr)
 	require.NoError(t, err)
 
 	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
@@ -287,57 +307,76 @@ func (s *sequencedTcpServer) Start(t *testing.T) {
 	t.Helper()
 
 	go func() {
+		var listener net.Listener
+
 		for _, seq := range s.StatusSequence {
 			<-s.release
+			if listener != nil {
+				listener.Close()
+			}
 
 			if !seq.accept {
 				continue
 			}
 
-			var listener net.Listener
-
-			listener, err := net.ListenTCP("tcp", s.Addr)
+			lis, err := net.ListenTCP("tcp", s.Addr)
 			require.NoError(t, err)
+
+			listener = lis
 
 			if s.TLS {
 				cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 				require.NoError(t, err)
 
+				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+				require.NoError(t, err)
+
+				certpool := x509.NewCertPool()
+				certpool.AddCert(x509Cert)
+
 				listener = tls.NewListener(
 					listener,
 					&tls.Config{
-						Certificates: []tls.Certificate{cert},
+						RootCAs:            certpool,
+						Certificates:       []tls.Certificate{cert},
+						InsecureSkipVerify: true,
+						ServerName:         "example.com",
+						MinVersion:         tls.VersionTLS12,
+						MaxVersion:         tls.VersionTLS12,
+						ClientAuth:         tls.VerifyClientCertIfGiven,
+						ClientCAs:          certpool,
 					},
 				)
 			}
 
 			conn, err := listener.Accept()
 			require.NoError(t, err)
-
-			listener.Close()
+			t.Cleanup(func() {
+				_ = conn.Close()
+			})
 
 			if seq.payloadIn == "" {
-				conn.Close()
-
 				continue
 			}
 
-			conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-			buf := make([]byte, 1024)
-			n, _ := conn.Read(buf)
+			buf := make([]byte, len(seq.payloadIn))
+			n, err := conn.Read(buf)
+			require.NoError(t, err)
 
 			recv := strings.TrimSpace(string(buf[:n]))
 
 			switch recv {
 			case seq.payloadIn:
-				_, _ = conn.Write([]byte(seq.payloadOut))
+				if _, err := conn.Write([]byte(seq.payloadOut)); err != nil {
+					t.Errorf("failed to write payload: %v", err)
+				}
 			default:
-				_, _ = conn.Write([]byte("FAULT\n"))
+				if _, err := conn.Write([]byte("FAULT\n")); err != nil {
+					t.Errorf("failed to write payload: %v", err)
+				}
 			}
-
-			defer conn.Close()
 		}
 
-		close(s.release)
+		defer close(s.release)
 	}()
 }

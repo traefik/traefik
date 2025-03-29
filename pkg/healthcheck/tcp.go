@@ -101,7 +101,7 @@ func (thc *ServiceTCPHealthChecker) Check(ctx context.Context) {
 	}
 }
 
-func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *net.TCPAddr) error {
+func (thc *ServiceTCPHealthChecker) executeHealthCheck(_ context.Context, config *dynamic.TCPServerHealthCheck, target *net.TCPAddr) error {
 	dialer, err := thc.dialerManager.Get(config.ServersTransport, config.TLS)
 	if err != nil {
 		return err
@@ -122,6 +122,7 @@ func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, conf
 
 	if config.Expected != "" {
 		buf := make([]byte, len(config.Expected))
+		conn.SetReadDeadline(time.Now().Add(thc.timeout))
 		_, err = conn.Read(buf)
 		if err != nil {
 			return err
