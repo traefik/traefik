@@ -29,7 +29,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/consul/api v1.26.1
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-multierror v1.1.1
@@ -69,7 +69,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
-	github.com/vulcand/oxy/v2 v2.0.0
+	github.com/vulcand/oxy/v2 v2.0.3
 	github.com/vulcand/predicate v1.2.0
 	go.elastic.co/apm/module/apmot/v2 v2.4.8
 	go.elastic.co/apm/v2 v2.4.8
