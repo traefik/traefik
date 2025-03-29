@@ -121,8 +121,12 @@ func (thc *ServiceTCPHealthChecker) executeHealthCheck(_ context.Context, config
 	}
 
 	if config.Expected != "" {
+		err := conn.SetReadDeadline(time.Now().Add(thc.timeout))
+		if err != nil {
+			return err
+		}
+
 		buf := make([]byte, len(config.Expected))
-		conn.SetReadDeadline(time.Now().Add(thc.timeout))
 		_, err = conn.Read(buf)
 		if err != nil {
 			return err
