@@ -691,6 +691,11 @@ func Test_HostSNIV2(t *testing.T) {
 			serverName: "foo.bar",
 		},
 		{
+			desc:       "Matching hosts with subdomains with _",
+			ruleHosts:  []string{"foo_bar.example.com"},
+			serverName: "foo_bar.example.com",
+		},
+		{
 			desc:       "Matching IPv4",
 			ruleHosts:  []string{"127.0.0.1"},
 			serverName: "127.0.0.1",
