@@ -39,9 +39,14 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     "",
 		},
 		{
+			// In this test, the default encodings are defaulted to gzip, brotli, and zstd,
+			// which make gzip the default encoding, and will be selected.
+			// However, the klauspost/compress gzhttp handler does not compress when Accept-Encoding: * is set.
+			// Until klauspost/compress gzhttp package supports the asterisk,
+			// we will not support it when selecting the gzip encoding.
 			desc:            "accept any header",
 			acceptEncHeader: "*",
-			expEncoding:     brotliName,
+			expEncoding:     "",
 		},
 		{
 			desc:            "gzip accept header",
@@ -66,7 +71,7 @@ func TestNegotiation(t *testing.T) {
 		{
 			desc:            "multi accept header list, prefer br",
 			acceptEncHeader: "gzip, br",
-			expEncoding:     brotliName,
+			expEncoding:     gzipName,
 		},
 		{
 			desc:            "zstd accept header",
@@ -79,14 +84,19 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     zstdName,
 		},
 		{
+			desc:            "multi accept header, prefer brotli",
+			acceptEncHeader: "gzip;q=0.8, br;q=1.0, zstd;q=0.7",
+			expEncoding:     brotliName,
+		},
+		{
 			desc:            "multi accept header, prefer gzip",
 			acceptEncHeader: "gzip;q=1.0, br;q=0.8, zstd;q=0.7",
 			expEncoding:     gzipName,
 		},
 		{
-			desc:            "multi accept header list, prefer zstd",
+			desc:            "multi accept header list, prefer gzip",
 			acceptEncHeader: "gzip, br, zstd",
-			expEncoding:     zstdName,
+			expEncoding:     gzipName,
 		},
 	}
 
@@ -171,6 +181,28 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+
+	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(fakeBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Empty(t, rw.Header().Get(varyHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+}
+
+func TestEmptyAcceptEncoding(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, "")
 
 	fakeBody := generateBytes(gzhttp.DefaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {

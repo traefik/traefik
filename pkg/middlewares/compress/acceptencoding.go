@@ -23,57 +23,44 @@ type Encoding struct {
 	Weight float64
 }
 
-func getCompressionEncoding(acceptEncoding []string, defaultEncoding string, supportedEncodings []string) string {
-	if defaultEncoding == "" {
-		if slices.Contains(supportedEncodings, brotliName) {
-			// Keeps the pre-existing default inside Traefik if brotli is a supported encoding.
-			defaultEncoding = brotliName
-		} else if len(supportedEncodings) > 0 {
-			// Otherwise use the first supported encoding.
-			defaultEncoding = supportedEncodings[0]
-		}
+func (c *compress) getCompressionEncoding(acceptEncoding []string) string {
+	// RFC says: An Accept-Encoding header field with a field value that is empty implies that the user agent does not want any content coding in response.
+	// https://datatracker.ietf.org/doc/html/rfc9110#name-accept-encoding
+	if len(acceptEncoding) == 1 && acceptEncoding[0] == "" {
+		return identityName
 	}
 
-	encodings, hasWeight := parseAcceptEncoding(acceptEncoding, supportedEncodings)
+	acceptableEncodings := parseAcceptableEncodings(acceptEncoding, c.supportedEncodings)
 
-	if hasWeight {
-		if len(encodings) == 0 {
-			return identityName
-		}
-
-		encoding := encodings[0]
-
-		if encoding.Type == identityName && encoding.Weight == 0 {
-			return notAcceptable
-		}
-
-		if encoding.Type == wildcardName && encoding.Weight == 0 {
-			return notAcceptable
-		}
-
-		if encoding.Type == wildcardName {
-			return defaultEncoding
-		}
-
-		return encoding.Type
+	// An empty Accept-Encoding header field would have been handled earlier.
+	// If empty, it means no encoding is supported, we do not encode.
+	if len(acceptableEncodings) == 0 {
+		// TODO: return 415 status code instead of deactivating the compression, if the backend was not to compress as well.
+		return notAcceptable
 	}
 
-	for _, dt := range supportedEncodings {
-		if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == dt }) {
-			return dt
+	slices.SortFunc(acceptableEncodings, func(a, b Encoding) int {
+		if a.Weight == b.Weight {
+			// At same weight, we want to prioritize based on the encoding priority.
+			// the lower the index, the higher the priority.
+			return cmp.Compare(c.supportedEncodings[a.Type], c.supportedEncodings[b.Type])
 		}
+		return cmp.Compare(b.Weight, a.Weight)
+	})
+
+	if acceptableEncodings[0].Type == wildcardName {
+		if c.defaultEncoding == "" {
+			return c.encodings[0]
+		}
+
+		return c.defaultEncoding
 	}
 
-	if slices.ContainsFunc(encodings, func(e Encoding) bool { return e.Type == wildcardName }) {
-		return defaultEncoding
-	}
-
-	return identityName
+	return acceptableEncodings[0].Type
 }
 
-func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encoding, bool) {
+func parseAcceptableEncodings(acceptEncoding []string, supportedEncodings map[string]int) []Encoding {
 	var encodings []Encoding
-	var hasWeight bool
 
 	for _, line := range acceptEncoding {
 		for _, item := range strings.Split(strings.ReplaceAll(line, " ", ""), ",") {
@@ -82,9 +69,7 @@ func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encodin
 				continue
 			}
 
-			if !slices.Contains(supportedEncodings, parsed[0]) &&
-				parsed[0] != identityName &&
-				parsed[0] != wildcardName {
+			if _, ok := supportedEncodings[parsed[0]]; !ok {
 				continue
 			}
 
@@ -94,8 +79,13 @@ func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encodin
 			if len(parsed) > 1 && strings.HasPrefix(parsed[1], "q=") {
 				w, _ := strconv.ParseFloat(strings.TrimPrefix(parsed[1], "q="), 64)
 
+				// If the weight is 0, the encoding is not acceptable.
+				// We can skip the encoding.
+				if w == 0 {
+					continue
+				}
+
 				weight = w
-				hasWeight = true
 			}
 
 			encodings = append(encodings, Encoding{
@@ -105,9 +95,5 @@ func parseAcceptEncoding(acceptEncoding, supportedEncodings []string) ([]Encodin
 		}
 	}
 
-	slices.SortFunc(encodings, func(a, b Encoding) int {
-		return cmp.Compare(b.Weight, a.Weight)
-	})
-
-	return encodings, hasWeight
+	return encodings
 }

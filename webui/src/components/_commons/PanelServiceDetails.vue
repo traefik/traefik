@@ -156,7 +156,7 @@ export default defineComponent({
   },
   props: {
     data: { type: Object, default: undefined, required: false },
-    dense: Boolean
+    dense: { type: Boolean, default: undefined }
   },
   computed: {
     isDense () {
