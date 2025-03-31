@@ -14,41 +14,40 @@ import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
-export const makeRowRender =
-  (navigate: NavigateFunction): RenderRowType =>
-  // eslint-disable-next-line react/display-name
-  (row) =>
-    (
-      <AnimatedRow key={row.name} onClick={(): void => navigate(`/udp/services/${row.name}`)}>
-        <Td>
-          <Tooltip label={row.status}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ResourceStatus status={row.status} />
-            </Box>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.name} action="copy">
-            <Text>{row.name}</Text>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.type} action="copy">
-            <Text>{row.type}</Text>
-          </Tooltip>
-        </Td>
-        <Td style={{ textAlign: 'right' }}>
-          <Text>{row.loadBalancer?.servers?.length || 0}</Text>
-        </Td>
-        <Td>
-          <Tooltip label={row.provider}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ProviderIcon name={row.provider} />
-            </Box>
-          </Tooltip>
-        </Td>
-      </AnimatedRow>
-    )
+export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
+  const UdpServicesRenderRow = (row) => (
+    <AnimatedRow key={row.name} onClick={(): void => navigate(`/udp/services/${row.name}`)}>
+      <Td>
+        <Tooltip label={row.status}>
+          <Box css={{ width: '32px', height: '32px' }}>
+            <ResourceStatus status={row.status} />
+          </Box>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.name} action="copy">
+          <Text>{row.name}</Text>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.type} action="copy">
+          <Text>{row.type}</Text>
+        </Tooltip>
+      </Td>
+      <Td style={{ textAlign: 'right' }}>
+        <Text>{row.loadBalancer?.servers?.length || 0}</Text>
+      </Td>
+      <Td>
+        <Tooltip label={row.provider}>
+          <Box css={{ width: '32px', height: '32px' }}>
+            <ProviderIcon name={row.provider} />
+          </Box>
+        </Tooltip>
+      </Td>
+    </AnimatedRow>
+  )
+  return UdpServicesRenderRow
+}
 
 export const UdpServicesRender = ({
   error,

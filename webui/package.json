@@ -7,7 +7,7 @@
     "analyze": "source-map-explorer 'dist/static/js/*.js'",
     "build": "rm -rf dist && vite build",
     "dev": "vite",
-    "format": "prettier-eslint '$(pwd)/**/*.{ts,tsx}' --config .prettierrc.js --write",
+    "format": "prettier-eslint './src/**/*.{ts,tsx}' --config .prettierrc.js --write",
     "lint": "eslint './src/**/*.{ts,tsx}'",
     "lint:fix": "eslint --fix './src/**/*.{ts,tsx}'",
     "preview": "vite preview",

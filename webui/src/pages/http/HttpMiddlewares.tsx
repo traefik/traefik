@@ -15,10 +15,8 @@ import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
-export const makeRowRender =
-  (navigate: NavigateFunction): RenderRowType =>
-  // eslint-disable-next-line react/display-name
-  (row) => {
+export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
+  const HttpMiddlewaresRenderRow = (row) => {
     const middlewareType = parseMiddlewareType(row)
 
     return (
@@ -52,6 +50,8 @@ export const makeRowRender =
       </AnimatedRow>
     )
   }
+  return HttpMiddlewaresRenderRow
+}
 
 export const HttpMiddlewaresRender = ({
   error,

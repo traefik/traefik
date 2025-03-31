@@ -16,62 +16,61 @@ import { FiArrowDown, FiArrowUp, FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
-export const makeRowRender =
-  (navigate: NavigateFunction, protocol = 'http'): RenderRowType =>
-  // eslint-disable-next-line react/display-name
-  (row) =>
-    (
-      <AnimatedRow key={row.name} onClick={(): void => navigate(`/${protocol}/routers/${row.name}`)}>
-        <Td>
-          <Tooltip label={row.status}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ResourceStatus status={row.status} />
-            </Box>
-          </Tooltip>
-        </Td>
-        {protocol !== 'udp' && (
-          <>
-            <Td>
-              {row.tls && (
-                <Tooltip label="TLS ON">
-                  <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
-                    <FiShield color="#008000" fill="#008000" size={24} />
-                  </Box>
-                </Tooltip>
-              )}
-            </Td>
-            <Td>
-              <Tooltip label={row.rule} action="copy">
-                <Text css={{ wordBreak: 'break-word' }}>{row.rule}</Text>
+export const makeRowRender = (navigate: NavigateFunction, protocol = 'http'): RenderRowType => {
+  const HttpRoutersRenderRow = (row) => (
+    <AnimatedRow key={row.name} onClick={(): void => navigate(`/${protocol}/routers/${row.name}`)}>
+      <Td>
+        <Tooltip label={row.status}>
+          <Box css={{ width: '32px', height: '32px' }}>
+            <ResourceStatus status={row.status} />
+          </Box>
+        </Tooltip>
+      </Td>
+      {protocol !== 'udp' && (
+        <>
+          <Td>
+            {row.tls && (
+              <Tooltip label="TLS ON">
+                <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
+                  <FiShield color="#008000" fill="#008000" size={24} />
+                </Box>
               </Tooltip>
-            </Td>
-          </>
-        )}
-        <Td>{row.using && row.using.length > 0 && <Chips items={row.using} />}</Td>
-        <Td>
-          <Tooltip label={row.name} action="copy">
-            <Text css={{ wordBreak: 'break-word' }}>{row.name}</Text>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.service} action="copy">
-            <Text css={{ wordBreak: 'break-word' }}>{row.service}</Text>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.provider}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ProviderIcon name={row.provider} />
-            </Box>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.priority} action="copy">
-            <Text css={{ wordBreak: 'break-word' }}>{row.priority}</Text>
-          </Tooltip>
-        </Td>
-      </AnimatedRow>
-    )
+            )}
+          </Td>
+          <Td>
+            <Tooltip label={row.rule} action="copy">
+              <Text css={{ wordBreak: 'break-word' }}>{row.rule}</Text>
+            </Tooltip>
+          </Td>
+        </>
+      )}
+      <Td>{row.using && row.using.length > 0 && <Chips items={row.using} />}</Td>
+      <Td>
+        <Tooltip label={row.name} action="copy">
+          <Text css={{ wordBreak: 'break-word' }}>{row.name}</Text>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.service} action="copy">
+          <Text css={{ wordBreak: 'break-word' }}>{row.service}</Text>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.provider}>
+          <Box css={{ width: '32px', height: '32px' }}>
+            <ProviderIcon name={row.provider} />
+          </Box>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.priority} action="copy">
+          <Text css={{ wordBreak: 'break-word' }}>{row.priority}</Text>
+        </Tooltip>
+      </Td>
+    </AnimatedRow>
+  )
+  return HttpRoutersRenderRow
+}
 
 export const HttpRoutersRender = ({
   error,
