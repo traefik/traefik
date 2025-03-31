@@ -1,8 +1,7 @@
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
+import { HttpRouters as HttpRoutersPage, HttpRoutersRender, makeRowRender } from 'pages/http/HttpRouters'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { HttpRouters as HttpRoutersPage, HttpRoutersRender, makeRowRender } from './HttpRouters'
 
 describe('<HttpRoutersPage />', () => {
   it('should render the routers list', () => {

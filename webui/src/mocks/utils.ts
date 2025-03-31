@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { chunk, cloneDeep } from 'lodash'
+import { chunk, cloneDeep, orderBy } from 'lodash'
 import { http, HttpResponse } from 'msw'
 
 const waitAsync = (noDelay = false) => {
@@ -14,25 +14,24 @@ export const listHandlers = (route: string, data: any = null, noDelay: boolean =
   http.get(route, async ({ request }) => {
     await waitAsync(noDelay)
     const url = new URL(request.url)
+    const direction = url.searchParams.get('direction') as 'asc' | 'desc' | null
     const search = url.searchParams.get('search')
+    const sortBy = url.searchParams.get('sortBy')
     const status = url.searchParams.get('status')
-    const results =
-      Array.isArray(data) && (search || status)
-        ? data
-            .filter((x: any) => (search ? x.name.toLowerCase().includes(search.toLowerCase()) : true))
-            .filter((x: any) => (status ? x.status === status : true))
-        : cloneDeep(data)
+    let results = cloneDeep(data)
     if (Array.isArray(results)) {
+      if (search) results = results.filter((x: any) => x.name.toLowerCase().includes(search.toLowerCase()))
+      if (status) results = results.filter((x: any) => x.status === status)
       if (!results.length) return HttpResponse.json([], { headers: { 'X-Next-Page': '1' }, status: 200 })
+      if (sortBy) results = orderBy(data, [sortBy], [direction || 'asc'])
       const page = +(url.searchParams.get('page') || 1)
       const pageSize = +(url.searchParams.get('per_page') || 10)
       const chunks = skipPagination ? [results] : chunk(results, pageSize)
       const totalPages = chunks.length
       const nextPage = page + 1 <= totalPages ? page + 1 : 1 // 1 means "no more pages".
       return HttpResponse.json(chunks[page - 1], { headers: { 'X-Next-Page': nextPage.toString() }, status: 200 })
-    } else {
-      return HttpResponse.json(results, { status: 200 })
     }
+    return HttpResponse.json(results, { status: 200 })
   }),
   http.get(`${route}/:name`, async ({ params }) => {
     await waitAsync(noDelay)

@@ -1,9 +1,8 @@
 import { Box, Flex, TextField } from '@traefiklabs/faency'
-import isUndefined from 'lodash/isUndefined'
-import omitBy from 'lodash/omitBy'
+import { isUndefined, omitBy } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { FiSearch } from 'react-icons/fi'
-import { useSearchParams } from 'react-router-dom'
+import { URLSearchParamsInit, useSearchParams } from 'react-router-dom'
 import { useDebounceCallback } from 'usehooks-ts'
 
 import { Button } from './FaencyOverrides'
@@ -20,7 +19,9 @@ export const searchParamsToState = (searchParams: URLSearchParams): State => {
 
   return omitBy(
     {
+      direction: searchParams.get('direction') || undefined,
       search: searchParams.get('search') || undefined,
+      sortBy: searchParams.get('sortBy') || undefined,
       status: searchParams.get('status') || undefined,
     },
     isUndefined,
@@ -48,14 +49,14 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
   const onSearch = useDebounceCallback((search?: string) => {
     const newState = omitBy({ ...state, search: search || undefined }, isUndefined)
     setState(newState)
-    setSearchParams(newState)
+    setSearchParams(newState as URLSearchParamsInit)
   }, 500)
 
   const onStatusClick = useCallback(
     (status?: string) => {
       const newState = omitBy({ ...state, status: status || undefined }, isUndefined)
       setState(newState)
-      setSearchParams(newState)
+      setSearchParams(newState as URLSearchParamsInit)
     },
     [setSearchParams, state],
   )
