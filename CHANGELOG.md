@@ -1,3 +1,20 @@
+## [v3.3.5](https://github.com/traefik/traefik/tree/v3.3.5) (2025-03-31)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.4...v3.3.5)
+
+**Bug fixes:**
+- **[k8s/gatewayapi]** Set scheme to https with BackendTLSPolicy ([#11586](https://github.com/traefik/traefik/pull/11586) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Revert compress middleware algorithms priority to v2 behavior ([#11641](https://github.com/traefik/traefik/pull/11641) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Do not abort request when response content-type is malformed ([#11628](https://github.com/traefik/traefik/pull/11628) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Compress data on flush when compression is not started ([#11583](https://github.com/traefik/traefik/pull/11583) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[middleware]** Add back forwarded headers section in FAQ ([#11606](https://github.com/traefik/traefik/pull/11606) by [kevinpollet](https://github.com/kevinpollet))
+- New Routing Reference Documentation ([#11330](https://github.com/traefik/traefik/pull/11330) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11644](https://github.com/traefik/traefik/pull/11644) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.3 ([#11594](https://github.com/traefik/traefik/pull/11594) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.22](https://github.com/traefik/traefik/tree/v2.11.22) (2025-03-31)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.21...v2.11.22)
 
