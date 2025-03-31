@@ -9,25 +9,43 @@
   ],
   "extends": [
     "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier"
+    "prettier",
+    "plugin:prettier/recommended"
   ],
-  "plugins": ["react", "@typescript-eslint", "prettier", "simple-import-sort"],
+  "plugins": ["@typescript-eslint", "react", "jsx-a11y", "prettier"],
   "env": {
     "browser": true,
     "es2020": true
   },
   "rules": {
     "@typescript-eslint/no-explicit-any": "warn",
+    "import/order": [
+      "error",
+      {
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        },
+        "newlines-between": "always"
+      }
+    ],
     "prettier/prettier": ["error", { "singleQuote": true }],
-    "react/display-name": "warn",
-    "react/react-in-jsx-scope": "off",
-    "simple-import-sort/imports": "error",
-    "simple-import-sort/exports": "error"
+    "react/react-in-jsx-scope": "off"
   },
   "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true
+      }
+    },
     "react": {
       "pragma": "React",
       "version": "detect"
