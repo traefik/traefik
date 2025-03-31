@@ -1,12 +1,14 @@
 package tls
 
 import (
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/url"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -91,29 +93,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	}
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
-
-	var SANs []string
-	if parsedCert.Subject.CommonName != "" {
-		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
-	}
-	if parsedCert.DNSNames != nil {
-		for _, dnsName := range parsedCert.DNSNames {
-			if dnsName != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(dnsName))
-			}
-		}
-	}
-	if parsedCert.IPAddresses != nil {
-		for _, ip := range parsedCert.IPAddresses {
-			if ip.String() != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(ip.String()))
-			}
-		}
-	}
-
-	// Guarantees the order to produce a unique cert key.
-	sort.Strings(SANs)
-	certKey := strings.Join(SANs, ",")
+	certKey := GetCertificateKey(parsedCert)
 
 	certExists := false
 	if certs[storeName] == nil {
@@ -305,4 +285,51 @@ func verifyChain(rootCAs *x509.CertPool, rawCerts [][]byte) (*x509.Certificate, 
 	}
 
 	return certs[0], nil
+}
+
+func GetCertificateKey(certificate *x509.Certificate) string {
+	var SANs []string
+	if certificate.Subject.CommonName != "" {
+		SANs = append(SANs, strings.ToLower(certificate.Subject.CommonName))
+	}
+	if certificate.DNSNames != nil {
+		for _, dnsName := range certificate.DNSNames {
+			if dnsName != certificate.Subject.CommonName {
+				SANs = append(SANs, strings.ToLower(dnsName))
+			}
+		}
+	}
+	if certificate.IPAddresses != nil {
+		for _, ip := range certificate.IPAddresses {
+			if ip.String() != certificate.Subject.CommonName {
+				SANs = append(SANs, strings.ToLower(ip.String()))
+			}
+		}
+	}
+
+	// Guarantees the order to produce a unique cert key.
+	sort.Strings(SANs)
+	return strings.Join(SANs, ",")
+}
+
+func GetCertificateLabels(certificate *x509.Certificate) []string {
+	slices.Sort(certificate.DNSNames)
+
+	return []string{
+		"cn", certificate.Subject.CommonName,
+		"serial", certificate.SerialNumber.String(),
+		"sans", strings.Join(certificate.DNSNames, ","),
+	}
+}
+
+func GetCertificateLabelsHash(labels []string) string {
+	h := sha256.New()
+
+	for _, s := range labels {
+		h.Write([]byte(s))
+		// Add a delimiter to avoid run-together collisions
+		h.Write([]byte{0})
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
