@@ -101,7 +101,7 @@ test-integration: binary
 #? test-gateway-api-conformance: Run the conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags !kNativeConformance ./integration  -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.3" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags !kNativeConformance ./integration  -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.4" $(TESTFLAGS)
 
 test-knative-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.

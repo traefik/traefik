@@ -1,9 +1,12 @@
 package compress
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 func Test_getCompressionEncoding(t *testing.T) {
@@ -15,14 +18,19 @@ func Test_getCompressionEncoding(t *testing.T) {
 		expected           string
 	}{
 		{
-			desc:           "br > gzip (no weight)",
-			acceptEncoding: []string{"gzip, br"},
-			expected:       brotliName,
+			desc:           "Empty Accept-Encoding",
+			acceptEncoding: []string{""},
+			expected:       identityName,
 		},
 		{
-			desc:           "zstd > br > gzip (no weight)",
-			acceptEncoding: []string{"zstd, gzip, br"},
-			expected:       zstdName,
+			desc:           "gzip > br (no weight)",
+			acceptEncoding: []string{"gzip, br"},
+			expected:       gzipName,
+		},
+		{
+			desc:           "gzip > br > zstd (no weight)",
+			acceptEncoding: []string{"gzip, br, zstd"},
+			expected:       gzipName,
 		},
 		{
 			desc:           "known compression encoding (no weight)",
@@ -32,23 +40,33 @@ func Test_getCompressionEncoding(t *testing.T) {
 		{
 			desc:           "unknown compression encoding (no weight), no encoding",
 			acceptEncoding: []string{"compress, rar"},
-			expected:       identityName,
+			expected:       notAcceptable,
 		},
 		{
-			desc:           "wildcard return the default compression encoding",
+			desc:           "wildcard returns the default compression encoding",
 			acceptEncoding: []string{"*"},
-			expected:       brotliName,
+			expected:       gzipName,
 		},
 		{
-			desc:            "wildcard return the custom default compression encoding",
+			desc:            "wildcard returns the custom default compression encoding",
 			acceptEncoding:  []string{"*"},
-			defaultEncoding: "foo",
-			expected:        "foo",
+			defaultEncoding: brotliName,
+			expected:        brotliName,
 		},
 		{
 			desc:           "follows weight",
 			acceptEncoding: []string{"br;q=0.8, gzip;q=1.0, *;q=0.1"},
 			expected:       gzipName,
+		},
+		{
+			desc:           "identity with higher weight is preferred",
+			acceptEncoding: []string{"br;q=0.8, identity;q=1.0"},
+			expected:       identityName,
+		},
+		{
+			desc:           "identity with equal weight is not preferred",
+			acceptEncoding: []string{"br;q=0.8, identity;q=0.8"},
+			expected:       brotliName,
 		},
 		{
 			desc:           "ignore unknown compression encoding",
@@ -93,6 +111,33 @@ func Test_getCompressionEncoding(t *testing.T) {
 			supportedEncodings: []string{gzipName, brotliName},
 			expected:           gzipName,
 		},
+		{
+			desc:           "Zero weights, no compression",
+			acceptEncoding: []string{"br;q=0, gzip;q=0, zstd;q=0"},
+			expected:       notAcceptable,
+		},
+		{
+			desc:            "Zero weights, default encoding, no compression",
+			acceptEncoding:  []string{"br;q=0, gzip;q=0, zstd;q=0"},
+			defaultEncoding: "br",
+			expected:        notAcceptable,
+		},
+		{
+			desc:           "Same weight, first supported encoding",
+			acceptEncoding: []string{"br;q=1.0, gzip;q=1.0, zstd;q=1.0"},
+			expected:       gzipName,
+		},
+		{
+			desc:           "Same weight, first supported encoding, order has no effect",
+			acceptEncoding: []string{"br;q=1.0, zstd;q=1.0, gzip;q=1.0"},
+			expected:       gzipName,
+		},
+		{
+			desc:            "Same weight, first supported encoding, defaultEncoding has no effect",
+			acceptEncoding:  []string{"br;q=1.0, zstd;q=1.0, gzip;q=1.0"},
+			defaultEncoding: "br",
+			expected:        gzipName,
+		},
 	}
 
 	for _, test := range testCases {
@@ -103,7 +148,18 @@ func Test_getCompressionEncoding(t *testing.T) {
 				test.supportedEncodings = defaultSupportedEncodings
 			}
 
-			encoding := getCompressionEncoding(test.acceptEncoding, test.defaultEncoding, test.supportedEncodings)
+			conf := dynamic.Compress{
+				Encodings:       test.supportedEncodings,
+				DefaultEncoding: test.defaultEncoding,
+			}
+
+			h, err := New(context.Background(), nil, conf, "test")
+			require.NoError(t, err)
+
+			c, ok := h.(*compress)
+			require.True(t, ok)
+
+			encoding := c.getCompressionEncoding(test.acceptEncoding)
 
 			assert.Equal(t, test.expected, encoding)
 		})
@@ -147,7 +203,6 @@ func Test_parseAcceptEncoding(t *testing.T) {
 				{Type: zstdName, Weight: 1},
 				{Type: gzipName, Weight: 1},
 				{Type: brotliName, Weight: 1},
-				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -157,7 +212,6 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			supportedEncodings: []string{zstdName},
 			expected: []Encoding{
 				{Type: zstdName, Weight: 1},
-				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -188,7 +242,6 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			expected: []Encoding{
 				{Type: gzipName, Weight: 1},
 				{Type: identityName, Weight: 0.5},
-				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -198,7 +251,6 @@ func Test_parseAcceptEncoding(t *testing.T) {
 			supportedEncodings: []string{"br"},
 			expected: []Encoding{
 				{Type: identityName, Weight: 0.5},
-				{Type: wildcardName, Weight: 0},
 			},
 			assertWeight: assert.True,
 		},
@@ -212,10 +264,11 @@ func Test_parseAcceptEncoding(t *testing.T) {
 				test.supportedEncodings = defaultSupportedEncodings
 			}
 
-			aes, hasWeight := parseAcceptEncoding(test.values, test.supportedEncodings)
+			supportedEncodings := buildSupportedEncodings(test.supportedEncodings)
+
+			aes := parseAcceptableEncodings(test.values, supportedEncodings)
 
 			assert.Equal(t, test.expected, aes)
-			test.assertWeight(t, hasWeight)
 		})
 	}
 }

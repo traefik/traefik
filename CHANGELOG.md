@@ -1,3 +1,72 @@
+## [v3.4.0-rc1](https://github.com/traefik/traefik/tree/v3.4.0-rc1) (2025-03-31)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.0-rc1...v3.4.0-rc1)
+
+**Enhancements:**
+- **[acme]** Add acme.profile and acme.emailAddresses options ([#11597](https://github.com/traefik/traefik/pull/11597) by [ldez](https://github.com/ldez))
+- **[docker,ecs,docker/swarm,consulcatalog,nomad]** Allow configuring server URLs with label providers ([#11374](https://github.com/traefik/traefik/pull/11374) by [yelvert](https://github.com/yelvert))
+- **[k8s/crd,k8s]** Improve CEL validation on Ingress CRD resources ([#11311](https://github.com/traefik/traefik/pull/11311) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/gatewayapi]** Set rule priority in Gateway API TLSRoute ([#11443](https://github.com/traefik/traefik/pull/11443) by [augustozanellato](https://github.com/augustozanellato))
+- **[k8s/ingress]** Add ingress status for ClusterIP and NodePort Service Type ([#11100](https://github.com/traefik/traefik/pull/11100) by [mlec1](https://github.com/mlec1))
+- **[middleware,authentication]** Add option to preserve request method in forwardAuth ([#11473](https://github.com/traefik/traefik/pull/11473) by [an09mous](https://github.com/an09mous))
+- **[middleware]** Support rewriting status codes in error page middleware ([#11520](https://github.com/traefik/traefik/pull/11520) by [sevensolutions](https://github.com/sevensolutions))
+- **[middleware]** Add Redis rate limiter ([#10211](https://github.com/traefik/traefik/pull/10211) by [longquan0104](https://github.com/longquan0104))
+- **[service]** Add p2c load-balancing strategy for servers load-balancer ([#11547](https://github.com/traefik/traefik/pull/11547) by [rtribotte](https://github.com/rtribotte))
+- **[sticky-session]** Support domain configuration for sticky cookies ([#11556](https://github.com/traefik/traefik/pull/11556) by [jleal52](https://github.com/jleal52))
+- **[tls,k8s/crd,service]** Allow root CA to be added through config maps ([#11475](https://github.com/traefik/traefik/pull/11475) by [Nelwhix](https://github.com/Nelwhix))
+- **[tls]** Add support to disable session ticket ([#11609](https://github.com/traefik/traefik/pull/11609) by [avdhoot](https://github.com/avdhoot))
+- **[udp]** Add support for UDP routing in systemd socket activation ([#11022](https://github.com/traefik/traefik/pull/11022) by [tsiid](https://github.com/tsiid))
+- **[webui]** Add auto webui theme option and default to it ([#11455](https://github.com/traefik/traefik/pull/11455) by [zizzfizzix](https://github.com/zizzfizzix))
+- Replace experimental maps and slices with stdlib ([#11350](https://github.com/traefik/traefik/pull/11350) by [Juneezee](https://github.com/Juneezee))
+
+**Documentation:**
+- Deprecate defaultRuleSyntax and ruleSyntax options ([#11619](https://github.com/traefik/traefik/pull/11619) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v3.3 into master ([#11653](https://github.com/traefik/traefik/pull/11653) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11595](https://github.com/traefik/traefik/pull/11595) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11541](https://github.com/traefik/traefik/pull/11541) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11504](https://github.com/traefik/traefik/pull/11504) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11420](https://github.com/traefik/traefik/pull/11420) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11394](https://github.com/traefik/traefik/pull/11394) by [mmatur](https://github.com/mmatur))
+
+## [v3.3.5](https://github.com/traefik/traefik/tree/v3.3.5) (2025-03-31)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.4...v3.3.5)
+
+**Bug fixes:**
+- **[k8s/gatewayapi]** Set scheme to https with BackendTLSPolicy ([#11586](https://github.com/traefik/traefik/pull/11586) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Revert compress middleware algorithms priority to v2 behavior ([#11641](https://github.com/traefik/traefik/pull/11641) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Do not abort request when response content-type is malformed ([#11628](https://github.com/traefik/traefik/pull/11628) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Compress data on flush when compression is not started ([#11583](https://github.com/traefik/traefik/pull/11583) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[middleware]** Add back forwarded headers section in FAQ ([#11606](https://github.com/traefik/traefik/pull/11606) by [kevinpollet](https://github.com/kevinpollet))
+- New Routing Reference Documentation ([#11330](https://github.com/traefik/traefik/pull/11330) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11644](https://github.com/traefik/traefik/pull/11644) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.3 ([#11594](https://github.com/traefik/traefik/pull/11594) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.22](https://github.com/traefik/traefik/tree/v2.11.22) (2025-03-31)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.21...v2.11.22)
+
+**Bug fixes:**
+- **[ecs,logs]** Bump AWS SDK to v2 ([#11359](https://github.com/traefik/traefik/pull/11359) by [Juneezee](https://github.com/Juneezee))
+- **[logs,tls]** Error level log for configuration-related TLS errors with backends ([#11611](https://github.com/traefik/traefik/pull/11611) by [rtribotte](https://github.com/rtribotte))
+- **[rules]** Allow underscore character in HostSNI matcher ([#11557](https://github.com/traefik/traefik/pull/11557) by [rohitlohar45](https://github.com/rohitlohar45))
+- **[server]** Bump github.com/vulcand/oxy/v2 to v2.0.3 ([#11649](https://github.com/traefik/traefik/pull/11649) by [adamvduke](https://github.com/adamvduke))
+- **[server]** Bump golang.org/x/net to v0.37.0 ([#11632](https://github.com/traefik/traefik/pull/11632) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Change boolean module properties default value to undefined ([#11639](https://github.com/traefik/traefik/pull/11639) by [rtribotte](https://github.com/rtribotte))
+- Bump github.com/golang-jwt/jwt to v4.5.2 and v5.2.2 ([#11634](https://github.com/traefik/traefik/pull/11634) by [kevinpollet](https://github.com/kevinpollet))
+- Bump github.com/redis/go-redis/v9 to v9.6.3 ([#11633](https://github.com/traefik/traefik/pull/11633) by [kevinpollet](https://github.com/kevinpollet))
+- Bump golang.org/x/net to v0.36.0 ([#11608](https://github.com/traefik/traefik/pull/11608) by [kevinpollet](https://github.com/kevinpollet))
+- Bump github.com/go-jose/go-jose/v4 to v4.0.5 ([#11571](https://github.com/traefik/traefik/pull/11571) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[accesslogs]** Remove documentation for OriginStatusLine and DownstreamStatusLine accessLogs fields ([#11599](https://github.com/traefik/traefik/pull/11599) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Clarifies that retry middleware uses TCP, not HTTP status codes ([#11603](https://github.com/traefik/traefik/pull/11603) by [geraldcroes](https://github.com/geraldcroes))
+- **[redis]** Add tip for dynamic configuration updates of Redis ([#11577](https://github.com/traefik/traefik/pull/11577) by [Alanxtl](https://github.com/Alanxtl))
+- Add Security Support ([#11610](https://github.com/traefik/traefik/pull/11610) by [nmengin](https://github.com/nmengin))
+
 ## [v3.3.4](https://github.com/traefik/traefik/tree/v3.3.4) (2025-02-25)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.3...v3.3.4)
 
