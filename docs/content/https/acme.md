@@ -253,7 +253,7 @@ when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpc
 #### `Delay`
 
 The delay between the creation of the challenge and the validation.
-A value lower or equal to zero means no delay.
+A value lower than or equal to zero means no delay.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
