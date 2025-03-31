@@ -23,7 +23,6 @@ interface ToastContextProps {
 
 export const ToastContext = React.createContext({} as ToastContextProps)
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const ToastProvider = (props: ToastProviderProps) => {
   const [toasts, setToastList] = React.useState<ToastState[]>([])
   const addToast = React.useCallback(
