@@ -1,4 +1,9 @@
-import { Box, Flex, Td, Text, Tfoot, Th, Thead } from '@traefiklabs/faency'
+import { Box, Flex, Td, Text, Tfoot, Thead } from '@traefiklabs/faency'
+import { useEffect, useMemo, useState } from 'react'
+import { FiShield } from 'react-icons/fi'
+import useInfiniteScroll from 'react-infinite-scroll-hook'
+import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
+
 import { AnimatedRow, AnimatedTable, AnimatedTBody } from 'components/AnimatedTable'
 import { Tr } from 'components/FaencyOverrides'
 import { Chips } from 'components/resources/DetailSections'
@@ -7,14 +12,11 @@ import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
+import SortableTh from 'components/tables/SortableTh'
 import Tooltip from 'components/Tooltip'
 import useFetchWithPagination, { RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
-import { useEffect, useMemo, useState } from 'react'
-import { FiArrowDown, FiArrowUp, FiShield } from 'react-icons/fi'
-import useInfiniteScroll from 'react-infinite-scroll-hook'
-import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
 export const makeRowRender = (navigate: NavigateFunction, protocol = 'http'): RenderRowType => {
   const HttpRoutersRenderRow = (row) => (
@@ -72,18 +74,7 @@ export const makeRowRender = (navigate: NavigateFunction, protocol = 'http'): Re
   return HttpRoutersRenderRow
 }
 
-export const HttpRoutersRender = ({
-  error,
-  isEmpty,
-  isLoadingMore,
-  isReachingEnd,
-  loadMore,
-  pageCount,
-  pages,
-  sortBy,
-  direction,
-  handleSort,
-}) => {
+export const HttpRoutersRender = ({ error, isEmpty, isLoadingMore, isReachingEnd, loadMore, pageCount, pages }) => {
   const [isMounted, setMounted] = useState(false)
 
   const [infiniteRef] = useInfiniteScroll({
@@ -99,28 +90,14 @@ export const HttpRoutersRender = ({
       <AnimatedTable isMounted={isMounted}>
         <Thead>
           <Tr>
-            <Th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
-              Status {sortBy === 'status' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
-            <Th>TLS</Th>
-            <Th onClick={() => handleSort('rule')} style={{ cursor: 'pointer' }}>
-              Rule {sortBy === 'rule' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
-            <Th onClick={() => handleSort('entrypoint')} style={{ cursor: 'pointer' }}>
-              Entrypoints {sortBy === 'entrypoint' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
-            <Th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-              Name {sortBy === 'name' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
-            <Th onClick={() => handleSort('service')} style={{ cursor: 'pointer' }}>
-              Service {sortBy === 'service' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
-            <Th onClick={() => handleSort('provider')} style={{ cursor: 'pointer' }}>
-              Provider {sortBy === 'provider' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
-            <Th onClick={() => handleSort('priority')} style={{ cursor: 'pointer' }}>
-              Priority {sortBy === 'priority' && (direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />)}
-            </Th>
+            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="TLS" />
+            <SortableTh label="Rule" isSortable sortByValue="rule" />
+            <SortableTh label="Entrypoints" isSortable sortByValue="entrypoint" />
+            <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Service" isSortable sortByValue="service" />
+            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
           </Tr>
         </Thead>
         <AnimatedTBody pageCount={pageCount} isMounted={isMounted}>
@@ -148,19 +125,7 @@ export const HttpRouters = () => {
   const renderRow = makeRowRender(navigate)
   const [searchParams] = useSearchParams()
 
-  const [sortBy, setSortBy] = useState<string>('priority')
-  const [direction, setDirection] = useState<'asc' | 'desc'>('desc')
-
-  const handleSort = (column: string) => {
-    setSortBy(column)
-    setDirection((prevDirection) => (prevDirection === 'asc' ? 'desc' : 'asc'))
-  }
-
-  // const query = useMemo(() => searchParamsToState(searchParams), [searchParams.append("direction", direction)])
-  const query = useMemo(
-    () => ({ ...searchParamsToState(searchParams), direction, sortBy }),
-    [searchParams, direction, sortBy],
-  )
+  const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
   const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
     '/http/routers',
     {
@@ -182,9 +147,6 @@ export const HttpRouters = () => {
         loadMore={loadMore}
         pageCount={pageCount}
         pages={pages}
-        sortBy={sortBy}
-        direction={direction}
-        handleSort={handleSort}
       />
     </Page>
   )
