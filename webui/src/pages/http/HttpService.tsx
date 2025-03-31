@@ -187,7 +187,7 @@ export const ServicePanels = ({ data, protocol = '' }: DetailProps) => {
             {data.loadBalancer.healthCheck.headers && (
               <ItemBlock title="Headers">
                 <Chips
-                  variant="deepBlue"
+                  variant="neon"
                   items={Object.entries(data.loadBalancer.healthCheck.headers).map((entry) => entry.join(': '))}
                 />
               </ItemBlock>

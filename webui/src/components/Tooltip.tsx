@@ -1,17 +1,16 @@
 import { Flex, Text } from '@traefiklabs/faency'
-import { JSXElementConstructor, MouseEvent, ReactElement, ReactNode, useMemo } from 'react'
+import { MouseEvent, ReactNode, useMemo } from 'react'
 import { FiCopy } from 'react-icons/fi'
 
 import { Button, Tooltip as FaencyTooltip } from './FaencyOverrides'
 
 type TooltipProps = {
   action?: 'copy'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  children: ReactNode & ReactElement<any, string | JSXElementConstructor<any>>
+  children: ReactNode
   label: string
 }
 
-export const Tooltip = ({ action, children, label }: TooltipProps) => {
+export default function Tooltip({ action, children, label }: TooltipProps) {
   const actionComponent = useMemo(() => {
     if (action === 'copy') {
       return (
@@ -43,5 +42,3 @@ export const Tooltip = ({ action, children, label }: TooltipProps) => {
     </FaencyTooltip>
   )
 }
-
-export default Tooltip
