@@ -15,39 +15,38 @@ import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
-export const makeRowRender =
-  (navigate: NavigateFunction): RenderRowType =>
-  // eslint-disable-next-line react/display-name
-  (row) =>
-    (
-      <AnimatedRow key={row.name} onClick={(): void => navigate(`/tcp/routers/${row.name}`)}>
-        <Td>
-          <Tooltip label={row.status}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ResourceStatus status={row.status} />
-            </Box>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.rule} action="copy">
-            <Text css={{ wordBreak: 'break-word' }}>{row.rule}</Text>
-          </Tooltip>
-        </Td>
-        <Td>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</Td>
-        <Td>
-          <Tooltip label={row.name} action="copy">
-            <Text css={{ wordBreak: 'break-word' }}>{row.name}</Text>
-          </Tooltip>
-        </Td>
-        <Td>
-          <Tooltip label={row.provider}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ProviderIcon name={row.provider} />
-            </Box>
-          </Tooltip>
-        </Td>
-      </AnimatedRow>
-    )
+export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
+  const TcpRoutersRenderRow = (row) => (
+    <AnimatedRow key={row.name} onClick={(): void => navigate(`/tcp/routers/${row.name}`)}>
+      <Td>
+        <Tooltip label={row.status}>
+          <Box css={{ width: '32px', height: '32px' }}>
+            <ResourceStatus status={row.status} />
+          </Box>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.rule} action="copy">
+          <Text css={{ wordBreak: 'break-word' }}>{row.rule}</Text>
+        </Tooltip>
+      </Td>
+      <Td>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</Td>
+      <Td>
+        <Tooltip label={row.name} action="copy">
+          <Text css={{ wordBreak: 'break-word' }}>{row.name}</Text>
+        </Tooltip>
+      </Td>
+      <Td>
+        <Tooltip label={row.provider}>
+          <Box css={{ width: '32px', height: '32px' }}>
+            <ProviderIcon name={row.provider} />
+          </Box>
+        </Tooltip>
+      </Td>
+    </AnimatedRow>
+  )
+  return TcpRoutersRenderRow
+}
 
 export const TcpRoutersRender = ({
   error,
