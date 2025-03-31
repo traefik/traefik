@@ -1,0 +1,91 @@
+import { Table, Tbody, Tr } from '@traefiklabs/faency'
+import { motion } from 'framer-motion'
+import { ComponentProps, ReactNode } from 'react'
+
+import ClickableRow from './ClickableRow'
+
+const tableVariants = {
+  hidden: {
+    opacity: 0,
+  },
+  visible: {
+    opacity: 1,
+  },
+}
+
+const bodyVariants = {
+  hidden: {
+    x: -6,
+    opacity: 0,
+  },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: { staggerChildren: 0.03, delayChildren: 0.1 },
+  },
+}
+
+const rowVariants = {
+  hidden: {
+    x: -6,
+    opacity: 0,
+  },
+  visible: {
+    x: 0,
+    opacity: 1,
+  },
+}
+
+const CustomTable = motion(Table)
+const CustomBody = motion(Tbody)
+const CustomClickableRow = motion(ClickableRow)
+const FixedCustomClickableRow = CustomClickableRow as ComponentProps<typeof CustomClickableRow> &
+  ComponentProps<typeof ClickableRow>
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomRow = motion(Tr) as any
+
+type AnimatedTableProps = {
+  children: ReactNode
+  isMounted?: boolean
+}
+
+export const AnimatedTable = ({ isMounted = true, children }: AnimatedTableProps) => (
+  <CustomTable
+    style={{ tableLayout: 'auto' }}
+    initial="hidden"
+    animate={isMounted ? 'visible' : 'hidden'}
+    variants={tableVariants}
+  >
+    {children}
+  </CustomTable>
+)
+
+type AnimatedTBodyProps = {
+  pageCount: number
+  isMounted: boolean
+  children: ReactNode | null
+}
+
+export const AnimatedTBody = ({ pageCount, isMounted = true, children }: AnimatedTBodyProps) => (
+  <CustomBody variants={bodyVariants} animate={isMounted && pageCount > 0 ? 'visible' : 'hidden'}>
+    {children}
+  </CustomBody>
+)
+
+type AnimatedRowType = {
+  children: ReactNode
+  onClick?: () => void
+}
+
+export const AnimatedRow = ({ children, onClick }: AnimatedRowType) => {
+  if (onClick) {
+    return (
+      <FixedCustomClickableRow onClick={onClick} variants={rowVariants}>
+        {children}
+      </FixedCustomClickableRow>
+    )
+  }
+
+  return <CustomRow variants={rowVariants}>{children}</CustomRow>
+}

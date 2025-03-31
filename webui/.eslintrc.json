@@ -1,0 +1,37 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.tsx"],
+      "rules": {
+        "react/prop-types": "off"
+      }
+    }
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "plugins": ["react", "@typescript-eslint", "prettier", "simple-import-sort"],
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "warn",
+    "prettier/prettier": ["error", { "singleQuote": true }],
+    "react/display-name": "warn",
+    "react/react-in-jsx-scope": "off",
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error"
+  },
+  "settings": {
+    "react": {
+      "pragma": "React",
+      "version": "detect"
+    }
+  },
+  "parser": "@typescript-eslint/parser"
+}

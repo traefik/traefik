@@ -1,0 +1,52 @@
+[
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "address": "172.17.0.6:8080"
+        },
+        {
+          "address": "172.17.0.4:8080"
+        }
+      ]
+    },
+    "status": "enabled",
+    "name": "whoami-a@file",
+    "provider": "file",
+    "type": "loadbalancer"
+  },
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "address": "172.17.0.5:8080"
+        }
+      ]
+    },
+    "status": "enabled",
+    "name": "whoami-b@file",
+    "provider": "file",
+    "type": "loadbalancer"
+  },
+  {
+    "weighted": {
+      "services": [
+        {
+          "name": "whoami-a",
+          "weight": 3
+        },
+        {
+          "name": "whoami-b",
+          "weight": 1
+        }
+      ]
+    },
+    "status": "enabled",
+    "usedBy": [
+      "to-whoami-a@file"
+    ],
+    "name": "whoami@file",
+    "provider": "file",
+    "type": "weighted"
+  }
+]
