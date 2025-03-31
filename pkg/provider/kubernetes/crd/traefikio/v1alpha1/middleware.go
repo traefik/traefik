@@ -12,7 +12,7 @@ import (
 // +kubebuilder:storageversion
 
 // Middleware is the CRD implementation of a Traefik Middleware.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/overview/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/overview/
 type Middleware struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -60,7 +60,7 @@ type MiddlewareSpec struct {
 
 // ErrorPage holds the custom error middleware configuration.
 // This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/errorpages/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/errorpages/
 type ErrorPage struct {
 	// Status defines which status or range of statuses should result in an error page.
 	// It can be either a status code as a number (500),
@@ -73,7 +73,7 @@ type ErrorPage struct {
 	// For example: "418": 404 or "410-418": 404
 	StatusRewrites map[string]int `json:"statusRewrites,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
-	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/errorpages/#service
+	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/errorpages/#service
 	Service Service `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
@@ -108,7 +108,7 @@ type CircuitBreaker struct {
 
 // Chain holds the configuration of the chain middleware.
 // This middleware enables to define reusable combinations of other pieces of middleware.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/chain/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/chain/
 type Chain struct {
 	// Middlewares is the list of MiddlewareRef which composes the chain.
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
@@ -118,7 +118,7 @@ type Chain struct {
 
 // BasicAuth holds the basic auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/basicauth/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/basicauth/
 type BasicAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret string `json:"secret,omitempty"`
@@ -129,7 +129,7 @@ type BasicAuth struct {
 	// Default: false.
 	RemoveHeader bool `json:"removeHeader,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -137,7 +137,7 @@ type BasicAuth struct {
 
 // DigestAuth holds the digest auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/digestauth/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/digestauth/
 type DigestAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret string `json:"secret,omitempty"`
@@ -147,7 +147,7 @@ type DigestAuth struct {
 	// Default: traefik.
 	Realm string `json:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -155,7 +155,7 @@ type DigestAuth struct {
 
 // ForwardAuth holds the forward auth middleware configuration.
 // This middleware delegates the request authentication to a Service.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/forwardauth/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty"`
@@ -164,7 +164,7 @@ type ForwardAuth struct {
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/forwardauth/#authresponseheadersregex
+	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
@@ -174,7 +174,7 @@ type ForwardAuth struct {
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/forwardauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/forwardauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 	// ForwardBody defines whether to send the request body to the authentication server.
 	ForwardBody bool `json:"forwardBody,omitempty"`
@@ -201,7 +201,7 @@ type ClientTLSWithCAOptional struct {
 
 // RateLimit holds the rate limit configuration.
 // This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/ratelimit/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/ratelimit/
 type RateLimit struct {
 	// Average is the maximum rate, by default in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
@@ -286,7 +286,7 @@ type ClientTLS struct {
 
 // Compress holds the compress middleware configuration.
 // This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/compress/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/compress/
 type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
 	// `application/grpc` is always excluded.
@@ -308,7 +308,7 @@ type Compress struct {
 // Retry holds the retry middleware configuration.
 // This middleware reissues requests a given number of times to a backend server if that server does not reply.
 // As soon as the server answers, the middleware stops retrying, regardless of the response status.
-// More info: https://doc.traefik.io/traefik/v3.3/middlewares/http/retry/
+// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	// +kubebuilder:validation:Minimum=0

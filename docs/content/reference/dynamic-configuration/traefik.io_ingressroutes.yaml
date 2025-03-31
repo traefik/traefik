@@ -43,7 +43,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.3/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.4/routing/entrypoints/
                   Default: all.
                 items:
                   type: string
@@ -64,12 +64,12 @@ spec:
                     match:
                       description: |-
                         Match defines the router's rule.
-                        More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rule
+                        More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#rule
                       type: string
                     middlewares:
                       description: |-
                         Middlewares defines the list of references to Middleware resources.
-                        More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#kind-middleware
+                        More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-middleware
                       items:
                         description: MiddlewareRef is a reference to a Middleware
                           resource.
@@ -101,7 +101,7 @@ spec:
                     priority:
                       description: |-
                         Priority defines the router's priority.
-                        More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#priority
+                        More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#priority
                       maximum: 9223372036854775000
                       type: integer
                     services:
@@ -243,7 +243,7 @@ spec:
                           sticky:
                             description: |-
                               Sticky defines the sticky sessions configuration.
-                              More info: https://doc.traefik.io/traefik/v3.3/routing/services/#sticky-sessions
+                              More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
                             properties:
                               cookie:
                                 description: Cookie defines the sticky cookie configuration.
@@ -313,7 +313,7 @@ spec:
                     syntax:
                       description: |-
                         Syntax defines the router's rule syntax.
-                        More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#rulesyntax
+                        More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#rulesyntax
                         Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
                       type: string
                   required:
@@ -323,18 +323,18 @@ spec:
               tls:
                 description: |-
                   TLS defines the TLS configuration.
-                  More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#tls
+                  More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#tls
                 properties:
                   certResolver:
                     description: |-
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
-                      More info: https://doc.traefik.io/traefik/v3.3/https/acme/#certificate-resolvers
+                      More info: https://doc.traefik.io/traefik/v3.4/https/acme/#certificate-resolvers
                     type: string
                   domains:
                     description: |-
                       Domains defines the list of domains that will be used to issue certificates.
-                      More info: https://doc.traefik.io/traefik/v3.3/routing/routers/#domains
+                      More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#domains
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -353,17 +353,17 @@ spec:
                     description: |-
                       Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
                       If not defined, the `default` TLSOption is used.
-                      More info: https://doc.traefik.io/traefik/v3.3/https/tls/#tls-options
+                      More info: https://doc.traefik.io/traefik/v3.4/https/tls/#tls-options
                     properties:
                       name:
                         description: |-
                           Name defines the name of the referenced TLSOption.
-                          More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#kind-tlsoption
+                          More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsoption
                         type: string
                       namespace:
                         description: |-
                           Namespace defines the namespace of the referenced TLSOption.
-                          More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#kind-tlsoption
+                          More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsoption
                         type: string
                     required:
                     - name
@@ -380,12 +380,12 @@ spec:
                       name:
                         description: |-
                           Name defines the name of the referenced TLSStore.
-                          More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#kind-tlsstore
+                          More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsstore
                         type: string
                       namespace:
                         description: |-
                           Namespace defines the namespace of the referenced TLSStore.
-                          More info: https://doc.traefik.io/traefik/v3.3/routing/providers/kubernetes-crd/#kind-tlsstore
+                          More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsstore
                         type: string
                     required:
                     - name
