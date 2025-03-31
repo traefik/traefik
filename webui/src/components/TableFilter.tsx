@@ -1,0 +1,108 @@
+import { Box, Flex, TextField } from '@traefiklabs/faency'
+import isUndefined from 'lodash/isUndefined'
+import omitBy from 'lodash/omitBy'
+import { useCallback, useEffect, useState } from 'react'
+import { FiSearch } from 'react-icons/fi'
+import { useSearchParams } from 'react-router-dom'
+import { useDebounceCallback } from 'usehooks-ts'
+
+import { Button } from './FaencyOverrides'
+
+type State = {
+  search?: string
+  status?: string
+  sortBy?: string
+  direction?: string
+}
+
+export const searchParamsToState = (searchParams: URLSearchParams): State => {
+  if (searchParams.size <= 0) return {}
+
+  return omitBy(
+    {
+      search: searchParams.get('search') || undefined,
+      status: searchParams.get('status') || undefined,
+    },
+    isUndefined,
+  )
+}
+
+type Status = {
+  id: string
+  value?: string
+  name: string
+}
+
+const statuses: Status[] = [
+  { id: 'all', value: undefined, name: 'All status' },
+  { id: 'enabled', value: 'enabled', name: 'Success' },
+  { id: 'warning', value: 'warning', name: 'Warnings' },
+  { id: 'disabled', value: 'disabled', name: 'Errors' },
+]
+
+export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }) => {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const [state, setState] = useState(searchParamsToState(searchParams))
+
+  const onSearch = useDebounceCallback((search?: string) => {
+    const newState = omitBy({ ...state, search: search || undefined }, isUndefined)
+    setState(newState)
+    setSearchParams(newState)
+  }, 500)
+
+  const onStatusClick = useCallback(
+    (status?: string) => {
+      const newState = omitBy({ ...state, status: status || undefined }, isUndefined)
+      setState(newState)
+      setSearchParams(newState)
+    },
+    [setSearchParams, state],
+  )
+
+  useEffect(() => setState(searchParamsToState(searchParams)), [searchParams])
+
+  return (
+    <Flex css={{ alignItems: 'center', justifyContent: 'space-between', mb: '$5' }}>
+      <Flex>
+        {!hideStatusFilter &&
+          statuses.map(({ id, value, name }) => (
+            <Button
+              key={id}
+              css={{ marginRight: '$3', boxShadow: 'none' }}
+              ghost={state.status !== value}
+              variant={state.status !== value ? 'secondary' : 'primary'}
+              onClick={() => onStatusClick(value)}
+            >
+              {name}
+            </Button>
+          ))}
+      </Flex>
+      <Box css={{ maxWidth: 200, position: 'relative' }}>
+        <TextField
+          data-testid="table-search-input"
+          defaultValue={state.search || ''}
+          onChange={(e) => onSearch(e.target?.value)}
+          placeholder="Search"
+          css={{ input: { paddingRight: '$6' } }}
+        />
+        <Box
+          css={{
+            position: 'absolute',
+            height: '100%',
+            top: 0,
+            right: '$2',
+            color: 'hsl(0, 0%, 56%)',
+            pointerEvents: 'none',
+          }}
+        >
+          <Flex css={{ alignItems: 'center', height: '100%' }}>
+            <FiSearch color="hsl(0, 0%, 56%)" size={20} />
+          </Flex>
+        </Box>
+      </Box>
+    </Flex>
+  )
+}
+
+export default TableFilter

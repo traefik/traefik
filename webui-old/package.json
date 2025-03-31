@@ -1,0 +1,62 @@
+{
+  "name": "traefik-ui",
+  "version": "2.0.0",
+  "description": "Traefik UI",
+  "productName": "Traefik",
+  "cordovaId": "io.traefik.traefik",
+  "private": true,
+  "scripts": {
+    "transfer": "node dev/scripts/transfer.js",
+    "lint": "eslint src/**/*.{js,vue}",
+    "dev": "APP_ENV=development quasar dev",
+    "build-quasar": "quasar build",
+    "build-staging": "NODE_ENV=production APP_ENV=development yarn build-quasar",
+    "build": "NODE_ENV=production APP_ENV=production yarn build-quasar && yarn transfer spa",
+    "build:nc": "yarn build",
+    "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
+    "test:unit": "vitest",
+    "test:unit:ci": "vitest run"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.16.12",
+    "axios": "^1.7.4",
+    "chart.js": "^4.4.1",
+    "core-js": "^3.35.1",
+    "dot-prop": "^8.0.2",
+    "lodash.isequal": "4.5.0",
+    "moment": "^2.30.1",
+    "quasar": "^2.16.6",
+    "query-string": "^8.1.0",
+    "vue": "^3.0.0",
+    "vue-chartjs": "^5.3.0",
+    "vue-router": "^4.0.12",
+    "vuex": "^4.1.0",
+    "vuex-map-fields": "^1.4.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.9",
+    "@babel/eslint-parser": "^7.23.10",
+    "@quasar/app-vite": "^2.0.0-beta.15",
+    "@quasar/babel-preset-app": "^2.0.3",
+    "@quasar/quasar-app-extension-testing-unit-vitest": "^1.0.0",
+    "@vue/test-utils": "^2.4.4",
+    "autoprefixer": "^10.4.2",
+    "eslint": "^8.11.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "postcss": "^8.4.14",
+    "vitest": "^1.6.0"
+  },
+  "resolutions": {
+    "cookie": "^0.7.0"
+  },
+  "engines": {
+    "node": "^22 || ^20 || ^18 || ^16",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.22.22"
+  },
+  "packageManager": "yarn@1.22.22"
+}

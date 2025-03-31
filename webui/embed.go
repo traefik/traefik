@@ -1,14 +1,12 @@
-package webui
+package dashboard
 
 import (
 	"embed"
 	"io/fs"
 )
 
-// Files starting with . and _ are excluded by default
-//
-//go:embed static
+//go:embed dist
 var assets embed.FS
 
-// FS contains the web UI assets.
-var FS, _ = fs.Sub(assets, "static")
+// WebUI contains the Web UI assets.
+var WebUI, _ = fs.Sub(assets, "dist")

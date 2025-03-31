@@ -1,0 +1,85 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { fetchPage } from 'libs/fetch'
+import qs from 'query-string'
+import { ReactNode } from 'react'
+import useSWRInfinite, { SWRInfiniteConfiguration } from 'swr/infinite'
+
+export type RenderRowType = (row: any) => ReactNode
+
+export type pagesResponseInterface = {
+  pages: ReactNode
+  pageCount: number
+  error: any
+  isLoadingMore: boolean
+  isReachingEnd: boolean
+  isEmpty: boolean
+  loadMore: () => void
+}
+type useFetchWithPaginationType = (
+  path: string,
+  opts: SWRInfiniteConfiguration & {
+    rowsPerPage?: number
+    renderRow: RenderRowType
+    renderLoader?: () => ReactNode
+    listContextKey?: string
+    query?: any
+  },
+) => pagesResponseInterface
+
+const useFetchWithPagination: useFetchWithPaginationType = (path, opts) => {
+  const defaultLoadingFunction = () => (
+    <tr>
+      <td>Loading...</td>
+    </tr>
+  )
+  const { rowsPerPage = 10, renderLoader = defaultLoadingFunction, renderRow, query } = opts
+
+  const getKey = (pageIndex: number, previousPageData: any): string | null => {
+    if (previousPageData && (!previousPageData.data?.length || previousPageData.nextPage === 1)) return null
+
+    return `${path}?${qs.stringify({
+      page: pageIndex + 1,
+      per_page: rowsPerPage,
+      ...query,
+    })}`
+  }
+
+  const { data: res, error, size, setSize } = useSWRInfinite(getKey, fetchPage)
+
+  const isLoadingInitialData = !res && !error
+  const isEmpty = !res?.[0]?.data || res?.[0]?.data?.length === 0
+  const isLoadingMore = isLoadingInitialData || (size > 0 && res && typeof res[size - 1] === 'undefined') || false
+  const nextPage = res?.[size - 1]?.nextPage
+  const isReachingEnd = !nextPage || nextPage === 1
+
+  const loadMore = (): void => {
+    if (!isLoadingMore) {
+      setSize(size + 1)
+    }
+  }
+
+  const data = res?.reduce((acc, req) => {
+    if (req.data) {
+      acc.push(...req.data)
+    }
+    return acc
+  }, [] as any[])
+
+  let pages: ReactNode = null
+
+  if (!error) {
+    pages = !data ? renderLoader() : data?.map(renderRow)
+  }
+
+  return {
+    pages,
+    pageCount: size,
+    isEmpty,
+    error,
+    isLoadingMore,
+    isReachingEnd,
+    loadMore,
+  }
+}
+
+export default useFetchWithPagination

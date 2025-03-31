@@ -1,0 +1,32 @@
+.quasar
+.DS_Store
+.thumbs.db
+node_modules
+/dist
+/dev_local
+/src-cordova/node_modules
+/src-cordova/platforms
+/src-cordova/plugins
+/src-cordova/www
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# local env files
+.env.local
+.env.*.local
+
+# static assets (ignore all except the DO NOT EDIT file)
+static/*
+!static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
