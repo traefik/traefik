@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/signal"
 	"slices"
-	"strings"
 	"syscall"
 	"time"
 
@@ -313,15 +312,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	)
 
 	// TLS
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		ctx := context.Background()
-		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
-
-		gauge := metricsRegistry.TLSCertsNotAfterTimestampGauge()
-		for _, certificate := range tlsManager.GetServerCertificates() {
-			appendCertMetric(gauge, certificate)
-		}
-	})
+	watcher.AddListener(tlsUpdater(tlsManager, metricsRegistry.TLSCertsNotAfterTimestampGauge()))
 
 	// Metrics
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -567,15 +558,35 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	return registries
 }
 
-func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
-	slices.Sort(certificate.DNSNames)
+func tlsUpdater(tlsManager *traefiktls.Manager, gauge gokitmetrics.Gauge,) func(conf dynamic.Configuration) {
+	return func(conf dynamic.Configuration) {
+		ctx := context.Background()
+		oldCertificates := make(map[string][]string)
 
-	labels := []string{
-		"cn", certificate.Subject.CommonName,
-		"serial", certificate.SerialNumber.String(),
-		"sans", strings.Join(certificate.DNSNames, ","),
+		for _, certificate := range tlsManager.GetServerCertificates() {
+			labels := traefiktls.GetCertificateLabels(certificate)
+			oldCertificates[traefiktls.GetCertificateLabelsHash(labels)] = labels
+		}
+
+		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+
+		for _, certificate := range tlsManager.GetServerCertificates() {
+			labelsHash := traefiktls.GetCertificateLabelsHash(traefiktls.GetCertificateLabels(certificate))
+			// if an old certificate is present in updated set, no need to remove it from metrics
+			delete(oldCertificates, labelsHash)
+			appendCertMetric(gauge, certificate)
+		}
+
+		for _, oldLabels := range oldCertificates {
+			// it's not possible to remove label set through go-kit metrics, so
+			// reset gauge value to 0 for certificate labels no longer in use
+			gauge.With(oldLabels...).Set(0)
+		}
 	}
+}
 
+func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
+	labels := traefiktls.GetCertificateLabels(certificate)
 	notAfter := float64(certificate.NotAfter.Unix())
 
 	gauge.With(labels...).Set(notAfter)
