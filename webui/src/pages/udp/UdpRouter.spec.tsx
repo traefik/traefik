@@ -1,7 +1,7 @@
+import { UdpRouterRender } from './UdpRouter'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { UdpRouterRender } from './UdpRouter'
 
 describe('<UdpRouterPage />', () => {
   it('should render the error message', () => {

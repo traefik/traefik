@@ -1,8 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import fetch from 'libs/fetch'
 import { SWRConfig } from 'swr'
 
 import { useResourceDetail } from './use-resource-detail'
+
+import fetch from 'libs/fetch'
 
 describe('useResourceDetail', () => {
   it('should fetch information about entrypoints and middlewares', async () => {

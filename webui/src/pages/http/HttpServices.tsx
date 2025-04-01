@@ -1,4 +1,8 @@
 import { Box, Flex, Td, Text, Tfoot, Th, Thead } from '@traefiklabs/faency'
+import { useEffect, useMemo, useState } from 'react'
+import useInfiniteScroll from 'react-infinite-scroll-hook'
+import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
+
 import { AnimatedRow, AnimatedTable, AnimatedTBody } from 'components/AnimatedTable'
 import { Tr } from 'components/FaencyOverrides'
 import { ProviderIcon } from 'components/resources/ProviderIcon'
@@ -10,9 +14,6 @@ import Tooltip from 'components/Tooltip'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
-import { useEffect, useMemo, useState } from 'react'
-import useInfiniteScroll from 'react-infinite-scroll-hook'
-import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
 export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
   const HttpServicesRenderRow = (row) => (

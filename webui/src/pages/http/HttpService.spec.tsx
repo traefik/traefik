@@ -1,7 +1,7 @@
+import { HttpServiceRender } from './HttpService'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { HttpServiceRender } from './HttpService'
 
 describe('<HttpServicePage />', () => {
   it('should render the error message', () => {

@@ -1,10 +1,10 @@
 import { AccessibleIcon } from '@traefiklabs/faency'
-import { useDarkMode } from 'hooks/use-dark-mode'
 import { FiMoon, FiSun } from 'react-icons/fi'
 
-import { Button } from './FaencyOverrides'
+import { Button } from 'components/FaencyOverrides'
+import { useDarkMode } from 'hooks/use-dark-mode'
 
-export const ThemeSwitcher = () => {
+export default function ThemeSwitcher() {
   const { isDarkMode, toggle } = useDarkMode({ initializeWithValue: false })
 
   return (
@@ -13,5 +13,3 @@ export const ThemeSwitcher = () => {
     </Button>
   )
 }
-
-export default ThemeSwitcher

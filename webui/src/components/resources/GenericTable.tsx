@@ -1,9 +1,10 @@
 import { Flex, Text } from '@traefiklabs/faency'
-import { AriaTable, AriaTbody, AriaTd, AriaTr } from 'components/FaencyOverrides'
-import Tooltip from 'components/Tooltip'
 import { useMemo } from 'react'
 
 import Status, { StatusType } from './Status'
+
+import { AriaTable, AriaTbody, AriaTd, AriaTr } from 'components/FaencyOverrides'
+import Tooltip from 'components/Tooltip'
 
 type GenericTableProps = {
   items: (number | string)[]

@@ -1,7 +1,7 @@
+import AdditionalFeatures from './AdditionalFeatures'
+
 import { MiddlewareProps } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import AdditionalFeatures from './AdditionalFeatures'
 
 describe('<AdditionalFeatures />', () => {
   it('should render the middleware info', () => {

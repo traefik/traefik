@@ -1,7 +1,7 @@
+import { TcpServiceRender } from './TcpService'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { TcpServiceRender } from './TcpService'
 
 describe('<TcpServicePage />', () => {
   it('should render the error message', () => {

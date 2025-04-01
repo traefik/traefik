@@ -1,5 +1,6 @@
-import { useDarkMode } from 'hooks/use-dark-mode'
 import { CSSProperties } from 'react'
+
+import { useDarkMode } from 'hooks/use-dark-mode'
 
 type LogoProps = {
   width?: number

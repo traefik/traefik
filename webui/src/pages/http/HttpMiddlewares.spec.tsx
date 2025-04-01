@@ -1,8 +1,8 @@
+import { HttpMiddlewares as HttpMiddlewaresPage, HttpMiddlewaresRender, makeRowRender } from './HttpMiddlewares'
+
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { HttpMiddlewares as HttpMiddlewaresPage, HttpMiddlewaresRender, makeRowRender } from './HttpMiddlewares'
 
 describe('<HttpMiddlewaresPage />', () => {
   it('should render the middleware list', () => {

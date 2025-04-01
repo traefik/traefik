@@ -1,6 +1,6 @@
-import { renderWithProviders } from 'utils/test'
-
 import Header from './Header'
+
+import { renderWithProviders } from 'utils/test'
 
 describe('<Header />', () => {
   it('should render the NavBar', async () => {

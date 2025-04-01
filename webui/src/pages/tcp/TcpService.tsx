@@ -1,11 +1,12 @@
 import { Flex, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { useParams } from 'react-router-dom'
+
 import { DetailSectionSkeleton } from 'components/resources/DetailSections'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import { ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-detail'
 import Page from 'layout/Page'
 import { ServicePanels } from 'pages/http/HttpService'
 import { NotFound } from 'pages/NotFound'
-import { useParams } from 'react-router-dom'
 
 const SpacedColumns = styled(Flex, {
   display: 'grid',

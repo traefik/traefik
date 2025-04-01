@@ -1,4 +1,5 @@
 import { Box, Flex, Grid, Skeleton as FaencySkeleton, Text } from '@traefiklabs/faency'
+
 import { Card } from 'components/FaencyOverrides'
 import ResourceCard from 'components/resources/ResourceCard'
 

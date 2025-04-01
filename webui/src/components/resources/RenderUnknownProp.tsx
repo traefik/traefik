@@ -1,10 +1,11 @@
 import { Text } from '@traefiklabs/faency'
-import Tooltip from 'components/Tooltip'
 import { ReactNode } from 'react'
 
 import { BooleanState, ItemBlock } from './DetailSections'
 import GenericTable from './GenericTable'
 import IpStrategyTable, { IpStrategy } from './IpStrategyTable'
+
+import Tooltip from 'components/Tooltip'
 
 type RenderUnknownPropProps = {
   name: string

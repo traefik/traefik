@@ -1,8 +1,9 @@
 import { Box, Button, Flex, styled, Text } from '@traefiklabs/faency'
-import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ComponentProps, ReactNode, useEffect } from 'react'
 import { FiX } from 'react-icons/fi'
+
+import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
 
 const CloseButton = styled(Button, {
   position: 'absolute',

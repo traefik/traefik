@@ -1,9 +1,10 @@
 import { waitFor } from '@testing-library/react'
-import { ToastContext, ToastProvider } from 'contexts/toasts'
 import { useContext, useEffect } from 'react'
-import { renderWithProviders } from 'utils/test'
 
 import { ToastPool } from './ToastPool'
+
+import { ToastContext, ToastProvider } from 'contexts/toasts'
+import { renderWithProviders } from 'utils/test'
 
 describe('<ToastPool />', () => {
   it('should render the toast pool', () => {

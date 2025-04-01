@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { fetchPage } from 'libs/fetch'
-import qs from 'query-string'
+import { stringify } from 'query-string'
 import { ReactNode } from 'react'
 import useSWRInfinite, { SWRInfiniteConfiguration } from 'swr/infinite'
+
+import { fetchPage } from 'libs/fetch'
 
 export type RenderRowType = (row: any) => ReactNode
 
@@ -37,7 +38,7 @@ const useFetchWithPagination: useFetchWithPaginationType = (path, opts) => {
   const getKey = (pageIndex: number, previousPageData: any): string | null => {
     if (previousPageData && (!previousPageData.data?.length || previousPageData.nextPage === 1)) return null
 
-    return `${path}?${qs.stringify({
+    return `${path}?${stringify({
       page: pageIndex + 1,
       per_page: rowsPerPage,
       ...query,

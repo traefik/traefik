@@ -1,5 +1,6 @@
-import fetchMany from 'libs/fetchMany'
 import useSWR from 'swr'
+
+import fetchMany from 'libs/fetchMany'
 
 export type EntryPoint = {
   name: string

@@ -1,8 +1,8 @@
+import { HttpServices as HttpServicesPage, HttpServicesRender, makeRowRender } from './HttpServices'
+
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { HttpServices as HttpServicesPage, HttpServicesRender, makeRowRender } from './HttpServices'
 
 describe('<HttpServicesPage />', () => {
   it('should render the services list', () => {

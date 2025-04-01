@@ -1,6 +1,6 @@
-import { renderWithProviders } from 'utils/test'
-
 import { RenderUnknownProp } from './RenderUnknownProp'
+
+import { renderWithProviders } from 'utils/test'
 
 describe('<RenderUnknownProp />', () => {
   it('renders a string correctly', () => {

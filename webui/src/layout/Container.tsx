@@ -1,4 +1,5 @@
 import { Flex, styled } from '@traefiklabs/faency'
+
 import breakpoints from 'utils/breakpoints'
 
 export default styled(Flex, {

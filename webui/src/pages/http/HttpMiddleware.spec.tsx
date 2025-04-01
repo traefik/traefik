@@ -1,7 +1,7 @@
+import { HttpMiddlewareRender } from './HttpMiddleware'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { HttpMiddlewareRender } from './HttpMiddleware'
 
 describe('<HttpMiddlewarePage />', () => {
   it('should render the error message', () => {

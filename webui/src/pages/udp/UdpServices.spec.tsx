@@ -1,8 +1,8 @@
+import { makeRowRender, UdpServices as UdpServicesPage, UdpServicesRender } from './UdpServices'
+
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { makeRowRender, UdpServices as UdpServicesPage, UdpServicesRender } from './UdpServices'
 
 describe('<UdpServicesPage />', () => {
   it('should render the services list', () => {

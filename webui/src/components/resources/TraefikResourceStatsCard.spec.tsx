@@ -1,6 +1,6 @@
-import { renderWithProviders } from 'utils/test'
-
 import TraefikResourceStatsCard from './TraefikResourceStatsCard'
+
+import { renderWithProviders } from 'utils/test'
 
 describe('<TraefikResourceStatsCard />', () => {
   it('should render the component and show the expected data (success count is zero)', () => {

@@ -1,8 +1,8 @@
+import { makeRowRender, UdpRouters as UdpRoutersPage, UdpRoutersRender } from './UdpRouters'
+
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { makeRowRender, UdpRouters as UdpRoutersPage, UdpRoutersRender } from './UdpRouters'
 
 describe('<UdpRoutersPage />', () => {
   it('should render the routers list', () => {

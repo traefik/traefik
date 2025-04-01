@@ -14,22 +14,23 @@ import {
   styled,
   Text,
 } from '@traefiklabs/faency'
+import { ComponentProps, ReactNode, useMemo } from 'react'
+import { Helmet } from 'react-helmet-async'
+import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
+import { matchPath, useNavigate } from 'react-router'
+import { useLocation } from 'react-router-dom'
+import useSWR from 'swr'
+
+import Container from './Container'
+
 import { Badge, Button } from 'components/FaencyOverrides'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import { useDarkMode } from 'hooks/use-dark-mode'
 import useTotals from 'hooks/use-overview-totals'
-import { ComponentProps, ReactNode, useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
-import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
-import { matchPath, useNavigate } from 'react-router'
-import { useLocation } from 'react-router-dom'
 import routes, { NavRouteType } from 'routes'
-import useSWR from 'swr'
 import exists from 'utils/exists'
-
-import Container from './Container'
 
 const NavigationDrawer = styled(Flex, {
   width: '100%',
