@@ -318,12 +318,7 @@ func (h *ServerHealthCheck) SetDefaults() {
 	fr := true
 	h.FollowRedirects = &fr
 	h.Mode = "http"
-
 	h.Interval = DefaultHealthCheckInterval
-
-	interval := DefaultHealthCheckInterval
-	h.UnhealthyInterval = &interval
-
 	h.Timeout = DefaultHealthCheckTimeout
 }
 
