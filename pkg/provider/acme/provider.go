@@ -374,8 +374,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 }
 
 // Maximum allowed value for Configuration.ClientTimeout.
-// We multiply the timeout by 4, so pick `"time".maxDuration / 4`.
-const maxClientTimeout = time.Duration((1<<63 - 1) / 4)
+const maxClientTimeout = time.Duration( /* time.MaxDuration */ (1<<63 - 1)) - 90*time.Second
 
 func (p *Provider) createHTTPClient() (*http.Client, error) {
 	tlsConfig, err := p.createClientTLSConfig()
@@ -391,14 +390,14 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 	}
 
 	return &http.Client{
-		Timeout: 4 * clientTimeout,
+		Timeout: clientTimeout + 90*time.Second,
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout:   clientTimeout,
-				KeepAlive: clientTimeout,
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
 			}).DialContext,
-			TLSHandshakeTimeout:   clientTimeout,
+			TLSHandshakeTimeout:   30 * time.Second,
 			ResponseHeaderTimeout: clientTimeout,
 			TLSClientConfig:       tlsConfig,
 		},
