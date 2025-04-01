@@ -1,6 +1,7 @@
 import { CSS, Flex, Text } from '@traefiklabs/faency'
-import { Card } from 'components/FaencyOverrides'
 import { ReactNode } from 'react'
+
+import { Card } from 'components/FaencyOverrides'
 
 type ResourceCardProps = {
   children: ReactNode

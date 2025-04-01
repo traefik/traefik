@@ -1,9 +1,10 @@
 import { Flex } from '@traefiklabs/faency'
-import { ToastContext } from 'contexts/toasts'
 import { useContext } from 'react'
-import { getPositionValues, PositionXProps, PositionYProps } from 'utils/position'
 
 import { Toast } from './Toast'
+
+import { ToastContext } from 'contexts/toasts'
+import { getPositionValues, PositionXProps, PositionYProps } from 'utils/position'
 
 export type ToastPoolProps = {
   positionX?: PositionXProps

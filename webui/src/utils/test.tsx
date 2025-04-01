@@ -19,10 +19,11 @@ function customRender(ui: React.ReactElement, options = {}) {
   })
 }
 
+// eslint-disable-next-line import/export
 export * from '@testing-library/react'
 export { default as userEvent } from '@testing-library/user-event'
 // override render export
-export { customRender as render }
+export { customRender as render } // eslint-disable-line import/export
 
 export function renderWithProviders(ui: React.ReactElement) {
   return customRender(ui, {

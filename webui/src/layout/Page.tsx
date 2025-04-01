@@ -1,11 +1,12 @@
 import { globalCss, styled } from '@traefiklabs/faency'
-import { ToastPool } from 'components/ToastPool'
-import { ToastProvider } from 'contexts/toasts'
 import { ReactNode } from 'react'
 import { Helmet } from 'react-helmet-async'
 
 import Container from './Container'
 import Header from './Header'
+
+import { ToastPool } from 'components/ToastPool'
+import { ToastProvider } from 'contexts/toasts'
 
 export const globalStyles = globalCss({
   body: {

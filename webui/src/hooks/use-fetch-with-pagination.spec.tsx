@@ -1,10 +1,11 @@
 import { act, fireEvent, renderHook, waitFor } from '@testing-library/react'
-import { server } from 'mocks/server'
 import { http, HttpResponse } from 'msw'
 import { SWRConfig } from 'swr'
-import { renderWithProviders } from 'utils/test'
 
 import useFetchWithPagination from './use-fetch-with-pagination'
+
+import { server } from 'mocks/server'
+import { renderWithProviders } from 'utils/test'
 
 const renderRow = (row) => (
   <li key={row.id} data-testid="listRow">

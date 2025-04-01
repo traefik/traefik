@@ -1,6 +1,7 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
-import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
 import { ReactNode } from 'react'
+
+import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
 
 export const StatusWrapper = styled(Flex, {
   height: '32px',

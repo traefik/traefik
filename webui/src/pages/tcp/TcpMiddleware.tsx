@@ -1,4 +1,6 @@
 import { Box, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { useParams } from 'react-router-dom'
+
 import { Card } from 'components/FaencyOverrides'
 import { DetailSectionSkeleton } from 'components/resources/DetailSections'
 import { RenderMiddleware } from 'components/resources/MiddlewarePanel'
@@ -6,7 +8,6 @@ import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resource
 import { ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-detail'
 import Page from 'layout/Page'
 import { NotFound } from 'pages/NotFound'
-import { useParams } from 'react-router-dom'
 import breakpoints from 'utils/breakpoints'
 
 const MiddlewareGrid = styled(Box, {

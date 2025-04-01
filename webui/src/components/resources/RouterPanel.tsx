@@ -1,14 +1,15 @@
 import { Text } from '@traefiklabs/faency'
-import { Badge } from 'components/FaencyOverrides'
-import Tooltip from 'components/Tooltip'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { FiInfo } from 'react-icons/fi'
-import exists from 'utils/exists'
 
 import { DetailSection, ItemBlock, LayoutTwoCols, ProviderName } from './DetailSections'
 import GenericTable from './GenericTable'
 import { ProviderIcon } from './ProviderIcon'
 import { ResourceStatus } from './ResourceStatus'
+
+import { Badge } from 'components/FaencyOverrides'
+import Tooltip from 'components/Tooltip'
+import { ResourceDetailDataType } from 'hooks/use-resource-detail'
+import exists from 'utils/exists'
 
 type Props = {
   data: ResourceDetailDataType

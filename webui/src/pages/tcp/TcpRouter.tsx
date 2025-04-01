@@ -1,4 +1,6 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
+import { useParams } from 'react-router-dom'
+
 import { CardListSection, DetailSectionSkeleton } from 'components/resources/DetailSections'
 import MiddlewarePanel from 'components/resources/MiddlewarePanel'
 import RouterPanel from 'components/resources/RouterPanel'
@@ -7,7 +9,6 @@ import { ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-de
 import Page from 'layout/Page'
 import { RouterStructure } from 'pages/http/HttpRouter'
 import { NotFound } from 'pages/NotFound'
-import { useParams } from 'react-router-dom'
 
 type DetailProps = {
   data: ResourceDetailDataType

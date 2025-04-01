@@ -1,12 +1,13 @@
 import { Box, Flex, styled, Table, Tbody, Td, Th, Thead } from '@traefiklabs/faency'
-import { Tr } from 'components/FaencyOverrides'
-import { ToastContext } from 'contexts/toasts'
-import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
-import { makeRowRender } from 'pages/http/HttpRouters'
 import { useContext, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { SectionHeader } from './DetailSections'
+
+import { Tr } from 'components/FaencyOverrides'
+import { ToastContext } from 'contexts/toasts'
+import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
+import { makeRowRender } from 'pages/http/HttpRouters'
 
 type UsedByRoutersSectionProps = {
   data: ServiceDetailType | MiddlewareDetailType

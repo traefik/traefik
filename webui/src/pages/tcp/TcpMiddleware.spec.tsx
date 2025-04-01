@@ -1,7 +1,7 @@
+import { TcpMiddlewareRender } from './TcpMiddleware'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { TcpMiddlewareRender } from './TcpMiddleware'
 
 describe('<TcpMiddlewarePage />', () => {
   it('should render the error message', () => {

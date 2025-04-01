@@ -1,4 +1,8 @@
 import { Box, Flex, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { useMemo } from 'react'
+import { FiGlobe, FiInfo, FiShield } from 'react-icons/fi'
+import { useParams } from 'react-router-dom'
+
 import { Badge } from 'components/FaencyOverrides'
 import {
   BooleanState,
@@ -17,9 +21,6 @@ import Tooltip from 'components/Tooltip'
 import { ResourceDetailDataType, ServiceDetailType, useResourceDetail } from 'hooks/use-resource-detail'
 import Page from 'layout/Page'
 import { NotFound } from 'pages/NotFound'
-import { useMemo } from 'react'
-import { FiGlobe, FiInfo, FiShield } from 'react-icons/fi'
-import { useParams } from 'react-router-dom'
 
 type DetailProps = {
   data: ServiceDetailType

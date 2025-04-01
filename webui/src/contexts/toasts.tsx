@@ -1,6 +1,7 @@
-import { ToastState } from 'components/Toast'
 import * as React from 'react'
 import * as sh from 'shorthash'
+
+import { ToastState } from 'components/Toast'
 
 function handleHideToast(toast: ToastState): (t: ToastState) => ToastState {
   return (t: ToastState): ToastState => {

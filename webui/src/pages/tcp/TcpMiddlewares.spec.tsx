@@ -1,8 +1,8 @@
+import { makeRowRender, TcpMiddlewares as TcpMiddlewaresPage, TcpMiddlewaresRender } from './TcpMiddlewares'
+
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { makeRowRender, TcpMiddlewares as TcpMiddlewaresPage, TcpMiddlewaresRender } from './TcpMiddlewares'
 
 describe('<TcpMiddlewaresPage />', () => {
   it('should render the middlewares list', () => {

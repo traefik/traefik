@@ -1,8 +1,4 @@
 import { Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
-import { useDarkMode } from 'hooks/use-dark-mode'
-import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
-import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
-import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
 import { Suspense, useEffect } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import { HashRouter, Navigate, Route, Routes as RouterRoutes, useLocation } from 'react-router-dom'
@@ -10,6 +6,11 @@ import { SWRConfig } from 'swr'
 
 import Page from './layout/Page'
 import fetch from './libs/fetch'
+
+import { useDarkMode } from 'hooks/use-dark-mode'
+import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
+import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
+import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
 
 export const LIGHT_THEME = lightTheme('deepBlue')
 export const DARK_THEME = darkTheme('deepBlue')

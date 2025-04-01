@@ -1,10 +1,10 @@
+import { HttpRouterRender } from './HttpRouter'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import apiEntrypoints from 'mocks/data/api-entrypoints.json'
 import apiHttpMiddlewares from 'mocks/data/api-http_middlewares.json'
 import apiHttpRouters from 'mocks/data/api-http_routers.json'
 import { renderWithProviders } from 'utils/test'
-
-import { HttpRouterRender } from './HttpRouter'
 
 describe('<HttpRouterPage />', () => {
   it('should render the error message', () => {

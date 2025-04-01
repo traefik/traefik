@@ -1,7 +1,4 @@
 import { Box, Flex, H3, styled, Text } from '@traefiklabs/faency'
-import { EmptyIcon } from 'components/icons/EmptyIcon'
-import { Middleware, RouterDetailType } from 'hooks/use-resource-detail'
-import { parseMiddlewareType } from 'libs/parsers'
 import { FiLayers } from 'react-icons/fi'
 
 import { DetailSection, EmptyPlaceholder, ItemBlock, LayoutTwoCols, ProviderName } from './DetailSections'
@@ -9,6 +6,10 @@ import GenericTable from './GenericTable'
 import { ProviderIcon } from './ProviderIcon'
 import { RenderUnknownProp } from './RenderUnknownProp'
 import { ResourceStatus } from './ResourceStatus'
+
+import { EmptyIcon } from 'components/icons/EmptyIcon'
+import { Middleware, RouterDetailType } from 'hooks/use-resource-detail'
+import { parseMiddlewareType } from 'libs/parsers'
 
 const Separator = styled('hr', {
   border: 'none',

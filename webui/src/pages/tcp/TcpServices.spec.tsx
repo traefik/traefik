@@ -1,8 +1,8 @@
+import { makeRowRender, TcpServices as TcpServicesPage, TcpServicesRender } from './TcpServices'
+
 import * as useFetchWithPagination from 'hooks/use-fetch-with-pagination'
 import { useFetchWithPaginationMock } from 'utils/mocks'
 import { renderWithProviders } from 'utils/test'
-
-import { makeRowRender, TcpServices as TcpServicesPage, TcpServicesRender } from './TcpServices'
 
 describe('<TcpServicesPage />', () => {
   it('should render the services list', () => {

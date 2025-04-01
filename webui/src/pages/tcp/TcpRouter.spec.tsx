@@ -1,7 +1,7 @@
+import { TcpRouterRender } from './TcpRouter'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { TcpRouterRender } from './TcpRouter'
 
 describe('<TcpRouterPage />', () => {
   it('should render the error message', () => {

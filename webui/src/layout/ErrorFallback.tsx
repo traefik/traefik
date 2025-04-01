@@ -1,6 +1,7 @@
 import { Box, Text } from '@traefiklabs/faency'
-import { Button } from 'components/FaencyOverrides'
 import { FallbackProps } from 'react-error-boundary'
+
+import { Button } from 'components/FaencyOverrides'
 
 const ErrorFallback: React.VFC<FallbackProps> = ({ error, resetErrorBoundary }) => {
   return (

@@ -1,7 +1,7 @@
+import { UdpServiceRender } from './UdpService'
+
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
-
-import { UdpServiceRender } from './UdpService'
 
 describe('<UdpServicePage />', () => {
   it('should render the error message', () => {

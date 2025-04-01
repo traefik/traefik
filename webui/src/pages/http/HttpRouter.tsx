@@ -1,4 +1,8 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
+import { useContext, useEffect } from 'react'
+import { FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
+import { useParams } from 'react-router-dom'
+
 import { CardListSection, DetailSectionSkeleton } from 'components/resources/DetailSections'
 import MiddlewarePanel from 'components/resources/MiddlewarePanel'
 import RouterPanel from 'components/resources/RouterPanel'
@@ -9,9 +13,6 @@ import Page from 'layout/Page'
 import { getErrorData, getValidData } from 'libs/objectHandlers'
 import { parseMiddlewareType } from 'libs/parsers'
 import { NotFound } from 'pages/NotFound'
-import { useContext, useEffect } from 'react'
-import { FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
-import { useParams } from 'react-router-dom'
 
 const CardListColumns = styled(Flex, {
   display: 'grid',
