@@ -423,7 +423,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 				Status:            test.status,
 				Path:              "/path",
 				Interval:          ptypes.Duration(500 * time.Millisecond),
-				UnhealthyInterval: ptypes.Duration(500 * time.Millisecond),
+				UnhealthyInterval: pointer(ptypes.Duration(500 * time.Millisecond)),
 				Timeout:           ptypes.Duration(499 * time.Millisecond),
 			}
 
@@ -480,7 +480,7 @@ func TestDifferentIntervals(t *testing.T) {
 		Mode:              "http",
 		Path:              "/path",
 		Interval:          ptypes.Duration(500 * time.Millisecond),
-		UnhealthyInterval: ptypes.Duration(50 * time.Millisecond),
+		UnhealthyInterval: pointer(ptypes.Duration(50 * time.Millisecond)),
 		Timeout:           ptypes.Duration(499 * time.Millisecond),
 	}
 
