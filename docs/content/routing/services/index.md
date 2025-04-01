@@ -415,7 +415,8 @@ Below are the available options for the health check mechanism:
 - `mode` (default: http), if defined to `grpc`, will use the gRPC health check protocol to probe the server.
 - `hostname` (optional), sets the value of `hostname` in the `Host` header of the health check request.
 - `port` (optional), replaces the server URL `port` for the health check endpoint.
-- `interval` (default: 30s), defines the frequency of the health check calls.
+- `interval` (default: 30s), defines the frequency of the health check calls for healthy targets.
+- `unhealthyInterval` (default: 30s), defines the frequency of the health check calls for unhealthy targets.  When not defined, it defaults to the `interval` value.
 - `timeout` (default: 5s), defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
 - `headers` (optional), defines custom headers to be sent to the health check endpoint.
 - `followRedirects` (default: true), defines whether redirects should be followed during the health check calls.
@@ -424,7 +425,7 @@ Below are the available options for the health check mechanism:
 
 !!! info "Interval & Timeout Format"
 
-    Interval and timeout are to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+    Interval, UnhealthyInterval and Timeout are to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
 !!! info "Recovering Servers"
 

@@ -373,6 +373,15 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 				return nil, err
 			}
 		}
+		// If the UnhealthyInterval option is not set, we use the Interval option value,
+		// to check the unhealthy targets as often as the healthy ones.
+		if svc.HealthCheck.UnhealthyInterval == nil {
+			lb.HealthCheck.UnhealthyInterval = &lb.HealthCheck.Interval
+		} else {
+			if err := lb.HealthCheck.UnhealthyInterval.Set(svc.HealthCheck.UnhealthyInterval.String()); err != nil {
+				return nil, err
+			}
+		}
 		if svc.HealthCheck.Timeout != nil {
 			if err := lb.HealthCheck.Timeout.Set(svc.HealthCheck.Timeout.String()); err != nil {
 				return nil, err
