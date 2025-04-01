@@ -281,6 +281,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/healthCheck/scheme` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/status` | `42` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/timeout` | `42s` |
+| `traefik/http/services/Service02/loadBalancer/healthCheck/unhealthyInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/preservePath` | `true` |
