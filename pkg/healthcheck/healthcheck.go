@@ -40,6 +40,11 @@ type metricsHealthCheck interface {
 	ServiceServerUpGauge() gokitmetrics.Gauge
 }
 
+type target struct {
+	targetURL *url.URL
+	name      string
+}
+
 type ServiceHealthChecker struct {
 	balancer StatusSetter
 	info     *runtime.ServiceInfo
@@ -57,11 +62,6 @@ type ServiceHealthChecker struct {
 	unhealthyTargets chan target
 
 	serviceName string
-}
-
-type target struct {
-	targetURL *url.URL
-	name      string
 }
 
 func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL, serviceName string) *ServiceHealthChecker {
