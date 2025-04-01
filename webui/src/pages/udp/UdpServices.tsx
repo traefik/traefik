@@ -11,6 +11,7 @@ import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
 import SortableTh from 'components/tables/SortableTh'
 import Tooltip from 'components/Tooltip'
+import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
@@ -26,14 +27,10 @@ export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
         </Tooltip>
       </Td>
       <Td>
-        <Tooltip label={row.name} action="copy">
-          <Text>{row.name}</Text>
-        </Tooltip>
+        <TooltipText text={row.name} />
       </Td>
       <Td>
-        <Tooltip label={row.type} action="copy">
-          <Text>{row.type}</Text>
-        </Tooltip>
+        <TooltipText text={row.type} />
       </Td>
       <Td style={{ textAlign: 'right' }}>
         <Text>{row.loadBalancer?.servers?.length || 0}</Text>

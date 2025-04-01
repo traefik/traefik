@@ -1,4 +1,4 @@
-import { Box, Flex, Td, Text, Tfoot, Thead, Tr } from '@traefiklabs/faency'
+import { Box, Flex, Td, Tfoot, Thead, Tr } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
@@ -11,8 +11,8 @@ import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
 import SortableTh from 'components/tables/SortableTh'
-import TruncatedText from 'components/tables/TruncatedText'
 import Tooltip from 'components/Tooltip'
+import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
@@ -28,15 +28,11 @@ export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
         </Tooltip>
       </Td>
       <Td>
-        <Tooltip label={row.rule} action="copy">
-          <Text css={{ wordBreak: 'break-word' }}>{row.rule}</Text>
-        </Tooltip>
+        <TooltipText text={row.rule} isTruncated variant="wide" />
       </Td>
       <Td>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</Td>
       <Td>
-        <Tooltip label={row.name} action="copy">
-          <Text css={{ wordBreak: 'break-word' }}>{row.name}</Text>
-        </Tooltip>
+        <TooltipText text={row.name} isTruncated />
       </Td>
       <Td>
         <Tooltip label={row.provider}>
@@ -46,7 +42,7 @@ export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
         </Tooltip>
       </Td>
       <Td>
-        <TruncatedText text={row.priority} />
+        <TooltipText text={row.priority} isTruncated variant="short" />
       </Td>
     </AnimatedRow>
   )

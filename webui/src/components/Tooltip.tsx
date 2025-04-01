@@ -1,6 +1,6 @@
 import { Button, Flex, Text, Tooltip as FaencyTooltip } from '@traefiklabs/faency'
-import { MouseEvent, ReactNode, useMemo } from 'react'
-import { FiCopy } from 'react-icons/fi'
+import { MouseEvent, ReactNode, useMemo, useState } from 'react'
+import { FiCheck, FiCopy } from 'react-icons/fi'
 
 // FIXME content props type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,23 +13,28 @@ type TooltipProps = {
 }
 
 export default function Tooltip({ action, children, label }: TooltipProps) {
+  const [showConfirmation, setShowConfirmation] = useState(false)
+
   const actionComponent = useMemo(() => {
     if (action === 'copy') {
       return (
         <Button
           css={{ padding: '0 $2 !important' }}
-          onClick={(e: MouseEvent): void => {
+          onClick={async (e: MouseEvent) => {
+            e.preventDefault()
             e.stopPropagation()
-            navigator.clipboard.writeText(label)
+            await navigator.clipboard.writeText(label)
+            setShowConfirmation(true)
+            setTimeout(() => setShowConfirmation(false), 1500)
           }}
         >
-          <FiCopy size={16} />
+          {showConfirmation ? <FiCheck size={16} /> : <FiCopy size={16} />}
         </Button>
       )
     }
 
     return null
-  }, [action, label])
+  }, [action, label, showConfirmation])
 
   return (
     <CustomTooltip
