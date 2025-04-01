@@ -8,7 +8,7 @@
       :thumb-style="appThumbStyle"
       style="height:100%;"
     >
-      <q-card-section v-if="data.scheme || data.interval">
+      <q-card-section v-if="data.scheme || data.interval || data.unhealthyInterval">
         <div class="row items-start no-wrap">
           <div
             v-if="data.scheme"
@@ -36,6 +36,20 @@
               class="app-chip app-chip-interval"
             >
               {{ data.interval }}
+            </q-chip>
+          </div>
+          <div
+            v-if="data.unhealthyInterval"
+            class="col"
+          >
+            <div class="text-subtitle2">
+              UNHEALTHY INTERVAL
+            </div>
+            <q-chip
+              dense
+              class="app-chip app-chip-interval"
+            >
+              {{ data.unhealthyInterval }}
             </q-chip>
           </div>
         </div>
