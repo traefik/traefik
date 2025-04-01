@@ -419,11 +419,12 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 
 			config := &dynamic.ServerHealthCheck{
-				Mode:     test.mode,
-				Status:   test.status,
-				Path:     "/path",
-				Interval: ptypes.Duration(500 * time.Millisecond),
-				Timeout:  ptypes.Duration(499 * time.Millisecond),
+				Mode:              test.mode,
+				Status:            test.status,
+				Path:              "/path",
+				Interval:          ptypes.Duration(500 * time.Millisecond),
+				UnhealthyInterval: pointer(ptypes.Duration(500 * time.Millisecond)),
+				Timeout:           ptypes.Duration(499 * time.Millisecond),
 			}
 
 			gauge := &testhelpers.CollectingGauge{}
@@ -455,4 +456,55 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
+}
+
+func TestDifferentIntervals(t *testing.T) {
+	// The context is passed to the health check and
+	// canonically canceled by the test server once all expected requests have been received.
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	healthyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	healthyURL := testhelpers.MustParseURL(healthyServer.URL)
+
+	unhealthyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	unhealthyURL := testhelpers.MustParseURL(unhealthyServer.URL)
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+	config := &dynamic.ServerHealthCheck{
+		Mode:              "http",
+		Path:              "/path",
+		Interval:          ptypes.Duration(500 * time.Millisecond),
+		UnhealthyInterval: pointer(ptypes.Duration(50 * time.Millisecond)),
+		Timeout:           ptypes.Duration(499 * time.Millisecond),
+	}
+
+	gauge := &testhelpers.CollectingGauge{}
+	serviceInfo := &runtime.ServiceInfo{}
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		hc.Launch(ctx)
+		wg.Done()
+	}()
+
+	select {
+	case <-time.After(2 * time.Second):
+		break
+	case <-ctx.Done():
+		wg.Wait()
+	}
+
+	lb.Lock()
+	defer lb.Unlock()
+
+	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "removed servers greater than upserted servers")
 }
