@@ -1,7 +1,6 @@
-import { Box, Flex, H1, Text } from '@traefiklabs/faency'
+import { Box, Button, Flex, H1, Text } from '@traefiklabs/faency'
 import { useNavigate } from 'react-router-dom'
 
-import { Button } from 'components/FaencyOverrides'
 import Page from 'layout/Page'
 
 export const NotFound = () => {

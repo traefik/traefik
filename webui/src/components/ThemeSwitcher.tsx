@@ -1,7 +1,6 @@
-import { AccessibleIcon } from '@traefiklabs/faency'
+import { AccessibleIcon, Button } from '@traefiklabs/faency'
 import { FiMoon, FiSun } from 'react-icons/fi'
 
-import { Button } from 'components/FaencyOverrides'
 import { useDarkMode } from 'hooks/use-dark-mode'
 
 export default function ThemeSwitcher() {

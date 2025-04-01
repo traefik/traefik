@@ -41,7 +41,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@traefiklabs/faency": "^11.1.2",
+    "@traefiklabs/faency": "11.1.3",
     "chart.js": "^4.4.1",
     "framer-motion": "^11.0.4",
     "lodash": "^4.17.21",

@@ -1,6 +1,5 @@
-import { Flex, Text } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTr, Badge, Flex, Text } from '@traefiklabs/faency'
 
-import { AriaTable, AriaTbody, AriaTd, AriaTr, Badge } from 'components/FaencyOverrides'
 import Tooltip from 'components/Tooltip'
 
 export type IpStrategy = {

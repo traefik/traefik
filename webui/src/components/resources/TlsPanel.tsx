@@ -1,9 +1,8 @@
-import { Box, Flex, Text } from '@traefiklabs/faency'
+import { Badge, Box, Flex, Text } from '@traefiklabs/faency'
 import { FiShield } from 'react-icons/fi'
 
 import { BooleanState, DetailSection, EmptyPlaceholder, ItemBlock } from './DetailSections'
 
-import { Badge } from 'components/FaencyOverrides'
 import { EmptyIcon } from 'components/icons/EmptyIcon'
 import { RouterDetailType } from 'hooks/use-resource-detail'
 
