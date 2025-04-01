@@ -1,4 +1,4 @@
-import { Box, Flex, Td, Text, Tfoot, Thead, Tr } from '@traefiklabs/faency'
+import { Box, Flex, Td, Tfoot, Thead, Tr } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
 import SortableTh from 'components/tables/SortableTh'
 import Tooltip from 'components/Tooltip'
+import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
@@ -30,16 +31,10 @@ export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
           </Tooltip>
         </Td>
         <Td>
-          <Tooltip label={row.name} action="copy">
-            <Text>{row.name}</Text>
-          </Tooltip>
+          <TooltipText text={row.name} />
         </Td>
         <Td>
-          {middlewareType && (
-            <Tooltip label={middlewareType} action="copy">
-              <Text>{middlewareType}</Text>
-            </Tooltip>
-          )}
+          <TooltipText text={middlewareType} />
         </Td>
         <Td>
           <Tooltip label={row.provider}>
