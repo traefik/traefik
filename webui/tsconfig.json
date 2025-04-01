@@ -25,6 +25,9 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "types": ["vitest/globals"],
+    "paths": {
+      "react": ["../node_modules/@types/react"]
+    }
   },
   "include": ["src", "test/setup.ts", "types/*.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]

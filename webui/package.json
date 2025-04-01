@@ -68,7 +68,7 @@
     "@types/lodash": "^4.17.16",
     "@types/luxon": "^1.21.0",
     "@types/node": "^18.19.11",
-    "@types/react": "^18.2.56",
+    "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.19",
     "@types/react-router-dom": "^5.1.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
