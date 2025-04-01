@@ -1,11 +1,10 @@
-import { Box, Flex, H2, styled, Text } from '@traefiklabs/faency'
+import { Badge, Box, Card, Flex, H2, styled, Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 import { FiArrowRight, FiToggleLeft, FiToggleRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 import { StatusWrapper } from './ResourceStatus'
 
-import { Badge, Card } from 'components/FaencyOverrides'
 import Tooltip from 'components/Tooltip'
 
 const CustomHeading = styled(H2, {

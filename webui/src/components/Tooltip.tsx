@@ -1,8 +1,10 @@
-import { Flex, Text } from '@traefiklabs/faency'
+import { Button, Flex, Text, Tooltip as FaencyTooltip } from '@traefiklabs/faency'
 import { MouseEvent, ReactNode, useMemo } from 'react'
 import { FiCopy } from 'react-icons/fi'
 
-import { Button, Tooltip as FaencyTooltip } from './FaencyOverrides'
+// FIXME content props type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = FaencyTooltip as any
 
 type TooltipProps = {
   action?: 'copy'
@@ -30,7 +32,7 @@ export default function Tooltip({ action, children, label }: TooltipProps) {
   }, [action, label])
 
   return (
-    <FaencyTooltip
+    <CustomTooltip
       content={
         <Flex align="center" gap={2} css={{ px: '$1' }}>
           <Text css={{ maxWidth: '240px !important', color: '$contrast', wordBreak: 'break-word' }}>{label}</Text>{' '}
@@ -39,6 +41,6 @@ export default function Tooltip({ action, children, label }: TooltipProps) {
       }
     >
       {children}
-    </FaencyTooltip>
+    </CustomTooltip>
   )
 }

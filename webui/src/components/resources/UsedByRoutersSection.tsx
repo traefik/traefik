@@ -1,10 +1,9 @@
-import { Box, Flex, styled, Table, Tbody, Td, Th, Thead } from '@traefiklabs/faency'
+import { Box, Flex, styled, Table, Tbody, Td, Th, Thead, Tr } from '@traefiklabs/faency'
 import { useContext, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { SectionHeader } from './DetailSections'
 
-import { Tr } from 'components/FaencyOverrides'
 import { ToastContext } from 'contexts/toasts'
 import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
 import { makeRowRender } from 'pages/http/HttpRouters'
@@ -46,7 +45,7 @@ export const UsedByRoutersSkeleton = () => (
         </Tr>
       </Thead>
       <Tbody>
-        <Tr style={{ pointerEvents: 'none' }}>
+        <Tr css={{ pointerEvents: 'none' }}>
           <Td>
             <SkeletonContent />
           </Td>

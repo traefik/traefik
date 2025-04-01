@@ -1,7 +1,6 @@
-import { Box, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Card, Box, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
 import { useParams } from 'react-router-dom'
 
-import { Card } from 'components/FaencyOverrides'
 import { DetailSectionSkeleton } from 'components/resources/DetailSections'
 import { RenderMiddleware } from 'components/resources/MiddlewarePanel'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'

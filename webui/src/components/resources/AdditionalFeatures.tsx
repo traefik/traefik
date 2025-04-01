@@ -1,6 +1,5 @@
-import { Box, Text } from '@traefiklabs/faency'
+import { Badge, Box, Text } from '@traefiklabs/faency'
 
-import { Badge } from 'components/FaencyOverrides'
 import Tooltip from 'components/Tooltip'
 import { MiddlewareProps } from 'hooks/use-resource-detail'
 

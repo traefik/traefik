@@ -1,11 +1,9 @@
-import { Box, Flex, TextField } from '@traefiklabs/faency'
+import { Box, Button, Flex, TextField } from '@traefiklabs/faency'
 import { isUndefined, omitBy } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { FiSearch } from 'react-icons/fi'
 import { URLSearchParamsInit, useSearchParams } from 'react-router-dom'
 import { useDebounceCallback } from 'usehooks-ts'
-
-import { Button } from './FaencyOverrides'
 
 type State = {
   search?: string

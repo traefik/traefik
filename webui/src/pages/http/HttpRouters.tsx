@@ -1,11 +1,10 @@
-import { Box, Flex, Td, Text, Tfoot, Thead } from '@traefiklabs/faency'
+import { Box, Flex, Td, Text, Tfoot, Thead, Tr } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import { FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { AnimatedRow, AnimatedTable, AnimatedTBody } from 'components/AnimatedTable'
-import { Tr } from 'components/FaencyOverrides'
 import { Chips } from 'components/resources/DetailSections'
 import { ProviderIcon } from 'components/resources/ProviderIcon'
 import { ResourceStatus } from 'components/resources/ResourceStatus'

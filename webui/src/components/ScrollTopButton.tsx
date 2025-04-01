@@ -1,6 +1,5 @@
+import { Button } from '@traefiklabs/faency'
 import { useCallback, useEffect, useState } from 'react'
-
-import { Button } from './FaencyOverrides'
 
 export const ScrollTopButton = () => {
   const [showOnScroll, setShowOnScroll] = useState<boolean>(false)

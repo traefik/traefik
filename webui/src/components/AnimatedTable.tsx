@@ -42,8 +42,7 @@ const CustomClickableRow = motion(ClickableRow)
 const FixedCustomClickableRow = CustomClickableRow as ComponentProps<typeof CustomClickableRow> &
   ComponentProps<typeof ClickableRow>
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomRow = motion(Tr) as any
+const CustomRow = motion(Tr)
 
 type AnimatedTableProps = {
   children: ReactNode

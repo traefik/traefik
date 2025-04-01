@@ -1,5 +1,7 @@
 import {
+  Badge,
   Box,
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -23,7 +25,6 @@ import useSWR from 'swr'
 
 import Container from './Container'
 
-import { Badge, Button } from 'components/FaencyOverrides'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'

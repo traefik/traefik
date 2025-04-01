@@ -1,6 +1,5 @@
-import { Box, Flex, Grid, Skeleton as FaencySkeleton, Text } from '@traefiklabs/faency'
+import { Box, Card, Flex, Grid, Skeleton as FaencySkeleton, Text } from '@traefiklabs/faency'
 
-import { Card } from 'components/FaencyOverrides'
 import ResourceCard from 'components/resources/ResourceCard'
 
 const FeatureCard = ({ feature }) => {

@@ -1,4 +1,4 @@
-import { CSS, Flex, Grid, H2, Text } from '@traefiklabs/faency'
+import { Card, CSS, Flex, Grid, H2, Text } from '@traefiklabs/faency'
 import { ReactNode, useMemo } from 'react'
 import { FaArrowRightToBracket } from 'react-icons/fa6'
 import { FiSettings } from 'react-icons/fi'
@@ -7,7 +7,6 @@ import { IoMdCube } from 'react-icons/io'
 import { TfiWorld } from 'react-icons/tfi'
 import useSWR from 'swr'
 
-import { Card } from 'components/FaencyOverrides'
 import FeatureCard, { FeatureCardSkeleton } from 'components/resources/FeatureCard'
 import { ProviderIcon } from 'components/resources/ProviderIcon'
 import ResourceCard from 'components/resources/ResourceCard'
