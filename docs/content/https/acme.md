@@ -839,17 +839,9 @@ certificatesResolvers:
 
 _Optional, Default=30s_
 
-`clientTimeout` is the timeout used for the http responses from the ACME Server.\
-
-The timeout is applied individually to each of the stages when establishing the http connection: 
-
-- the timeout for establishing a connection to the server
-- the timeout for completing a TLS Handshake with the ACME server
-- the timeout for the initial HTTP response headers to be sent by the ACME server
-- the timeout for the body of the HTTP response to be sent to the client
-
+`clientTimeout` is the timeout used for http responses from the ACME Server.
 The timeout defaults to 30 seconds. 
-The maximum allowed timeout value is `640511h56m49.213693951s` or about 73 years.
+The maximum allowed timeout value is `2562047h45m46.854775807s` or about 292 years.
 Values larger than this are clamped automatically. 
 
 ```yaml tab="File (YAML)"
