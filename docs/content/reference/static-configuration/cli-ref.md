@@ -174,6 +174,9 @@ CSR email addresses to use.
 `--certificatesresolvers.<name>.acme.httpchallenge`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
 
+`--certificatesresolvers.<name>.acme.httpchallenge.delay`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
+
 `--certificatesresolvers.<name>.acme.httpchallenge.entrypoint`:  
 HTTP challenge EntryPoint
 
