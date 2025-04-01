@@ -1,9 +1,10 @@
-import { Box, Flex, styled, Table, Tbody, Td, Th, Thead, Tr } from '@traefiklabs/faency'
+import { Box, Flex, styled, Table, Tbody, Td, Th, Tr, Thead } from '@traefiklabs/faency'
+import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { SectionHeader } from './DetailSections'
-
+import { SectionHeader } from 'components/resources/DetailSections'
+import SortableTh from 'components/tables/SortableTh'
 import { ToastContext } from 'contexts/toasts'
 import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
 import { makeRowRender } from 'pages/http/HttpRouters'
@@ -42,6 +43,9 @@ export const UsedByRoutersSkeleton = () => (
           <Th>
             <SkeletonContent />
           </Th>
+          <Th>
+            <SkeletonContent />
+          </Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -61,8 +65,11 @@ export const UsedByRoutersSkeleton = () => (
           <Td>
             <SkeletonContent />
           </Td>
+          <Th>
+            <SkeletonContent />
+          </Th>
         </Tr>
-        <Tr style={{ pointerEvents: 'none' }}>
+        <Tr css={{ pointerEvents: 'none' }}>
           <Td>
             <SkeletonContent />
           </Td>
@@ -78,6 +85,9 @@ export const UsedByRoutersSkeleton = () => (
           <Td>
             <SkeletonContent />
           </Td>
+          <Th>
+            <SkeletonContent />
+          </Th>
         </Tr>
       </Tbody>
     </Table>
@@ -87,9 +97,16 @@ export const UsedByRoutersSkeleton = () => (
 export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersSectionProps) => {
   const navigate = useNavigate()
   const renderRow = makeRowRender(navigate, protocol)
+  const [searchParams] = useSearchParams()
   const { addToast } = useContext(ToastContext)
 
-  const routersFound = useMemo(() => data.routers?.filter((r) => !r.message), [data])
+  const routersFound = useMemo(() => {
+    let routers = data.routers?.filter((r) => !r.message)
+    const direction = searchParams.get('direction') as 'asc' | 'desc' | null
+    const sortBy = searchParams.get('sortBy')
+    if (sortBy) routers = orderBy(routers, [sortBy], [direction || 'asc'])
+    return routers
+  }, [data, searchParams])
   const routersNotFound = useMemo(() => data.routers?.filter((r) => !!r.message), [data])
 
   useEffect(() => {
@@ -109,22 +126,21 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     <Flex css={{ flexDirection: 'column', mt: '$5' }}>
       <SectionHeader title="Used by Routers" />
 
-      <Box css={{ maxWidth: '100%', width: '100%', overflow: 'auto' }}>
-        <Table data-testid="routers-table" css={{ tableLayout: 'auto' }}>
-          <Thead>
-            <Tr>
-              <Th>Status</Th>
-              <Th>TLS</Th>
-              <Th>Rule</Th>
-              <Th>Entrypoints</Th>
-              <Th>Name</Th>
-              <Th>Service</Th>
-              <Th>Provider</Th>
-            </Tr>
-          </Thead>
-          <Tbody>{routersFound.map(renderRow)}</Tbody>
-        </Table>
-      </Box>
+      <Table data-testid="routers-table" css={{ tableLayout: 'auto' }}>
+        <Thead>
+          <Tr>
+            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="TLS" />
+            <SortableTh label="Rule" isSortable sortByValue="rule" />
+            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
+            <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Service" isSortable sortByValue="service" />
+            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
+          </Tr>
+        </Thead>
+        <Tbody>{routersFound.map(renderRow)}</Tbody>
+      </Table>
     </Flex>
   )
 }

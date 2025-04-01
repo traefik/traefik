@@ -12,6 +12,7 @@ import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
 import SortableTh from 'components/tables/SortableTh'
+import TruncatedText from 'components/tables/TruncatedText'
 import Tooltip from 'components/Tooltip'
 import useFetchWithPagination, { RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
@@ -64,9 +65,7 @@ export const makeRowRender = (navigate: NavigateFunction, protocol = 'http'): Re
         </Tooltip>
       </Td>
       <Td>
-        <Tooltip label={row.priority} action="copy">
-          <Text css={{ wordBreak: 'break-word' }}>{row.priority}</Text>
-        </Tooltip>
+        <TruncatedText text={row.priority} />
       </Td>
     </AnimatedRow>
   )
@@ -92,7 +91,7 @@ export const HttpRoutersRender = ({ error, isEmpty, isLoadingMore, isReachingEnd
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
             <SortableTh label="TLS" />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
-            <SortableTh label="Entrypoints" isSortable sortByValue="entrypoint" />
+            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
