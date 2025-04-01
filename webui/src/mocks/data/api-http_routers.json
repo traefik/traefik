@@ -8,6 +8,7 @@
       "web-secured",
       "web"
     ],
+    "priority": 10,
     "provider": "docker"
   },
   {
@@ -50,6 +51,7 @@
       "web3",
       "web4"
     ],
+    "priority": 30,
     "provider": "file"
   },
   {
@@ -107,6 +109,7 @@
     "using": [
       "web-redirect"
     ],
+    "priority": 9223372036854776000,
     "provider": "consulcatalog-default"
   },
   {

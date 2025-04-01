@@ -1,4 +1,4 @@
-import { Box, Flex, Td, Text, Tfoot, Th, Thead, Tr } from '@traefiklabs/faency'
+import { Box, Flex, Td, Text, Tfoot, Thead, Tr } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
@@ -10,6 +10,8 @@ import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
+import SortableTh from 'components/tables/SortableTh'
+import TruncatedText from 'components/tables/TruncatedText'
 import Tooltip from 'components/Tooltip'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
@@ -43,6 +45,9 @@ export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
           </Box>
         </Tooltip>
       </Td>
+      <Td>
+        <TruncatedText text={row.priority} />
+      </Td>
     </AnimatedRow>
   )
   return TcpRoutersRenderRow
@@ -72,11 +77,12 @@ export const TcpRoutersRender = ({
       <AnimatedTable>
         <Thead>
           <Tr>
-            <Th style={{ width: '72px' }}>Status</Th>
-            <Th style={{ width: '33%' }}>Rule</Th>
-            <Th style={{ width: '33%' }}>Entrypoints</Th>
-            <Th style={{ width: '33%' }}>Name</Th>
-            <Th style={{ textAlign: 'right', width: '80px' }}>Provider</Th>
+            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Rule" isSortable sortByValue="rule" />
+            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
+            <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
           </Tr>
         </Thead>
         <AnimatedTBody pageCount={pageCount} isMounted={isMounted}>

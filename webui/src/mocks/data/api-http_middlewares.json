@@ -14,7 +14,7 @@
       "scheme": "https"
     },
     "status": "enabled",
-    "usedBy": ["server-redirect@docker"],
+    "usedBy": ["server-mtls@docker", "server-redirect@docker", "orphan-router@file"],
     "name": "redirect@file",
     "type": "redirectscheme",
     "provider": "file"

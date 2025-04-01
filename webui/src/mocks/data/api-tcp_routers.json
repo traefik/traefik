@@ -11,6 +11,7 @@
       "web-secured",
       "web"
     ],
+    "priority": 10,
     "provider": "docker"
   }
 ]

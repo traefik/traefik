@@ -9,6 +9,7 @@
       "udp"
     ],
     "name": "to-whoami-a@file",
+    "priority": 10,
     "provider": "file"
   }
 ]
