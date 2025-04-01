@@ -1,14 +1,16 @@
 # syntax=docker/dockerfile:1.2
-# Portal UI dependencies
+# Dashboard UI dependencies
 FROM node:18-alpine AS dashboard-ui-deps
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+RUN corepack enable
 
-RUN yarn install --frozen-lockfile
+COPY package.json yarn.lock .yarnrc.yml ./
 
-# Portal UI build
+RUN yarn workspaces focus --all --production
+
+# Dashboard UI build
 FROM node:18-alpine AS dashboard-ui-builder
 
 WORKDIR /app
