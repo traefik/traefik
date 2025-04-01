@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -372,6 +373,17 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 			if err := lb.HealthCheck.Interval.Set(svc.HealthCheck.Interval.String()); err != nil {
 				return nil, err
 			}
+		}
+		// If the UnhealthyInterval option is not set, we use the Interval option value,
+		// to check the unhealthy targets as often as the healthy ones.
+		if svc.HealthCheck.UnhealthyInterval == nil {
+			lb.HealthCheck.UnhealthyInterval = &lb.HealthCheck.Interval
+		} else {
+			var unhealthyInterval ptypes.Duration
+			if err := unhealthyInterval.Set(svc.HealthCheck.UnhealthyInterval.String()); err != nil {
+				return nil, err
+			}
+			lb.HealthCheck.UnhealthyInterval = &unhealthyInterval
 		}
 		if svc.HealthCheck.Timeout != nil {
 			if err := lb.HealthCheck.Timeout.Set(svc.HealthCheck.Timeout.String()); err != nil {

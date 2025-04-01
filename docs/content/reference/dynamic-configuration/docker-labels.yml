@@ -209,6 +209,7 @@
 - "traefik.http.services.service02.loadbalancer.healthcheck.scheme=foobar"
 - "traefik.http.services.service02.loadbalancer.healthcheck.status=42"
 - "traefik.http.services.service02.loadbalancer.healthcheck.timeout=42s"
+- "traefik.http.services.service02.loadbalancer.healthcheck.unhealthyinterval=42s"
 - "traefik.http.services.service02.loadbalancer.passhostheader=true"
 - "traefik.http.services.service02.loadbalancer.responseforwarding.flushinterval=42s"
 - "traefik.http.services.service02.loadbalancer.serverstransport=foobar"
