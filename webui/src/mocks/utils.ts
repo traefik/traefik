@@ -32,7 +32,7 @@ export const listHandlers = (
       if (status) results = results.filter((x) => x.status === status)
       if (!results.length) return HttpResponse.json([], { headers: { 'X-Next-Page': '1' }, status: 200 })
 
-      if (sortBy && Array.isArray(data)) results = orderBy(data as DataItem[], [sortBy], [direction || 'asc'])
+      if (sortBy) results = orderBy(results as DataItem[], [sortBy], [direction || 'asc'])
       const page = +(url.searchParams.get('page') || 1)
       const pageSize = +(url.searchParams.get('per_page') || 10)
       const chunks = skipPagination ? [results] : chunk(results, pageSize)
