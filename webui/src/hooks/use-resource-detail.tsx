@@ -8,9 +8,15 @@ export type EntryPoint = {
   message?: string
 }
 
+type JSONObject = {
+  [x: string]: string | number
+}
+export type ValuesMapType = {
+  [key: string]: string | number | JSONObject
+}
+
 export type MiddlewareProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [prop: string]: any
+  [prop: string]: ValuesMapType
 }
 
 export type Middleware = {
@@ -18,8 +24,7 @@ export type Middleware = {
   status: 'enabled' | 'disabled' | 'warning'
   provider: string
   type?: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  plugin?: any
+  plugin?: Record<string, unknown>
   error?: string[]
   routers?: string[]
   usedBy?: string[]
@@ -27,10 +32,10 @@ export type Middleware = {
 
 type Router = {
   name: string
-  service: string
+  service?: string
   status: 'enabled' | 'disabled' | 'warning'
-  rule: string
-  priority: number
+  rule?: string
+  priority?: number
   provider: string
   tls?: {
     options: string
@@ -106,7 +111,7 @@ export type ResourceDetailDataType = RouterDetailType & ServiceDetailType & Midd
 
 type ResourceDetailType = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error
 }
 
 export const useResourceDetail = (name: string, resource: string, protocol = 'http'): ResourceDetailType => {

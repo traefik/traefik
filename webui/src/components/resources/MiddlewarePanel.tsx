@@ -65,7 +65,7 @@ export const RenderMiddleware = ({ middleware, withHeader }: RenderMiddlewarePro
     )}
     {middleware.plugin &&
       Object.keys(middleware.plugin).map((pluginName) => (
-        <RenderUnknownProp key={pluginName} name={pluginName} prop={middleware.plugin[pluginName]} />
+        <RenderUnknownProp key={pluginName} name={pluginName} prop={middleware.plugin?.[pluginName]} />
       ))}
     {filterMiddlewareProps(middleware).map((propName) => (
       <RenderUnknownProp

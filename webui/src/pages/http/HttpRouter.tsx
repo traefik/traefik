@@ -29,7 +29,9 @@ export const RouterStructure = ({ data, protocol = 'http' }: DetailProps) => {
   const { addToast } = useContext(ToastContext)
   const entrypoints = getValidData(data.entryPointsData)
   const entrypointsError = getErrorData(data.entryPointsData)
-  const serviceSlug = data.service.includes('@') ? data.service : `${data.service}@${data.provider}`
+  const serviceSlug = data.service?.includes('@')
+    ? data.service
+    : `${data.service ?? 'unknown'}@${data.provider ?? 'unknown'}`
 
   useEffect(() => {
     entrypointsError?.map((error) =>
@@ -95,7 +97,7 @@ const RouterDetail = ({ data }: DetailProps) => (
 
 type HttpRouterRenderProps = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error | null
   name: string
 }
 

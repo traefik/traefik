@@ -8,7 +8,6 @@ import { ResourceStatus } from './ResourceStatus'
 
 import Tooltip from 'components/Tooltip'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
-import exists from 'utils/exists'
 
 type Props = {
   data: ResourceDetailDataType
@@ -50,7 +49,7 @@ const RouterPanel = ({ data }: Props) => (
         </Tooltip>
       </ItemBlock>
     )}
-    {exists(data.using) && data.using && data.using.length > 0 && (
+    {!!data.using && data.using && data.using.length > 0 && (
       <ItemBlock title="Entrypoints">
         {data.using.map((ep) => (
           <Tooltip key={ep} label={ep} action="copy">

@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Key } from 'swr'
 
 const { VITE_APP_BASE_API_URL } = import.meta.env
 
-export default async function <JSON = any>(key: Key): Promise<JSON[] | undefined> {
+export default async function <JSON>(key: Key): Promise<JSON[] | undefined> {
   const [baseUrl, params, init] = key as Array<string | string[] | RequestInit>
 
   if (!params || !Array.isArray(params)) return

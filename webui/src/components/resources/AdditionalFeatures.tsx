@@ -1,14 +1,13 @@
 import { Badge, Box, Text } from '@traefiklabs/faency'
 
 import Tooltip from 'components/Tooltip'
-import { MiddlewareProps } from 'hooks/use-resource-detail'
+import { MiddlewareProps, ValuesMapType } from 'hooks/use-resource-detail'
 
 function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function quote(value: any): any {
+function quote(value: string | number): string | number {
   if (typeof value === 'string') {
     return `"${value}"`
   }
@@ -16,17 +15,10 @@ function quote(value: any): any {
   return value
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function quoteArray(values: any[]): any {
+function quoteArray(values: (string | number)[]): (string | number)[] {
   return values.map(quote)
 }
 
-type JSONObject = {
-  [x: string]: any // eslint-disable-line @typescript-eslint/no-explicit-any
-}
-type ValuesMapType = {
-  [key: string]: string | number | JSONObject
-}
 const renderFeatureValues = (valuesMap: ValuesMapType): string => {
   return Object.entries(valuesMap)
     .map(([name, value]) => {

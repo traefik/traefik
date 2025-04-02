@@ -26,7 +26,7 @@ const RouterDetail = ({ data }: DetailProps) => (
 
 type UdpRouterRenderProps = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error
   name: string
 }
 
