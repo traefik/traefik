@@ -831,12 +831,12 @@ certificatesResolvers:
 
 ### `clientTimeout`
 
-_Optional, Default=30s_
+_Optional, Default=2m_
 
-`clientTimeout` is the timeout used for http responses from the ACME Server.
-The timeout defaults to 30 seconds. 
-The maximum allowed timeout value is `2562047h45m46.854775807s` or about 292 years.
-Values larger than this are clamped automatically. 
+`clientTimeout` is the maximum amount of time a http client communicating with the `caServer` waits before timing out.
+It defaults to 2 minutes.
+
+!!! warning "This must be at least as much time as `clientResponseHeaderTimeout` option below or the certificate resolver will fail to start."
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -862,6 +862,37 @@ certificatesResolvers:
 
 !!! warning
     This should not be confused with any timeouts used for validating challenges.
+
+### `clientResponseHeaderTimeout`
+
+_Optional, Default=30s_
+
+`clientResponseHeaderTimeout` is the maximum amount of time a http client communicating with the `caServer` waits for response headers.
+It defaults to 30 seconds. 
+
+!!! warning "This must be less than the `clientTimeout` option above or the certificate resolver will fail to start."
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      clientResponseHeaderTimeout: 1m
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  clientResponseHeaderTimeout=1m
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.clientResponseHeaderTimeout=1m
+# ...
+```
 
 ### `preferredChain`
 

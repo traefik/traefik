@@ -557,6 +557,7 @@ certificatesResolvers:
         hmacEncoded: foobar
       certificatesDuration: 42
       clientTimeout: 42s
+      clientResponseHeaderTimeout: 42s
       caCertificates:
         - foobar
         - foobar
@@ -595,6 +596,7 @@ certificatesResolvers:
         hmacEncoded: foobar
       certificatesDuration: 42
       clientTimeout: 42s
+      clientResponseHeaderTimeout: 42s
       caCertificates:
         - foobar
         - foobar
