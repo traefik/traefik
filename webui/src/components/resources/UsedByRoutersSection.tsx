@@ -102,8 +102,8 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
 
   const routersFound = useMemo(() => {
     let routers = data.routers?.filter((r) => !r.message)
-    const direction = searchParams.get('direction') as 'asc' | 'desc' | null
-    const sortBy = searchParams.get('sortBy')
+    const direction = (searchParams.get('direction') as 'asc' | 'desc' | null) || 'asc'
+    const sortBy = searchParams.get('sortBy') || 'name'
     if (sortBy) routers = orderBy(routers, [sortBy], [direction || 'asc'])
     return routers
   }, [data, searchParams])
