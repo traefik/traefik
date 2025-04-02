@@ -130,8 +130,8 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
         <Thead>
           <Tr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
-            <SortableTh label="TLS" />
-            <SortableTh label="Rule" isSortable sortByValue="rule" />
+            {protocol !== 'udp' ? <SortableTh label="TLS" /> : null}
+            {protocol !== 'udp' ? <SortableTh label="Rule" isSortable sortByValue="rule" /> : null}
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />

@@ -1,5 +1,6 @@
 import { Box, Flex, Td, Tfoot, Thead, Tr } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
+import { FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -28,11 +29,23 @@ export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
         </Tooltip>
       </Td>
       <Td>
+        {row.tls && (
+          <Tooltip label="TLS ON">
+            <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
+              <FiShield color="#008000" fill="#008000" size={24} />
+            </Box>
+          </Tooltip>
+        )}
+      </Td>
+      <Td>
         <TooltipText text={row.rule} isTruncated variant="wide" />
       </Td>
       <Td>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</Td>
       <Td>
         <TooltipText text={row.name} isTruncated />
+      </Td>
+      <Td>
+        <TooltipText text={row.service} isTruncated />
       </Td>
       <Td>
         <Tooltip label={row.provider}>
@@ -74,9 +87,11 @@ export const TcpRoutersRender = ({
         <Thead>
           <Tr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="TLS" />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Service" isSortable sortByValue="service" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
             <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
           </Tr>
