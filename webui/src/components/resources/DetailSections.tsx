@@ -54,19 +54,11 @@ const SpacedCard = styled(Card, {
   },
 })
 
-const CardDescriptionSmall = styled(Text, {
+const CardDescription = styled(Text, {
   textAlign: 'left',
   fontWeight: '700',
   fontSize: '16px',
   lineHeight: '16px',
-  wordBreak: 'break-word',
-})
-
-const CardDescriptionBig = styled(Text, {
-  textAlign: 'left',
-  fontWeight: '700',
-  fontSize: '22px',
-  lineHeight: '24px',
   wordBreak: 'break-word',
 })
 
@@ -113,8 +105,6 @@ type SectionType = SectionHeaderType & {
   bigDescription?: boolean
 }
 const CardSkeleton = ({ bigDescription }: { bigDescription?: boolean }) => {
-  const CardDescription = bigDescription ? CardDescriptionBig : CardDescriptionSmall
-
   return (
     <SpacedCard css={{ p: '$3' }}>
       <ItemTitle>
@@ -135,7 +125,6 @@ const CardSkeleton = ({ bigDescription }: { bigDescription?: boolean }) => {
 }
 
 export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: SectionType) => {
-  const CardDescription = bigDescription ? CardDescriptionBig : CardDescriptionSmall
   const navigate = useNavigate()
 
   return (
@@ -162,6 +151,7 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
                   </FlexLink>
                 </SpacedCard>
               ))}
+            <Box css={{ height: '16px' }}>&nbsp;</Box>
           </Flex>
         </CardListColumn>
         {!isLast && (
