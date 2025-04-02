@@ -49,6 +49,7 @@ const NavigationContainer = Container
 
 const SubNavDrawer = styled(Flex, {
   boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12)',
+  mt: 64,
 })
 
 const SubNavContainer = styled(Container, {
@@ -204,7 +205,7 @@ const Header = () => {
           <script src="https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js"></script>
         </Helmet>
       )}
-      <NavigationDrawer>
+      <NavigationDrawer css={{ position: 'fixed', zIndex: 999, top: 0 }}>
         <NavigationContainer css={{ overflowX: 'auto' }}>
           <Flex align="center" justify="space-between" css={{ flexGrow: 1 }}>
             <Flex align="center" gap={2}>

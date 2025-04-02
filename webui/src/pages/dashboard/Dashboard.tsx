@@ -82,7 +82,7 @@ export const Dashboard = () => {
 
   return (
     <Page title="Dashboard">
-      <Flex direction="column" gap={6}>
+      <Flex direction="column" gap={6} css={{ mt: '$8' }}>
         <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints">
           {entrypoints?.map((i, idx) => (
             <ResourceCard
