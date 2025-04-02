@@ -163,7 +163,7 @@
     "service": "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a-service",
     "rule": "Host(`jorge.dockeree.containous.cloud`)",
     "status": "enabled",
-    "name": " whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a@kubernetescrd",
+    "name": "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a@kubernetescrd",
     "using": [
       "web"
     ],
