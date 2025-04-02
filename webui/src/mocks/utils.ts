@@ -14,9 +14,9 @@ export const listHandlers = (route: string, data: any = null, noDelay: boolean =
   http.get(route, async ({ request }) => {
     await waitAsync(noDelay)
     const url = new URL(request.url)
-    const direction = url.searchParams.get('direction') as 'asc' | 'desc' | null
+    const direction = (url.searchParams.get('direction') as 'asc' | 'desc' | null) || 'asc'
     const search = url.searchParams.get('search')
-    const sortBy = url.searchParams.get('sortBy')
+    const sortBy = url.searchParams.get('sortBy') || 'name'
     const status = url.searchParams.get('status')
     let results = cloneDeep(data)
     if (Array.isArray(results)) {

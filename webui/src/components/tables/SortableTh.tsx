@@ -27,14 +27,14 @@ export default function SortableTh({ label, isSortable = false, sortByValue, ali
 
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const isActive = useMemo(() => searchParams.get('sortBy') === sortByValue, [searchParams, sortByValue])
+  const isActive = useMemo(() => (searchParams.get('sortBy') || 'name') === sortByValue, [searchParams, sortByValue])
 
-  const order = useMemo(() => searchParams.get('direction'), [searchParams])
+  const order = useMemo(() => searchParams.get('direction') || 'asc', [searchParams])
 
   const onSort = useCallback(() => {
     if (!sortByValue) return
-    const direction = searchParams.get('direction')
-    const sortBy = searchParams.get('sortBy')
+    const direction = searchParams.get('direction') || 'asc'
+    const sortBy = searchParams.get('sortBy') || 'name'
     if (!sortBy || sortBy !== sortByValue || direction === 'desc') {
       setSearchParams({ ...searchParams, sortBy: sortByValue, direction: 'asc' })
     } else {
