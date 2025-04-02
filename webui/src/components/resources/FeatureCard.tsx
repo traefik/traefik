@@ -19,6 +19,7 @@ const FeatureCard = ({ feature }) => {
             fontSize: '$10',
             fontWeight: 500,
             color: !value ? '$red10' : typeof value === 'boolean' ? '$green10' : '$gray10',
+            textAlign: 'center',
           }}
         >
           {!value ? 'OFF' : typeof value === 'boolean' ? 'ON' : value}
@@ -31,7 +32,7 @@ const FeatureCard = ({ feature }) => {
 export const FeatureCardSkeleton = () => {
   return (
     <Grid gap={6} css={{ gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))' }}>
-      <Card>
+      <Card css={{ minHeight: '125px' }}>
         <Flex justify="space-between" align="center" direction="column" css={{ height: '100%', p: '$2' }}>
           <FaencySkeleton css={{ width: 150, height: 13, mb: '$3' }} />
           <FaencySkeleton css={{ width: 80, height: 40 }} />

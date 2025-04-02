@@ -39,7 +39,14 @@ const SectionContainer = ({
   return (
     <Flex direction="column" gap={4} css={{ mt: '$4' }}>
       <SectionTitle icon={icon} title={title} />
-      <Grid gap={6} css={{ gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))', ...childrenContainerCss }}>
+      <Grid
+        gap={6}
+        css={{
+          gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
+          alignItems: 'stretch',
+          ...childrenContainerCss,
+        }}
+      >
         {children}
       </Grid>
     </Flex>
@@ -91,7 +98,6 @@ export const Dashboard = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
-                height: 'fit-content',
                 minHeight: '125px',
               }}
               title={i.name}
@@ -176,7 +182,7 @@ export const Dashboard = () => {
               <Card key={`provider-${idx}`} css={{ height: 125 }}>
                 <Flex direction="column" align="center" gap={3} justify="center" css={{ height: '100%' }}>
                   <ProviderIcon name={p} size={52} />
-                  <Text css={{ fontSize: '$4', fontWeight: 500 }}>{p}</Text>
+                  <Text css={{ fontSize: '$4', fontWeight: 500, textAlign: 'center' }}>{p}</Text>
                 </Flex>
               </Card>
             ))}
@@ -189,7 +195,7 @@ export const Dashboard = () => {
 export const DashboardSkeleton = () => {
   return (
     <Page>
-      <Flex direction="column" gap={6}>
+      <Flex direction="column" gap={6} css={{ mt: '$8' }}>
         <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints">
           {[...Array(5)].map((_, i) => (
             <FeatureCardSkeleton key={`entry-skeleton-${i}`} />
