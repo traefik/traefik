@@ -129,8 +129,11 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTRESPONSEHEADERTIMEOUT`:  
+Timeout for response headers for HTTP Client used to communicate with the ACME server. (Default: ```30```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTTIMEOUT`:  
-Timeout for HTTP responses from the ACME server. (Default: ```0```)
+Timeout for HTTP Client used to communicate with the ACME server. (Default: ```120```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
 Activate DNS-01 Challenge. (Default: ```false```)
