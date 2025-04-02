@@ -20,7 +20,7 @@ const MiddlewareGrid = styled(Box, {
 
 type HttpMiddlewareRenderProps = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error | null
   name: string
 }
 

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { chunk, cloneDeep, orderBy } from 'lodash'
 import { http, HttpResponse } from 'msw'
 
@@ -10,7 +8,17 @@ const waitAsync = (noDelay = false) => {
   return new Promise((res) => setTimeout(res, delay * 1000))
 }
 
-export const listHandlers = (route: string, data: any = null, noDelay: boolean = false, skipPagination = false) => [
+interface DataItem {
+  name: string
+  status?: string
+}
+
+export const listHandlers = (
+  route: string,
+  data: DataItem[] | Record<string, unknown> | null = null,
+  noDelay: boolean = false,
+  skipPagination = false,
+) => [
   http.get(route, async ({ request }) => {
     await waitAsync(noDelay)
     const url = new URL(request.url)
@@ -20,10 +28,11 @@ export const listHandlers = (route: string, data: any = null, noDelay: boolean =
     const status = url.searchParams.get('status')
     let results = cloneDeep(data)
     if (Array.isArray(results)) {
-      if (search) results = results.filter((x: any) => x.name.toLowerCase().includes(search.toLowerCase()))
-      if (status) results = results.filter((x: any) => x.status === status)
+      if (search) results = results.filter((x) => x.name.toLowerCase().includes(search.toLowerCase()))
+      if (status) results = results.filter((x) => x.status === status)
       if (!results.length) return HttpResponse.json([], { headers: { 'X-Next-Page': '1' }, status: 200 })
-      if (sortBy) results = orderBy(data, [sortBy], [direction || 'asc'])
+
+      if (sortBy && Array.isArray(data)) results = orderBy(data as DataItem[], [sortBy], [direction || 'asc'])
       const page = +(url.searchParams.get('page') || 1)
       const pageSize = +(url.searchParams.get('per_page') || 10)
       const chunks = skipPagination ? [results] : chunk(results, pageSize)
@@ -41,7 +50,7 @@ export const listHandlers = (route: string, data: any = null, noDelay: boolean =
     }
 
     const { name } = params
-    const res = data.find((x: any) => x.name === name)
+    const res = data.find((x) => x.name === name)
     if (!res) {
       const parts = route.split('/')
       const lastPart = parts[parts.length - 1]

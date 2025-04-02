@@ -16,7 +16,7 @@ const SpacedColumns = styled(Flex, {
 
 type UdpServiceRenderProps = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error
   name: string
 }
 

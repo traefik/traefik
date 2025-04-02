@@ -30,7 +30,7 @@ const RouterDetail = ({ data }: DetailProps) => (
 
 type TcpRouterRenderProps = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error
   name: string
 }
 

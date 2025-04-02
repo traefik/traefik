@@ -30,7 +30,6 @@ import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import useTotals from 'hooks/use-overview-totals'
 import routes, { NavRouteType } from 'routes'
-import exists from 'utils/exists'
 
 const NavigationDrawer = styled(Flex, {
   width: '100%',
@@ -294,7 +293,7 @@ const Header = () => {
                 >
                   <Flex align="center">
                     {route.label}
-                    {exists(totalValueByPath[route.path]) && (
+                    {!!totalValueByPath[route.path] && (
                       <Badge variant={currentSubRoute?.path === route.path ? 'green' : undefined} css={{ ml: '$2' }}>
                         {totalValueByPath[route.path]}
                       </Badge>

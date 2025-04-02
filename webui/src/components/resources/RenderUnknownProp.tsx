@@ -47,12 +47,10 @@ export const RenderUnknownProp = ({ name, prop, removeTitlePrefix }: RenderUnkno
         )
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((prop as any)?.constructor === Object) {
+      if (prop?.constructor === Object) {
         return (
           <>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {Object.entries(prop as any).map(([childName, childProp]) => {
+            {Object.entries(prop).map(([childName, childProp]) => {
               const spacedChildName = childName.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
               let title = `${name} > ${spacedChildName}`
               if (removeTitlePrefix) {

@@ -263,7 +263,7 @@ export const ServicePanels = ({ data, protocol = '' }: DetailProps) => {
 
 type HttpServiceRenderProps = {
   data?: ResourceDetailDataType
-  error?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: Error
   name: string
 }
 
