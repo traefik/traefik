@@ -249,15 +249,9 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 }
 
 func (r *Router) AddHTTPRegexpTLSConfig(hostRegexp string, config *tls.Config) {
-	preparePattern, err := tcpmuxer.PreparePattern(hostRegexp)
+	re, err := regexp.Compile(hostRegexp)
 	if err != nil {
-		log.Error().Err(err).Str("hostRegexp", hostRegexp).Msg("Failed to prepare pattern")
-		return
-	}
-
-	re, err := regexp.Compile(preparePattern)
-	if err != nil {
-		log.Error().Err(err).Str("host", hostRegexp).Str("pattern", preparePattern).Msg("Failed to compile regex")
+		log.Error().Err(err).Str("host", hostRegexp).Msg("Failed to compile regex")
 		return
 	}
 

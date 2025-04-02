@@ -132,7 +132,7 @@ func hostSNIRegexpV2(tree *matchersTree, templates ...string) error {
 	var regexps []*regexp.Regexp
 
 	for _, template := range templates {
-		preparedPattern, err := PreparePattern(template)
+		preparedPattern, err := preparePattern(template)
 		if err != nil {
 			return fmt.Errorf("invalid pattern value for \"HostSNIRegexp\" matcher, %q is not a valid pattern: %w", template, err)
 		}
@@ -158,10 +158,10 @@ func hostSNIRegexpV2(tree *matchersTree, templates ...string) error {
 	return nil
 }
 
-// PreparePattern builds a regexp pattern from the initial user defined expression.
+// preparePattern builds a regexp pattern from the initial user defined expression.
 // This function reuses the code dedicated to host matching of the newRouteRegexp func from the gorilla/mux library.
 // https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
-func PreparePattern(template string) (string, error) {
+func preparePattern(template string) (string, error) {
 	// Check if it is well-formed.
 	idxs, errBraces := braceIndices(template)
 	if errBraces != nil {

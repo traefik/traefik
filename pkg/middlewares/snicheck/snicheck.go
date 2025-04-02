@@ -8,7 +8,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
@@ -23,14 +22,9 @@ type SNICheck struct {
 func New(tlsOptionsForHost map[string]string, tlsOptionsForHostRegexp map[string]string, next http.Handler) *SNICheck {
 	tlsOptionsForHostRegex := make(map[*regexp.Regexp]string)
 	for hostRegexp, tlsOptions := range tlsOptionsForHostRegexp {
-		preparePattern, err := tcp.PreparePattern(hostRegexp)
+		re, err := regexp.Compile(hostRegexp)
 		if err != nil {
-			log.Error().Err(err).Str("hostRegexp", hostRegexp).Msg("Failed to prepare pattern")
-			continue
-		}
-		re, err := regexp.Compile(preparePattern)
-		if err != nil {
-			log.Error().Err(err).Str("host", hostRegexp).Str("pattern", preparePattern).Msg("Failed to compile regex")
+			log.Error().Err(err).Str("hostRegexp", hostRegexp).Msg("Failed to compile regex")
 			continue
 		}
 		tlsOptionsForHostRegex[re] = tlsOptions
