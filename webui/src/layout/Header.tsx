@@ -28,7 +28,6 @@ import Container from './Container'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
-import { useDarkMode } from 'hooks/use-dark-mode'
 import useTotals from 'hooks/use-overview-totals'
 import routes, { NavRouteType } from 'routes'
 import exists from 'utils/exists'
@@ -138,7 +137,6 @@ const NavItemWithIcon = ({ icon, label, isActive, href, ...props }: NavItemWithI
 }
 
 const Header = () => {
-  const { isDarkMode } = useDarkMode()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -296,10 +294,7 @@ const Header = () => {
                   <Flex align="center">
                     {route.label}
                     {exists(totalValueByPath[route.path]) && (
-                      <Badge
-                        variant={currentSubRoute?.path === route.path ? (isDarkMode ? 'slate' : 'green') : undefined}
-                        css={{ ml: '$2' }}
-                      >
+                      <Badge variant={currentSubRoute?.path === route.path ? 'green' : undefined} css={{ ml: '$2' }}>
                         {totalValueByPath[route.path]}
                       </Badge>
                     )}

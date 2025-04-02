@@ -12,8 +12,8 @@ import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
 
-export const LIGHT_THEME = lightTheme('deepBlue')
-export const DARK_THEME = darkTheme('deepBlue')
+export const LIGHT_THEME = lightTheme('blue')
+export const DARK_THEME = darkTheme('blue')
 
 // TODO: Restore the loader.
 const PageLoader = () => (
