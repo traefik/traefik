@@ -54,7 +54,7 @@ const FeatureMiddleware = ({ middleware }: { middleware: MiddlewareProps }) => {
 
   return (
     <Tooltip label={content} action="copy">
-      <Badge variant="deepBlue" css={{ mr: '$2', mt: '$2' }}>
+      <Badge variant="blue" css={{ mr: '$2', mt: '$2' }}>
         {content}
       </Badge>
     </Tooltip>

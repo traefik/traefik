@@ -71,13 +71,15 @@ const CardDescriptionBig = styled(Text, {
 })
 
 const CardListColumnWrapper = styled(Flex, {
-  display: 'grid',
-  gridTemplateColumns: 'minmax(160px, 66%) minmax(50px, auto)',
+  display: 'flex',
 })
 
 const CardListColumn = styled(Flex, {
+  minWidth: 160,
+  maxWidth: '66%',
   maxHeight: '416px',
   overflowY: 'auto',
+  p: '$1',
 })
 
 const ItemBlockContainer = styled(Flex, {
@@ -110,12 +112,10 @@ type SectionType = SectionHeaderType & {
   isLast?: boolean
   bigDescription?: boolean
 }
-
-export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: SectionType) => {
+const CardSkeleton = ({ bigDescription }: { bigDescription?: boolean }) => {
   const CardDescription = bigDescription ? CardDescriptionBig : CardDescriptionSmall
-  const navigate = useNavigate()
 
-  const CardSkeleton = (
+  return (
     <SpacedCard css={{ p: '$3' }}>
       <ItemTitle>
         <Box css={{ height: '12px', bg: '$slate5', borderRadius: 1, mb: '$3', mr: '60%' }} />
@@ -132,6 +132,11 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
       </CardDescription>
     </SpacedCard>
   )
+}
+
+export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: SectionType) => {
+  const CardDescription = bigDescription ? CardDescriptionBig : CardDescriptionSmall
+  const navigate = useNavigate()
 
   return (
     <Flex css={{ flexDirection: 'column', flexGrow: 1 }}>
@@ -139,7 +144,7 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
       <CardListColumnWrapper>
         <CardListColumn>
           <Flex css={{ flexDirection: 'column', flexGrow: 1, marginRight: '$3' }}>
-            {!cards && CardSkeleton}
+            {!cards && <CardSkeleton bigDescription={bigDescription} />}
             {cards
               ?.filter((c) => !!c.description)
               .map((card) => (
