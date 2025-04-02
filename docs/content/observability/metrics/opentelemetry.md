@@ -23,7 +23,7 @@ metrics:
 
 !!! info "Default protocol"
 
-    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318/v1/metrics, see the [gRPC Section](#grpc-configuration) to use gRPC.
+    The OpenTelemetry exporter will export metrics to the collector using HTTPS by default to https://localhost:4318/v1/metrics, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 #### `addEntryPointsLabels`
 
@@ -184,25 +184,29 @@ metrics:
 
 #### `endpoint`
 
-_Required, Default="http://localhost:4318/v1/metrics", Format="`<scheme>://<host>:<port><path>`"_
+_Optional, Default="https://localhost:4318/v1/metrics", Format="`<scheme>://<host>:<port><path>`"_
 
 URL of the OpenTelemetry Collector to send metrics to.
+
+!!! info "Insecure mode"
+
+    To disable TLS, use `http://` instead of `https://` in the `endpoint` configuration.
 
 ```yaml tab="File (YAML)"
 metrics:
   otlp:
     http:
-      endpoint: http://localhost:4318/v1/metrics
+      endpoint: https://collector:4318/v1/metrics
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.otlp.http]
-    endpoint = "http://localhost:4318/v1/metrics"
+    endpoint = "https://collector:4318/v1/metrics"
 ```
 
 ```bash tab="CLI"
---metrics.otlp.http.endpoint=http://localhost:4318/v1/metrics
+--metrics.otlp.http.endpoint=https://collector:4318/v1/metrics
 ```
 
 #### `headers`

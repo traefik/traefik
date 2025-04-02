@@ -179,8 +179,14 @@ http:
 _Optional, Default=1024_
 
 `minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
-
 Responses smaller than the specified values will not be compressed.
+
+!!! tip "Streaming"
+
+    When data is sent to the client on flush, the `minResponseBodyBytes` configuration is ignored and the data is compressed.
+    This is particularly the case when data is streamed to the client when using `Transfer-encoding: chunked` response.
+
+When chunked data is sent to the client on flush, it will be compressed by default even if the received data has not reached  
 
 ```yaml tab="Docker & Swarm"
 labels:
@@ -258,10 +264,10 @@ http:
 
 ### `encodings`
 
-_Optional, Default="zstd, br, gzip"_
+_Optional, Default="gzip, br, zstd"_
 
 `encodings` specifies the list of supported compression encodings.
-At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip).
+At least one encoding value must be specified, and valid entries are `gzip` (Gzip), `br` (Brotli), and `zstd` (Zstandard).
 The order of the list also sets the priority, the top entry has the highest priority.
 
 ```yaml tab="Docker & Swarm"

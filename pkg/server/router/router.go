@@ -91,12 +91,12 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			continue
 		}
 
-		handler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "").Then(BuildDefaultHTTPRouter())
+		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "", nil).Then(BuildDefaultHTTPRouter())
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
 		}
-		entryPointHandlers[entryPointName] = handler
+		entryPointHandlers[entryPointName] = defaultHandler
 	}
 
 	return entryPointHandlers
@@ -108,7 +108,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 		return nil, err
 	}
 
-	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "defaultHandler").Then(http.NotFoundHandler())
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "", nil).Then(http.NotFoundHandler())
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		observabilityChain := m.observabilityMgr.BuildEPChain(ctx, entryPointName, routerConfig.Service)
+		observabilityChain := m.observabilityMgr.BuildEPChain(ctx, entryPointName, routerConfig.Service, routerConfig.Observability)
 		handler, err = observabilityChain.Then(handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
@@ -182,7 +182,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 	}
 
 	// Prevents from enabling observability for internal resources.
-	if !m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, routerConfig.Service)) {
+	if !m.observabilityMgr.ShouldAddAccessLogs(provider.GetQualifiedName(ctx, routerConfig.Service), routerConfig.Observability) {
 		m.routerHandlers[routerName] = handler
 		return m.routerHandlers[routerName], nil
 	}
@@ -221,12 +221,12 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	chain := alice.New()
 
 	if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsRouterEnabled() &&
-		m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, router.Service)) {
+		m.observabilityMgr.ShouldAddMetrics(provider.GetQualifiedName(ctx, router.Service), router.Observability) {
 		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, provider.GetQualifiedName(ctx, router.Service)))
 	}
 
 	// Prevents from enabling tracing for internal resources.
-	if !m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, router.Service)) {
+	if !m.observabilityMgr.ShouldAddTracing(provider.GetQualifiedName(ctx, router.Service), router.Observability) {
 		return chain.Extend(*mHandler).Then(sHandler)
 	}
 

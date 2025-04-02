@@ -2,8 +2,10 @@ package httputil
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"io"
+	stdlog "log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -11,7 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -29,6 +33,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
+		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
 }
@@ -66,7 +71,9 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 			outReq.Host = outReq.URL.Host
 		}
 
-		cleanWebSocketHeaders(outReq)
+		if isWebSocketUpgrade(outReq) {
+			cleanWebSocketHeaders(outReq)
+		}
 	}
 }
 
@@ -75,10 +82,6 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 // Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
 // https://tools.ietf.org/html/rfc6455#page-20
 func cleanWebSocketHeaders(req *http.Request) {
-	if !isWebSocketUpgrade(req) {
-		return
-	}
-
 	req.Header["Sec-WebSocket-Key"] = req.Header["Sec-Websocket-Key"]
 	delete(req.Header, "Sec-Websocket-Key")
 
@@ -110,7 +113,13 @@ func ErrorHandlerWithContext(ctx context.Context, w http.ResponseWriter, err err
 	statusCode := ComputeStatusCode(err)
 
 	logger := log.Ctx(ctx)
-	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
+
+	// Log the error with error level if it is a TLS error related to configuration.
+	if isTLSConfigError(err) {
+		logger.Error().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
+	} else {
+		logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
+	}
 
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
@@ -123,6 +132,22 @@ func statusText(statusCode int) string {
 		return StatusClientClosedRequestText
 	}
 	return http.StatusText(statusCode)
+}
+
+// isTLSConfigError returns true if the error is a TLS error which is related to configuration.
+// We assume that if the error is a tls.RecordHeaderError or a tls.CertificateVerificationError,
+// it is related to configuration, because the client should not send a TLS request to a non-TLS server,
+// and the client configuration should allow to verify the server certificate.
+func isTLSConfigError(err error) bool {
+	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
+	var recordHeaderErr tls.RecordHeaderError
+	if errors.As(err, &recordHeaderErr) {
+		return true
+	}
+
+	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
+	var certVerificationErr *tls.CertificateVerificationError
+	return errors.As(err, &certVerificationErr)
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.

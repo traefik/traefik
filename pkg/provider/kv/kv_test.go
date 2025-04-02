@@ -58,6 +58,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/secure":                          "true",
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/httpOnly":                        "true",
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/path":                            "foobar",
+		"traefik/http/services/Service01/loadBalancer/strategy":                                      "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/0/url":                                 "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/1/url":                                 "foobar",
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
@@ -88,6 +89,10 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/cert":                                 "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/address":                                  "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/trustForwardHeader":                       "true",
+		"traefik/http/middlewares/Middleware08/forwardAuth/forwardBody":                              "true",
+		"traefik/http/middlewares/Middleware08/forwardAuth/maxBodySize":                              "42",
+		"traefik/http/middlewares/Middleware08/forwardAuth/preserveLocationHeader":                   "true",
+		"traefik/http/middlewares/Middleware08/forwardAuth/preserveRequestMethod":                    "true",
 		"traefik/http/middlewares/Middleware15/redirectScheme/scheme":                                "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/port":                                  "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/permanent":                             "true",
@@ -440,6 +445,10 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
+						ForwardBody:            true,
+						MaxBodySize:            pointer(int64(42)),
+						PreserveLocationHeader: true,
+						PreserveRequestMethod:  true,
 					},
 				},
 				"Middleware06": {
@@ -638,6 +647,7 @@ func Test_buildConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.Service{
 				"Service01": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: "foobar",
 						Sticky: &dynamic.Sticky{
 							Cookie: &dynamic.Cookie{
 								Name:     "foobar",
@@ -648,12 +658,10 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						Servers: []dynamic.Server{
 							{
-								URL:    "foobar",
-								Scheme: "http",
+								URL: "foobar",
 							},
 							{
-								URL:    "foobar",
-								Scheme: "http",
+								URL: "foobar",
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{

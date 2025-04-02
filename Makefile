@@ -101,7 +101,7 @@ test-integration: binary
 #? test-gateway-api-conformance: Run the conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.2" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.4" $(TESTFLAGS)
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui
@@ -175,7 +175,7 @@ docs-pull-images:
 .PHONY: generate-crd
 #? generate-crd: Generate CRD clientset and CRD manifests
 generate-crd:
-	@$(CURDIR)/script/code-gen-docker.sh
+	@$(CURDIR)/script/code-gen.sh
 
 .PHONY: generate-genconf
 #? generate-genconf: Generate code from dynamic configuration github.com/traefik/genconf

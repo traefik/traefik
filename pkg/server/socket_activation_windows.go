@@ -2,4 +2,6 @@
 
 package server
 
-func populateSocketActivationListeners() {}
+func populateSocketActivationListeners() *SocketActivation {
+	return &SocketActivation{enabled: false}
+}

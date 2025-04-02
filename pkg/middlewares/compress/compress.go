@@ -22,7 +22,7 @@ const typeName = "Compress"
 // See https://github.com/klauspost/compress/blob/9559b037e79ad673c71f6ef7c732c00949014cd2/gzhttp/compress.go#L47.
 const defaultMinSize = 1024
 
-var defaultSupportedEncodings = []string{zstdName, brotliName, gzipName}
+var defaultSupportedEncodings = []string{gzipName, brotliName, zstdName}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -33,6 +33,8 @@ type compress struct {
 	minSize         int
 	encodings       []string
 	defaultEncoding string
+	// supportedEncodings is a map of supported encodings and their priority.
+	supportedEncodings map[string]int
 
 	brotliHandler http.Handler
 	gzipHandler   http.Handler
@@ -85,13 +87,14 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	}
 
 	c := &compress{
-		next:            next,
-		name:            name,
-		excludes:        excludes,
-		includes:        includes,
-		minSize:         minSize,
-		encodings:       conf.Encodings,
-		defaultEncoding: conf.DefaultEncoding,
+		next:               next,
+		name:               name,
+		excludes:           excludes,
+		includes:           includes,
+		minSize:            minSize,
+		encodings:          conf.Encodings,
+		defaultEncoding:    conf.DefaultEncoding,
+		supportedEncodings: buildSupportedEncodings(conf.Encodings),
 	}
 
 	var err error
@@ -112,6 +115,19 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	}
 
 	return c, nil
+}
+
+func buildSupportedEncodings(encodings []string) map[string]int {
+	supportedEncodings := map[string]int{
+		// the most permissive first.
+		wildcardName: -1,
+		// the less permissive last.
+		identityName: len(encodings),
+	}
+	for i, encoding := range encodings {
+		supportedEncodings[encoding] = i
+	}
+	return supportedEncodings
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -149,7 +165,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	c.chooseHandler(getCompressionEncoding(acceptEncoding, c.defaultEncoding, c.encodings), rw, req)
+	c.chooseHandler(c.getCompressionEncoding(acceptEncoding), rw, req)
 }
 
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {

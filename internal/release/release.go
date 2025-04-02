@@ -25,14 +25,22 @@ func main() {
 			ParseFiles("./.goreleaser.yml.tmpl"),
 	)
 
-	outputPath := path.Join(os.TempDir(), fmt.Sprintf(".goreleaser_%s.yml", goos))
+	goarch := ""
+	outputFileName := fmt.Sprintf(".goreleaser_%s.yml", goos)
+	if strings.Contains(goos, "-") {
+		split := strings.Split(goos, "-")
+		goos = split[0]
+		goarch = split[1]
+	}
+
+	outputPath := path.Join(os.TempDir(), outputFileName)
 
 	output, err := os.Create(outputPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = tmpl.Execute(output, map[string]string{"GOOS": goos})
+	err = tmpl.Execute(output, map[string]string{"GOOS": goos, "GOARCH": goarch})
 	if err != nil {
 		log.Fatal(err)
 	}

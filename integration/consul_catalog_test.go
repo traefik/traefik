@@ -170,8 +170,6 @@ func (s *ConsulCatalogSuite) TestByLabels() {
 		Tags: []string{
 			"traefik.enable=true",
 			"traefik.http.routers.router1.rule=Path(`/whoami`)",
-			"traefik.http.routers.router1.service=service1",
-			"traefik.http.services.service1.loadBalancer.server.url=http://" + containerIP,
 		},
 		Port:    80,
 		Address: containerIP,
@@ -576,8 +574,6 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 	tags := []string{
 		"traefik.enable=true",
 		"traefik.http.routers.router1.rule=Path(`/whoami`)",
-		"traefik.http.routers.router1.service=service1",
-		"traefik.http.services.service1.loadBalancer.server.url=http://" + whoamiIP,
 	}
 
 	reg1 := &api.AgentServiceRegistration{
@@ -658,8 +654,6 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 			"traefik.enable=true",
 			"traefik.consulcatalog.connect=true",
 			"traefik.http.routers.router1.rule=Path(`/`)",
-			"traefik.http.routers.router1.service=service1",
-			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,
@@ -718,8 +712,6 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 		Tags: []string{
 			"traefik.enable=true",
 			"traefik.http.routers.router1.rule=Path(`/`)",
-			"traefik.http.routers.router1.service=service1",
-			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,
@@ -800,8 +792,6 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 			"traefik.enable=true",
 			"traefik.consulcatalog.connect=true",
 			"traefik.http.routers.router1.rule=Path(`/`)",
-			"traefik.http.routers.router1.service=service1",
-			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,

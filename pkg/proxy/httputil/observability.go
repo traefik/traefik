@@ -68,7 +68,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		span.End(trace.WithTimestamp(end))
 	}
 
-	if t.semConvMetricRegistry != nil && t.semConvMetricRegistry.HTTPClientRequestDuration() != nil {
+	if req.Context().Value(observability.DisableMetricsKey) == nil && t.semConvMetricRegistry != nil && t.semConvMetricRegistry.HTTPClientRequestDuration() != nil {
 		var attrs []attribute.KeyValue
 
 		if statusCode < 100 || statusCode >= 600 {

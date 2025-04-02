@@ -21,10 +21,11 @@ import (
 type DynConfBuilder struct {
 	Shared
 	apiClient client.APIClient
+	swarm     bool
 }
 
-func NewDynConfBuilder(configuration Shared, apiClient client.APIClient) *DynConfBuilder {
-	return &DynConfBuilder{Shared: configuration, apiClient: apiClient}
+func NewDynConfBuilder(configuration Shared, apiClient client.APIClient, swarm bool) *DynConfBuilder {
+	return &DynConfBuilder{Shared: configuration, apiClient: apiClient, swarm: swarm}
 }
 
 func (p *DynConfBuilder) build(ctx context.Context, containersInspected []dockerData) *dynamic.Configuration {
@@ -261,10 +262,14 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.Server{}
-		server.SetDefaults()
+		loadBalancer.Servers = []dynamic.Server{{}}
+	}
 
-		loadBalancer.Servers = []dynamic.Server{server}
+	if loadBalancer.Servers[0].URL != "" {
+		if loadBalancer.Servers[0].Scheme != "" || loadBalancer.Servers[0].Port != "" {
+			return errors.New("defining scheme or port is not allowed when URL is defined")
+		}
+		return nil
 	}
 
 	serverPort := loadBalancer.Servers[0].Port
@@ -279,8 +284,13 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 		return errors.New("port is missing")
 	}
 
-	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(ip, port))
+	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
+	if scheme == "" {
+		scheme = "http"
+	}
+
+	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(ip, port))
 
 	return nil
 }
@@ -321,16 +331,16 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 	logger := log.Ctx(ctx)
 
 	netNotFound := false
-	if container.ExtraConf.Docker.Network != "" {
+	if container.ExtraConf.Network != "" {
 		settings := container.NetworkSettings
 		if settings.Networks != nil {
-			network := settings.Networks[container.ExtraConf.Docker.Network]
+			network := settings.Networks[container.ExtraConf.Network]
 			if network != nil {
 				return network.Addr
 			}
 
 			netNotFound = true
-			logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Docker.Network, container.Name)
+			logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Network, container.Name)
 		}
 	}
 
@@ -360,12 +370,12 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 		containerParsed := parseContainer(containerInspected)
 		extraConf, err := p.extractLabels(containerParsed)
 		if err != nil {
-			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s : failed to get extra configuration for container %s", container.Name, containerInspected.Name)
+			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s: failed to get extra configuration for container %s", container.Name, containerInspected.Name)
 			return ""
 		}
 
-		if extraConf.Docker.Network == "" {
-			extraConf.Docker.Network = container.ExtraConf.Docker.Network
+		if extraConf.Network == "" {
+			extraConf.Network = container.ExtraConf.Network
 		}
 
 		containerParsed.ExtraConf = extraConf
@@ -395,4 +405,11 @@ func (p *DynConfBuilder) getPortBinding(container dockerData, serverPort string)
 	}
 
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
+}
+
+func (p *DynConfBuilder) extractLabels(container dockerData) (configuration, error) {
+	if p.swarm {
+		return p.Shared.extractSwarmLabels(container)
+	}
+	return p.Shared.extractDockerLabels(container)
 }

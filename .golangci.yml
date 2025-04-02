@@ -1,5 +1,6 @@
 run:
   timeout: 10m
+  relative-path-mode: cfg
 
 linters-settings:
   govet:
@@ -139,6 +140,9 @@ linters-settings:
       - name: unreachable-code
       - name: redefines-builtin-id
   gomoddirectives:
+    tool-forbidden: true
+    toolchain-pattern: 'go1\.\d+\.\d+$'
+    go-version-pattern: '^1\.\d+(\.0)?$'
     replace-allow-list:
       - github.com/abbot/go-http-auth
       - github.com/gorilla/mux
@@ -162,6 +166,7 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - tenv # Deprecated
     - sqlclosecheck # not relevant (SQL)
     - rowserrcheck # not relevant (SQL)
     - cyclop # duplicate of gocyclo
@@ -198,7 +203,6 @@ linters:
     - maintidx # kind of duplicate of gocyclo
     - nonamedreturns # Too strict
     - gosmopolitan  # not relevant
-    - exportloopref # Not relevant since go1.22
 
 issues:
   exclude-use-default: false

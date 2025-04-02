@@ -12,6 +12,11 @@
       "rule": "Host(`kv1.localhost`)",
       "priority": 42,
       "tls": {},
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "web"
@@ -42,6 +47,11 @@
           }
         ]
       },
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "web"
@@ -53,8 +63,13 @@
       ],
       "service": "api@internal",
       "rule": "PathPrefix(`/api`)",
-      "ruleSyntax": "v3",
+      "ruleSyntax": "default",
       "priority": 9223372036854775806,
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "traefik"
@@ -70,8 +85,13 @@
       ],
       "service": "dashboard@internal",
       "rule": "PathPrefix(`/`)",
-      "ruleSyntax": "v3",
+      "ruleSyntax": "default",
       "priority": 9223372036854775805,
+      "observability": {
+        "accessLogs": true,
+        "tracing": true,
+        "metrics": true
+      },
       "status": "enabled",
       "using": [
         "traefik"
@@ -180,6 +200,7 @@
             "url": "http://10.0.1.1:8889"
           }
         ],
+        "strategy": "wrr",
         "passHostHeader": true,
         "responseForwarding": {
           "flushInterval": "100ms"
@@ -205,6 +226,7 @@
             "url": "http://10.0.1.2:8889"
           }
         ],
+        "strategy": "wrr",
         "passHostHeader": true,
         "responseForwarding": {
           "flushInterval": "100ms"
@@ -222,6 +244,7 @@
             "url": "http://10.0.1.3:8889"
           }
         ],
+        "strategy": "wrr",
         "passHostHeader": true,
         "responseForwarding": {
           "flushInterval": "100ms"

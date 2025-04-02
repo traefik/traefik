@@ -2,3 +2,10 @@ version: "3.8"
 services:
   whoami1:
     image: traefik/whoami
+
+  redis:
+    image: redis:5.0
+    command:
+      - redis-server
+      - --port
+      - 6379

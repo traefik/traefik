@@ -13,7 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -25,7 +25,7 @@ import (
 
 // Backend is an abstraction for tracking backend (OpenTelemetry, ...).
 type Backend interface {
-	Setup(serviceName string, sampleRate float64, globalAttributes map[string]string) (trace.Tracer, io.Closer, error)
+	Setup(serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error)
 }
 
 // NewTracing Creates a Tracing.
@@ -38,13 +38,13 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 
 	if backend == nil {
 		log.Debug().Msg("Could not initialize tracing, using OpenTelemetry by default")
-		defaultBackend := &opentelemetry.Config{}
+		defaultBackend := &types.OTelTracing{}
 		backend = defaultBackend
 	}
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.GlobalAttributes)
+	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.ResourceAttributes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -151,7 +151,7 @@ func (t *Tracer) Start(ctx context.Context, spanName string, opts ...trace.SpanS
 
 	spanCtx, span := t.Tracer.Start(ctx, spanName, opts...)
 
-	wrappedSpan := &Span{Span: span, tracerProvider: &TracerProvider{tracer: t}}
+	wrappedSpan := &Span{Span: span, tracerProvider: &TracerProvider{TracerProvider: span.TracerProvider(), tracer: t}}
 
 	return trace.ContextWithSpan(spanCtx, wrappedSpan), wrappedSpan
 }

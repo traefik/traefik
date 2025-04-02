@@ -37,6 +37,12 @@ type customErrors struct {
 	backendHandler http.Handler
 	httpCodeRanges types.HTTPCodeRanges
 	backendQuery   string
+	statusRewrites []statusRewrite
+}
+
+type statusRewrite struct {
+	fromCodes types.HTTPCodeRanges
+	toCode    int
 }
 
 // New creates a new custom error pages middleware.
@@ -53,12 +59,27 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		return nil, err
 	}
 
+	// Parse StatusRewrites
+	statusRewrites := make([]statusRewrite, 0, len(config.StatusRewrites))
+	for k, v := range config.StatusRewrites {
+		ranges, err := types.NewHTTPCodeRanges([]string{k})
+		if err != nil {
+			return nil, err
+		}
+
+		statusRewrites = append(statusRewrites, statusRewrite{
+			fromCodes: ranges,
+			toCode:    v,
+		})
+	}
+
 	return &customErrors{
 		name:           name,
 		next:           next,
 		backendHandler: backend,
 		httpCodeRanges: httpCodeRanges,
 		backendQuery:   config.Query,
+		statusRewrites: statusRewrites,
 	}, nil
 }
 
@@ -84,12 +105,28 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// check the recorder code against the configured http status code ranges
 	code := catcher.getCode()
-	logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
+
+	originalCode := code
+
+	// Check if we need to rewrite the status code
+	for _, rsc := range c.statusRewrites {
+		if rsc.fromCodes.Contains(code) {
+			code = rsc.toCode
+			break
+		}
+	}
+
+	if code != originalCode {
+		logger.Debug().Msgf("Caught HTTP Status Code %d (rewritten to %d), returning error page", originalCode, code)
+	} else {
+		logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
+	}
 
 	var query string
 	if len(c.backendQuery) > 0 {
 		query = "/" + strings.TrimPrefix(c.backendQuery, "/")
 		query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
+		query = strings.ReplaceAll(query, "{originalStatus}", strconv.Itoa(originalCode))
 		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(req.URL.String()))
 	}
 

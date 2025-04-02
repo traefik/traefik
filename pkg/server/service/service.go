@@ -2,11 +2,9 @@ package service
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -24,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
@@ -31,13 +30,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/p2c"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
 	"google.golang.org/grpc/status"
-)
-
-const (
-	defaultMirrorBody        = true
-	defaultMaxBodySize int64 = -1
 )
 
 // ProxyBuilder builds reverse proxy handlers.
@@ -221,12 +216,12 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	mirrorBody := defaultMirrorBody
+	mirrorBody := dynamic.MirroringDefaultMirrorBody
 	if config.MirrorBody != nil {
 		mirrorBody = *config.MirrorBody
 	}
 
-	maxBodySize := defaultMaxBodySize
+	maxBodySize := dynamic.MirroringDefaultMaxBodySize
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
@@ -258,7 +253,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.Add(service.Name, serviceHandler, service.Weight)
+		balancer.Add(service.Name, serviceHandler, service.Weight, false)
 
 		if config.HealthCheck == nil {
 			continue
@@ -311,6 +306,13 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 	}
 }
 
+type serverBalancer interface {
+	http.Handler
+	healthcheck.StatusSetter
+
+	AddServer(name string, handler http.Handler, server dynamic.Server)
+}
+
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
 	service := info.LoadBalancer
 
@@ -337,41 +339,51 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		passHostHeader = *service.PassHostHeader
 	}
 
-	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
+	var lb serverBalancer
+	switch service.Strategy {
+	// Here we are handling the empty value to comply with providers that are not applying defaults (e.g. REST provider)
+	// TODO: remove this when all providers apply default values.
+	case dynamic.BalancerStrategyWRR, "":
+		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
+	case dynamic.BalancerStrategyP2C:
+		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
+	default:
+		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
+	}
+
 	healthCheckTargets := make(map[string]*url.URL)
 
-	for _, server := range shuffle(service.Servers, m.rand) {
-		hasher := fnv.New64a()
-		_, _ = hasher.Write([]byte(server.URL)) // this will never return an error.
-
-		proxyName := hex.EncodeToString(hasher.Sum(nil))
-
+	for i, server := range shuffle(service.Servers, m.rand) {
 		target, err := url.Parse(server.URL)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
 		}
 
-		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
+		logger.Debug().Int(logs.ServerIndex, i).Str("URL", server.URL).
 			Msg("Creating server")
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName)
+		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil)
 		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
+		// The retry wrapping must be done just before the proxy handler,
+		// to make sure that the retry will not be triggered/disabled by
+		// middlewares in the chain.
+		proxy = retry.WrapHandler(proxy)
 
 		// Prevents from enabling observability for internal resources.
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 		}
 
 		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
 			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
 
 			proxy, err = alice.New().
@@ -382,11 +394,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			}
 		}
 
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) {
 			proxy = observability.NewService(ctx, serviceName, proxy)
 		}
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName) {
+		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
 			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
 			// to re-target the request to it.
 			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
@@ -397,12 +409,12 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy, _ = capture.Wrap(proxy)
 		}
 
-		lb.Add(proxyName, proxy, server.Weight)
+		lb.AddServer(server.URL, proxy, server)
 
 		// servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
 
-		healthCheckTargets[proxyName] = target
+		healthCheckTargets[server.URL] = target
 	}
 
 	if service.HealthCheck != nil {

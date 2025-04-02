@@ -2,6 +2,7 @@ package server
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
@@ -50,6 +51,15 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 						Strs(logs.EntryPointName, defaultEntryPoints).
 						Msg("No entryPoint defined for this router, using the default one(s) instead")
 					router.EntryPoints = defaultEntryPoints
+				}
+
+				// The `ruleSyntax` option is deprecated.
+				// We exclude the "default" value to avoid logging it,
+				// as it is the value used for internal models and computed rules.
+				if router.RuleSyntax != "" && router.RuleSyntax != "default" {
+					log.Warn().
+						Str(logs.RouterName, routerName).
+						Msg("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
 				}
 
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
@@ -156,7 +166,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 			router := rt.DeepCopy()
 
 			if !router.DefaultRule && router.RuleSyntax == "" {
-				for _, model := range cfg.HTTP.Models {
+				for modelName, model := range cfg.HTTP.Models {
+					// models cannot be provided by another provider than the internal one.
+					if !strings.HasSuffix(modelName, "@internal") {
+						continue
+					}
 					router.RuleSyntax = model.DefaultRuleSyntax
 					break
 				}
@@ -178,6 +192,22 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
+					if cp.Observability == nil {
+						cp.Observability = &dynamic.RouterObservabilityConfig{}
+					}
+
+					if cp.Observability.AccessLogs == nil {
+						cp.Observability.AccessLogs = m.Observability.AccessLogs
+					}
+
+					if cp.Observability.Metrics == nil {
+						cp.Observability.Metrics = m.Observability.Metrics
+					}
+
+					if cp.Observability.Tracing == nil {
+						cp.Observability.Tracing = m.Observability.Tracing
+					}
+
 					rtName := name
 					if len(eps) > 1 {
 						rtName = epName + "-" + name
@@ -193,6 +223,9 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 		cfg.HTTP.Routers = rts
 	}
+
+	// Apply default observability model to HTTP routers.
+	applyDefaultObservabilityModel(cfg)
 
 	if cfg.TCP == nil || len(cfg.TCP.Models) == 0 {
 		return cfg
@@ -217,3 +250,38 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 	return cfg
 }
+
+// applyDefaultObservabilityModel applies the default observability model to the configuration.
+// This function is used to ensure that the observability configuration is set for all routers,
+// and make sure it is serialized and available in the API.
+// We could have introduced a "default" model, but it would have been more complex to manage for now.
+// This could be generalized in the future.
+func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
+	if cfg.HTTP != nil {
+		for _, router := range cfg.HTTP.Routers {
+			if router.Observability == nil {
+				router.Observability = &dynamic.RouterObservabilityConfig{
+					AccessLogs: pointer(true),
+					Metrics:    pointer(true),
+					Tracing:    pointer(true),
+				}
+
+				continue
+			}
+
+			if router.Observability.AccessLogs == nil {
+				router.Observability.AccessLogs = pointer(true)
+			}
+
+			if router.Observability.Tracing == nil {
+				router.Observability.Tracing = pointer(true)
+			}
+
+			if router.Observability.Metrics == nil {
+				router.Observability.Metrics = pointer(true)
+			}
+		}
+	}
+}
+
+func pointer[T any](v T) *T { return &v }

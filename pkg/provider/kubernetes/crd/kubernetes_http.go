@@ -13,15 +13,16 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 const (
-	roundRobinStrategy = "RoundRobin"
-	httpsProtocol      = "https"
-	httpProtocol       = "http"
+	httpsProtocol = "https"
+	httpProtocol  = "http"
 )
 
 func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
@@ -112,12 +113,13 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			r := &dynamic.Router{
-				Middlewares: mds,
-				Priority:    route.Priority,
-				RuleSyntax:  route.Syntax,
-				EntryPoints: ingressRoute.Spec.EntryPoints,
-				Rule:        route.Match,
-				Service:     serviceName,
+				Middlewares:   mds,
+				Priority:      route.Priority,
+				RuleSyntax:    route.Syntax,
+				EntryPoints:   ingressRoute.Spec.EntryPoints,
+				Rule:          route.Match,
+				Service:       serviceName,
+				Observability: route.Observability,
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -257,6 +259,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
 				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
 				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
+				Domain:   tService.Weighted.Sticky.Cookie.Domain,
 			},
 		}
 		sticky.Cookie.SetDefaults()
@@ -318,13 +321,33 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
 func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+
+	// This is required by the tests as the fake client does not apply default values.
+	// TODO: remove this when the fake client apply default values.
+	if svc.Strategy != "" {
+		switch svc.Strategy {
+		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
+			lb.Strategy = svc.Strategy
+
+		// Here we are just logging a warning as the default value is already applied.
+		case "RoundRobin":
+			log.Warn().
+				Str("namespace", namespace).
+				Str("service", svc.Name).
+				Msgf("RoundRobin strategy value is deprecated, please use %s value instead", dynamic.BalancerStrategyWRR)
+
+		default:
+			return nil, fmt.Errorf("load-balancer strategy %s is not supported", svc.Strategy)
+		}
+	}
+
 	servers, err := c.loadServers(namespace, svc)
 	if err != nil {
 		return nil, err
 	}
 
-	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
 	lb.Servers = servers
 
 	if svc.HealthCheck != nil {
@@ -379,6 +402,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
 				SameSite: svc.Sticky.Cookie.SameSite,
 				MaxAge:   svc.Sticky.Cookie.MaxAge,
+				Domain:   svc.Sticky.Cookie.Domain,
 			},
 		}
 		lb.Sticky.Cookie.SetDefaults()
@@ -416,14 +440,6 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 }
 
 func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
-	strategy := svc.Strategy
-	if strategy == "" {
-		strategy = roundRobinStrategy
-	}
-	if strategy != roundRobinStrategy {
-		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
-	}
-
 	namespace := namespaceOrFallback(svc, parentNamespace)
 
 	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
@@ -544,7 +560,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+			if !k8s.EndpointServing(endpoint) {
 				continue
 			}
 
@@ -555,7 +571,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 
 				addresses[address] = struct{}{}
 				servers = append(servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
+					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
 				})
 			}
 		}

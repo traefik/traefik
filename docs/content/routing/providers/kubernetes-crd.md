@@ -48,7 +48,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.2
+              image: traefik:v3.4
               args:
                 - --log.level=DEBUG
                 - --api
@@ -332,17 +332,21 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         middlewares:                    # [5]
         - name: middleware1             # [6]
           namespace: default            # [7]
-        services:                       # [8]
+        observability:                  # [8]
+          accesslogs: true              # [9]    
+          metrics: true                 # [10]
+          tracing: true                 # [11]
+        services:                       # [12]
         - kind: Service
           name: foo
           namespace: default
           passHostHeader: true
-          port: 80                      # [9]
+          port: 80                      # [13]
           responseForwarding:
             flushInterval: 1ms
           scheme: https
-          serversTransport: transport   # [10]
-          healthCheck:                  # [11]
+          serversTransport: transport   # [14]
+          healthCheck:                  # [15]
             path: /health
             interval: 15s
           sticky:
@@ -353,19 +357,20 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
               sameSite: none
               maxAge: 42  
               path: /foo
-          strategy: RoundRobin
+              domain: foo.com
+          strategy: wrr                 # [16]
           weight: 10
-          nativeLB: true                # [12]
-          nodePortLB: true              # [13]
-      tls:                              # [14]
-        secretName: supersecret         # [15]
-        options:                        # [16]
-          name: opt                     # [17]
-          namespace: default            # [18]
-        certResolver: foo               # [19]
-        domains:                        # [20]
-        - main: example.net             # [21]
-          sans:                         # [22]
+          nativeLB: true                # [17]
+          nodePortLB: true              # [18]
+      tls:                              # [19]
+        secretName: supersecret         # [20]
+        options:                        # [21]
+          name: opt                     # [22]
+          namespace: default            # [23]
+        certResolver: foo               # [24]
+        domains:                        # [25]
+        - main: example.net             # [26]
+          sans:                         # [27]
           - a.example.net
           - b.example.net
     ```
@@ -379,21 +384,26 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [5]  | `routes[n].middlewares`        | List of reference to [Middleware](#kind-middleware)                                                                                                                                                                                                                                          |
 | [6]  | `middlewares[n].name`          | Defines the [Middleware](#kind-middleware) name                                                                                                                                                                                                                                              |
 | [7]  | `middlewares[n].namespace`     | Defines the [Middleware](#kind-middleware) namespace. It can be omitted when the Middleware is in the IngressRoute namespace.                                                                                                                                                                |
-| [8]  | `routes[n].services`           | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup)                                                                     |
-| [9]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       |
-| [10] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
-| [11] | `services[n].healthCheck`      | Defines the HealthCheck when service references a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.                                                                                                                               |
-| [12] | `services[n].nativeLB`         | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                     |
-| [13] | `services[n].nodePortLB`       | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.                                                                                                                               |
-| [14] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                             |
-| [15] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                         |
-| [16] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                      |
-| [17] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                |
-| [18] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                           |
-| [19] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                                                                                                  |
-| [20] | `tls.domains`                  | List of [domains](../routers/index.md#domains)                                                                                                                                                                                                                                               |
-| [21] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                 |
-| [22] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                           |
+| [8]  | `routes[n].observability`      | Defines the route observability configuration.                                                                                                                                                                                                                                               |
+| [9]  | `observability.accesslogs`     | Defines whether the route will produce [access-logs](../routers/index.md#accesslogs).                                                                                                                                                                                                        |
+| [10] | `observability.metrics`        | Defines whether the route will produce [metrics](../routers/index.md#metrics).                                                                                                                                                                                                               |
+| [11] | `observability.tracing`        | Defines whether the route will produce [traces](../routers/index.md#tracing).                                                                                                                                                                                                                |
+| [12] | `routes[n].services`           | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup)                                                                     |
+| [13] | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       |
+| [14] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
+| [15] | `services[n].healthCheck`      | Defines the HealthCheck when service references a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.                                                                                                                               |
+| [16] | `services[n].strategy`         | Defines the load-balancing strategy for the load-balancer. Supported values are `wrr` and `p2c`, please refer to the [Load Balancing documentation](../routing/services/#load-balancing-strategy) for more information.                                                                      |
+| [17] | `services[n].nativeLB`         | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                     |
+| [18] | `services[n].nodePortLB`       | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.                                                                                                                               |
+| [19] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                             |
+| [20] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                         |
+| [21] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                      |
+| [22] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                |
+| [23] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                           |
+| [24] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                                                                                                  |
+| [25] | `tls.domains`                  | List of [domains](../routers/index.md#domains)                                                                                                                                                                                                                                               |
+| [26] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                 |
+| [27] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                           |
 
 ??? example "Declaring an IngressRoute"
 
@@ -596,7 +606,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 
 #### Load Balancing
 
-More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
+More information in the dedicated server [load balancing](../services/index.md#load-balancing-strategy) section.
 
 !!! info "Declaring and using Kubernetes Service Load Balancing"
 
@@ -982,6 +992,9 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 As explained in the section about [Sticky sessions](../../services/#sticky-sessions), for stickiness to work all the way,
 it must be specified at each load-balancing level.
 
+When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
+Fenced servers can still process requests tied to sticky cookies, while they are terminating.
+
 For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
 and there is a second level because each whoami service is a `replicaset` and is thus handled as a load-balancer of servers.
 
@@ -1157,48 +1170,50 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           serversTransport: transport # [13]
           nativeLB: true              # [14]
           nodePortLB: true            # [15]
+          tls: false                  # [16]
 
-      tls:                            # [16]
-        secretName: supersecret       # [17]
-        options:                      # [18]
-          name: opt                   # [19]
-          namespace: default          # [20]
-        certResolver: foo             # [21]
-        domains:                      # [22]
-        - main: example.net           # [23]
-          sans:                       # [24]
+      tls:                            # [17]
+        secretName: supersecret       # [18]
+        options:                      # [19]
+          name: opt                   # [20]
+          namespace: default          # [21]
+        certResolver: foo             # [22]
+        domains:                      # [23]
+        - main: example.net           # [24]
+          sans:                       # [25]
           - a.example.net
           - b.example.net
-        passthrough: false            # [25]
+        passthrough: false            # [26]
     ```
 
-| Ref  | Attribute                           | Purpose                                                                                                                                                                                                                                                                                                                                                                              |
-|------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `entryPoints`                       | List of [entrypoints](../routers/index.md#entrypoints_1) names                                                                                                                                                                                                                                                                                                                       |
-| [2]  | `routes`                            | List of routes                                                                                                                                                                                                                                                                                                                                                                       |
-| [3]  | `routes[n].match`                   | Defines the [rule](../routers/index.md#rule_1) of the underlying router                                                                                                                                                                                                                                                                                                              |
-| [4]  | `routes[n].priority`                | Defines the [priority](../routers/index.md#priority_1) to disambiguate rules of the same length, for route matching                                                                                                                                                                                                                                                                  |
-| [5]  | `middlewares[n].name`               | Defines the [MiddlewareTCP](#kind-middlewaretcp) name                                                                                                                                                                                                                                                                                                                                |
-| [6]  | `middlewares[n].namespace`          | Defines the [MiddlewareTCP](#kind-middlewaretcp) namespace                                                                                                                                                                                                                                                                                                                           |
-| [7]  | `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions  (See below for `ExternalName Service` setup)                                                                                                                                                                                                                             |
-| [8]  | `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                         |
-| [9]  | `services[n].port`                  | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                                                                                                               |
-| [10] | `services[n].weight`                | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                             |
-| [11] | `services[n].proxyProtocol`         | Defines the [PROXY protocol](../services/index.md#proxy-protocol) configuration                                                                                                                                                                                                                                                                                                      |
-| [12] | `services[n].proxyProtocol.version` | Defines the [PROXY protocol](../services/index.md#proxy-protocol) version                                                                                                                                                                                                                                                                                                            |
-| [13] | `services[n].serversTransport`      | Defines the reference to a [ServersTransportTCP](#kind-serverstransporttcp). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)).                                                                                   |
-| [14] | `services[n].nativeLB`              | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                                                                                                             |
-| [15] | `services[n].nodePortLB`            | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is                                                                                                                                                                                                                                 |
-| [16] | `tls`                               | Defines [TLS](../routers/index.md#tls_1) certificate configuration                                                                                                                                                                                                                                                                                                                   |
-| [17] | `tls.secretName`                    | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                                                                                                                 |
-| [18] | `tls.options`                       | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                                                                                                              |
-| [19] | `tls.options.name`                  | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                                                                                                        |
-| [20] | `tls.options.namespace`             | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                                                                                                                   |
-| [21] | `tls.certResolver`                  | Defines the reference to a [CertResolver](../routers/index.md#certresolver_1)                                                                                                                                                                                                                                                                                                        |
-| [22] | `tls.domains`                       | List of [domains](../routers/index.md#domains_1)                                                                                                                                                                                                                                                                                                                                     |
-| [23] | `tls.domains[n].main`               | Defines the main domain name                                                                                                                                                                                                                                                                                                                                                         |
-| [24] | `tls.domains[n].sans`               | List of SANs (alternative domains)                                                                                                                                                                                                                                                                                                                                                   |
-| [25] | `tls.passthrough`                   | If `true`, delegates the TLS termination to the backend                                                                                                                                                                                                                                                                                                                              |
+| Ref  | Attribute                           | Purpose                                                                                                                                                                                                                                                                                            |
+|------|-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `entryPoints`                       | List of [entrypoints](../routers/index.md#entrypoints_1) names                                                                                                                                                                                                                                     |
+| [2]  | `routes`                            | List of routes                                                                                                                                                                                                                                                                                     |
+| [3]  | `routes[n].match`                   | Defines the [rule](../routers/index.md#rule_1) of the underlying router                                                                                                                                                                                                                            |
+| [4]  | `routes[n].priority`                | Defines the [priority](../routers/index.md#priority_1) to disambiguate rules of the same length, for route matching                                                                                                                                                                                |
+| [5]  | `middlewares[n].name`               | Defines the [MiddlewareTCP](#kind-middlewaretcp) name                                                                                                                                                                                                                                              |
+| [6]  | `middlewares[n].namespace`          | Defines the [MiddlewareTCP](#kind-middlewaretcp) namespace                                                                                                                                                                                                                                         |
+| [7]  | `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions  (See below for `ExternalName Service` setup)                                                                                                                                           |
+| [8]  | `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                       |
+| [9]  | `services[n].port`                  | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                             |
+| [10] | `services[n].weight`                | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                           |
+| [11] | `services[n].proxyProtocol`         | Defines the [PROXY protocol](../services/index.md#proxy-protocol) configuration                                                                                                                                                                                                                    |
+| [12] | `services[n].proxyProtocol.version` | Defines the [PROXY protocol](../services/index.md#proxy-protocol) version                                                                                                                                                                                                                          |
+| [13] | `services[n].serversTransport`      | Defines the reference to a [ServersTransportTCP](#kind-serverstransporttcp). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
+| [14] | `services[n].nativeLB`              | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.                                                                                                                                           |
+| [15] | `services[n].nodePortLB`            | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs when the service type is of type NodePort.                                                                                                                                                |
+| [16] | `services[n].tls`                   | Defines whether to use TLS when dialing with the target service.                                                                                                                                                                                                                                   |
+| [17] | `tls`                               | Defines [TLS](../routers/index.md#tls_1) certificate configuration                                                                                                                                                                                                                                 |
+| [18] | `tls.secretName`                    | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                               |
+| [19] | `tls.options`                       | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                            |
+| [20] | `tls.options.name`                  | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                      |
+| [21] | `tls.options.namespace`             | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                                 |
+| [22] | `tls.certResolver`                  | Defines the reference to a [CertResolver](../routers/index.md#certresolver_1)                                                                                                                                                                                                                      |
+| [23] | `tls.domains`                       | List of [domains](../routers/index.md#domains_1)                                                                                                                                                                                                                                                   |
+| [24] | `tls.domains[n].main`               | Defines the main domain name                                                                                                                                                                                                                                                                       |
+| [25] | `tls.domains[n].sans`               | List of SANs (alternative domains)                                                                                                                                                                                                                                                                 |
+| [26] | `tls.passthrough`                   | If `true`, delegates the TLS termination to the backend                                                                                                                                                                                                                                            |
 
 ??? example "Declaring an IngressRouteTCP"
 
@@ -1836,9 +1851,9 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     spec:
       serverName: foobar                        # [1]
       insecureSkipVerify: true                  # [2]
-      rootCAsSecrets:                           # [3]
-        - foobar
-        - foobar
+      rootCAs:                                  # [3]
+        - configMap: foobar
+        - secret: foobar
       certificatesSecrets:                      # [4]
         - foobar
         - foobar
@@ -1856,22 +1871,22 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         trustDomain: "spiffe://trust-domain"    # [14]
     ```
 
-| Ref  | Attribute               | Purpose                                                                                                                                                                 |
-|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                  |
-| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                              |
-| [3]  | `rootCAsSecrets`        | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key. |
-| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                         |
-| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                     |
-| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                         |
-| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                               |
-| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                    |
-| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
-| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
-| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                           |
-| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                               |
-| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                          |
-| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                |
+| Ref  | Attribute               | Purpose                                                                                                                                                                                         |
+|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                                          |
+| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                                                      |
+| [3]  | `rootCAs`               | Defines the set of root certificate authorities to use when verifying server certificates. The referenced Secret or ConfigMap must contain a certificate under either a tls.ca or a ca.crt key. |
+| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                                                 |
+| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                                             |
+| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                                                 |
+| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                                                       |
+| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                                            |
+| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                                                  |
+| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                |
+| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                                                   |
+| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                                                       |
+| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                  |
+| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                                        |
 
 !!! info "CA Secret"
 
@@ -1945,9 +1960,9 @@ The `default@internal` serversTransportTCP is created from the [static configura
         serverName: foobar                      # [5]
         insecureSkipVerify: true                # [6]
         peerCertURI: foobar                     # [7]
-        rootCAsSecrets:                         # [8]
-          - foobar
-          - foobar
+        rootCAs:                                # [8]
+          - secret: foobar
+          - configMap: foobar
         certificatesSecrets:                    # [9]
           - foobar
           - foobar
@@ -1967,7 +1982,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 | [5]  | `serverName`          | ServerName used to contact the server.                                                                                                                                                                                                                                                                                                              |
 | [6]  | `insecureSkipVerify`  | Controls whether the server's certificate chain and host name is verified.                                                                                                                                                                                                                                                                          |
 | [7]  | `peerCertURI`         | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                                                                                                                                                                    |
-| [8]  | `rootCAsSecrets`      | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                                             |
+| [8]  | `rootCAs`             | Defines the set of root certificate authorities to use when verifying server certificates. The referenced Secret or ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                     |
 | [9]  | `certificatesSecrets` | Certificates to present to the server for mTLS.                                                                                                                                                                                                                                                                                                     |
 | [10] | `spiffe`              | The SPIFFE configuration.                                                                                                                                                                                                                                                                                                                           |
 | [11] | `ids`                 | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                                                                                                                                                                      |

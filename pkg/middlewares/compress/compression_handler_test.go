@@ -498,6 +498,73 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 	}
 }
 
+func Test_FlushForceCompress(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		cfg            Config
+		algo           string
+		readerBuilder  func(io.Reader) (io.Reader, error)
+		acceptEncoding string
+	}{
+		{
+			desc: "brotli",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
+			acceptEncoding: "br",
+		},
+		{
+			desc: "zstd",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
+			acceptEncoding: "zstd",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+
+				_, err := rw.Write(smallTestBody)
+				require.NoError(t, err)
+
+				rw.(http.Flusher).Flush()
+			})
+
+			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
+			defer srv.Close()
+
+			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
+			require.NoError(t, err)
+
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+
+			defer res.Body.Close()
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, test.acceptEncoding, res.Header.Get(contentEncoding))
+
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
+
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, smallTestBody, got)
+		})
+	}
+}
+
 func Test_ExcludedContentTypes(t *testing.T) {
 	testCases := []struct {
 		desc                 string
@@ -509,6 +576,11 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			desc:           "Always compress when content types are empty",
 			contentType:    "",
 			expCompression: true,
+		},
+		{
+			desc:           "MIME malformed",
+			contentType:    "application/json;charset=UTF-8;charset=utf-8",
+			expCompression: false,
 		},
 		{
 			desc:                 "MIME match",
@@ -619,6 +691,11 @@ func Test_IncludedContentTypes(t *testing.T) {
 			desc:           "Always compress when content types are empty",
 			contentType:    "",
 			expCompression: true,
+		},
+		{
+			desc:           "MIME malformed",
+			contentType:    "application/json;charset=UTF-8;charset=utf-8",
+			expCompression: false,
 		},
 		{
 			desc:                 "MIME match",

@@ -43,7 +43,7 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.2/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.4/routing/entrypoints/
                   Default: all.
                 items:
                   type: string
@@ -92,6 +92,7 @@ spec:
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
+                            minimum: 0
                             type: integer
                         required:
                         - name

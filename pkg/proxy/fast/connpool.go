@@ -20,8 +20,9 @@ import (
 // rwWithUpgrade contains a ResponseWriter and an upgradeHandler,
 // used to upgrade the connection (e.g. Websockets).
 type rwWithUpgrade struct {
-	RW      http.ResponseWriter
-	Upgrade upgradeHandler
+	ReqMethod string
+	RW        http.ResponseWriter
+	Upgrade   upgradeHandler
 }
 
 // conn is an enriched net.Conn.
@@ -178,7 +179,6 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 			}
 
 			res.Reset()
-			res.Header.Reset()
 			res.Header.SetNoDefaultContentType(true)
 
 			continue
@@ -211,7 +211,7 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 
 	r.RW.WriteHeader(res.StatusCode())
 
-	if res.Header.ContentLength() == 0 {
+	if noResponseBodyExpected(r.ReqMethod) {
 		return nil
 	}
 
@@ -221,8 +221,14 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
+	contentLength := res.Header.ContentLength()
+
+	if contentLength == 0 {
+		return nil
+	}
+
 	// Chunked response, Content-Length is set to -1 by FastProxy when "Transfer-Encoding: chunked" header is received.
-	if res.Header.ContentLength() == -1 {
+	if contentLength == -1 {
 		cbr := httputil.NewChunkedReader(c.br)
 
 		b := c.bufferPool.Get()
@@ -262,6 +268,23 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
+	// Response without Content-Length header.
+	// The message body length is determined by the number of bytes received prior to the server closing the connection.
+	if contentLength == -2 {
+		b := c.bufferPool.Get()
+		if b == nil {
+			b = make([]byte, bufferSize)
+		}
+		defer c.bufferPool.Put(b)
+
+		if _, err := io.CopyBuffer(r.RW, c.br, b); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Response with a valid Content-Length header.
 	brl := c.limitedReaderPool.Get()
 	if brl == nil {
 		brl = &io.LimitedReader{}
@@ -444,8 +467,8 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 	c.releaseConn(newConn)
 }
 
-// isBodyAllowedForStatus reports whether a given response status code
-// permits a body. See RFC 7230, section 3.3.
+// isBodyAllowedForStatus reports whether a given response status code permits a body.
+// See RFC 7230, section 3.3.
 // From https://github.com/golang/go/blame/master/src/net/http/transfer.go#L459
 func isBodyAllowedForStatus(status int) bool {
 	switch {
@@ -457,4 +480,10 @@ func isBodyAllowedForStatus(status int) bool {
 		return false
 	}
 	return true
+}
+
+// noResponseBodyExpected reports whether a given request method permits a body.
+// From https://github.com/golang/go/blame/master/src/net/http/transfer.go#L250
+func noResponseBodyExpected(requestMethod string) bool {
+	return requestMethod == "HEAD"
 }

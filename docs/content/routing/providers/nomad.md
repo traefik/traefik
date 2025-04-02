@@ -111,6 +111,30 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     traefik.http.routers.myrouter.tls.options=foobar
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.accesslogs=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.metrics=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.tracing=true
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
@@ -142,6 +166,15 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
 
     ```yaml
     traefik.http.services.myservice.loadbalancer.server.scheme=http
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.url`"
+
+    Defines the service URL.
+    This option cannot be used in combination with `port` or `scheme` definition.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.server.url=http://foobar:8080
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
@@ -273,6 +306,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.domain`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.domain=foo.com
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.maxage`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -295,6 +336,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
 
     ```yaml
     traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.strategy=p2c
     ```
 
 ### Middleware

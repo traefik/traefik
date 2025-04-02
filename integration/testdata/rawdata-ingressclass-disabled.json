@@ -6,8 +6,13 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 9223372036854775806,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -23,8 +28,13 @@
 			],
 			"service": "dashboard@internal",
 			"rule": "PathPrefix(`/`)",
-			"ruleSyntax": "v3",
+			"ruleSyntax": "default",
 			"priority": 9223372036854775805,
+			"observability": {
+				"accessLogs": true,
+				"tracing": true,
+				"metrics": true
+			},
 			"status": "enabled",
 			"using": [
 				"traefik"

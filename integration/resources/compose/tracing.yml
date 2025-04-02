@@ -2,7 +2,7 @@ version: "3.8"
 services:
   tempo:
     hostname: tempo
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.6.1
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./fixtures/tracing/tempo.yaml:/etc/tempo.yaml

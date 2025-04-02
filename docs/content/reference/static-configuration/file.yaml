@@ -91,6 +91,10 @@ entryPoints:
       advertisedPort: 42
     udp:
       timeout: 42s
+    observability:
+      accessLogs: true
+      tracing: true
+      metrics: true
 providers:
   providersThrottleDuration: 42s
   docker:
@@ -418,6 +422,32 @@ log:
   maxAge: 42
   maxBackups: 42
   compress: true
+  otlp:
+    serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 accessLog:
   filePath: foobar
   format: foobar
@@ -439,9 +469,35 @@ accessLog:
         name1: foobar
   bufferingSize: 42
   addInternals: true
+  otlp:
+    serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
+    grpc:
+      endpoint: foobar
+      insecure: true
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
+    http:
+      endpoint: foobar
+      tls:
+        ca: foobar
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+      headers:
+        name0: foobar
+        name1: foobar
 tracing:
   serviceName: foobar
-  globalAttributes:
+  resourceAttributes:
     name0: foobar
     name1: foobar
   capturedRequestHeaders:
@@ -477,6 +533,9 @@ tracing:
       headers:
         name0: foobar
         name1: foobar
+  globalAttributes:
+    name0: foobar
+    name1: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
@@ -487,6 +546,10 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       preferredChain: foobar
+      profile: foobar
+      emailAddresses:
+        - foobar
+        - foobar
       storage: foobar
       keyType: foobar
       eab:
@@ -512,6 +575,7 @@ certificatesResolvers:
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
+        delay: 42s
       tlsChallenge: {}
     tailscale: {}
   CertificateResolver1:
@@ -519,6 +583,10 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       preferredChain: foobar
+      profile: foobar
+      emailAddresses:
+        - foobar
+        - foobar
       storage: foobar
       keyType: foobar
       eab:
@@ -544,6 +612,7 @@ certificatesResolvers:
         disablePropagationCheck: true
       httpChallenge:
         entryPoint: foobar
+        delay: 42s
       tlsChallenge: {}
     tailscale: {}
 experimental:
@@ -590,6 +659,7 @@ experimental:
   abortOnPluginFailure: true
   fastProxy:
     debug: true
+  otlplogs: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar

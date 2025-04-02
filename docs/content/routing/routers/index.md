@@ -877,6 +877,117 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 !!! warning "Double Wildcard Certificates"
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
 
+### Observability
+
+The Observability section defines a per router behavior regarding access-logs, metrics or tracing.
+
+The default router observability configuration is inherited from the attached EntryPoints and can be configured with the observability [options](../../routing/entrypoints.md#observability-options).
+However, a router defining its own observability configuration will opt-out from these defaults.
+
+!!! info "Note that to enable router-level observability, you must first enable access-logs, tracing, and/or metrics."
+    
+!!! warning "AddInternals option"
+
+    By default, and for any type of signals (access-logs, metrics and tracing),
+    Traefik disables observability for internal resources.
+    The observability options described below cannot interfere with the `AddInternals` ones,
+    and will be ignored.
+
+    For instance, if a router exposes the `api@internal` service and `metrics.AddInternals` is false,
+    it will never produces metrics, even if the router observability configuration enables metrics.
+
+#### `accessLogs`
+
+_Optional_
+
+The `accessLogs` option controls whether the router will produce access-logs.
+
+??? example "Disable access-logs for a router using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          service: service-foo
+          observability:
+            accessLogs: false
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        service = "service-foo"
+        [http.routers.my-router.observability]
+          accessLogs = false
+    ```
+
+#### `metrics`
+
+_Optional_
+
+The `metrics` option controls whether the router will produce metrics.
+
+!!! warning "Metrics layers"
+
+    When metrics layers are not enabled with the `addEntryPointsLabels`, `addRoutersLabels` and/or `addServicesLabels` options,
+    enabling metrics for a router will not enable them.
+
+??? example "Disable metrics for a router using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          service: service-foo
+          observability:
+            metrics: false
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        service = "service-foo"
+        [http.routers.my-router.observability]
+          metrics = false
+    ```
+
+#### `tracing`
+
+_Optional_
+
+The `tracing` option controls whether the router will produce traces.
+
+??? example "Disable tracing for a router using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          service: service-foo
+          observability:
+            tracing: false
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        service = "service-foo"
+        [http.routers.my-router.observability]
+          tracing = false
+    ```
+
 ## Configuring TCP Routers
 
 !!! warning "The character `@` is not authorized in the router name"

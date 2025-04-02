@@ -23,6 +23,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"go.opentelemetry.io/contrib/bridges/otellogrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type key string
@@ -52,6 +54,7 @@ func (n noopCloser) Close() error {
 }
 
 type handlerParams struct {
+	ctx          context.Context
 	logDataTable *LogData
 }
 
@@ -106,6 +109,16 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Level:     logrus.InfoLevel,
 	}
 
+	if config.OTLP != nil {
+		otelLoggerProvider, err := config.OTLP.NewLoggerProvider()
+		if err != nil {
+			return nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
+		}
+
+		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
+		logger.Out = io.Discard
+	}
+
 	// Transform header names to a canonical form, to be used as is without further transformations,
 	// and transform field names to lower case, to enable case-insensitive lookup.
 	if config.Fields != nil {
@@ -150,7 +163,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		go func() {
 			defer logHandler.wg.Done()
 			for handlerParams := range logHandler.logHandlerChan {
-				logHandler.logTheRoundTrip(handlerParams.logDataTable)
+				logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
 			}
 		}()
 	}
@@ -195,6 +208,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		Request: request{
 			headers: req.Header,
 		},
+	}
+
+	if span := trace.SpanFromContext(req.Context()); span != nil {
+		spanContext := span.SpanContext()
+		logDataTable.Core[TraceID] = spanContext.TraceID().String()
+		logDataTable.Core[SpanID] = spanContext.SpanID().String()
 	}
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
@@ -256,12 +275,13 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 		if h.config.BufferingSize > 0 {
 			h.logHandlerChan <- handlerParams{
+				ctx:          req.Context(),
 				logDataTable: logDataTable,
 			}
 			return
 		}
 
-		h.logTheRoundTrip(logDataTable)
+		h.logTheRoundTrip(req.Context(), logDataTable)
 	}()
 
 	next.ServeHTTP(rw, reqWithDataTable)
@@ -313,7 +333,7 @@ func usernameIfPresent(theURL *url.URL) string {
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time.
-func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
+func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	core := logDataTable.Core
 
 	retryAttempts, ok := core[RetryAttempts].(int)
@@ -359,7 +379,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 
 		h.mu.Lock()
 		defer h.mu.Unlock()
-		h.logger.WithFields(fields).Println()
+		h.logger.WithContext(ctx).WithFields(fields).Println()
 	}
 }
 

@@ -192,12 +192,17 @@ func (r *responseWriter) Header() http.Header {
 }
 
 func (r *responseWriter) WriteHeader(statusCode int) {
-	if r.statusCodeSet {
+	// Handle informational headers
+	// This is gated to not forward 1xx responses on builds prior to go1.20.
+	if statusCode >= 100 && statusCode <= 199 {
+		r.rw.WriteHeader(statusCode)
 		return
 	}
 
-	r.statusCode = statusCode
-	r.statusCodeSet = true
+	if !r.statusCodeSet {
+		r.statusCode = statusCode
+		r.statusCodeSet = true
+	}
 }
 
 func (r *responseWriter) Write(p []byte) (int, error) {
@@ -228,8 +233,12 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// Disable compression according to user wishes in excludedContentTypes or includedContentTypes.
 	if ct := r.rw.Header().Get(contentType); ct != "" {
 		mediaType, params, err := mime.ParseMediaType(ct)
+		// To align the behavior with the klauspost handler for Gzip,
+		// if the MIME type is not parsable the compression is disabled.
 		if err != nil {
-			return 0, fmt.Errorf("parsing content-type media type: %w", err)
+			r.compressionDisabled = true
+			r.rw.WriteHeader(r.statusCode)
+			return r.rw.Write(p)
 		}
 
 		if len(r.includedContentTypes) > 0 {
@@ -319,11 +328,16 @@ func (r *responseWriter) Flush() {
 	}
 
 	// Here, nothing was ever written either to rw or to bw (since we're still
-	// waiting to decide whether to compress), so we do not need to flush anything.
-	// Note that we diverge with klauspost's gzip behavior, where they instead
-	// force compression and flush whatever was in the buffer in this case.
+	// waiting to decide whether to compress), so to be aligned with klauspost's
+	// gzip behavior we force the compression and flush whatever was in the buffer in this case.
 	if !r.compressionStarted {
-		return
+		r.rw.Header().Del(contentLength)
+
+		r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
+		r.rw.WriteHeader(r.statusCode)
+		r.headersSent = true
+
+		r.compressionStarted = true
 	}
 
 	// Conversely, we here know that something was already written to bw (or is

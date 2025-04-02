@@ -22,7 +22,7 @@ spec:
           TraefikService object allows to:
           - Apply weight to Services on load-balancing
           - Mirror traffic on services
-          More info: https://doc.traefik.io/traefik/v3.2/routing/providers/kubernetes-crd/#kind-traefikservice
+          More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-traefikservice
         properties:
           apiVersion:
             description: |-
@@ -268,11 +268,16 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.2/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
+                                domain:
+                                  description: |-
+                                    Domain defines the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -296,6 +301,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -305,14 +314,21 @@ spec:
                               type: object
                           type: object
                         strategy:
+                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            RoundRobin is the only supported value at the moment.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and supported for backward compatibility.
+                          enum:
+                          - wrr
+                          - p2c
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -381,11 +397,16 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.2/routing/services/#sticky-sessions
+                      More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
+                          domain:
+                            description: |-
+                              Domain defines the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
@@ -409,6 +430,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -417,14 +442,21 @@ spec:
                         type: object
                     type: object
                   strategy:
+                    default: wrr
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
-                      RoundRobin is the only supported value at the moment.
+                      Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                      RoundRobin value is deprecated and supported for backward compatibility.
+                    enum:
+                    - wrr
+                    - p2c
+                    - RoundRobin
                     type: string
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object
                       (and to be precise, one that embeds a Weighted Round Robin).
+                    minimum: 0
                     type: integer
                 required:
                 - name
@@ -570,11 +602,16 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.2/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
                               properties:
+                                domain:
+                                  description: |-
+                                    Domain defines the host to which the cookie will be sent.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                                  type: string
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -598,6 +635,10 @@ spec:
                                   description: |-
                                     SameSite defines the same site policy.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                                  enum:
+                                  - none
+                                  - lax
+                                  - strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -607,14 +648,21 @@ spec:
                               type: object
                           type: object
                         strategy:
+                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            RoundRobin is the only supported value at the moment.
+                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            RoundRobin value is deprecated and supported for backward compatibility.
+                          enum:
+                          - wrr
+                          - p2c
+                          - RoundRobin
                           type: string
                         weight:
                           description: |-
                             Weight defines the weight and should only be specified when Name references a TraefikService object
                             (and to be precise, one that embeds a Weighted Round Robin).
+                          minimum: 0
                           type: integer
                       required:
                       - name
@@ -623,11 +671,16 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v3.2/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+                      More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
                         properties:
+                          domain:
+                            description: |-
+                              Domain defines the host to which the cookie will be sent.
+                              More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
+                            type: string
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
@@ -651,6 +704,10 @@ spec:
                             description: |-
                               SameSite defines the same site policy.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                            enum:
+                            - none
+                            - lax
+                            - strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only

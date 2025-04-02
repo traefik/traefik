@@ -98,7 +98,8 @@ func Test_getPort_swarm(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 
-			p := SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
 
 			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)

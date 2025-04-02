@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-if [ -n "${SEMAPHORE_GIT_TAG_NAME}" ]; then
+if [ -n "${VERSION}" ]; then
   echo "Deploying..."
 else
   echo "Skipping deploy"
@@ -13,8 +13,8 @@ git config --global user.name "Traefiker"
 
 # load ssh key
 eval "$(ssh-agent -s)"
-chmod 600 /home/semaphore/.ssh/traefiker_rsa
-ssh-add /home/semaphore/.ssh/traefiker_rsa
+chmod 600 ~/.ssh/traefiker_rsa
+ssh-add ~/.ssh/traefiker_rsa
 
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."

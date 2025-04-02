@@ -20,6 +20,10 @@
         [[http.routers.Router0.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [http.routers.Router0.observability]
+        accessLogs = true
+        tracing = true
+        metrics = true
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -38,6 +42,10 @@
         [[http.routers.Router1.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [http.routers.Router1.observability]
+        accessLogs = true
+        tracing = true
+        metrics = true
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -46,6 +54,7 @@
         [http.services.Service01.failover.healthCheck]
     [http.services.Service02]
       [http.services.Service02.loadBalancer]
+        strategy = "foobar"
         passHostHeader = true
         serversTransport = "foobar"
         [http.services.Service02.loadBalancer.sticky]
@@ -56,6 +65,7 @@
             sameSite = "foobar"
             maxAge = 42
             path = "foobar"
+            domain = "foobar"
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
@@ -114,6 +124,7 @@
             sameSite = "foobar"
             maxAge = 42
             path = "foobar"
+            domain = "foobar"
         [http.services.Service04.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
@@ -165,6 +176,9 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        [http.middlewares.Middleware09.errors.statusRewrites]
+          name0 = 42
+          name1 = 42
     [http.middlewares.Middleware10]
       [http.middlewares.Middleware10.forwardAuth]
         address = "foobar"
@@ -174,6 +188,10 @@
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
         headerField = "foobar"
+        forwardBody = true
+        maxBodySize = 42
+        preserveLocationHeader = true
+        preserveRequestMethod = true
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
@@ -294,6 +312,22 @@
             depth = 42
             excludedIPs = ["foobar", "foobar"]
             ipv6Subnet = 42
+        [http.middlewares.Middleware18.rateLimit.redis]
+          endpoints = ["foobar", "foobar"]
+          username = "foobar"
+          password = "foobar"
+          db = 42
+          poolSize = 42
+          minIdleConns = 42
+          maxActiveConns = 42
+          readTimeout = "42s"
+          writeTimeout = "42s"
+          dialTimeout = "42s"
+          [http.middlewares.Middleware18.rateLimit.redis.tls]
+            ca = "foobar"
+            cert = "foobar"
+            key = "foobar"
+            insecureSkipVerify = true
     [http.middlewares.Middleware19]
       [http.middlewares.Middleware19.redirectRegex]
         regex = "foobar"
@@ -536,6 +570,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       alpnProtocols = ["foobar", "foobar"]
+      disableSessionTickets = true
       preferServerCipherSuites = true
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
@@ -547,6 +582,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       alpnProtocols = ["foobar", "foobar"]
+      disableSessionTickets = true
       preferServerCipherSuites = true
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]

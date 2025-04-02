@@ -79,7 +79,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 			defer func() { _ = dockerClient.Close() }()
 
-			builder := NewDynConfBuilder(p.Shared, dockerClient)
+			builder := NewDynConfBuilder(p.Shared, dockerClient, false)
 
 			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
@@ -179,7 +179,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 			continue
 		}
 
-		extraConf, err := p.extractLabels(dData)
+		extraConf, err := p.extractDockerLabels(dData)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msgf("Skip container %s", getServiceName(dData))
 			continue
