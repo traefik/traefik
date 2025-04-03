@@ -48,7 +48,7 @@ make build           # Generate Docker image
 ## Libraries
 
 - [Node](https://nodejs.org)
-- [NPM](https://www.npmjs.com/)
+- [Yarn](https://yarnpkg.com/)
 - [React](https://reactjs.org/)
 - [Faency](https://github.com/containous/faency)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
