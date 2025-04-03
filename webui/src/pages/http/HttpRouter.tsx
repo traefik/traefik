@@ -1,5 +1,5 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useMemo } from 'react'
 import { FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 import { useParams } from 'react-router-dom'
 
@@ -27,8 +27,9 @@ type DetailProps = {
 
 export const RouterStructure = ({ data, protocol = 'http' }: DetailProps) => {
   const { addToast } = useContext(ToastContext)
-  const entrypoints = getValidData(data.entryPointsData)
-  const entrypointsError = getErrorData(data.entryPointsData)
+  const entrypoints = useMemo(() => getValidData(data.entryPointsData), [data?.entryPointsData])
+  const entrypointsError = useMemo(() => getErrorData(data.entryPointsData), [data?.entryPointsData])
+
   const serviceSlug = data.service?.includes('@')
     ? data.service
     : `${data.service ?? 'unknown'}@${data.provider ?? 'unknown'}`

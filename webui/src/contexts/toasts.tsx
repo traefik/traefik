@@ -1,5 +1,4 @@
 import * as React from 'react'
-import * as sh from 'shorthash'
 
 import { ToastState } from 'components/Toast'
 
@@ -26,15 +25,16 @@ export const ToastContext = React.createContext({} as ToastContextProps)
 
 export const ToastProvider = (props: ToastProviderProps) => {
   const [toasts, setToastList] = React.useState<ToastState[]>([])
+  const id = React.useId()
+
   const addToast = React.useCallback(
     (toast: ToastState) => {
-      const key = sh.unique(JSON.stringify(toast))
-      if (!toasts.find((t) => t.key === key)) {
-        toast.key = key
-        setToastList((toasts) => [...toasts, toast])
-      }
+      toast.key = id
+      setToastList((toasts) => [...toasts, toast])
+
+      return toast
     },
-    [setToastList, toasts],
+    [id],
   )
 
   const hideToast = React.useCallback(

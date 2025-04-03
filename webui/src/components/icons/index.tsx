@@ -1,5 +1,4 @@
-import { VariantProps } from '@stitches/react'
-import { CSS, Flex } from '@traefiklabs/faency'
+import { CSS, Flex, VariantProps } from '@traefiklabs/faency'
 import { HTMLAttributes } from 'react'
 
 export type CustomIconProps = HTMLAttributes<SVGElement> & {
