@@ -248,7 +248,7 @@ const Header = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" css={{ zIndex: 9999 }}>
                     <DropdownMenuGroup>
                       <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
                         <Link

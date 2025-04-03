@@ -107,6 +107,7 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     if (sortBy) routers = orderBy(routers, [sortBy], [direction || 'asc'])
     return routers
   }, [data, searchParams])
+
   const routersNotFound = useMemo(() => data.routers?.filter((r) => !!r.message), [data])
 
   useEffect(() => {

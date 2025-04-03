@@ -4721,13 +4721,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/luxon@npm:^1.21.0":
-  version: 1.27.1
-  resolution: "@types/luxon@npm:1.27.1"
-  checksum: 10c0/2c6d131ceaeb842ba562843075bc470d4eaa3895a45ccd8a5cfbccab2f4e997dc41826064883d1966843f81afeccd324872d8d2a7952bbfbf93ee913de324b91
-  languageName: node
-  linkType: hard
-
 "@types/mdx@npm:^2.0.0":
   version: 2.0.13
   resolution: "@types/mdx@npm:2.0.13"
@@ -8112,13 +8105,6 @@ __metadata:
   bin:
     eslint-config-prettier: bin/cli.js
   checksum: 10c0/19f8c497d9bdc111a17a61b25ded97217be3755bbc4714477dfe535ed539dddcaf42ef5cf8bb97908b058260cf89a3d7c565cb0be31096cbcd39f4c2fa5fe43c
-  languageName: node
-  linkType: hard
-
-"eslint-config-react@npm:^1.1.7":
-  version: 1.1.7
-  resolution: "eslint-config-react@npm:1.1.7"
-  checksum: 10c0/cba465fef2a29dda476c5e630668f60eaf319aa90ada9a4b38cb029b361cc696581df5c30847a181bb9e5e366cfd32869729250a6c5fe31d8ce97135eae4abcb
   languageName: node
   linkType: hard
 
@@ -13666,15 +13652,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"polished@npm:^3.4.2":
-  version: 3.7.2
-  resolution: "polished@npm:3.7.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.12.5"
-  checksum: 10c0/c36439946b5bfbac16c06dd7b00a89f45e07410427344e909c540ce3ddeb9b44d2ae9cc035a9d77f4551e07b9803419ae77767aec85958a0978158a95c0115d8
-  languageName: node
-  linkType: hard
-
 "polished@npm:^4.2.2":
   version: 4.3.1
   resolution: "polished@npm:4.3.1"
@@ -14096,13 +14073,6 @@ __metadata:
   version: 3.2.2
   resolution: "react-fast-compare@npm:3.2.2"
   checksum: 10c0/0bbd2f3eb41ab2ff7380daaa55105db698d965c396df73e6874831dbafec8c4b5b08ba36ff09df01526caa3c61595247e3269558c284e37646241cba2b90a367
-  languageName: node
-  linkType: hard
-
-"react-flatten-children@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "react-flatten-children@npm:1.1.2"
-  checksum: 10c0/3c51045f244cb8e23543fdad4e737ba9c460728d91f2e12c607b50a6a38a939450a5db9287b91bae859b817f5065e7886e7b4e764b7dc7f97ba5a78b2e105b4a
   languageName: node
   linkType: hard
 
@@ -15247,13 +15217,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shorthash@npm:0.0.2":
-  version: 0.0.2
-  resolution: "shorthash@npm:0.0.2"
-  checksum: 10c0/e6d23591dc0b0ddb7fd302fdfd9e624461075460d5283d6f4efc593168a70d1c3305accaf0911966b7fa715b3ba1e4ec288fbe6128cda6cf00b6f1688ce05a0f
-  languageName: node
-  linkType: hard
-
 "side-channel-list@npm:^1.0.0":
   version: 1.0.0
   resolution: "side-channel-list@npm:1.0.0"
@@ -16288,7 +16251,6 @@ __metadata:
     "@testing-library/user-event": "npm:^14.5.2"
     "@traefiklabs/faency": "npm:11.1.4"
     "@types/lodash": "npm:^4.17.16"
-    "@types/luxon": "npm:^1.21.0"
     "@types/node": "npm:^18.19.11"
     "@types/react": "npm:^18.2.0"
     "@types/react-dom": "npm:^18.2.19"
@@ -16300,7 +16262,6 @@ __metadata:
     chart.js: "npm:^4.4.1"
     eslint: "npm:^8.56.0"
     eslint-config-prettier: "npm:^8.8.0"
-    eslint-config-react: "npm:^1.1.7"
     eslint-import-resolver-typescript: "npm:^3.7.0"
     eslint-plugin-import: "npm:^2.31.0"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
@@ -16314,7 +16275,6 @@ __metadata:
     lint-staged: "npm:^9.5.0"
     lodash: "npm:^4.17.21"
     msw: "npm:^2.1.7"
-    polished: "npm:^3.4.2"
     prettier: "npm:^2.8.8"
     prettier-eslint: "npm:^15.0.1"
     prettier-eslint-cli: "npm:^7.1.0"
@@ -16323,16 +16283,13 @@ __metadata:
     react-chartjs-2: "npm:^5.2.0"
     react-dom: "npm:^18.2.0"
     react-error-boundary: "npm:^4.0.12"
-    react-flatten-children: "npm:^1.1.2"
     react-helmet-async: "npm:^2.0.4"
     react-icons: "npm:^5.0.1"
     react-infinite-scroll-hook: "npm:^4.1.1"
     react-router-dom: "npm:6.22.1"
-    shorthash: "npm:0.0.2"
     source-map-explorer: "npm:^2.5.3"
     swr: "npm:^2.2.4"
     typescript: "npm:^5.2.2"
-    use-callback-ref: "npm:^1.2.1"
     usehooks-ts: "npm:^2.14.0"
     vite: "npm:^5.1.4"
     vite-tsconfig-paths: "npm:^4.3.1"
@@ -16962,7 +16919,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-callback-ref@npm:^1.2.1, use-callback-ref@npm:^1.3.3":
+"use-callback-ref@npm:^1.3.3":
   version: 1.3.3
   resolution: "use-callback-ref@npm:1.3.3"
   dependencies:
