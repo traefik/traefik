@@ -20,7 +20,7 @@ const ToastContainer = styled(Flex, {
   borderRadius: '$2',
 })
 
-const AnimatedToastContainer = motion(ToastContainer)
+const AnimatedToastContainer = motion.create(ToastContainer)
 const FixedAnimatedToastContainer = AnimatedToastContainer as ComponentProps<typeof AnimatedToastContainer> &
   ComponentProps<typeof ToastContainer>
 
