@@ -36,13 +36,13 @@ const rowVariants = {
   },
 }
 
-const CustomTable = motion(Table)
-const CustomBody = motion(Tbody)
-const CustomClickableRow = motion(ClickableRow)
+const CustomTable = motion.create(Table)
+const CustomBody = motion.create(Tbody)
+const CustomClickableRow = motion.create(ClickableRow)
 const FixedCustomClickableRow = CustomClickableRow as ComponentProps<typeof CustomClickableRow> &
   ComponentProps<typeof ClickableRow>
 
-const CustomRow = motion(Tr)
+const CustomRow = motion.create(Tr)
 
 type AnimatedTableProps = {
   children: ReactNode
