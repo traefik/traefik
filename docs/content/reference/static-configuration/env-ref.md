@@ -1017,6 +1017,9 @@ Kubernetes namespaces.
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NATIVELBBYDEFAULT`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_STRICTPREFIXMATCHING`:  
+Make prefix matching strictly follow the Kubernetes Ingress spec (path-element-wise matching instead of string-character-wise matching). (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_THROTTLEDURATION`:  
 Ingress refresh throttle duration (Default: ```0```)
 

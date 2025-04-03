@@ -529,6 +529,29 @@ providers:
 --providers.kubernetesingress.nativeLBByDefault=true
 ```
 
+### `strictPrefixMatching`
+
+_Optional, Default: false_
+
+Make prefix matching strictly follow the Kubernetes Ingress spec (path-element-wise matching instead of string-character-wise matching). For example a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    strictPrefixMatching: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  strictPrefixMatching = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.strictPrefixMatching=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
