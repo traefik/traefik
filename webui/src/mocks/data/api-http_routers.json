@@ -110,7 +110,7 @@
       "web-redirect"
     ],
     "priority": 9223372036854776000,
-    "provider": "consulcatalog-default"
+    "provider": "docker"
   },
   {
     "entryPoints": [

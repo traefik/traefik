@@ -1,12 +1,13 @@
-import 'chart.js/auto'
-
 import { Box, Card, Flex, H3, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Chart, ArcElement } from 'chart.js'
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { FaArrowRightLong } from 'react-icons/fa6'
 import { Link as RouterLink } from 'react-router-dom'
 
 import Status, { colorByStatus } from './Status'
+
+Chart.register(ArcElement)
 
 const Link = styled(RouterLink, {
   textDecoration: 'none',
