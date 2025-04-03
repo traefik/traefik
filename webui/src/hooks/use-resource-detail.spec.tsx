@@ -34,12 +34,14 @@ describe('useResourceDetail', () => {
     expect(data?.error).toBeUndefined()
     expect(data?.middlewares?.length).toBe(1)
     expect(data?.middlewares?.[0]).toEqual({
-      name: 'redirect@file',
-      provider: 'file',
-      redirectScheme: { scheme: 'https' },
+      redirectScheme: {
+        scheme: 'https',
+      },
       status: 'enabled',
+      usedBy: ['server-mtls@docker', 'server-redirect@docker', 'orphan-router@file'],
+      name: 'redirect@file',
       type: 'redirectscheme',
-      usedBy: ['server-redirect@docker'],
+      provider: 'file',
     })
     expect(data?.hasValidMiddlewares).toBeTrue()
     expect(data?.entryPointsData?.length).toBe(1)
