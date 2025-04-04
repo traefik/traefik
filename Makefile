@@ -35,14 +35,12 @@ build-webui-image:
 .PHONY: clean-webui
 #? clean-webui: Clean WebUI static generated assets
 clean-webui:
-	rm -r webui/static
-	mkdir -p webui/static
+	rm -rf webui/static
 
 webui/static/index.html:
 	$(MAKE) build-webui-image
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn build
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
-	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 .PHONY: generate-webui
 #? generate-webui: Generate WebUI
