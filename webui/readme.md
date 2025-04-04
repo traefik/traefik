@@ -1,42 +1,56 @@
-# Traefik Proxy dashboard
+# Traefik Web UI
 
-Documentation related to the agent dashboard of Traefik Proxy.
+Access to Traefik Web UI, ex: http://localhost:8080
 
 ## Interface
 
-Traefik Proxy dashboard provide information about HTTP, TCP, and UDP resources.
+Traefik Web UI provide 2 types of information:
 
-## How to build (for backend developers)
+- Providers with their backends and frontends information.
+- Health of the web server.
 
-Use the Makefile:
+## How to build (for backend developer)
+
+Use the Makefile :
 
 ```shell
-make build           # Generate Docker image
+make build-image                # Generate Docker image.
+make clean-webui generate-webui # Generate static contents in `webui/static/` folder.
 ```
 
-## How to build (for frontend developers)
+## How to build (only for frontend developer)
 
-- prerequisite: [Node Stable 18+](https://nodejs.org)
+- prerequisite: [Node 20.14+](https://nodejs.org) [Yarn 4.8.1](https://yarnpkg.com/)
 
-- To install dependencies, run `yarn`
+- Go to the `webui/` directory
 
-- To build static Web UI, run `yarn build`
+- To install dependencies, execute the following commands:
 
-- Static contents are built in the `dist` directory
+  - `yarn install`
 
-**Don't manually change the files in the directory `dist`**
+- Build static Web UI, execute the following command:
 
-- The build allows to:
+  - `yarn build`
+
+- Static contents are built in the `webui/static/` directory
+
+**Do not manually change the files in the `webui/static/` directory**
+
+The build allows to:
   - optimize all JavaScript
   - optimize all CSS
-  - add vendor prefixes to CSS (cross-bowser support)
+  - add vendor prefixes to CSS (cross-browser support)
   - add a hash in the file names to prevent browser cache problems
-  - all images will be optimized at build
-  - bundle JavaScript into one file
+  - optimize all images at build time
+  - bundle JavaScript in one file
 
-## How to edit (only for frontend developers)
+## How to edit (only for frontend developer)
 
-- Run in development mode
+**Do not manually change the files in the `webui/static/` directory**
+
+- Go to the `webui/` directory
+- Edit files in `webui/src/`
+- Run in development mode :
   - `yarn dev`
 
 ## How to run tests
@@ -51,4 +65,4 @@ make build           # Generate Docker image
 - [Yarn](https://yarnpkg.com/)
 - [React](https://reactjs.org/)
 - [Faency](https://github.com/containous/faency)
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
+- [Vitest](https://vitest.dev/)
