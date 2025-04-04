@@ -57,6 +57,5 @@ Thumbs.db
 !.yarn/sdks
 !.yarn/versions
 
-# static assets (ignore all except the DO NOT EDIT file)
+# static assets
 static/*
-!static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
