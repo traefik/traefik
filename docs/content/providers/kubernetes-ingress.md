@@ -533,7 +533,7 @@ providers:
 
 _Optional, Default: false_
 
-Make prefix matching strictly follow the Kubernetes Ingress spec (path-element-wise matching instead of string-character-wise matching). For example a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). For example, a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.
 
 ```yaml tab="File (YAML)"
 providers:

@@ -1018,7 +1018,7 @@ Kubernetes namespaces.
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
 `--providers.kubernetesingress.strictprefixmatching`:  
-Make prefix matching strictly follow the Kubernetes Ingress spec (path-element-wise matching instead of string-character-wise matching). (Default: ```false```)
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). (Default: ```false```)
 
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
