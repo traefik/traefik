@@ -57,9 +57,9 @@ export function useDarkMode(
   const defaultValue = typeof options === 'boolean' ? options : options?.defaultValue
   const localStorageKey =
     typeof options === 'boolean'
-      ? localStorageKeyProps ?? LOCAL_STORAGE_KEY
-      : options?.localStorageKey ?? LOCAL_STORAGE_KEY
-  const initializeWithValue = typeof options === 'boolean' ? undefined : options?.initializeWithValue ?? undefined
+      ? (localStorageKeyProps ?? LOCAL_STORAGE_KEY)
+      : (options?.localStorageKey ?? LOCAL_STORAGE_KEY)
+  const initializeWithValue = typeof options === 'boolean' ? undefined : (options?.initializeWithValue ?? undefined)
 
   const isDarkOS = useMediaQuery(COLOR_SCHEME_QUERY, {
     initializeWithValue,
