@@ -177,7 +177,7 @@ export const Dashboard = () => {
         </SectionContainer>
 
         <SectionContainer title="Providers" icon={<IoMdCube size={22} />}>
-          {overview?.providers?.length &&
+          {overview?.providers?.length ? (
             overview.providers.map((p, idx) => (
               <Card key={`provider-${idx}`} css={{ height: 125 }}>
                 <Flex direction="column" align="center" gap={3} justify="center" css={{ height: '100%' }}>
@@ -185,7 +185,10 @@ export const Dashboard = () => {
                   <Text css={{ fontSize: '$4', fontWeight: 500, textAlign: 'center' }}>{p}</Text>
                 </Flex>
               </Card>
-            ))}
+            ))
+          ) : (
+            <Text size={4}>No related objects to show.</Text>
+          )}
         </SectionContainer>
       </Flex>
     </Page>
