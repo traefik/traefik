@@ -16,5 +16,3 @@ RUN yarn workspaces focus --all --production
 COPY . $WEBUI_DIR/
 
 EXPOSE 8080
-
-# RUN yarn lint
