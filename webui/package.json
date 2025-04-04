@@ -4,8 +4,7 @@
   "private": true,
   "homepage": ".",
   "scripts": {
-    "analyze": "source-map-explorer 'dist/static/js/*.js'",
-    "build": "rm -rf dist && vite build",
+    "build": "vite build",
     "dev": "vite",
     "format": "prettier-eslint './src/**/*.{ts,tsx}' --config .prettierrc.js --write",
     "lint": "eslint './src/**/*.{ts,tsx}'",
@@ -88,7 +87,6 @@
     "prettier": "^2.8.8",
     "prettier-eslint": "^15.0.1",
     "prettier-eslint-cli": "^7.1.0",
-    "source-map-explorer": "^2.5.3",
     "typescript": "^5.2.2",
     "vitest": "^1.3.1",
     "vitest-canvas-mock": "^0.3.3"
