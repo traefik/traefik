@@ -1,7 +1,6 @@
 package tracing
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -129,7 +128,7 @@ func TestNewForwarder(t *testing.T) {
 				assert.Equal(t, test.expected.OperationName, span.OpName)
 			})
 
-			handler := NewForwarder(context.Background(), test.router, test.service, next)
+			handler := NewForwarder(t.Context(), test.router, test.service, next)
 			handler.ServeHTTP(rw, req)
 		})
 	}

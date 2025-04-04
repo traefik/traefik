@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -212,7 +211,7 @@ func TestProvider_Provide(t *testing.T) {
 		},
 	}
 
-	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
+	err = provider.Provide(configurationChan, safe.NewPool(t.Context()))
 	require.NoError(t, err)
 
 	timeout := time.After(time.Second)
@@ -246,7 +245,7 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 
 	configurationChan := make(chan dynamic.Message, 10)
 
-	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
+	err = provider.Provide(configurationChan, safe.NewPool(t.Context()))
 	require.NoError(t, err)
 
 	time.Sleep(time.Second)

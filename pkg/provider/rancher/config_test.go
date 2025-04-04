@@ -1,7 +1,6 @@
 package rancher
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1281,7 +1280,7 @@ func Test_buildConfiguration(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.containers)
+			configuration := p.buildConfiguration(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})

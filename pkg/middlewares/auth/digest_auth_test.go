@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,7 +22,7 @@ func TestDigestAuthError(t *testing.T) {
 	auth := dynamic.DigestAuth{
 		Users: []string{"test"},
 	}
-	_, err := NewDigest(context.Background(), next, auth, "authName")
+	_, err := NewDigest(t.Context(), next, auth, "authName")
 	assert.Error(t, err)
 }
 
@@ -35,7 +34,7 @@ func TestDigestAuthFail(t *testing.T) {
 	auth := dynamic.DigestAuth{
 		Users: []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
 	}
-	authMiddleware, err := NewDigest(context.Background(), next, auth, "authName")
+	authMiddleware, err := NewDigest(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 	assert.NotNil(t, authMiddleware, "this should not be nil")
 
@@ -109,7 +108,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 				fmt.Fprintln(w, "traefik")
 			})
 
-			authenticator, err := NewDigest(context.Background(), next, authenticatorConfiguration, "authName")
+			authenticator, err := NewDigest(t.Context(), next, authenticatorConfiguration, "authName")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(authenticator)

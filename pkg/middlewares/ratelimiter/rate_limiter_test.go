@@ -1,7 +1,6 @@
 package ratelimiter
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -94,7 +93,7 @@ func TestNewRateLimiter(t *testing.T) {
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)
 			} else {
@@ -258,7 +257,7 @@ func TestRateLimit(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				reqCount++
 			})
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)

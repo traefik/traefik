@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,7 +29,7 @@ func TestForwardAuthFail(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	middleware, err := NewForward(context.Background(), next, dynamic.ForwardAuth{
+	middleware, err := NewForward(t.Context(), next, dynamic.ForwardAuth{
 		Address: server.URL,
 	}, "authTest")
 	require.NoError(t, err)
@@ -77,7 +76,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		AuthResponseHeaders:      []string{"X-Auth-User", "X-Auth-Group"},
 		AuthResponseHeadersRegex: "^Foo-",
 	}
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -110,7 +109,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 
 	auth := dynamic.ForwardAuth{Address: authTs.URL}
 
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -161,7 +160,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 
 	auth := dynamic.ForwardAuth{Address: authTs.URL}
 
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -207,7 +206,7 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	auth := dynamic.ForwardAuth{
 		Address: authTs.URL,
 	}
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -469,10 +468,10 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 
 	tr, _ := tracing.NewTracing("testApp", 100, &mockBackend{tracer})
 
-	next, err := NewForward(context.Background(), next, auth, "authTest")
+	next, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	next = tracingMiddleware.NewEntryPoint(context.Background(), tr, "tracingTest", next)
+	next = tracingMiddleware.NewEntryPoint(t.Context(), tr, "tracingTest", next)
 
 	ts := httptest.NewServer(next)
 	t.Cleanup(ts.Close)

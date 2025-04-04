@@ -1,7 +1,6 @@
 package replacepath
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -82,7 +81,7 @@ func TestReplacePath(t *testing.T) {
 				requestURI = r.RequestURI
 			})
 
-			handler, err := New(context.Background(), next, test.config, "foo-replace-path")
+			handler, err := New(t.Context(), next, test.config, "foo-replace-path")
 			require.NoError(t, err)
 
 			server := httptest.NewServer(handler)

@@ -69,7 +69,7 @@ func TestGetLoadBalancer(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler, err := sm.getLoadBalancer(context.Background(), test.serviceName, test.service, test.fwd)
+			handler, err := sm.getLoadBalancer(t.Context(), test.serviceName, test.service, test.fwd)
 			if test.expectError {
 				require.Error(t, err)
 				assert.Nil(t, handler)
@@ -336,7 +336,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, test.service)
+			handler, err := sm.getLoadBalancerServiceHandler(t.Context(), test.serviceName, test.service)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, handler)
@@ -414,7 +414,7 @@ func Test1xxResponses(t *testing.T) {
 			},
 		},
 	}
-	handler, err := sm.getLoadBalancerServiceHandler(context.Background(), "foobar", config)
+	handler, err := sm.getLoadBalancerServiceHandler(t.Context(), "foobar", config)
 	assert.NoError(t, err)
 
 	frontend := httptest.NewServer(handler)
@@ -458,7 +458,7 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, frontend.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, frontend.URL, nil)
 
 	res, err := frontendClient.Do(req)
 	assert.NoError(t, err)
@@ -506,15 +506,15 @@ func TestManager_ServiceBuilders(t *testing.T) {
 		return nil, nil
 	}))
 
-	h, err := manager.BuildHTTP(context.Background(), "test@internal")
+	h, err := manager.BuildHTTP(t.Context(), "test@internal")
 	require.NoError(t, err)
 	assert.Equal(t, internalHandler, h)
 
-	h, err = manager.BuildHTTP(context.Background(), "test@test")
+	h, err = manager.BuildHTTP(t.Context(), "test@test")
 	require.NoError(t, err)
 	assert.NotNil(t, h)
 
-	_, err = manager.BuildHTTP(context.Background(), "wrong@test")
+	_, err = manager.BuildHTTP(t.Context(), "wrong@test")
 	assert.Error(t, err)
 }
 
@@ -571,7 +571,7 @@ func TestManager_Build(t *testing.T) {
 				},
 			})
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}
@@ -598,6 +598,6 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 		},
 	})
 
-	_, err := manager.BuildHTTP(context.Background(), "test@file")
+	_, err := manager.BuildHTTP(t.Context(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }

@@ -43,7 +43,7 @@ func TestNewIPWhiteLister(t *testing.T) {
 			t.Parallel()
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			whiteLister, err := New(t.Context(), next, test.whiteList, "traefikTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
@@ -92,7 +92,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			whiteLister, err := New(t.Context(), next, test.whiteList, "traefikTest")
 			require.NoError(t, err)
 
 			server, client := net.Pipe()

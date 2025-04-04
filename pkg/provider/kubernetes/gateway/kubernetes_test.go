@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1481,7 +1480,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2215,7 +2214,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3307,7 +3306,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4258,7 +4257,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 			}
 
 			p := Provider{EntryPoints: test.entryPoints}
-			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
 		})
 	}

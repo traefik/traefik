@@ -83,11 +83,11 @@ func TestListTasks(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{}
-			dockerData, err := p.parseService(context.Background(), test.service, test.networks)
+			dockerData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
-			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
+			taskDockerData, _ := listTasks(t.Context(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
 
 			if len(test.expectedTasks) != len(taskDockerData) {
 				t.Errorf("expected tasks %v, got %v", test.expectedTasks, taskDockerData)
@@ -277,7 +277,7 @@ func TestListServices(t *testing.T) {
 
 			p := Provider{}
 
-			serviceDockerData, err := p.listServices(context.Background(), dockerClient)
+			serviceDockerData, err := p.listServices(t.Context(), dockerClient)
 			assert.NoError(t, err)
 
 			assert.Len(t, serviceDockerData, len(test.expectedServices))
@@ -395,11 +395,11 @@ func TestSwarmTaskParsing(t *testing.T) {
 
 			p := Provider{}
 
-			dData, err := p.parseService(context.Background(), test.service, test.networks)
+			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			for _, task := range test.tasks {
-				taskDockerData := parseTasks(context.Background(), task, dData, test.networks, test.isGlobalSVC)
+				taskDockerData := parseTasks(t.Context(), task, dData, test.networks, test.isGlobalSVC)
 				expected := test.expected[task.ID]
 				assert.Equal(t, expected.Name, taskDockerData.Name)
 			}

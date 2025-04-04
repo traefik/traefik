@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"context"
 	"strconv"
 	"testing"
 
@@ -387,7 +386,7 @@ func TestDefaultRule(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.containers)
+			configuration := p.buildConfiguration(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -3504,7 +3503,7 @@ func Test_buildConfiguration(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.containers)
+			configuration := p.buildConfiguration(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -3676,7 +3675,7 @@ func TestDockerGetIPPort(t *testing.T) {
 				UseBindPortIP: true,
 			}
 
-			actualIP, actualPort, actualError := provider.getIPPort(context.Background(), dData, test.serverPort)
+			actualIP, actualPort, actualError := provider.getIPPort(t.Context(), dData, test.serverPort)
 			if test.expected.error {
 				require.Error(t, actualError)
 			} else {
@@ -3857,7 +3856,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				dData.ExtraConf.Docker.Network = test.network
 			}
 
-			actual := provider.getIPAddress(context.Background(), dData)
+			actual := provider.getIPAddress(t.Context(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -3917,10 +3916,10 @@ func TestSwarmGetIPAddress(t *testing.T) {
 				SwarmMode: true,
 			}
 
-			dData, err := provider.parseService(context.Background(), test.service, test.networks)
+			dData, err := provider.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
-			actual := provider.getIPAddress(context.Background(), dData)
+			actual := provider.getIPAddress(t.Context(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -3949,7 +3948,7 @@ func TestSwarmGetPort(t *testing.T) {
 
 			p := Provider{}
 
-			dData, err := p.parseService(context.Background(), test.service, test.networks)
+			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			actual := getPort(dData, test.serverPort)

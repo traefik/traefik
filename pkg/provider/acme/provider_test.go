@@ -1,7 +1,6 @@
 package acme
 
 import (
-	"context"
 	"crypto/tls"
 	"testing"
 	"time"
@@ -181,7 +180,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 				resolvingDomains: test.resolvingDomains,
 			}
 
-			domains := acmeProvider.getUncheckedDomains(context.Background(), test.domains, "default")
+			domains := acmeProvider.getUncheckedDomains(t.Context(), test.domains, "default")
 			assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
 		})
 	}
@@ -245,7 +244,7 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 
 			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
 
-			domains, err := acmeProvider.sanitizeDomains(context.Background(), test.domains)
+			domains, err := acmeProvider.sanitizeDomains(t.Context(), test.domains)
 
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
@@ -424,7 +423,7 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			domains := deleteUnnecessaryDomains(context.Background(), test.domains)
+			domains := deleteUnnecessaryDomains(t.Context(), test.domains)
 			assert.Equal(t, test.expectedDomains, domains, "unexpected domain")
 		})
 	}
@@ -497,7 +496,7 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := isAccountMatchingCaServer(context.Background(), test.accountURI, test.serverURI)
+			result := isAccountMatchingCaServer(t.Context(), test.accountURI, test.serverURI)
 
 			assert.Equal(t, test.expected, result)
 		})
@@ -574,7 +573,7 @@ func TestInitAccount(t *testing.T) {
 
 			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
 
-			actualAccount, err := acmeProvider.initAccount(context.Background())
+			actualAccount, err := acmeProvider.initAccount(t.Context())
 			assert.NoError(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
 			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
