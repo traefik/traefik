@@ -5,8 +5,8 @@ RUN mkdir -p $WEBUI_DIR
 
 COPY package.json yarn.lock .yarnrc.yml $WEBUI_DIR/
 
-ENV VITE_APP_BASE_URL ""
-ENV VITE_APP_BASE_API_URL "/api"
+ENV VITE_APP_BASE_URL=""
+ENV VITE_APP_BASE_API_URL="/api"
 
 WORKDIR $WEBUI_DIR
 
