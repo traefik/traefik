@@ -56,3 +56,6 @@ Thumbs.db
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+static/
+!static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
