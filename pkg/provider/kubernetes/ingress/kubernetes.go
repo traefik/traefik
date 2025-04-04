@@ -872,6 +872,7 @@ func buildPrefixMatchRegex(path string) string {
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf(prefixMatchRegexTemplate, regexp.QuoteMeta(path))
 }
+
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
 	if throttleDuration == 0 {
 		return nil
