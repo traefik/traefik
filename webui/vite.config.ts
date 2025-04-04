@@ -17,6 +17,7 @@ export default ({ mode }: { mode: string }) => {
     },
     build: {
       emptyOutDir: true,
+      outDir: './static',
     },
     test: {
       environment: 'jsdom',
