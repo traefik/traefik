@@ -505,11 +505,12 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 	dData.ExtraConf = extraConf
 
 	if service.Spec.EndpointSpec != nil {
-		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
+		switch service.Spec.EndpointSpec.Mode {
+		case swarmtypes.ResolutionModeDNSRR:
 			if dData.ExtraConf.Docker.LBSwarm {
 				logger.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
 			}
-		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
+		case swarmtypes.ResolutionModeVIP:
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
 				networkService := networkMap[virtualIP.NetworkID]

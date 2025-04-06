@@ -280,7 +280,7 @@ func TestListServices(t *testing.T) {
 			serviceDockerData, err := p.listServices(context.Background(), dockerClient)
 			assert.NoError(t, err)
 
-			assert.Equal(t, len(test.expectedServices), len(serviceDockerData))
+			assert.Len(t, serviceDockerData, len(test.expectedServices))
 			for i, serviceName := range test.expectedServices {
 				if len(serviceDockerData) <= i {
 					require.Fail(t, "index", "invalid index %d", i)

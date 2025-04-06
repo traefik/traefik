@@ -70,7 +70,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
 	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
 
-	assert.EqualValues(t, rw.Body.Bytes(), fakeCompressedBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeCompressedBody)
 }
 
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
@@ -90,7 +90,7 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	handler.ServeHTTP(rw, req)
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
@@ -152,7 +152,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 
 			assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-			assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+			assert.Equal(t, rw.Body.Bytes(), baseBody)
 		})
 	}
 }
@@ -213,7 +213,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			assert.EqualValues(t, fakeCompressedBody, body)
+			assert.Equal(t, fakeCompressedBody, body)
 		})
 	}
 }
@@ -345,12 +345,12 @@ func TestMinResponseBodyBytes(t *testing.T) {
 
 			if test.expectedCompression {
 				assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
-				assert.NotEqualValues(t, rw.Body.Bytes(), fakeBody)
+				assert.NotEqual(t, rw.Body.Bytes(), fakeBody)
 				return
 			}
 
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-			assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+			assert.Equal(t, rw.Body.Bytes(), fakeBody)
 		})
 	}
 }
@@ -432,7 +432,7 @@ func Test1xxResponses(t *testing.T) {
 
 	assert.Equal(t, gzipValue, res.Header.Get(contentEncodingHeader))
 	body, _ := io.ReadAll(res.Body)
-	assert.NotEqualValues(t, body, fakeBody)
+	assert.NotEqual(t, body, fakeBody)
 }
 
 func BenchmarkCompress(b *testing.B) {

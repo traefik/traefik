@@ -65,7 +65,7 @@ func TestParseAccessLog(t *testing.T) {
 
 			result, err := ParseAccessLog(test.value)
 			assert.NoError(t, err)
-			assert.Equal(t, len(test.expected), len(result))
+			assert.Len(t, result, len(test.expected))
 			for key, value := range test.expected {
 				assert.Equal(t, value, result[key])
 			}
