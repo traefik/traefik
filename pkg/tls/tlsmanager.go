@@ -6,7 +6,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -43,6 +45,11 @@ func getCipherSuites() []string {
 	return ciphers
 }
 
+// OCSPConfig contains the OCSP configuration.
+type OCSPConfig struct {
+	ResponderOverrides map[string]string
+}
+
 // Manager is the TLS option/store/configuration factory.
 type Manager struct {
 	lock         sync.RWMutex
@@ -50,16 +57,37 @@ type Manager struct {
 	stores       map[string]*CertificateStore
 	configs      map[string]Options
 	certs        []*CertAndStores
+
+	// As of today, the TLS manager contains and is responsible for creating/starting the OCSP ocspStapler.
+	// It would likely have been a Configuration listener but this implies that certs are re-parsed.
+	// But this would probably have impact on resource consumption.
+	ocspStapler *ocspStapler
 }
 
 // NewManager creates a new Manager.
-func NewManager() *Manager {
+func NewManager(ocspConfig *OCSPConfig) *Manager {
+	var stapler *ocspStapler
+	if ocspConfig != nil {
+		stapler = newOCSPStapler(ocspConfig.ResponderOverrides)
+	}
+
 	return &Manager{
-		stores: map[string]*CertificateStore{},
+		ocspStapler: stapler,
+		stores:      map[string]*CertificateStore{},
 		configs: map[string]Options{
 			"default": DefaultTLSOptions,
 		},
 	}
+}
+
+// StartOCSPStapler starts the OCSP stapler routine if enabled.
+func (m *Manager) StartOCSPStapler(ctx context.Context) {
+	// Nothing to do, OCSP stapler is disabled.
+	if m.ocspStapler == nil {
+		return
+	}
+
+	m.ocspStapler.Run(ctx)
 }
 
 // UpdateConfigs updates the TLS* configuration options.
@@ -92,6 +120,13 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	}
 
 	storesCertificates := make(map[string]map[string]*CertificateData)
+
+	// Define the TTL for all the cache entries with no TTL.
+	// This will discard entries that are not used anymore.
+	if m.ocspStapler != nil {
+		m.ocspStapler.ResetTTL()
+	}
+
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
 			log.Ctx(ctx).Debug().MsgFunc(func() string {
@@ -101,24 +136,49 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			conf.Stores = []string{DefaultTLSStoreName}
 		}
 
-		for _, store := range conf.Stores {
-			logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, store).Logger()
+		cert, SANs, err := parseCertificate(&conf.Certificate)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msgf("Unable to parse certificate %s", conf.Certificate.GetTruncatedCertificateName())
+			continue
+		}
 
+		var certHash string
+		if m.ocspStapler != nil && len(cert.Leaf.OCSPServer) > 0 {
+			certHash = hashRawCert(cert.Leaf.Raw)
+
+			issuer := cert.Leaf
+			if len(cert.Certificate) > 1 {
+				issuer, err = x509.ParseCertificate(cert.Certificate[1])
+				if err != nil {
+					log.Ctx(ctx).Error().Err(err).Msgf("Unable to parse issuer certificate %s", conf.Certificate.GetTruncatedCertificateName())
+					continue
+				}
+			}
+
+			if err := m.ocspStapler.Upsert(certHash, cert.Leaf, issuer); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msgf("Unable to upsert OCSP certificate %s", conf.Certificate.GetTruncatedCertificateName())
+				continue
+			}
+		}
+
+		certData := &CertificateData{
+			Certificate: &cert,
+			Hash:        certHash,
+		}
+
+		for _, store := range conf.Stores {
 			if _, ok := m.storesConfig[store]; !ok {
 				m.storesConfig[store] = Store{}
 			}
 
-			cert := CertificateData{config: &conf.Certificate}
-			if err := cert.AppendCertificate(storesCertificates, store); err != nil {
-				logger.Error().Err(err).Msgf("Unable to append certificate %s to store", conf.Certificate.GetTruncatedCertificateName())
-			}
+			appendCertificate(storesCertificates, SANs, store, certData)
 		}
 	}
 
 	m.stores = make(map[string]*CertificateStore)
 
 	for storeName, storeConfig := range m.storesConfig {
-		st := NewCertificateStore()
+		st := NewCertificateStore(m.ocspStapler)
 		m.stores[storeName] = st
 
 		if certs, ok := storesCertificates[storeName]; ok {
@@ -133,12 +193,16 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, storeName).Logger()
 		ctxStore := logger.WithContext(ctx)
 
-		certificate, err := getDefaultCertificate(ctxStore, storeConfig, st)
+		certificate, err := m.getDefaultCertificate(ctxStore, storeConfig, st)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while creating certificate store")
 		}
 
 		st.DefaultCertificate = certificate
+	}
+
+	if m.ocspStapler != nil {
+		m.ocspStapler.ForceStapleUpdates()
 	}
 }
 
@@ -204,25 +268,12 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 				return nil, nil
 			}
 
-			return certificate.Certificate, nil
+			return certificate, nil
 		}
 
 		bestCertificate := store.GetBestCertificate(clientHello)
 		if bestCertificate != nil {
-			doStaple := func() {
-				err := bestCertificate.ocsp.Staple()
-				if err != nil {
-					log.Warn().Err(err).Msg("ocsp - error during staple")
-				}
-			}
-
-			if bestCertificate.ocsp.MustStaple {
-				doStaple()
-			} else {
-				go doStaple()
-			}
-
-			return bestCertificate.Certificate, nil
+			return bestCertificate, nil
 		}
 
 		if sniStrict {
@@ -239,7 +290,8 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		}
 
 		log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
-		return store.DefaultCertificate.Certificate, nil
+
+		return store.GetDefaultCertificate(), nil
 	}
 
 	return tlsConfig, err
@@ -302,9 +354,9 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 	return m.getStore(storeName)
 }
 
-func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*CertificateData, error) {
+func (m *Manager) getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*CertificateData, error) {
 	if tlsStore.DefaultCertificate != nil {
-		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
+		cert, err := m.buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
 			return nil, err
 		}
@@ -337,6 +389,45 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 
 	log.Ctx(ctx).Debug().Msg("No default certificate, fallback to the internal generated certificate")
 	return defaultCertificate, nil
+}
+
+func (m *Manager) buildDefaultCertificate(defaultCertificate *Certificate) (*CertificateData, error) {
+	certFile, err := defaultCertificate.CertFile.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cert file content: %w", err)
+	}
+
+	keyFile, err := defaultCertificate.KeyFile.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key file content: %w", err)
+	}
+
+	cert, err := tls.X509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
+	}
+
+	var certHash string
+	if m.ocspStapler != nil {
+		certHash = hashRawCert(cert.Leaf.Raw)
+
+		issuer := cert.Leaf
+		if len(cert.Certificate) > 1 {
+			issuer, err = x509.ParseCertificate(cert.Certificate[1])
+			if err != nil {
+				return nil, fmt.Errorf("parsing issuer certificate %s: %w", defaultCertificate.GetTruncatedCertificateName(), err)
+			}
+		}
+
+		if err := m.ocspStapler.Upsert(certHash, cert.Leaf, issuer); err != nil {
+			return nil, fmt.Errorf("upserting OCSP certificate %s: %w", defaultCertificate.GetTruncatedCertificateName(), err)
+		}
+	}
+
+	return &CertificateData{
+		Certificate: &cert,
+		Hash:        certHash,
+	}, nil
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
@@ -429,22 +520,10 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	return conf, nil
 }
 
-func buildDefaultCertificate(defaultCertificate *Certificate) (*CertificateData, error) {
-	certFile, err := defaultCertificate.CertFile.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cert file content: %w", err)
-	}
+func hashRawCert(rawCert []byte) string {
+	hasher := fnv.New64()
 
-	keyFile, err := defaultCertificate.KeyFile.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get key file content: %w", err)
-	}
-
-	cert, err := tls.X509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
-	}
-	return &CertificateData{
-		Certificate: &cert,
-	}, nil
+	// purposely ignoring the error, as no error can be returned from the implementation.
+	_, _ = hasher.Write(rawCert)
+	return strconv.FormatUint(hasher.Sum64(), 16)
 }
