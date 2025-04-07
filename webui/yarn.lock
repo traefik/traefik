@@ -8744,7 +8744,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framer-motion@npm:^11.0.4":
+"framer-motion@npm:^11.18.2":
   version: 11.18.2
   resolution: "framer-motion@npm:11.18.2"
   dependencies:
@@ -16099,7 +16099,7 @@ __metadata:
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-react: "npm:^7.37.4"
     eslint-plugin-react-hooks: "npm:^5.1.0"
-    framer-motion: "npm:^11.0.4"
+    framer-motion: "npm:^11.18.2"
     globals: "npm:^16.0.0"
     husky: "npm:^3.1.0"
     jest-extended: "npm:^4.0.2"
