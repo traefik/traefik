@@ -50,6 +50,7 @@ The build allows to:
 
 - Go to the `webui/` directory
 - Edit files in `webui/src/`
+- Create and populate the `.env` file using the values inside `.env.sample` file.
 - Run in development mode :
   - `yarn dev`
 
