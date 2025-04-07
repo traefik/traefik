@@ -89,7 +89,8 @@
   "devDependencies": {
     "husky": "^3.1.0",
     "lint-staged": "^9.5.0",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "vite-plugin-html": "^3.2.2"
   },
   "msw": {
     "workerDirectory": [
