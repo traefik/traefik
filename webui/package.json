@@ -82,6 +82,7 @@
     "typescript-eslint": "^8.24.1",
     "usehooks-ts": "^2.14.0",
     "vite": "^5.1.4",
+    "vite-plugin-html": "^3.2.2",
     "vite-tsconfig-paths": "^4.3.1",
     "vitest": "^1.3.1",
     "vitest-canvas-mock": "^0.3.3"
@@ -89,8 +90,7 @@
   "devDependencies": {
     "husky": "^3.1.0",
     "lint-staged": "^9.5.0",
-    "prettier": "^3.5.3",
-    "vite-plugin-html": "^3.2.2"
+    "prettier": "^3.5.3"
   },
   "msw": {
     "workerDirectory": [
