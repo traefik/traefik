@@ -13,18 +13,6 @@ import (
 
 // +k8s:deepcopy-gen=true
 
-// OCSPConfig configures how OCSP is handled.
-type OCSPConfig struct {
-	// Disable automatic OCSP stapling; strongly discouraged unless you have a good reason.
-	// Disabling this puts clients at greater risk and reduces their privacy.
-	DisableStapling bool `json:"disableStapling,omitempty" toml:"disableStapling,omitempty" yaml:"disableStapling,omitempty"`
-
-	// A map of OCSP responder domains to replacement domains for querying OCSP servers. Used for
-	// overriding the OCSP responder URL that is embedded in certificates. Mapping to an empty
-	// URL will disable OCSP from that responder.
-	ResponderOverrides map[string]string `json:"responderOverrides,omitempty" toml:"responderOverrides,omitempty" yaml:"responderOverrides,omitempty"`
-}
-
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents.
 type ClientTLS struct {

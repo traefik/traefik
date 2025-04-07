@@ -608,3 +608,8 @@
 
 [spiffe]
   workloadAPIAddr = "foobar"
+
+[ocsp]
+  [ocsp.responderOverrides]
+    name0 = "foobar"
+    name1 = "foobar"
