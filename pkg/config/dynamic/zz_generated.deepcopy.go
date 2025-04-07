@@ -1512,9 +1512,7 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 	if in.Certificates != nil {
 		in, out := &in.Certificates, &out.Certificates
 		*out = make(tls.Certificates, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
+		copy(*out, *in)
 	}
 	if in.ForwardingTimeouts != nil {
 		in, out := &in.ForwardingTimeouts, &out.ForwardingTimeouts
@@ -2119,9 +2117,7 @@ func (in *TLSClientConfig) DeepCopyInto(out *TLSClientConfig) {
 	if in.Certificates != nil {
 		in, out := &in.Certificates, &out.Certificates
 		*out = make(tls.Certificates, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
+		copy(*out, *in)
 	}
 	if in.Spiffe != nil {
 		in, out := &in.Spiffe, &out.Spiffe
