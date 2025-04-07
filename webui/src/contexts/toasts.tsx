@@ -25,24 +25,14 @@ export const ToastContext = React.createContext({} as ToastContextProps)
 
 export const ToastProvider = (props: ToastProviderProps) => {
   const [toasts, setToastList] = React.useState<ToastState[]>([])
-  const id = React.useId()
 
-  const addToast = React.useCallback(
-    (toast: ToastState) => {
-      toast.key = id
-      setToastList((toasts) => [...toasts, toast])
+  const addToast = React.useCallback((toast: ToastState) => {
+    setToastList((toasts) => [...toasts, toast])
+  }, [])
 
-      return toast
-    },
-    [id],
-  )
-
-  const hideToast = React.useCallback(
-    (toast: ToastState) => {
-      setToastList((toasts) => toasts.map(handleHideToast(toast)))
-    },
-    [setToastList],
-  )
+  const hideToast = React.useCallback((toast: ToastState) => {
+    setToastList((toasts) => toasts.map(handleHideToast(toast)))
+  }, [])
 
   const value: ToastContextProps = { toasts, addToast, hideToast }
 

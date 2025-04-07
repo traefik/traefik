@@ -29,8 +29,8 @@ export const ToastPool = ({ positionX = 'right', positionY = 'bottom', toastTime
       }}
       data-testid="toast-pool"
     >
-      {toasts?.map((toast) => (
-        <Toast key={toast.key} {...toast} dismiss={(): void => hideToast(toast)} timeout={toastTimeout} />
+      {toasts?.map((toast, key) => (
+        <Toast key={`toast-${key}`} {...toast} dismiss={(): void => hideToast(toast)} timeout={toastTimeout} />
       ))}
     </Flex>
   )
