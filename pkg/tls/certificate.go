@@ -68,15 +68,11 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	return certs
 }
 
-// +k8s:deepcopy-gen=true
-
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself.
 type Certificate struct {
 	CertFile types.FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
 	KeyFile  types.FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
-	OCSP     types.OCSPConfig    `json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	SANs     []string            `json:"-" toml:"-" yaml:"-"`
 }
 
 // GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
