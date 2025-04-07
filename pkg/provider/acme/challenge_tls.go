@@ -155,9 +155,6 @@ func createMessage(certs map[string]*Certificate) dynamic.Message {
 			Certificate: traefiktls.Certificate{
 				CertFile: types.FileOrContent(cert.Certificate),
 				KeyFile:  types.FileOrContent(cert.Key),
-				OCSP: types.OCSPConfig{
-					DisableStapling: true,
-				},
 			},
 			Stores: []string{tlsalpn01.ACMETLS1Protocol},
 		}

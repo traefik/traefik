@@ -47,49 +47,6 @@ tls:
     It is the only available method to configure the certificates (as well as the options and the stores).
     However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
 
-### OCSP Stapling
-
-OCSP stapling is supported by default in Traefik and enabled for all certificates.  
-You can disable OCSP stapling for a certificate in configuration:
-
-```yaml tab="File (YAML)
-tls:
-  certificates:
-    - certFile: /path/to/domain.cert
-      keyFile: /path/to/domain.key
-      ocsp:
-        disableStapling: true
-```
-
-```yaml tab="File (TOML)
-[[tls.certificates]]
-  certFile = "/path/to/domain.cert"
-  keyFile = "/path/to/domain.key"
-  [tls.certificates.ocsp]
-    disableStapling = true
-```
-
-You can also override the OCSP responder:
-
-```yaml tab="File (YAML)
-tls:
-  certificates:
-    - certFile: /path/to/domain.cert
-      keyFile: /path/to/domain.key
-      ocsp:
-        responderOverrides:
-          'https://ocsp.example.com': https://ocsp-proxy.example.org
-```
-
-```yaml tab="File (TOML)
-[[tls.certificates]]
-  certFile = "/path/to/domain.cert"
-  keyFile = "/path/to/domain.key"
-  [tls.certificates.ocsp]
-    [tls.certificates.ocsp.responderOverrides]
-      https://ocsp.example.com = https://ocsp-proxy.example.org
-```
-
 ## Certificates Stores
 
 In Traefik, certificates are grouped together in certificates stores, which are defined as such:
