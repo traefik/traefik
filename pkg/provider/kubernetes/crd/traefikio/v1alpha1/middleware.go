@@ -67,7 +67,7 @@ type ErrorPage struct {
 	// as multiple comma-separated numbers (500,502),
 	// as ranges by separating two codes with a dash (500-599),
 	// or a combination of the two (404,418,500-599).
-	// +kubebuilder:validation:items:Pattern=`^([0-5][0-9]{2}[,-]?)+$`
+	// +kubebuilder:validation:items:Pattern=`^([1-5][0-9]{2}[,-]?)+$`
 	Status []string `json:"status,omitempty"`
 	// StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
 	// For example: "418": 404 or "410-418": 404
