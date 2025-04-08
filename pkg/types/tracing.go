@@ -23,6 +23,16 @@ import (
 	"google.golang.org/grpc/encoding/gzip"
 )
 
+const (
+	// Configuration options for SpanName
+	Static   = "static"
+	UrlPath  = "urlPath"
+	FullUrl  = "url"
+	HostName = "hostName"
+)
+
+var SupportedSpanNames = []string{Static, UrlPath, FullUrl, HostName}
+
 // OTelTracing provides configuration settings for the open-telemetry tracer.
 type OTelTracing struct {
 	GRPC *OTelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`

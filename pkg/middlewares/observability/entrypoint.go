@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -37,7 +38,7 @@ func newEntryPoint(ctx context.Context, tracer *tracing.Tracer, entryPointName s
 	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
 	if tracer == nil {
-		tracer = tracing.NewTracer(noop.Tracer{}, nil, nil, nil)
+		tracer = tracing.NewTracer(noop.Tracer{}, nil, nil, nil, "")
 	}
 
 	return &entryPointTracing{
@@ -50,7 +51,7 @@ func newEntryPoint(ctx context.Context, tracer *tracing.Tracer, entryPointName s
 func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	tracingCtx := tracing.ExtractCarrierIntoContext(req.Context(), req.Header)
 	start := time.Now()
-	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
+	tracingCtx, span := e.tracer.Start(tracingCtx, e.getSpanName(req), trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
 	// Associate the request context with the logger.
 	logger := log.Ctx(tracingCtx).With().Ctx(tracingCtx).Logger()
@@ -69,4 +70,21 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	end := time.Now()
 	span.End(trace.WithTimestamp(end))
+}
+
+// Translates the configured span name to it's dynamic value.
+// The default value is "EntryPoint".
+func (e *entryPointTracing) getSpanName(req *http.Request) string {
+	switch e.tracer.TraceName {
+	case types.Static:
+		return "EntryPoint"
+	case types.UrlPath:
+		return req.URL.Path
+	case types.FullUrl:
+		return req.URL.String()
+	case types.HostName:
+		return req.Host
+	default:
+		return "EntryPoint"
+	}
 }
