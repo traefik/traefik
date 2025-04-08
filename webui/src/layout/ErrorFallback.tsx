@@ -1,7 +1,7 @@
 import { Box, Button, Text } from '@traefiklabs/faency'
 import { FallbackProps } from 'react-error-boundary'
 
-const ErrorFallback: React.VFC<FallbackProps> = ({ error, resetErrorBoundary }) => {
+const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
     <Box role="alert">
       <Box css={{ mb: '$2' }}>

@@ -53,6 +53,7 @@ The build allows to:
 - Create and populate the `.env` file using the values inside `.env.sample` file.
 - Run in development mode :
   - `yarn dev`
+- The application will be available at `http://localhost:3000/`. On development mode, the application will run with mocked data served by [Mock Service Worker](https://mswjs.io/).
 
 ## How to run tests
 
@@ -65,5 +66,7 @@ The build allows to:
 - [Node](https://nodejs.org)
 - [Yarn](https://yarnpkg.com/)
 - [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
 - [Faency](https://github.com/containous/faency)
 - [Vitest](https://vitest.dev/)
+- [Mock Service Worker](https://mswjs.io/)
