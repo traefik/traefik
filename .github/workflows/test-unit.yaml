@@ -57,6 +57,8 @@ jobs:
           cache-dependency-path: webui/yarn.lock
 
       - name: UI unit tests
+        env:
+          VITE_APP_BASE_API_URL: "/api"
         run: |
           yarn --cwd webui install
           yarn --cwd webui test:unit:ci
