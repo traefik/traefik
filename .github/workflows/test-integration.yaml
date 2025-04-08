@@ -31,7 +31,9 @@ jobs:
           check-latest: true
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: Build binary
         run: make binary
@@ -59,7 +61,9 @@ jobs:
           check-latest: true
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: Build binary
         run: make binary

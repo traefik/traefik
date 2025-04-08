@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:unit:ci": "vitest run"
   },
   "lint-staged": {
     "**/*.{ts,tsx}": [

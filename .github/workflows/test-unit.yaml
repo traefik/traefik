@@ -30,7 +30,9 @@ jobs:
           check-latest: true
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: Tests
         run: make test-unit
