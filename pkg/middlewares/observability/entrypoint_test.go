@@ -20,13 +20,96 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		entryPoint string
+		spanName   string
 		expected   expected
 	}{
 		{
 			desc:       "basic test",
 			entryPoint: "test",
+			spanName:   "static",
 			expected: expected{
 				name: "EntryPoint",
+				attributes: []attribute.KeyValue{
+					attribute.String("span.kind", "server"),
+					attribute.String("entry_point", "test"),
+					attribute.String("http.request.method", "GET"),
+					attribute.String("network.protocol.version", "1.1"),
+					attribute.Int64("http.request.body.size", int64(0)),
+					attribute.String("url.path", "/search"),
+					attribute.String("url.query", "q=Opentelemetry&token=REDACTED"),
+					attribute.String("url.scheme", "http"),
+					attribute.String("user_agent.original", "entrypoint-test"),
+					attribute.String("server.address", "www.test.com"),
+					attribute.String("network.peer.address", "10.0.0.1"),
+					attribute.String("client.address", "10.0.0.1"),
+					attribute.Int64("client.port", int64(1234)),
+					attribute.Int64("network.peer.port", int64(1234)),
+					attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
+					attribute.Int64("http.response.status_code", int64(404)),
+					attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
+				},
+			},
+		},
+		{
+			desc:       "url path span name",
+			entryPoint: "test",
+			spanName:   "urlPath",
+			expected: expected{
+				name: "/search",
+				attributes: []attribute.KeyValue{
+					attribute.String("span.kind", "server"),
+					attribute.String("entry_point", "test"),
+					attribute.String("http.request.method", "GET"),
+					attribute.String("network.protocol.version", "1.1"),
+					attribute.Int64("http.request.body.size", int64(0)),
+					attribute.String("url.path", "/search"),
+					attribute.String("url.query", "q=Opentelemetry&token=REDACTED"),
+					attribute.String("url.scheme", "http"),
+					attribute.String("user_agent.original", "entrypoint-test"),
+					attribute.String("server.address", "www.test.com"),
+					attribute.String("network.peer.address", "10.0.0.1"),
+					attribute.String("client.address", "10.0.0.1"),
+					attribute.Int64("client.port", int64(1234)),
+					attribute.Int64("network.peer.port", int64(1234)),
+					attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
+					attribute.Int64("http.response.status_code", int64(404)),
+					attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
+				},
+			},
+		},
+		{
+			desc:       "default span name",
+			entryPoint: "test",
+			spanName:   "invalid",
+			expected: expected{
+				name: "EntryPoint",
+				attributes: []attribute.KeyValue{
+					attribute.String("span.kind", "server"),
+					attribute.String("entry_point", "test"),
+					attribute.String("http.request.method", "GET"),
+					attribute.String("network.protocol.version", "1.1"),
+					attribute.Int64("http.request.body.size", int64(0)),
+					attribute.String("url.path", "/search"),
+					attribute.String("url.query", "q=Opentelemetry&token=REDACTED"),
+					attribute.String("url.scheme", "http"),
+					attribute.String("user_agent.original", "entrypoint-test"),
+					attribute.String("server.address", "www.test.com"),
+					attribute.String("network.peer.address", "10.0.0.1"),
+					attribute.String("client.address", "10.0.0.1"),
+					attribute.Int64("client.port", int64(1234)),
+					attribute.Int64("network.peer.port", int64(1234)),
+					attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
+					attribute.Int64("http.response.status_code", int64(404)),
+					attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
+				},
+			},
+		},
+		{
+			desc:       "method and path span name",
+			entryPoint: "test",
+			spanName:   "methodAndPath",
+			expected: expected{
+				name: "GET /search",
 				attributes: []attribute.KeyValue{
 					attribute.String("span.kind", "server"),
 					attribute.String("entry_point", "test"),
@@ -68,7 +151,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 
 			tracer := &mockTracer{}
 
-			handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"}), test.entryPoint, next)
+			handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"}, test.spanName), test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
 			for _, span := range tracer.spans {
