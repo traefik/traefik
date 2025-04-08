@@ -81,7 +81,7 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 	} else {
 		unhealthyInterval = time.Duration(*config.UnhealthyInterval)
 		if unhealthyInterval <= 0 {
-			logger.Error().Msg("Health recheck interval smaller than zero, default value will be used instead.")
+			logger.Error().Msg("Health check unhealthy interval smaller than zero, default value will be used instead.")
 			unhealthyInterval = time.Duration(dynamic.DefaultHealthCheckInterval)
 		}
 	}
