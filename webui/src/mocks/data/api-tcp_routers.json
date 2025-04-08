@@ -1,0 +1,17 @@
+[
+  {
+    "entryPoints": [
+      "web-tcp"
+    ],
+    "service": "tcp-all",
+    "rule": "HostSNI(`*`)",
+    "status": "enabled",
+    "name": "tcp-all@docker",
+    "using": [
+      "web-secured",
+      "web"
+    ],
+    "priority": 10,
+    "provider": "docker"
+  }
+]

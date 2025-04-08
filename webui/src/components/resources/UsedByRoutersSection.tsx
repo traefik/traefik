@@ -1,0 +1,147 @@
+import { Box, Flex, styled, Table, Tbody, Td, Th, Tr, Thead } from '@traefiklabs/faency'
+import { orderBy } from 'lodash'
+import { useContext, useEffect, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+
+import { SectionHeader } from 'components/resources/DetailSections'
+import SortableTh from 'components/tables/SortableTh'
+import { ToastContext } from 'contexts/toasts'
+import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
+import { makeRowRender } from 'pages/http/HttpRouters'
+
+type UsedByRoutersSectionProps = {
+  data: ServiceDetailType | MiddlewareDetailType
+  protocol?: string
+}
+
+const SkeletonContent = styled(Box, {
+  backgroundColor: '$slate5',
+  height: '14px',
+  minWidth: '50px',
+  borderRadius: '4px',
+  margin: '8px',
+})
+
+export const UsedByRoutersSkeleton = () => (
+  <Flex css={{ flexDirection: 'column', mt: '40px' }}>
+    <SectionHeader />
+    <Table>
+      <Thead>
+        <Tr>
+          <Th>
+            <SkeletonContent />
+          </Th>
+          <Th>
+            <SkeletonContent />
+          </Th>
+          <Th>
+            <SkeletonContent />
+          </Th>
+          <Th>
+            <SkeletonContent />
+          </Th>
+          <Th>
+            <SkeletonContent />
+          </Th>
+          <Th>
+            <SkeletonContent />
+          </Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        <Tr css={{ pointerEvents: 'none' }}>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Th>
+            <SkeletonContent />
+          </Th>
+        </Tr>
+        <Tr css={{ pointerEvents: 'none' }}>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Td>
+            <SkeletonContent />
+          </Td>
+          <Th>
+            <SkeletonContent />
+          </Th>
+        </Tr>
+      </Tbody>
+    </Table>
+  </Flex>
+)
+
+export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersSectionProps) => {
+  const navigate = useNavigate()
+  const renderRow = makeRowRender(navigate, protocol)
+  const [searchParams] = useSearchParams()
+  const { addToast } = useContext(ToastContext)
+
+  const routersFound = useMemo(() => {
+    let routers = data.routers?.filter((r) => !r.message)
+    const direction = (searchParams.get('direction') as 'asc' | 'desc' | null) || 'asc'
+    const sortBy = searchParams.get('sortBy') || 'name'
+    if (sortBy) routers = orderBy(routers, [sortBy], [direction || 'asc'])
+    return routers
+  }, [data, searchParams])
+
+  const routersNotFound = useMemo(() => data.routers?.filter((r) => !!r.message), [data])
+
+  useEffect(() => {
+    routersNotFound?.map((error) =>
+      addToast({
+        message: error.message,
+        severity: 'error',
+      }),
+    )
+  }, [addToast, routersNotFound])
+
+  if (!routersFound || routersFound.length <= 0) {
+    return null
+  }
+
+  return (
+    <Flex css={{ flexDirection: 'column', mt: '$5' }}>
+      <SectionHeader title="Used by Routers" />
+
+      <Table data-testid="routers-table" css={{ tableLayout: 'auto' }}>
+        <Thead>
+          <Tr>
+            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            {protocol !== 'udp' ? <SortableTh label="TLS" /> : null}
+            {protocol !== 'udp' ? <SortableTh label="Rule" isSortable sortByValue="rule" /> : null}
+            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
+            <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Service" isSortable sortByValue="service" />
+            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
+          </Tr>
+        </Thead>
+        <Tbody>{routersFound.map(renderRow)}</Tbody>
+      </Table>
+    </Flex>
+  )
+}
