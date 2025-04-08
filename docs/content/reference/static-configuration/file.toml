@@ -465,6 +465,7 @@
   safeQueryParams = ["foobar", "foobar"]
   sampleRate = 42.0
   addInternals = true
+  spanName = "foobar"
   [tracing.resourceAttributes]
     name0 = "foobar"
     name1 = "foobar"
