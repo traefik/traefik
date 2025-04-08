@@ -208,6 +208,7 @@ type Tracing struct {
 	SafeQueryParams         []string           `description:"Query params to not redact." json:"safeQueryParams,omitempty" toml:"safeQueryParams,omitempty" yaml:"safeQueryParams,omitempty" export:"true"`
 	SampleRate              float64            `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 	AddInternals            bool               `description:"Enables tracing for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+	SpanName                string             `description:"Span name, used for most tracing UIs." json:"spanName,omitempty" toml:"spanName,omitempty" yaml:"spanName,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	OTLP                    *types.OTelTracing `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	// Deprecated: please use ResourceAttributes instead.
