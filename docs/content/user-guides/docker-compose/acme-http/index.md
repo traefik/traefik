@@ -45,17 +45,17 @@ For the HTTP challenge you will need:
 
 What changed between the basic example:
 
-- We configure a second entry point for the HTTPS traffic:
+- We configure a second entry point for the HTTP traffic:
 
 ```yaml
 command:
-  # Traefik will listen to incoming request on the port 443 (https)
-  - "--entryPoints.websecure.address=:443"
+  # Traefik will listen to incoming request on the port 80 (http)
+  - "--entryPoints.web.address=:80"
 ports:
-  - "443:443"
+  - "80:80"
 ```
 
-- We configure the HTTPS Let's Encrypt challenge:
+- We configure the HTTP Let's Encrypt challenge:
 
 ```yaml
 command:
