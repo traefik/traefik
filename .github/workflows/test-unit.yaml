@@ -13,7 +13,6 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
-
   test-unit:
     runs-on: ubuntu-latest
 
@@ -57,8 +56,9 @@ jobs:
           cache-dependency-path: webui/yarn.lock
 
       - name: UI unit tests
+        working-directory: ./webui
         env:
           VITE_APP_BASE_API_URL: "/api"
         run: |
-          yarn --cwd webui install
-          yarn --cwd webui test:unit:ci
+          yarn install
+          yarn test:unit:ci
