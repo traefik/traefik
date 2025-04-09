@@ -218,6 +218,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.healthcheck.interval=10
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.unhealthyinterval`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.healthcheck.unhealthyinterval=10
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
 
     See [health check](../services/index.md#health-check) for more information.
