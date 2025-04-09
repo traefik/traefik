@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -123,6 +124,7 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
+	fa.address = strings.ReplaceAll(fa.address, "{escaped_request_uri}", url.QueryEscape(req.URL.String()))
 	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	if err != nil {
 		logger.Debug().Msgf("Error calling %s. Cause %s", fa.address, err)
