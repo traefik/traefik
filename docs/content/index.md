@@ -29,7 +29,7 @@ Traefik supports different needs depending on your background. We keep three use
 
 - **Beginners**: You are new to Traefik or new to reverse proxies. You want simple, guided steps to set things up without diving too deep into advanced topics.
 - **DevOps Engineers**: You manage infrastructure or clusters (Docker, Kubernetes, or other orchestrators). You integrate Traefik into your environment and value reliability, performance, and streamlined deployments.
-- Developers: You create and deploy applications or APIs. You focus on how to expose your services through Traefik, apply routing rules, and integrate it with your development workflow.
+- **Developers**: You create and deploy applications or APIs. You focus on how to expose your services through Traefik, apply routing rules, and integrate it with your development workflow.
 
 ## Core Concepts
 
