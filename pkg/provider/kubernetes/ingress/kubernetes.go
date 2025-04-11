@@ -859,7 +859,6 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 		// Use PathRegexp to replicate element-wise behavior.
 		//
 		// See TestPrefixMatchRegex() for examples.
-		path = strings.TrimRight(path, "/")
 		return "PathRegexp(`" + buildPrefixMatchRegex(path) + "`)"
 	}
 
