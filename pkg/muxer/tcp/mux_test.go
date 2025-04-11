@@ -623,7 +623,7 @@ func TestParseHostSNI(t *testing.T) {
 				require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
 			}
 
-			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
+			assert.Equal(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
 		})
 	}
 }
