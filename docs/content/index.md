@@ -1,6 +1,6 @@
 ---
 title: "Traefik Proxy Documentation"
-description: "Traefik Proxy, an open source Edge Router, auto-discovers configurations and supports major orchestrators, like Kubernetes. Read the technical documentation."
+description: "Traefik Proxy, an open-source Edge Router, auto-discovers configurations and supports major orchestrators, like Kubernetes. Read the technical documentation."
 ---
 
 # What is Traefik?
@@ -8,7 +8,7 @@ description: "Traefik Proxy, an open source Edge Router, auto-discovers configur
 ![Architecture](assets/img/traefik-architecture.png)
 
 Traefik is an [open-source](https://github.com/traefik/traefik) *Application Proxy* that makes publishing your services a fun and easy experience. 
-It receives requests on behalf of your system and identifies which components are responsible for handling them, and routes them securely. 
+It receives requests on behalf of your system, identifies which components are responsible for handling them, and routes them securely. 
 
 What sets Traefik apart, besides its many features, is that it automatically discovers the right configuration for your services. 
 The magic happens when Traefik inspects your infrastructure, where it finds relevant information and discovers which service serves which request. 
@@ -35,8 +35,8 @@ Traefik supports different needs depending on your background. We keep three use
 
 Traefik’s main concepts help you understand how requests flow to your services:
 
-- [Entrypoints](./reference/install-configuration/entrypoints.md) are the network entry points into Traefik. They define the port which will receive the packets, and whether to listen for TCP or UDP.
-- [Routers](./reference/routing-configuration/http/router/rules-and-priority.md) are in charge of connecting incoming requests to the services that can handle them. In the process, routers may use pieces of [middleware](./reference/routing-configuration/http/middlewares/overview.md) to update the request, or act before forwarding the request to the service.
+- [Entrypoints](./reference/install-configuration/entrypoints.md) are the network entry points into Traefik. They define the port that will receive the packets and whether to listen for TCP or UDP.
+- [Routers](./reference/routing-configuration/http/router/rules-and-priority.md) are in charge of connecting incoming requests to the services that can handle them. In the process, routers may use pieces of [middleware](./reference/routing-configuration/http/middlewares/overview.md) to update the request or act before forwarding the request to the service.
 - [Services](./reference/routing-configuration/http/load-balancing/service.md) are responsible for configuring how to reach the actual services that will eventually handle the incoming requests.
 - [Providers](./reference/install-configuration/providers/overview.md) are infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores. The idea is that Traefik queries the provider APIs in order to find relevant information about routing, and when Traefik detects a change, it dynamically updates the routes.
 
@@ -45,7 +45,7 @@ These concepts work together to manage your traffic from the moment a request ar
 ## How to Use the Documentation
 
 - **Navigation**: Each main section focuses on a specific stage of working with Traefik - installing, exposing services, observing, extending & migrating. 
-Use the sidebar to naviagate to the section that is most approriate for your needs.
+Use the sidebar to navigate to the section that is most appropriate for your needs.
 - **Practical Examples**: You will see code snippets and configuration examples for different environments (YAML/TOML, Labels, & Tags).
 - **Reference**: When you need to look up technical details, our reference section provides a deep dive into configuration options and key terms.
 
