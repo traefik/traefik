@@ -45,7 +45,7 @@ These concepts work together to manage your traffic from the moment a request ar
 ## How to Use the Documentation
 
 - **Navigation**: Each main section focuses on a specific stage of working with Traefik - installing, exposing services, observing, extending & migrating. 
-Use the sidebar to naviagate to the section that is most approriate for your needs.
+Use the sidebar to navigate to the section that is most approriate for your needs.
 - **Practical Examples**: You will see code snippets and configuration examples for different environments (YAML/TOML, Labels, & Tags).
 - **Reference**: When you need to look up technical details, our reference section provides a deep dive into configuration options and key terms.
 
