@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"syscall"
@@ -572,6 +573,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	handler = denyFragment(handler)
+	// cleanPath is used to flatten the URL path (essentially remove /./ and /../),
+	// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
+	handler = cleanPath(handler)
+
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
 	} else {
@@ -711,5 +716,25 @@ func denyFragment(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(rw, req)
+	})
+}
+
+// cleanPath is a http.Handler that cleans the URL path.
+// It cleans the request URL Path and RawPath, and updates the request URI.
+func cleanPath(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		r2 := new(http.Request)
+		*r2 = *req
+		r2.URL = new(url.URL)
+		*r2.URL = *req.URL
+
+		r2.URL.Path = path.Clean(req.URL.Path)
+		if r2.URL.Path != req.URL.Path && req.URL.RawPath != "" {
+			r2.URL.RawPath = url.PathEscape(r2.URL.Path)
+		}
+		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
+		r2.RequestURI = r2.URL.RequestURI()
+
+		h.ServeHTTP(rw, r2)
 	})
 }
