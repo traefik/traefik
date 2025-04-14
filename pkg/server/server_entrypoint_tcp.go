@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"syscall"
@@ -725,13 +724,9 @@ func cleanPath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
-		r2.URL = new(url.URL)
-		*r2.URL = *req.URL
 
-		r2.URL.Path = path.Clean(req.URL.Path)
-		if r2.URL.Path != req.URL.Path && req.URL.RawPath != "" {
-			r2.URL.RawPath = url.PathEscape(r2.URL.Path)
-		}
+		// JoinPath cleans the URL path and rawPath, using the escaped version if needed.
+		r2.URL = req.URL.JoinPath()
 		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
 		r2.RequestURI = r2.URL.RequestURI()
 
