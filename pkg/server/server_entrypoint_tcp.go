@@ -720,7 +720,7 @@ func denyFragment(h http.Handler) http.Handler {
 }
 
 // cleanPath is a http.Handler that cleans the URL path.
-// It cleans the request URL path and rawPath, and updates the request URI.
+// It cleans the request URL Path and RawPath, and updates the request URI.
 func cleanPath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)

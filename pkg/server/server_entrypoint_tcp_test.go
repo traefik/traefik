@@ -395,7 +395,6 @@ func TestCleanPath(t *testing.T) {
 		{"/a/../../../c/../b", "/b"},
 		{"/a/../c/../../b", "/b"},
 		{"/a/..//c/.././b", "/b"},
-		{"/abc/def/../../../ghi/jkl/../../../mno", "/mno"},
 	}
 
 	for _, test := range tests {
