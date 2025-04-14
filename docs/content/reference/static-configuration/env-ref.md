@@ -1340,3 +1340,6 @@ Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Sets the name for this service. (Default: ```traefik```)
+
+`TRAEFIK_TRACING_SPANNAME`:  
+Span name, used for most tracing UIs.
