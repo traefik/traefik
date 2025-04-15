@@ -389,7 +389,12 @@ func TestCleanDotDotSegments(t *testing.T) {
 		path     string
 		expected string
 	}{
+		{path: "/b", expected: "/b"},
+		{path: "/b/", expected: "/b/"},
+		{path: "/../../b/", expected: "/b/"},
 		{path: "/../../b", expected: "/b"},
+		{path: "/a/b/..", expected: "/a"},
+		{path: "/a/b/../", expected: "/a/"},
 		{path: "/a/../../b", expected: "/b"},
 		{path: "/..///b///", expected: "//b///"},
 		{path: "/a/../b", expected: "/b"},
