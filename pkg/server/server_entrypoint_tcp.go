@@ -572,9 +572,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	handler = denyFragment(handler)
-	// cleanPath is used to flatten the URL path (essentially remove /./ and /../),
+	// cleanDotDotSegments is used to clean the URL path by removing /../ sequences,
 	// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
-	handler = cleanPath(handler)
+	handler = cleanDotDotSegments(handler)
 
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
@@ -718,18 +718,79 @@ func denyFragment(h http.Handler) http.Handler {
 	})
 }
 
-// cleanPath is a http.Handler that cleans the URL path.
+// cleanDotDotSegments removes the ".." segments from the URL path.
 // It cleans the request URL Path and RawPath, and updates the request URI.
-func cleanPath(h http.Handler) http.Handler {
+func cleanDotDotSegments(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
+		r2.URL = new(url.URL)
+		*r2.URL = *req.URL
 
-		// JoinPath cleans the URL path and rawPath, using the escaped version if needed.
-		r2.URL = req.URL.JoinPath()
+		escapedPath := removeDotDotSegments(r2.URL.EscapedPath())
+
+		// Set the cleaned path to the URL.
+		// This behaves like url.setPath.
+		var err error
+		r2.URL.Path, err = url.PathUnescape(escapedPath)
+		// This error is not expected to happen, but if it does, we log it and return a 500 error.
+		if err != nil {
+			log.WithoutContext().WithError(err).Error("Cleaning dotdot segments: unescape path")
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if r2.URL.Path != escapedPath {
+			r2.URL.RawPath = escapedPath
+		} else {
+			r2.URL.RawPath = ""
+		}
+
 		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
 		r2.RequestURI = r2.URL.RequestURI()
 
 		h.ServeHTTP(rw, r2)
 	})
+}
+
+// removeDotDotSegments removes ".." segments from the given path, preserving other parts like double slashes.
+func removeDotDotSegments(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	// Ensure the path starts with a slash.
+	if path[0] != '/' {
+		path = "/" + path
+	}
+
+	var stack []string
+
+	for _, seg := range strings.Split(path, "/") {
+		if seg == ".." {
+			// Remove the last valid segment if possible
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
+			}
+			continue
+		}
+
+		// Keep everything else (including empty strings)
+		stack = append(stack, seg)
+	}
+
+	// Reassemble the path with original slash pattern
+	cleanPath := strings.Join(stack, "/")
+
+	// Ensure the path starts with a slash.
+	if cleanPath[0] != '/' {
+		cleanPath = "/" + cleanPath
+	}
+
+	// Ensure the path ends with a slash if the original path did.
+	if path[len(path)-1] == '/' && cleanPath[len(cleanPath)-1] != '/' {
+		cleanPath = cleanPath + "/"
+	}
+
+	return cleanPath
 }
