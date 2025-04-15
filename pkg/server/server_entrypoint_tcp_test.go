@@ -384,27 +384,32 @@ func TestKeepAliveH2c(t *testing.T) {
 	require.Contains(t, err.Error(), "use of closed network connection")
 }
 
-func TestCleanPath(t *testing.T) {
+func TestCleanDotDotSegments(t *testing.T) {
 	tests := []struct {
-		path, result string
+		path     string
+		expected string
 	}{
-		{"/../../b", "/b"},
-		{"/a/../b", "/b"},
-		{"/a/../../b", "/b"},
-		{"/a/../c/../b", "/b"},
-		{"/a/../../../c/../b", "/b"},
-		{"/a/../c/../../b", "/b"},
-		{"/a/..//c/.././b", "/b"},
+		{path: "/../../b", expected: "/b"},
+		{path: "/a/../../b", expected: "/b"},
+		{path: "/..///b///", expected: "//b///"},
+		{path: "/a/../b", expected: "/b"},
+		{path: "/a/./b", expected: "/a/./b"},
+		{path: "/a//b", expected: "/a//b"},
+		{path: "/a/../../b", expected: "/b"},
+		{path: "/a/../c/../b", expected: "/b"},
+		{path: "/a/../../../c/../b", expected: "/b"},
+		{path: "/a/../c/../../b", expected: "/b"},
+		{path: "/a/..//c/.././b", expected: "//./b"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.path, func(t *testing.T) {
+		t.Run("Testing case: "+test.path, func(t *testing.T) {
 			t.Parallel()
 
 			var callCount int
-			clean := cleanPath(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			clean := cleanDotDotSegments(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				callCount++
-				assert.Equal(t, test.result, r.URL.Path)
+				assert.Equal(t, test.expected, r.URL.Path)
 			}))
 
 			request := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
