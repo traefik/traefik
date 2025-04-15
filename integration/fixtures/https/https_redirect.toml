@@ -108,7 +108,7 @@
   [http.routers.router8]
     entryPoints = [ "web" ]
     rule = "Host(`bar2.com`)"
-    middlewares = ["redirect-https", "api-slash-regex-replace"]
+    middlewares = ["api-slash-regex-replace", "redirect-https"]
     service = "service1"
 
   [http.routers.router8TLS]
