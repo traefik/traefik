@@ -765,31 +765,26 @@ func removeDotDotSegments(path string) string {
 	}
 
 	var stack []string
-
 	for _, seg := range strings.Split(path, "/") {
 		if seg == ".." {
-			// Remove the last valid segment if possible
+			// Remove the last valid segment if possible.
 			if len(stack) > 0 {
 				stack = stack[:len(stack)-1]
 			}
 			continue
 		}
 
-		// Keep everything else (including empty strings)
+		// Keep everything else (including empty strings).
 		stack = append(stack, seg)
 	}
 
-	// Reassemble the path with original slash pattern
+	// Reassemble the path with original slash pattern.
 	cleanPath := strings.Join(stack, "/")
 
-	// Ensure the path starts with a slash.
+	// Ensure the path starts with a slash,
+	// in case a dotdot segment removed it.
 	if cleanPath[0] != '/' {
 		cleanPath = "/" + cleanPath
-	}
-
-	// Ensure the path ends with a slash if the original path did.
-	if path[len(path)-1] == '/' && cleanPath[len(cleanPath)-1] != '/' {
-		cleanPath = cleanPath + "/"
 	}
 
 	return cleanPath
