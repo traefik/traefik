@@ -1386,7 +1386,7 @@ func (s *SimpleSuite) TestDenyFragment() {
 	assert.Equal(s.T(), http.StatusBadRequest, resp.StatusCode)
 }
 
-func (s *SimpleSuite) TestCleanPath() {
+func (s *SimpleSuite) TestSanitizePath() {
 	s.createComposeProject("base")
 
 	s.composeUp()

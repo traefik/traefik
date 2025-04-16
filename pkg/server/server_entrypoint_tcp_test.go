@@ -384,7 +384,7 @@ func TestKeepAliveH2c(t *testing.T) {
 	require.Contains(t, err.Error(), "use of closed network connection")
 }
 
-func TestCleanPath(t *testing.T) {
+func TestSanitizePath(t *testing.T) {
 	tests := []struct {
 		path     string
 		expected string
@@ -412,7 +412,7 @@ func TestCleanPath(t *testing.T) {
 			t.Parallel()
 
 			var callCount int
-			clean := cleanPath(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			clean := sanitizePath(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				callCount++
 				assert.Equal(t, test.expected, r.URL.Path)
 			}))
