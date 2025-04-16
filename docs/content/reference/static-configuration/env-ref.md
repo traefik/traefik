@@ -151,7 +151,7 @@ Scheme used for the redirection. (Default: ```https```)
 Targeted entry point of the redirection.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_SANITIZEPATH`:  
-Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences). (Default: ```false```)
+Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences). (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS`:  
 Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
