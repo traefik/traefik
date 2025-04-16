@@ -134,6 +134,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"https://foo.bar.org"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
@@ -152,6 +153,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"*"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
@@ -171,6 +173,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":                   {"0"},
 				"Access-Control-Allow-Origin":      {"*"},
 				"Access-Control-Max-Age":           {"600"},
 				"Access-Control-Allow-Methods":     {"GET,OPTIONS,PUT"},
@@ -191,6 +194,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"*"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
@@ -210,6 +214,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                        {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"*"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
