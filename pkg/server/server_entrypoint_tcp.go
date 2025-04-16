@@ -571,9 +571,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
-	// cleanPath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
-	// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
-	handler = cleanPath(handler)
+	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
+		// cleanPath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
+		// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
+		handler = cleanPath(handler)
+	}
 
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
