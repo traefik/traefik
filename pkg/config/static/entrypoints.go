@@ -52,6 +52,7 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.ForwardedHeaders = &ForwardedHeaders{}
 	ep.UDP = &UDPConfig{}
 	ep.UDP.SetDefaults()
+	ep.HTTP.SetDefaults()
 	ep.HTTP2 = &HTTP2Config{}
 	ep.HTTP2.SetDefaults()
 }
