@@ -53,6 +53,7 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Handle Cors headers and preflight if configured.
 	if isPreflight := s.processCorsHeaders(rw, req); isPreflight {
+		rw.Header().Set("Content-Length", "0")
 		rw.WriteHeader(http.StatusOK)
 		return
 	}
@@ -149,7 +150,6 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 	originHeader := req.Header.Get("Origin")
 
 	if reqAcMethod != "" && originHeader != "" && req.Method == http.MethodOptions {
-		rw.Header().Add("Content-Length", "0")
 		// If the request is an OPTIONS request with an Access-Control-Request-Method header,
 		// and Origin headers, then it is a CORS preflight request,
 		// and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
