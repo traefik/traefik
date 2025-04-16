@@ -1414,7 +1414,7 @@ func (s *SimpleSuite) TestCleanPath() {
 			desc:     "Explicit call to the route with a middleware",
 			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
-			expected: http.StatusMovedPermanently,
+			expected: http.StatusFound,
 		},
 		{
 			desc:     "Explicit call to the route without a middleware",
@@ -1427,6 +1427,26 @@ func (s *SimpleSuite) TestCleanPath() {
 			desc:     "Implicit call to the route with a middleware",
 			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
+			expected: http.StatusFound,
+		},
+		{
+			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
+			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusFound,
+		},
+		{
+			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
+			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusOK,
+			body:     "GET /without HTTP/1.1",
+		},
+		{
+			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
+			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:  "127.0.0.1:8001",
+			// The whoami is redirecting to /with, but the path is not sanitized.
 			expected: http.StatusMovedPermanently,
 		},
 	}

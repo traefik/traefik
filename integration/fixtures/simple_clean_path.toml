@@ -5,6 +5,13 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
+  [entryPoints.web2]
+    address = ":8001"
+    [entryPoints.web2.http]
+      sanitizePath = false
+
+[log]
+  level = "DEBUG"
 
 [api]
   insecure = true
@@ -26,7 +33,7 @@
 [http.middlewares]
   [http.middlewares.test-redirectscheme.redirectScheme]
     scheme = "https"
-    permanent = true
+    permanent = false
 
 [http.services]
   [http.services.whoami.loadBalancer]
