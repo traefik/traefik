@@ -572,9 +572,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
-		// cleanPath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
+		// sanitizePath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
 		// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
-		handler = cleanPath(handler)
+		handler = sanitizePath(handler)
 	}
 
 	if configuration.HTTP.EncodeQuerySemicolons {
@@ -721,9 +721,9 @@ func denyFragment(h http.Handler) http.Handler {
 	})
 }
 
-// cleanPath removes the "..", "." and duplicate slash segments from the URL.
+// sanitizePath removes the "..", "." and duplicate slash segments from the URL.
 // It cleans the request URL Path and RawPath, and updates the request URI.
-func cleanPath(h http.Handler) http.Handler {
+func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
