@@ -1,3 +1,17 @@
+## [v2.11.23](https://github.com/traefik/traefik/tree/v2.11.23) (2025-04-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.22...v2.11.23)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.23.1 ([#11690](https://github.com/traefik/traefik/pull/11690) by [ldez](https://github.com/ldez))
+- **[metrics]** Bump gopkg.in/DataDog/dd-trace-go.v1 to v1.72.2 ([#11693](https://github.com/traefik/traefik/pull/11693) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Add Content-Length header to preflight response ([#11682](https://github.com/traefik/traefik/pull/11682) by [lbenguigui](https://github.com/lbenguigui))
+- **[server]** Sanitize request path ([#11684](https://github.com/traefik/traefik/pull/11684) by [rtribotte](https://github.com/rtribotte))
+- Bump golang.org/x/net to v0.38.0 ([#11691](https://github.com/traefik/traefik/pull/11691) by [kevinpollet](https://github.com/kevinpollet))
+- Bump golang.org/x/oauth2 to v0.28.0 ([#11689](https://github.com/traefik/traefik/pull/11689) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Typo fix on the Explanation Section for User Guide HTTP Challenge. ([#11676](https://github.com/traefik/traefik/pull/11676) by [YapWC](https://github.com/YapWC))
+
 ## [v3.3.5](https://github.com/traefik/traefik/tree/v3.3.5) (2025-03-31)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.4...v3.3.5)
 
