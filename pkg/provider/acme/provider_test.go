@@ -182,7 +182,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			}
 
 			domains := acmeProvider.getUncheckedDomains(context.Background(), test.domains, "default")
-			assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+			assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
 		})
 	}
 }
@@ -250,7 +250,7 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
 			} else {
-				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+				assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
 			}
 		})
 	}

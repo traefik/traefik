@@ -375,7 +375,7 @@ func Test_doOnStruct(t *testing.T) {
 			err := doOnStruct(val, tagExport, test.redactByDefault)
 			require.NoError(t, err)
 
-			assert.EqualValues(t, test.expected, test.base)
+			assert.Equal(t, test.expected, test.base)
 		})
 	}
 }
