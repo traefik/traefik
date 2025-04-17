@@ -74,7 +74,7 @@ require (
 	go.elastic.co/apm/module/apmot/v2 v2.4.8
 	go.elastic.co/apm/v2 v2.4.8
 	golang.org/x/mod v0.23.0
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/text v0.23.0
 	golang.org/x/time v0.11.0
 	golang.org/x/tools v0.30.0
