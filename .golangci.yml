@@ -1,305 +1,324 @@
-run:
-  timeout: 10m
-  relative-path-mode: cfg
+version: "2"
 
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - shadow
-      - fieldalignment
-  gocyclo:
-    min-complexity: 14
-  goconst:
-    min-len: 3
-    min-occurrences: 4
-  misspell:
-    locale: US
-  funlen:
-    lines: -1
-    statements: 120
-  forbidigo:
-    forbid:
-      - ^print(ln)?$
-      - ^spew\.Print(f|ln)?$
-      - ^spew\.Dump$
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: "github.com/instana/testify"
-            desc: not allowed
-          - pkg: "github.com/pkg/errors"
-            desc: Should be replaced by standard lib errors package
-          - pkg: "k8s.io/api/networking/v1beta1"
-            desc: This API is deprecated
-          - pkg: "k8s.io/api/extensions/v1beta1"
-            desc: This API is deprecated
-  godox:
-    keywords:
-      - FIXME
-  importas:
-    no-unaliased: true
-    alias:
-      - alias: composeapi
-        pkg: github.com/docker/compose/v2/pkg/api
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  exclusions:
+    generated: lax
+    paths:
+      - pkg/provider/kubernetes/crd/generated/
 
-      # Standard Kubernetes rewrites:
-      - alias: corev1
-        pkg: "k8s.io/api/core/v1"
-      - alias: netv1
-        pkg: "k8s.io/api/networking/v1"
-      - alias: admv1
-        pkg: "k8s.io/api/admission/v1"
-      - alias: admv1beta1
-        pkg: "k8s.io/api/admission/v1beta1"
-      - alias: metav1
-        pkg: "k8s.io/apimachinery/pkg/apis/meta/v1"
-      - alias: ktypes
-        pkg: "k8s.io/apimachinery/pkg/types"
-      - alias: kerror
-        pkg: "k8s.io/apimachinery/pkg/api/errors"
-      - alias: kclientset
-        pkg: "k8s.io/client-go/kubernetes"
-      - alias: kinformers
-        pkg: "k8s.io/client-go/informers"
-      - alias: ktesting
-        pkg: "k8s.io/client-go/testing"
-      - alias: kschema
-        pkg: "k8s.io/apimachinery/pkg/runtime/schema"
-      - alias: kscheme
-        pkg: "k8s.io/client-go/kubernetes/scheme"
-      - alias: kversion
-        pkg: "k8s.io/apimachinery/pkg/version"
-      - alias: kubefake
-        pkg: "k8s.io/client-go/kubernetes/fake"
-      - alias: discoveryfake
-        pkg: "k8s.io/client-go/discovery/fake"
-
-      # Kubernetes Gateway rewrites:
-      - alias: gateclientset
-        pkg: "sigs.k8s.io/gateway-api/pkg/client/clientset/gateway/versioned"
-      - alias: gateinformers
-        pkg: "sigs.k8s.io/gateway-api/pkg/client/informers/gateway/externalversions"
-      - alias: gatev1alpha2
-        pkg: "sigs.k8s.io/gateway-api/apis/v1alpha2"
-
-      # Traefik Kubernetes rewrites:
-      - alias: traefikv1alpha1
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-      - alias: traefikclientset
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-      - alias: traefikinformers
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
-      - alias: traefikscheme
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-      - alias: traefikcrdfake
-        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
-  tagalign:
-    align: false
-    sort: true
-    order:
-      - description
-      - json
-      - toml
-      - yaml
-      - yml
-      - label
-      - label-slice-as-struct
-      - file
-      - kv
-      - export
-  revive:
-    rules:
-      - name: struct-tag
-      - name: blank-imports
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: exported
-        disabled: true
-      - name: if-return
-      - name: increment-decrement
-      - name: var-naming
-      - name: var-declaration
-      - name: package-comments
-        disabled: true
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: indent-error-flow
-      - name: errorf
-      - name: empty-block
-      - name: superfluous-else
-      - name: unused-parameter
-        disabled: true
-      - name: unreachable-code
-      - name: redefines-builtin-id
-  gomoddirectives:
-    tool-forbidden: true
-    toolchain-pattern: 'go1\.\d+\.\d+$'
-    go-version-pattern: '^1\.\d+(\.0)?$'
-    replace-allow-list:
-      - github.com/abbot/go-http-auth
-      - github.com/gorilla/mux
-      - github.com/mailgun/minheap
-      - github.com/mailgun/multibuf
-      - github.com/jaguilar/vt100
-      - github.com/cucumber/godog
-      - github.com/http-wasm/http-wasm-host-go
-  testifylint:
-    disable:
-      - suite-dont-use-pkg
-      - require-error
-      - go-require
-  staticcheck:
-    checks:
-      - all
-      - -SA1019
-  errcheck:
-    exclude-functions:
-      - fmt.Fprintln
 linters:
-  enable-all: true
+  default: all
   disable:
-    - tenv # Deprecated
-    - sqlclosecheck # not relevant (SQL)
-    - rowserrcheck # not relevant (SQL)
+    - bodyclose # too many false-positive
+    - containedctx # too many false-positive
+    - contextcheck # too many false-positive
     - cyclop # duplicate of gocyclo
-    - lll # Not relevant
-    - gocyclo # FIXME must be fixed
-    - gocognit # Too strict
-    - nestif # Too many false-positive.
-    - prealloc # Too many false-positive.
-    - makezero # Not relevant
     - dupl # Too strict
-    - gosec # Too strict
-    - gochecknoinits
-    - gochecknoglobals
-    - wsl # Too strict
-    - nlreturn # Not relevant
-    - mnd # Too strict
-    - stylecheck # skip because report issues related to some generated files.
-    - testpackage # Too strict
-    - tparallel # Not relevant
-    - paralleltest # Not relevant
+    - err113 # Too strict
     - exhaustive # Not relevant
     - exhaustruct # Not relevant
-    - err113 # Too strict
-    - wrapcheck # Too strict
-    - noctx # Too strict
-    - bodyclose # too many false-positive
     - forcetypeassert # Too strict
-    - tagliatelle # Too strict
-    - varnamelen # Not relevant
-    - nilnil # Not relevant
-    - ireturn # Not relevant
-    - contextcheck # too many false-positive
-    - containedctx # too many false-positive
-    - maintidx # kind of duplicate of gocyclo
-    - nonamedreturns # Too strict
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit # Too strict
+    - gocyclo # FIXME must be fixed
+    - gosec # Too strict
     - gosmopolitan  # not relevant
+    - ireturn # Not relevant
+    - lll # Not relevant
+    - maintidx # kind of duplicate of gocyclo
+    - makezero # Not relevant
+    - mnd # Too strict
+    - nestif # Too many false-positive.
+    - nilnil # Not relevant
+    - nlreturn # Not relevant
+    - noctx # Too strict
+    - nonamedreturns # Too strict
+    - paralleltest # Not relevant
+    - prealloc # Too many false-positive.
+    - rowserrcheck # not relevant (SQL)
+    - sqlclosecheck # not relevant (SQL)
+    - tagliatelle # Too strict
+    - testpackage # Too strict
+    - tparallel # Not relevant
+    - varnamelen # Not relevant
+    - wrapcheck # Too strict
+    - wsl # Too strict
+
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: github.com/instana/testify
+              desc: not allowed
+            - pkg: github.com/pkg/errors
+              desc: Should be replaced by standard lib errors package
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintln
+    forbidigo:
+      forbid:
+        - pattern: ^print(ln)?$
+        - pattern: ^spew\.Print(f|ln)?$
+        - pattern: ^spew\.Dump$
+    funlen:
+      lines: -1
+      statements: 120
+    goconst:
+      min-len: 3
+      min-occurrences: 4
+    gocyclo:
+      min-complexity: 14
+    godox:
+      keywords:
+        - FIXME
+    gomoddirectives:
+      toolchain-pattern: go1\.\d+\.\d+$
+      tool-forbidden: true
+      go-version-pattern: ^1\.\d+(\.0)?$
+      replace-allow-list:
+        - github.com/abbot/go-http-auth
+        - github.com/gorilla/mux
+        - github.com/mailgun/minheap
+        - github.com/mailgun/multibuf
+        - github.com/jaguilar/vt100
+        - github.com/cucumber/godog
+    govet:
+      enable-all: true
+      disable:
+        - shadow
+        - fieldalignment
+    importas:
+      no-unaliased: true
+      alias:
+        - pkg: github.com/docker/compose/v2/pkg/api
+          alias: composeapi
+
+        # Standard Kubernetes rewrites:
+        - pkg: k8s.io/api/core/v1
+          alias: corev1
+        - pkg: k8s.io/api/networking/v1
+          alias: netv1
+        - pkg: k8s.io/api/networking/v1beta1
+          alias: netv1beta1
+        - pkg: k8s.io/api/admission/v1
+          alias: admv1
+        - pkg: k8s.io/api/admission/v1beta1
+          alias: admv1beta1
+        - pkg: k8s.io/api/extensions/v1beta1
+          alias: extv1beta1
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+        - pkg: k8s.io/apimachinery/pkg/types
+          alias: ktypes
+        - pkg: k8s.io/apimachinery/pkg/api/errors
+          alias: kerror
+        - pkg: k8s.io/client-go/kubernetes
+          alias: kclientset
+        - pkg: k8s.io/client-go/informers
+          alias: kinformers
+        - pkg: k8s.io/client-go/testing
+          alias: ktesting
+        - pkg: k8s.io/apimachinery/pkg/runtime/schema
+          alias: kschema
+        - pkg: k8s.io/client-go/kubernetes/scheme
+          alias: kscheme
+        - pkg: k8s.io/apimachinery/pkg/version
+          alias: kversion
+        - pkg: k8s.io/client-go/kubernetes/fake
+          alias: kubefake
+        - pkg: k8s.io/client-go/discovery/fake
+          alias: discoveryfake
+
+        # Kubernetes Gateway rewrites:
+        - pkg: sigs.k8s.io/gateway-api/pkg/client/clientset/gateway/versioned
+          alias: gateclientset
+        - pkg: sigs.k8s.io/gateway-api/pkg/client/informers/gateway/externalversions
+          alias: gateinformers
+        - pkg: sigs.k8s.io/gateway-api/apis/v1alpha2
+          alias: gatev1alpha2
+
+        # Traefik Kubernetes rewrites:
+        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1
+          alias: traefikv1alpha1
+        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned
+          alias: traefikclientset
+        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions
+          alias: traefikinformers
+        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme
+          alias: traefikscheme
+        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake
+          alias: traefikcrdfake
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: struct-tag
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+          disabled: true
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+          disabled: true
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+          disabled: true
+        - name: unreachable-code
+        - name: redefines-builtin-id
+    tagalign:
+      align: false
+      sort: true
+      order:
+        - description
+        - json
+        - toml
+        - yaml
+        - yml
+        - label
+        - label-slice-as-struct
+        - file
+        - kv
+        - export
+    testifylint:
+      disable:
+        - suite-dont-use-pkg
+        - require-error
+        - go-require
+    perfsprint:
+      err-error: true
+      errorf: true
+      sprintf1: true
+      strconcat: false
+    staticcheck:
+      checks:
+        - all
+        - '-SA1019'
+        - '-ST1000'
+        - '-ST1003'
+        - '-ST1016'
+        - '-ST1020'
+        - '-ST1021'
+        - '-ST1022'
+        - '-QF1001'
+        - '-QF1008' # TODO must be fixed
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+    rules:
+      - path: (.+)_test.go
+        linters:
+          - canonicalheader
+          - fatcontext
+          - funlen
+          - goconst
+          - godot
+      - path: (.+)_test.go
+        text: ' always receives '
+        linters:
+          - unparam
+      - path: pkg/server/service/bufferpool.go
+        text: 'SA6002: argument should be pointer-like to avoid allocations'
+      - path: pkg/server/middleware/middlewares.go
+        text: Function 'buildConstructor' has too many statements
+        linters:
+          - funlen
+      - path: pkg/tracing/haystack/logger.go
+        linters:
+          - goprintffuncname
+      - path: pkg/tracing/tracing.go
+        text: printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'
+        linters:
+          - goprintffuncname
+      - path: pkg/tls/tlsmanager_test.go
+        text: 'SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18'
+      - path: pkg/types/tls_test.go
+        text: 'SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18'
+      - path: pkg/provider/kubernetes/(crd|gateway)/client.go
+        linters:
+          - interfacebloat
+      - path: pkg/metrics/metrics.go
+        linters:
+          - interfacebloat
+      - path: integration/healthcheck_test.go
+        text: Duplicate words \(wsp2,\) found
+        linters:
+          - dupword
+      - path: pkg/types/domain_test.go
+        text: Duplicate words \(sub\) found
+        linters:
+          - dupword
+      - path: pkg/provider/kubernetes/gateway/client_mock_test.go
+        text: 'unusedwrite: unused write to field'
+        linters:
+          - govet
+      - path: pkg/provider/acme/local_store.go
+        linters:
+          - musttag
+      - path: pkg/tls/certificate.go
+        text: the methods of "Certificates" use pointer receiver and non-pointer receiver.
+        linters:
+          - recvcheck
+      - path: pkg/config/static/static_config.go
+        source: 'errors.New\("Consul Catalog provider'
+        text: 'ST1005: error strings should not be capitalized'
+      - path: pkg/config/static/static_config.go
+        source: 'errors.New\("Consul provider'
+        text: 'ST1005: error strings should not be capitalized'
+      - path: pkg/config/static/static_config.go
+        source: 'errors.New\("Nomad provider'
+        text: 'ST1005: error strings should not be capitalized'
+      - path: (.+)\.go
+        text: 'struct-tag: unknown option ''inline'' in JSON tag'
+        linters:
+          - revive
+      - path: (.+)\.go
+        text: 'struct-tag: unknown option ''omitzero'' in TOML tag'
+        linters:
+          - revive
+      - path: (.+)\.go$
+        text: 'SA1019: http.CloseNotifier has been deprecated' # FIXME must be fixed
+      - path: (.+)\.go$
+        text: 'SA1019: cfg.(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: c.Providers.(ConsulCatalog|Consul|Nomad).Namespace is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: dockertypes.ContainerNode is deprecated'
+      - path: pkg/provider/kubernetes/crd/kubernetes.go
+        text: "Function 'loadConfigurationFromCRD' has too many statements"
+        linters:
+          - funlen
+      - path: pkg/plugins/middlewarewasm.go
+        text: 'the methods of "wasmMiddlewareBuilder" use pointer receiver and non-pointer receiver.'
+        linters:
+          - recvcheck
+      - path: pkg/proxy/httputil/bufferpool.go
+        text: 'SA6002: argument should be pointer-like to avoid allocations'
+    paths:
+      - pkg/provider/kubernetes/crd/generated/
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-dirs:
-    - pkg/provider/kubernetes/crd/generated/
-  exclude:
-    - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
-    - "should have a package comment, unless it's in another file for this package"
-    - 'fmt.Sprintf can be replaced with string'
-    - 'SA1019: dockertypes.ContainerNode is deprecated'
-  exclude-rules:
-    - path: '(.+)_test.go'
-      linters:
-        - goconst
-        - funlen
-        - godot
-        - canonicalheader
-        - fatcontext
-    - path: '(.+)_test.go'
-      text: ' always receives '
-      linters:
-        - unparam
-    - path: '(.+)\.go'
-      text: 'struct-tag: unknown option ''inline'' in JSON tag'
-      linters:
-        - revive
-    - path: pkg/proxy/httputil/bufferpool.go
-      text: 'SA6002: argument should be pointer-like to avoid allocations'
-    - path: pkg/server/middleware/middlewares.go
-      text: "Function 'buildConstructor' has too many statements"
-      linters:
-        - funlen
-    - path: pkg/logs/haystack.go
-      linters:
-        - goprintffuncname
-    - path: pkg/tracing/tracing.go
-      text: "printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'"
-      linters:
-        - goprintffuncname
-    - path: pkg/tls/tlsmanager_test.go
-      text: 'SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18'
-    - path: pkg/types/tls_test.go
-      text: 'SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18'
-    - path: pkg/provider/kubernetes/crd/kubernetes.go
-      text: 'SA1019: middleware.Spec.IPWhiteList is deprecated: please use IPAllowList instead.'
-    - path: pkg/server/middleware/tcp/middlewares.go
-      text: 'SA1019: config.IPWhiteList is deprecated: please use IPAllowList instead.'
-    - path: pkg/server/middleware/middlewares.go
-      text: 'SA1019: config.IPWhiteList is deprecated: please use IPAllowList instead.'
-    - path: pkg/provider/kubernetes/(crd|gateway)/client.go
-      linters:
-        - interfacebloat
-    - path: pkg/metrics/metrics.go
-      linters:
-        - interfacebloat
-    - path: integration/healthcheck_test.go
-      text: 'Duplicate words \(wsp2,\) found'
-      linters:
-        - dupword
-    - path: pkg/types/domain_test.go
-      text: 'Duplicate words \(sub\) found'
-      linters:
-        - dupword
-    - path: pkg/provider/kubernetes/crd/kubernetes.go
-      text: "Function 'loadConfigurationFromCRD' has too many statements"
-      linters:
-        - funlen
-    - path: pkg/provider/kubernetes/gateway/client_mock_test.go
-      text: 'unusedwrite: unused write to field'
-      linters:
-        - govet
-    - path: pkg/cli/deprecation.go
-      linters:
-        - goconst
-    - path: pkg/cli/loader_file.go
-      linters:
-        - goconst
-    - path: pkg/provider/acme/local_store.go
-      linters:
-        - musttag
-    - path: pkg/types/metrics.go
-      linters:
-        - goconst
-    - path: pkg/tls/certificate.go
-      text: 'the methods of "Certificates" use pointer receiver and non-pointer receiver.'
-      linters:
-        - recvcheck
-    - path: pkg/plugins/middlewarewasm.go
-      text: 'the methods of "wasmMiddlewareBuilder" use pointer receiver and non-pointer receiver.'
-      linters:
-        - recvcheck
-
-output:
-  show-stats: true
-  sort-results: true
-  sort-order:
-    - linter
-    - file

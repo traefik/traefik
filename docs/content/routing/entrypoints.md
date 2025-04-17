@@ -1101,6 +1101,56 @@ entryPoints:
 | false                 | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
 | true                  | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
 
+### SanitizePath
+
+_Optional, Default=true_
+
+The `sanitizePath` option defines whether to enable the request path sanitization.
+When disabled, the incoming request path is passed to the backend as is.
+This can be useful when dealing with legacy clients that are not url-encoding data in the request path.
+For example, as base64 uses the “/” character internally,
+if it's not url encoded,
+it can lead to unsafe routing when the `sanitizePath` option is set to `false`.
+
+!!! warning "Security"
+
+    Setting the sanitizePath option to false is not safe.
+    Ensure every request is properly url encoded instead.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      sanitizePath: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    sanitizePath = false
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.sanitizePath=false
+```
+
+#### Examples
+
+| SanitizePath | Request Path    | Resulting Request Path |
+|--------------|-----------------|------------------------|
+| false        | /./foo/bar      | /./foo/bar             |
+| true         | /./foo/bar      | /foo/bar               |
+| false        | /foo/../bar     | /foo/../bar            |
+| true         | /foo/../bar     | /bar                   |
+| false        | /foo/bar//      | /foo/bar//             |
+| true         | /foo/bar//      | /foo/bar/              |
+| false        | /./foo/../bar// | /./foo/../bar//        |
+| true         | /./foo/../bar// | /bar/                  |
+
 ### Middlewares
 
 The list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.
