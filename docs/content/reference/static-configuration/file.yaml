@@ -63,6 +63,7 @@ entryPoints:
               - foobar
               - foobar
       encodeQuerySemicolons: true
+      sanitizePath: true
     http2:
       maxConcurrentStreams: 42
     http3:
