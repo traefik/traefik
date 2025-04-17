@@ -1000,14 +1000,17 @@ _Optional, Default=true_
 
 The `sanitizePath` option defines whether to enable the request path sanitization.
 When disabled, the incoming request path is passed to the backend as is.
-This can be useful when dealing with legacy clients that are not url-encoding data in the request path. For example, as base64 uses the “/” character internally, if it's not url encoded, it can lead to unsafe routing when the `sanitizePath` option is set to `false`.
+This can be useful when dealing with legacy clients that are not url-encoding data in the request path.
+For example, as base64 uses the “/” character internally,
+if it's not url encoded, it can lead to unsafe routing when the `sanitizePath` option is set to `false`.
 
 !!! warning "Security"
 
     When disabling path sanitization, it is then possible that the path interpretation, 
     notably within the match evaluation of the router rules,
     differs from the backend server evaluation.
-    Setting the sanitizePath option to false is not safe. Ensure every request is properly url encoded instead.
+    Setting the sanitizePath option to false is not safe.
+    Ensure every request is properly url encoded instead.
 
 ```yaml tab="File (YAML)"
 entryPoints:
