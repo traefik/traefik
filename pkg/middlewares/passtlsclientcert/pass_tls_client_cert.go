@@ -226,11 +226,11 @@ func getIssuerDNInfo(ctx context.Context, options *IssuerDistinguishedNameOption
 
 	content := &strings.Builder{}
 
-	// Manage non standard attributes
+	// Manage non-standard attributes
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content.WriteString(fmt.Sprintf("DC=%s%s", name.Value, subFieldSeparator))
+			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
 		}
 	}
 
@@ -272,7 +272,7 @@ func getSubjectDNInfo(ctx context.Context, options *SubjectDistinguishedNameOpti
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content.WriteString(fmt.Sprintf("DC=%s%s", name.Value, subFieldSeparator))
+			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
 		}
 	}
 
