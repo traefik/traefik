@@ -25,6 +25,9 @@ type Descriptor struct {
 
 	// Settings (optional)
 	Settings Settings `description:"Plugin's settings (works only for wasm plugins)." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
+
+	// Headers (optional)
+	Headers map[string]string `description:"HTTP headers to forward to the http client to fetch package." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 }
 
 // LocalDescriptor The static part of a local plugin configuration.
