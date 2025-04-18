@@ -839,10 +839,10 @@ certificatesResolvers:
 
 _Optional, Default=2m_
 
-`clientTimeout` is the maximum amount of time a http client communicating with the `caServer` waits before timing out.
+`clientTimeout` is the total timeout for a complete HTTP transaction (including TCP connection, sending request and receiving response) with the ACME server.
 It defaults to 2 minutes.
 
-!!! warning "This must be at least as much time as `clientResponseHeaderTimeout` option below or the certificate resolver will fail to start."
+!!! warning "This timeout encompasses the entire request-response cycle, including the response headers timeout. It must be at least `clientResponseHeaderTimeout`, otherwise the certificate resolver will fail to start."
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
