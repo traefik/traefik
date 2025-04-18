@@ -282,11 +282,7 @@ func TestInMemoryRateLimit(t *testing.T) {
 			end := start.Add(test.loadDuration)
 			ticker := time.NewTicker(loadPeriod)
 			defer ticker.Stop()
-			for {
-				if time.Now().After(end) {
-					break
-				}
-
+			for !time.Now().After(end) {
 				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 				req.RemoteAddr = "127.0.0.1:1234"
 				w := httptest.NewRecorder()

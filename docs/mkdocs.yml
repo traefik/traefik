@@ -64,7 +64,7 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - 'Welcome': 'index.md'
+  - 'What is Traefik': 'index.md'
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start':
@@ -163,6 +163,9 @@ nav:
       - 'Tracing':
           - 'Overview': 'observability/tracing/overview.md'
           - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
+  - 'Security':
+    - 'Best Practices':
+          - 'security/best-practices/content-length.md'
   - 'User Guides':
       - 'FastProxy': 'user-guides/fastproxy.md'
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
@@ -206,7 +209,7 @@ nav:
           - 'Nomad': "reference/install-configuration/providers/hashicorp/nomad.md"
           - 'Consul': 'reference/install-configuration/providers/hashicorp/consul.md'
           - 'Consul Catalog': 'reference/install-configuration/providers/hashicorp/consul-catalog.md'
-        - 'KV Stores': 
+        - 'KV Stores':
           - 'Redis': 'reference/install-configuration/providers/kv/redis.md'
           - 'Consul': 'reference/install-configuration/providers/kv/consul.md'
           - 'etcd': 'reference/install-configuration/providers/kv/etcd.md'
@@ -230,22 +233,22 @@ nav:
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
       # - 'Options List':  'reference/install-configuration/cli-options-list.md' -- Todo
     - 'Routing Configuration':
-        - 'General' : 
+        - 'General' :
           - 'Configuration Methods' : 'reference/routing-configuration/dynamic-configuration-methods.md'
-          - 'HTTP' : 
+          - 'HTTP' :
             - 'Router' :
               - 'Rules & Priority' : 'reference/routing-configuration/http/router/rules-and-priority.md'
               - 'Observability': 'reference/routing-configuration/http/router/observability.md'
             - 'Load Balancing' :
               - 'Service' : 'reference/routing-configuration/http/load-balancing/service.md'
               - 'ServersTransport' : 'reference/routing-configuration/http/load-balancing/serverstransport.md'
-            - 'TLS' : 
+            - 'TLS' :
               - 'Overview' : 'reference/routing-configuration/http/tls/overview.md'
               - 'TLS Certificates' : 'reference/routing-configuration/http/tls/tls-certificates.md'
               - 'TLS Options' : 'reference/routing-configuration/http/tls/tls-options.md'
-            - 'Middlewares' : 
+            - 'Middlewares' :
               - 'Overview' : 'reference/routing-configuration/http/middlewares/overview.md'
-              - 'AddPrefix' : 'reference/routing-configuration/http/middlewares/addprefix.md' 
+              - 'AddPrefix' : 'reference/routing-configuration/http/middlewares/addprefix.md'
               - 'BasicAuth' : 'reference/routing-configuration/http/middlewares/basicauth.md'
               - 'Buffering': 'reference/routing-configuration/http/middlewares/buffering.md'
               - 'Chain': 'reference/routing-configuration/http/middlewares/chain.md'
@@ -269,7 +272,7 @@ nav:
               - 'StripPrefix': 'reference/routing-configuration/http/middlewares/stripprefix.md'
               - 'StripPrefixRegex': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
           - 'TCP' :
-              - 'Router' : 
+              - 'Router' :
                 - 'Rules & Priority' : 'reference/routing-configuration/tcp/router/rules-and-priority.md'
               - 'Service' : 'reference/routing-configuration/tcp/service.md'
               - 'ServersTransport' : 'reference/routing-configuration/tcp/serverstransport.md'
@@ -284,7 +287,7 @@ nav:
             - 'Service' : 'reference/routing-configuration/udp/service.md'
         - 'Kubernetes':
           - 'Gateway API' : 'reference/routing-configuration/kubernetes/gateway-api.md'
-          - 'Kubernetes CRD' : 
+          - 'Kubernetes CRD' :
             - 'HTTP' :
               - 'IngressRoute' : 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
               - 'TraefikService' : 'reference/routing-configuration/kubernetes/crd/http/traefikservice.md'
