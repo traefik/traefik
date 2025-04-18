@@ -127,7 +127,7 @@ func ReadManifest(goPath, moduleName string) (*Manifest, error) {
 }
 
 // Download downloads a plugin archive.
-func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, error) {
+func (c *Client) Download(ctx context.Context, pName, pVersion string, headers map[string]string) (string, error) {
 	filename := c.buildArchivePath(pName, pVersion)
 
 	var hash string
@@ -151,6 +151,12 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if len(headers) > 0 {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
 	}
 
 	if hash != "" {

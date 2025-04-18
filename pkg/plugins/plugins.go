@@ -29,7 +29,7 @@ func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
 	for pAlias, desc := range plugins {
 		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
-		hash, err := client.Download(ctx, desc.ModuleName, desc.Version)
+		hash, err := client.Download(ctx, desc.ModuleName, desc.Version, desc.Headers)
 		if err != nil {
 			_ = client.ResetAll()
 			return fmt.Errorf("unable to download plugin %s: %w", desc.ModuleName, err)
