@@ -610,8 +610,8 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
 	}
 
-	switch {
-	case service.Kind == "" || service.Kind == "Service":
+	switch service.Kind {
+	case "", "Service":
 		serversLB, err := c.buildServersLB(namespace, service)
 		if err != nil {
 			return "", nil, err
@@ -620,8 +620,10 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 		fullName := fullServiceName(svcCtx, namespace, service, service.Port)
 
 		return fullName, serversLB, nil
-	case service.Kind == "TraefikService":
+
+	case "TraefikService":
 		return fullServiceName(svcCtx, namespace, service, intstr.FromInt(0)), nil, nil
+
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}

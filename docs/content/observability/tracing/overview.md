@@ -128,15 +128,16 @@ It applies to client and server kind spans.
 tracing:
   capturedRequestHeaders:
     - X-CustomHeader
+    - X-OtherHeader
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  capturedRequestHeaders = ["X-CustomHeader"]
+  capturedRequestHeaders = ["X-CustomHeader", "X-OtherHeader"]
 ```
 
 ```bash tab="CLI"
---tracing.capturedRequestHeaders[0]=X-CustomHeader
+--tracing.capturedRequestHeaders="X-CustomHeader,X-OtherHeader"
 ```
 
 #### `capturedResponseHeaders`
@@ -150,15 +151,16 @@ It applies to client and server kind spans.
 tracing:
   capturedResponseHeaders:
     - X-CustomHeader
+    - X-OtherHeader
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  capturedResponseHeaders = ["X-CustomHeader"]
+  capturedResponseHeaders = ["X-CustomHeader", "X-OtherHeader"]
 ```
 
 ```bash tab="CLI"
---tracing.capturedResponseHeaders[0]=X-CustomHeader
+--tracing.capturedResponseHeaders="X-CustomHeader,X-OtherHeader"
 ```
 
 #### `safeQueryParams`

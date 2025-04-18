@@ -299,7 +299,6 @@ spec:
                                 type: object
                             type: object
                           strategy:
-                            default: wrr
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
                               Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).

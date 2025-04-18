@@ -386,9 +386,10 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
 	for k := range headers {
 		v := h.config.Fields.KeepHeader(k)
-		if v == types.AccessLogKeep {
+		switch v {
+		case types.AccessLogKeep:
 			fields[prefix+k] = strings.Join(headers.Values(k), ",")
-		} else if v == types.AccessLogRedact {
+		case types.AccessLogRedact:
 			fields[prefix+k] = "REDACTED"
 		}
 	}
