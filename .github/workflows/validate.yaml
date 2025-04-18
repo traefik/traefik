@@ -7,7 +7,7 @@ on:
 
 env:
   GO_VERSION: '1.23'
-  GOLANGCI_LINT_VERSION: v1.64.2
+  GOLANGCI_LINT_VERSION: v2.0.2
   MISSPELL_VERSION: v0.6.0
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
           check-latest: true
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
 
@@ -48,7 +48,7 @@ jobs:
           check-latest: true
 
       - name: Install misspell ${{ env.MISSPELL_VERSION }}
-        run: curl -sfL https://raw.githubusercontent.com/golangci/misspell/master/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSPELL_VERSION}
+        run: curl -sfL https://raw.githubusercontent.com/golangci/misspell/HEAD/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSPELL_VERSION}
 
       - name: Avoid generating webui
         run: touch webui/static/index.html

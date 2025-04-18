@@ -327,7 +327,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			assert.NotNil(t, handler)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://callme", nil)
-			assert.Equal(t, "", req.Header.Get("User-Agent"))
+			assert.Empty(t, req.Header.Get("User-Agent"))
 
 			if test.userAgent != "" {
 				req.Header.Set("User-Agent", test.userAgent)
