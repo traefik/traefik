@@ -1,3 +1,46 @@
+## [v3.4.0-rc2](https://github.com/traefik/traefik/tree/v3.4.0-rc2) (2025-04-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.0-rc1...v3.4.0-rc2)
+
+**Bug fixes:**
+- **[k8s/crd]** Remove default load-balancing strategy from CRD ([#11701](https://github.com/traefik/traefik/pull/11701) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd]** Restrict regex validation of HTTP status codes for Ingress CRD resources ([#11670](https://github.com/traefik/traefik/pull/11670) by [jnoordsij](https://github.com/jnoordsij))
+- Bump github.com/redis/go-redis/v9 to v9.7.3 ([#11687](https://github.com/traefik/traefik/pull/11687) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.3.6](https://github.com/traefik/traefik/tree/v3.3.6) (2025-04-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.5...v3.3.6)
+
+**Documentation:**
+- **[k8s/gatewayapi]** Fix Kubernetes Gateway statusAddress documentation ([#11663](https://github.com/traefik/traefik/pull/11663) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing]** Document how to pass multiple Headers on tracing with CLI ([#11665](https://github.com/traefik/traefik/pull/11665) by [mloiseleur](https://github.com/mloiseleur))
+- Fix typos on what is Traefik docs page ([#11685](https://github.com/traefik/traefik/pull/11685) by [matthewCmatt](https://github.com/matthewCmatt))
+- Update Welcome Page ([#11615](https://github.com/traefik/traefik/pull/11615) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11703](https://github.com/traefik/traefik/pull/11703) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.3 ([#11696](https://github.com/traefik/traefik/pull/11696) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.3 ([#11694](https://github.com/traefik/traefik/pull/11694) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.24](https://github.com/traefik/traefik/tree/v2.11.24) (2025-04-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.22...v2.11.24)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.23.1 ([#11690](https://github.com/traefik/traefik/pull/11690) by [ldez](https://github.com/ldez))
+- **[metrics]** Bump gopkg.in/DataDog/dd-trace-go.v1 to v1.72.2 ([#11693](https://github.com/traefik/traefik/pull/11693) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Add Content-Length header to preflight response ([#11682](https://github.com/traefik/traefik/pull/11682) by [lbenguigui](https://github.com/lbenguigui))
+- **[server]** Sanitize request path ([#11684](https://github.com/traefik/traefik/pull/11684) by [rtribotte](https://github.com/rtribotte))
+- Bump github.com/redis/go-redis/v9 to v9.7.3 ([#11695](https://github.com/traefik/traefik/pull/11695) by [kevinpollet](https://github.com/kevinpollet))
+- Bump golang.org/x/net to v0.38.0 ([#11691](https://github.com/traefik/traefik/pull/11691) by [kevinpollet](https://github.com/kevinpollet))
+- Bump golang.org/x/oauth2 to v0.28.0 ([#11689](https://github.com/traefik/traefik/pull/11689) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[middleware]** Add content-length best practice documentation ([#11697](https://github.com/traefik/traefik/pull/11697) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Typo fix on the Explanation Section for User Guide HTTP Challenge. ([#11676](https://github.com/traefik/traefik/pull/11676) by [YapWC](https://github.com/YapWC))
+
+## [v2.11.23](https://github.com/traefik/traefik/tree/v2.11.23) (2025-04-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.22...v2.11.23)
+
+Release canceled.
+
 ## [v3.4.0-rc1](https://github.com/traefik/traefik/tree/v3.4.0-rc1) (2025-03-31)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.0-rc1...v3.4.0-rc1)
 

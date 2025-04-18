@@ -131,11 +131,7 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 	}
 	start := time.Now()
 	end := start.Add(graceTimeout)
-	for {
-		if time.Now().After(end) {
-			break
-		}
-
+	for !time.Now().After(end) {
 		l.mu.RLock()
 		if len(l.conns) == 0 {
 			l.mu.RUnlock()
