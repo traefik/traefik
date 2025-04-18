@@ -264,3 +264,7 @@ The retry expression is defined as a logical combination of the functions below 
 - `Attempts()` number of attempts (the first one counts)
 - `ResponseCode()` response code of the service
 - `IsNetworkError()` whether the response code is related to networking error
+
+### Content-Length
+
+See [Best Practices: Content‑Length](../../security/best-practices/content-length.md)
