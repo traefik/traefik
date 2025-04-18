@@ -1,3 +1,17 @@
+## [v3.3.6](https://github.com/traefik/traefik/tree/v3.3.6) (2025-04-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.5...v3.3.6)
+
+**Documentation:**
+- **[k8s/gatewayapi]** Fix Kubernetes Gateway statusAddress documentation ([#11663](https://github.com/traefik/traefik/pull/11663) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing]** Document how to pass multiple Headers on tracing with CLI ([#11665](https://github.com/traefik/traefik/pull/11665) by [mloiseleur](https://github.com/mloiseleur))
+- Fix typos on what is Traefik docs page ([#11685](https://github.com/traefik/traefik/pull/11685) by [matthewCmatt](https://github.com/matthewCmatt))
+- Update Welcome Page ([#11615](https://github.com/traefik/traefik/pull/11615) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.3 ([#11703](https://github.com/traefik/traefik/pull/11703) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.3 ([#11696](https://github.com/traefik/traefik/pull/11696) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.3 ([#11694](https://github.com/traefik/traefik/pull/11694) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.24](https://github.com/traefik/traefik/tree/v2.11.24) (2025-04-18)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.22...v2.11.24)
 
