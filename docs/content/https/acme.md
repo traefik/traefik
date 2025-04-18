@@ -873,10 +873,10 @@ certificatesResolvers:
 
 _Optional, Default=30s_
 
-`clientResponseHeaderTimeout` is the maximum amount of time a http client communicating with the `caServer` waits for response headers.
+`clientResponseHeaderTimeout` defines how long the HTTP client waits for response headers when communicating with the `caServer`.
 It defaults to 30 seconds. 
 
-!!! warning "This must be less than the `clientTimeout` option above or the certificate resolver will fail to start."
+!!! warning "It must be lower than `clientTimeout`, otherwise the certificate resolver will fail to start."
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
