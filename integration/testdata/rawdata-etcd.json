@@ -200,7 +200,6 @@
             "url": "http://10.0.1.1:8889"
           }
         ],
-        "strategy": "wrr",
         "passHostHeader": true,
         "responseForwarding": {
           "flushInterval": "100ms"
@@ -226,7 +225,6 @@
             "url": "http://10.0.1.2:8889"
           }
         ],
-        "strategy": "wrr",
         "passHostHeader": true,
         "responseForwarding": {
           "flushInterval": "100ms"
@@ -244,7 +242,6 @@
             "url": "http://10.0.1.3:8889"
           }
         ],
-        "strategy": "wrr",
         "passHostHeader": true,
         "responseForwarding": {
           "flushInterval": "100ms"
