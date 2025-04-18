@@ -1,3 +1,11 @@
+## [v3.4.0-rc2](https://github.com/traefik/traefik/tree/v3.4.0-rc2) (2025-04-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.0-rc1...v3.4.0-rc2)
+
+**Bug fixes:**
+- **[k8s/crd]** Remove default load-balancing strategy from CRD ([#11701](https://github.com/traefik/traefik/pull/11701) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd]** Restrict regex validation of HTTP status codes for Ingress CRD resources ([#11670](https://github.com/traefik/traefik/pull/11670) by [jnoordsij](https://github.com/jnoordsij))
+- Bump github.com/redis/go-redis/v9 to v9.7.3 ([#11687](https://github.com/traefik/traefik/pull/11687) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.3.6](https://github.com/traefik/traefik/tree/v3.3.6) (2025-04-18)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.5...v3.3.6)
 
