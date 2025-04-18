@@ -340,7 +340,6 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 			}
 
 			netNotFound = true
-			logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Network, container.Name)
 		}
 	}
 
@@ -382,6 +381,9 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 		return p.getIPAddress(ctx, containerParsed)
 	}
 
+	if netNotFound {
+		logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Network, container.Name)
+	}
 	for _, network := range container.NetworkSettings.Networks {
 		if netNotFound {
 			logger.Warn().Msgf("Defaulting to first available network (%q) for container %q.", network, container.Name)
