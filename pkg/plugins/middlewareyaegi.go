@@ -135,7 +135,7 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 	}
 
 	if manifest.UseUnsafe && !settings.UseUnsafe {
-		return nil, errors.New("this plugin uses unsafe import. If you want to use it, you need to allow useUnsafe in the settings.")
+		return nil, errors.New("this plugin uses unsafe import. If you want to use it, you need to allow useUnsafe in the settings")
 	}
 
 	if settings.UseUnsafe && manifest.UseUnsafe {
