@@ -50,8 +50,8 @@ type Configuration struct {
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
-	ClientTimeout               ptypes.Duration `description:"Timeout for HTTP Client used to communicate with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for response headers for HTTP Client used to communicate with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
 	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
