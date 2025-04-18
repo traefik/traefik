@@ -41,7 +41,7 @@ func TestDomain_ToStrArray(t *testing.T) {
 			t.Parallel()
 
 			domains := test.domain.ToStrArray()
-			assert.EqualValues(t, test.expected, domains)
+			assert.Equal(t, test.expected, domains)
 		})
 	}
 }
