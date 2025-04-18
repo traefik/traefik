@@ -346,7 +346,7 @@ func assertNotEmpty() func(t *testing.T, actual interface{}) {
 	return func(t *testing.T, actual interface{}) {
 		t.Helper()
 
-		assert.NotEqual(t, "", actual)
+		assert.NotEmpty(t, actual)
 	}
 }
 
@@ -590,7 +590,7 @@ func TestLoggerJSON(t *testing.T) {
 			err = json.Unmarshal(logData, &jsonData)
 			require.NoError(t, err)
 
-			assert.Equal(t, len(test.expected), len(jsonData))
+			assert.Len(t, jsonData, len(test.expected))
 
 			for field, assertion := range test.expected {
 				assertion(t, jsonData[field])
@@ -649,7 +649,7 @@ func TestLogger_AbortedRequest(t *testing.T) {
 	err = json.Unmarshal(logData, &jsonData)
 	require.NoError(t, err)
 
-	assert.Equal(t, len(expected), len(jsonData))
+	assert.Len(t, jsonData, len(expected))
 
 	for field, assertion := range expected {
 		assertion(t, jsonData[field])
@@ -880,7 +880,7 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 
 	formatErrMessage := fmt.Sprintf("Expected:\t%q\nActual:\t%q", expected, string(logData))
 
-	require.Equal(t, len(resultExpected), len(result), formatErrMessage)
+	require.Len(t, result, len(resultExpected), formatErrMessage)
 	assert.Equal(t, resultExpected[ClientHost], result[ClientHost], formatErrMessage)
 	assert.Equal(t, resultExpected[ClientUsername], result[ClientUsername], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestMethod], result[RequestMethod], formatErrMessage)
