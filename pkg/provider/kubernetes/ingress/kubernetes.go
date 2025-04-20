@@ -38,7 +38,6 @@ const (
 	traefikDefaultIngressClass           = "traefik"
 	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
 	defaultPathMatcher                   = "PathPrefix"
-	prefixMatchRegexTemplate             = "^%s(|/.*)$"
 )
 
 // Provider holds configurations of the provider.
@@ -856,20 +855,26 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 		//
 		// Traefik's default PathPrefix matcher performs a character-wise prefix match,
 		// unlike Kubernetes which matches path elements.
-		// Use PathRegexp to replicate element-wise behavior.
+		// Will use Path and PathPrefix to replicate element-wise behavior.
 		//
-		// See TestPrefixMatchRegex() for examples.
-		return "PathRegexp(`" + buildPrefixMatchRegex(path) + "`)"
+		// See TestStrictPrefixMatchingRule() for examples.
+		return buildStrictPrefixMatchingRule(path)
 	}
 
 	return fmt.Sprintf("%s(`%s`)", matcher, path)
 }
 
-// buildPrefixMatchRegex returns a regex that matches the given path and its subpaths.
+// buildStrictPrefixMatchingRule returns a rule that matches the given path and its subpaths.
 // For example, "/v1" matches "/v1" and "/v1/anything", but not "/v12".
-func buildPrefixMatchRegex(path string) string {
+// See TestStrictPrefixMatchingRule() for more examples.
+func buildStrictPrefixMatchingRule(path string) string {
 	path = strings.TrimSuffix(path, "/")
-	return fmt.Sprintf(prefixMatchRegexTemplate, regexp.QuoteMeta(path))
+
+	if path == "" {
+		return "PathPrefix(`/`)"
+	}
+
+	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
