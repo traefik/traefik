@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"math"
 	"net"
 	"os"
@@ -849,32 +850,20 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 	// When enabled, strictPrefixMatching ensures that prefix matching follows
 	// the Kubernetes Ingress spec (path-element-wise instead of character-wise).
 	if strictPrefixMatching && matcher == "PathPrefix" {
-		// To mimic Kubernetes behavior (see:
-		// https://kubernetes.io/docs/concepts/services-networking/ingress/#examples),
+		// According to
+		// https://kubernetes.io/docs/concepts/services-networking/ingress/#examples,
 		// "/v12" should not match "/v1".
 		//
 		// Traefik's default PathPrefix matcher performs a character-wise prefix match,
-		// unlike Kubernetes which matches path elements.
-		// Will use Path and PathPrefix to replicate element-wise behavior.
+		// unlike Kubernetes which matches path elements. To mimic Kubernetes behavior,
+		// we will use Path and PathPrefix to replicate element-wise behavior.
 		//
-		// See TestStrictPrefixMatchingRule() for examples.
-		return buildStrictPrefixMatchingRule(path)
+		// "PathPrefix" in Kubernetes Gateway API is semantically equivalent to the "Prefix" path type in the
+		// Kubernetes Ingress API, so we use the same rule as in gateway package.
+		return gateway.BuildPathPrefixRule(path)
 	}
 
 	return fmt.Sprintf("%s(`%s`)", matcher, path)
-}
-
-// buildStrictPrefixMatchingRule returns a rule that matches the given path and its subpaths.
-// For example, "/v1" matches "/v1" and "/v1/anything", but not "/v12".
-// See TestStrictPrefixMatchingRule() for more examples.
-func buildStrictPrefixMatchingRule(path string) string {
-	path = strings.TrimSuffix(path, "/")
-
-	if path == "" {
-		return "PathPrefix(`/`)"
-	}
-
-	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {

@@ -635,14 +635,15 @@ func buildPathRule(pathMatch gatev1.HTTPPathMatch) (string, int) {
 		return fmt.Sprintf("Path(`%s`)", pathValue), 100000
 
 	case gatev1.PathMatchPathPrefix:
+		rule := BuildPathPrefixRule(pathValue)
+
 		// PathPrefix(`/`) rule is a catch-all,
 		// here we ensure it would be evaluated last.
 		if pathValue == "/" {
-			return "PathPrefix(`/`)", 1
+			return rule, 1
 		}
 
-		pv := strings.TrimSuffix(pathValue, "/")
-		return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", pv), 10000 + len(pathValue)*100
+		return rule, 10000 + len(pathValue)*100
 
 	case gatev1.PathMatchRegularExpression:
 		return fmt.Sprintf("PathRegexp(`%s`)", pathValue), 10000 + len(pathValue)*100
@@ -650,6 +651,21 @@ func buildPathRule(pathMatch gatev1.HTTPPathMatch) (string, int) {
 	default:
 		return "PathPrefix(`/`)", 1
 	}
+}
+
+// BuildPathPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
+// For example, the paths `/abc`, `/abc/`, and `/abc/def` would all match the prefix `/abc`,
+// but the path `/abcd` would not. See TestStrictPrefixMatchingRule() for more examples.
+//
+// "PathPrefix" in Kubernetes Gateway API is semantically equivalent to the "Prefix" path type in the
+// Kubernetes Ingress API.
+func BuildPathPrefixRule(path string) string {
+	if path == "/" {
+		return "PathPrefix(`/`)"
+	}
+
+	path = strings.TrimSuffix(path, "/")
+	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
 func buildHeaderRules(headers []gatev1.HTTPHeaderMatch) ([]string, int) {

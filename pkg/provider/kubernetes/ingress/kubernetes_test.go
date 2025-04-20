@@ -3,10 +3,7 @@ package ingress
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -2295,107 +2291,4 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
-}
-
-func TestStrictPrefixMatchingRule(t *testing.T) {
-	tests := []struct {
-		path        string
-		requestPath string
-		match       bool
-	}{ // The tests are taken from https://kubernetes.io/docs/concepts/services-networking/ingress/#examples
-		{
-			path:        "/foo",
-			requestPath: "/foo",
-			match:       true,
-		},
-		{
-			path:        "/foo",
-			requestPath: "/foo/",
-			match:       true,
-		},
-		{
-			path:        "/foo/",
-			requestPath: "/foo",
-			match:       true,
-		},
-		{
-			path:        "/foo/",
-			requestPath: "/foo/",
-			match:       true,
-		},
-		{
-			path:        "/aaa/bb",
-			requestPath: "/aaa/bbb",
-			match:       false,
-		},
-		{
-			path:        "/aaa/bbb",
-			requestPath: "/aaa/bbb",
-			match:       true,
-		},
-		{
-			path:        "/aaa/bbb/",
-			requestPath: "/aaa/bbb",
-			match:       true,
-		},
-		{
-			path:        "/aaa/bbb",
-			requestPath: "/aaa/bbb/",
-			match:       true,
-		},
-		{
-			path:        "/aaa/bbb",
-			requestPath: "/aaa/bbb/ccc",
-			match:       true,
-		},
-		{
-			path:        "/aaa/bbb",
-			requestPath: "/aaa/bbbxyz",
-			match:       false,
-		},
-		{
-			path:        "/",
-			requestPath: "/aaa/ccc",
-			match:       true,
-		},
-		{
-			path:        "/aaa",
-			requestPath: "/aaa/ccc",
-			match:       true,
-		},
-		{
-			path:        "/...",
-			requestPath: "/aaa",
-			match:       false,
-		},
-		{
-			path:        "/...",
-			requestPath: "/.../",
-			match:       true,
-		},
-	}
-
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("Prefix match case #%d", i), func(t *testing.T) {
-			t.Parallel()
-
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			muxer, err := traefikhttp.NewMuxer()
-			require.NoError(t, err)
-
-			rule := buildStrictPrefixMatchingRule(tt.path)
-			err = muxer.AddRoute(rule, "", 0, handler)
-			require.NoError(t, err)
-
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodGet, tt.requestPath, http.NoBody)
-			muxer.ServeHTTP(w, req)
-
-			if tt.match {
-				assert.Equal(t, http.StatusOK, w.Code)
-			} else {
-				assert.Equal(t, http.StatusNotFound, w.Code)
-			}
-		})
-	}
 }
