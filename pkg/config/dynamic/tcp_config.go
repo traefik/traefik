@@ -176,7 +176,7 @@ func (t *TCPServersTransport) SetDefaults() {
 
 // +k8s:deepcopy-gen=true
 
-// TCPServer holds a TCP Server configuration.
+// TCPServerHealthCheck holds the HealthCheck configuration.
 type TCPServerHealthCheck struct {
 	Address          string          `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
 	Port             string          `json:"-" toml:"-" yaml:"-"`
