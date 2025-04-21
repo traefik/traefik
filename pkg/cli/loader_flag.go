@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/cli"
@@ -15,6 +16,15 @@ type FlagLoader struct{}
 func (*FlagLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	if len(args) == 0 {
 		return false, nil
+	}
+
+	if cmd.Name == "healthcheck" {
+		for _, a := range args {
+			if strings.HasPrefix(a, "--url") {
+				log.Print("Skipping flag load for healthcheck (url provided)")
+				return false, nil
+			}
+		}
 	}
 
 	if err := flag.Decode(args, cmd.Configuration); err != nil {

@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -19,14 +20,30 @@ func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLo
 		Configuration: traefikConfiguration,
 		Run:           runCmd(traefikConfiguration),
 		Resources:     loaders,
+		AllowArg:      true,
 	}
 }
 
-func runCmd(traefikConfiguration *static.Configuration) func(_ []string) error {
-	return func(_ []string) error {
+func runCmd(traefikConfiguration *static.Configuration) func(args []string) error {
+	return func(args []string) error {
+		fs := flag.NewFlagSet("healthcheck", flag.ContinueOnError)
+		urlFlag := fs.String("url", "", "override the healthcheck path (e.g. https://test.traefik.com/healthz")
+		fs.SetOutput(os.Stderr)
+		if err := fs.Parse(args); err != nil {
+			return err
+		}
+
 		traefikConfiguration.SetEffectiveConfiguration()
 
-		resp, errPing := Do(*traefikConfiguration)
+		var resp *http.Response
+		var errPing error
+		if *urlFlag != "" {
+			client := &http.Client{Timeout: 5 * time.Second}
+			resp, errPing = client.Head(*urlFlag)
+		} else {
+			resp, errPing = Do(*traefikConfiguration)
+		}
+
 		if resp != nil {
 			resp.Body.Close()
 		}
