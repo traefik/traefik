@@ -27,8 +27,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
+	"go.opentelemetry.io/otel/trace/embedded"
 )
 
 const delta float64 = 1e-10
@@ -310,7 +312,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 func TestLoggerCLF(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
-	doLogging(t, config)
+	doLogging(t, config, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -322,7 +324,7 @@ func TestLoggerCLF(t *testing.T) {
 func TestLoggerCLFWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
-	doLogging(t, config)
+	doLogging(t, config, false)
 
 	// wait a bit for the buffer to be written in the file.
 	time.Sleep(50 * time.Millisecond)
@@ -371,10 +373,11 @@ func TestLoggerJSON(t *testing.T) {
 		desc     string
 		config   *types.AccessLog
 		tls      bool
+		tracing  bool
 		expected map[string]func(t *testing.T, value interface{})
 	}{
 		{
-			desc: "default config",
+			desc: "default config without tracing",
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
@@ -410,8 +413,48 @@ func TestLoggerJSON(t *testing.T) {
 				"time":                    assertNotEmpty(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
-				TraceID:                   assertNotEmpty(),
-				SpanID:                    assertNotEmpty(),
+			},
+		},
+		{
+			desc: "default config with tracing",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+			},
+			tracing: true,
+			expected: map[string]func(t *testing.T, value interface{}){
+				RequestContentSize:        assertFloat64(0),
+				RequestHost:               assertString(testHostname),
+				RequestAddr:               assertString(testHostname),
+				RequestMethod:             assertString(testMethod),
+				RequestPath:               assertString(testPath),
+				RequestProtocol:           assertString(testProto),
+				RequestScheme:             assertString(testScheme),
+				RequestPort:               assertString("-"),
+				DownstreamStatus:          assertFloat64(float64(testStatus)),
+				DownstreamContentSize:     assertFloat64(float64(len(testContent))),
+				OriginContentSize:         assertFloat64(float64(len(testContent))),
+				OriginStatus:              assertFloat64(float64(testStatus)),
+				RequestRefererHeader:      assertString(testReferer),
+				RequestUserAgentHeader:    assertString(testUserAgent),
+				RouterName:                assertString(testRouterName),
+				ServiceURL:                assertString(testServiceName),
+				ClientUsername:            assertString(testUsername),
+				ClientHost:                assertString(testHostname),
+				ClientPort:                assertString(strconv.Itoa(testPort)),
+				ClientAddr:                assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
+				"level":                   assertString("info"),
+				"msg":                     assertString(""),
+				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
+				RequestCount:              assertFloat64NotZero(),
+				Duration:                  assertFloat64NotZero(),
+				Overhead:                  assertFloat64NotZero(),
+				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
+				"time":                    assertNotEmpty(),
+				"StartLocal":              assertNotEmpty(),
+				"StartUTC":                assertNotEmpty(),
+				TraceID:                   assertString("01000000000000000000000000000000"),
+				SpanID:                    assertString("0100000000000000"),
 			},
 		},
 		{
@@ -455,8 +498,6 @@ func TestLoggerJSON(t *testing.T) {
 				"time":                    assertNotEmpty(),
 				StartLocal:                assertNotEmpty(),
 				StartUTC:                  assertNotEmpty(),
-				TraceID:                   assertNotEmpty(),
-				SpanID:                    assertNotEmpty(),
 			},
 		},
 		{
@@ -578,9 +619,9 @@ func TestLoggerJSON(t *testing.T) {
 
 			test.config.FilePath = logFilePath
 			if test.tls {
-				doLoggingTLS(t, test.config)
+				doLoggingTLS(t, test.config, test.tracing)
 			} else {
-				doLogging(t, test.config)
+				doLogging(t, test.config, test.tracing)
 			}
 
 			logData, err := os.ReadFile(logFilePath)
@@ -632,8 +673,6 @@ func TestLogger_AbortedRequest(t *testing.T) {
 		"downstream_Content-Type":      assertString("text/plain"),
 		"downstream_Transfer-Encoding": assertString("chunked"),
 		"downstream_Cache-Control":     assertString("no-cache"),
-		TraceID:                        assertNotEmpty(),
-		SpanID:                         assertNotEmpty(),
 	}
 
 	config := &types.AccessLog{
@@ -854,7 +893,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			file, restoreStdout := captureStdout(t)
 			defer restoreStdout()
 
-			doLogging(t, test.config)
+			doLogging(t, test.config, false)
 
 			written, err := os.ReadFile(file.Name())
 			require.NoError(t, err, "unable to read captured stdout from file")
@@ -913,7 +952,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	return file, restoreStdout
 }
 
-func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
+func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing bool) {
 	t.Helper()
 	logger, err := NewHandler(config)
 	require.NoError(t, err)
@@ -952,9 +991,10 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 		}
 	}
 
-	tracer := noop.Tracer{}
-	spanCtx, _ := tracer.Start(req.Context(), "test")
-	req = req.WithContext(spanCtx)
+	if tracing {
+		contextWithSpan := trace.ContextWithSpan(req.Context(), &mockSpan{})
+		req = req.WithContext(contextWithSpan)
+	}
 
 	chain := alice.New()
 	chain = chain.Append(capture.Wrap)
@@ -965,16 +1005,16 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 }
 
-func doLoggingTLS(t *testing.T, config *types.AccessLog) {
+func doLoggingTLS(t *testing.T, config *types.AccessLog, tracing bool) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, true)
+	doLoggingTLSOpt(t, config, true, tracing)
 }
 
-func doLogging(t *testing.T, config *types.AccessLog) {
+func doLogging(t *testing.T, config *types.AccessLog, tracing bool) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, false)
+	doLoggingTLSOpt(t, config, false, tracing)
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
@@ -1090,4 +1130,28 @@ func streamBackend(rw http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
+}
+
+// mockSpan is an implementation of Span that preforms no operations.
+type mockSpan struct {
+	embedded.Span
+}
+
+var _ trace.Span = &mockSpan{}
+
+func (*mockSpan) SpanContext() trace.SpanContext {
+	return trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}})
+}
+func (*mockSpan) IsRecording() bool                             { return true }
+func (s *mockSpan) SetStatus(_ codes.Code, _ string)            {}
+func (s *mockSpan) SetAttributes(...attribute.KeyValue)         {}
+func (s *mockSpan) End(...trace.SpanEndOption)                  {}
+func (s *mockSpan) RecordError(_ error, _ ...trace.EventOption) {}
+func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
+func (s *mockSpan) AddLink(_ trace.Link)                        {}
+
+func (s *mockSpan) SetName(_ string) {}
+
+func (s *mockSpan) TracerProvider() trace.TracerProvider {
+	return nil
 }
