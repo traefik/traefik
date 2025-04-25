@@ -63,7 +63,7 @@ func TestGetBestCertificate(t *testing.T) {
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
 				require.NoError(t, err)
-				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
+				dynamicMap[strings.ToLower(test.dynamicCert)] = &CertificateData{Certificate: cert}
 			}
 
 			store := &CertificateStore{
@@ -71,7 +71,7 @@ func TestGetBestCertificate(t *testing.T) {
 				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 			}
 
-			var expected *CertificateData
+			var expected *tls.Certificate
 			if test.expectedCert != "" {
 				cert, err := loadTestCert(test.expectedCert, test.uppercase)
 				require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestGetBestCertificate(t *testing.T) {
 	}
 }
 
-func loadTestCert(certName string, uppercase bool) (*CertificateData, error) {
+func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 	replacement := "wildcard"
 	if uppercase {
 		replacement = "uppercase_wildcard"
@@ -102,7 +102,5 @@ func loadTestCert(certName string, uppercase bool) (*CertificateData, error) {
 		return nil, err
 	}
 
-	return &CertificateData{
-		Certificate: &staticCert,
-	}, nil
+	return &staticCert, nil
 }
