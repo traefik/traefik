@@ -80,6 +80,13 @@ type Configuration struct {
 	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
+
+	OCSP *OCSP `description:"OCSP configuration." json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// OCSP contains the OCSP configuration.
+type OCSP struct {
+	ResponderOverrides map[string]string `description:"Defines a map of OCSP responders to replace for querying OCSP servers." json:"responderOverrides,omitempty" toml:"responderOverrides,omitempty" yaml:"responderOverrides,omitempty"`
 }
 
 // Core configures Traefik core behavior.
@@ -422,6 +429,14 @@ func (c *Configuration) ValidateConfiguration() error {
 
 	if c.API != nil && !path.IsAbs(c.API.BasePath) {
 		return errors.New("API basePath must be a valid absolute path")
+	}
+
+	if c.OCSP != nil {
+		for responderURL, url := range c.OCSP.ResponderOverrides {
+			if url == "" {
+				return fmt.Errorf("OCSP responder override value for %s cannot be empty", responderURL)
+			}
+		}
 	}
 
 	return nil
