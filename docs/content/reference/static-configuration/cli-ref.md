@@ -348,6 +348,9 @@ Environment variables to forward to the wasm guest.
 `--experimental.localplugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
 
+`--experimental.localplugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -362,6 +365,9 @@ Environment variables to forward to the wasm guest.
 
 `--experimental.plugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
+
+`--experimental.plugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.
