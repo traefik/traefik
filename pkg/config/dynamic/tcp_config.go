@@ -189,9 +189,7 @@ func (t *TCPServersTransport) SetDefaults() {
 
 // TCPServerHealthCheck holds the HealthCheck configuration.
 type TCPServerHealthCheck struct {
-	Address          string          `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
-	Port             string          `json:"-" toml:"-" yaml:"-"`
-	TLS              bool            `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS              bool            `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	ServersTransport string          `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 	Interval         ptypes.Duration `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	Timeout          ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
