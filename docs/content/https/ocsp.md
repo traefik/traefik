@@ -8,6 +8,8 @@ description: "Learn how to configure Traefik to use OCSP. Read the technical doc
 Check certificate status and perform OCSP stapling.
 {: .subtitle }
 
+## Overview
+
 ### OCSP Stapling
 
 When OCSP is enabled, Traefik checks the status of every certificate in the store,
