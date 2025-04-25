@@ -10,13 +10,16 @@ Check certificate status and perform OCSP stapling.
 
 ### OCSP Stapling
 
-When OCSP is enabled, Traefik checks the status of every certificate in the store, including the default certificate, and staples the OCSP response to the TLS handshake.
-The OCSP check is performed when the certificate is loaded and once every hour until it is successful at the halfway point before the update date.
+When OCSP is enabled, Traefik checks the status of every certificate in the store,
+including the default certificate, and staples the OCSP response to the TLS handshake.
+The OCSP check is performed when the certificate is loaded,
+and once every hour until it is successful at the halfway point before the update date.
 
 ### Caching
 
 Traefik caches the OCSP response as long as the associated certificate is provided by the configuration.
-When a certificate is no longer provisioned, the OCSP response has a 24 hour TTL waiting to be provisioned again or eventually removed.
+When a certificate is no longer provided,
+the OCSP response has a 24 hour TTL waiting to be provided again or eventually removed.
 The OCSP response is cached in memory and is not persisted between Traefik restarts.
 
 ## Configuration
@@ -55,7 +58,6 @@ ocsp:
 
 ```toml tab="File (TOML)"
 ## Static configuration
-
 [ocsp]
   [ocsp.responderOverrides]
     foo = "bar"
