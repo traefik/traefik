@@ -67,8 +67,11 @@ nav:
   - 'What is Traefik': 'index.md'
   - 'Getting Started':
       - 'Overview': 'getting-started/index.md'
-      - 'Kubernetes': 'getting-started/kubernetes.md'
-      - 'Docker': 'getting-started/docker.md'
+      - 'Quick Start':
+        - 'Kubernetes': 'getting-started/kubernetes.md'
+        - 'Docker': 'getting-started/docker.md'
+      - 'Configuration Introduction': 'getting-started/configuration-overview.md'
+      - 'Frequently Asked Questions': 'getting-started/faq.md'  
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
