@@ -628,6 +628,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+        useUnsafe: true
     Descriptor1:
       moduleName: foobar
       version: foobar
@@ -638,6 +639,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+        useUnsafe: true
   localPlugins:
     LocalDescriptor0:
       moduleName: foobar
@@ -648,6 +650,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+        useUnsafe: true
     LocalDescriptor1:
       moduleName: foobar
       settings:
@@ -657,6 +660,7 @@ experimental:
         mounts:
           - foobar
           - foobar
+        useUnsafe: true
   abortOnPluginFailure: true
   fastProxy:
     debug: true
