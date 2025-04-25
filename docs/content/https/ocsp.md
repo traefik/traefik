@@ -12,7 +12,7 @@ Check certificate status and perform OCSP stapling.
 
 ### OCSP Stapling
 
-When OCSP is enabled, Traefik checks the status of every certificate in the store,
+When OCSP is enabled, Traefik checks the status of every certificate in the store that provides an OCSP responder URL,
 including the default certificate, and staples the OCSP response to the TLS handshake.
 The OCSP check is performed when the certificate is loaded,
 and once every hour until it is successful at the halfway point before the update date.
