@@ -511,6 +511,8 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      clientTimeout = "42s"
+      clientResponseHeaderTimeout = "42s"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
@@ -542,6 +544,8 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      clientTimeout = "42s"
+      clientResponseHeaderTimeout = "42s"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
