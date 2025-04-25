@@ -61,10 +61,9 @@ func generateCert(commonName string, caKey *ecdsa.PrivateKey, caCert *x509.Certi
 		Subject: pkix.Name{
 			CommonName: commonName,
 		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().Add(1 * 365 * 24 * time.Hour), // 1 an
-		KeyUsage:  x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(1 * 365 * 24 * time.Hour), // 1 an
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		BasicConstraintsValid: true,
 		OCSPServer:            []string{"ocsp.example.com"},
 	}
@@ -86,10 +85,16 @@ func saveKeyAndCert(keyFile, certFile string, key *ecdsa.PrivateKey, cert *x509.
 		panic(err)
 	}
 
-	pem.Encode(keyOut, &pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKey})
+	err = pem.Encode(keyOut, &pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKey})
+	if err != nil {
+		panic(err)
+	}
 
 	// save the certificate
 	certOut, _ := os.Create(certFile)
 	defer certOut.Close()
-	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	err = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	if err != nil {
+		panic(err)
+	}
 }
