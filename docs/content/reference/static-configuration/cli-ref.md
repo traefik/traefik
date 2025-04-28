@@ -129,6 +129,12 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`--certificatesresolvers.<name>.acme.clientresponseheadertimeout`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`--certificatesresolvers.<name>.acme.clienttimeout`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
