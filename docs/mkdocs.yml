@@ -167,8 +167,8 @@ nav:
           - 'Elastic': 'observability/tracing/elastic.md'
           - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
   - 'Security':
-    - 'Best Practices': 
-          - 'security/best-practices/content-length.md'
+        - 'Content-Length': 'security/content-length.md'
+        - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
