@@ -59,6 +59,16 @@ kubectl cluster-info
 kubectl wait --for=condition=ready nodes traefik-control-plane
 ```
 
+Add a load balancer like [MetalLB](https://metallb.io/) or [cloud-provider-kind](https://github.com/kubernetes-sigs/cloud-provider-kind) to it:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
+kubectl wait --namespace metallb-system --for=condition=ready pod --selector=app=metallb --timeout=90s
+```
+
+!!! note
+    If using MetalLB, ensure you assign an IP address pool for the LoadBalancer and advertise it.
+
 ### Using k3d
 
 Create a cluster with the following command. This command:
