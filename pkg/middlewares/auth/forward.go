@@ -27,8 +27,9 @@ import (
 const typeNameForward = "ForwardAuth"
 
 const (
-	xForwardedURI    = "X-Forwarded-Uri"
-	xForwardedMethod = "X-Forwarded-Method"
+	xForwardedURI       = "X-Forwarded-Uri"
+	xForwardedMethod    = "X-Forwarded-Method"
+	xTraefikForwardAuth = "X-Traefik-Forward-Auth"
 )
 
 // hopHeaders Hop-by-hop headers to be removed in the authentication request.
@@ -404,6 +405,8 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	default:
 		forwardReq.Header.Del(xForwardedURI)
 	}
+
+	forwardReq.Header.Set(xTraefikForwardAuth, "1")
 }
 
 func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
