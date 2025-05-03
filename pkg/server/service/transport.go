@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v3/pkg/server/service/fastcgi"
 	"net"
 	"net/http"
 	"reflect"
@@ -198,6 +199,10 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tlsConfig *tls.Config) (http.RoundTripper, error) {
 	if cfg == nil {
 		return nil, errors.New("no transport configuration given")
+	}
+
+	if cfg.FastCGI != nil {
+		return fastcgi.NewRoundTripper(cfg.FastCGI, "traefik"), nil
 	}
 
 	dialer := &net.Dialer{
