@@ -1,7 +1,6 @@
 package fastcgi
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	ptypes "github.com/traefik/paerser/types"
@@ -9,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -27,9 +27,8 @@ func NewRoundTripper(cfg *dynamic.FastCGI, serverName string) *Transport {
 	setDefaultTimeout(&cfg.WriteTimeout, 60*time.Second)
 	setDefaultTimeout(&cfg.ReadTimeout, 60*time.Second)
 	setDefaultTimeout(&cfg.AcquireConnTimeout, 4*time.Second)
-
-	if cfg.SplitPathInfoRegex == "" {
-		cfg.SplitPathInfoRegex = "^(.+\\.php)(/.+)$"
+	if cfg.SplitPathRegex == "" {
+		cfg.SplitPathRegex = `^(.+\.php)(/.+)$`
 	}
 
 	return &Transport{
@@ -73,7 +72,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		t.clients[req.Host] = client
+		t.clients[req.URL.Host] = client
 	}
 
 	stdout, err := client.Do(&Request{
@@ -85,9 +84,44 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to make FastCGI request: %w", err)
 	}
-	buf := bufio.NewReader(stdout)
 
-	return http.ReadResponse(buf, req)
+	return makeResponse(stdout)
+}
+
+func makeResponse(stdout *ConnReadCloser) (*http.Response, error) {
+	// emulates nginx FastCGI proxy behavior:
+	// - discards http status line
+	// - looking for status in 'Status' header
+	// - missing status header = 200 OK
+	tp := textproto.NewReader(stdout.reader)
+	mimeHeader, err := tp.ReadMIMEHeader()
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	resp := new(http.Response)
+	resp.Header = http.Header(mimeHeader)
+	resp.Body = stdout
+
+	if resp.Header.Get("Status") != "" {
+		statusNumber, statusInfo, statusIsCut := strings.Cut(resp.Header.Get("Status"), " ")
+		resp.StatusCode, err = strconv.Atoi(statusNumber)
+		if err != nil {
+			return nil, err
+		}
+		if statusIsCut {
+			resp.Status = statusInfo
+		}
+	} else {
+		resp.StatusCode = http.StatusOK
+	}
+
+	resp.ContentLength, err = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+	if err != nil {
+		resp.ContentLength = -1
+		resp.TransferEncoding = []string{"chunked"}
+	}
+
+	return resp, nil
 }
 
 func makeErrResponse(req *http.Request, code int, message string) *http.Response {
@@ -114,14 +148,14 @@ func makeErrResponse(req *http.Request, code int, message string) *http.Response
 	return resp
 }
 
-func (t *Transport) splitPathInfo(r *http.Request) (scriptName, pathInfo string, err error) {
-	scriptName = r.URL.Path
+func (t *Transport) splitPathInfo(req *http.Request) (scriptName, pathInfo string, err error) {
+	scriptName = req.URL.Path
 
-	re, err := regexp.Compile(t.config.SplitPathInfoRegex)
+	re, err := regexp.Compile(t.config.SplitPathRegex)
 	if err != nil {
-		return "", "", err
+		return
 	}
-	matches := re.FindStringSubmatch(r.URL.Path)
+	matches := re.FindStringSubmatch(req.URL.Path)
 	if len(matches) > 1 {
 		scriptName = matches[1]
 	}
@@ -175,7 +209,7 @@ func (t *Transport) buildEnvVars(req *http.Request) (env, error) {
 		return nil, fmt.Errorf("failed to match script name and path info with regex: %w", err)
 	}
 
-	contentLength := ""
+	contentLength := "0"
 	if req.ContentLength > 0 {
 		contentLength = strconv.FormatInt(req.ContentLength, 10)
 	}
@@ -193,18 +227,20 @@ func (t *Transport) buildEnvVars(req *http.Request) (env, error) {
 		"REMOTE_IDENT":      "",
 		"REMOTE_USER":       "",
 		"REQUEST_METHOD":    req.Method,
-		"SCRIPT_NAME":       "/" + scriptName,
+		"SCRIPT_NAME":       scriptName,
 		"SERVER_NAME":       reqHost,
 		"SERVER_PORT":       reqPort,
 		"SERVER_PROTOCOL":   req.Proto,
 		"SERVER_SOFTWARE":   t.serverSoftware,
 
-		"DOCUMENT_ROOT":   rootPath,
-		"HTTP_HOST":       req.Host,
-		"REQUEST_URI":     req.URL.RequestURI(),
-		"SCRIPT_FILENAME": filepath.Join(rootPath, scriptName[1:]), // scriptName always has leading '/'
+		"DOCUMENT_ROOT": rootPath,
+		"HTTP_HOST":     req.Host,
+		"REQUEST_URI":   req.URL.RequestURI(),
 	}
 
+	if scriptName != "" {
+		envVars["SCRIPT_FILENAME"] = filepath.Join(rootPath, scriptName[1:]) // scriptName always has leading '/'
+	}
 	if pathInfo != "" {
 		envVars["PATH_TRANSLATED"] = filepath.Join(rootPath, pathInfo[1:]) // pathInfo always has leading '/'
 	}
@@ -217,6 +253,11 @@ func (t *Transport) buildEnvVars(req *http.Request) (env, error) {
 	for hKey, hVal := range req.Header {
 		key := fmt.Sprintf("HTTP_%s", replacer.Replace(hKey))
 		key = strings.ToUpper(key)
+
+		// skip header if present in envVars
+		if _, ok := envVars[key]; ok {
+			continue
+		}
 		envVars[key] = strings.Join(hVal, ", ")
 	}
 

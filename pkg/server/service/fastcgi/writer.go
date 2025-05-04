@@ -83,7 +83,7 @@ func (w *fastcgiWriter) writeGetValuesReq(keys []string) error {
 func (w *fastcgiWriter) writePairs(recordType uint8, pairs map[string]string) error {
 	w.buff.Reset()
 	// space for header
-	w.buff.Write(padding[:8])
+	w.buff.Write(padding[:FastCgiHeaderSz])
 
 	for k, v := range pairs {
 		n, keyLenBin := encodeParamLen(k)
@@ -95,7 +95,7 @@ func (w *fastcgiWriter) writePairs(recordType uint8, pairs map[string]string) er
 				return err
 			}
 			// space for header
-			w.buff.Write(padding[:8])
+			w.buff.Write(padding[:FastCgiHeaderSz])
 		}
 		w.buff.Write(keyLenBin)
 		w.buff.Write(valLenBin)
@@ -138,7 +138,7 @@ func (w *fastcgiWriter) writeHeader(recordType uint8, contentLen uint16, padding
 func (w *fastcgiWriter) terminateStream(recType uint8) error {
 	// write an empty record to terminate stream
 	w.buff.Reset()
-	w.buff.Write(padding[:8])
+	w.buff.Write(padding[:FastCgiHeaderSz])
 	if err := w.writeHeader(recType, 0, 0); err != nil {
 		return err
 	}

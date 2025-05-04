@@ -1,6 +1,7 @@
 package fastcgi
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"github.com/rs/zerolog/log"
@@ -76,7 +77,7 @@ func newClient(
 	}
 }
 
-func (c *Client) Do(req *Request) (io.ReadCloser, error) {
+func (c *Client) Do(req *Request) (*ConnReadCloser, error) {
 	req.params["REQUEST_METHOD"] = req.httpMethod
 	conn, err := c.getConn()
 	if err != nil {
@@ -112,10 +113,12 @@ func (c *Client) Do(req *Request) (io.ReadCloser, error) {
 		}
 	}
 
-	return &connReadCloser{
+	fastCgiReader := newFastCgiReader(conn.inner)
+	return &ConnReadCloser{
 		client: c,
 		conn:   conn,
-		reader: newFastCgiReader(conn.inner),
+		reader: bufio.NewReader(fastCgiReader),
+		error:  &fastCgiReader.error,
 	}, nil
 }
 
@@ -139,7 +142,6 @@ func (c *Client) getConn() (poolConn, error) {
 	// waiting for connection to be released
 	timer := time.NewTimer(c.acquireTimeout)
 	defer timer.Stop()
-
 	select {
 	case conn := <-c.conns:
 		return conn, nil
@@ -181,30 +183,33 @@ func (c *Client) putConn(conn poolConn) {
 		// suppress the error and close connection
 		// because request is completed anyway
 		c.closeConn(conn)
+		log.Err(err).Msg("failed to reset fastcgi conn timeout")
 		return
 	}
 	c.conns <- conn
 }
 
-type connReadCloser struct {
+type ConnReadCloser struct {
+	reader  *bufio.Reader
 	client  *Client
-	reader  *fastcgiReader
+	error   *bytes.Buffer
 	conn    poolConn
 	drained bool
 }
 
-func (crc *connReadCloser) Read(p []byte) (int, error) {
+func (crc *ConnReadCloser) Read(p []byte) (int, error) {
 	n, err := crc.reader.Read(p)
-	// consider that we can reuse connection if EOF is reached
-	// or an error code is received from the FastCGI app
-	if err == io.EOF || errors.Is(err, errFastCgiProtocolError) {
+	// fastCgiRequestEOF indicates that FCGI_END_REQUEST has been read
+	// in such case connection can be reused
+	if errors.Is(err, fastCgiRequestEOF) {
 		crc.drained = true
+		err = io.EOF
 	}
 
 	return n, err
 }
 
-func (crc *connReadCloser) Close() error {
+func (crc *ConnReadCloser) Close() error {
 	if !crc.drained {
 		crc.client.closeConn(crc.conn)
 		return nil
@@ -216,7 +221,7 @@ func (crc *connReadCloser) Close() error {
 	}
 
 	// log stderr if exist
-	stderr := crc.reader.error.String()
+	stderr := crc.error.String()
 	if len(stderr) > 0 {
 		log.Error().Msgf("FastCGI: stderr received: '%s'", stderr)
 	}

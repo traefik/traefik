@@ -345,7 +345,7 @@ type ServersTransport struct {
 
 type FastCGI struct {
 	Root               string            `description:"FastCGI application root directory." json:"root,omitempty" toml:"root,omitempty" yaml:"root,omitempty"`
-	SplitPathInfoRegex string            `description:"Regular expression to split SCRIPT_NAME and PATH_INFO." json:"splitPathInfoRegex,omitempty" toml:"splitPathInfoRegex,omitempty" yaml:"splitPathInfoRegex,omitempty"`
+	SplitPathRegex     string            `description:"Regular expression to split SCRIPT_NAME and PATH_INFO." json:"splitPathRegex,omitempty" toml:"splitPathRegex,omitempty" yaml:"splitPathRegex,omitempty"`
 	Env                map[string]string `description:"Environment variables to set for the FastCGI process." json:"env,omitempty" toml:"env,omitempty" yaml:"env,omitempty" label:"env" file:"env" export:"true"`
 	MaxConns           int               `description:"Maximum number of simultaneous FastCGI connections." json:"maxConns" toml:"maxConns" yaml:"maxConns"`
 	AcquireConnTimeout ptypes.Duration   `description:"Timeout to wait for acquiring a connection from the pool." json:"acquireConnTimeout,omitempty" toml:"acquireConnTimeout,omitempty" yaml:"acquireConnTimeout,omitempty"`

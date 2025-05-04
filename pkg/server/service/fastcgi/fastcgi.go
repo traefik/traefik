@@ -57,11 +57,15 @@ func calcPadding(contentLen uint16) uint8 {
 }
 
 func encodeParamLen(param string) (int, []byte) {
-	if len(param) < 127 {
-		return 1, []byte{uint8(len(param))}
+	length := len(param)
+	// one byte for length
+	if length < 128 {
+		return 1, []byte{byte(length)}
 	}
 
+	// 4 bytes length with 0x80 flag
 	var encoded [4]byte
-	binary.BigEndian.PutUint32(encoded[:], uint32(len(param)))
+	binary.BigEndian.PutUint32(encoded[:], uint32(length))
+	encoded[0] |= 0x80
 	return 4, encoded[:]
 }

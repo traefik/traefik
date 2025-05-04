@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"io"
 )
 
-var errFastCgiProtocolError = errors.New("fastcgi request ended with error")
+var (
+	errFastCgiProtocolError = errors.New("fastcgi request ended with error")
+	fastCgiRequestEOF       = errors.New("fastcgi request complete")
+)
 
 type fastcgiReader struct {
 	inner io.Reader
@@ -28,7 +32,13 @@ func newFastCgiReader(src io.Reader) *fastcgiReader {
 
 func (r *fastcgiReader) Read(p []byte) (int, error) {
 	if r.contentReader.N > 0 {
-		return r.contentReader.Read(p)
+		n, err := r.contentReader.Read(p)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+
+		log.Debug().Msgf("%d bytes of content read", n)
+		return n, nil
 	}
 
 	if err := r.discardPadding(); err != nil {
@@ -48,7 +58,7 @@ func (r *fastcgiReader) Read(p []byte) (int, error) {
 		_, err := io.Copy(&r.error, &r.contentReader)
 		return 0, err
 	case FastCgiStdoutRecord:
-		return r.contentReader.Read(p)
+		return r.Read(p)
 	default:
 		return 0, fmt.Errorf("unexpected record type %d", r.metadata.Type)
 	}
@@ -57,6 +67,7 @@ func (r *fastcgiReader) Read(p []byte) (int, error) {
 func (r *fastcgiReader) readHeader() error {
 	var hBuff [FastCgiHeaderSz]byte
 	if _, err := io.ReadFull(r.inner, hBuff[:]); err != nil {
+		log.Err(err).Msg("on reading header")
 		return err
 	}
 	if err := r.metadata.decode(hBuff[:]); err != nil {
@@ -84,8 +95,11 @@ func (r *fastcgiReader) readEndRequest() error {
 	if req.protocolStatus != FastCgiRequestComplete {
 		return fmt.Errorf("%w: %d, %s", errFastCgiProtocolError, req.protocolStatus, req.appStatus)
 	}
+	if err := r.discardPadding(); err != nil {
+		return err
+	}
 
-	return io.EOF
+	return fastCgiRequestEOF
 }
 
 func (r *fastcgiReader) discardPadding() error {
