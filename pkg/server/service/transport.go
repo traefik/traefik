@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/traefik/traefik/v3/pkg/server/service/fastcgi"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
@@ -198,6 +200,10 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tlsConfig *tls.Config) (http.RoundTripper, error) {
 	if cfg == nil {
 		return nil, errors.New("no transport configuration given")
+	}
+
+	if cfg.FastCGI != nil {
+		return fastcgi.NewRoundTripper(cfg.FastCGI, "traefik"), nil
 	}
 
 	dialer := &net.Dialer{
