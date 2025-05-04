@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"io"
 )
 
@@ -37,7 +36,6 @@ func (r *fastcgiReader) Read(p []byte) (int, error) {
 			return 0, err
 		}
 
-		log.Debug().Msgf("%d bytes of content read", n)
 		return n, nil
 	}
 
@@ -67,7 +65,6 @@ func (r *fastcgiReader) Read(p []byte) (int, error) {
 func (r *fastcgiReader) readHeader() error {
 	var hBuff [FastCgiHeaderSz]byte
 	if _, err := io.ReadFull(r.inner, hBuff[:]); err != nil {
-		log.Err(err).Msg("on reading header")
 		return err
 	}
 	if err := r.metadata.decode(hBuff[:]); err != nil {

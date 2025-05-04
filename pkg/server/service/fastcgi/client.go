@@ -4,17 +4,16 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
-var (
-	errMaxConnsExceeded = errors.New("max connections exceeded")
-)
+var errMaxConnsExceeded = errors.New("max connections exceeded")
 
 var bufPool = sync.Pool{
 	New: func() any {

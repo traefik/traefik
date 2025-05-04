@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/server/service/fastcgi"
 	"net"
 	"net/http"
 	"reflect"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/traefik/traefik/v3/pkg/server/service/fastcgi"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"

@@ -6,9 +6,7 @@ import (
 	"io"
 )
 
-var (
-	padding [255]byte
-)
+var padding [255]byte
 
 type fastcgiWriter struct {
 	reqID     uint16

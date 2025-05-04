@@ -3,8 +3,6 @@ package fastcgi
 import (
 	"bytes"
 	"fmt"
-	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"io"
 	"net"
 	"net/http"
@@ -14,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 type Transport struct {
