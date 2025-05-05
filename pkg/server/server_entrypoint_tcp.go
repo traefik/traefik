@@ -36,6 +36,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"tailscale.com/tsnet"
 )
 
 type key string
@@ -397,6 +399,8 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
 		return typedConn, nil
+	case *gonet.TCPConn:
+		return typedConn, nil
 	default:
 		return nil, fmt.Errorf("unknown connection type %T", typedConn)
 	}
@@ -468,30 +472,44 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 	var listener net.Listener
 	var err error
 
-	// if we have predefined listener from socket activation
-	if socketActivation.isEnabled() {
-		listener, err = socketActivation.getListener(name)
+	if config.TSNet != nil {
+		ts := &tsnet.Server{
+			Hostname:  name,
+			Ephemeral: config.TSNet.Ephemeral,
+			AuthKey:   config.TSNet.AuthKey,
+		}
+
+		listener, err = ts.Listen("tcp", config.GetAddress())
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
+			return nil, fmt.Errorf("error opening tsnet listener: %w", err)
+		}
+	} else {
+		// if we have predefined listener from socket activation
+		if socketActivation.isEnabled() {
+			listener, err = socketActivation.getListener(name)
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
+			}
+		}
+
+		if listener == nil {
+			listenConfig := newListenConfig(config)
+			listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
+			if err != nil {
+				return nil, fmt.Errorf("error opening listener: %w", err)
+			}
+		}
+
+		listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
+
+		if config.ProxyProtocol != nil {
+			listener, err = buildProxyProtocolListener(ctx, config, listener)
+			if err != nil {
+				return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
+			}
 		}
 	}
 
-	if listener == nil {
-		listenConfig := newListenConfig(config)
-		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
-		if err != nil {
-			return nil, fmt.Errorf("error opening listener: %w", err)
-		}
-	}
-
-	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
-
-	if config.ProxyProtocol != nil {
-		listener, err = buildProxyProtocolListener(ctx, config, listener)
-		if err != nil {
-			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
-		}
-	}
 	return listener, nil
 }
 

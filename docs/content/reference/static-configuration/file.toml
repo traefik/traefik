@@ -78,6 +78,9 @@
       advertisedPort = 42
     [entryPoints.EntryPoint0.udp]
       timeout = "42s"
+    [entryPoints.EntryPoint0.tsnet]
+      ephemeral = true
+      authKey = "foobar"
     [entryPoints.EntryPoint0.observability]
       accessLogs = true
       tracing = true
