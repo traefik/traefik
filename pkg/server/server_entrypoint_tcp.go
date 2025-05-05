@@ -175,7 +175,20 @@ type TCPEntryPoint struct {
 func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker(openConnectionsGauge)
 
-	listener, err := buildListener(ctx, name, config)
+	var ts *tsnet.Server
+	if config.TSNet != nil {
+		ts = &tsnet.Server{
+			Hostname:  config.TSNet.Hostname,
+			Ephemeral: config.TSNet.Ephemeral,
+			AuthKey:   config.TSNet.AuthKey,
+		}
+		if ts.Hostname == "" {
+			// Default to the name of the endpoint if there's no explicit hostname
+			ts.Hostname = name
+		}
+	}
+
+	listener, err := buildListener(ctx, name, config, ts)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
@@ -199,7 +212,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer, ts)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
@@ -468,49 +481,38 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
-func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
-	var listener net.Listener
-	var err error
-
-	if config.TSNet != nil {
-		ts := &tsnet.Server{
-			Hostname:  config.TSNet.Hostname,
-			Ephemeral: config.TSNet.Ephemeral,
-			AuthKey:   config.TSNet.AuthKey,
-		}
-		if ts.Hostname == "" {
-			// Default to the name of the endpoint if there's no explicit hostname
-			ts.Hostname = name
-		}
-
+func buildListener(ctx context.Context, name string, config *static.EntryPoint, ts *tsnet.Server) (listener net.Listener, err error) {
+	// If using Tailscale TSNet
+	if ts != nil {
 		listener, err = ts.Listen("tcp", config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("error opening tsnet listener: %w", err)
 		}
-	} else {
-		// if we have predefined listener from socket activation
-		if socketActivation.isEnabled() {
-			listener, err = socketActivation.getListener(name)
-			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
-			}
+		return listener, nil
+	}
+
+	// if we have predefined listener from socket activation
+	if socketActivation.isEnabled() {
+		listener, err = socketActivation.getListener(name)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
 		}
+	}
 
-		if listener == nil {
-			listenConfig := newListenConfig(config)
-			listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
-			if err != nil {
-				return nil, fmt.Errorf("error opening listener: %w", err)
-			}
+	if listener == nil {
+		listenConfig := newListenConfig(config)
+		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("error opening listener: %w", err)
 		}
+	}
 
-		listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
+	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
-		if config.ProxyProtocol != nil {
-			listener, err = buildProxyProtocolListener(ctx, config, listener)
-			if err != nil {
-				return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
-			}
+	if config.ProxyProtocol != nil {
+		listener, err = buildProxyProtocolListener(ctx, config, listener)
+		if err != nil {
+			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
 
