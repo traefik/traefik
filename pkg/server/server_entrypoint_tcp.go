@@ -36,6 +36,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"tailscale.com/tsnet"
 )
 
 type key string
@@ -173,7 +175,20 @@ type TCPEntryPoint struct {
 func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker(openConnectionsGauge)
 
-	listener, err := buildListener(ctx, name, config)
+	var ts *tsnet.Server
+	if config.TSNet != nil {
+		ts = &tsnet.Server{
+			Hostname:  config.TSNet.Hostname,
+			Ephemeral: config.TSNet.Ephemeral,
+			AuthKey:   config.TSNet.AuthKey,
+		}
+		if ts.Hostname == "" {
+			// Default to the name of the endpoint if there's no explicit hostname
+			ts.Hostname = name
+		}
+	}
+
+	listener, err := buildListener(ctx, name, config, ts)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
@@ -197,7 +212,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer, ts)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
@@ -397,6 +412,8 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
 		return typedConn, nil
+	case *gonet.TCPConn:
+		return typedConn, nil
 	default:
 		return nil, fmt.Errorf("unknown connection type %T", typedConn)
 	}
@@ -464,9 +481,15 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
-func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
-	var listener net.Listener
-	var err error
+func buildListener(ctx context.Context, name string, config *static.EntryPoint, ts *tsnet.Server) (listener net.Listener, err error) {
+	// If using Tailscale TSNet
+	if ts != nil {
+		listener, err = ts.Listen("tcp", config.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("error opening tsnet listener: %w", err)
+		}
+		return listener, nil
+	}
 
 	// if we have predefined listener from socket activation
 	if socketActivation.isEnabled() {
@@ -492,6 +515,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
+
 	return listener, nil
 }
 
