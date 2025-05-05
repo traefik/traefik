@@ -333,6 +333,9 @@ Auth key for the node (overrides the TS_AUTHKEY env var).
 `--entrypoints.<name>.tsnet.ephemeral`:  
 Register the node as ephemeral. (Default: ```false```)
 
+`--entrypoints.<name>.tsnet.hostname`:  
+Hostname for the node; if empty, defaults to the endpoint's name
+
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 

@@ -93,6 +93,7 @@ entryPoints:
     udp:
       timeout: 42s
     tsnet:
+      hostname: foobar
       ephemeral: true
       authKey: foobar
     observability:
