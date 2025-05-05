@@ -474,9 +474,13 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 
 	if config.TSNet != nil {
 		ts := &tsnet.Server{
-			Hostname:  name,
+			Hostname:  config.TSNet.Hostname,
 			Ephemeral: config.TSNet.Ephemeral,
 			AuthKey:   config.TSNet.AuthKey,
+		}
+		if ts.Hostname == "" {
+			// Default to the name of the endpoint if there's no explicit hostname
+			ts.Hostname = name
 		}
 
 		listener, err = ts.Listen("tcp", config.GetAddress())
