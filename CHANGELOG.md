@@ -1,3 +1,9 @@
+## [v3.3.7](https://github.com/traefik/traefik/tree/v3.3.7) (2025-05-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.6...v3.3.7)
+
+**Bug fixes:**
+- **[logs,middleware,accesslogs]** Add SpanID and TraceID accessLogs fields only when tracing is enabled ([#11715](https://github.com/traefik/traefik/pull/11715) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.4.0-rc2](https://github.com/traefik/traefik/tree/v3.4.0-rc2) (2025-04-18)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.0-rc1...v3.4.0-rc2)
 

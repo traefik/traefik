@@ -212,8 +212,10 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	if span := trace.SpanFromContext(req.Context()); span != nil {
 		spanContext := span.SpanContext()
-		logDataTable.Core[TraceID] = spanContext.TraceID().String()
-		logDataTable.Core[SpanID] = spanContext.SpanID().String()
+		if spanContext.HasTraceID() && spanContext.HasSpanID() {
+			logDataTable.Core[TraceID] = spanContext.TraceID().String()
+			logDataTable.Core[SpanID] = spanContext.SpanID().String()
+		}
 	}
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
