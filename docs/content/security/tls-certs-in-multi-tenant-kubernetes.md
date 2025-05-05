@@ -31,7 +31,7 @@ Keep each certificate and the routes that use it in the same namespace, prevent 
 | **Tenant‑managed certs** | Give each tenant a namespaced cert‑manager `Issuer` instead of a cluster‑wide `ClusterIssuer`. |
 | **Restrict RBAC** | Allow tenants to work with Secrets only in their namespace. No wildcard `*` verbs. |
 | **One certificate, one domain** | Match each cert’s SANs to the domains in the referencing `Ingress` or `IngressRoute`. |
-| **Use wildcard certs safely** | Store wildcard certs in Traefik’s namespace and attach them through a `TLSStore`. |
+| **Use wildcard certs safely** | Store wildcard certs in Traefik’s namespace and attach them through a [`TLSStore`](../routing/providers/kubernetes-crd.md#kind-tlsstore). |
 
 ---
 
@@ -67,4 +67,3 @@ spec:
     Place it in a namespace that Traefik can watch.
     Because Traefik picks it up automatically, you never need to reference it in an [`IngressRoute`](../routing/providers/kubernetes-crd.md#kind-ingressroute) or [`IngressRouteTCP`](../routing/providers/kubernetes-crd.md#kind-ingressroutetcp) objects.
     You cannot have two stores named **default** in different namespaces.
-    
