@@ -49,6 +49,9 @@ Copy the full output (e.g., admin:$$apr1$$…) — we'll need this for the middl
 
 Now define the whole stack in a Compose file. This file declares Traefik, mounts the certificate, sets up a dedicated network, and later hosts the whoami demo service.
 
+!!! note
+    You can also choose to use the Docker CLI and a configuration file to run Traefik, but for this tutorial, we'll be using Docker Compose.
+
 First, create a folder named `dynamic` and create a file name `tls.yml` for dynamic configuration. Paste the configuration for our tls certs in the file:
 
 ```bash
@@ -272,7 +275,7 @@ Log incoming requests for debugging and analysis.
 command:
   # ... other command arguments ...
   - "--accesslog=true" # Enable access logs to stdout
-  
+
   # Optionally change format or output file (requires volume)
   - "--accesslog.format=json"
   - "--accesslog.filepath=/path/to/access.log"
@@ -281,7 +284,7 @@ command:
   - "--accesslog.filters.statuscodes=400-599"
 ```
 
-This enables access logs to the container's standard output (viewable via `docker compose logs traefik`). See the [Access Logs Documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
+This enables access logs to the container's standard output (viewable via `docker compose logs <traefik-container-id>`). See the [Access Logs Documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
 
 ### Conclusion
 
