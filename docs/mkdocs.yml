@@ -73,6 +73,10 @@ nav:
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
       - 'Install Traefik': 'getting-started/install-traefik.md'
       - 'Frequently Asked Questions': 'getting-started/faq.md'
+  - 'Setup':
+      - 'Kubernetes': 'setup/kubernetes.md'
+      - 'Docker': 'setup/docker.md'
+      - 'Swarm': 'setup/swarm.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
