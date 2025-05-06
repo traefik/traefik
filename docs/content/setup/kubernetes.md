@@ -1,6 +1,6 @@
 ---
 title: "Setup Traefik on Kubernetes"
-description: "Production‑ready Traefik on Kubernetes: entrypoints, HTTPS, redirects, secure dashboard, metrics, tracing, access‑logs."
+description: "Learn how to Setup Traefik on Kubernetes with HTTP/HTTPS entrypoints, redirects, secure dashboard, basic TLS, metrics, tracing, access‑logs."
 ---
 
 This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Kubernetes cluster using the official Helm chart. In this guide, we'll cover the following:
@@ -16,6 +16,8 @@ This guide provides an in-depth walkthrough for installing and configuring Traef
 - A Kubernetes cluster
 - Helm v3, 
 - Kubectl 
+
+admin:$$apr1$$mYUXUhhD$$D4stoDMSw1.vmEoQv50oq0
 
 ## Create the Cluster
 
@@ -282,7 +284,7 @@ Apply the manifest:
 kubectl apply -f whoami-route.yaml
 ```
 
-After you apply the manifest, navigate to Routes in the Traefik Dashboard; you’ll see that the [https://whoami.docker.localhost](https://whoami.docker.localhost) route has been created.
+After you apply the manifest, navigate to  the Routes in the Traefik Dashboard; you’ll see that the [https://whoami.docker.localhost](https://whoami.docker.localhost) route has been created.
 
 ![Route](../assets/img/setup/route-in-dashboard.png)
 
@@ -382,14 +384,14 @@ Distributed tracing helps understand request latency and flow through your syste
 ```yaml
 additionalArguments:
   - "--tracing.otel=true"
-  - "--tracing.otel.grpcendpoint=otel-collector.observability:4317" # Adjust URL
-  - "--tracing.otel.httpendpoint=otel-collector.observability:4318" # Adjust URL
+  - "--tracing.otel.grpcendpoint=otel-collector.observability:4317" # Adjust endpoint as needed
+  - "--tracing.otel.httpendpoint=otel-collector.observability:4318" # Adjust endpoint as needed
 ```
 
 This enables OTel tracing and specifies the collector endpoint. Consult the [Tracing Documentation](../reference/install-configuration/observability/tracing.md) for details on OTel tracing.
     
 ## Conclusion
 
-This setup establishes Traefik with secure dashboard access and HTTPS redirection, along with pointers to enable basic observability & TLS.
+This setup establishes Traefik with secure dashboard access and HTTPS redirection, along with pointers to enable observability & TLS.
 
 {!traefik-for-business-applications.md!}
