@@ -14,7 +14,7 @@ import { searchParamsToState, TableFilter } from 'components/TableFilter'
 import SortableTh from 'components/tables/SortableTh'
 import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
-import useFetchWithPagination, { RenderRowType } from 'hooks/use-fetch-with-pagination'
+import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
 
@@ -66,7 +66,15 @@ export const makeRowRender = (navigate: NavigateFunction, protocol = 'http'): Re
   return HttpRoutersRenderRow
 }
 
-export const HttpRoutersRender = ({ error, isEmpty, isLoadingMore, isReachingEnd, loadMore, pageCount, pages }) => {
+export const HttpRoutersRender = ({
+  error,
+  isEmpty,
+  isLoadingMore,
+  isReachingEnd,
+  loadMore,
+  pageCount,
+  pages,
+}: pagesResponseInterface) => {
   const [isMounted, setMounted] = useState(false)
 
   const [infiniteRef] = useInfiniteScroll({
