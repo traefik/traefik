@@ -48,7 +48,6 @@ describe('<HttpRouterPage />', () => {
     expect(routerStructure.innerHTML).toContain(':8080')
     expect(routerStructure.innerHTML).toContain(':8002')
     expect(routerStructure.innerHTML).toContain(':8003')
-    expect(routerStructure.innerHTML).toContain(':8004')
     expect(routerStructure.innerHTML).toContain('orphan-router@file')
     expect(routerStructure.innerHTML).toContain('middleware00')
     expect(routerStructure.innerHTML).toContain('middleware01')

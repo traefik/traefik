@@ -110,86 +110,6 @@
     "name": "web3"
   },
   {
-    "address": ":8004",
-    "transport": {
-      "lifeCycle": {
-        "requestAcceptGraceTimeout": 42000000000,
-        "graceTimeOut": 42000000000
-      },
-      "respondingTimeouts": {
-        "readTimeout": 42000000000,
-        "writeTimeout": 42000000000,
-        "idleTimeout": 42000000000
-      }
-    },
-    "forwardedHeaders": {},
-    "name": "web4"
-  },
-  {
-    "address": ":8005",
-    "transport": {
-      "lifeCycle": {
-        "requestAcceptGraceTimeout": 42000000000,
-        "graceTimeOut": 42000000000
-      },
-      "respondingTimeouts": {
-        "readTimeout": 42000000000,
-        "writeTimeout": 42000000000,
-        "idleTimeout": 42000000000
-      }
-    },
-    "forwardedHeaders": {},
-    "name": "web5"
-  },
-  {
-    "address": ":8006",
-    "transport": {
-      "lifeCycle": {
-        "requestAcceptGraceTimeout": 42000000000,
-        "graceTimeOut": 42000000000
-      },
-      "respondingTimeouts": {
-        "readTimeout": 42000000000,
-        "writeTimeout": 42000000000,
-        "idleTimeout": 42000000000
-      }
-    },
-    "forwardedHeaders": {},
-    "name": "web6"
-  },
-  {
-    "address": ":8007",
-    "transport": {
-      "lifeCycle": {
-        "requestAcceptGraceTimeout": 42000000000,
-        "graceTimeOut": 42000000000
-      },
-      "respondingTimeouts": {
-        "readTimeout": 42000000000,
-        "writeTimeout": 42000000000,
-        "idleTimeout": 42000000000
-      }
-    },
-    "forwardedHeaders": {},
-    "name": "web7"
-  },
-  {
-    "address": ":8008",
-    "transport": {
-      "lifeCycle": {
-        "requestAcceptGraceTimeout": 42000000000,
-        "graceTimeOut": 42000000000
-      },
-      "respondingTimeouts": {
-        "readTimeout": 42000000000,
-        "writeTimeout": 42000000000,
-        "idleTimeout": 42000000000
-      }
-    },
-    "forwardedHeaders": {},
-    "name": "web8"
-  },
-  {
     "address": ":65535/udp",
     "transport": {
       "lifeCycle": {
@@ -220,28 +140,5 @@
     },
     "forwardedHeaders": {},
     "name": "supercalifragilisticexpialidocious"
-  },
-  {
-    "address": ":9100/tcp",
-    "transport": {
-      "lifeCycle": {
-        "graceTimeOut": "10s"
-      },
-      "respondingTimeouts": {
-        "readTimeout": "1m0s",
-        "idleTimeout": "3m0s"
-      }
-    },
-    "forwardedHeaders": {},
-    "http": {
-      "maxHeaderBytes": 1048576
-    },
-    "http2": {
-      "maxConcurrentStreams": 250
-    },
-    "udp": {
-      "timeout": "3s"
-    },
-    "name": "metrics"
   }
 ]

@@ -48,8 +48,7 @@
       "web",
       "traefik",
       "web2",
-      "web3",
-      "web4"
+      "web3"
     ],
     "priority": 30,
     "provider": "file"
