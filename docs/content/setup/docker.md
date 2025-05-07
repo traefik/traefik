@@ -6,21 +6,19 @@ description: "Learn how to Setup Traefik on Docker with HTTP/HTTPS entrypoints, 
 This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Docker container with using the official Traefik Docker image & Docker compose. In this guide, we'll cover the following:
 
 - Enable the Docker provider
-- Expose web (HTTP :80) and websecure (HTTPS :443) entrypoints
+- Expose **web** (HTTP :80) and **websecure** (HTTPS :443) entrypoints  
 - Redirect all HTTP traffic to HTTPS
-- Secure the Traefik dashboard with basic‑auth
-- Terminate TLS with a self‑signed certificate for *.docker.localhost
-- Deploy the whoami demo service
+- Secure the Traefik dashboard with **basic‑auth**  
+- Terminate TLS with a self‑signed certificate for `*.docker.localhost`
+- Deploy the **whoami** demo service
 - Enable access‑logs and Prometheus metrics
 
 ## Prerequisites  
 
-| Tool | Minimum version | Why it matters |
-|------|-----------------|----------------|
-| Docker Desktop / Engine | 24.x |  |
-| Docker Compose | bundled with Docker Desktop, or standalone plugin |  |
-| `openssl` | (any) | Generates a self‑signed certificate |
-| `htpasswd` | Apache `apache2-utils` or `httpd-tools` | Creates the basic‑auth hash |
+- Docker Desktop / Engine 
+- Docker Compose 
+- `openssl`
+- `htpasswd`
 
 ## Create a self‑signed certificate
 
@@ -53,7 +51,7 @@ Now define the whole stack in a Compose file. This file declares Traefik, mounts
     You can also choose to use the Docker CLI and a configuration file to run Traefik, but for this tutorial, we'll be using Docker Compose.
 
 First, create a folder named `dynamic` and create a file name `tls.yml` for dynamic configuration. Paste the configuration for our tls certs in the file:
-
+    
 ```bash
 tls:
   certificates:
@@ -73,6 +71,7 @@ services:
       - no-new-privileges:true
 
     networks:
+     # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes
       - proxy
 
     ports:
@@ -229,7 +228,7 @@ This defines a resolver named `le`, sets the required email and storage path (wi
 
 ### Metrics (Prometheus)
 
-Expose internal metrics for monitoring with Prometheus. We already enabled prometheus in our setup but we can further configure it.
+You can expose Traefik's internal metrics for monitoring with Prometheus. We already enabled prometheus in our setup but we can further configure it.
 *Example `command` additions:*
 
 ```yaml
@@ -252,7 +251,7 @@ This enables the `/metrics` endpoint (typically accessed via the internal API po
 
 ### Tracing (OTel):
 
-Enable distributed tracing to follow requests through Traefik.
+You can enable distributed tracing to follow requests through Traefik.
 *Example `command` additions:*
 
 ```yaml
@@ -268,7 +267,7 @@ command:
 
 ### Access Logs
 
-Log incoming requests for debugging and analysis.
+You can configure Traefik to log incoming requests for debugging and analysis.
 *Example `command` additions:*
 
 ```yaml

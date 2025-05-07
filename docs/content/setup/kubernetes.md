@@ -135,7 +135,7 @@ extraObjects:
     type: kubernetes.io/basic-auth
     stringData:
       username: admin
-      password: "P@ssw0rd"      # Replace with Your Actual Password
+      password: "P@ssw0rd"      # Replace with an Actual Password
   - apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
