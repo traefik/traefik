@@ -36,9 +36,9 @@ export default function SortableTh({ label, isSortable = false, sortByValue, ali
     const direction = searchParams.get('direction') || 'asc'
     const sortBy = searchParams.get('sortBy') || 'name'
     if (!sortBy || sortBy !== sortByValue || direction === 'desc') {
-      setSearchParams({ ...searchParams, sortBy: sortByValue, direction: 'asc' })
+      setSearchParams({ ...Object.fromEntries(searchParams.entries()), sortBy: sortByValue, direction: 'asc' })
     } else {
-      setSearchParams({ ...searchParams, sortBy: sortByValue, direction: 'desc' })
+      setSearchParams({ ...Object.fromEntries(searchParams.entries()), sortBy: sortByValue, direction: 'desc' })
     }
   }, [sortByValue, searchParams, setSearchParams])
 
