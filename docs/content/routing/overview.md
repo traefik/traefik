@@ -327,6 +327,11 @@ serversTransport:
 --serversTransport.maxIdleConnsPerHost=7
 ```
 
+!!! info "Disable connection reuse"
+    
+    The default value of `maxIdleConnsPerHost` is 2, and the zero value is the fallback to the default (2).
+    If you want to disable connection reuse, set `maxIdleConnsPerHost` to -1.
+
 #### `spiffe`
 
 Please note that [SPIFFE](../https/spiffe.md) must be enabled in the static configuration 
