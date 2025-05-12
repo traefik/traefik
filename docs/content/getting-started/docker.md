@@ -147,7 +147,7 @@ X-Forwarded-Server: 9232cdd4fd6c
 X-Real-Ip: 192.168.147.1
 ```
 
-You can also [http://whoami.localhost](http://whoami.localhost) in your browser to test the application:
+You can also open [http://whoami.localhost](http://whoami.localhost) in a browser to test the application:
 
 ![whoami application Screenshot](../assets/img/getting-started/whoami-localhost.png)
 

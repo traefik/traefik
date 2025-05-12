@@ -26,6 +26,28 @@ This guide shows you how to:
 
 ## Create a Kubernetes Cluster
 
+### Using k3d
+
+Create a cluster with the following command. This command:
+
+- Creates a k3d cluster named "traefik"
+- Maps ports 80, 443, and 8000 to the loadbalancer for accessing services
+- Disables the built-in Traefik ingress controller to avoid conflicts
+
+```bash
+k3d cluster create traefik \
+  --port 80:80@loadbalancer \
+  --port 443:443@loadbalancer \
+  --port 8000:8000@loadbalancer \
+  --k3s-arg "--disable=traefik@server:0"
+```
+
+Configure kubectl:
+
+```bash
+kubectl cluster-info --context k3d-traefik
+```
+
 ### Using kind
 
 kind requires specific configuration to use an IngressController on localhost. Create a configuration file:
@@ -68,28 +90,6 @@ kubectl wait --namespace metallb-system --for=condition=ready pod --selector=app
 
 !!! note
     If using MetalLB, ensure you assign an IP address pool for the LoadBalancer and advertise it.
-
-### Using k3d
-
-Create a cluster with the following command. This command:
-
-- Creates a k3d cluster named "traefik"
-- Maps ports 80, 443, and 8000 to the loadbalancer for accessing services
-- Disables the built-in Traefik ingress controller to avoid conflicts
-
-```bash
-k3d cluster create traefik \
-  --port 80:80@loadbalancer \
-  --port 443:443@loadbalancer \
-  --port 8000:8000@loadbalancer \
-  --k3s-arg "--disable=traefik@server:0"
-```
-
-Configure kubectl:
-
-```bash
-kubectl cluster-info --context k3d-traefik
-```
 
 ## Install Traefik
 
@@ -173,7 +173,8 @@ kubectl describe GatewayClass traefik
 
 ## Expose the Dashboard
 
-The dashboard is automatically exposed through the [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md) we defined in the helm values during installation. 
+The dashboard is exposed with an [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md) provided by the Chart, as we defined in the helm values during installation. 
+
 Access it at:
 
 [http://dashboard.localhost/dashboard](http://dashboard.localhost/dashboard)
@@ -282,7 +283,7 @@ X-Forwarded-Server: traefik-598946cd7-zds59
 X-Real-Ip: 127.0.0.1
 ```
 
-You can also visit [http://whoami.localhost](http://whoami.localhost) in your browser to verify that the application is exposed correctly:
+You can also visit [http://whoami.localhost](http://whoami.localhost) in a browser to verify that the application is exposed correctly:
 
 ![whoami application Screenshot](../assets/img/getting-started/whoami-localhost.png)
 
