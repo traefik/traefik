@@ -92,6 +92,9 @@ func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
 		require.NoError(s.T(), err)
 		defer tmpFile.Close()
 
+		err = tmpFile.Chmod(0o666)
+		require.NoError(s.T(), err)
+
 		model := structs.Map(templateValue)
 		model["SelfFilename"] = tmpFile.Name()
 
