@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"google.golang.org/grpc"
@@ -321,4 +323,46 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 	}
 
 	return nil
+}
+
+type PassiveHealthChecker struct {
+	mu          sync.Mutex
+	failures    []time.Time
+	maxFail     int
+	failTimeout ptypes.Duration
+}
+
+func NewPassiveHealthChecker(maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
+	return &PassiveHealthChecker{
+		failures:    []time.Time{},
+		maxFail:     maxFail,
+		failTimeout: failTimeout,
+	}
+}
+
+func (p *PassiveHealthChecker) AllowRequest() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Clean up old failures outside the sliding window
+	now := time.Now()
+	threshold := now.Add(time.Duration(-p.failTimeout))
+
+	var filteredFailures []time.Time
+	for _, t := range p.failures {
+		if t.After(threshold) {
+			filteredFailures = append(filteredFailures, t)
+		}
+	}
+	p.failures = filteredFailures
+
+	// Check if failures exceed maxFail
+	return len(p.failures) < p.maxFail
+}
+
+func (p *PassiveHealthChecker) RecordFailure() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.failures = append(p.failures, time.Now())
 }
